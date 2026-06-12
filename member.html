@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Area · PKD GP Ansor Bantul</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <!-- Font & Bootstrap -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      background: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+    }
+    .navbar-brand img {
+      height: 40px;
+      margin-right: 12px;
+    }
+    .brand-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0a3d62;
+    }
+    .brand-sub {
+      font-size: 0.85rem;
+      color: #64748b;
+      display: block;
+      margin-top: 2px;
+    }
+    .wrapper {
+      display: flex;
+      width: 100%;
+      align-items: stretch;
+    }
+    #sidebar {
+      min-width: 280px;
+      max-width: 280px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      transition: all 0.3s;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+    }
+    #sidebar .sidebar-header {
+      padding: 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    #sidebar ul.components {
+      padding: 20px 0;
+    }
+    #sidebar ul li a {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #334155;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.2s;
+      border-left: 4px solid transparent;
+    }
+    #sidebar ul li a i {
+      width: 24px;
+      font-size: 1.2rem;
+      color: #64748b;
+    }
+    #sidebar ul li a:hover {
+      background: #f1f5f9;
+      border-left-color: #2563eb;
+    }
+    #sidebar ul li.active a {
+      background: #e6f0ff;
+      border-left-color: #2563eb;
+      color: #2563eb;
+      font-weight: 600;
+    }
+    #sidebar ul li.active a i {
+      color: #2563eb;
+    }
+    #content {
+      width: 100%;
+      padding: 30px;
+      min-height: 100vh;
+      background: #f8fafc;
+    }
+    .card-dashboard {
+      background: white;
+      border-radius: 24px;
+      padding: 1.8rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid #e9eef2;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 650;
+      margin-bottom: 1.5rem;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+    }
+    .profile-photo {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #2563eb;
+      margin-bottom: 1rem;
+    }
+    .photo-placeholder {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      color: #94a3b8;
+      border: 3px dashed #cbd5e1;
+      margin: 0 auto 1rem;
+    }
+    .btn-rounded {
+      border-radius: 9999px;
+      padding: 0.6rem 2rem;
+      font-weight: 600;
+    }
+    .photo-preview {
+      max-width: 120px;
+      max-height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-top: 10px;
+      border: 2px solid #2563eb;
+    }
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      text-align: center;
+      padding: 1.5rem;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+    }
+    /* Sertifikat card */
+    .certificate-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1rem;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 1rem;
+      transition: 0.2s;
+    }
+    .certificate-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar Atas -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="LOGO ANSOR.webp" alt="GP Ansor">
+        <span>
+          <span class="brand-title">PKD GP Ansor</span>
+          <span class="brand-sub">Kabupaten Bantul</span>
+        </span>
+      </a>
+      <div class="d-flex align-items-center" id="navbarUserMenu"></div>
+    </div>
+  </nav>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h5 class="mb-1"><i class="bi bi-person-circle me-2"></i>Member Area</h5>
+        <p class="text-muted small mb-0" id="sidebarUserName">Memuat...</p>
+      </div>
+      <ul class="list-unstyled components">
+        <li class="active" id="menu-dashboard"><a href="#" onclick="loadContent('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li id="menu-profil"><a href="#" onclick="loadContent('profil')"><i class="bi bi-person-badge"></i> Profil Saya</a></li>
+        <li id="menu-materi"><a href="#" onclick="loadContent('materi')"><i class="bi bi-file-earmark-pdf"></i> Materi</a></li>
+        <li id="menu-skrining"><a href="#" onclick="loadContent('skrining')"><i class="bi bi-clipboard-check"></i> Skrining</a></li>
+        <li id="menu-pretest"><a href="#" onclick="loadContent('pretest')"><i class="bi bi-pencil-square"></i> Pretest</a></li>
+        <li id="menu-posttest"><a href="#" onclick="loadContent('posttest')"><i class="bi bi-trophy"></i> Posttest</a></li>
+        <li id="menu-absensi"><a href="#" onclick="loadContent('absensi')"><i class="bi bi-calendar-check"></i> Absensi</a></li>
+        <li id="menu-sertifikat"><a href="#" onclick="loadContent('sertifikat')"><i class="bi bi-award"></i> Sertifikat</a></li>
+        <li id="menu-informasi"><a href="#" onclick="loadContent('informasi')"><i class="bi bi-megaphone"></i> Informasi</a></li>
+        <li><hr class="my-2"></li>
+        <li><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </nav>
+
+    <!-- Konten Utama -->
+    <div id="content">
+      <div id="content-container">
+        <!-- konten akan dimuat di sini oleh JavaScript -->
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer-modern">
+    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+  </footer>
+
+  <!-- Bootstrap JS & api.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="api.js"></script>
+
+  <script>
+    // -------------------------------------------------------
+    // Fungsi bantu lokal
+    // -------------------------------------------------------
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // -------------------------------------------------------
+    // Logout lokal
+    // -------------------------------------------------------
+    function logout() {
+      PKD.logout();  // akan mereset state dan redirect ke index.html
+    }
+
+    // -------------------------------------------------------
+    // Inisialisasi & pengecekan role
+    // -------------------------------------------------------
+    let currentMenu = 'dashboard';
+
+    function checkMemberAccess() {
+      if (PKD.getUserRole() !== 'member') {
+        window.location.href = 'login.html';
+        return false;
+      }
+      // Tampilkan nama member di sidebar
+      document.getElementById('sidebarUserName').innerText = PKD.getUserData().nama || 'Member';
+      return true;
+    }
+
+    // -------------------------------------------------------
+    // Load konten berdasarkan menu
+    // -------------------------------------------------------
+    async function loadContent(menu) {
+      currentMenu = menu;
+      // Update active class di sidebar
+      document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
+      document.getElementById(`menu-${menu}`)?.classList.add('active');
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+      try {
+        switch (menu) {
+          case 'dashboard': await renderDashboard(container); break;
+          case 'profil': await renderProfil(container); break;
+          case 'materi': await renderMateri(container); break;
+          case 'skrining': await renderSkrining(container); break;
+          case 'pretest': await renderPretest(container); break;
+          case 'posttest': await renderPosttest(container); break;
+          case 'absensi': await renderAbsensi(container); break;
+          case 'sertifikat': await renderSertifikat(container); break;
+          case 'informasi': await renderInformasi(container); break;
+          default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${PKD.escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // -------------------------------------------------------
+    // Render dashboard
+    // -------------------------------------------------------
+    async function renderDashboard(container) {
+      const user = PKD.getUserData();
+      // Ambil data member lengkap
+      const res = await PKD.getMemberData(user.username);
+      const member = res.member || {};
+      const pretestCount = res.pretest?.length || 0;
+      const posttestCount = res.posttest?.length || 0;
+      // Absensi
+      const absenRes = await PKD.callApi('getMemberAbsensi', { nama: member.nama_lengkap }, 'GET');
+      const absenCount = absenRes.data?.length || 0;
+      // Total peserta
+      const totalRes = await PKD.getTotalPeserta();
+      const totalPeserta = totalRes.total || 0;
+      // Sertifikat
+      const sertifikatRes = await PKD.getMemberSertifikat(member.nama_lengkap);
+      const sertifikatCount = sertifikatRes.data?.length || 0;
+      // Notifikasi sertifikat baru (info list jenis sertifikat)
+      const infoRes = await PKD.getInfoList();
+      const newCertNotif = infoRes.filter(item => item.jenis === 'sertifikat' && new Date(item.createdAt) > Date.now() - 7*24*60*60*1000).length;
+
+      let html = `
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="section-title">Dashboard</h2>
+          <span class="badge bg-primary px-3 py-2">Selamat datang, ${PKD.escapeHtml(member.nama_lengkap || 'Member')}</span>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-people fs-1 text-primary"></i>
+              <h3 class="mt-2">${totalPeserta}</h3>
+              <p class="text-muted">Total Peserta</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-pencil-square fs-1 text-success"></i>
+              <h3 class="mt-2">${pretestCount}</h3>
+              <p class="text-muted">Pretest Dikerjakan</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-trophy fs-1 text-warning"></i>
+              <h3 class="mt-2">${posttestCount}</h3>
+              <p class="text-muted">Posttest Dikerjakan</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-calendar-check fs-1 text-info"></i>
+              <h3 class="mt-2">${absenCount}</h3>
+              <p class="text-muted">Kehadiran</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-award fs-1 text-danger"></i>
+              <h3 class="mt-2">${sertifikatCount}</h3>
+              <p class="text-muted">Sertifikat</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card-dashboard text-center">
+              <i class="bi bi-megaphone fs-1 text-warning"></i>
+              <h3 class="mt-2">${newCertNotif}</h3>
+              <p class="text-muted">Notifikasi Baru</p>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <div class="card-dashboard">
+              <h5><i class="bi bi-info-circle me-2"></i>Informasi Terbaru</h5>
+              <p>Silakan lengkapi skrining, pretest, dan absensi Anda. Sertifikat akan tersedia setelah semua persyaratan terpenuhi.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card-dashboard">
+              <h5><i class="bi bi-award me-2"></i>Sertifikat</h5>
+              <p>Anda dapat mengunduh sertifikat setelah semua persyaratan terpenuhi. Saat ini Anda memiliki ${sertifikatCount} sertifikat.</p>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Profil (dengan edit foto)
+    // -------------------------------------------------------
+    async function renderProfil(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.getMemberData(user.username);
+      if (!res.success) throw new Error('Gagal memuat data profil');
+      const member = res.member || {};
+      const fotoDriveId = res.fotoDriveId;
+      const fotoUrl = fotoDriveId ? `https://drive.google.com/thumbnail?id=${fotoDriveId}` : null;
+
+      let html = `
+        <h2 class="section-title">Profil Saya</h2>
+        <div class="card-dashboard">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              ${fotoUrl ? `<img src="${fotoUrl}" class="profile-photo" alt="Foto">` : 
+                `<div class="photo-placeholder"><i class="bi bi-person-fill"></i></div>`}
+              <h4>${PKD.escapeHtml(member.nama_lengkap || '-')}</h4>
+              <p class="text-muted"><i class="bi bi-envelope"></i> ${PKD.escapeHtml(member.email || '-')}</p>
+              <p class="text-muted"><i class="bi bi-telephone"></i> ${PKD.escapeHtml(member.no_hp || '-')}</p>
+            </div>
+            <div class="col-md-8">
+              <form id="profilForm">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Nama Lengkap</label>
+                  <input type="text" class="form-control" id="profilNama" value="${PKD.escapeHtml(member.nama_lengkap || '')}" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Email</label>
+                  <input type="email" class="form-control" id="profilEmail" value="${PKD.escapeHtml(member.email || '')}" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">No. HP</label>
+                  <input type="text" class="form-control" id="profilNohp" value="${PKD.escapeHtml(member.no_hp || '')}">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Foto Profil</label>
+                  <input type="file" class="form-control" id="profilFoto" accept="image/*">
+                  <small class="text-muted">Maksimal 2MB</small>
+                  <div class="mt-2">
+                    <img id="profilFotoPreview" src="${fotoUrl || '#'}" class="photo-preview" style="${fotoUrl ? '' : 'display: none;'}">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Password Baru <span class="text-muted small">(kosongkan jika tidak ingin mengubah)</span></label>
+                  <input type="password" class="form-control" id="profilPassword" placeholder="Minimal 6 karakter">
+                </div>
+                <button type="submit" class="btn btn-primary btn-rounded px-5">Simpan Perubahan</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+
+      // Preview foto
+      document.getElementById('profilFoto').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran file maksimal 2MB');
+            this.value = '';
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = ev => {
+            document.getElementById('profilFotoPreview').src = ev.target.result;
+            document.getElementById('profilFotoPreview').style.display = 'inline';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Submit form
+      document.getElementById('profilForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const nama = document.getElementById('profilNama').value.trim();
+        const email = document.getElementById('profilEmail').value.trim();
+        const nohp = document.getElementById('profilNohp').value.trim();
+        const password = document.getElementById('profilPassword').value;
+        const fotoFile = document.getElementById('profilFoto').files[0];
+
+        if (!nama || !email) {
+          alert('Nama dan email wajib diisi');
+          return;
+        }
+
+        let fotoBase64 = null;
+        if (fotoFile && fotoFile.size > 0) fotoBase64 = await fileToBase64(fotoFile);
+
+        const user = PKD.getUserData();
+        try {
+          const res = await PKD.updateMemberProfile(user.username, nama, email, nohp, password, fotoBase64);
+          if (res.success) {
+            alert('Profil berhasil diperbarui');
+            // Update local storage data
+            PKD.setUserData({ ...PKD.getUserData(), nama, email, nohp });
+            PKD.persistAuthState();
+            document.getElementById('sidebarUserName').innerText = nama;
+            renderProfil(container);
+          } else {
+            alert('Gagal memperbarui profil');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    }
+
+    // -------------------------------------------------------
+    // Render Materi
+    // -------------------------------------------------------
+    async function renderMateri(container) {
+      const materi = await PKD.getMateriList();
+      let html = `<h2 class="section-title">Materi Pembelajaran</h2><div class="row g-4">`;
+      if (materi.length === 0) {
+        html += '<p class="text-muted">Belum ada materi.</p>';
+      } else {
+        materi.forEach(m => {
+          const fileUrl = `https://drive.google.com/file/d/${m.fileId}/preview`;
+          html += `
+            <div class="col-md-6">
+              <div class="card-dashboard">
+                <h5><i class="bi bi-file-earmark-${m.tipe === 'pdf' ? 'pdf' : 'ppt'} me-2"></i>${PKD.escapeHtml(m.judul)}</h5>
+                <p class="small text-muted">${PKD.escapeHtml(m.deskripsi || '')}</p>
+                <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat Materi</a>
+              </div>
+            </div>
+          `;
+        });
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Skrining
+    // -------------------------------------------------------
+    async function renderSkrining(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.callApi('getMemberSkrining', { nama: user.nama }, 'GET');
+      const data = res.data;
+      if (!data) {
+        container.innerHTML = `
+          <h2 class="section-title">Skrining</h2>
+          <div class="card-dashboard">
+            <p>Anda belum mengisi skrining. Silakan <a href="skrining.html">klik di sini</a> untuk mengisi.</p>
+          </div>`;
+      } else {
+        container.innerHTML = `
+          <h2 class="section-title">Hasil Skrining</h2>
+          <div class="card-dashboard">
+            <p><strong>Tanggal:</strong> ${PKD.escapeHtml(data.timestamp)}</p>
+            <p><strong>Nama:</strong> ${PKD.escapeHtml(data.nama)}</p>
+            <p><strong>Alamat:</strong> ${PKD.escapeHtml(data.alamat)}</p>
+            <p><strong>Info:</strong> ${PKD.escapeHtml(data.info)}</p>
+            <p><strong>Pengetahuan:</strong> ${PKD.escapeHtml(data.pengetahuan)}</p>
+            <p><strong>Qunut:</strong> ${PKD.escapeHtml(data.qunut)}</p>
+            <p><strong>Penyakit:</strong> ${PKD.escapeHtml(data.penyakit)}</p>
+            <p><strong>Pernah:</strong> ${PKD.escapeHtml(data.pernah)}</p>
+            <p><strong>Alasan:</strong> ${PKD.escapeHtml(data.alasan)}</p>
+            <p><strong>Catatan:</strong> ${PKD.escapeHtml(data.catatan)}</p>
+          </div>`;
+      }
+    }
+
+    // -------------------------------------------------------
+    // Render Pretest
+    // -------------------------------------------------------
+    async function renderPretest(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.getMemberData(user.username);
+      const pretest = res.pretest || [];
+      let html = `<h2 class="section-title">Riwayat Pretest</h2><div class="card-dashboard">`;
+      if (pretest.length === 0) {
+        html += '<p>Belum mengerjakan pretest. <a href="pretest.html">Mulai Pretest</a></p>';
+      } else {
+        html += '<div class="list-group">';
+        pretest.forEach(p => {
+          html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+            <span>${PKD.escapeHtml(new Date(p.timestamp).toLocaleString())}</span>
+            <span class="badge bg-primary rounded-pill">Skor: ${p.score}</span></div>`;
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Posttest
+    // -------------------------------------------------------
+    async function renderPosttest(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.getMemberData(user.username);
+      const posttest = res.posttest || [];
+      let html = `<h2 class="section-title">Riwayat Posttest</h2><div class="card-dashboard">`;
+      if (posttest.length === 0) {
+        html += '<p>Belum mengerjakan posttest. <a href="posttest.html">Mulai Posttest</a></p>';
+      } else {
+        html += '<div class="list-group">';
+        posttest.forEach(p => {
+          html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+            <span>${PKD.escapeHtml(new Date(p.timestamp).toLocaleString())}</span>
+            <span class="badge bg-warning text-dark rounded-pill">Skor: ${p.score}</span></div>`;
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Absensi
+    // -------------------------------------------------------
+    async function renderAbsensi(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.callApi('getMemberAbsensi', { nama: user.nama }, 'GET');
+      const absen = res.data || [];
+      let html = `<h2 class="section-title">Riwayat Kehadiran</h2><div class="card-dashboard">`;
+      if (absen.length === 0) {
+        html += '<p>Belum ada riwayat absensi.</p>';
+      } else {
+        html += '<table class="table"><thead><tr><th>Tanggal</th><th>Sesi</th></tr></thead><tbody>';
+        absen.forEach(a => {
+          html += `<tr><td>${PKD.escapeHtml(new Date(a.timestamp).toLocaleString())}</td><td>${PKD.escapeHtml(a.sesiNama)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Sertifikat
+    // -------------------------------------------------------
+    async function renderSertifikat(container) {
+      const user = PKD.getUserData();
+      const res = await PKD.getMemberSertifikat(user.nama);
+      const sertifikat = res.data || [];
+      let html = `<h2 class="section-title">Sertifikat Saya</h2><div class="card-dashboard">`;
+      if (sertifikat.length === 0) {
+        html += '<p>Belum ada sertifikat yang tersedia. Pastikan Anda telah menyelesaikan seluruh rangkaian kegiatan.</p>';
+      } else {
+        html += '<div class="row">';
+        sertifikat.forEach(s => {
+          html += `
+            <div class="col-md-6">
+              <div class="certificate-card d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${PKD.escapeHtml(s.nomor_sertifikat)}</strong><br>
+                  <small>${PKD.escapeHtml(s.nama_peserta)}</small>
+                </div>
+                <a href="${PKD.escapeHtml(s.pdf_url)}" target="_blank" class="btn btn-sm btn-success">
+                  <i class="bi bi-download"></i> Unduh
+                </a>
+              </div>
+            </div>`;
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render Informasi (termasuk notifikasi sertifikat)
+    // -------------------------------------------------------
+    async function renderInformasi(container) {
+      const info = await PKD.getInfoList();
+      let html = `<h2 class="section-title">Informasi & Pengumuman</h2><div class="row g-4">`;
+      if (info.length === 0) {
+        html += '<p class="text-muted">Belum ada informasi.</p>';
+      } else {
+        info.sort((a,b) => (a.urutan || 0) - (b.urutan || 0));
+        info.forEach(item => {
+          if (item.jenis === 'video') {
+            html += `
+              <div class="col-md-6">
+                <div class="card-dashboard">
+                  <h5>${PKD.escapeHtml(item.judul)}</h5>
+                  <p>${PKD.escapeHtml(item.deskripsi)}</p>
+                  <div class="ratio ratio-16x9">
+                    <iframe src="${PKD.escapeHtml(item.url)}" allowfullscreen></iframe>
+                  </div>
+                </div>
+              </div>`;
+          } else if (item.jenis === 'flyer' || item.jenis === 'galeri') {
+            const imgUrl = item.url ? `https://drive.google.com/thumbnail?id=${item.url}` : '#';
+            html += `
+              <div class="col-md-4">
+                <div class="card-dashboard">
+                  <img src="${imgUrl}" class="img-fluid rounded" alt="${PKD.escapeHtml(item.judul)}">
+                  <h6 class="mt-2">${PKD.escapeHtml(item.judul)}</h6>
+                  <p class="small">${PKD.escapeHtml(item.deskripsi)}</p>
+                </div>
+              </div>`;
+          } else if (item.jenis === 'sertifikat') {
+            html += `
+              <div class="col-md-6">
+                <div class="card-dashboard d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5>${PKD.escapeHtml(item.judul)}</h5>
+                    <p class="small">${PKD.escapeHtml(item.deskripsi)}</p>
+                  </div>
+                  <a href="${PKD.escapeHtml(item.url)}" target="_blank" class="btn btn-sm btn-success">
+                    <i class="bi bi-download"></i> Unduh
+                  </a>
+                </div>
+              </div>`;
+          } else {
+            html += `
+              <div class="col-md-6">
+                <div class="card-dashboard">
+                  <h5>${PKD.escapeHtml(item.judul)}</h5>
+                  <p>${PKD.escapeHtml(item.deskripsi)}</p>
+                </div>
+              </div>`;
+          }
+        });
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Inisialisasi halaman
+    // -------------------------------------------------------
+    window.onload = function() {
+      if (!checkMemberAccess()) return;
+      loadContent('dashboard');
+    };
+  </script>
+</body>
+</html>

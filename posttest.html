@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Post‑test</title>
+  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .container-card { max-width: 900px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .card-kahoot { background: white; border: 1px solid #e2e8f0; border-radius: 28px; padding: 1.8rem; box-shadow: 0 6px 14px rgba(0,0,0,0.02); }
+    .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: #f1f5f9; padding: 14px 24px; border-radius: 60px; flex-wrap: wrap; gap: 10px; }
+    .timer-box { background: #0f172a; color: white; padding: 8px 22px; border-radius: 40px; font-weight: 600; font-size: 1.25rem; }
+    .score-box { background: #fbbf24; color: #0f172a; padding: 8px 22px; border-radius: 40px; font-weight: 700; }
+    .progress-box { font-weight: 600; color: #2563eb; }
+    .question-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 30px; line-height: 1.4; color: #0f172a; }
+    .kahoot-options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 10px; }
+    .kahoot-option { display: flex !important; align-items: center; padding: 1rem 1.5rem !important; border: none !important; border-radius: 18px !important; color: white !important; font-weight: 600 !important; font-size: 1.1rem !important; transition: transform 0.12s, box-shadow 0.15s !important; box-shadow: 0 6px 12px rgba(0,0,0,0.12) !important; width: 100%; text-align: left; }
+    .kahoot-option:hover:not(:disabled) { transform: scale(1.01); box-shadow: 0 10px 18px rgba(0,0,0,0.18) !important; }
+    .kahoot-option.selected { outline: 4px solid #1e293b !important; outline-offset: 2px; transform: scale(0.98); }
+    .opt-red { background-color: #dc2626; }
+    .opt-blue { background-color: #2563eb; }
+    .opt-yellow { background-color: #eab308; color: #0f172a !important; }
+    .opt-green { background-color: #16a34a; }
+    .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
+    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ==================== MODE LOGIN CHECK ==================== -->
+<script src="api.js"></script>
+<script>
+  (async function() {
+    try {
+      const loginMode = await PKD.getLoginMode();
+      const requireLogin = loginMode.success ? loginMode.enabled : false;
+      if (requireLogin) {
+        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+        if (!auth) {
+          window.location.href = 'login.html';
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Gagal cek login mode, lanjut tanpa login:', e);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadPosttest);
+    } else {
+      loadPosttest();
+    }
+  })();
+</script>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="index.html">
+      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto"><i class="bi bi-arrow-left"></i> Kembali</a>
+  </div>
+</nav>
+
+<!-- Konten utama -->
+<div class="container container-card">
+  <h2 class="section-title"><i class="bi bi-check2-circle me-2"></i>Post‑test – Evaluasi</h2>
+  <div id="posttestContainer">Memuat soal...</div>
+</div>
+
+<!-- Footer -->
+<footer class="footer-modern container">
+  <i class="bi bi-c-circle"></i> 2026 · Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<script>
+  // State global
+  let posttestQuiz = null;
+
+  // Bantuan lokal (pakai PKD)
+  function escapeHtml(unsafe) { return PKD.escapeHtml(unsafe); }
+  function showToast(message, type = 'success') { PKD.showToast(message, type); }
+
+  // ========== CACHE ==========
+  function getCachedPosttestQuestions() {
+    return PKD.getCached('posttestQuestionsCache', 3600000);
+  }
+  function saveCachedPosttestQuestions(data) {
+    PKD.saveCached('posttestQuestionsCache', data);
+  }
+  function getCachedQuizSettings() {
+    return PKD.getCached('quizSettingsCache', 3600000);
+  }
+  function saveCachedQuizSettings(data) {
+    PKD.saveCached('quizSettingsCache', data);
+  }
+
+  // ========== FETCH DATA ==========
+  async function fetchPosttestQuestions(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getCachedPosttestQuestions();
+      if (cached) return cached;
+    }
+    const questions = await PKD.getPosttestQuestions(true);
+    saveCachedPosttestQuestions(questions);
+    return questions;
+  }
+
+  async function fetchQuizSettings(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getCachedQuizSettings();
+      if (cached) return cached;
+    }
+    const settings = await PKD.getQuizSettings(true);
+    saveCachedQuizSettings(settings);
+    return settings;
+  }
+
+  // ========== STATE LOCALSTORAGE ==========
+  function savePosttestQuiz() {
+    if (!posttestQuiz) return;
+    const { timer, questions, ...state } = posttestQuiz;
+    if (questions && Array.isArray(questions)) {
+      state.questionIds = questions.map(q => q.id);
+    }
+    localStorage.setItem('posttestQuiz', JSON.stringify(state));
+  }
+
+  function loadSavedPosttestQuiz() {
+    const saved = localStorage.getItem('posttestQuiz');
+    if (!saved) return null;
+    try {
+      const parsed = JSON.parse(saved);
+      parsed.nohp = parsed.nohp || '';
+      parsed.alamat = parsed.alamat || '';
+      parsed.started = parsed.started || false;
+      parsed.isFinished = parsed.isFinished || false;
+      parsed.answers = parsed.answers || [];
+      parsed.currentIndex = parsed.currentIndex || 0;
+      parsed.score = parsed.score || 0;
+      parsed.timerDuration = parsed.timerDuration || 30;
+      parsed.timeLeft = parsed.timeLeft || parsed.timerDuration;
+      return parsed;
+    } catch (e) { console.warn('Gagal parse saved posttest:', e); return null; }
+  }
+
+  function clearPosttestQuiz() {
+    localStorage.removeItem('posttestQuiz');
+    posttestQuiz = null;
+  }
+
+  // ========== RENDER ==========
+  function renderPosttestStartForm() {
+    const quiz = posttestQuiz;
+    if (!quiz) return;
+
+    let html = `
+      <div class="card-kahoot">
+        <h4 class="mb-4">📝 Isi Data Diri untuk Memulai Posttest</h4>
+        <div class="mb-3"><label class="form-label fw-bold">Nama Lengkap</label><input type="text" class="form-control" id="posttestNama" value="${escapeHtml(quiz.nama || '')}" placeholder="Masukkan nama lengkap" required></div>
+        <div class="mb-3"><label class="form-label fw-bold">Nomor HP</label><input type="tel" class="form-control" id="posttestNohp" value="${escapeHtml(quiz.nohp || '')}" placeholder="Masukkan nomor HP" required></div>
+        <div class="mb-3"><label class="form-label fw-bold">Alamat</label><textarea class="form-control" id="posttestAlamat" rows="2" placeholder="Masukkan alamat" required>${escapeHtml(quiz.alamat || '')}</textarea></div>
+        <div class="text-center mt-4"><button id="startPosttestBtn" class="btn btn-primary btn-lg rounded-pill px-5">🚀 Mulai Posttest</button></div>
+      </div>`;
+
+    document.getElementById('posttestContainer').innerHTML = html;
+
+    document.getElementById('startPosttestBtn').addEventListener('click', function() {
+      const nama = document.getElementById('posttestNama').value.trim();
+      const nohp = document.getElementById('posttestNohp').value.trim();
+      const alamat = document.getElementById('posttestAlamat').value.trim();
+      if (!nama || !nohp || !alamat) {
+        showToast('Nama, No HP, dan Alamat wajib diisi!', 'danger');
+        return;
+      }
+      quiz.nama = nama; quiz.nohp = nohp; quiz.alamat = alamat;
+      quiz.started = true; quiz.currentIndex = 0; quiz.score = 0; quiz.answers = [];
+      quiz.timeLeft = quiz.timerDuration;
+      savePosttestQuiz();
+      renderPosttestQuestion();
+    });
+  }
+
+  function renderPosttestQuestion() {
+    const container = document.getElementById('posttestContainer');
+    const quiz = posttestQuiz;
+    if (!quiz) return;
+    if (!quiz.started) { renderPosttestStartForm(); return; }
+    if (quiz.currentIndex >= quiz.questions.length) { renderPosttestSummary(); return; }
+
+    const q = quiz.questions[quiz.currentIndex];
+    const progress = `${quiz.currentIndex + 1}/${quiz.questions.length}`;
+    const timerValue = quiz.timeLeft;
+
+    let html = `<div class="card-kahoot">`;
+    html += `<div class="quiz-header">`;
+    html += `<div class="timer-box"><i class="bi bi-hourglass-split"></i> <span id="timerDisplay">${timerValue}</span> detik</div>`;
+    html += `<div class="score-box"><i class="bi bi-star-fill"></i> Skor: ${quiz.score}</div>`;
+    html += `<div class="progress-box"><i class="bi bi-list-ol"></i> ${progress}</div>`;
+    html += `</div>`;
+    html += `<div class="mb-3 small text-muted">Nama: ${escapeHtml(quiz.nama)} | No HP: ${escapeHtml(quiz.nohp)} | Alamat: ${escapeHtml(quiz.alamat)}</div>`;
+    html += `<div class="question-text">${quiz.currentIndex + 1}. ${q.teks}</div>`;
+    html += `<div class="kahoot-options-grid">`;
+
+    (q.opsi || []).forEach((ops, i) => {
+      let colorClass = '';
+      if (i === 0) colorClass = 'opt-red';
+      else if (i === 1) colorClass = 'opt-blue';
+      else if (i === 2) colorClass = 'opt-yellow';
+      else if (i === 3) colorClass = 'opt-green';
+      const isAnswered = quiz.answers[quiz.currentIndex] !== undefined;
+      let disabled = isAnswered ? 'disabled' : '';
+      html += `<button type="button" class="option-btn kahoot-option ${colorClass}" data-qid="${q.id}" data-opt-index="${i}" ${disabled}>
+                <span class="opt-letter">${String.fromCharCode(65 + i)}.</span><span class="opt-text">${ops}</span></button>`;
+    });
+
+    html += `</div>`;
+    if (quiz.answers[quiz.currentIndex] !== undefined) {
+      html += `<div class="mt-4 text-center"><button id="nextPosttestBtn" class="btn btn-primary btn-lg rounded-pill px-5">Selanjutnya ➡️</button></div>`;
+    }
+    html += `</div>`;
+    container.innerHTML = html;
+
+    document.querySelectorAll('.kahoot-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (quiz.answers[quiz.currentIndex] !== undefined) return;
+        const qid = parseInt(this.dataset.qid);
+        const optIdx = parseInt(this.dataset.optIndex);
+        handlePosttestAnswer(qid, optIdx);
+      });
+    });
+
+    const nextBtn = document.getElementById('nextPosttestBtn');
+    if (nextBtn) { nextBtn.addEventListener('click', nextPosttestQuestion); }
+
+    if (quiz.answers[quiz.currentIndex] === undefined) { startPosttestTimer(); }
+  }
+
+  function handlePosttestAnswer(questionId, selectedIndex) {
+    const quiz = posttestQuiz;
+    if (!quiz || quiz.answers[quiz.currentIndex] !== undefined) return;
+    const q = quiz.questions[quiz.currentIndex];
+    const isCorrect = (selectedIndex === q.jawaban);
+    if (isCorrect) quiz.score += 10;
+    quiz.answers[quiz.currentIndex] = { questionId, selectedOption: selectedIndex, isCorrect };
+    if (quiz.timer) { clearInterval(quiz.timer); quiz.timer = null; }
+    renderPosttestQuestion();
+    savePosttestQuiz();
+    setTimeout(() => {
+      if (quiz.currentIndex < quiz.questions.length && quiz.answers[quiz.currentIndex] !== undefined) {
+        nextPosttestQuestion();
+      }
+    }, 1500);
+  }
+
+  function startPosttestTimer() {
+    const quiz = posttestQuiz;
+    if (!quiz || quiz.timer) return;
+    quiz.timeLeft = quiz.timerDuration;
+    updateTimerDisplay(quiz.timeLeft);
+    quiz.timer = setInterval(() => {
+      if (!quiz) { clearInterval(quiz.timer); return; }
+      if (quiz.answers[quiz.currentIndex] !== undefined) {
+        clearInterval(quiz.timer); quiz.timer = null; return;
+      }
+      quiz.timeLeft -= 1;
+      updateTimerDisplay(quiz.timeLeft);
+      if (quiz.timeLeft <= 0) {
+        clearInterval(quiz.timer); quiz.timer = null;
+        if (quiz.answers[quiz.currentIndex] === undefined) {
+          const q = quiz.questions[quiz.currentIndex];
+          quiz.answers[quiz.currentIndex] = { questionId: q.id, selectedOption: null, isCorrect: false };
+          renderPosttestQuestion();
+          savePosttestQuiz();
+          setTimeout(() => { nextPosttestQuestion(); }, 1500);
+        }
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay(seconds) {
+    const timerEl = document.getElementById('timerDisplay');
+    if (timerEl) { timerEl.innerText = seconds; }
+  }
+
+  function nextPosttestQuestion() {
+    const quiz = posttestQuiz;
+    if (!quiz) return;
+    if (quiz.timer) { clearInterval(quiz.timer); quiz.timer = null; }
+    quiz.currentIndex++;
+    quiz.timeLeft = quiz.timerDuration;
+    renderPosttestQuestion();
+    savePosttestQuiz();
+  }
+
+  function renderPosttestSummary() {
+    const quiz = posttestQuiz;
+    if (!quiz) return;
+    quiz.isFinished = true;
+    savePosttestQuiz();
+    const totalQuestions = quiz.questions.length;
+    const correctAnswers = quiz.answers.filter(a => a && a.isCorrect).length;
+    const score = quiz.score;
+
+    let html = `<div class="card-kahoot text-center">
+                  <h3 class="mb-4">🎉 Posttest Selesai! 🎉</h3>
+                  <div class="display-1 mb-3">${score}</div>
+                  <p class="lead">Jawaban benar: ${correctAnswers} dari ${totalQuestions}</p>
+                  <p><strong>Nama:</strong> ${escapeHtml(quiz.nama || '')}</p>
+                  <p><strong>No HP:</strong> ${escapeHtml(quiz.nohp || '')}</p>
+                  <p><strong>Alamat:</strong> ${escapeHtml(quiz.alamat || '')}</p>
+                  <hr>
+                  <button id="submitPosttestResultBtn" class="btn btn-primary btn-lg rounded-pill px-5 mt-3">📤 Kumpulkan Posttest</button>
+                  <button id="restartPosttestBtn" class="btn btn-outline-secondary btn-lg rounded-pill px-5 mt-3 ms-2">🔄 Ulangi</button>
+                </div>`;
+    document.getElementById('posttestContainer').innerHTML = html;
+
+    document.getElementById('submitPosttestResultBtn').addEventListener('click', async function() {
+      if (!quiz.nama) { showToast('Nama belum diisi!', 'danger'); return; }
+      try {
+        const answers = JSON.stringify(quiz.answers.map(a => ({ qid: a.questionId, selected: a.selectedOption, correct: a.isCorrect })));
+        await PKD.submitPosttest(quiz.nama, quiz.nohp, quiz.alamat, answers, quiz.score);
+        showToast('Posttest berhasil dikirim!', 'success');
+        clearPosttestQuiz();
+        location.reload();
+      } catch (e) { showToast('Gagal mengirim: ' + e.message, 'danger'); }
+    });
+
+    document.getElementById('restartPosttestBtn').addEventListener('click', function() {
+      clearPosttestQuiz();
+      loadPosttest();
+    });
+  }
+
+  // ========== LOAD POSTTEST ==========
+  async function loadPosttest() {
+    const container = document.getElementById('posttestContainer');
+    container.innerHTML = '<div class="text-center my-4"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat soal...</p></div>';
+
+    let questions = getCachedPosttestQuestions();
+    let settings = getCachedQuizSettings();
+
+    if (questions && settings) {
+      initPosttestWithData(questions, settings);
+      Promise.all([fetchPosttestQuestions(true), fetchQuizSettings(true)])
+        .then(([newQuestions, newSettings]) => {
+          if (JSON.stringify(newQuestions) !== JSON.stringify(questions) || JSON.stringify(newSettings) !== JSON.stringify(settings)) {
+            initPosttestWithData(newQuestions, newSettings);
+          }
+        })
+        .catch(console.warn);
+    } else {
+      try {
+        questions = await fetchPosttestQuestions(true);
+        settings = await fetchQuizSettings(true);
+        initPosttestWithData(questions, settings);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Gagal memuat soal: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+  }
+
+  function initPosttestWithData(questions, settings) {
+    const container = document.getElementById('posttestContainer');
+    if (!questions.length) {
+      container.innerHTML = '<div class="alert alert-info">Belum ada soal Posttest.</div>';
+      return;
+    }
+
+    const savedQuiz = loadSavedPosttestQuiz();
+    if (savedQuiz && !savedQuiz.isFinished) {
+      const currentIds = questions.map(q => q.id).sort();
+      const savedIds = savedQuiz.questionIds ? savedQuiz.questionIds.sort() : [];
+      const isSame = currentIds.length === savedIds.length && currentIds.every((id, idx) => id === savedIds[idx]);
+
+      if (!isSame) {
+        const confirmReset = confirm('Soal Posttest telah diperbarui. Data sebelumnya tidak dapat dilanjutkan.\n\nMulai ulang dengan soal baru?');
+        if (confirmReset) {
+          const nama = savedQuiz.nama || ''; const nohp = savedQuiz.nohp || ''; const alamat = savedQuiz.alamat || '';
+          clearPosttestQuiz();
+          posttestQuiz = { questions, currentIndex: 0, score: 0, answers: [], timer: null, timerDuration: settings.posttest_timer ? 30 : 0, timeLeft: settings.posttest_timer ? 30 : 0, nama, nohp, alamat, started: false, isFinished: false, settings };
+          renderPosttestStartForm();
+          return;
+        } else { clearPosttestQuiz(); renderPosttestStartForm(); return; }
+      }
+
+      const resume = confirm('Anda memiliki Posttest yang belum selesai. Lanjutkan?');
+      if (resume) {
+        posttestQuiz = savedQuiz;
+        posttestQuiz.timer = null;
+        posttestQuiz.timeLeft = posttestQuiz.timerDuration || 30;
+        posttestQuiz.settings = settings;
+        posttestQuiz.questions = questions;
+        if (posttestQuiz.started) { renderPosttestQuestion(); } else { renderPosttestStartForm(); }
+        return;
+      } else { clearPosttestQuiz(); }
+    }
+
+    posttestQuiz = { questions, currentIndex: 0, score: 0, answers: [], timer: null, timerDuration: settings.posttest_timer ? 30 : 0, timeLeft: settings.posttest_timer ? 30 : 0, nama: '', nohp: '', alamat: '', started: false, isFinished: false, settings };
+    renderPosttestStartForm();
+  }
+
+  window.loadPosttest = loadPosttest;
+</script>
+</body>
+</html>

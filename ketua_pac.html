@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ketua PAC · PKD GP Ansor Bantul</title>
+  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body { background: #f1f5f9; font-family: 'Inter', sans-serif; }
+    .navbar-brand img { height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.3rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.85rem; color: #64748b; display: block; margin-top: 2px; }
+    .wrapper { display: flex; width: 100%; align-items: stretch; }
+    #sidebar { min-width: 280px; max-width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 2px 0 10px rgba(0,0,0,0.02); }
+    #sidebar .sidebar-header { padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    #sidebar ul.components { padding: 20px 0; }
+    #sidebar ul li a { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #334155; text-decoration: none; font-weight: 500; border-left: 4px solid transparent; }
+    #sidebar ul li a i { width: 24px; font-size: 1.2rem; color: #64748b; }
+    #sidebar ul li a:hover { background: #f1f5f9; border-left-color: #2563eb; }
+    #sidebar ul li.active a { background: #e6f0ff; border-left-color: #2563eb; color: #2563eb; font-weight: 600; }
+    #sidebar ul li.active a i { color: #2563eb; }
+    #content { width: 100%; padding: 30px; min-height: 100vh; background: #f8fafc; }
+    .card-dashboard { background: white; border-radius: 24px; padding: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e9eef2; margin-bottom: 24px; }
+    .section-title { font-size: 1.6rem; font-weight: 650; margin-bottom: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .footer-modern { font-size: 0.85rem; color: #64748b; text-align: center; padding: 1.5rem; background: white; border-top: 1px solid #e2e8f0; }
+    .table-responsive { max-height: 500px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="LOGO ANSOR.webp" alt="GP Ansor">
+        <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+      </a>
+      <div class="d-flex align-items-center" id="navbarUserMenu"></div>
+    </div>
+  </nav>
+
+  <div class="wrapper">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <h5 class="mb-1"><i class="bi bi-person-badge me-2"></i>Ketua PAC</h5>
+        <p class="text-muted small mb-0" id="sidebarUserName">Memuat...</p>
+        <p class="text-muted small mb-0" id="sidebarKapanewon"></p>
+      </div>
+      <ul class="list-unstyled components">
+        <li class="active" id="menu-dashboard"><a href="#" onclick="loadContent('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li id="menu-peserta"><a href="#" onclick="loadContent('peserta')"><i class="bi bi-people-fill"></i> Data Peserta</a></li>
+        <li id="menu-skrining"><a href="#" onclick="loadContent('skrining')"><i class="bi bi-clipboard-check"></i> Hasil Skrining</a></li>
+        <li id="menu-pretest"><a href="#" onclick="loadContent('pretest')"><i class="bi bi-pencil-square"></i> Hasil Pretest</a></li>
+        <li id="menu-posttest"><a href="#" onclick="loadContent('posttest')"><i class="bi bi-trophy"></i> Hasil Posttest</a></li>
+        <li><hr class="my-2"></li>
+        <li><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </nav>
+
+    <div id="content">
+      <div id="content-container">
+        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer-modern">
+    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="api.js"></script>
+  <script>
+    // -------------------------------------------------------
+    // Ambil kapanewon dari user data
+    // -------------------------------------------------------
+    function getKapanewon() {
+      const userData = PKD.getUserData();
+      return userData.kapanewon || '';
+    }
+
+    function checkAccess() {
+      if (PKD.getUserRole() !== 'ketua_pac') {
+        window.location.href = 'login.html';
+        return false;
+      }
+      const kap = getKapanewon();
+      document.getElementById('sidebarUserName').innerText = PKD.getUserData().nama || 'Ketua PAC';
+      document.getElementById('sidebarKapanewon').innerText = kap ? `Kapanewon ${kap}` : '';
+      return true;
+    }
+
+    function logout() { PKD.logout(); }
+
+    // -------------------------------------------------------
+    // Filter data berdasarkan kapanewon
+    // -------------------------------------------------------
+    async function getFilteredPeserta() {
+      const all = await PKD.getPesertaList();
+      const kap = getKapanewon().toLowerCase();
+      return all.filter(p => (p.utusan || '').toLowerCase().includes(kap));
+    }
+
+    async function getFilteredSkrining() {
+      const filteredPeserta = await getFilteredPeserta();
+      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
+      const all = await PKD.getSkriningResponses();
+      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
+    }
+
+    async function getFilteredPretest() {
+      const filteredPeserta = await getFilteredPeserta();
+      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
+      const all = await PKD.getPretestResponses();
+      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
+    }
+
+    async function getFilteredPosttest() {
+      const filteredPeserta = await getFilteredPeserta();
+      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
+      const all = await PKD.getPosttestResponses();
+      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
+    }
+
+    // -------------------------------------------------------
+    // Load konten sesuai menu
+    // -------------------------------------------------------
+    async function loadContent(menu) {
+      document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
+      document.getElementById(`menu-${menu}`)?.classList.add('active');
+
+      const container = document.getElementById('content-container');
+      container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+      try {
+        switch(menu) {
+          case 'dashboard': await renderDashboard(container); break;
+          case 'peserta': await renderPeserta(container); break;
+          case 'skrining': await renderSkrining(container); break;
+          case 'pretest': await renderPretest(container); break;
+          case 'posttest': await renderPosttest(container); break;
+        }
+      } catch(e) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${PKD.escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    // -------------------------------------------------------
+    // Render dashboard
+    // -------------------------------------------------------
+    async function renderDashboard(container) {
+      const [peserta, skrining, pretest, posttest] = await Promise.all([
+        getFilteredPeserta(),
+        getFilteredSkrining(),
+        getFilteredPretest(),
+        getFilteredPosttest()
+      ]);
+      container.innerHTML = `
+        <h2 class="section-title">Dashboard Kapanewon ${getKapanewon()}</h2>
+        <div class="row g-4">
+          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-people fs-1 text-primary"></i><h3>${peserta.length}</h3><p>Total Peserta</p></div></div>
+          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-clipboard-check fs-1 text-success"></i><h3>${skrining.length}</h3><p>Skrining Terisi</p></div></div>
+          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-pencil-square fs-1 text-warning"></i><h3>${pretest.length}</h3><p>Pretest Terisi</p></div></div>
+          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-trophy fs-1 text-info"></i><h3>${posttest.length}</h3><p>Posttest Terisi</p></div></div>
+        </div>`;
+    }
+
+    // -------------------------------------------------------
+    // Render tabel peserta
+    // -------------------------------------------------------
+    async function renderPeserta(container) {
+      const data = await getFilteredPeserta();
+      let html = `<h2 class="section-title">Data Peserta Kapanewon ${getKapanewon()}</h2>
+        <div class="card-dashboard"><div class="table-responsive">
+          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama Lengkap</th><th>Utusan</th><th>Pendidikan</th><th>No HP</th><th>Email</th></tr></thead><tbody>`;
+      data.forEach((p,i) => {
+        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(p.nama_lengkap)}</td><td>${PKD.escapeHtml(p.utusan)}</td><td>${PKD.escapeHtml(p.pendidikan_terakhir)}</td><td>${PKD.escapeHtml(p.no_hp)}</td><td>${PKD.escapeHtml(p.email)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Render tabel skrining, pretest, posttest
+    // -------------------------------------------------------
+    async function renderSkrining(container) {
+      const data = await getFilteredSkrining();
+      let html = `<h2 class="section-title">Hasil Skrining Kapanewon ${getKapanewon()}</h2>
+        <div class="card-dashboard"><div class="table-responsive">
+          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Pernah</th><th>Alasan</th></tr></thead><tbody>`;
+      data.forEach((d,i) => {
+        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${PKD.escapeHtml(d.alamat)}</td><td>${PKD.escapeHtml(d.info)}</td><td>${PKD.escapeHtml(d.pengetahuan)}</td><td>${PKD.escapeHtml(d.qunut)}</td><td>${PKD.escapeHtml(d.pernah)}</td><td>${PKD.escapeHtml(d.alasan)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+      container.innerHTML = html;
+    }
+
+    async function renderPretest(container) {
+      const data = await getFilteredPretest();
+      let html = `<h2 class="section-title">Hasil Pretest Kapanewon ${getKapanewon()}</h2>
+        <div class="card-dashboard"><div class="table-responsive">
+          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
+      data.forEach((d,i) => {
+        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${d.score}</td><td>${PKD.escapeHtml(d.timestamp)}</td><td>${PKD.escapeHtml(d.nohp)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+      container.innerHTML = html;
+    }
+
+    async function renderPosttest(container) {
+      const data = await getFilteredPosttest();
+      let html = `<h2 class="section-title">Hasil Posttest Kapanewon ${getKapanewon()}</h2>
+        <div class="card-dashboard"><div class="table-responsive">
+          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
+      data.forEach((d,i) => {
+        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${d.score}</td><td>${PKD.escapeHtml(d.timestamp)}</td><td>${PKD.escapeHtml(d.nohp)}</td></tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------
+    // Inisialisasi
+    // -------------------------------------------------------
+    window.onload = function() {
+      if (!checkAccess()) return;
+      loadContent('dashboard');
+    };
+  </script>
+</body>
+</html>

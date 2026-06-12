@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Kabupaten Bantul</title>
+
+  <!-- Favicon & Font Modern -->
+  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    /* ========== GAYA DASAR ========== */
+    .navbar-brand {
+      line-height: 1.2;
+    }
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0a3d62;
+    }
+    .brand-sub {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #6c757d;
+      display: block;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+    }
+    .navbar-brand img {
+      height: 45px;
+      width: auto;
+      margin-right: 12px;
+      transition: transform 0.3s ease;
+      will-change: transform;
+    }
+    .navbar-brand img:hover {
+      transform: scale(1.05);
+    }
+    .nav-link.active {
+      font-weight: 600;
+      color: #0a3d62 !important;
+    }
+    .nav-link {
+      color: #495057 !important;
+      margin: 0 4px;
+    }
+    .nav-link:hover {
+      color: #0a3d62 !important;
+    }
+    @media (max-width: 991px) {
+      .navbar-brand img {
+        height: 40px;
+      }
+      .brand-title {
+        font-size: 1.2rem;
+      }
+    }
+    * { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .navbar {
+      background: rgba(255,255,255,0.8) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(203,213,225,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #0f172a !important;
+    }
+    .nav-link {
+      font-weight: 500;
+      border-radius: 9999px;
+      padding: 0.5rem 1.2rem;
+      margin: 0 0.2rem;
+      color: #334155 !important;
+      transition: all 0.15s;
+    }
+    .nav-link:hover {
+      background: rgba(37,99,235,0.06);
+      color: #2563eb !important;
+    }
+    .nav-link.active {
+      background: #2563eb !important;
+      color: white !important;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+    }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card {
+      max-width: 1000px;
+      background: white;
+      border-radius: 32px;
+      padding: 2rem 2rem;
+      margin: 30px auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      flex: 1;
+    }
+    .section-title {
+      font-weight: 650;
+      font-size: 1.75rem;
+      margin-bottom: 1.8rem;
+      color: #0f172a;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-icon {
+      font-size: 2.2rem;
+      color: #2563eb;
+      background: rgba(37,99,235,0.08);
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 30px;
+      margin-bottom: 1rem;
+    }
+
+    .btn-rounded {
+      border-radius: 9999px;
+      padding: 0.6rem 2rem;
+      font-weight: 600;
+    }
+
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 3rem;
+      text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    /* ========== GAYA FAQ PANEL ========== */
+    .chatbot-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      z-index: 1032;
+    }
+    .chatbot-button:hover {
+      background: #1d4ed8;
+    }
+    .chatbot-panel {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 380px;
+      max-width: calc(100vw - 60px);
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 1031;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      max-height: 80vh;
+    }
+    .chatbot-panel.show {
+      display: flex;
+    }
+    .chatbot-header {
+      background: #2563eb;
+      color: white;
+      padding: 16px 20px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .chatbot-header button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .faq-content {
+      padding: 16px;
+      overflow-y: auto;
+      max-height: 400px;
+      background: #f8fafc;
+    }
+    .faq-item {
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+    .faq-item .fw-bold {
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .faq-item .text-muted {
+      font-size: 0.9rem;
+    }
+
+    /* Kartu menu */
+    .menu-card {
+      cursor: pointer;
+      transition: box-shadow 0.2s, background-color 0.2s;
+    }
+    .menu-card:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+      background-color: #f9f9fc;
+    }
+
+    .content-logo {
+      max-width: 200px;
+      opacity: 0.9;
+    }
+
+    /* Badge total peserta */
+    .total-peserta-badge {
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.2);
+    }
+
+    /* Spinner */
+    .spinner-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    /* Login prompt */
+    #loginPrompt {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 1px dashed #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR MODERN ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="index.html">
+      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+      <span>
+        <span class="brand-title">PKD GP Ansor</span>
+        <span class="brand-sub">Kabupaten Bantul</span>
+      </span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <!-- Menu navigasi utama (diisi oleh JS jika login) -->
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+      </ul>
+      <div class="d-flex align-items-center gap-2 ms-auto" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA ==================== -->
+<div id="contentArea">
+  <section id="berandaSection" class="container container-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title mb-0"><i class="bi bi-house-heart-fill me-2"></i>Selamat Datang di Sistem PKD</h2>
+      <!-- Badge total peserta realtime -->
+      <div id="totalPesertaBadge" class="total-peserta-badge d-none"></div>
+    </div>
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <p style="font-size:1.2rem; line-height:1.7;">Portal digital <strong>Pelatihan Kepemimpinan Dasar (PKD) GP Ansor Kabupaten Bantul</strong>.</p>
+        <p class="mb-4">Gunakan menu di bawah untuk mengakses fitur:</p>
+
+        <!-- MENU GRID -->
+        <div class="row g-4" id="menuGrid">
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('pretest.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-pencil-square"></i></div>
+              <div><strong>Pre-test</strong><br><span class="text-muted small">Uji pengetahuan awal sebelum pelatihan.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('posttest.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-trophy"></i></div>
+              <div><strong>Post-test</strong><br><span class="text-muted small">Evaluasi setelah materi selesai.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('absen.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-qr-code"></i></div>
+              <div><strong>Absen Digital</strong><br><span class="text-muted small">Scan QR atau masukkan password sesi.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('skrining.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-clipboard-check"></i></div>
+              <div><strong>Skrining</strong><br><span class="text-muted small">Form pendataan awal peserta.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <a href="https://pkd-ansorbantul.github.io/bisa/peserta.html" class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card text-decoration-none text-dark" target="_blank" rel="noopener noreferrer">
+              <div class="feature-icon mb-3"><i class="bi bi-person-badge"></i></div>
+              <div><strong>Peserta</strong><br><span class="text-muted small">Isi data diri peserta PKD.</span></div>
+            </a>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('materi.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-file-earmark-pdf"></i></div>
+              <div><strong>Materi</strong><br><span class="text-muted small">Akses materi pelatihan, tayangkan langsung.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('about.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-info-circle"></i></div>
+              <div><strong>Tentang Kami</strong><br><span class="text-muted small">Informasi seputar PKD GP Ansor Bantul.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('informasi.html')" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-newspaper"></i></div>
+              <div><strong>Informasi</strong><br><span class="text-muted small">Flyer, galeri, video & timeline PKD.</span></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
+            <a href="verifikasi.html" class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card text-decoration-none text-dark" role="button">
+              <div class="feature-icon mb-3"><i class="bi bi-qr-code-scan"></i></div>
+              <div><strong>Verifikasi Sertifikat</strong><br><span class="text-muted small">Scan QR untuk cek keaslian sertifikat.</span></div>
+            </a>
+          </div>
+        </div>
+        <!-- Login Prompt (jika mode login aktif) -->
+        <div id="loginPrompt">
+          <h5><i class="bi bi-shield-lock"></i> Akses Terbatas</h5>
+          <p>Anda harus login untuk mengakses menu.</p>
+          <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='login.html'">Login</button>
+        </div>
+      </div>
+      <div class="col-lg-6 text-center">
+        <img src="LOGO ANSOR.webp" alt="Logo Ansor" class="content-logo mt-4 mt-lg-0">
+        <div class="mt-3 text-muted">"Berdaya, Berkhidmat, Berkemajuan"</div>
+      </div>
+    </div>
+    <hr class="my-5">
+  </section>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container">
+  <div class="d-flex justify-content-center align-items-center gap-2">
+    <i class="bi bi-c-circle"></i>
+    <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul. Semua Hak Dilindungi</span>
+  </div>
+</footer>
+
+<!-- ==================== FAQ PANEL ==================== -->
+<div>
+  <button class="chatbot-button" id="chatbotToggleBtn" title="FAQ - Pusat Bantuan">
+    <i class="bi bi-question-circle-fill"></i>
+  </button>
+  <div class="chatbot-panel" id="chatbotPanel">
+    <div class="chatbot-header">
+      <span><i class="bi bi-question-circle me-2"></i>FAQ - Pusat Bantuan</span>
+      <button id="chatbotCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="faq-content">
+      <div class="faq-item">
+        <div class="fw-bold">📅 Kapan pretest dilaksanakan?</div>
+        <div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Anda bisa mengaksesnya di menu "Pre‑test" setelah login.</div>
+      </div>
+      <div class="faq-item">
+        <div class="fw-bold">📝 Bagaimana cara mendaftar PKD?</div>
+        <div class="text-muted small">
+          Pendaftaran dilakukan melalui <a href="https://pkd-ansorbantul.github.io/bisa/peserta.html" target="_blank">Menu Peserta</a>. 
+          Isi data diri dan tunggu konfirmasi, atau bisa menghubungi admin.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="fw-bold">📚 Materi apa saja yang tersedia?</div>
+        <div class="text-muted small">Materi pelatihan meliputi kepemimpinan, keorganisasian, dan wawasan kebangsaan. Akses di menu "Materi".</div>
+      </div>
+
+      <!-- Kontak Admin via WhatsApp -->
+      <div class="faq-item" id="waContactItem"></div>
+
+      <div class="faq-item">
+        <div class="fw-bold">📍 Alamat sekretariat?</div>
+        <div class="text-muted small">Jl. Imogiri Timur KM 10, Bantul.</div>
+      </div>
+      <div class="faq-item">
+        <div class="fw-bold">🔐 Bagaimana cara login?</div>
+        <div class="text-muted small">Klik tombol "Login" di pojok kanan atas, gunakan username dan password yang telah diberikan panitia.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BOOTSTRAP JS ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- panggil api.js -->
+<script src="api.js"></script>
+
+<script>
+  // =====================================================
+  //   STATE DARI PKD
+  // =====================================================
+  // userRole, userData, dll. sudah di-load oleh api.js
+
+  let realtimeEnabled = false;
+  let requireLogin = false;
+
+  // =====================================================
+  //   FUNGSI NAVIGASI DENGAN MODE LOGIN
+  // =====================================================
+  function navigateTo(url) {
+    if (requireLogin && !PKD.getUserRole()) {
+      // Mode login aktif & belum login → alihkan ke login
+      window.location.href = `login.html?redirect=${encodeURIComponent(url)}`;
+    } else {
+      window.location.href = url;
+    }
+  }
+
+  // =====================================================
+  //   TOTAL PESERTA REALTIME
+  // =====================================================
+  async function updateTotalPeserta() {
+    if (!realtimeEnabled) return;
+    try {
+      const res = await PKD.callApi('getTotalPeserta', {}, 'GET');
+      if (res.success) {
+        const badge = document.getElementById('totalPesertaBadge');
+        badge.classList.remove('d-none');
+        badge.innerHTML = `<i class="bi bi-people-fill me-1"></i> Total Kader: ${res.total}`;
+      }
+    } catch (e) {
+      console.warn('Gagal mengambil total peserta:', e);
+    }
+  }
+
+  async function loadRealtimeSetting() {
+    try {
+      const res = await PKD.getRealtimeSetting();
+      realtimeEnabled = res.success && res.enabled;
+      if (realtimeEnabled) {
+        updateTotalPeserta();
+        setInterval(updateTotalPeserta, 30000);
+      }
+    } catch (e) {
+      console.warn('Gagal memuat pengaturan realtime:', e);
+    }
+  }
+
+  // =====================================================
+  //   MODE LOGIN CHECK
+  // =====================================================
+  async function checkLoginMode() {
+    try {
+      const res = await PKD.getLoginMode();
+      requireLogin = res.success ? res.enabled : false;
+
+      if (requireLogin && !PKD.getUserRole()) {
+        document.getElementById('menuGrid').style.display = 'none';
+        document.getElementById('loginPrompt').style.display = 'block';
+      } else {
+        document.getElementById('menuGrid').style.display = '';
+        document.getElementById('loginPrompt').style.display = 'none';
+      }
+    } catch (e) {
+      console.warn('Gagal memeriksa mode login', e);
+    }
+  }
+
+  // =====================================================
+  //   KONTAK WHATSAPP DI FAQ
+  // =====================================================
+  function updateWAContact() {
+    const waItem = document.getElementById('waContactItem');
+    if (!waItem) return;
+
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    const correctAnswer = num1 + num2;
+    waItem.dataset.correctAnswer = correctAnswer;
+
+    waItem.innerHTML = `
+      <div class="fw-bold mb-2">📞 Kontak Admin via WhatsApp</div>
+      <div class="text-muted small mb-2">Isi data di bawah, pesan akan langsung terkirim ke admin.</div>
+      <div class="mb-2">
+        <input type="text" class="form-control form-control-sm" id="waName" placeholder="Nama Anda" maxlength="100">
+      </div>
+      <div class="mb-2">
+        <textarea class="form-control form-control-sm" id="waMessage" rows="2" placeholder="Permasalahan / pesan" maxlength="500"></textarea>
+      </div>
+      <div class="mb-2">
+        <label class="form-label small">Verifikasi: Berapa ${num1} + ${num2}?</label>
+        <input type="number" class="form-control form-control-sm" id="waCaptcha" placeholder="Jawaban">
+      </div>
+      <button class="btn btn-success btn-sm w-100" id="waSendBtn">
+        <i class="bi bi-whatsapp"></i> Kirim ke WhatsApp
+      </button>
+    `;
+
+    document.getElementById('waSendBtn')?.addEventListener('click', function() {
+      const name = document.getElementById('waName').value.trim();
+      const message = document.getElementById('waMessage').value.trim();
+      const captcha = document.getElementById('waCaptcha').value.trim();
+
+      if (name === '' || message === '' || captcha === '') {
+        alert('Mohon isi semua field, termasuk verifikasi.');
+        return;
+      }
+
+      if (parseInt(captcha) !== parseInt(waItem.dataset.correctAnswer)) {
+        alert('Jawaban verifikasi salah. Silakan coba lagi.');
+        return;
+      }
+
+      const now = new Date();
+      const waktu = now.toLocaleString('id-ID', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+
+      const phoneNumber = '6283866675521';
+      const pesanFormatted = 
+        `*Pesan dari Halaman FAQ PKD GP Ansor Kabupaten Bantul*%0A%0A` +
+        `*Nama:* ${encodeURIComponent(name)}%0A` +
+        `*Waktu Kirim:* ${encodeURIComponent(waktu)}%0A` +
+        `*Pesan:*%0A${encodeURIComponent(message)}%0A%0A` +
+        `_Dikirim melalui fitur kontak WhatsApp di website PKD._`;
+
+      const waUrl = `https://wa.me/${phoneNumber}?text=${pesanFormatted}`;
+      window.open(waUrl, '_blank');
+    });
+  }
+
+  // =====================================================
+  //   FAQ PANEL TOGGLE
+  // =====================================================
+  (function() {
+    const toggleBtn = document.getElementById('chatbotToggleBtn');
+    const panel = document.getElementById('chatbotPanel');
+    const closeBtn = document.getElementById('chatbotCloseBtn');
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        panel.classList.toggle('show');
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        panel.classList.remove('show');
+      });
+    }
+
+    document.addEventListener('click', function(e) {
+      if (panel && toggleBtn && !panel.contains(e.target) && !toggleBtn.contains(e.target) && panel.classList.contains('show')) {
+        panel.classList.remove('show');
+      }
+    });
+  })();
+
+  // =====================================================
+  //   INISIALISASI
+  // =====================================================
+  window.onload = function() {
+    // PKD.loadAuthState() sudah dipanggil oleh api.js saat DOMContentLoaded,
+    // sehingga userRole dan userData sudah terisi.
+    // Tetap panggil updateWAContact (selalu tampil).
+    updateWAContact();
+    loadRealtimeSetting();
+    checkLoginMode();
+  };
+
+  // Tutup navbar saat klik di luar
+  document.addEventListener('click', function(event) {
+    const navbar = document.getElementById('navbarMain');
+    const toggler = document.querySelector('.navbar-toggler');
+    if (!navbar || !toggler) return;
+    const isClickInside = navbar.contains(event.target) || toggler.contains(event.target);
+    if (!isClickInside && navbar.classList.contains('show')) {
+      const bsCollapse = bootstrap.Collapse.getInstance(navbar);
+      if (bsCollapse) bsCollapse.hide();
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Verifikasi Sertifikat - PKD GP Ansor Bantul</title>
+
+  <!-- Favicon & Font Modern -->
+  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Html5-Qrcode untuk scan QR -->
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .navbar {
+      background: rgba(255,255,255,0.8) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(203,213,225,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #0f172a !important;
+    }
+    .navbar-brand img {
+      height: 40px;
+      width: auto;
+      margin-right: 10px;
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0a3d62;
+    }
+    .brand-sub {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #6c757d;
+      display: block;
+      margin-top: 2px;
+    }
+    .container-card {
+      max-width: 900px;
+      background: white;
+      border-radius: 32px;
+      padding: 2rem;
+      margin: 30px auto;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+      border: 1px solid rgba(226,232,240,0.6);
+      flex: 1;
+    }
+    .section-title {
+      font-weight: 650;
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      color: #0f172a;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+    }
+    #qr-reader {
+      width: 100%;
+      border: 2px dashed #cbd5e1;
+      border-radius: 24px;
+      padding: 16px;
+      background: #f1f5f9;
+    }
+    #qr-reader video {
+      border-radius: 16px;
+    }
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+      margin-top: auto;
+    }
+    .btn-rounded {
+      border-radius: 9999px;
+      padding: 0.6rem 2rem;
+      font-weight: 600;
+    }
+    .container-card {
+      animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #loadingSpinner {
+      display: none;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 2rem;
+      height: 2rem;
+      border: 3px solid rgba(37,99,235,0.2);
+      border-radius: 50%;
+      border-top-color: #2563eb;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .verification-result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #2563eb;
+    }
+    .verification-valid {
+      border-left-color: #28a745;
+      background-color: #d4edda;
+    }
+    .verification-invalid {
+      border-left-color: #dc3545;
+      background-color: #f8d7da;
+    }
+    .signature-img {
+      max-height: 80px;
+      max-width: 200px;
+      object-fit: contain;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: white;
+    }
+    .badge-status {
+      font-size: 1.1rem;
+      padding: 8px 24px;
+      border-radius: 50px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar sederhana -->
+<nav class="navbar navbar-expand navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="index.html">
+      <img src="LOGO ANSOR.webp" alt="GP Ansor">
+      <span>
+        <span class="brand-title">PKD GP Ansor</span>
+        <span class="brand-sub">Kabupaten Bantul</span>
+      </span>
+    </a>
+    <div class="ms-auto">
+      <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
+        <i class="bi bi-house-door me-1"></i>Beranda
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Konten Utama -->
+<div class="container container-card">
+  <h2 class="section-title">
+    <i class="bi bi-qr-code-scan me-2"></i>Verifikasi Keaslian Sertifikat
+  </h2>
+
+  <!-- Input manual nomor sertifikat -->
+  <div class="mb-4">
+    <label class="form-label fw-semibold">Masukkan Nomor Sertifikat</label>
+    <div class="input-group">
+      <input type="text" class="form-control form-control-lg" id="certNumberInput" placeholder="Contoh: 001/PC-XI/SR-01.PKD/I/2026">
+      <button class="btn btn-primary btn-lg" type="button" id="verifyByNumberBtn">
+        <i class="bi bi-search"></i> Cek
+      </button>
+    </div>
+  </div>
+
+  <div class="text-center my-4 text-muted fw-semibold">— atau —</div>
+
+  <!-- Area scan QR -->
+  <div class="mb-4">
+    <label class="form-label fw-semibold">Scan QR Code pada Sertifikat</label>
+    <div id="qr-reader"></div>
+    <div id="qr-reader-results" class="mt-2 small text-muted"></div>
+  </div>
+
+  <!-- Indikator proses -->
+  <div id="loadingSpinner" class="text-center my-3">
+    <div class="loading-spinner" role="status">
+      <span class="visually-hidden">Memverifikasi...</span>
+    </div>
+    <p class="mt-2">Memverifikasi sertifikat, harap tunggu...</p>
+  </div>
+
+  <!-- Hasil verifikasi -->
+  <div id="verifyResult" class="mt-4" style="display: none;"></div>
+
+  <div class="text-center mt-3">
+    <a href="index.html" class="btn btn-outline-secondary rounded-pill px-5">
+      <i class="bi bi-arrow-left me-1"></i>Kembali
+    </a>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer-modern">
+  <div class="container">
+    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- api.js -->
+<script src="api.js"></script>
+
+<script>
+  // =====================================================
+  //   FUNGSI BANTU
+  // =====================================================
+  function escapeHtmlLocal(unsafe) {
+    if (typeof PKD !== 'undefined' && PKD.escapeHtml) {
+      return PKD.escapeHtml(unsafe);
+    }
+    // Fallback jika PKD tidak tersedia
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // Cache hasil verifikasi
+  function cacheResult(nomor, data) {
+    try {
+      localStorage.setItem('verify_' + nomor, JSON.stringify(data));
+    } catch (e) {
+      // Ignore cache error
+    }
+  }
+
+  function getCachedResult(nomor) {
+    try {
+      const cached = localStorage.getItem('verify_' + nomor);
+      if (cached) {
+        const data = JSON.parse(cached);
+        // Cache berlaku 1 jam
+        if (data._timestamp && (Date.now() - data._timestamp < 3600000)) {
+          return data;
+        }
+      }
+    } catch (e) {
+      // Ignore cache error
+    }
+    return null;
+  }
+
+  // =====================================================
+  //   VERIFIKASI SERTIFIKAT
+  // =====================================================
+  async function verifyCertificate(nomor) {
+    const resultDiv = document.getElementById('verifyResult');
+    const spinner = document.getElementById('loadingSpinner');
+    resultDiv.style.display = 'none';
+    spinner.style.display = 'block';
+
+    const cleanedNomor = nomor ? nomor.toString().trim().replace(/\s+/g, ' ') : '';
+    if (!cleanedNomor) {
+      spinner.style.display = 'none';
+      showResult('<div class="alert alert-danger mb-0">Masukkan nomor sertifikat terlebih dahulu.</div>', false);
+      return;
+    }
+
+    // Cek cache
+    const cached = getCachedResult(cleanedNomor);
+    if (cached) {
+      spinner.style.display = 'none';
+      renderVerificationResult(cached);
+      return;
+    }
+
+    try {
+      // Cek apakah PKD tersedia
+      if (typeof PKD === 'undefined' || typeof PKD.verifyCertificate !== 'function') {
+        spinner.style.display = 'none';
+        showResult('<div class="alert alert-danger mb-0">Sistem tidak tersedia. Pastikan API sudah dimuat.</div>', false);
+        return;
+      }
+
+      const res = await PKD.verifyCertificate(cleanedNomor);
+      spinner.style.display = 'none';
+      if (res.success && res.data) {
+        const dataWithTimestamp = { ...res.data, _timestamp: Date.now() };
+        cacheResult(cleanedNomor, dataWithTimestamp);
+        renderVerificationResult(res.data);
+      } else {
+        showResult(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor "${escapeHtmlLocal(cleanedNomor)}" tidak ditemukan.</div>`, false);
+      }
+    } catch (e) {
+      spinner.style.display = 'none';
+      showResult(`<div class="alert alert-danger mb-0">Gagal memverifikasi: ${escapeHtmlLocal(e.message)}</div>`, false);
+    }
+  }
+
+  function renderVerificationResult(data) {
+    // Siapkan data tanda tangan
+    const ttdKetuaPC = data.ttd_ketua_pc || '';
+    const ttdSekretaris = data.ttd_sekretaris || '';
+    const ttdInstruktur = data.ttd_instruktur || '';
+
+    // Jika data tidak memiliki tanda tangan, tampilkan pesan
+    const hasSignatures = ttdKetuaPC || ttdSekretaris || ttdInstruktur;
+
+    const html = `
+      <div class="verification-result verification-valid">
+        <div class="text-center mb-3">
+          <span class="badge-status bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>Sertifikat VALID</span>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Nama:</strong> ${escapeHtmlLocal(data.nama_peserta || '-')}</p>
+            <p class="mb-1"><strong>Nomor Sertifikat:</strong> ${escapeHtmlLocal(data.nomor_sertifikat || '-')}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Lokasi PKD:</strong> ${escapeHtmlLocal(data.lokasi || 'Kabupaten Bantul')}</p>
+            <p class="mb-1"><strong>Tanggal Terbit:</strong> ${escapeHtmlLocal(data.createdAt || '-')}</p>
+          </div>
+        </div>
+
+        ${hasSignatures ? `
+        <hr>
+        <h6 class="text-center fw-bold mb-3">Tanda Tangan Digital</h6>
+        <div class="row g-3 text-center">
+          <div class="col-md-4">
+            <p class="mb-1 fw-bold">Ketua PC</p>
+            ${ttdKetuaPC ? `<img src="https://drive.google.com/thumbnail?id=${ttdKetuaPC}&sz=w300" class="signature-img" alt="Tanda tangan Ketua PC">` : '<p class="text-muted">Belum tersedia</p>'}
+          </div>
+          <div class="col-md-4">
+            <p class="mb-1 fw-bold">Sekretaris</p>
+            ${ttdSekretaris ? `<img src="https://drive.google.com/thumbnail?id=${ttdSekretaris}&sz=w300" class="signature-img" alt="Tanda tangan Sekretaris">` : '<p class="text-muted">Belum tersedia</p>'}
+          </div>
+          <div class="col-md-4">
+            <p class="mb-1 fw-bold">Instruktur</p>
+            ${ttdInstruktur ? `<img src="https://drive.google.com/thumbnail?id=${ttdInstruktur}&sz=w300" class="signature-img" alt="Tanda tangan Instruktur">` : '<p class="text-muted">Belum tersedia</p>'}
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="text-center mt-3">
+          ${data.pdf_url ? `<a href="${escapeHtmlLocal(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-4"><i class="bi bi-file-pdf"></i> Lihat Sertifikat</a>` : ''}
+        </div>
+      </div>
+    `;
+    showResult(html, true);
+  }
+
+  function showResult(content, isValid = true) {
+    const resultDiv = document.getElementById('verifyResult');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = content;
+    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // =====================================================
+  //   QR CODE SCANNER
+  // =====================================================
+  let html5QrcodeScanner = null;
+
+  function initQrScanner() {
+    const qrReader = document.getElementById('qr-reader');
+    if (!qrReader) return;
+
+    if (typeof Html5QrcodeScanner === 'undefined') {
+      qrReader.innerHTML = '<div class="alert alert-warning">Gagal memuat library QR. Silakan refresh atau gunakan input manual.</div>';
+      return;
+    }
+
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.clear();
+    }
+
+    html5QrcodeScanner = new Html5QrcodeScanner(
+      "qr-reader",
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      },
+      false
+    );
+
+    html5QrcodeScanner.render(onScanSuccess, onScanError);
+  }
+
+  function onScanSuccess(decodedText) {
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.clear();
+    }
+
+    let nomor = decodedText.trim();
+
+    // Coba ekstrak nomor dari berbagai format
+    // Format: "Sertifikat No: 001/PC-XI/SR-01.PKD/I/2026 - ULINNUHA"
+    const prefix = "Sertifikat No: ";
+    if (nomor.startsWith(prefix)) {
+      const afterPrefix = nomor.substring(prefix.length);
+      const dashIndex = afterPrefix.indexOf(" - ");
+      if (dashIndex !== -1) {
+        nomor = afterPrefix.substring(0, dashIndex).trim();
+      } else {
+        nomor = afterPrefix.trim();
+      }
+    } 
+    // Format: URL dengan parameter ?nomor=...
+    else if (nomor.includes('?nomor=')) {
+      try {
+        const url = new URL(nomor);
+        const paramNomor = url.searchParams.get('nomor');
+        if (paramNomor) nomor = paramNomor;
+      } catch (e) {
+        // Bukan URL valid, gunakan teks asli
+      }
+    }
+    // Format: JSON
+    else if (nomor.startsWith('{') && nomor.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(nomor);
+        if (parsed.nomor) nomor = parsed.nomor;
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    // Isi input dengan nomor
+    const input = document.getElementById('certNumberInput');
+    if (input) input.value = nomor;
+
+    // Jalankan verifikasi
+    verifyCertificate(nomor);
+  }
+
+  function onScanError(errorMessage) {
+    // Abaikan, kamera terus mencari
+    console.debug('QR Scan error:', errorMessage);
+  }
+
+  // =====================================================
+  //   AMBIL PARAMETER DARI URL
+  // =====================================================
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  // =====================================================
+  //   INITIALIZATION
+  // =====================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Event listener untuk tombol verifikasi manual
+    const verifyBtn = document.getElementById('verifyByNumberBtn');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', function() {
+        const nomor = document.getElementById('certNumberInput').value;
+        verifyCertificate(nomor);
+      });
+    }
+
+    // Event listener untuk input (tekan Enter)
+    const input = document.getElementById('certNumberInput');
+    if (input) {
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          const verifyBtn = document.getElementById('verifyByNumberBtn');
+          if (verifyBtn) verifyBtn.click();
+        }
+      });
+    }
+
+    // Cek parameter URL
+    const nomorFromUrl = getQueryParam('nomor');
+    if (nomorFromUrl) {
+      const input = document.getElementById('certNumberInput');
+      if (input) input.value = nomorFromUrl;
+      // Verifikasi setelah halaman siap
+      setTimeout(() => {
+        verifyCertificate(nomorFromUrl);
+      }, 500);
+    }
+
+    // Inisialisasi QR scanner setelah halaman siap
+    setTimeout(initQrScanner, 300);
+  });
+
+  // Bersihkan scanner saat halaman ditutup
+  window.addEventListener('beforeunload', function() {
+    if (html5QrcodeScanner) {
+      try {
+        html5QrcodeScanner.clear();
+      } catch (e) {
+        // Ignore
+      }
+    }
+  });
+
+  // Handle resize untuk scanner
+  window.addEventListener('resize', function() {
+    // Re-initialize scanner jika diperlukan
+  });
+</script>
+</body>
+</html>
