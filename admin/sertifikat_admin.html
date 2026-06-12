@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Sertifikat Admin</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- QR Code & Barcode -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
+    .nav-pills .nav-link i { font-size: 1.1rem; }
+    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
+    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; transition: all 0.3s ease; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+
+    /* Sertifikat 2 halaman */
+    .certificate-container { width: 1123px; height: 794px; background: white; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; margin: 0 auto 30px; }
+    .certificate-border { width: 100%; height: 100%; position: relative; padding: 35px; }
+    .guilloche-border { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 20px solid transparent; border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cdefs%3E%3Cpattern id='gold-pattern' patternUnits='userSpaceOnUse' width='20' height='20'%3E%3Cpath d='M0 0 L20 20 M20 0 L0 20' stroke='%23d4af37' stroke-width='0.6' opacity='0.5' fill='none'/%3E%3Ccircle cx='10' cy='10' r='2.5' fill='%23d4af37' opacity='0.7'/%3E%3Crect width='20' height='20' fill='none' stroke='%23d4af37' stroke-width='0.4' opacity='0.8'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='20' height='20' fill='url(%23gold-pattern)'/%3E%3C/svg%3E") 30 repeat; pointer-events: none; }
+    .inner-border { position: absolute; top: 22px; left: 22px; right: 22px; bottom: 22px; border: 2px solid #d4af37; box-shadow: 0 0 8px #d4af37, inset 0 0 5px rgba(212,175,55,0.3); pointer-events: none; }
+    .certificate-inner { width: 100%; height: 100%; padding: 25px 45px; position: relative; }
+    .guilloche-pattern { position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.05; background-image: repeating-linear-gradient(45deg, #1e3a8a 25%, transparent 25%, transparent 75%, #1e3a8a 75%, #1e3a8a); background-size: 20px 20px; pointer-events: none; }
+    .corner-decoration { position: absolute; width: 80px; height: 80px; z-index: 10; border-color: #d4af37; }
+    .corner-tl { top: 28px; left: 28px; border-left: 2px solid #d4af37; border-top: 2px solid #d4af37; border-radius: 0 0 30px 0; }
+    .corner-tr { top: 28px; right: 28px; border-right: 2px solid #d4af37; border-top: 2px solid #d4af37; border-radius: 0 0 0 30px; }
+    .corner-bl { bottom: 28px; left: 28px; border-left: 2px solid #d4af37; border-bottom: 2px solid #d4af37; border-radius: 0 30px 0 0; }
+    .corner-br { bottom: 28px; right: 28px; border-right: 2px solid #d4af37; border-bottom: 2px solid #d4af37; border-radius: 30px 0 0 0; }
+    .photo-box { width: 105px; height: 140px; border: 1px solid #ccc; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+    .cert-preview-wrapper { background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; }
+
+    @media (max-width: 1200px) { .certificate-container { width: 100%; height: auto; aspect-ratio: 1123/794; } }
+    @media print { .navbar, .sidebar-sticky, .container-card { box-shadow: none !important; } }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../dashboard_admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA ==================== -->
+<div class="container container-card">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2">
+      <div class="sidebar-sticky">
+        <div class="bg-light p-3 rounded-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Sertifikat</span></h6>
+            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar">
+              <i class="bi bi-arrow-left-right"></i>
+            </button>
+          </div>
+          <div class="nav flex-column nav-pills" id="sertifikatTabs" role="tablist">
+            <button class="nav-link active" id="preview-tab" data-bs-toggle="pill" data-bs-target="#previewPanel"><i class="bi bi-file-earmark-text me-2"></i><span>Preview & Generate</span></button>
+            <button class="nav-link" id="templates-tab" data-bs-toggle="pill" data-bs-target="#templatePanel"><i class="bi bi-file-earmark-text me-2"></i><span>Template</span></button>
+            <button class="nav-link" id="presets-tab" data-bs-toggle="pill" data-bs-target="#presetPanel"><i class="bi bi-layers me-2"></i><span>Preset</span></button>
+            <button class="nav-link" id="upload-tab" data-bs-toggle="pill" data-bs-target="#uploadPanel"><i class="bi bi-cloud-upload me-2"></i><span>Upload Manual</span></button>
+            <button class="nav-link" id="verifikasi-tab" data-bs-toggle="pill" data-bs-target="#verifikasiPanel"><i class="bi bi-shield-check me-2"></i><span>Verifikasi</span></button>
+            <button class="nav-link" id="ttd-tab" data-bs-toggle="pill" data-bs-target="#ttdPanel"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan Digital</span></button>
+          </div>
+          <hr class="my-2">
+          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konten kanan -->
+    <div class="col-md-9 col-lg-10">
+      <div class="bg-white p-4 rounded-4 shadow-sm">
+        <div class="tab-content" id="sertifikatTabContent">
+          <div class="tab-pane fade show active" id="previewPanel" role="tabpanel"><div id="previewContainer">Memuat preview...</div></div>
+          <div class="tab-pane fade" id="templatePanel" role="tabpanel"><div id="templateContainer">Memuat template...</div></div>
+          <div class="tab-pane fade" id="presetPanel" role="tabpanel"><div id="presetContainer">Memuat preset...</div></div>
+          <div class="tab-pane fade" id="uploadPanel" role="tabpanel"><div id="uploadContainer">Memuat upload...</div></div>
+          <div class="tab-pane fade" id="verifikasiPanel" role="tabpanel"><div id="verifikasiContainer">Memuat verifikasi...</div></div>
+          <div class="tab-pane fade" id="ttdPanel" role="tabpanel"><div id="ttdContainer">Memuat tanda tangan digital...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container text-center py-3 border-top mt-4">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL TEMPLATE ==================== -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="templateModalLabel">Tambah/Edit Template Sertifikat</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="templateId"><div class="mb-3"><label class="form-label">Nama Template</label><input type="text" class="form-control" id="templateNama" required></div><div class="mb-3"><label class="form-label">ID Google Docs</label><input type="text" class="form-control" id="templateDocId" required><div class="form-text">Ambil dari URL dokumen: https://docs.google.com/document/d/XXXXXX/edit</div></div><div class="mb-3"><label class="form-label">Konfigurasi (JSON) opsional</label><textarea class="form-control" id="templateConfig" rows="3">{"placeholder": "value"}</textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" id="simpanTemplateBtn">Simpan</button></div></div></div>
+</div>
+
+<!-- ==================== MODAL PRESET ==================== -->
+<div class="modal fade" id="presetModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-success text-white"><h5 class="modal-title" id="presetModalLabel">Tambah/Edit Preset</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="presetId"><div class="mb-3"><label class="form-label">Nama Preset</label><input type="text" class="form-control" id="presetNama" required></div><div class="mb-3"><label class="form-label">Konfigurasi (JSON)</label><textarea class="form-control" id="presetConfig" rows="6" placeholder='{"tempat":"MTs N 8 Bantul","tanggal":"14-15 Februari 2026","kapanewon":"Dlingo","ketua_pc":"Ahmad Sidik","sekretaris":"Fatolani","instruktur_umum":"Cahyo Galih","ttd_ketua_pc":"","ttd_sekretaris":"","ttd_instruktur":""}'></textarea><div class="form-text">Gunakan format JSON.</div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-success" id="simpanPresetBtn">Simpan</button></div></div></div>
+</div>
+
+<!-- ==================== MODAL UPLOAD MANUAL ==================== -->
+<div class="modal fade" id="uploadManualModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white"><h5 class="modal-title">Upload Sertifikat Manual</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="uploadPesertaId"><div class="mb-3"><label class="form-label">Nama Peserta</label><input type="text" class="form-control" id="uploadPesertaNama" readonly></div><div class="mb-3"><label class="form-label">Nomor Sertifikat</label><input type="text" class="form-control" id="uploadNomorSertifikat" placeholder="Contoh: 001/PC-XI/SR-01.PKD/I/2026" required></div><div class="mb-3"><label class="form-label">File PDF Sertifikat</label><input type="file" class="form-control" id="uploadPdfFile" accept=".pdf" required><small class="text-muted">Maksimal 5MB</small></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" id="submitUploadBtn">Upload</button></div></div></div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+
+<script>
+  window.togglePasswordVisibility = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
+
+  // =====================================================
+  //   GLOBAL VARIABLES
+  // =====================================================
+  let allPeserta = [];
+  let allTemplates = [];
+  let allPresets = [];
+  let uploadedCerts = [];
+  let materiList = [];
+
+  // =====================================================
+  //   RENDER SKELETON
+  // =====================================================
+  function renderSkeleton(rows = 4, cols = 5) {
+    let h = '<div class="skeleton-table p-3">';
+    for (let r = 0; r < rows; r++) {
+      h += '<div class="d-flex gap-2 mb-3">';
+      for (let c = 0; c < cols; c++) h += '<div class="skeleton-loader" style="flex:1; height:1.2em;"></div>';
+      h += '</div>';
+    }
+    return h + '</div>';
+  }
+
+  // =====================================================
+  //   LOAD DATA
+  // =====================================================
+  async function loadAllData() {
+    const promises = [
+      PKD.getPesertaList().then(d => { allPeserta = d; }),
+      PKD.getCertificateTemplates().then(d => { allTemplates = d; }),
+      PKD.getCertPresets().then(d => { allPresets = d; }),
+      PKD.getUploadedCertificates().then(d => { uploadedCerts = d; })
+    ];
+    await Promise.all(promises);
+  }
+
+  // =====================================================
+  //   TAB PREVIEW & GENERATE
+  // =====================================================
+  async function loadPreviewTab() {
+    const container = document.getElementById('previewContainer');
+    container.innerHTML = renderSkeleton(3, 4);
+    await loadAllData();
+
+    let html = `
+      <div class="preview-controls d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
+        <button class="btn btn-sm btn-outline-secondary" id="generateFromCsvBtn"><i class="bi bi-file-spreadsheet"></i> Generate dari CSV</button>
+        <button class="btn btn-sm btn-success" id="refreshPreviewData"><i class="bi bi-arrow-repeat"></i> Refresh Data</button>
+      </div>
+      <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title fw-bold"><i class="bi bi-gear-wide me-2"></i>Generate Sertifikat untuk Peserta</h5>
+          <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">Pilih Template</label>
+              <select class="form-select" id="templateSelect">
+                <option value="">-- Pilih --</option>
+                ${allTemplates.map(t => `<option value="${t.id}">${PKD.escapeHtml(t.nama_template)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="col-md-3"><label class="form-label">Pilih Preset</label>
+              <select class="form-select" id="presetSelect">
+                <option value="">-- Pilih --</option>
+                ${allPresets.map(p => `<option value="${p.id}">${PKD.escapeHtml(p.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="col-md-2"><label class="form-label">Nomor Awal</label><input type="number" class="form-control" id="startNumber" value="1" min="1"></div>
+            <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100" id="generateBtn"><i class="bi bi-gear-fill me-2"></i>Generate</button></div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Pilih Peserta</label>
+            <input type="text" class="form-control" id="searchPesertaGenerate" placeholder="Cari nama peserta...">
+            <div class="peserta-checkbox-list" id="pesertaCheckboxList" style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 5px;">
+              ${allPeserta.map(p => `
+                <div class="form-check peserta-checkbox-item" data-nama="${(p.nama_lengkap||'').toLowerCase()}">
+                  <input class="form-check-input peserta-checkbox" type="checkbox" value="${p.id}" id="peserta_${p.id}">
+                  <label class="form-check-label" for="peserta_${p.id}">
+                    ${PKD.escapeHtml(p.nama_lengkap)} <small class="text-muted">(${PKD.escapeHtml(p.utusan||'')})</small>
+                  </label>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <div id="generateResult" class="mt-3"></div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+    document.getElementById('searchPesertaGenerate').addEventListener('input', function(e) {
+      const kw = e.target.value.toLowerCase();
+      document.querySelectorAll('.peserta-checkbox-item').forEach(item => {
+        item.style.display = item.dataset.nama.includes(kw) ? '' : 'none';
+      });
+    });
+    document.getElementById('generateBtn').addEventListener('click', generateCertificates);
+    document.getElementById('generateFromCsvBtn').addEventListener('click', generateFromCSV);
+    document.getElementById('refreshPreviewData').addEventListener('click', function() {
+      loadAllData().then(() => loadPreviewTab());
+    });
+  }
+
+  async function generateCertificates() {
+    const templateId = document.getElementById('templateSelect').value;
+    const presetId = document.getElementById('presetSelect').value;
+    const start = parseInt(document.getElementById('startNumber').value) || 1;
+
+    if (!templateId || !presetId) {
+      PKD.showToast('Pilih template dan preset terlebih dahulu!', 'danger');
+      return;
+    }
+
+    const selected = Array.from(document.querySelectorAll('.peserta-checkbox:checked')).map(cb => {
+      return allPeserta.find(p => p.id == cb.value);
+    }).filter(Boolean);
+
+    if (!selected.length) {
+      PKD.showToast('Pilih minimal satu peserta!', 'danger');
+      return;
+    }
+
+    if (!confirm(`Generate ${selected.length} sertifikat?`)) return;
+
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+
+    const customData = {
+      kapanewon: document.getElementById('customKapanewon').value.trim(),
+      tanggal_pelaksanaan: document.getElementById('customTanggal').value.trim(),
+      tempat_pelaksanaan: document.getElementById('customTempat').value.trim(),
+      tanggal_penerbitan: document.getElementById('customTanggalTerbit').value.trim(),
+      ketua_pc_nama: document.getElementById('customKetuaPC').value.trim(),
+      sekretaris_nama: document.getElementById('customSekretaris').value.trim(),
+      instruktur_nama: document.getElementById('customInstruktur').value.trim(),
+      barcode_placeholder: document.getElementById('customBarcode').value.trim()
+    };
+
+    if (presetId) {
+      const preset = allPresets.find(p => p.id == presetId);
+      if (preset) {
+        customData.ketua_pc_ttd = preset.ttd_ketua_pc || '';
+        customData.sekretaris_ttd = preset.ttd_sekretaris || '';
+        customData.instruktur_ttd = preset.ttd_instruktur || '';
+      }
+    }
+
+    try {
+      const res = await PKD.generateCertificates(templateId, presetId, selected, start, customData);
+      let html = '<h6 class="mt-3 fw-bold">Hasil Generate:</h6><ul class="list-group">';
+      res.certificates.forEach(c => {
+        html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>${PKD.escapeHtml(c.nama)} - ${PKD.escapeHtml(c.nomor)}</span>
+                  <a href="${PKD.escapeHtml(c.pdfUrl)}" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-download"></i> Unduh</a>
+                </li>`;
+      });
+      html += '</ul>';
+      document.getElementById('generateResult').innerHTML = html;
+      PKD.showToast('Sertifikat berhasil digenerate!', 'success');
+    } catch (e) {
+      PKD.showToast('Gagal generate: ' + e.message, 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-gear-fill me-2"></i>Generate';
+    }
+  }
+
+  function generateFromCSV() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(ev) {
+        const text = ev.target.result;
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length < 2) {
+          PKD.showToast('CSV minimal memiliki header dan 1 baris data', 'danger');
+          return;
+        }
+        const headers = lines[0].split(',').map(h => h.trim());
+        const data = lines.slice(1).map(l => {
+          const vals = l.split(',').map(v => v.trim());
+          const obj = {};
+          headers.forEach((h, i) => obj[h] = vals[i] || '');
+          return obj;
+        });
+
+        const templateId = prompt('Masukkan ID Template:');
+        const presetId = prompt('Masukkan ID Preset:');
+        if (!templateId || !presetId) return;
+
+        const start = parseInt(prompt('Nomor awal:', '1')) || 1;
+
+        const participants = data.map(row => ({
+          nama_lengkap: row.Nama || row.nama || '',
+          utusan: row.Utusan || row.utusan || '',
+          tempat_tgl_lahir: row.TTL || row.ttl || ''
+        })).filter(p => p.nama_lengkap);
+
+        if (!participants.length) {
+          PKD.showToast('Tidak ada data peserta valid dalam CSV', 'danger');
+          return;
+        }
+
+        if (!confirm(`Generate ${participants.length} sertifikat dari CSV?`)) return;
+
+        try {
+          const res = await PKD.generateCertificates(templateId, presetId, participants, start);
+          let html = '<h6 class="mt-3 fw-bold">Hasil Generate dari CSV:</h6><ul class="list-group">';
+          res.certificates.forEach(c => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span>${PKD.escapeHtml(c.nama)} - ${PKD.escapeHtml(c.nomor)}</span>
+                      <a href="${PKD.escapeHtml(c.pdfUrl)}" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-download"></i> Unduh</a>
+                    </li>`;
+          });
+          html += '</ul>';
+          document.getElementById('generateResult').innerHTML = html;
+          PKD.showToast('Sertifikat dari CSV berhasil digenerate!', 'success');
+        } catch (err) {
+          PKD.showToast('Gagal generate dari CSV: ' + err.message, 'danger');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  // =====================================================
+  //   TAB TEMPLATE (DENGAN PREVIEW SERTIFIKAT 2 HALAMAN)
+  // =====================================================
+  async function loadTemplateTab() {
+    const container = document.getElementById('templateContainer');
+    container.innerHTML = renderSkeleton(3, 4);
+
+    // Ambil data template & preset (dengan fallback)
+    try {
+      allTemplates = await PKD.getCertificateTemplates();
+      allPresets = await PKD.getCertPresets();
+    } catch (e) {
+      console.warn('Gagal load data, menggunakan fallback:', e);
+      // Fallback data untuk demo
+      allTemplates = allTemplates.length ? allTemplates : [
+        { id: 'dummy1', nama_template: 'Template Sertifikat PKD', doc_template_id: 'XXX', config: {} }
+      ];
+      allPresets = allPresets.length ? allPresets : [
+        { 
+          id: 'dummy1', 
+          name: 'Preset Dummy', 
+          kapanewon: 'Dlingo', 
+          tanggal: '14-15 Februari 2026', 
+          lokasi: 'MTs N 8 Bantul',
+          ketua_pc: 'Ahmad Sidik',
+          sekretaris: 'Fatolani',
+          instruktur_umum: 'Cahyo Galih',
+          ttd_ketua_pc: '', // Kosongkan agar QR tidak muncul di demo
+          ttd_sekretaris: '',
+          ttd_instruktur: ''
+        }
+      ];
+    }
+
+    // Inisialisasi materi default
+    materiList = [
+      { nama: "Orientasi Pengkaderan", instruktur: "Nanang Zuhdi Santoso" },
+      { nama: "Ahlussunnah Wal Jama'ah I", instruktur: "Lupa" },
+      { nama: "Ke-Nahdlatul Ulama-an I", instruktur: "Dr. Attobari" },
+      { nama: "Organisasi dan Kepemimpinan", instruktur: "Wahdini" },
+      { nama: "Ke-GP Ansor-an I", instruktur: "Alan" },
+      { nama: "Dalil-dalil Amaliyah dan Tradisi Keagamaan NU", instruktur: "Mustaba" },
+      { nama: "Ke-Indonesia-an dan Ke-Bangsa-an", instruktur: "Tim Banser" },
+      { nama: "Pengenalan Aturan Organisasi GP Ansor", instruktur: "Danil" },
+      { nama: "Literasi Digital", instruktur: "Ulinnuha" },
+      { nama: "Analisis Sosial", instruktur: "Sucipto" },
+      { nama: "Rencana Kerja dan Tindak Lanjut", instruktur: "Cahyo Galih dkk" },
+      { nama: "Pembaitan", instruktur: "Tim Instruktur" }
+    ];
+
+    // Render UI
+    let html = `
+      <div class="d-flex justify-content-between mb-3">
+        <h5 class="fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Template Sertifikat</h5>
+        <button class="btn btn-success btn-sm" id="addTemplateBtn"><i class="bi bi-plus-circle me-1"></i>Tambah</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm table-hover">
+          <thead class="table-light"><tr><th>ID</th><th>Nama Template</th><th>Doc ID</th><th>Config</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${allTemplates.map(t => `
+              <tr>
+                <td>${t.id}</td>
+                <td>${PKD.escapeHtml(t.nama_template)}</td>
+                <td><code>${t.doc_template_id}</code></td>
+                <td><pre class="small">${JSON.stringify(t.config, null, 2)}</pre></td>
+                <td>
+                  <button class="btn btn-sm btn-warning edit-template" data-id="${t.id}"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-danger delete-template" data-id="${t.id}"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="my-4">
+
+      <h5 class="fw-bold mb-3"><i class="bi bi-eye me-2"></i>Preview Template Sertifikat (2 Halaman)</h5>
+      <div class="preview-form-panel mb-4">
+        <div class="row g-3">
+          <div class="col-md-3"><label>Pilih Template</label>
+            <select class="form-select" id="templatePreviewSelect">
+              <option value="">-- Pilih --</option>
+              ${allTemplates.map(t => `<option value="${t.id}">${PKD.escapeHtml(t.nama_template)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="col-md-3"><label>Pilih Preset</label>
+            <select class="form-select" id="presetPreviewSelect">
+              <option value="">-- Pilih --</option>
+              ${allPresets.map(p => `<option value="${p.id}">${PKD.escapeHtml(p.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="col-md-3"><label>Nama Peserta</label><input type="text" class="form-control" id="templatePreviewNama" value="ULINNUHA"></div>
+          <div class="col-md-3 d-flex align-items-end"><button class="btn btn-outline-primary w-100" id="templatePreviewBtn"><i class="bi bi-eye me-2"></i>Preview Template</button></div>
+        </div>
+      </div>
+
+      <div id="templatePreviewResult"></div>
+    `;
+
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+
+    // --- Event listener untuk tombol Add Template, Edit, Delete ---
+    document.getElementById('addTemplateBtn')?.addEventListener('click', () => showTemplateModal());
+    document.querySelectorAll('.edit-template').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const t = allTemplates.find(t => t.id == this.dataset.id);
+        showTemplateModal(t);
+      });
+    });
+    document.querySelectorAll('.delete-template').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Hapus template ini?')) return;
+        await PKD.deleteCertificateTemplate(this.dataset.id);
+        PKD.showToast('Template dihapus', 'success');
+        loadTemplateTab();
+      });
+    });
+
+    // --- Event listener PREVIEW TEMPLATE ---
+    const previewBtn = document.getElementById('templatePreviewBtn');
+    const previewResult = document.getElementById('templatePreviewResult');
+
+    previewBtn.addEventListener('click', function() {
+      const templateId = document.getElementById('templatePreviewSelect').value;
+      const presetId = document.getElementById('presetPreviewSelect').value;
+      const nama = document.getElementById('templatePreviewNama').value.trim() || 'ULINNUHA';
+
+      if (!templateId || !presetId) {
+        PKD.showToast('Pilih template dan preset terlebih dahulu!', 'danger');
+        return;
+      }
+
+      const template = allTemplates.find(t => t.id == templateId);
+      const preset = allPresets.find(p => p.id == presetId);
+
+      if (!template || !preset) {
+        PKD.showToast('Data template atau preset tidak ditemukan.', 'danger');
+        return;
+      }
+
+      // --- Data sertifikat ---
+      const data = {
+        nomor: '001/PC-XI/SR-01.PKD/I/2026',
+        nama: nama,
+        kapanewon: preset.kapanewon || 'Dlingo',
+        ttl: 'Bantul, 3 Agustus 1999',
+        tglPelaksanaan: preset.tanggal || '14-15 Februari 2026',
+        tempat: preset.lokasi || 'MTs N 8 Bantul, D.I.Yogyakarta',
+        tglTerbit: 'Bantul, 16 Februari 2026',
+        utusan: preset.ketua_pc ? `PAC GP ANSOR ${preset.kapanewon?.toUpperCase() || 'DLINGO'}` : 'PAC GP ANSOR DLINGO',
+        ketuaPC: preset.ketua_pc || 'Ahmad Sidik',
+        sekretaris: preset.sekretaris || 'Fatolani',
+        instrukturUmum: preset.instruktur_umum || 'Cahyo Galih'
+      };
+
+      const ttdKetuaPC = preset.ttd_ketua_pc || '';
+      const ttdSekretaris = preset.ttd_sekretaris || '';
+      const ttdInstruktur = preset.ttd_instruktur || '';
+
+      const allSigned = ttdKetuaPC && ttdSekretaris && ttdInstruktur;
+      const showQR = allSigned;
+
+      const barcodeData = JSON.stringify({ nomor: data.nomor, nama: data.nama, kapanewon: data.kapanewon });
+      const barcodeId = 'barcode-' + Date.now();
+
+      const qrData = JSON.stringify({ nomor: data.nomor, ttd_ketua_pc: ttdKetuaPC, ttd_sekretaris: ttdSekretaris, ttd_instruktur: ttdInstruktur });
+      const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=120&ecLevel=L`;
+
+      // --- Render HTML 2 halaman ---
+      const resultHTML = `
+        <div class="cert-preview-wrapper">
+          <!-- HALAMAN DEPAN -->
+          <div class="certificate-container cert-front">
+            <div class="certificate-border">
+              <div class="guilloche-border"></div>
+              <div class="inner-border"></div>
+              <div class="certificate-inner">
+                <div class="guilloche-pattern"></div>
+                <div class="corner-decoration corner-tl"></div>
+                <div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div>
+                <div class="corner-decoration corner-br"></div>
+
+                <div id="${barcodeId}" style="position:absolute; top:15px; left:15px; background:white; padding:4px; border:1px solid #ddd; border-radius:4px; z-index:10;">
+                  <div style="width:120px; height:40px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; font-size:0.6rem; color:#888;">Barcode</div>
+                </div>
+
+                <div class="text-end"><img src="../LOGO ANSOR.webp" style="height:50px;"></div>
+                <h1 class="text-center" style="font-family: 'Playfair Display', serif; font-size:2.5rem;">SERTIFIKAT</h1>
+                <p class="text-center">NO ${data.nomor}</p>
+                <p class="text-center" style="font-size:1.5rem;">${data.nama}</p>
+                <p class="text-center fw-bold">DINYATAKAN LULUS</p>
+                <p class="text-center">dalam PKD PAC GP Ansor Kapanewon <strong>${data.kapanewon}</strong> pada <strong>${data.tglPelaksanaan}</strong> di <strong>${data.tempat}</strong></p>
+                <p class="text-center">${data.tglTerbit}</p>
+
+                <div class="d-flex justify-content-between mt-4">
+                  <div class="text-center" style="flex:1;">
+                    ${ttdKetuaPC ? `<img src="https://drive.google.com/thumbnail?id=${ttdKetuaPC}&sz=w200" style="max-height:60px; object-fit:contain;">` : '<div style="height:60px;"></div>'}
+                    <hr style="width:150px; margin:5px auto;">
+                    <span><strong>${data.ketuaPC}</strong></span><br><small>Mengetahui,<br>Ketua PC GP Ansor Bantul</small>
+                    ${showQR ? `<div style="margin-top:10px;"><img src="${qrUrl}" alt="QR Verifikasi" style="width:80px; height:80px; border-radius:8px; border:1px solid #ddd;"></div>` : ''}
+                  </div>
+
+                  <div class="text-center" style="flex:1;">
+                    ${ttdSekretaris ? `<img src="https://drive.google.com/thumbnail?id=${ttdSekretaris}&sz=w200" style="max-height:60px; object-fit:contain;">` : '<div style="height:60px;"></div>'}
+                    <hr style="width:150px; margin:5px auto;">
+                    <span><strong>${data.sekretaris}</strong></span><br><small>Sekretaris</small>
+                  </div>
+
+                  <div class="text-center" style="flex:1;">
+                    ${ttdInstruktur ? `<img src="https://drive.google.com/thumbnail?id=${ttdInstruktur}&sz=w200" style="max-height:60px; object-fit:contain;">` : '<div style="height:60px;"></div>'}
+                    <hr style="width:150px; margin:5px auto;">
+                    <span><strong>${data.instrukturUmum}</strong></span><br><small>Instruktur PKD</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HALAMAN BELAKANG -->
+          <div class="certificate-container cert-back">
+            <div class="certificate-border">
+              <div class="guilloche-border"></div>
+              <div class="inner-border"></div>
+              <div class="certificate-inner">
+                <div class="guilloche-pattern"></div>
+                <div class="corner-decoration corner-tl"></div>
+                <div class="corner-decoration corner-tr"></div>
+                <div class="corner-decoration corner-bl"></div>
+                <div class="corner-decoration corner-br"></div>
+                <div class="d-flex justify-content-between">
+                  <div class="photo-box">
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;">3×4</div>
+                  </div>
+                  <div class="ms-3">
+                    <h4>${data.nama}</h4>
+                    <p><strong>TTL:</strong> ${data.ttl}<br><strong>Utusan:</strong> ${data.utusan}</p>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <table class="table table-bordered table-sm">
+                    <thead class="table-dark"><tr><th>NO</th><th>MATERI</th><th>INSTRUKTUR</th></tr></thead>
+                    <tbody>
+                      ${materiList.map((item, idx) => `<tr><td>${idx+1}</td><td>${item.nama}</td><td>${item.instruktur}</td></tr>`).join('')}
+                    </tbody>
+                  </table>
+                </div>
+                <p class="text-end mt-2"><strong>Instruktur Umum</strong><br><span>${data.instrukturUmum}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // --- Masukkan hasil ke dalam container ---
+      previewResult.innerHTML = resultHTML;
+      PKD.showToast('✅ Sertifikat berhasil dimuat!', 'success');
+
+      // --- Generate barcode setelah DOM siap ---
+      setTimeout(() => {
+        try {
+          JsBarcode(`#${barcodeId}`, barcodeData, {
+            format: "CODE128",
+            width: 2,
+            height: 40,
+            displayValue: true,
+            fontSize: 8,
+            margin: 5
+          });
+          const placeholder = document.querySelector(`#${barcodeId} > div`);
+          if (placeholder) placeholder.remove();
+        } catch (e) {
+          console.warn('Barcode gagal digenerate:', e);
+        }
+      }, 100);
+    });
+  }
+
+  // =====================================================
+  //   FUNGSI TEMPLATE MODAL
+  // =====================================================
+  function showTemplateModal(template = null) {
+    const isEdit = !!template;
+    document.getElementById('templateModalLabel').innerText = isEdit ? 'Edit Template' : 'Tambah Template';
+    document.getElementById('templateId').value = isEdit ? template.id : '';
+    document.getElementById('templateNama').value = isEdit ? template.nama_template : '';
+    document.getElementById('templateDocId').value = isEdit ? template.doc_template_id : '';
+    document.getElementById('templateConfig').value = isEdit ? JSON.stringify(template.config, null, 2) : '{}';
+    const modal = new bootstrap.Modal(document.getElementById('templateModal'));
+    modal.show();
+    document.getElementById('simpanTemplateBtn').onclick = async () => {
+      const id = document.getElementById('templateId').value;
+      const nama = document.getElementById('templateNama').value.trim();
+      const docId = document.getElementById('templateDocId').value.trim();
+      let config = {};
+      try { config = JSON.parse(document.getElementById('templateConfig').value); } catch(e) { alert('JSON tidak valid'); return; }
+      if (!nama || !docId) { alert('Nama dan ID wajib'); return; }
+      try {
+        if (isEdit) await PKD.updateCertificateTemplate(id, nama, docId, JSON.stringify(config));
+        else await PKD.addCertificateTemplateManual(nama, docId, JSON.stringify(config));
+        PKD.showToast(isEdit ? 'Template diperbarui' : 'Template ditambahkan', 'success');
+        modal.hide();
+        loadTemplateTab();
+      } catch(e) { alert('Gagal: ' + e.message); }
+    };
+  }
+
+  // =====================================================
+  //   TAB LAINNYA (disederhanakan)
+  // =====================================================
+  async function loadPresetTab() {
+    const container = document.getElementById('presetContainer');
+    container.innerHTML = renderSkeleton(3, 4);
+    await loadAllData();
+    let html = `<h5 class="fw-bold"><i class="bi bi-layers me-2"></i>Preset Sertifikat</h5>
+      <button class="btn btn-success btn-sm mb-3" id="addPresetBtn">➕ Tambah</button>
+      <table class="table table-bordered"><thead><tr><th>ID</th><th>Nama</th><th>Kapanewon</th><th>Tanggal</th><th>Lokasi</th><th>Aksi</th></tr></thead><tbody>
+      ${allPresets.map(p => `<tr><td>${p.id}</td><td>${PKD.escapeHtml(p.name)}</td><td>${PKD.escapeHtml(p.kapanewon || '')}</td><td>${PKD.escapeHtml(p.tanggal || '')}</td><td>${PKD.escapeHtml(p.lokasi || '')}</td><td><button class="btn btn-sm btn-warning edit-preset" data-id="${p.id}">✏️</button> <button class="btn btn-sm btn-danger delete-preset" data-id="${p.id}">🗑️</button></td></tr>`).join('')}
+      </tbody></table>`;
+    container.innerHTML = html;
+    document.getElementById('addPresetBtn').addEventListener('click', () => showPresetModal());
+    document.querySelectorAll('.edit-preset').forEach(btn => btn.addEventListener('click', function() { const p = allPresets.find(p => p.id == this.dataset.id); showPresetModal(p); }));
+    document.querySelectorAll('.delete-preset').forEach(btn => btn.addEventListener('click', async function() { if(!confirm('Hapus preset?')) return; await PKD.deleteCertPreset(this.dataset.id); PKD.showToast('Dihapus','success'); loadPresetTab(); }));
+  }
+
+  function showPresetModal(preset = null) {
+    const isEdit = !!preset;
+    document.getElementById('presetModalLabel').innerText = isEdit ? 'Edit Preset' : 'Tambah Preset';
+    document.getElementById('presetId').value = isEdit ? preset.id : '';
+    document.getElementById('presetNama').value = isEdit ? preset.name : '';
+    document.getElementById('presetConfig').value = isEdit ? JSON.stringify(preset, null, 2) : '{"tempat": "", "tanggal": "", "kapanewon": "", "ketua_pc": "", "sekretaris": "", "instruktur_umum": "", "ttd_ketua_pc": "", "ttd_sekretaris": "", "ttd_instruktur": ""}';
+    const modal = new bootstrap.Modal(document.getElementById('presetModal'));
+    modal.show();
+    document.getElementById('simpanPresetBtn').onclick = async () => {
+      const id = document.getElementById('presetId').value;
+      const nama = document.getElementById('presetNama').value.trim();
+      let config = {};
+      try { config = JSON.parse(document.getElementById('presetConfig').value); } catch(e) { alert('JSON tidak valid'); return; }
+      if (!nama) { alert('Nama wajib'); return; }
+      try {
+        if (isEdit) await PKD.updateCertPreset(id, nama, JSON.stringify(config));
+        else await PKD.addCertPreset(nama, JSON.stringify(config));
+        PKD.showToast(isEdit ? 'Preset diperbarui' : 'Preset ditambahkan', 'success');
+        modal.hide();
+        loadPresetTab();
+      } catch(e) { alert('Gagal: ' + e.message); }
+    };
+  }
+
+  async function loadUploadTab() {
+    const container = document.getElementById('uploadContainer');
+    container.innerHTML = renderSkeleton(3, 4);
+    await loadAllData();
+    const status = allPeserta.map(p => ({ ...p, hasCert: uploadedCerts.some(c => c.peserta_id == p.id), certData: uploadedCerts.find(c => c.peserta_id == p.id) }));
+    container.innerHTML = `<h5>📤 Upload Sertifikat Manual</h5>
+      <div class="row"><div class="col-md-6"><div class="card"><div class="card-header bg-warning">Belum Terkirim</div><ul class="list-group list-group-flush">${status.filter(p=>!p.hasCert).map(p => `<li class="list-group-item">${PKD.escapeHtml(p.nama_lengkap)} <button class="btn btn-sm btn-primary btn-upload" data-id="${p.id}">Upload</button></li>`).join('')}</ul></div></div>
+      <div class="col-md-6"><div class="card"><div class="card-header bg-success">Telah Terkirim</div><ul class="list-group list-group-flush">${status.filter(p=>p.hasCert).map(p => `<li class="list-group-item">${PKD.escapeHtml(p.nama_lengkap)} <a href="${p.certData.pdf_url}" target="_blank" class="btn btn-sm btn-outline-success">Lihat</a></li>`).join('')}</ul></div></div></div>`;
+    document.querySelectorAll('.btn-upload').forEach(btn => btn.addEventListener('click', function() {
+      document.getElementById('uploadPesertaId').value = this.dataset.id;
+      document.getElementById('uploadPesertaNama').value = this.dataset.nama;
+      new bootstrap.Modal(document.getElementById('uploadManualModal')).show();
+    }));
+    document.getElementById('submitUploadBtn').onclick = async function() {
+      const pesertaId = document.getElementById('uploadPesertaId').value;
+      const nomor = document.getElementById('uploadNomorSertifikat').value.trim();
+      const file = document.getElementById('uploadPdfFile').files[0];
+      if (!nomor || !file) { alert('Nomor dan file PDF harus diisi'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('File maksimal 5MB'); return; }
+      const base64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result); reader.readAsDataURL(file); });
+      try {
+        const res = await PKD.uploadManualCertificate(pesertaId, nomor, base64);
+        if (res.success) { PKD.showToast('Sertifikat diupload', 'success'); bootstrap.Modal.getInstance(document.getElementById('uploadManualModal')).hide(); loadUploadTab(); }
+        else PKD.showToast('Gagal: ' + res.message, 'danger');
+      } catch (e) { PKD.showToast('Error: ' + e.message, 'danger'); }
+    };
+  }
+
+  function loadVerifikasiTab() {
+    const container = document.getElementById('verifikasiContainer');
+    container.innerHTML = `<h5>Verifikasi Sertifikat</h5><input type="text" class="form-control mb-3" id="nomorSertifikatVerifikasi" placeholder="Nomor sertifikat"><button class="btn btn-primary" id="verifikasiBtn">Periksa</button><div id="verifikasiResult" class="mt-3"></div>`;
+    document.getElementById('verifikasiBtn').addEventListener('click', async () => {
+      const nomor = document.getElementById('nomorSertifikatVerifikasi').value.trim();
+      if (!nomor) { alert('Masukkan nomor'); return; }
+      try {
+        const res = await PKD.verifyCertificate(nomor);
+        const resultDiv = document.getElementById('verifikasiResult');
+        if (res.success && res.data) {
+          resultDiv.innerHTML = `<div class="alert alert-success">Sertifikat VALID<br>Nama: ${PKD.escapeHtml(res.data.nama_peserta)}<br>Nomor: ${PKD.escapeHtml(res.data.nomor_sertifikat)}</div>`;
+        } else {
+          resultDiv.innerHTML = `<div class="alert alert-danger">Sertifikat tidak ditemukan</div>`;
+        }
+      } catch(e) { resultDiv.innerHTML = `<div class="alert alert-danger">${PKD.escapeHtml(e.message)}</div>`; }
+    });
+  }
+
+  function loadTtdTab() {
+    const container = document.getElementById('ttdContainer');
+    container.innerHTML = `<h5>Tanda Tangan Digital</h5>
+      <div class="row g-4">
+        <div class="col-md-4"><div class="card"><div class="card-body text-center"><i class="bi bi-person-fill fs-1 text-primary"></i><h6>Ketua PC</h6><a href="../sign_ketua_pc.html" target="_blank" class="btn btn-primary btn-sm">Tanda Tangan</a></div></div></div>
+        <div class="col-md-4"><div class="card"><div class="card-body text-center"><i class="bi bi-person-fill fs-1 text-primary"></i><h6>Sekretaris</h6><a href="../sign_sekretaris.html" target="_blank" class="btn btn-primary btn-sm">Tanda Tangan</a></div></div></div>
+        <div class="col-md-4"><div class="card"><div class="card-body text-center"><i class="bi bi-person-fill fs-1 text-primary"></i><h6>Instruktur</h6><a href="../sign_instruktur.html" target="_blank" class="btn btn-primary btn-sm">Tanda Tangan</a></div></div></div>
+      </div>`;
+  }
+
+  // =====================================================
+  //   INISIALISASI
+  // =====================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    if (PKD.getUserRole() !== 'admin') {
+      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+    } else {
+      loadPreviewTab();
+    }
+
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value;
+      const err = document.getElementById('adminLoginError');
+      if (!u || !p) { err.innerText = 'Username dan password harus diisi'; err.style.display = 'block'; return; }
+      try {
+        const res = await PKD.verifyAdmin(u, p);
+        if (res.success) {
+          PKD.setUserRole('admin'); PKD.setUserData({ nama: u });
+          PKD.persistAuthState(); PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadPreviewTab();
+        } else { err.innerText = res.message || 'Login gagal'; err.style.display = 'block'; }
+      } catch (e) { err.innerText = 'Kesalahan: ' + e.message; err.style.display = 'block'; }
+    });
+
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', e => { e.preventDefault(); PKD.logout(); });
+
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        document.querySelector('.row.g-4').classList.toggle('sidebar-minimized');
+        const icon = this.querySelector('i');
+        icon.classList.toggle('bi-arrow-left-right');
+        icon.classList.toggle('bi-arrow-right-left');
+      });
+    }
+
+    // Lazy load tabs
+    document.getElementById('preview-tab').addEventListener('shown.bs.tab', loadPreviewTab);
+    document.getElementById('templates-tab').addEventListener('shown.bs.tab', loadTemplateTab);
+    document.getElementById('presets-tab').addEventListener('shown.bs.tab', loadPresetTab);
+    document.getElementById('upload-tab').addEventListener('shown.bs.tab', loadUploadTab);
+    document.getElementById('verifikasi-tab').addEventListener('shown.bs.tab', loadVerifikasiTab);
+    document.getElementById('ttd-tab').addEventListener('shown.bs.tab', loadTtdTab);
+  });
+</script>
+</body>
+</html>

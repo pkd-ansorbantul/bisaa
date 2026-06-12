@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Data Absensi Admin</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
+    .nav-pills .nav-link i { font-size: 1.1rem; }
+    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
+    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .signature-thumb { max-width: 80px; max-height: 40px; border-radius: 4px; cursor: pointer; object-fit: contain; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA DUA KOLOM ==================== -->
+<section class="container container-card">
+  <div class="row g-4">
+    <!-- Sidebar kiri -->
+    <div class="col-md-3 col-lg-2">
+      <div class="sidebar-sticky">
+        <div class="bg-light p-3 rounded-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Admin</span></h6>
+            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar">
+              <i class="bi bi-arrow-left-right"></i>
+            </button>
+          </div>
+          <div class="nav flex-column nav-pills">
+            <a class="nav-link" href="skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+            <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+            <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+            <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
+            <a class="nav-link active" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link" href="sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+            <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+            <hr class="my-2">
+            <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konten kanan: Data Absensi -->
+    <div class="col-md-9 col-lg-10">
+      <div class="bg-white p-4 rounded-4 shadow-sm">
+        <h2 class="section-title"><i class="bi bi-table me-2"></i>Data Absensi Peserta</h2>
+        <div id="absensiContainer">Memuat...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container text-center py-3 border-top mt-4">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST NOTIFIKASI ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+
+<script>
+  // Fungsi toggle password (untuk modal login)
+  window.togglePasswordVisibility = function(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) input.type = input.type === 'password' ? 'text' : 'password';
+  };
+
+  // Destructure fungsi dari PKD
+  const { escapeHtml, showToast, getCached, saveCached } = PKD;
+
+  // Fungsi spesifik data absensi
+  async function fetchAbsensiFromServer() {
+    return await PKD.getAbsensiResponses(true);
+  }
+  async function fetchSesiFromServer() {
+    return await PKD.getSesiAbsen(true);
+  }
+
+  function renderSkeletonTable(rows = 5, cols = 5) {
+    let html = '<div class="skeleton-table p-3">';
+    for (let r = 0; r < rows; r++) {
+      html += '<div class="d-flex gap-2 mb-3">';
+      for (let c = 0; c < cols; c++) {
+        html += '<div class="skeleton-loader" style="flex:1; height:1.5rem;"></div>';
+      }
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  function renderAbsensiTable(responses, sesiList, container) {
+    const sesiMap = new Map(sesiList.map(s => [s.id, s.nama]));
+
+    if (!responses.length) {
+      container.innerHTML = '<p class="text-muted">Belum ada data absensi.</p>';
+      return;
+    }
+
+    let html = `
+      <div class="d-flex justify-content-between mb-3">
+        <div class="filter-input w-25">
+          <select class="form-select" id="filterSesi">
+            <option value="">Semua Sesi</option>
+            ${sesiList.map(s => `<option value="${s.id}">${escapeHtml(s.nama)}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-success btn-sm" id="exportAbsensiCSV">📥 Ekspor CSV</button>
+      </div>
+      <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+        <table class="table table-bordered table-sm table-striped">
+          <thead><tr>
+            <th>Waktu</th><th>Nama</th><th>Sesi</th><th>Tanda Tangan</th>
+          </tr></thead>
+          <tbody id="absensiDataBody">
+    `;
+
+    responses.forEach(row => {
+      const sesiNama = sesiMap.get(row.sesiId) || 'Tidak diketahui';
+      const signatureThumb = row.signatureDriveId ? `https://drive.google.com/thumbnail?id=${row.signatureDriveId}&sz=w80` : '';
+      html += `<tr class="data-row" data-sesi="${row.sesiId}">
+        <td>${escapeHtml(row.timestamp || '')}</td>
+        <td class="nama">${escapeHtml(row.nama || '')}</td>
+        <td>${escapeHtml(sesiNama)}</td>
+        <td>${row.signatureDriveId ? `<img src="${signatureThumb}" class="signature-thumb" onclick="window.open('https://drive.google.com/file/d/${row.signatureDriveId}/view')">` : '-'}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+
+    // Filter berdasarkan sesi
+    document.getElementById('filterSesi').addEventListener('change', function(e) {
+      const sesiId = e.target.value;
+      document.querySelectorAll('#absensiDataBody .data-row').forEach(row => {
+        row.style.display = (!sesiId || row.dataset.sesi === sesiId) ? '' : 'none';
+      });
+    });
+
+    // Ekspor CSV
+    document.getElementById('exportAbsensiCSV').addEventListener('click', () => {
+      exportCSV(responses, sesiMap);
+    });
+  }
+
+  function exportCSV(responses, sesiMap) {
+    const headers = ['Timestamp','Nama','Sesi','Tanda Tangan'];
+    const rows = responses.map(r => [
+      r.timestamp,
+      r.nama,
+      sesiMap.get(r.sesiId) || '',
+      r.signatureDriveId ? `https://drive.google.com/file/d/${r.signatureDriveId}/view` : ''
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.map(cell => `"${cell}"`).join(',')).join('\n');
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'data_absensi.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  async function loadDataAbsensi() {
+    const container = document.getElementById('absensiContainer');
+    const cachedResp = getCached('absensiResponses');
+    const cachedSesi = getCached('sesiList');
+
+    if (cachedResp && cachedSesi) {
+      // Tampilkan data cache segera
+      renderAbsensiTable(cachedResp, cachedSesi, container);
+      // Ambil data terbaru di latar belakang
+      Promise.all([fetchAbsensiFromServer(), fetchSesiFromServer()])
+        .then(([newResp, newSesi]) => {
+          if (JSON.stringify(newResp) !== JSON.stringify(cachedResp) ||
+              JSON.stringify(newSesi) !== JSON.stringify(cachedSesi)) {
+            renderAbsensiTable(newResp, newSesi, container);
+            saveCached('absensiResponses', newResp);
+            saveCached('sesiList', newSesi);
+          }
+        })
+        .catch(console.warn);
+    } else {
+      // Tidak ada cache, tampilkan skeleton dan ambil dari server
+      container.innerHTML = renderSkeletonTable(5, 5);
+      try {
+        const [resp, sesi] = await Promise.all([fetchAbsensiFromServer(), fetchSesiFromServer()]);
+        renderAbsensiTable(resp, sesi, container);
+        saveCached('absensiResponses', resp);
+        saveCached('sesiList', sesi);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+  }
+
+  // Inisialisasi
+  document.addEventListener('DOMContentLoaded', () => {
+    // Auth sudah ditangani api.js, tapi jika belum login admin, tampilkan modal
+    if (PKD.getUserRole() !== 'admin') {
+      const loginModal = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+      loginModal.show();
+    } else {
+      loadDataAbsensi();
+    }
+
+    // Tombol login di modal
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const errorDiv = document.getElementById('adminLoginError');
+      if (!username || !password) {
+        errorDiv.innerText = 'Username dan password harus diisi';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      try {
+        const res = await PKD.verifyAdmin(username, password);
+        if (res.success) {
+          PKD.setUserRole('admin');
+          PKD.setUserData({ nama: username });
+          PKD.persistAuthState();
+          PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadDataAbsensi();
+        } else {
+          errorDiv.innerText = res.message || 'Login gagal';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errorDiv.innerText = 'Kesalahan: ' + err.message;
+        errorDiv.style.display = 'block';
+      }
+    });
+
+    // Tombol logout di sidebar
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      PKD.logout();
+    });
+
+    // Toggle sidebar
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleSidebarBtn) {
+      toggleSidebarBtn.addEventListener('click', function() {
+        const row = document.querySelector('.row.g-4');
+        row.classList.toggle('sidebar-minimized');
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('bi-arrow-left-right')) {
+          icon.classList.remove('bi-arrow-left-right');
+          icon.classList.add('bi-arrow-right-left');
+        } else {
+          icon.classList.remove('bi-arrow-right-left');
+          icon.classList.add('bi-arrow-left-right');
+        }
+      });
+    }
+
+    // Tutup navbar saat klik di luar
+    document.addEventListener('click', function(e) {
+      const navbar = document.getElementById('navbarMain');
+      const toggler = document.querySelector('.navbar-toggler');
+      if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
+        bootstrap.Collapse.getInstance(navbar)?.hide();
+      }
+    });
+  });
+</script>
+</body>
+</html>

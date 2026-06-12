@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Skrining Admin</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
+    .nav-pills .nav-link i { font-size: 1.1rem; }
+    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
+    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .crud-table { max-height: 400px; overflow-y: auto; border-radius: 16px; }
+    .table-admin th { background-color: #f8fafc; font-weight: 600; }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .signature-thumb { max-width: 80px; max-height: 40px; border-radius: 4px; cursor: pointer; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA DUA KOLOM ==================== -->
+<section class="container container-card">
+  <div class="row g-4">
+    <!-- Sidebar kiri -->
+    <div class="col-md-3 col-lg-2">
+      <div class="sidebar-sticky">
+        <div class="bg-light p-3 rounded-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Admin</span></h6>
+            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar"><i class="bi bi-arrow-left-right"></i></button>
+          </div>
+          <div class="nav flex-column nav-pills">
+            <a class="nav-link active" href="skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+            <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+            <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+            <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link" href="sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+            <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+            <hr class="my-2">
+            <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konten kanan: Skrining -->
+    <div class="col-md-9 col-lg-10">
+      <div class="bg-white p-4 rounded-4 shadow-sm">
+        <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Manajemen Skrining</h2>
+        <ul class="nav nav-tabs mb-3" id="skriningTab" role="tablist">
+          <li class="nav-item"><button class="nav-link active" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button">📋 Pertanyaan Skrining</button></li>
+          <li class="nav-item"><button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" type="button">📊 Data Skrining</button></li>
+        </ul>
+        <div class="tab-content" id="skriningTabContent">
+          <div class="tab-pane fade show active" id="questions" role="tabpanel"><div id="questionsContainer">Memuat...</div></div>
+          <div class="tab-pane fade" id="data" role="tabpanel"><div id="dataContainer">Memuat...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container text-center py-3 border-top mt-4">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div><div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div><div id="adminLoginError" class="text-danger mt-2 small" style="display:none;"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div></div></div>
+</div>
+
+<!-- ==================== MODAL SKRINING ==================== -->
+<div class="modal fade" id="skriningModal" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="skriningModalLabel">Tambah/Edit Pertanyaan</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="skriningId"><div class="mb-3"><label class="form-label">Teks Pertanyaan</label><textarea class="form-control" id="skriningTeks" rows="2"></textarea></div><div class="mb-3"><label class="form-label">Jenis</label><select class="form-select" id="skriningJenis"><option value="text">Text</option><option value="radio">Radio</option></select></div><div class="mb-3"><label class="form-label">Opsi (pisahkan koma, jika radio)</label><input type="text" class="form-control" id="skriningOpsi"></div><div class="mb-3"><label class="form-label">Urutan</label><input type="number" class="form-control" id="skriningUrutan"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" id="simpanSkriningBtn">Simpan</button></div></div></div>
+</div>
+
+<!-- ==================== MODAL DETAIL ==================== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="detailModalLabel">Detail Skrining</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="detailModalBody"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div></div></div>
+</div>
+
+<!-- ==================== TOAST NOTIFIKASI ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+
+<script>
+  window.togglePasswordVisibility = id => { const el = document.getElementById(id); if(el) el.type = el.type==='password'?'text':'password'; };
+  const { escapeHtml, showToast, getCached, saveCached } = PKD;
+
+  function renderSkeletonTable(rows=5, cols=6) {
+    let h = '<div class="skeleton-table p-3">';
+    for(let r=0;r<rows;r++) { h+='<div class="d-flex gap-2 mb-3">'; for(let c=0;c<cols;c++) h+='<div class="skeleton-loader" style="flex:1;height:1.5rem;"></div>'; h+='</div>'; }
+    return h+'</div>';
+  }
+
+  // ========== PERTANYAAN ==========
+  async function fetchSkriningQuestions() { return await PKD.getSkriningQuestions(true); }
+
+  function renderQuestions(questions, container) {
+    let html = `<div class="d-flex justify-content-between mb-3"><h5>📋 Daftar Pertanyaan</h5><button class="btn btn-success btn-sm" id="addSkriningBtn">➕ Tambah</button></div>`;
+    if (!questions.length) html += '<p class="text-muted">Belum ada pertanyaan.</p>';
+    else {
+      html += `<div class="table-responsive crud-table"><table class="table table-bordered table-sm table-admin"><thead><tr><th>ID</th><th>Teks</th><th>Jenis</th><th>Opsi</th><th>Urutan</th><th>Aksi</th></tr></thead><tbody>`;
+      questions.sort((a,b)=>(a.urutan||0)-(b.urutan||0)).forEach(q=>{
+        html += `<tr>
+          <td>${q.id}</td><td>${escapeHtml(q.teks)}</td><td>${q.jenis||'text'}</td><td>${escapeHtml(q.opsi||'')}</td><td>${q.urutan||''}</td>
+          <td><button class="btn btn-sm btn-warning edit-skrining" data-id="${q.id}">✏️</button> <button class="btn btn-sm btn-danger delete-skrining" data-id="${q.id}">🗑️</button></td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    container.innerHTML = html; container.classList.add('fade-in');
+    document.getElementById('addSkriningBtn')?.addEventListener('click', ()=>showSkriningModal());
+    document.querySelectorAll('.edit-skrining').forEach(b=>b.addEventListener('click',()=>{
+      const q = questions.find(q=>q.id==b.dataset.id); showSkriningModal(q);
+    }));
+    document.querySelectorAll('.delete-skrining').forEach(b=>b.addEventListener('click', async function(){
+      if(!confirm('Hapus pertanyaan ini?')) return;
+      await PKD.deleteSkriningQuestion(this.dataset.id); showToast('Pertanyaan dihapus','success'); loadQuestions();
+    }));
+  }
+
+  async function loadQuestions() {
+    const container = document.getElementById('questionsContainer');
+    const cached = getCached('skriningQuestions');
+    if(cached) { renderQuestions(cached,container); fetchSkriningQuestions().then(n=>{ if(JSON.stringify(n)!==JSON.stringify(cached)){ renderQuestions(n,container); saveCached('skriningQuestions',n); } }).catch(console.warn); }
+    else { container.innerHTML = renderSkeletonTable(4,5); try { const d = await fetchSkriningQuestions(); renderQuestions(d,container); saveCached('skriningQuestions',d); } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`; } }
+  }
+
+  function showSkriningModal(question=null) {
+    const isEdit = !!question;
+    document.getElementById('skriningModalLabel').innerText = isEdit?'Edit Pertanyaan':'Tambah Pertanyaan';
+    document.getElementById('skriningId').value = isEdit?question.id:'';
+    document.getElementById('skriningTeks').value = isEdit?(question.teks||''):'';
+    document.getElementById('skriningJenis').value = isEdit?(question.jenis||'text'):'text';
+    document.getElementById('skriningOpsi').value = isEdit?(question.opsi||''):'';
+    document.getElementById('skriningUrutan').value = isEdit?(question.urutan||''):'';
+    const modal = new bootstrap.Modal(document.getElementById('skriningModal'));
+    modal.show();
+    document.getElementById('simpanSkriningBtn').onclick = async () => {
+      const id = document.getElementById('skriningId').value;
+      const teks = document.getElementById('skriningTeks').value;
+      const jenis = document.getElementById('skriningJenis').value;
+      const opsi = document.getElementById('skriningOpsi').value;
+      const urutan = document.getElementById('skriningUrutan').value;
+      try {
+        if(isEdit) await PKD.updateSkriningQuestion(id, teks, jenis, opsi, urutan);
+        else await PKD.addSkriningQuestion(teks, jenis, opsi, urutan);
+        showToast(isEdit?'Pertanyaan diperbarui':'Pertanyaan ditambahkan','success'); modal.hide(); loadQuestions();
+      } catch(e) { showToast('Gagal: '+e.message,'danger'); }
+    };
+  }
+
+  // ========== DATA ==========
+  async function fetchSkriningResponses() { return await PKD.getSkriningResponses(true); }
+
+  function renderData(responses, container) {
+    if(!responses.length){ container.innerHTML='<p class="text-muted">Belum ada data skrining.</p>'; return; }
+    let html = `<div class="d-flex justify-content-between mb-3"><div class="filter-input w-25"><input type="text" class="form-control" id="filterSkrining" placeholder="🔍 Cari nama..."></div><button class="btn btn-success btn-sm" id="exportSkriningCSV">📥 Ekspor CSV</button></div>
+                <div class="table-responsive" style="max-height:500px;overflow-y:auto;"><table class="table table-bordered table-sm table-striped">
+                <thead><tr><th>Waktu</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Penyakit</th><th>Pernah</th><th>Alasan</th><th>Catatan</th><th>Tanda Tangan</th><th>Detail</th></tr></thead><tbody id="skriningDataBody">`;
+    responses.forEach(row=>{
+      const signatureThumb = row.signatureDriveId ? `https://drive.google.com/thumbnail?id=${row.signatureDriveId}&sz=w80` : '';
+      html += `<tr class="data-row">
+        <td>${escapeHtml(row.timestamp||'')}</td><td class="nama">${escapeHtml(row.nama||'')}</td><td>${escapeHtml(row.alamat||'')}</td>
+        <td>${escapeHtml(row.info||'')}</td><td>${escapeHtml(row.pengetahuan||'')}</td><td>${escapeHtml(row.qunut||'')}</td>
+        <td>${escapeHtml(row.penyakit||'')}</td><td>${escapeHtml(row.pernah||'')}</td><td>${escapeHtml(row.alasan||'')}</td><td>${escapeHtml(row.catatan||'')}</td>
+        <td>${row.signatureDriveId ? `<img src="${signatureThumb}" class="signature-thumb" onclick="window.open('https://drive.google.com/file/d/${row.signatureDriveId}/view')">` : '-'}</td>
+        <td><button class="btn btn-sm btn-outline-info btn-detail-skrining" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button></td></tr>`;
+    });
+    html += `</tbody></table></div>`; container.innerHTML=html; container.classList.add('fade-in');
+    document.getElementById('filterSkrining')?.addEventListener('input', e=>{
+      const kw = e.target.value.toLowerCase();
+      document.querySelectorAll('#skriningDataBody .data-row').forEach(r=>{ const n = r.querySelector('.nama')?.innerText.toLowerCase()||''; r.style.display = n.includes(kw)?'':'none'; });
+    });
+    document.getElementById('exportSkriningCSV')?.addEventListener('click', ()=>exportCSV(responses));
+    document.querySelectorAll('.btn-detail-skrining').forEach(b=>b.addEventListener('click', function(){
+      try { const row = JSON.parse(decodeURIComponent(this.dataset.row)); showDetail(row); } catch(e) { showToast('Gagal menampilkan detail','danger'); }
+    }));
+  }
+
+  async function loadData() {
+    const container = document.getElementById('dataContainer');
+    const cached = getCached('skriningResponses');
+    if(cached) { renderData(cached,container); fetchSkriningResponses().then(n=>{ if(JSON.stringify(n)!==JSON.stringify(cached)){ renderData(n,container); saveCached('skriningResponses',n); } }).catch(console.warn); }
+    else { container.innerHTML = renderSkeletonTable(5,7); try { const d = await fetchSkriningResponses(); renderData(d,container); saveCached('skriningResponses',d); } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`; } }
+  }
+
+  function exportCSV(responses) {
+    const headers = ['Timestamp','Nama','Alamat','Info','Pengetahuan','Qunut','Penyakit','Pernah','Alasan','Catatan','Tanda Tangan'];
+    const rows = responses.map(r => [r.timestamp, r.nama, r.alamat, r.info, r.pengetahuan, r.qunut, r.penyakit, r.pernah, r.alasan, r.catatan, r.signatureDriveId ? `https://drive.google.com/file/d/${r.signatureDriveId}/view` : '']);
+    const csvContent = [headers,...rows].map(e=>e.map(c=>`"${c}"`).join(',')).join('\n');
+    const bom="\uFEFF"; const blob=new Blob([bom+csvContent],{type:'text/csv;charset=utf-8;'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='skrining_data.csv'; link.click(); URL.revokeObjectURL(link.href);
+  }
+
+  function showDetail(row) {
+    let detail = '<h6>Detail Jawaban Tambahan</h6>';
+    if (row.dataJson) {
+      try {
+        const parsed = JSON.parse(row.dataJson);
+        detail += '<table class="table table-sm table-bordered">';
+        Object.keys(parsed).forEach(k => { detail += `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(parsed[k])}</td></tr>`; });
+        detail += '</table>';
+      } catch { detail += '<p>Data JSON tidak valid.</p>'; }
+    } else detail += '<p>Tidak ada data tambahan.</p>';
+    document.getElementById('detailModalLabel').innerHTML = 'Detail Skrining - ' + escapeHtml(row.nama);
+    document.getElementById('detailModalBody').innerHTML = detail;
+    new bootstrap.Modal(document.getElementById('detailModal')).show();
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', () => {
+    if (PKD.getUserRole() !== 'admin') {
+      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+    } else { loadQuestions(); }
+
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value;
+      const err = document.getElementById('adminLoginError');
+      if(!u||!p){ err.innerText='Username dan password harus diisi'; err.style.display='block'; return; }
+      try {
+        const res = await PKD.verifyAdmin(u,p);
+        if(res.success){
+          PKD.setUserRole('admin'); PKD.setUserData({nama:u}); PKD.persistAuthState(); PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadQuestions();
+        } else { err.innerText = res.message||'Login gagal'; err.style.display='block'; }
+      } catch(e) { err.innerText='Kesalahan: '+e.message; err.style.display='block'; }
+    });
+
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', e=>{ e.preventDefault(); PKD.logout(); });
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    if(toggleBtn){ toggleBtn.addEventListener('click', ()=>{ const row=document.querySelector('.row.g-4'); row.classList.toggle('sidebar-minimized'); const icon=toggleBtn.querySelector('i'); icon.classList.toggle('bi-arrow-left-right'); icon.classList.toggle('bi-arrow-right-left'); }); }
+
+    document.getElementById('questions-tab').addEventListener('shown.bs.tab', loadQuestions);
+    document.getElementById('data-tab').addEventListener('shown.bs.tab', loadData);
+
+    document.addEventListener('click', function(e) {
+      const nav=document.getElementById('navbarMain'); const tog=document.querySelector('.navbar-toggler');
+      if(nav&&tog&&!nav.contains(e.target)&&!tog.contains(e.target)&&nav.classList.contains('show')) bootstrap.Collapse.getInstance(nav)?.hide();
+    });
+  });
+</script>
+</body>
+</html>

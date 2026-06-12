@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Manajemen Peserta</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .crud-table { max-height: 500px; overflow-y: auto; border-radius: 16px; }
+    .table-admin th { background-color: #f8fafc; font-weight: 600; position: sticky; top: 0; background: white; z-index: 10; }
+
+    .foto-thumb { max-width: 50px; max-height: 50px; border-radius: 4px; object-fit: cover; cursor: pointer; }
+
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+    .filter-bar .filter-input { max-width: 300px; }
+
+    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: 3rem; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-content { border-radius: 24px; }
+    .modal-header { border-radius: 24px 24px 0 0; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA ==================== -->
+<section class="container container-card">
+  <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Manajemen Peserta PKD</h2>
+
+  <!-- Tombol aksi dan filter -->
+  <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <button class="btn btn-success btn-sm" id="moveSelectedToAlumniBtn" disabled>
+        <i class="bi bi-person-up"></i> Pindah Terpilih ke Alumni
+      </button>
+      <button class="btn btn-secondary btn-sm" id="clearSelectionBtn">
+        <i class="bi bi-x-circle"></i> Batal Pilih
+      </button>
+      <button class="btn btn-success btn-sm" id="tambahPesertaBtn">
+        <i class="bi bi-plus-circle"></i> Tambah Peserta
+      </button>
+      <button class="btn btn-info btn-sm" id="importPesertaBtn">
+        <i class="bi bi-file-earmark-arrow-up"></i> Impor CSV
+      </button>
+      <button class="btn btn-secondary btn-sm" id="exportPesertaBtn">
+        <i class="bi bi-download"></i> Ekspor CSV
+      </button>
+    </div>
+    <div class="filter-input">
+      <input type="text" class="form-control form-control-sm" id="searchPeserta" placeholder="🔍 Cari nama / alamat / utusan...">
+    </div>
+  </div>
+
+  <!-- Tabel peserta -->
+  <div id="pesertaContainer">
+    <!-- akan diisi oleh JavaScript -->
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL PESERTA ==================== -->
+<div class="modal fade" id="pesertaModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="pesertaModalLabel">Tambah/Edit Peserta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pesertaId">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Foto</label>
+          <input type="file" class="form-control" id="pesertaFoto" accept="image/*">
+          <img id="pesertaFotoPreview" src="#" alt="Preview" style="max-width: 150px; display: none;" class="mt-2 rounded border">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nama Lengkap *</label>
+          <input type="text" class="form-control" id="pesertaNamaLengkap" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Tempat dan Tanggal Lahir</label>
+          <input type="text" class="form-control" id="pesertaTempatTglLahir" placeholder="Contoh: Bantul, 17 Agustus 2000">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Pekerjaan</label>
+          <input type="text" class="form-control" id="pesertaPekerjaan">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Pendidikan Terakhir</label>
+          <input type="text" class="form-control" id="pesertaPendidikan">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Alamat</label>
+          <textarea class="form-control" id="pesertaAlamat" rows="2"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">No HP</label>
+          <input type="tel" class="form-control" id="pesertaNoHP">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Email</label>
+          <input type="email" class="form-control" id="pesertaEmail">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Utusan (PAC / Organisasi)</label>
+          <input type="text" class="form-control" id="pesertaUtusan" placeholder="Contoh: PAC Bantul">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Pengalaman Organisasi</label>
+          <textarea class="form-control" id="pesertaPengalaman" rows="3"></textarea>
+        </div>
+        <div id="pesertaModalError" class="text-danger small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" id="simpanPesertaBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL IMPOR CSV ==================== -->
+<div class="modal fade" id="importPesertaModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up me-2"></i>Impor Data Peserta dari CSV</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Pilih File CSV</label>
+          <input type="file" class="form-control" id="importCsvFile" accept=".csv" required>
+          <div class="form-text text-muted small">
+            Format CSV harus memiliki header: 
+            <code>nama_lengkap, tempat_tgl_lahir, pekerjaan, pendidikan_terakhir, alamat, no_hp, email, utusan, pengalaman_organisasi</code> 
+            (kolom lain diabaikan). File maksimal 5 MB.
+          </div>
+        </div>
+        <div id="importCsvError" class="text-danger small" style="display: none;"></div>
+        <div id="importCsvProgress" class="progress mt-2" style="display: none;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%">Memproses...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-info" id="importCsvSubmitBtn">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST NOTIFIKASI ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+<script>
+  window.togglePasswordVisibility = function(id) { const el = document.getElementById(id); if(el) el.type = el.type==='password'?'text':'password'; };
+
+  const { escapeHtml, showToast, getCached, saveCached } = PKD;
+
+  // =====================================================
+  //   GLOBAL VARIABLES
+  // =====================================================
+  let allPeserta = [];
+
+  // =====================================================
+  //   RENDER SKELETON
+  // =====================================================
+  function renderSkeletonTable(rows = 5, cols = 12) {
+    let h = '<div class="skeleton-table p-3">';
+    for (let r = 0; r < rows; r++) {
+      h += '<div class="d-flex gap-2 mb-3">';
+      for (let c = 0; c < cols; c++) h += '<div class="skeleton-loader" style="flex:1; height:1.2em;"></div>';
+      h += '</div>';
+    }
+    return h + '</div>';
+  }
+
+  // =====================================================
+  //   RENDER PESERTA TABLE
+  // =====================================================
+  function renderPesertaTable(data, container) {
+    if (!data.length) {
+      container.innerHTML = '<p class="text-muted text-center py-5">Belum ada data peserta aktif.</p>';
+      return;
+    }
+
+    let html = `
+      <div class="table-responsive crud-table">
+        <table class="table table-bordered table-sm table-hover table-admin">
+          <thead>
+            <tr>
+              <th style="width: 40px;"><input type="checkbox" id="selectAllPeserta"></th>
+              <th>No</th>
+              <th>Foto</th>
+              <th>Nama Lengkap</th>
+              <th>Tempat/Tgl Lahir</th>
+              <th>Pekerjaan</th>
+              <th>Pendidikan</th>
+              <th>Alamat</th>
+              <th>No HP</th>
+              <th>Email</th>
+              <th>Utusan</th>
+              <th>Pengalaman</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="pesertaTableBody">
+    `;
+
+    data.forEach((p, idx) => {
+      const fotoThumb = p.fotoDriveId ? `https://drive.google.com/thumbnail?id=${p.fotoDriveId}&sz=w100-h100` : '';
+      html += `
+        <tr class="peserta-row" data-nama="${escapeHtml(p.nama_lengkap || '').toLowerCase()}" data-alamat="${escapeHtml(p.alamat || '').toLowerCase()}" data-utusan="${escapeHtml(p.utusan || '').toLowerCase()}">
+          <td><input type="checkbox" class="peserta-checkbox-multi" value="${p.id}"></td>
+          <td>${idx + 1}</td>
+          <td>${p.fotoDriveId ? `<img src="${fotoThumb}" class="foto-thumb" onclick="window.open('https://drive.google.com/file/d/${p.fotoDriveId}/view')">` : '-'}</td>
+          <td>${escapeHtml(p.nama_lengkap || '')}</td>
+          <td>${escapeHtml(p.tempat_tgl_lahir || '')}</td>
+          <td>${escapeHtml(p.pekerjaan || '')}</td>
+          <td>${escapeHtml(p.pendidikan_terakhir || '')}</td>
+          <td>${escapeHtml(p.alamat || '')}</td>
+          <td>${escapeHtml(p.no_hp || '')}</td>
+          <td>${escapeHtml(p.email || '')}</td>
+          <td>${escapeHtml(p.utusan || '')}</td>
+          <td>${escapeHtml(p.pengalaman_organisasi || '')}</td>
+          <td>
+            <button class="btn btn-sm btn-warning edit-peserta" data-id="${p.id}"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger delete-peserta" data-id="${p.id}"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-success move-to-alumni-btn" data-id="${p.id}" data-nama="${escapeHtml(p.nama_lengkap)}">
+              <i class="bi bi-person-up"></i> Alumni
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+
+    // === SELECT ALL ===
+    document.getElementById('selectAllPeserta')?.addEventListener('change', function() {
+      const isChecked = this.checked;
+      document.querySelectorAll('.peserta-checkbox-multi').forEach(cb => cb.checked = isChecked);
+      updateMoveSelectedButton();
+    });
+
+    // === UPDATE BUTTON STATE ===
+    function updateMoveSelectedButton() {
+      const checked = document.querySelectorAll('.peserta-checkbox-multi:checked');
+      const btn = document.getElementById('moveSelectedToAlumniBtn');
+      btn.disabled = checked.length === 0;
+      btn.innerHTML = checked.length > 0 
+        ? `<i class="bi bi-person-up"></i> Pindah ${checked.length} ke Alumni`
+        : `<i class="bi bi-person-up"></i> Pindah Terpilih ke Alumni`;
+    }
+
+    document.querySelectorAll('.peserta-checkbox-multi').forEach(cb => {
+      cb.addEventListener('change', updateMoveSelectedButton);
+    });
+
+    // === TOMBOL CLEAR SELECTION ===
+    document.getElementById('clearSelectionBtn')?.addEventListener('click', function() {
+      document.querySelectorAll('.peserta-checkbox-multi').forEach(cb => cb.checked = false);
+      document.getElementById('selectAllPeserta').checked = false;
+      updateMoveSelectedButton();
+    });
+
+    // === TOMBOL MOVE SELECTED TO ALUMNI ===
+    document.getElementById('moveSelectedToAlumniBtn')?.addEventListener('click', async function() {
+      const checked = document.querySelectorAll('.peserta-checkbox-multi:checked');
+      if (!checked.length) return;
+      const ids = Array.from(checked).map(cb => parseInt(cb.value));
+      const namaPeserta = Array.from(checked).map(cb => {
+        const row = cb.closest('tr');
+        return row.querySelector('td:nth-child(4)').innerText;
+      });
+      if (!confirm(`Pindahkan ${ids.length} peserta ke alumni?\n\n${namaPeserta.join(', ')}`)) return;
+
+      const btn = this;
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+      try {
+        const result = await PKD.alumni.moveMultipleToAlumni(ids);
+        let msg = `✅ Berhasil memindahkan ${result.moved} peserta ke alumni.`;
+        if (result.failed.length > 0) {
+          msg += `\n⚠️ ${result.failed.length} peserta gagal dipindahkan (ID: ${result.failed.join(', ')})`;
+        }
+        showToast(msg, result.failed.length > 0 ? 'warning' : 'success');
+        document.querySelectorAll('.peserta-checkbox-multi').forEach(cb => cb.checked = false);
+        document.getElementById('selectAllPeserta').checked = false;
+        updateMoveSelectedButton();
+        loadPeserta();
+      } catch (e) {
+        showToast('Gagal: ' + e.message, 'danger');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+
+    // === TOMBOL EDIT ===
+    document.querySelectorAll('.edit-peserta').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const peserta = allPeserta.find(p => p.id == id);
+        showPesertaModal(peserta);
+      });
+    });
+
+    // === TOMBOL DELETE ===
+    document.querySelectorAll('.delete-peserta').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Hapus data peserta ini?')) return;
+        const id = this.dataset.id;
+        try {
+          await PKD.deletePeserta(id);
+          showToast('Peserta dihapus', 'success');
+          loadPeserta();
+        } catch (e) {
+          showToast('Gagal menghapus: ' + e.message, 'danger');
+        }
+      });
+    });
+
+    // === TOMBOL MOVE SINGLE TO ALUMNI ===
+    document.querySelectorAll('.move-to-alumni-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const nama = this.dataset.nama;
+        if (!confirm(`Pindahkan "${nama}" ke alumni?`)) return;
+        const id = this.dataset.id;
+        const orig = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+        try {
+          await PKD.alumni.moveToAlumni(id);
+          showToast(`"${nama}" berhasil dipindahkan ke alumni`, 'success');
+          loadPeserta();
+        } catch (e) {
+          showToast('Gagal: ' + e.message, 'danger');
+          this.innerHTML = orig;
+          this.disabled = false;
+        }
+      });
+    });
+
+    // === FILTER PENCARIAN ===
+    document.getElementById('searchPeserta')?.addEventListener('input', function(e) {
+      const keyword = e.target.value.toLowerCase();
+      document.querySelectorAll('#pesertaTableBody .peserta-row').forEach(row => {
+        const nama = row.dataset.nama || '';
+        const alamat = row.dataset.alamat || '';
+        const utusan = row.dataset.utusan || '';
+        row.style.display = (nama.includes(keyword) || alamat.includes(keyword) || utusan.includes(keyword)) ? '' : 'none';
+      });
+    });
+  }
+
+  // =====================================================
+  //   LOAD PESERTA (CACHE + FETCH)
+  // =====================================================
+  async function loadPeserta() {
+    const container = document.getElementById('pesertaContainer');
+    const cached = getCached('pesertaList');
+    if (cached) {
+      renderPesertaTable(cached, container);
+      fetchPesertaFromServer().then(newData => {
+        if (JSON.stringify(newData) !== JSON.stringify(cached)) {
+          renderPesertaTable(newData, container);
+          saveCached('pesertaList', newData);
+        }
+      }).catch(console.warn);
+    } else {
+      container.innerHTML = renderSkeletonTable(5, 12);
+      try {
+        const data = await fetchPesertaFromServer();
+        renderPesertaTable(data, container);
+        saveCached('pesertaList', data);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Gagal memuat data peserta: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+  }
+
+  async function fetchPesertaFromServer() {
+    const data = await PKD.getPesertaList(true);
+    allPeserta = data;
+    return data;
+  }
+
+  // =====================================================
+  //   MODAL PESERTA (TAMBAH / EDIT)
+  // =====================================================
+  function showPesertaModal(peserta = null) {
+    const isEdit = !!peserta;
+    document.getElementById('pesertaModalLabel').innerText = isEdit ? 'Edit Peserta' : 'Tambah Peserta';
+    document.getElementById('pesertaId').value = isEdit ? peserta.id : '';
+    document.getElementById('pesertaNamaLengkap').value = isEdit ? (peserta.nama_lengkap || '') : '';
+    document.getElementById('pesertaTempatTglLahir').value = isEdit ? (peserta.tempat_tgl_lahir || '') : '';
+    document.getElementById('pesertaPekerjaan').value = isEdit ? (peserta.pekerjaan || '') : '';
+    document.getElementById('pesertaPendidikan').value = isEdit ? (peserta.pendidikan_terakhir || '') : '';
+    document.getElementById('pesertaAlamat').value = isEdit ? (peserta.alamat || '') : '';
+    document.getElementById('pesertaNoHP').value = isEdit ? (peserta.no_hp || '') : '';
+    document.getElementById('pesertaEmail').value = isEdit ? (peserta.email || '') : '';
+    document.getElementById('pesertaUtusan').value = isEdit ? (peserta.utusan || '') : '';
+    document.getElementById('pesertaPengalaman').value = isEdit ? (peserta.pengalaman_organisasi || '') : '';
+
+    const preview = document.getElementById('pesertaFotoPreview');
+    if (isEdit && peserta.fotoDriveId) {
+      preview.src = `https://drive.google.com/thumbnail?id=${peserta.fotoDriveId}&sz=w150`;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+      preview.src = '#';
+    }
+    document.getElementById('pesertaFoto').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('pesertaModal'));
+    modal.show();
+
+    // Preview foto saat file dipilih
+    document.getElementById('pesertaFoto').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          preview.src = ev.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = 'none';
+      }
+    });
+
+    // Submit form
+    document.getElementById('simpanPesertaBtn').onclick = async function() {
+      const id = document.getElementById('pesertaId').value;
+      const nama_lengkap = document.getElementById('pesertaNamaLengkap').value.trim();
+      if (!nama_lengkap) {
+        document.getElementById('pesertaModalError').innerText = 'Nama lengkap wajib diisi!';
+        document.getElementById('pesertaModalError').style.display = 'block';
+        return;
+      }
+
+      const fotoFile = document.getElementById('pesertaFoto').files[0];
+      let fotoBase64 = null;
+      if (fotoFile) {
+        if (fotoFile.size > 5 * 1024 * 1024) {
+          document.getElementById('pesertaModalError').innerText = 'Ukuran foto maksimal 5 MB';
+          document.getElementById('pesertaModalError').style.display = 'block';
+          return;
+        }
+        fotoBase64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result); reader.readAsDataURL(fotoFile); });
+      }
+
+      const params = {
+        nama_lengkap,
+        tempat_tgl_lahir: document.getElementById('pesertaTempatTglLahir').value,
+        pekerjaan: document.getElementById('pesertaPekerjaan').value,
+        pendidikan_terakhir: document.getElementById('pesertaPendidikan').value,
+        alamat: document.getElementById('pesertaAlamat').value,
+        no_hp: document.getElementById('pesertaNoHP').value,
+        email: document.getElementById('pesertaEmail').value,
+        utusan: document.getElementById('pesertaUtusan').value,
+        pengalaman_organisasi: document.getElementById('pesertaPengalaman').value
+      };
+      if (fotoBase64) params.foto = fotoBase64;
+
+      try {
+        if (isEdit) {
+          params.id = id;
+          await PKD.updatePeserta(params);
+        } else {
+          await PKD.submitPeserta(params);
+        }
+        showToast(isEdit ? 'Data diperbarui' : 'Data ditambahkan', 'success');
+        modal.hide();
+        loadPeserta();
+      } catch (err) {
+        document.getElementById('pesertaModalError').innerText = err.message;
+        document.getElementById('pesertaModalError').style.display = 'block';
+      }
+    };
+  }
+
+  // =====================================================
+  //   EKSPOR CSV
+  // =====================================================
+  document.getElementById('exportPesertaBtn')?.addEventListener('click', async () => {
+    try {
+      const res = await PKD.exportPesertaCSV();
+      if (res.success && res.csv) {
+        downloadCSV(res.csv, 'data_peserta.csv');
+        showToast('Ekspor berhasil', 'success');
+      } else {
+        showToast('Gagal mengekspor data', 'danger');
+      }
+    } catch (e) {
+      showToast('Error: ' + e.message, 'danger');
+    }
+  });
+
+  function downloadCSV(csvContent, filename) {
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  // =====================================================
+  //   IMPOR CSV
+  // =====================================================
+  document.getElementById('importPesertaBtn')?.addEventListener('click', () => {
+    new bootstrap.Modal(document.getElementById('importPesertaModal')).show();
+  });
+
+  document.getElementById('importCsvSubmitBtn')?.addEventListener('click', async function() {
+    const fileInput = document.getElementById('importCsvFile');
+    const errorDiv = document.getElementById('importCsvError');
+    const progress = document.getElementById('importCsvProgress');
+
+    if (!fileInput.files.length) {
+      errorDiv.innerText = 'Pilih file CSV terlebih dahulu!';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    const file = fileInput.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      errorDiv.innerText = 'Ukuran file maksimal 5 MB';
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    errorDiv.style.display = 'none';
+    progress.style.display = 'block';
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const base64Data = e.target.result.split(',')[1];
+      try {
+        const res = await PKD.importPesertaCSV(base64Data, file.name);
+        if (res.success) {
+          showToast(`Berhasil mengimpor ${res.count || 0} data`, 'success');
+          bootstrap.Modal.getInstance(document.getElementById('importPesertaModal')).hide();
+          fileInput.value = '';
+          loadPeserta();
+        } else {
+          throw new Error(res.message || 'Gagal impor');
+        }
+      } catch (err) {
+        errorDiv.innerText = 'Gagal: ' + err.message;
+        errorDiv.style.display = 'block';
+      } finally {
+        progress.style.display = 'none';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // =====================================================
+  //   INISIALISASI & LOGIN CHECK
+  // =====================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    if (PKD.getUserRole() !== 'admin') {
+      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+    } else {
+      loadPeserta();
+    }
+
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value;
+      const err = document.getElementById('adminLoginError');
+      if (!u || !p) { err.innerText = 'Username dan password harus diisi'; err.style.display = 'block'; return; }
+      try {
+        const res = await PKD.verifyAdmin(u, p);
+        if (res.success) {
+          PKD.setUserRole('admin'); PKD.setUserData({ nama: u });
+          PKD.persistAuthState(); PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadPeserta();
+        } else { err.innerText = res.message || 'Login gagal'; err.style.display = 'block'; }
+      } catch (e) { err.innerText = 'Kesalahan: ' + e.message; err.style.display = 'block'; }
+    });
+
+    document.addEventListener('click', function(e) {
+      const nav = document.getElementById('navbarMain');
+      const tog = document.querySelector('.navbar-toggler');
+      if (nav && tog && !nav.contains(e.target) && !tog.contains(e.target) && nav.classList.contains('show')) {
+        bootstrap.Collapse.getInstance(nav)?.hide();
+      }
+    });
+  });
+</script>
+</body>
+</html>

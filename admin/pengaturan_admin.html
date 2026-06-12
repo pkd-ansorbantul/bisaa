@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Pengaturan Admin</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
+    .nav-pills .nav-link i { font-size: 1.1rem; }
+    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
+    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+
+    .form-switch .form-check-input { width: 3em; height: 1.5em; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA DUA KOLOM ==================== -->
+<section class="container container-card">
+  <div class="row g-4">
+    <!-- Sidebar kiri -->
+    <div class="col-md-3 col-lg-2">
+      <div class="sidebar-sticky">
+        <div class="bg-light p-3 rounded-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Admin</span></h6>
+            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar">
+              <i class="bi bi-arrow-left-right"></i>
+            </button>
+          </div>
+          <div class="nav flex-column nav-pills">
+            <a class="nav-link" href="skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+            <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+            <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+            <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link active" href="sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+            <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+            <hr class="my-2">
+            <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konten kanan: Pengaturan -->
+    <div class="col-md-9 col-lg-10">
+      <div class="bg-white p-4 rounded-4 shadow-sm">
+        <h2 class="section-title"><i class="bi bi-gear me-2"></i>Pengaturan Sistem</h2>
+
+        <!-- TABS PENGATURAN -->
+        <ul class="nav nav-tabs mb-3" id="settingsTab" role="tablist">
+          <li class="nav-item"><button class="nav-link active" id="quiz-tab" data-bs-toggle="tab" data-bs-target="#quiz" type="button">⚙️ Quiz Settings</button></li>
+          <li class="nav-item"><button class="nav-link" id="passwords-tab" data-bs-toggle="tab" data-bs-target="#passwords" type="button">🔐 Menu Passwords</button></li>
+          <li class="nav-item"><button class="nav-link" id="admin-users-tab" data-bs-toggle="tab" data-bs-target="#adminUsers" type="button">👥 Admin Users</button></li>
+          <li class="nav-item"><button class="nav-link" id="presets-tab" data-bs-toggle="tab" data-bs-target="#certPresets" type="button">📜 Certifikat Presets</button></li>
+          <li class="nav-item"><button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#certTemplates" type="button">📄 Template Sertifikat</button></li>
+          <li class="nav-item"><button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button">👤 Member Users</button></li>
+          <li class="nav-item"><button class="nav-link" id="realtime-tab" data-bs-toggle="tab" data-bs-target="#realtime" type="button">📊 Tampilan Realtime</button></li>
+          <li class="nav-item"><button class="nav-link" id="loginmode-tab" data-bs-toggle="tab" data-bs-target="#loginmode" type="button">🔐 Mode Login</button></li>
+        </ul>
+
+        <div class="tab-content" id="settingsTabContent">
+          <div class="tab-pane fade show active" id="quiz" role="tabpanel">
+            <div id="quizContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="passwords" role="tabpanel">
+            <div id="passwordsContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="adminUsers" role="tabpanel">
+            <div id="adminUsersContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="certPresets" role="tabpanel">
+            <div id="presetsContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="certTemplates" role="tabpanel">
+            <div id="templatesContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="members" role="tabpanel">
+            <div id="membersContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="realtime" role="tabpanel">
+            <div id="realtimeContainer">Memuat...</div>
+          </div>
+          <div class="tab-pane fade" id="loginmode" role="tabpanel">
+            <div id="loginmodeContainer">Memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container text-center py-3 border-top mt-4">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST NOTIFIKASI ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+
+<script>
+  // =====================================================
+  //   TOGGLE PASSWORD VISIBILITY
+  // =====================================================
+  window.togglePasswordVisibility = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
+
+  // =====================================================
+  //   FUNGSI BANTU
+  // =====================================================
+  function renderSkeleton() {
+    return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+  }
+
+  // =====================================================
+  //   QUIZ SETTINGS
+  // =====================================================
+  async function loadQuizSettings() {
+    const container = document.getElementById('quizContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.callApi('getQuizSettings', {}, 'GET');
+      const data = res.data || {};
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm"><div class="card-body p-4">
+          <h5 class="fw-bold mb-3">Pengaturan Timer & Passing Grade</h5>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Timer Pretest (detik), 0 = nonaktif</label>
+            <input type="number" class="form-control" id="pretestTimer" value="${data.pretest_timer || 30}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Timer Posttest (detik), 0 = nonaktif</label>
+            <input type="number" class="form-control" id="posttestTimer" value="${data.posttest_timer || 30}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Passing Grade (%)</label>
+            <input type="number" class="form-control" id="passingGrade" value="${data.passing_grade || 70}">
+          </div>
+          <button class="btn btn-primary rounded-pill px-4" id="saveQuizBtn">Simpan</button>
+          <span id="quizStatus" class="ms-3 small"></span>
+        </div></div>`;
+      container.classList.add('fade-in');
+      document.getElementById('saveQuizBtn').addEventListener('click', async () => {
+        const pretest_timer = document.getElementById('pretestTimer').value;
+        const posttest_timer = document.getElementById('posttestTimer').value;
+        const passing_grade = document.getElementById('passingGrade').value;
+        try {
+          await PKD.callApi('saveQuizSettings', { pretest_timer, posttest_timer, passing_grade }, 'POST');
+          showToast('Pengaturan kuis disimpan', 'success');
+          document.getElementById('quizStatus').innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Tersimpan</span>';
+        } catch(e) { showToast('Gagal: '+e.message, 'danger'); }
+      });
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`; }
+  }
+
+  // =====================================================
+  //   MENU PASSWORDS
+  // =====================================================
+  async function loadMenuPasswords() {
+    const container = document.getElementById('passwordsContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.callApi('getMenuPasswords', {}, 'GET');
+      const data = res.data || [];
+      let html = `<div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Password Proteksi Menu</h5>
+        <button class="btn btn-success btn-sm mb-3" id="addPasswordBtn">Tambah Password</button>
+        <div class="table-responsive"><table class="table table-sm table-bordered">
+          <thead><tr><th>Menu</th><th>Password</th><th>Aksi</th></tr></thead><tbody>`;
+      data.forEach(p => {
+        html += `<tr><td>${escapeHtml(p.menu)}</td><td>${escapeHtml(p.password || '****')}</td><td>
+          <button class="btn btn-sm btn-warning edit-password" data-id="${p.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-password" data-id="${p.id}">🗑️</button>
+        </td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+      container.innerHTML = html; container.classList.add('fade-in');
+      document.getElementById('addPasswordBtn').addEventListener('click', () => showPasswordModal());
+      document.querySelectorAll('.edit-password').forEach(b => b.addEventListener('click', () => {
+        const item = data.find(d => d.id == b.dataset.id);
+        showPasswordModal(item);
+      }));
+      document.querySelectorAll('.delete-password').forEach(b => b.addEventListener('click', async () => {
+        if(!confirm('Hapus password menu ini?')) return;
+        await PKD.callApi('deleteMenuPassword', { id: b.dataset.id }, 'POST');
+        showToast('Dihapus', 'success'); loadMenuPasswords();
+      }));
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  function showPasswordModal(item = null) {
+    const modal = document.createElement('div'); modal.className = 'modal d-block'; modal.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5>${item?'Edit':'Tambah'} Password Menu</h5><button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="passId" value="${item?.id||''}">
+        <div class="mb-3"><label class="form-label">Menu</label><input type="text" class="form-control" id="passMenu" value="${escapeHtml(item?.menu||'')}"></div>
+        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" id="passPassword"></div>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Batal</button>
+      <button class="btn btn-primary" id="savePassBtn">Simpan</button></div></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('savePassBtn').addEventListener('click', async () => {
+      const params = { menu: document.getElementById('passMenu').value, password: document.getElementById('passPassword').value };
+      if(item) params.id = item.id;
+      await PKD.callApi(item ? 'updateMenuPassword' : 'addMenuPassword', params, 'POST');
+      showToast('Password disimpan','success'); modal.remove(); loadMenuPasswords();
+    });
+  }
+
+  // =====================================================
+  //   ADMIN USERS
+  // =====================================================
+  async function loadAdminUsers() {
+    const container = document.getElementById('adminUsersContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.callApi('getAdminUsers', {}, 'GET');
+      const users = res.data || [];
+      let html = `<div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Daftar Admin</h5>
+        <button class="btn btn-success btn-sm mb-3" id="addAdminBtn">Tambah Admin</button>
+        <div class="table-responsive"><table class="table table-sm table-bordered">
+          <thead><tr><th>Username</th><th>Nama</th><th>Aksi</th></tr></thead><tbody>`;
+      users.forEach(u => {
+        html += `<tr><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.nama||'')}</td><td>
+          <button class="btn btn-sm btn-warning edit-admin" data-id="${u.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-admin" data-id="${u.id}">🗑️</button></td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+      container.innerHTML = html; container.classList.add('fade-in');
+      document.getElementById('addAdminBtn').addEventListener('click', () => showAdminModal());
+      document.querySelectorAll('.edit-admin').forEach(b => b.addEventListener('click', () => {
+        const user = users.find(u => u.id == b.dataset.id); showAdminModal(user);
+      }));
+      document.querySelectorAll('.delete-admin').forEach(b => b.addEventListener('click', async () => {
+        if(!confirm('Hapus admin?')) return;
+        await PKD.callApi('deleteAdminUser', { id: b.dataset.id }, 'POST');
+        showToast('Admin dihapus','success'); loadAdminUsers();
+      }));
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  function showAdminModal(user = null) {
+    const modal = document.createElement('div'); modal.className = 'modal d-block'; modal.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5>${user?'Edit':'Tambah'} Admin</h5><button class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="adminId" value="${user?.id||''}">
+        <div class="mb-3"><label class="form-label">Username</label><input class="form-control" id="admUsername" value="${escapeHtml(user?.username||'')}"></div>
+        <div class="mb-3"><label class="form-label">Nama</label><input class="form-control" id="admNama" value="${escapeHtml(user?.nama||'')}"></div>
+        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" id="admPassword"></div>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Batal</button>
+      <button class="btn btn-primary" id="saveAdminBtn">Simpan</button></div></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('saveAdminBtn').addEventListener('click', async () => {
+      const params = { username: document.getElementById('admUsername').value, nama: document.getElementById('admNama').value, password: document.getElementById('admPassword').value };
+      if(user) params.id = user.id;
+      await PKD.callApi(user ? 'updateAdminUser' : 'addAdminUser', params, 'POST');
+      showToast('Admin disimpan','success'); modal.remove(); loadAdminUsers();
+    });
+  }
+
+  // =====================================================
+  //   CERT PRESETS
+  // =====================================================
+  async function loadCertPresets() {
+    const container = document.getElementById('presetsContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const presets = await PKD.getCertPresets(true);
+      let html = `<div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Preset Sertifikat</h5>
+        <button class="btn btn-success btn-sm mb-3" id="addPresetBtn">Tambah Preset</button>
+        <div class="table-responsive"><table class="table table-sm table-bordered">
+          <thead><tr><th>Nama</th><th>Konfigurasi</th><th>Aksi</th></tr></thead><tbody>`;
+      presets.forEach(p => {
+        html += `<tr><td>${escapeHtml(p.name)}</td><td><pre>${escapeHtml(JSON.stringify(p.config, null, 2))}</pre></td><td>
+          <button class="btn btn-sm btn-warning edit-preset" data-id="${p.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-preset" data-id="${p.id}">🗑️</button></td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+      container.innerHTML = html; container.classList.add('fade-in');
+      document.getElementById('addPresetBtn').addEventListener('click', () => showPresetModal());
+      document.querySelectorAll('.edit-preset').forEach(b => b.addEventListener('click', () => {
+        const p = presets.find(pr => pr.id == b.dataset.id); showPresetModal(p);
+      }));
+      document.querySelectorAll('.delete-preset').forEach(b => b.addEventListener('click', async () => {
+        if(!confirm('Hapus preset?')) return;
+        await PKD.deleteCertPreset(b.dataset.id); showToast('Dihapus','success'); loadCertPresets();
+      }));
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  function showPresetModal(preset = null) {
+    const modal = document.createElement('div'); modal.className = 'modal d-block'; modal.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>${preset?'Edit':'Tambah'} Preset</h5><button class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="presetId" value="${preset?.id||''}">
+        <div class="mb-3"><label class="form-label">Nama</label><input class="form-control" id="presetName" value="${escapeHtml(preset?.name||'')}"></div>
+        <div class="mb-3"><label class="form-label">Konfigurasi (JSON)</label><textarea class="form-control" id="presetConfig" rows="6">${preset ? JSON.stringify(preset.config, null, 2) : '{}'}</textarea></div>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Batal</button>
+      <button class="btn btn-success" id="savePresetBtn">Simpan</button></div></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('savePresetBtn').addEventListener('click', async () => {
+      const name = document.getElementById('presetName').value.trim();
+      let config; try { config = JSON.parse(document.getElementById('presetConfig').value); } catch(e) { alert('JSON tidak valid'); return; }
+      if(!name) { alert('Nama wajib diisi'); return; }
+      if(preset) await PKD.updateCertPreset(preset.id, name, JSON.stringify(config));
+      else await PKD.addCertPreset(name, JSON.stringify(config));
+      showToast('Preset disimpan','success'); modal.remove(); loadCertPresets();
+    });
+  }
+
+  // =====================================================
+  //   TEMPLATE SERTIFIKAT
+  // =====================================================
+  async function loadCertTemplates() {
+    const container = document.getElementById('templatesContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const templates = await PKD.getCertificateTemplates(true);
+      let html = `<div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Template Sertifikat</h5>
+        <button class="btn btn-success btn-sm mb-3" id="addTemplateBtn">Tambah Template</button>
+        <div class="table-responsive"><table class="table table-sm table-bordered">
+          <thead><tr><th>Nama</th><th>Doc ID</th><th>Aksi</th></tr></thead><tbody>`;
+      templates.forEach(t => {
+        html += `<tr><td>${escapeHtml(t.nama_template)}</td><td>${t.doc_template_id}</td><td>
+          <button class="btn btn-sm btn-warning edit-template" data-id="${t.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-template" data-id="${t.id}">🗑️</button></td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+      container.innerHTML = html; container.classList.add('fade-in');
+      document.getElementById('addTemplateBtn').addEventListener('click', () => showTemplateModal());
+      document.querySelectorAll('.edit-template').forEach(b => b.addEventListener('click', () => {
+        const t = templates.find(tm => tm.id == b.dataset.id); showTemplateModal(t);
+      }));
+      document.querySelectorAll('.delete-template').forEach(b => b.addEventListener('click', async () => {
+        if(!confirm('Hapus template?')) return;
+        await PKD.deleteCertificateTemplate(b.dataset.id); showToast('Dihapus','success'); loadCertTemplates();
+      }));
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  function showTemplateModal(template = null) {
+    const modal = document.createElement('div'); modal.className = 'modal d-block'; modal.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5>${template?'Edit':'Tambah'} Template</h5><button class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="templateId" value="${template?.id||''}">
+        <div class="mb-3"><label class="form-label">Nama</label><input class="form-control" id="templateNama" value="${escapeHtml(template?.nama_template||'')}"></div>
+        <div class="mb-3"><label class="form-label">Google Docs ID</label><input class="form-control" id="templateDocId" value="${template?.doc_template_id||''}"></div>
+        <div class="mb-3"><label class="form-label">Konfigurasi (JSON)</label><textarea class="form-control" id="templateConfig" rows="3">${template ? JSON.stringify(template.config, null, 2) : '{}'}</textarea></div>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Batal</button>
+      <button class="btn btn-primary" id="saveTemplateBtn">Simpan</button></div></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('saveTemplateBtn').addEventListener('click', async () => {
+      const nama = document.getElementById('templateNama').value.trim();
+      const docId = document.getElementById('templateDocId').value.trim();
+      let config; try { config = JSON.parse(document.getElementById('templateConfig').value); } catch(e) { alert('JSON tidak valid'); return; }
+      if(!nama || !docId) { alert('Nama dan Doc ID wajib diisi'); return; }
+      const params = { nama_template: nama, doc_template_id: docId, config: JSON.stringify(config) };
+      if(template) params.id = template.id;
+      await PKD.callApi(template ? 'updateCertificateTemplate' : 'addCertificateTemplateManual', params, 'POST');
+      showToast('Template disimpan','success'); modal.remove(); loadCertTemplates();
+    });
+  }
+
+  // =====================================================
+  //   MEMBER USERS
+  // =====================================================
+  async function loadAdminMembers() {
+    const container = document.getElementById('membersContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.callApi('getMemberUsers', {}, 'GET');
+      const members = res.data || [];
+      let html = `<div class="card border-0 shadow-sm"><div class="card-body p-4">
+        <h5 class="fw-bold mb-3">Member Users</h5>
+        <button class="btn btn-success btn-sm mb-3" id="addMemberBtn">Tambah Member</button>
+        <div class="table-responsive"><table class="table table-sm table-bordered">
+          <thead><tr><th>Username</th><th>Nama</th><th>Email</th><th>Aksi</th></tr></thead><tbody>`;
+      members.forEach(m => {
+        html += `<tr><td>${escapeHtml(m.username)}</td><td>${escapeHtml(m.nama||'')}</td><td>${escapeHtml(m.email||'')}</td><td>
+          <button class="btn btn-sm btn-warning edit-member" data-id="${m.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-member" data-id="${m.id}">🗑️</button></td></tr>`;
+      });
+      html += `</tbody></table></div></div></div>`;
+      container.innerHTML = html; container.classList.add('fade-in');
+      document.getElementById('addMemberBtn').addEventListener('click', () => showMemberModal());
+      document.querySelectorAll('.edit-member').forEach(b => b.addEventListener('click', () => {
+        const mem = members.find(m => m.id == b.dataset.id); showMemberModal(mem);
+      }));
+      document.querySelectorAll('.delete-member').forEach(b => b.addEventListener('click', async () => {
+        if(!confirm('Hapus member?')) return;
+        await PKD.callApi('deleteMemberUser', { id: b.dataset.id }, 'POST');
+        showToast('Member dihapus','success'); loadAdminMembers();
+      }));
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  function showMemberModal(member = null) {
+    const modal = document.createElement('div'); modal.className = 'modal d-block'; modal.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5>${member?'Edit':'Tambah'} Member</h5><button class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="memberId" value="${member?.id||''}">
+        <div class="mb-3"><label>Username</label><input class="form-control" id="memUsername" value="${escapeHtml(member?.username||'')}"></div>
+        <div class="mb-3"><label>Nama</label><input class="form-control" id="memNama" value="${escapeHtml(member?.nama||'')}"></div>
+        <div class="mb-3"><label>Email</label><input class="form-control" id="memEmail" value="${escapeHtml(member?.email||'')}"></div>
+        <div class="mb-3"><label>Password</label><input type="password" class="form-control" id="memPassword"></div>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Batal</button>
+      <button class="btn btn-success" id="saveMemberBtn">Simpan</button></div></div></div>`;
+    document.body.appendChild(modal);
+    document.getElementById('saveMemberBtn').addEventListener('click', async () => {
+      const params = { username: document.getElementById('memUsername').value, nama: document.getElementById('memNama').value,
+                       email: document.getElementById('memEmail').value, password: document.getElementById('memPassword').value };
+      if(member) params.id = member.id;
+      await PKD.callApi(member ? 'updateMemberUser' : 'addMemberUser', params, 'POST');
+      showToast('Member disimpan','success'); modal.remove(); loadAdminMembers();
+    });
+  }
+
+  // =====================================================
+  //   REALTIME SETTINGS
+  // =====================================================
+  async function loadRealtimeSettings() {
+    const container = document.getElementById('realtimeContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.callApi('getRealtimeSetting', {}, 'GET');
+      const enabled = res.enabled || false;
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm"><div class="card-body p-4">
+          <h5 class="fw-bold mb-3">Pengaturan Tampilan Realtime</h5>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="realtimeSwitch" ${enabled ? 'checked' : ''}>
+            <label class="form-check-label" for="realtimeSwitch">Aktifkan tampilan realtime jumlah peserta</label>
+          </div>
+          <button class="btn btn-primary rounded-pill px-4" id="saveRealtimeBtn">Simpan</button>
+          <span id="realtimeStatus" class="ms-3 small"></span>
+        </div></div>`;
+      container.classList.add('fade-in');
+      document.getElementById('saveRealtimeBtn').addEventListener('click', async () => {
+        const enabled = document.getElementById('realtimeSwitch').checked;
+        await PKD.callApi('setRealtimeSetting', { enabled }, 'POST');
+        showToast('Pengaturan realtime disimpan','success');
+        document.getElementById('realtimeStatus').innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Tersimpan</span>';
+      });
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  // =====================================================
+  //   MODE LOGIN
+  // =====================================================
+  async function loadLoginModeSettings() {
+    const container = document.getElementById('loginmodeContainer');
+    container.innerHTML = renderSkeleton();
+    try {
+      const res = await PKD.getLoginMode();
+      const enabled = res.success ? res.enabled : false;
+      container.innerHTML = `
+        <div class="card border-0 shadow-sm"><div class="card-body p-4">
+          <h5 class="fw-bold mb-2"><i class="bi bi-shield-lock me-2"></i>Pengaturan Mode Login</h5>
+          <p class="text-muted mb-4">Aktifkan atau nonaktifkan keharusan login untuk mengakses menu utama.</p>
+          <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 mb-3">
+            <div><h6 class="mb-1">Wajib Login</h6><small class="text-muted">Ketika diaktifkan, pengguna harus login terlebih dahulu.</small></div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="loginModeSwitch" ${enabled ? 'checked' : ''}>
+            </div>
+          </div>
+          <button class="btn btn-primary rounded-pill px-4" id="saveLoginModeBtn"><i class="bi bi-save me-1"></i> Simpan</button>
+          <span id="loginModeStatus" class="ms-3 small"></span>
+        </div></div>`;
+      container.classList.add('fade-in');
+      document.getElementById('saveLoginModeBtn').addEventListener('click', async () => {
+        const enabled = document.getElementById('loginModeSwitch').checked;
+        await PKD.setLoginMode(enabled);
+        showToast('Mode login berhasil ' + (enabled ? 'diaktifkan' : 'dinonaktifkan'), 'success');
+        document.getElementById('loginModeStatus').innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Tersimpan</span>';
+      });
+    } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal: ${e.message}</div>`; }
+  }
+
+  // =====================================================
+  //   INISIALISASI
+  // =====================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    if (PKD.getUserRole() !== 'admin') {
+      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+    } else {
+      loadQuizSettings(); // default tab
+    }
+
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value;
+      const err = document.getElementById('adminLoginError');
+      if (!u || !p) { err.innerText = 'Username dan password harus diisi'; err.style.display = 'block'; return; }
+      try {
+        const res = await PKD.verifyAdmin(u, p);
+        if (res.success) {
+          PKD.setUserRole('admin'); PKD.setUserData({ nama: u });
+          PKD.persistAuthState(); PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadQuizSettings();
+        } else { err.innerText = res.message || 'Login gagal'; err.style.display = 'block'; }
+      } catch (e) { err.innerText = 'Kesalahan: ' + e.message; err.style.display = 'block'; }
+    });
+
+    // Sidebar logout
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', e => { e.preventDefault(); PKD.logout(); });
+
+    // Sidebar toggle
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        document.querySelector('.row.g-4').classList.toggle('sidebar-minimized');
+        const icon = this.querySelector('i');
+        icon.classList.toggle('bi-arrow-left-right');
+        icon.classList.toggle('bi-arrow-right-left');
+      });
+    }
+
+    // Lazy load tabs
+    document.getElementById('quiz-tab').addEventListener('shown.bs.tab', loadQuizSettings);
+    document.getElementById('passwords-tab').addEventListener('shown.bs.tab', loadMenuPasswords);
+    document.getElementById('admin-users-tab').addEventListener('shown.bs.tab', loadAdminUsers);
+    document.getElementById('presets-tab').addEventListener('shown.bs.tab', loadCertPresets);
+    document.getElementById('templates-tab').addEventListener('shown.bs.tab', loadCertTemplates);
+    document.getElementById('members-tab').addEventListener('shown.bs.tab', loadAdminMembers);
+    document.getElementById('realtime-tab').addEventListener('shown.bs.tab', loadRealtimeSettings);
+    document.getElementById('loginmode-tab').addEventListener('shown.bs.tab', loadLoginModeSettings);
+
+    // Navbar collapse
+    document.addEventListener('click', function(e) {
+      const nav = document.getElementById('navbarMain');
+      const tog = document.querySelector('.navbar-toggler');
+      if (nav && tog && !nav.contains(e.target) && !tog.contains(e.target) && nav.classList.contains('show')) {
+        bootstrap.Collapse.getInstance(nav)?.hide();
+      }
+    });
+  });
+</script>
+</body>
+</html>

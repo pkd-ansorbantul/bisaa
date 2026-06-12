@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>PKD GP Ansor Bantul · Sesi Absen Admin</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- QR Code Generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+    .navbar-brand img { max-height: 40px; margin-right: 12px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
+    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
+    .nav-link i { margin-right: 6px; }
+
+    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+
+    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
+    .nav-pills .nav-link i { font-size: 1.1rem; }
+    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
+    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; transition: all 0.3s ease; }
+
+    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
+    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .crud-table { max-height: 400px; overflow-y: auto; border-radius: 16px; }
+    .table-admin th { background-color: #f8fafc; font-weight: 600; }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
+
+    .qr-canvas { display: block; margin: 0 auto; max-width: 256px; max-height: 256px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: white; }
+
+    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
+    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
+    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
+    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
+    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
+    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
+    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
+    .sidebar-minimized .nav-link[title]:hover::after {
+      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
+      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .sidebar-minimized .nav-link { position: relative; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center" href="../index.html">
+      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
+      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== KONTEN UTAMA DUA KOLOM ==================== -->
+<section class="container container-card">
+  <div class="row g-4">
+    <!-- Sidebar kiri -->
+    <div class="col-md-3 col-lg-2">
+      <div class="sidebar-sticky">
+        <div class="bg-light p-3 rounded-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Admin</span></h6>
+            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar">
+              <i class="bi bi-arrow-left-right"></i>
+            </button>
+          </div>
+          <div class="nav flex-column nav-pills">
+            <a class="nav-link" href="skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+            <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link active" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+            <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+            <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link" href="sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+            <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+            <hr class="my-2">
+            <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Konten kanan: Sesi Absen -->
+    <div class="col-md-9 col-lg-10">
+      <div class="bg-white p-4 rounded-4 shadow-sm">
+        <h2 class="section-title"><i class="bi bi-calendar-event me-2"></i>Manajemen Sesi Absen</h2>
+        <div id="sesiContainer">Memuat...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer-modern container text-center py-3 border-top mt-4">
+  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+</footer>
+
+<!-- ==================== MODAL LOGIN ==================== -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SESI ==================== -->
+<div class="modal fade" id="sesiModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="sesiModalLabel">Tambah/Edit Sesi Absen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sesiId">
+        <div class="mb-3">
+          <label class="form-label">Nama Sesi</label>
+          <input type="text" class="form-control" id="sesiNama" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Waktu</label>
+          <input type="text" class="form-control" id="sesiWaktu" placeholder="Contoh: 09:00 - 10:30 WIB">
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="sesiAktif" checked>
+          <label class="form-check-label" for="sesiAktif">Aktif</label>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">🔐 Password Sesi</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="sesiPassword" placeholder="Kosongkan jika tidak ingin mengubah">
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('sesiPassword')">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <div class="form-text text-muted">Isi hanya jika ingin menambah/mengubah password.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-warning" id="simpanSesiBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL QR SESI ==================== -->
+<div class="modal fade" id="qrSesiModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title"><i class="bi bi-qr-code-scan me-2"></i>QR Code Absen Sesi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <div id="qrSesiCanvasContainer"></div>
+        <div id="qrSesiDataText" class="mt-3 small text-muted"></div>
+        <div class="alert alert-info mt-3 mb-0 rounded-4 border-0 bg-light">
+          <i class="bi bi-info-circle"></i> Scan QR ini untuk absen tanpa password.
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-primary" id="downloadQRSesiBtn">💾 Download PNG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DETAIL KEHADIRAN ==================== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="detailModalLabel">Daftar Hadir</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detailModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST NOTIFIKASI ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0">
+      <i class="bi me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Berhasil</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../api.js"></script>
+<script>
+  // Fungsi toggle password
+  window.togglePassword = function(id) {
+    const input = document.getElementById(id);
+    if (input) input.type = input.type === 'password' ? 'text' : 'password';
+  };
+  window.togglePasswordVisibility = function(id) {
+    window.togglePassword(id);
+  };
+
+  // Shortcut ke fungsi PKD
+  const { escapeHtml, showToast, getCached, saveCached } = PKD;
+
+  // =====================================================
+  // FUNGSI BANTU
+  // =====================================================
+  function renderSkeletonTable(rows = 5, cols = 7) {
+    let html = '<div class="skeleton-table p-3">';
+    for (let r = 0; r < rows; r++) {
+      html += '<div class="d-flex gap-2 mb-3">';
+      for (let c = 0; c < cols; c++) html += '<div class="skeleton-loader" style="flex:1; height:1.5rem;"></div>';
+      html += '</div>';
+    }
+    return html + '</div>';
+  }
+
+  // =====================================================
+  // MANAJEMEN CACHE (menggunakan PKD.getCached/saveCached)
+  // =====================================================
+  async function fetchSesiFromServer() {
+    return await PKD.getSesiAbsen(true);
+  }
+
+  // =====================================================
+  // FUNGSI RENDER TABEL SESI
+  // =====================================================
+  function renderSesiTable(sesiList, container) {
+    let html = `<div class="d-flex justify-content-between mb-3">
+                  <h5>📆 Daftar Sesi Absen</h5>
+                  <button class="btn btn-success btn-sm" id="addSesiBtn">➕ Tambah</button>
+                </div>`;
+
+    if (!sesiList.length) {
+      html += '<p class="text-muted">Belum ada sesi.</p>';
+    } else {
+      html += `<div class="table-responsive crud-table">
+                <table class="table table-bordered table-sm table-admin">
+                  <thead><tr>
+                    <th>ID</th><th>Nama</th><th>Waktu</th><th>Aktif</th>
+                    <th>Aksi</th><th>QR Sesi</th><th>Kehadiran</th>
+                  </tr></thead>
+                  <tbody>`;
+      sesiList.forEach(s => {
+        html += `<tr>
+          <td>${s.id}</td>
+          <td>${escapeHtml(s.nama || '')}</td>
+          <td>${escapeHtml(s.waktu || '')}</td>
+          <td>${s.aktif ? '✅' : '❌'}</td>
+          <td>
+            <button class="btn btn-sm btn-warning edit-sesi" data-id="${s.id}">✏️</button>
+            <button class="btn btn-sm btn-danger delete-sesi" data-id="${s.id}">🗑️</button>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-dark generate-qr-sesi" 
+              data-id="${s.id}" 
+              data-nama="${escapeHtml(s.nama)}" 
+              data-qr-token="${escapeHtml(s.qrToken || '')}">
+              <i class="bi bi-qr-code"></i> QR
+            </button>
+            <button class="btn btn-sm btn-outline-secondary regenerate-qr-sesi" 
+              data-id="${s.id}" 
+              data-nama="${escapeHtml(s.nama)}">
+              <i class="bi bi-arrow-repeat"></i> Regenerate
+            </button>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-info view-attendance" data-id="${s.id}" data-nama="${escapeHtml(s.nama)}">
+              <i class="bi bi-people"></i> Lihat
+            </button>
+          </td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+
+    // Pasang event listener
+    document.getElementById('addSesiBtn')?.addEventListener('click', () => showSesiModal());
+
+    document.querySelectorAll('.edit-sesi').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const sesi = sesiList.find(s => s.id == id);
+        showSesiModal(sesi);
+      });
+    });
+
+    document.querySelectorAll('.delete-sesi').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Hapus sesi ini?')) return;
+        const id = this.dataset.id;
+        await PKD.deleteSesiAbsen(id);
+        showToast('Sesi dihapus', 'success');
+        loadSesi();
+      });
+    });
+
+    document.querySelectorAll('.generate-qr-sesi').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const sesiId = this.dataset.id;
+        const sesiNama = this.dataset.nama;
+        const qrToken = this.dataset.qrToken;
+        if (!qrToken) {
+          showToast('Token QR tidak ditemukan! Generate ulang.', 'warning');
+          return;
+        }
+        generateQRSesi(sesiId, sesiNama, qrToken);
+      });
+    });
+
+    document.querySelectorAll('.regenerate-qr-sesi').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const sesiId = this.dataset.id;
+        const sesiNama = this.dataset.nama;
+        if (!confirm(`Regenerate QR untuk sesi "${sesiNama}"? QR lama akan tidak berlaku.`)) return;
+
+        const originalHtml = this.innerHTML;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+
+        try {
+          const res = await PKD.regenerateQRSesi(sesiId);
+          if (res.success) {
+            showToast('QR berhasil diregenerasi', 'success');
+            loadSesi();
+          } else {
+            showToast(res.message || 'Gagal regenerate QR', 'danger');
+            this.innerHTML = originalHtml;
+            this.disabled = false;
+          }
+        } catch (e) {
+          showToast('Error: ' + e.message, 'danger');
+          this.innerHTML = originalHtml;
+          this.disabled = false;
+        }
+      });
+    });
+
+    document.querySelectorAll('.view-attendance').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const sesiId = this.dataset.id;
+        const sesiNama = this.dataset.nama;
+        try {
+          const res = await PKD.getAttendanceBySesi(sesiId);
+          if (res.success) {
+            const attendees = res.data || [];
+            let detail = `<h6>Daftar Hadir Sesi: ${escapeHtml(sesiNama)}</h6>`;
+            if (attendees.length === 0) {
+              detail += '<p>Belum ada peserta yang hadir.</p>';
+            } else {
+              detail += '<ul class="list-group">';
+              attendees.forEach(a => {
+                detail += `<li class="list-group-item">${escapeHtml(a.nama)} - ${escapeHtml(a.timestamp)}</li>`;
+              });
+              detail += '</ul>';
+            }
+            document.getElementById('detailModalLabel').innerHTML = 'Kehadiran';
+            document.getElementById('detailModalBody').innerHTML = detail;
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+          } else {
+            showToast('Gagal memuat data kehadiran', 'danger');
+          }
+        } catch (e) {
+          showToast('Error: ' + e.message, 'danger');
+        }
+      });
+    });
+  }
+
+  // =====================================================
+  // FUNGSI UTAMA: LOAD SESI (dengan cache)
+  // =====================================================
+  async function loadSesi() {
+    const container = document.getElementById('sesiContainer');
+    const cached = getCached('sesiAbsen');
+
+    if (cached) {
+      // Tampilkan data cache segera
+      renderSesiTable(cached, container);
+      // Ambil data terbaru di latar belakang
+      fetchSesiFromServer().then(newData => {
+        if (JSON.stringify(newData) !== JSON.stringify(cached)) {
+          renderSesiTable(newData, container);
+          saveCached('sesiAbsen', newData);
+        }
+      }).catch(console.warn);
+    } else {
+      // Tidak ada cache, tampilkan skeleton dan ambil dari server
+      container.innerHTML = renderSkeletonTable(4, 7);
+      try {
+        const data = await fetchSesiFromServer();
+        renderSesiTable(data, container);
+        saveCached('sesiAbsen', data);
+      } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`;
+      }
+    }
+  }
+
+  // =====================================================
+  // SHOW MODAL SESI (TAMBAH/EDIT)
+  // =====================================================
+  function showSesiModal(sesi = null) {
+    const isEdit = !!sesi;
+    document.getElementById('sesiModalLabel').innerText = isEdit ? 'Edit Sesi Absen' : 'Tambah Sesi Absen';
+    document.getElementById('sesiId').value = isEdit ? sesi.id : '';
+    document.getElementById('sesiNama').value = isEdit ? (sesi.nama || '') : '';
+    document.getElementById('sesiWaktu').value = isEdit ? (sesi.waktu || '') : '';
+    document.getElementById('sesiAktif').checked = isEdit ? (sesi.aktif !== undefined ? sesi.aktif : true) : true;
+    document.getElementById('sesiPassword').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('sesiModal'));
+    modal.show();
+
+    document.getElementById('simpanSesiBtn').onclick = async function() {
+      const id = document.getElementById('sesiId').value;
+      const nama = document.getElementById('sesiNama').value.trim();
+      const waktu = document.getElementById('sesiWaktu').value;
+      const aktif = document.getElementById('sesiAktif').checked;
+      const password = document.getElementById('sesiPassword').value;
+
+      if (!nama) {
+        showToast('Nama sesi wajib diisi', 'danger');
+        return;
+      }
+
+      try {
+        if (isEdit) {
+          await PKD.updateSesiAbsen(id, nama, waktu, aktif, password);
+        } else {
+          await PKD.addSesiAbsen(nama, waktu, aktif, password);
+        }
+        showToast(isEdit ? 'Sesi diperbarui' : 'Sesi ditambahkan', 'success');
+        modal.hide();
+        loadSesi();
+      } catch (e) {
+        showToast('Gagal: ' + e.message, 'danger');
+      }
+    };
+  }
+
+  // =====================================================
+  // GENERATE QR
+  // =====================================================
+  function generateQRSesi(sesiId, sesiNama, qrToken) {
+    try {
+      const qrLib = typeof qrcodeGenerator === 'function' ? qrcodeGenerator : qrcode;
+
+      // Hitung link ke halaman absen publik (di luar folder /admin/)
+      const currentPath = window.location.pathname;
+      const adminDir = '/admin/';
+      const idx = currentPath.lastIndexOf(adminDir);
+      let basePath;
+      if (idx !== -1) {
+        basePath = currentPath.substring(0, idx);
+      } else {
+        basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+      }
+      const baseUrl = window.location.origin + basePath + '/absen.html';
+      const qrUrl = `${baseUrl}?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(qrToken)}`;
+
+      const qr = qrLib(0, 'M');
+      qr.addData(qrUrl);
+      qr.make();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = qr.getModuleCount() * 8;
+      canvas.height = qr.getModuleCount() * 8;
+      const ctx = canvas.getContext('2d');
+      
+      for (let row = 0; row < qr.getModuleCount(); row++) {
+        for (let col = 0; col < qr.getModuleCount(); col++) {
+          ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+          ctx.fillRect(col * 8, row * 8, 8, 8);
+        }
+      }
+
+      const container = document.getElementById('qrSesiCanvasContainer');
+      container.innerHTML = '';
+      container.appendChild(canvas);
+      canvas.classList.add('qr-canvas');
+
+      document.getElementById('qrSesiDataText').innerHTML = `
+        <strong>Sesi:</strong> ${escapeHtml(sesiNama)}<br>
+        <strong>ID Sesi:</strong> ${sesiId}<br>
+        <span class="text-success">Token tersemat dalam QR (tanpa password)</span>
+      `;
+
+      window.__qrSesiCanvas = canvas;
+
+      const qrModal = new bootstrap.Modal(document.getElementById('qrSesiModal'));
+      qrModal.show();
+    } catch (e) {
+      showToast('Gagal generate QR: ' + e.message, 'danger');
+    }
+  }
+
+  document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
+    if (window.__qrSesiCanvas) {
+      const link = document.createElement('a');
+      link.download = `QR_Sesi_${Date.now()}.png`;
+      link.href = window.__qrSesiCanvas.toDataURL('image/png');
+      link.click();
+    } else {
+      showToast('Tidak ada QR yang tersedia', 'warning');
+    }
+  });
+
+  // =====================================================
+  // INISIALISASI
+  // =====================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    // Auth check
+    if (PKD.getUserRole() !== 'admin') {
+      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+    } else {
+      loadSesi();
+    }
+
+    // Tombol login di modal
+    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const errorDiv = document.getElementById('adminLoginError');
+      if (!username || !password) {
+        errorDiv.innerText = 'Username dan password harus diisi';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      try {
+        const res = await PKD.verifyAdmin(username, password);
+        if (res.success) {
+          PKD.setUserRole('admin');
+          PKD.setUserData({ nama: username });
+          PKD.persistAuthState();
+          PKD.updateNavbarMenu();
+          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+          loadSesi();
+        } else {
+          errorDiv.innerText = res.message || 'Login gagal';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errorDiv.innerText = 'Kesalahan: ' + err.message;
+        errorDiv.style.display = 'block';
+      }
+    });
+
+    // Tombol logout di sidebar
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      PKD.logout();
+    });
+
+    // Toggle sidebar
+    const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleSidebarBtn) {
+      toggleSidebarBtn.addEventListener('click', function() {
+        const row = document.querySelector('.row.g-4');
+        row.classList.toggle('sidebar-minimized');
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('bi-arrow-left-right')) {
+          icon.classList.remove('bi-arrow-left-right');
+          icon.classList.add('bi-arrow-right-left');
+        } else {
+          icon.classList.remove('bi-arrow-right-left');
+          icon.classList.add('bi-arrow-left-right');
+        }
+      });
+    }
+
+    // Tutup navbar saat klik di luar
+    document.addEventListener('click', function(e) {
+      const navbar = document.getElementById('navbarMain');
+      const toggler = document.querySelector('.navbar-toggler');
+      if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
+        bootstrap.Collapse.getInstance(navbar)?.hide();
+      }
+    });
+  });
+</script>
+</body>
+</html>
