@@ -13,22 +13,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Signature Pad -->
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <!-- QR Code via QuickChart -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
-    body {
-      background: #f8fafc;
-      color: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
 
-    .navbar {
-      background: rgba(255,255,255,0.8) !important;
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
-    }
+    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
     .navbar-brand img { height: 45px; margin-right: 12px; }
     .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
     .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; margin-top: 2px; }
@@ -83,14 +75,31 @@
     }
 
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast {
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    .saved-signature-img {
+      max-height: 80px;
+      max-width: 200px;
+      object-fit: contain;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4px;
       background: white;
-      border-left: 5px solid;
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-      border-radius: 16px;
+      margin-bottom: 10px;
     }
-    .toast.border-success { border-left-color: #28a745; }
-    .toast.border-danger { border-left-color: #dc3545; }
+
+    .qr-container {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .qr-container img {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 4px;
+      background: white;
+    }
 
     @media (max-width: 576px) {
       .container-card { padding: 1.5rem; }
@@ -113,7 +122,6 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarMain">
-      <!-- Menu utama -->
       <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link" href="pretest.html">Pre-test</a></li>
         <li class="nav-item"><a class="nav-link" href="posttest.html">Post-test</a></li>
@@ -124,7 +132,6 @@
         <li class="nav-item"><a class="nav-link" href="sertifikat.html">Sertifikat</a></li>
         <li class="nav-item"><a class="nav-link active" href="#">Tanda Tangan</a></li>
       </ul>
-      <!-- Menu user akan diisi oleh api.js -->
       <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
     </div>
   </div>
@@ -140,6 +147,13 @@
     <div class="mb-3">
       <label class="form-label fw-bold">Nama Lengkap</label>
       <input type="text" class="form-control" id="nama" value="Fatolani" required>
+    </div>
+
+    <!-- Kegunaan Tanda Tangan (Manual, tanpa dropdown) -->
+    <div class="mb-3">
+      <label class="form-label fw-bold">Kegunaan Tanda Tangan</label>
+      <textarea class="form-control" id="kegunaan" rows="2" placeholder="Contoh: Untuk verifikasi sertifikat PKD Dlingo, atau keperluan administrasi lainnya...">Untuk verifikasi sertifikat PKD Dlingo</textarea>
+      <div class="form-text text-muted">Isikan secara manual keperluan atau alasan tanda tangan ini.</div>
     </div>
 
     <!-- Password verifikasi -->
@@ -171,15 +185,9 @@
       <i class="bi bi-cloud-upload me-2"></i>Kirim Tanda Tangan
     </button>
 
-    <!-- Status -->
-    <div id="status" class="mt-3 small"></div>
+    <!-- Status & Hasil -->
+    <div id="status" class="mt-3"></div>
   </form>
-
-  <div class="mt-4 text-center">
-    <a href="verify_signature.html?role=sekretaris" target="_blank" class="btn btn-outline-success btn-sm btn-rounded">
-      <i class="bi bi-shield-check me-1"></i>Lihat Tanda Tangan Tersimpan
-    </a>
-  </div>
 </div>
 
 <!-- Footer -->
@@ -264,6 +272,7 @@
     e.preventDefault();
 
     const nama = document.getElementById('nama').value.trim();
+    const kegunaan = document.getElementById('kegunaan').value.trim();
     const password = document.getElementById('password').value.trim();
     const statusDiv = document.getElementById('status');
 
@@ -290,21 +299,48 @@
         role: 'sekretaris',
         nama: nama,
         signature: signatureDataURL,
-        password: password
+        password: password,
+        peserta_nama: '',
+        kegunaan: kegunaan  // Field manual untuk kegunaan
       }, 'POST');
 
       if (result.success) {
         const driveId = result.driveId || '';
         const verifyUrl = `verify_signature.html?role=sekretaris&driveId=${driveId}`;
+
+        // QR Code menuju verifikasi_qr.html (persetujuan)
+        const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent('verifikasi_qr.html?role=sekretaris&nama=' + encodeURIComponent(nama))}&size=120&ecLevel=L`;
+
         statusDiv.innerHTML = `
           <div class="alert alert-success">
             <i class="bi bi-check-circle-fill me-2"></i>
-            <strong>✅ Tanda tangan digital berhasil disimpan!</strong><br>
-            <a href="${verifyUrl}" target="_blank" class="alert-link">Lihat hasil verifikasi</a>
+            <strong>✅ Tanda tangan digital berhasil disimpan!</strong>
+            ${kegunaan ? `<p class="mt-2 mb-0"><strong>Kegunaan:</strong> ${kegunaan}</p>` : ''}
+          </div>
+          <div class="text-center mt-3">
+            <h6 class="fw-bold">Tanda Tangan Tersimpan</h6>
+            ${driveId ? `<img src="https://drive.google.com/thumbnail?id=${driveId}&sz=w200" class="saved-signature-img" alt="Tanda tangan">` : ''}
+          </div>
+          <div class="text-center mt-3">
+            <h6 class="fw-bold">QR Code Verifikasi Persetujuan</h6>
+            <div class="qr-container">
+              <img src="${qrUrl}" alt="QR Verifikasi">
+            </div>
+            <p class="small text-muted mt-2">
+              Scan QR code ini untuk melihat persetujuan anda.<br>
+              <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">Buka QR di tab baru</a>
+            </p>
+          </div>
+          <div class="text-center mt-3">
+            <a href="${verifyUrl}" target="_blank" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-shield-check me-1"></i> Verifikasi Tanda Tangan (Gambar)
+            </a>
           </div>
         `;
+
         sigPad.clear();
         document.getElementById('password').value = '';
+        document.getElementById('kegunaan').value = '';
         PKD.showToast('Tanda tangan Sekretaris tersimpan', 'success');
       } else {
         statusDiv.innerHTML = `<div class="alert alert-danger">${result.error || 'Gagal menyimpan tanda tangan.'}</div>`;
