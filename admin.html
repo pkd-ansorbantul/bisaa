@@ -72,7 +72,11 @@
       transition: opacity 0.2s;
     }
     .brand-sidebar:hover { opacity: 0.8; }
-    .brand-sidebar img { max-height: 45px; width: auto; }
+    .brand-sidebar img { 
+      max-height: 45px; 
+      width: auto; 
+      transition: all 0.2s;
+    }
     .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; line-height: 1.2; }
     .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; }
     
@@ -82,6 +86,7 @@
     }
     .sidebar-wrapper.minimized .brand-sidebar img {
       max-height: 40px;
+      margin: 0 auto;
     }
     .sidebar-wrapper.minimized .brand-sidebar-title,
     .sidebar-wrapper.minimized .brand-sidebar-sub {
@@ -242,6 +247,10 @@
     .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
     .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
     .stat-label { font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* === FADE IN === */
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -260,7 +269,7 @@
       </div>
 
       <!-- Logo & Brand (sebagai link Beranda) -->
-      <a class="brand-sidebar" href="../index.html" title="Beranda">
+      <a class="brand-sidebar" href="index.html" title="Beranda">
         <img src="LOGO%20ANSOR.webp" alt="GP Ansor">
         <div>
           <div class="brand-sidebar-title">PKD GP Ansor</div>
@@ -270,23 +279,23 @@
 
       <!-- Menu Navigasi Sidebar (Semua link sudah ditambahkan admin/) -->
       <div class="nav flex-column nav-pills">
-        <a class="nav-link active" href="admin.html" title="Dashboard"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
-        <a class="nav-link" href="admin/skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i>Skrining</a>
-        <a class="nav-link" href="admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i>Pre-test</a>
-        <a class="nav-link" href="admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i>Post-test</a>
-        <a class="nav-link" href="admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i>Sesi Absen</a>
-        <a class="nav-link" href="admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i>Materi</a>
-        <a class="nav-link" href="admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i>Peserta</a>
-        <a class="nav-link" href="admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i>Alumni</a>
-        <a class="nav-link" href="admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i>Kader</a>
-        <a class="nav-link" href="admin/informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i>Informasi</a>
-        <a class="nav-link" href="admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i>Data Absensi</a>
-        <a class="nav-link" href="admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i>Rekap Absensi</a>
-        <a class="nav-link" href="admin/sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i>Sertifikat</a>
-        <a class="nav-link" href="admin/pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i>Pengaturan</a>
+        <a class="nav-link active" href="admin.html" title="Dashboard"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+        <a class="nav-link" href="admin/skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+        <a class="nav-link" href="admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+        <a class="nav-link" href="admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+        <a class="nav-link" href="admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+        <a class="nav-link" href="admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+        <a class="nav-link" href="admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+        <a class="nav-link" href="admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+        <a class="nav-link" href="admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+        <a class="nav-link" href="admin/informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
+        <a class="nav-link" href="admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+        <a class="nav-link" href="admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+        <a class="nav-link" href="admin/sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+        <a class="nav-link" href="admin/pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
         
         <div class="sidebar-logout"></div>
-        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
       </div>
     </div>
 
@@ -415,6 +424,7 @@
     container.innerHTML = renderSkeleton();
 
     try {
+      // Gunakan fungsi dari PKD (api.js)
       const [peserta, sesi, materi, skrining, pretest, posttest] = await Promise.all([
         PKD.getPesertaList(),
         PKD.getSesiAbsen(),
@@ -489,6 +499,13 @@
   //   INISIALISASI
   // =====================================================
   document.addEventListener('DOMContentLoaded', function() {
+    // Cek apakah PKD sudah terdefinisi (api.js sudah dimuat)
+    if (typeof PKD === 'undefined') {
+      console.error('PKD tidak terdefinisi. Pastikan api.js sudah dimuat dengan benar.');
+      document.getElementById('dashboardContent').innerHTML = '<div class="alert alert-danger">Gagal memuat sistem. Silakan refresh halaman.</div>';
+      return;
+    }
+
     if (PKD.getUserRole() !== 'admin') {
       new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
     } else {
