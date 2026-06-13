@@ -7,7 +7,7 @@
   'use strict';
 
   // ======================== KONFIGURASI ========================
-  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyEXavYeKkYVygsuk2rJckbJHN4DMT0XBtb3s9K-qGbreBS3CG3WBSAs4bpvJOTpdsXEg/exec';
+  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyZAh91D8Yg7yqKSrJfH0GbaC3jH7bPU1s2ZDrS8YShHxLQTnbUveh9MAG4pBw9scOuZA/exec';
   const SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
   // ======================== STATE ========================
@@ -617,6 +617,11 @@
     return await callApi('getDigitalApproval', { role }, 'GET');
   }
 
+  // ✅ TAMBAHAN BARU: Fungsi getAllDigitalApprovals
+  async function getAllDigitalApprovals() {
+    return await callApi('getAllDigitalApprovals', {}, 'GET');
+  }
+
   // --- Pengaturan ---
   async function getQuizSettings(forceRefresh = false) {
     const cacheKey = 'quizSettings';
@@ -855,6 +860,7 @@
     // Tanda Tangan Digital
     submitDigitalSignature,
     getDigitalApproval,
+    getAllDigitalApprovals, // ✅ Fungsi ini ditambahkan
 
     // Pengaturan
     getQuizSettings,
