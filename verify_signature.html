@@ -8,14 +8,18 @@
   <!-- Favicon & Font -->
   <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
   <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <!-- JsBarcode untuk generate barcode -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
   <style>
-    * { font-family: 'Inter', system-ui, sans-serif; }
+    * {
+      font-family: 'Inter', system-ui, sans-serif;
+    }
     body {
       background: #f8fafc;
       color: #0f172a;
@@ -25,13 +29,25 @@
     }
 
     .navbar {
-      background: rgba(255,255,255,0.8) !important;
+      background: rgba(255, 255, 255, 0.8) !important;
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
+      border-bottom: 1px solid rgba(203, 213, 225, 0.3);
     }
-    .navbar-brand img { height: 45px; margin-right: 12px; }
-    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; margin-top: 2px; }
+    .navbar-brand img {
+      height: 45px;
+      margin-right: 12px;
+    }
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0a3d62;
+    }
+    .brand-sub {
+      font-size: 0.9rem;
+      color: #6c757d;
+      display: block;
+      margin-top: 2px;
+    }
 
     .container-card {
       max-width: 700px;
@@ -39,8 +55,8 @@
       border-radius: 32px;
       padding: 2rem;
       margin: 30px auto;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-      border: 1px solid rgba(226,232,240,0.6);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(226, 232, 240, 0.6);
     }
 
     .section-title {
@@ -62,7 +78,11 @@
       object-fit: contain;
     }
 
-    .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
+    .btn-rounded {
+      border-radius: 9999px;
+      padding: 0.6rem 2rem;
+      font-weight: 600;
+    }
 
     .footer-modern {
       font-size: 0.85rem;
@@ -74,16 +94,6 @@
       background: white;
     }
 
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast {
-      background: white;
-      border-left: 5px solid;
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-      border-radius: 16px;
-    }
-    .toast.border-success { border-left-color: #28a745; }
-    .toast.border-danger { border-left-color: #dc3545; }
-
     .barcode-container {
       display: inline-block;
       background: white;
@@ -92,276 +102,316 @@
       border-radius: 4px;
     }
 
-    @media (max-width: 576px) { .container-card { padding: 1.5rem; } }
+    .approval-badge {
+      font-size: 1.1rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+    }
+
+    .detail-item {
+      border-bottom: 1px solid #f1f5f9;
+      padding: 0.5rem 0;
+    }
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 576px) {
+      .container-card {
+        padding: 1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
-      <span>
-        <span class="brand-title">PKD GP Ansor</span>
-        <span class="brand-sub">Kabupaten Bantul</span>
-      </span>
-    </a>
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="pretest.html">Pre-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="posttest.html">Post-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="absen.html">Absen</a></li>
-        <li class="nav-item"><a class="nav-link" href="skrining.html">Skrining</a></li>
-        <li class="nav-item"><a class="nav-link" href="peserta.html">Peserta</a></li>
-        <li class="nav-item"><a class="nav-link" href="materi.html">Materi</a></li>
-        <li class="nav-item"><a class="nav-link" href="sertifikat.html">Sertifikat</a></li>
-        <li class="nav-item"><a class="nav-link active" href="#">Verifikasi</a></li>
-      </ul>
-      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
-    </div>
-  </div>
-</nav>
-
-<!-- Konten utama -->
-<div class="container container-card">
-  <h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Tanda Tangan Digital</h2>
-  <p class="text-muted text-center mb-4">Memverifikasi keaslian tanda tangan digital Ketua PC / Sekretaris / Instruktur PKD</p>
-
-  <div id="verificationContent">
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-        <span class="visually-hidden">Memverifikasi...</span>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+        <span>
+          <span class="brand-title">PKD GP Ansor</span>
+          <span class="brand-sub">Kabupaten Bantul</span>
+        </span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="pretest.html">Pre-test</a></li>
+          <li class="nav-item"><a class="nav-link" href="posttest.html">Post-test</a></li>
+          <li class="nav-item"><a class="nav-link" href="absen.html">Absen</a></li>
+          <li class="nav-item"><a class="nav-link" href="skrining.html">Skrining</a></li>
+          <li class="nav-item"><a class="nav-link" href="peserta.html">Peserta</a></li>
+          <li class="nav-item"><a class="nav-link" href="materi.html">Materi</a></li>
+          <li class="nav-item"><a class="nav-link" href="sertifikat.html">Sertifikat</a></li>
+          <li class="nav-item"><a class="nav-link active" href="#">Verifikasi</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
       </div>
-      <p class="mt-3 text-muted">Memverifikasi tanda tangan digital...</p>
     </div>
-  </div>
-</div>
+  </nav>
 
-<!-- Footer -->
-<footer class="footer-modern container">
-  <i class="bi bi-c-circle"></i> 2026 · Tim Instruktur GP Ansor Kabupaten Bantul
-</footer>
+  <!-- Konten utama -->
+  <div class="container container-card">
+    <h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Tanda Tangan Digital</h2>
+    <p class="text-muted text-center mb-4">Memverifikasi keaslian tanda tangan digital Ketua PC / Sekretaris / Instruktur PKD</p>
 
-<!-- Toast container -->
-<div class="toast-container">
-  <div id="apiToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-    <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="apiToastIcon"></i>
-      <strong class="me-auto" id="apiToastTitle">Berhasil</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-    </div>
-    <div class="toast-body" id="apiToastMessage"></div>
-  </div>
-</div>
-
-<!-- Bootstrap JS dan api.js -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="api.js"></script>
-
-<script>
-  // =====================================================
-  //   AMBIL PARAMETER DARI URL
-  // =====================================================
-  function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-  }
-
-  // =====================================================
-  //   RENDER HASIL VERIFIKASI
-  // =====================================================
-  function renderVerificationResult(data, role, driveId) {
-    const container = document.getElementById('verificationContent');
-
-    const roleLabels = {
-      'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul',
-      'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul',
-      'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul'
-    };
-    const roleLabel = roleLabels[role] || role;
-
-    const imgUrl = driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400` : '';
-
-    // Data untuk barcode
-    const barcodeData = JSON.stringify({
-      role: role,
-      nama: data.nama,
-      driveId: driveId,
-      timestamp: data.timestamp
-    });
-    const barcodeId = 'barcode-' + Date.now();
-
-    let html = `
-      <div class="alert alert-success fw-bold text-center mb-4">
-        <i class="bi bi-check-circle-fill me-2"></i>✅ Tanda tangan digital VALID
+    <div id="verificationContent">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Memverifikasi...</span>
+        </div>
+        <p class="mt-3 text-muted">Memverifikasi tanda tangan digital...</p>
       </div>
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6 text-center mb-3 mb-md-0">
-              ${imgUrl ? `<img src="${imgUrl}" class="signature-img" alt="Tanda Tangan">` : '<div class="text-muted">Gambar tanda tangan tidak tersedia</div>'}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer-modern container">
+    <i class="bi bi-c-circle"></i> 2026 · Tim Instruktur GP Ansor Kabupaten Bantul
+  </footer>
+
+  <!-- Bootstrap JS dan api.js -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="api.js"></script>
+
+  <script>
+    // =====================================================
+    //   AMBIL PARAMETER DARI URL
+    // =====================================================
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    // =====================================================
+    //   RENDER HASIL VERIFIKASI
+    // =====================================================
+    function renderVerificationResult(data, role, driveId) {
+      const container = document.getElementById('verificationContent');
+
+      const roleLabels = {
+        'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul',
+        'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul',
+        'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul'
+      };
+      const roleLabel = roleLabels[role] || role;
+
+      // Format timestamp
+      let timestampDisplay = 'Tidak tersedia';
+      if (data.timestamp) {
+        try {
+          const date = new Date(data.timestamp);
+          timestampDisplay = date.toLocaleString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+        } catch (e) {
+          timestampDisplay = data.timestamp;
+        }
+      }
+
+      // Kegunaan
+      const kegunaan = data.kegunaan || 'Tidak ada keterangan';
+
+      // Nama peserta (jika ada)
+      const pesertaNama = data.peserta_nama || '-';
+
+      // Gambar tanda tangan
+      const imgUrl = driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400` : '';
+
+      // Data untuk barcode (verifikasi)
+      const barcodeData = JSON.stringify({
+        role: role,
+        nama: data.nama,
+        driveId: driveId,
+        timestamp: data.timestamp,
+        kegunaan: kegunaan
+      });
+      const barcodeId = 'barcode-' + Date.now();
+
+      let html = `
+        <div class="alert alert-success fw-bold text-center mb-4">
+          <i class="bi bi-check-circle-fill me-2"></i>✅ Tanda tangan digital VALID
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+            <div class="row align-items-center">
+              <div class="col-md-5 text-center mb-3 mb-md-0">
+                ${imgUrl ? `<img src="${imgUrl}" class="signature-img" alt="Tanda Tangan">` : '<div class="text-muted"><i class="bi bi-image fs-1"></i><br>Gambar tidak tersedia</div>'}
+              </div>
+              <div class="col-md-7">
+                <div class="detail-item">
+                  <strong>Role</strong><br>
+                  <span class="text-muted">${roleLabel}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Nama Penanda Tangan</strong><br>
+                  <span class="fw-bold">${data.nama || 'Tidak diketahui'}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Kegunaan</strong><br>
+                  <span class="text-muted">${kegunaan}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Untuk Peserta</strong><br>
+                  <span class="text-muted">${pesertaNama}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Waktu Persetujuan</strong><br>
+                  <span class="text-muted">${timestampDisplay}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Drive ID</strong><br>
+                  <code style="font-size:0.75rem;">${driveId || '-'}</code>
+                </div>
+              </div>
             </div>
-            <div class="col-md-6">
-              <table class="table table-borderless">
-                <tr>
-                  <th style="width: 40%;">Role</th>
-                  <td>${roleLabel}</td>
-                </tr>
-                <tr>
-                  <th>Nama</th>
-                  <td><strong>${data.nama || 'Tidak diketahui'}</strong></td>
-                </tr>
-                <tr>
-                  <th>Timestamp</th>
-                  <td>${data.timestamp ? new Date(data.timestamp).toLocaleString('id-ID') : 'Tidak tersedia'}</td>
-                </tr>
-                <tr>
-                  <th>Drive ID</th>
-                  <td><code>${driveId || '-'}</code></td>
-                </tr>
-              </table>
+
+            <hr class="my-3">
+
+            <div class="text-center">
+              <h6 class="fw-bold">Barcode Verifikasi</h6>
+              <div class="barcode-container" id="${barcodeId}"></div>
+              <p class="small text-muted mt-2">Scan barcode ini untuk memverifikasi keaslian tanda tangan digital.</p>
             </div>
-          </div>
-          <hr>
-          <div class="text-center">
-            <h6 class="fw-bold">Barcode Verifikasi</h6>
-            <div class="barcode-container" id="${barcodeId}"></div>
-            <p class="small text-muted mt-2">Scan barcode ini untuk memverifikasi keaslian tanda tangan digital.</p>
           </div>
         </div>
-      </div>
-      <div class="text-center mt-3">
-        <a href="index.html" class="btn btn-outline-primary btn-rounded">
-          <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
-        </a>
-        <a href="sertifikat.html" class="btn btn-outline-success btn-rounded ms-2">
-          <i class="bi bi-patch-check me-1"></i>Lihat Sertifikat
-        </a>
-      </div>
-    `;
 
-    container.innerHTML = html;
+        <div class="text-center mt-3">
+          <a href="index.html" class="btn btn-outline-primary btn-rounded">
+            <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
+          </a>
+          <a href="sertifikat.html" class="btn btn-outline-success btn-rounded ms-2">
+            <i class="bi bi-patch-check me-1"></i>Lihat Sertifikat
+          </a>
+        </div>
+      `;
 
-    // Generate barcode
-    setTimeout(() => {
-      try {
-        JsBarcode(`#${barcodeId}`, barcodeData, {
-          format: "CODE128",
-          width: 2,
-          height: 60,
-          displayValue: true,
-          fontSize: 10,
-          margin: 10
-        });
-      } catch (e) {
-        console.warn('Barcode gagal digenerate, fallback ke teks:', e);
-        const barcodeEl = document.getElementById(barcodeId);
-        if (barcodeEl) {
-          barcodeEl.innerHTML = `<div style="font-size:0.5rem; word-break:break-all;">${barcodeData}</div>`;
+      container.innerHTML = html;
+
+      // Generate barcode
+      setTimeout(() => {
+        try {
+          JsBarcode(`#${barcodeId}`, barcodeData, {
+            format: "CODE128",
+            width: 2,
+            height: 60,
+            displayValue: true,
+            fontSize: 10,
+            margin: 10
+          });
+        } catch (e) {
+          console.warn('Barcode gagal digenerate, fallback ke teks:', e);
+          const barcodeEl = document.getElementById(barcodeId);
+          if (barcodeEl) {
+            barcodeEl.innerHTML = `<div style="font-size:0.5rem; word-break:break-all;">${barcodeData}</div>`;
+          }
         }
-      }
-    }, 100);
-  }
-
-  function renderError(message) {
-    const container = document.getElementById('verificationContent');
-    container.innerHTML = `
-      <div class="alert alert-danger text-center">
-        <i class="bi bi-x-circle-fill me-2"></i>${message}
-      </div>
-      <div class="text-center mt-3">
-        <a href="index.html" class="btn btn-outline-primary btn-rounded">
-          <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
-        </a>
-      </div>
-    `;
-  }
-
-  function renderNotFound(role) {
-    const container = document.getElementById('verificationContent');
-    const roleLabels = {
-      'ketua_pc': 'Ketua PC',
-      'sekretaris': 'Sekretaris',
-      'instruktur': 'Instruktur'
-    };
-    container.innerHTML = `
-      <div class="alert alert-warning text-center">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        Tanda tangan digital untuk <strong>${roleLabels[role] || role}</strong> belum ditemukan.
-        <br>Silakan <a href="sign_${role}.html" class="alert-link">tanda tangan di halaman ini</a> terlebih dahulu.
-      </div>
-      <div class="text-center mt-3">
-        <a href="index.html" class="btn btn-outline-primary btn-rounded">
-          <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
-        </a>
-      </div>
-    `;
-  }
-
-  // =====================================================
-  //   VERIFIKASI UTAMA
-  // =====================================================
-  async function verifySignature() {
-    const role = getQueryParam('role');
-    const driveId = getQueryParam('driveId');
-
-    if (!role) {
-      renderError('Parameter "role" tidak ditemukan. Silakan gunakan link verifikasi yang benar.');
-      return;
+      }, 100);
     }
 
-    // Jika driveId tidak ada, coba ambil dari server
-    if (!driveId) {
-      try {
-        const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
-        if (res.success && res.data && res.data.driveId) {
-          // Redirect ke halaman yang sama dengan driveId
-          window.location.href = `verify_signature.html?role=${role}&driveId=${res.data.driveId}`;
-          return;
-        } else {
-          renderNotFound(role);
-          return;
-        }
-      } catch (err) {
-        renderError('Gagal mengambil data tanda tangan: ' + err.message);
+    function renderError(message) {
+      const container = document.getElementById('verificationContent');
+      container.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="bi bi-x-circle-fill me-2"></i>${message}
+        </div>
+        <div class="text-center mt-3">
+          <a href="index.html" class="btn btn-outline-primary btn-rounded">
+            <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
+          </a>
+        </div>
+      `;
+    }
+
+    function renderNotFound(role) {
+      const container = document.getElementById('verificationContent');
+      const roleLabels = {
+        'ketua_pc': 'Ketua PC',
+        'sekretaris': 'Sekretaris',
+        'instruktur': 'Instruktur'
+      };
+      container.innerHTML = `
+        <div class="alert alert-warning text-center">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Tanda tangan digital untuk <strong>${roleLabels[role] || role}</strong> belum ditemukan.
+          <br>Silakan <a href="sign_${role}.html" class="alert-link">tanda tangan di halaman ini</a> terlebih dahulu.
+        </div>
+        <div class="text-center mt-3">
+          <a href="index.html" class="btn btn-outline-primary btn-rounded">
+            <i class="bi bi-house-door me-1"></i>Kembali ke Beranda
+          </a>
+        </div>
+      `;
+    }
+
+    // =====================================================
+    //   VERIFIKASI UTAMA
+    // =====================================================
+    async function verifySignature() {
+      const role = getQueryParam('role');
+      const driveId = getQueryParam('driveId');
+
+      if (!role) {
+        renderError('Parameter "role" tidak ditemukan. Silakan gunakan link verifikasi yang benar.');
         return;
       }
-    }
 
-    // Verifikasi dengan driveId yang diberikan
-    try {
-      const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
-      if (res.success && res.data && res.data.driveId === driveId) {
-        renderVerificationResult(res.data, role, driveId);
-      } else {
-        renderError('Tanda tangan tidak valid atau telah diubah.');
+      // Jika driveId tidak ada, coba ambil dari server
+      if (!driveId) {
+        try {
+          const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
+          if (res.success && res.data && res.data.driveId) {
+            // Redirect ke halaman yang sama dengan driveId
+            window.location.href = `verify_signature.html?role=${role}&driveId=${res.data.driveId}`;
+            return;
+          } else {
+            renderNotFound(role);
+            return;
+          }
+        } catch (err) {
+          renderError('Gagal mengambil data tanda tangan: ' + err.message);
+          return;
+        }
       }
-    } catch (err) {
-      renderError('Terjadi kesalahan saat verifikasi: ' + err.message);
-    }
-  }
 
-  // =====================================================
-  //   NAVBAR COLLAPSE
-  // =====================================================
-  document.addEventListener('click', function(e) {
-    const navbar = document.getElementById('navbarMain');
-    const toggler = document.querySelector('.navbar-toggler');
-    if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
-      bootstrap.Collapse.getInstance(navbar)?.hide();
+      // Verifikasi dengan driveId yang diberikan
+      try {
+        const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
+        if (res.success && res.data && res.data.driveId === driveId) {
+          renderVerificationResult(res.data, role, driveId);
+        } else {
+          renderError('Tanda tangan tidak valid atau telah diubah.');
+        }
+      } catch (err) {
+        renderError('Terjadi kesalahan saat verifikasi: ' + err.message);
+      }
     }
-  });
 
-  // =====================================================
-  //   INIT PADA DOM LOADED
-  // =====================================================
-  document.addEventListener('DOMContentLoaded', function() {
-    verifySignature();
-  });
-</script>
+    // =====================================================
+    //   NAVBAR COLLAPSE
+    // =====================================================
+    document.addEventListener('click', function(e) {
+      const navbar = document.getElementById('navbarMain');
+      const toggler = document.querySelector('.navbar-toggler');
+      if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
+        if (typeof bootstrap !== 'undefined') {
+          bootstrap.Collapse.getInstance(navbar)?.hide();
+        }
+      }
+    });
+
+    // =====================================================
+    //   INIT PADA DOM LOADED
+    // =====================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      verifySignature();
+    });
+  </script>
 </body>
 </html>

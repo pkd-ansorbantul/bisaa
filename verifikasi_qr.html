@@ -1,229 +1,330 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Verifikasi Persetujuan - PKD GP Ansor Bantul</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Verifikasi Persetujuan Digital - PKD GP Ansor Bantul</title>
 
-  <!-- Favicon & Font Modern -->
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Favicon & Font Modern -->
+    <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    body {
-      background: #f8fafc;
-      color: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .navbar {
-      background: rgba(255,255,255,0.8) !important;
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
-    }
-    .navbar-brand img {
-      height: 40px;
-      margin-right: 12px;
-    }
-    .brand-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #0a3d62;
-    }
-    .brand-sub {
-      font-size: 0.9rem;
-      color: #6c757d;
-      display: block;
-    }
+        .navbar {
+            background: rgba(255,255,255,0.8) !important;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(203,213,225,0.3);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 12px;
+        }
+        .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0a3d62;
+        }
+        .brand-sub {
+            font-size: 0.9rem;
+            color: #6c757d;
+            display: block;
+        }
 
-    .container-card {
-      max-width: 600px;
-      background: white;
-      border-radius: 32px;
-      padding: 2rem;
-      margin: 30px auto;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-      border: 1px solid rgba(226,232,240,0.6);
-    }
+        .container-card {
+            max-width: 600px;
+            background: white;
+            border-radius: 32px;
+            padding: 2rem;
+            margin: 30px auto;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(226,232,240,0.6);
+        }
 
-    .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
-      margin-bottom: 1.8rem;
-    }
+        .section-title {
+            font-weight: 650;
+            font-size: 1.75rem;
+            border-left: 6px solid #2563eb;
+            padding-left: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
 
-    .status-badge {
-      font-size: 1.2rem;
-      padding: 10px 20px;
-      border-radius: 50px;
-      display: inline-block;
-    }
+        .status-badge {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+        }
 
-    .footer-modern {
-      font-size: 0.85rem;
-      color: #64748b;
-      text-align: center;
-      padding: 1.5rem 0;
-      border-top: 1px solid #e2e8f0;
-      background: white;
-      margin-top: auto;
-    }
+        .footer-modern {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+            margin-top: auto;
+        }
 
-    .logo {
-      height: 60px;
-    }
+        .logo { height: 60px; }
 
-    .approval-card {
-      border: none;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      padding: 20px;
-      margin-top: 20px;
-    }
+        .approval-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-top: 20px;
+            background: #ffffff;
+        }
 
-    .approval-card .approval-icon {
-      font-size: 3rem;
-      color: #28a745;
-    }
+        .approval-card .approval-icon {
+            font-size: 3rem;
+            color: #28a745;
+        }
 
-    @media (max-width: 576px) {
-      .container-card { padding: 1.5rem; }
-    }
-  </style>
+        .detail-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 0.5rem 0;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 576px) {
+            .container-card { padding: 1.5rem; }
+        }
+    </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand navbar-light bg-white sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor">
-      <span>
-        <span class="brand-title">PKD GP Ansor</span>
-        <span class="brand-sub">Kabupaten Bantul</span>
-      </span>
-    </a>
-    <div class="ms-auto">
-      <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
-        <i class="bi bi-house-door me-1"></i> Beranda
-      </a>
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="index.html">
+            <img src="LOGO ANSOR.webp" alt="GP Ansor">
+            <span>
+                <span class="brand-title">PKD GP Ansor</span>
+                <span class="brand-sub">Kabupaten Bantul</span>
+            </span>
+        </a>
+        <div class="ms-auto">
+            <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-house-door me-1"></i> Beranda
+            </a>
+        </div>
     </div>
-  </div>
 </nav>
 
 <!-- Konten Utama -->
 <div class="container container-card">
-  <h2 class="section-title">
-    <i class="bi bi-shield-check me-2"></i>Verifikasi Persetujuan Digital
-  </h2>
-  <p class="text-muted text-center mb-4">PKD GP Ansor Kabupaten Bantul</p>
+    <h2 class="section-title">
+        <i class="bi bi-shield-check me-2"></i>Verifikasi Persetujuan Digital
+    </h2>
+    <p class="text-muted text-center mb-4">PKD GP Ansor Kabupaten Bantul</p>
 
-  <div id="result" class="text-center"></div>
+    <div id="result" class="text-center"></div>
 
-  <div class="text-center mt-3">
-    <a href="index.html" class="btn btn-outline-secondary rounded-pill px-5">
-      <i class="bi bi-arrow-left me-1"></i> Kembali
-    </a>
-  </div>
+    <div class="text-center mt-3">
+        <a href="index.html" class="btn btn-outline-secondary rounded-pill px-5">
+            <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+    </div>
 </div>
 
 <!-- Footer -->
 <footer class="footer-modern">
-  <div class="container">
-    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
-  </div>
+    <div class="container">
+        <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+    </div>
 </footer>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- api.js -->
+<script src="api.js"></script>
 
 <script>
-  (function() {
-    'use strict';
+    (function() {
+        'use strict';
 
-    // Ambil parameter dari URL
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
+        // =====================================================
+        //   AMBIL PARAMETER DARI URL
+        // =====================================================
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
 
-    // Data persetujuan untuk setiap role
-    const roleLabels = {
-      'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul',
-      'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul',
-      'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul'
-    };
+        // =====================================================
+        //   RENDER HASIL VERIFIKASI
+        // =====================================================
+        function renderResult(data, role) {
+            const container = document.getElementById('result');
 
-    // Fungsi untuk menampilkan hasil verifikasi
-    function renderResult(role, nama, lokasi) {
-      const container = document.getElementById('result');
+            const roleLabels = {
+                'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul',
+                'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul',
+                'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul'
+            };
+            const roleLabel = roleLabels[role] || role;
 
-      if (!role || !roleLabels[role]) {
-        container.innerHTML = `
-          <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Data persetujuan tidak valid. Silakan scan QR code yang benar.
-          </div>
-        `;
-        return;
-      }
+            // Format timestamp
+            let timestampDisplay = 'Tidak tersedia';
+            if (data.timestamp) {
+                try {
+                    const date = new Date(data.timestamp);
+                    timestampDisplay = date.toLocaleString('id-ID', {
+                        day: 'numeric', month: 'long', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                } catch (e) {
+                    timestampDisplay = data.timestamp;
+                }
+            }
 
-      const label = roleLabels[role];
-      const lokasiTeks = lokasi || 'Bantul';
+            const kegunaan = data.kegunaan || 'Tidak ada keterangan';
+            const pesertaNama = data.peserta_nama || '-';
 
-      container.innerHTML = `
-        <div class="approval-card">
-          <div class="approval-icon">
-            <i class="bi bi-check-circle-fill"></i>
-          </div>
-          <div class="mt-3">
-            <span class="status-badge bg-success text-white">
-              <i class="bi bi-check-circle-fill me-2"></i>✅ Disetujui
-            </span>
-          </div>
-          <div class="mt-4">
-            <h5 class="text-muted">Disetujui oleh</h5>
-            <h2 class="fw-bold text-success">${nama || '-'}</h2>
-            <p class="text-muted fw-semibold">${label}</p>
-            <p class="small text-muted mt-3">
-              <i class="bi bi-geo-alt me-1"></i> Lokasi PKD: ${lokasiTeks}
-            </p>
-            <p class="small text-muted">
-              <i class="bi bi-clock me-1"></i> Dokumen ini telah disetujui secara digital.
-            </p>
-          </div>
-        </div>
-      `;
-    }
+            container.innerHTML = `
+                <div class="approval-card">
+                    <div class="approval-icon">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="mt-3">
+                        <span class="status-badge bg-success text-white">
+                            <i class="bi bi-check-circle-fill me-2"></i>✅ Disetujui
+                        </span>
+                    </div>
+                    <div class="mt-4 text-start">
+                        <div class="detail-item">
+                            <strong>Role</strong><br>
+                            <span class="text-muted">${roleLabel}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Nama Penanda Tangan</strong><br>
+                            <span class="fw-bold">${data.nama || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Kegunaan</strong><br>
+                            <span class="text-muted">${kegunaan}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Untuk Peserta</strong><br>
+                            <span class="text-muted">${pesertaNama}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Waktu Persetujuan</strong><br>
+                            <span class="text-muted">${timestampDisplay}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Status</strong><br>
+                            <span class="badge bg-success">Telah disetujui secara digital</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-    // Inisialisasi saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', function() {
-      const role = getQueryParam('role');
-      const nama = getQueryParam('nama');
-      const lokasi = getQueryParam('lokasi') || 'Bantul';
+        function renderError(message) {
+            document.getElementById('result').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
 
-      // Jika tidak ada parameter, tampilkan pesan default
-      if (!role && !nama) {
-        document.getElementById('result').innerHTML = `
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            Silakan scan QR code pada sertifikat untuk melihat persetujuan.
-          </div>
-        `;
-        return;
-      }
+        function renderNotFound(role) {
+            const roleLabels = {
+                'ketua_pc': 'Ketua PC',
+                'sekretaris': 'Sekretaris',
+                'instruktur': 'Instruktur'
+            };
+            document.getElementById('result').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Persetujuan untuk <strong>${roleLabels[role] || role}</strong> belum ditemukan.
+                    <br>Silakan <a href="sign_${role}.html" class="alert-link">tanda tangan di halaman ini</a> terlebih dahulu.
+                </div>
+            `;
+        }
 
-      renderResult(role, nama, lokasi);
-    });
-  })();
+        // =====================================================
+        //   VERIFIKASI UTAMA
+        // =====================================================
+        async function verifyApproval() {
+            const role = getQueryParam('role');
+            const driveId = getQueryParam('driveId');
+            const nama = getQueryParam('nama'); // opsional fallback
+
+            if (!role) {
+                renderError('Parameter "role" tidak ditemukan. Silakan scan QR code yang benar.');
+                return;
+            }
+
+            // Jika driveId tidak ada, coba ambil dari server berdasarkan role
+            if (!driveId) {
+                try {
+                    const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
+                    if (res.success && res.data && res.data.driveId) {
+                        // Redirect ke halaman yang sama dengan driveId
+                        window.location.href = `verifikasi_qr.html?role=${role}&driveId=${res.data.driveId}`;
+                        return;
+                    } else {
+                        renderNotFound(role);
+                        return;
+                    }
+                } catch (err) {
+                    renderError('Gagal mengambil data persetujuan: ' + err.message);
+                    return;
+                }
+            }
+
+            // Verifikasi dengan driveId yang diberikan
+            try {
+                const res = await PKD.callApi('getDigitalApproval', { role }, 'GET');
+                if (res.success && res.data && res.data.driveId === driveId) {
+                    renderResult(res.data, role);
+                } else {
+                    renderError('Persetujuan tidak valid atau telah diubah.');
+                }
+            } catch (err) {
+                renderError('Terjadi kesalahan saat verifikasi: ' + err.message);
+            }
+        }
+
+        // =====================================================
+        //   INIT PADA DOM LOADED
+        // =====================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            verifyApproval();
+        });
+
+        // =====================================================
+        //   NAVBAR COLLAPSE (optional, jika ada navbar collapse)
+        // =====================================================
+        document.addEventListener('click', function(e) {
+            const navbar = document.getElementById('navbarMain');
+            const toggler = document.querySelector('.navbar-toggler');
+            if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
+                if (typeof bootstrap !== 'undefined') {
+                    bootstrap.Collapse.getInstance(navbar)?.hide();
+                }
+            }
+        });
+
+    })();
 </script>
 
 </body>
