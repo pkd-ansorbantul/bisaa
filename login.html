@@ -106,7 +106,7 @@
           PKD.setUserRole('admin');
           PKD.setUserData({ nama: username });
           PKD.persistAuthState();
-          window.location.href = 'admin.html';
+          window.location.href = 'admin/dashboard_admin.html';
           return;
         }
       } catch (e) {
@@ -152,7 +152,7 @@
     (function() {
       const role = PKD.getUserRole();
       if (role === 'admin') {
-        window.location.href = 'admin.html';
+        window.location.href = 'admin/dashboard_admin.html';
       } else if (role === 'ketua_pac') {
         window.location.href = 'ketua_pac.html';
       } else if (role === 'member') {
