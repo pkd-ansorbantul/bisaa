@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>Admin Informasi - PKD GP Ansor Bantul</title>
+    <title>Admin Aset Digital - PKD GP Ansor Bantul</title>
 
     <!-- Favicon & Font -->
     <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
@@ -330,28 +330,7 @@
             }
         }
 
-        /* ===== FORM STYLES ===== */
-        .form-section {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
-            margin-bottom: 2rem;
-        }
-        .form-section h5 {
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            border-left: 4px solid #2563eb;
-            padding-left: 0.8rem;
-        }
-        .info-thumb {
-            max-width: 80px;
-            max-height: 60px;
-            border-radius: 4px;
-            object-fit: cover;
-            cursor: pointer;
-        }
+        /* ===== ASSET SPECIFIC ===== */
         .table-container {
             background: white;
             border-radius: 20px;
@@ -360,7 +339,7 @@
             border: 1px solid #e2e8f0;
         }
         .btn-aksi {
-            min-width: 70px;
+            min-width: 80px;
         }
         .cache-status {
             font-size: 0.8rem;
@@ -376,6 +355,27 @@
         .cache-status.offline {
             background: #fee2e2;
             color: #dc2626;
+        }
+
+        .asset-thumb {
+            max-width: 120px;
+            max-height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
         }
     </style>
 </head>
@@ -443,13 +443,13 @@
                         <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
                     </div>
 
-                    <!-- Informasi (AKTIF) -->
-                    <div class="nav-link active" data-target="informasi" title="Informasi">
+                    <!-- Informasi -->
+                    <div class="nav-link" data-target="informasi" title="Informasi">
                         <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
                     </div>
-                    <div class="submenu open" id="submenu-informasi">
+                    <div class="submenu" id="submenu-informasi">
                         <a class="nav-link active" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-                        <a class="nav-link" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+                        <a class="nav-link active" href="/bisaa/admin/aset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
                     </div>
 
                     <!-- Skrining -->
@@ -495,104 +495,18 @@
             <!--   CONTENT WRAPPER        -->
             <!-- ======================== -->
             <div class="content-wrapper" id="mainContent">
-                <h2 class="section-title"><i class="bi bi-info-circle me-2"></i>Manajemen Informasi & Flyer PKD</h2>
+                <h2 class="section-title"><i class="bi bi-image me-2"></i>Manajemen Aset Digital</h2>
 
-                <!-- FORM TAMBAH / EDIT -->
-                <div class="form-section">
-                    <h5 id="formTitle"><i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer</h5>
-                    <form id="infoForm">
-                        <input type="hidden" id="editId" value="" />
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Judul *</label>
-                                <input type="text" class="form-control" id="judulItem" placeholder="Judul flyer / acara" required />
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Deskripsi</label>
-                                <input type="text" class="form-control" id="deskripsiItem" placeholder="Keterangan singkat" />
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Urutan</label>
-                                <input type="number" class="form-control" id="urutanItem" value="0" />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Tanggal Mulai *</label>
-                                <input type="date" class="form-control" id="tanggalMulaiItem" required />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Tanggal Akhir</label>
-                                <input type="date" class="form-control" id="tanggalAkhirItem" />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Lokasi</label>
-                                <input type="text" class="form-control" id="lokasiItem" placeholder="SKB Semail, Bangunharjo" />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">Upload Gambar (Flyer) - Opsional</label>
-                                <input type="file" class="form-control" id="fileItem" accept="image/*" />
-                                <div class="form-text">Maks 2 MB. Jika tidak diisi, dianggap timeline.</div>
-                            </div>
-                            <div class="col-12 d-flex gap-2">
-                                <button type="submit" class="btn btn-primary rounded-pill px-4" id="saveBtn">
-                                    <i class="bi bi-save me-1"></i> Simpan
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="cancelEditBtn">
-                                    Batal
-                                </button>
-                            </div>
-                        </div>
-                        <div id="formMessage" class="mt-3 small"></div>
-                    </form>
-                </div>
-
-                <!-- TABEL INFORMASI -->
-                <div class="table-container mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-table me-2"></i>Daftar Jadwal & Flyer</h5>
-                        <div>
-                            <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn">
-                                <i class="bi bi-download me-1"></i> Ekspor
-                            </button>
-                            <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn">
-                                <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
-                            </button>
-                            <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group" style="max-width:300px;">
-                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari judul..." />
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-md-end">
-                            <select class="form-select d-inline-block ms-2" style="width:auto;display:inline-block !important;" id="filterJenis">
-                                <option value="">Semua Jenis</option>
-                                <option value="timeline">Timeline</option>
-                                <option value="flyer">Flyer</option>
-                            </select>
-                            <select class="form-select d-inline-block ms-2" style="width:auto;display:inline-block !important;" id="filterStatus">
-                                <option value="">Semua Status</option>
-                                <option value="aktif">Aktif</option>
-                                <option value="selesai">Selesai</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="informasiTableContainer" class="table-responsive">
-                        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-primary rounded-pill" id="uploadAssetBtn"><i class="bi bi-cloud-upload me-1"></i> Upload Aset</button>
+                        <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+                        <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
                     </div>
                 </div>
 
-                <!-- TABEL USULAN PAC -->
-                <div class="table-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-envelope-paper me-2"></i>Usulan PKD dari PAC (Menunggu Persetujuan)</h5>
-                        <button class="btn btn-outline-secondary rounded-pill" id="refreshUsulanBtn">
-                            <i class="bi bi-arrow-repeat me-1"></i> Refresh
-                        </button>
-                    </div>
-                    <div id="usulanTableContainer" class="table-responsive">Memuat...</div>
+                <div id="assetContainer" class="table-container">
+                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
                 </div>
             </div>
             <!-- END CONTENT WRAPPER -->
@@ -620,11 +534,44 @@
                         <div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
                         <div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
                         <div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100 active">Informasi</a></div>
+                        <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
                         <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
                         <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
                         <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================== -->
+    <!--   MODAL UPLOAD                                             -->
+    <!-- ========================================================== -->
+    <div class="modal fade" id="uploadAssetModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+                    <h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i>Upload Aset Digital</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3"><label class="form-label fw-semibold">Judul</label><input type="text" class="form-control" id="assetJudul" required /></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea class="form-control" id="assetDeskripsi" rows="2"></textarea></div>
+                    <div class="mb-3 upload-area" id="uploadDropZone">
+                        <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                        <p class="mb-1"><strong>Klik atau drag & drop file di sini</strong></p>
+                        <p class="text-muted small">Format: JPG, PNG, WEBP, GIF (Max 5MB)</p>
+                        <input type="file" class="form-control" id="assetFile" accept="image/*" required style="max-width:300px;margin:0 auto;" />
+                    </div>
+                    <div id="filePreview" class="mt-2 text-center" style="display:none;">
+                        <img id="previewImage" src="#" class="img-thumbnail" style="max-height:150px;" />
+                        <p id="fileNameDisplay" class="small text-muted mt-1"></p>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="submitUploadBtn">Upload</button>
                 </div>
             </div>
         </div>
@@ -643,9 +590,8 @@
                 </div>
                 <div class="modal-body p-4 text-center">
                     <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
-                    <p>Apakah Anda yakin ingin menghapus informasi ini?</p>
-                    <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
-                    <input type="hidden" id="deleteInformasiId" />
+                    <p>Apakah Anda yakin ingin menghapus aset ini?</p>
+                    <input type="hidden" id="deleteAssetId" />
                 </div>
                 <div class="modal-footer border-0 justify-content-center">
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
@@ -716,7 +662,7 @@
 
     <script>
         // ==========================================================
-        //   TOGGLE PASSWORD VISIBILITY
+        //   TOGGLE PASSWORD VISIBILITY (global)
         // ==========================================================
         window.togglePasswordVisibility = function(id) {
             const el = document.getElementById(id);
@@ -768,16 +714,11 @@
         // ==========================================================
         //   MAIN STATE
         // ==========================================================
-        let STATE = {
-            informasiList: [],
-            filteredList: [],
-            searchQuery: '',
-            jenisFilter: '',
-            statusFilter: '',
-            usulanList: [],
-            isEditing: false
-        };
+        let assetList = [];
 
+        // ==========================================================
+        //   UTILITY
+        // ==========================================================
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/[&<>"]/g, function(m) {
@@ -808,39 +749,14 @@
             toast.show();
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const d = new Date(dateStr + 'T00:00:00');
-            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        function formatDate(d) {
+            if (!d) return '-';
+            const date = new Date(d);
+            return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        function getStatusBadge(status) {
-            return status === 'selesai' ? 'bg-success' : 'bg-primary';
-        }
-
-        function debounce(fn, delay) {
-            let timer;
-            return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        }
-
-        // ==========================================================
-        //   CACHE HELPERS
-        // ==========================================================
-        function loadDataFromCache() {
-            const cached = DataCache.getData('info');
-            if (cached && Array.isArray(cached)) {
-                STATE.informasiList = cached;
-                return true;
-            }
-            return false;
-        }
-
-        function updateCache(data) {
-            DataCache.updateData('info', data);
-            STATE.informasiList = data;
+        function getDriveThumb(driveId) {
+            return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : '';
         }
 
         function updateCacheStatus(status) {
@@ -851,463 +767,193 @@
             }
         }
 
-        function loadDataFromStorage() {
+        // ==========================================================
+        //   LOAD ASSETS
+        // ==========================================================
+        async function loadAssets(forceRefresh) {
+            const container = document.getElementById('assetContainer');
+            container.innerHTML =
+                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat aset...</p></div>';
+
             try {
-                const stored = localStorage.getItem('pkd_info_data');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed && parsed.informasiList) {
-                        STATE.informasiList = parsed.informasiList;
+                if (!forceRefresh) {
+                    const cached = DataCache.getData('asset');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        assetList = cached;
+                        renderAssets(container);
+                        updateCacheStatus('Cache');
+                        return;
                     }
                 }
-            } catch (e) {}
-            if (STATE.informasiList.length === 0) {
-                STATE.informasiList = [];
-                saveDataToStorage();
-            }
-        }
 
-        function saveDataToStorage() {
-            try {
-                localStorage.setItem('pkd_info_data', JSON.stringify({ informasiList: STATE.informasiList }));
-            } catch (e) {}
-        }
-
-        function getInfoById(id) {
-            return STATE.informasiList.find(item => item.id == id);
-        }
-
-        // ==========================================================
-        //   LOAD INFORMASI LIST
-        // ==========================================================
-        async function loadInfoList(force) {
-            const container = document.getElementById('informasiTableContainer');
-            container.innerHTML =
-                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
-
-            try {
-                if (!force && loadDataFromCache()) {
-                    renderTable(STATE.informasiList);
-                    updateCacheStatus('Cache');
-                    return;
-                }
-
-                const res = await PKD.getInfoList(true);
-                if (res && res.data) {
-                    STATE.informasiList = res.data;
-                    updateCache(STATE.informasiList);
-                    saveDataToStorage();
-                    renderTable(STATE.informasiList);
-                    updateCacheStatus('Live');
-                } else {
-                    throw new Error('Data tidak valid');
-                }
+                const res = await PKD.callApi('getAssetList', {}, 'GET');
+                assetList = res?.data || [];
+                DataCache.updateData('asset', assetList);
+                renderAssets(container);
+                updateCacheStatus('Live');
             } catch (e) {
-                console.warn('Gagal load info:', e);
-                loadDataFromStorage();
-                renderTable(STATE.informasiList);
-                updateCacheStatus('Offline');
-                showToast('Gagal memuat data: ' + e.message, 'error');
+                console.warn('Gagal load aset:', e);
+                container.innerHTML =
+                    '<div class="alert alert-danger">Gagal memuat data.</div>';
+                updateCacheStatus('Error');
             }
         }
 
         // ==========================================================
-        //   RENDER TABLE INFORMASI
+        //   RENDER ASSETS
         // ==========================================================
-        function renderTable(data) {
-            const container = document.getElementById('informasiTableContainer');
-            if (!container) return;
-
-            let filtered = data;
-            if (STATE.searchQuery) {
-                const q = STATE.searchQuery.toLowerCase();
-                filtered = filtered.filter(item =>
-                    (item.judul && item.judul.toLowerCase().includes(q)) ||
-                    (item.deskripsi && item.deskripsi.toLowerCase().includes(q))
-                );
-            }
-            if (STATE.jenisFilter) {
-                filtered = filtered.filter(item => item.jenis === STATE.jenisFilter);
-            }
-            if (STATE.statusFilter) {
-                filtered = filtered.filter(item => item.status === STATE.statusFilter);
-            }
-            STATE.filteredList = filtered;
-
-            let html = `
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width:50px;">#</th>
-                            <th>Jenis</th>
-                            <th>Judul</th>
-                            <th>Deskripsi</th>
-                            <th>Tanggal & Lokasi</th>
-                            <th>Gambar</th>
-                            <th>Urutan</th>
-                            <th>Status</th>
-                            <th style="width:180px;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            if (filtered.length === 0) {
-                html +=
-                    `<tr><td colspan="9" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-4 d-block mb-2"></i>Tidak ada data.</td></tr>`;
-            } else {
-                const sorted = [...filtered].sort((a, b) => (a.urutan || 0) - (b.urutan || 0) || new Date(a.tanggal_mulai) - new Date(
-                    b.tanggal_mulai));
-                sorted.forEach((item, idx) => {
-                    const isFlyer = item.jenis === 'flyer';
-                    let tanggal = item.tanggal_mulai ? formatDate(item.tanggal_mulai) : '';
-                    if (item.tanggal_akhir) tanggal += ' - ' + formatDate(item.tanggal_akhir);
-                    let lokasi = item.lokasi ?
-                        `<br><small class="text-muted"><i class="bi bi-geo-alt"></i> ${escapeHtml(item.lokasi)}</small>` : '';
-                    let preview = isFlyer && item.url ?
-                        `<img src="https://lh3.googleusercontent.com/d/${item.url}=w100" class="info-thumb" onclick="window.open('https://lh3.googleusercontent.com/d/${item.url}')">` :
-                        '-';
-                    const statusClass = getStatusBadge(item.status);
-                    const statusLabel = item.status === 'selesai' ? '✅ Selesai' : '🔄 Aktif';
-                    html += `
-                        <tr>
-                            <td>${idx + 1}</td>
-                            <td><span class="badge ${isFlyer ? 'bg-info' : 'bg-primary'}">${isFlyer ? 'Flyer' : 'Timeline'}</span></td>
-                            <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
-                            <td><small>${escapeHtml(item.deskripsi || '-')}</small></td>
-                            <td>${tanggal || '-'} ${lokasi}</td>
-                            <td>${preview}</td>
-                            <td>${item.urutan || ''}</td>
-                            <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editInfo('${item.id}')"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-${item.status === 'selesai' ? 'warning' : 'success'} btn-aksi" onclick="toggleStatus('${item.id}')">${item.status === 'selesai' ? 'Aktifkan' : 'Selesai'}</button>
-                                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-        }
-
-        // ==========================================================
-        //   CRUD OPERATIONS
-        // ==========================================================
-        async function saveInfo(data) {
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-            try {
-                let params = {
-                    action: data.id ? 'updateInfo' : 'addInfo',
-                    judul: data.judul,
-                    deskripsi: data.deskripsi || '',
-                    urutan: data.urutan || 0,
-                    tanggal_mulai: data.tanggal_mulai,
-                    tanggal_akhir: data.tanggal_akhir || '',
-                    lokasi: data.lokasi || '',
-                    jenis: data.fileData ? 'flyer' : 'timeline'
-                };
-                if (data.id) params.id = data.id;
-                if (data.fileData) {
-                    params.fileData = data.fileData;
-                    params.fileName = data.fileName;
-                }
-                const res = await PKD.callApi(params.action, params);
-                if (res && res.success) {
-                    showToast(data.id ? 'Informasi diperbarui' : 'Informasi ditambahkan', 'success');
-                    document.getElementById('infoForm').reset();
-                    document.getElementById('editId').value = '';
-                    document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
-                    STATE.isEditing = false;
-                    loadInfoList(true);
-                } else {
-                    throw new Error(res.error || 'Gagal menyimpan');
-                }
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan';
-            }
-        }
-
-        async function deleteInfo(id) {
-            try {
-                const res = await PKD.callApi('deleteInfo', { id });
-                if (res && res.success) {
-                    showToast('Informasi dihapus', 'success');
-                    loadInfoList(true);
-                } else {
-                    throw new Error(res.error || 'Gagal menghapus');
-                }
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            }
-        }
-
-        async function toggleStatus(id) {
-            try {
-                const res = await PKD.callApi('toggleInfoStatus', { id });
-                if (res && res.success) {
-                    showToast('Status berhasil diubah', 'success');
-                    loadInfoList(true);
-                } else {
-                    throw new Error(res.error || 'Gagal mengubah status');
-                }
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            }
-        }
-
-        // ==========================================================
-        //   USULAN PAC
-        // ==========================================================
-        async function loadUsulanList() {
-            try {
-                const res = await PKD.callApi('getUsulanList');
-                if (res && res.data) {
-                    STATE.usulanList = res.data.filter(u => u.status === 'pending');
-                    renderUsulanTable();
-                } else {
-                    throw new Error('Data usulan tidak valid');
-                }
-            } catch (e) {
-                console.warn('Gagal load usulan:', e);
-                document.getElementById('usulanTableContainer').innerHTML =
-                    '<div class="text-center py-4 text-muted">Gagal memuat usulan.</div>';
-            }
-        }
-
-        async function approveUsulan(id) {
-            try {
-                const res = await PKD.callApi('updateUsulanStatus', { id, status: 'approved' });
-                if (res && res.success) {
-                    showToast('Usulan disetujui dan dipublikasikan', 'success');
-                    loadUsulanList();
-                    loadInfoList(true);
-                } else {
-                    throw new Error(res.error || 'Gagal menyetujui');
-                }
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            }
-        }
-
-        async function rejectUsulan(id) {
-            try {
-                const res = await PKD.callApi('updateUsulanStatus', { id, status: 'rejected' });
-                if (res && res.success) {
-                    showToast('Usulan ditolak', 'success');
-                    loadUsulanList();
-                } else {
-                    throw new Error(res.error || 'Gagal menolak');
-                }
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            }
-        }
-
-        function renderUsulanTable() {
-            const container = document.getElementById('usulanTableContainer');
-            if (STATE.usulanList.length === 0) {
-                container.innerHTML = '<div class="text-center py-4 text-muted">Tidak ada usulan pending.</div>';
+        function renderAssets(container) {
+            if (!assetList || assetList.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-image fs-4 d-block mb-2"></i>
+                        Belum ada aset digital. Klik "Upload Aset" untuk menambahkan.
+                    </div>
+                `;
                 return;
             }
+
             let html = `
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Nama</th>
-                            <th>Usulan (PAC)</th>
-                            <th>Tanggal</th>
-                            <th>Lokasi</th>
-                            <th>No HP</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Judul</th>
+                                <th>Deskripsi</th>
+                                <th>Gambar</th>
+                                <th>Upload</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
-            STATE.usulanList.forEach(u => {
-                let tgl = u.tanggal_mulai ? formatDate(u.tanggal_mulai) : '';
-                if (u.tanggal_akhir) tgl += ' - ' + formatDate(u.tanggal_akhir);
+
+            assetList.forEach((item, idx) => {
+                const thumb = getDriveThumb(item.driveId);
                 html += `
                     <tr>
-                        <td>${escapeHtml(u.nama)}</td>
-                        <td>${escapeHtml(u.usulan)}</td>
-                        <td>${tgl}</td>
-                        <td>${escapeHtml(u.lokasi)}</td>
-                        <td>${escapeHtml(u.no_hp)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-success me-1" onclick="approveUsulan('${u.id}')">ACC</button>
-                            <button class="btn btn-sm btn-danger" onclick="rejectUsulan('${u.id}')">Tolak</button>
+                        <td>${idx + 1}</td>
+                        <td><strong>${escapeHtml(item.judul || '')}</strong></td>
+                        <td>${escapeHtml(item.deskripsi || '-')}</td>
+                        <td>${thumb ? `<img src="${thumb}" class="asset-thumb" />` : '-'}</td>
+                        <td>${formatDate(item.timestamp)}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
-            html += `</tbody></table>`;
+
+            html += `</tbody></table></div>`;
             container.innerHTML = html;
+            container.classList.add('fade-in');
         }
 
         // ==========================================================
-        //   EXPORT
+        //   CONFIRM DELETE
         // ==========================================================
-        function exportData() {
-            const data = STATE.filteredList;
-            if (data.length === 0) {
-                showToast('Tidak ada data untuk diekspor.', 'info');
-                return;
-            }
-            const exportData = data.map(item => ({
-                id: item.id,
-                jenis: item.jenis,
-                judul: item.judul,
-                deskripsi: item.deskripsi,
-                url: item.url,
-                urutan: item.urutan,
-                tanggal_mulai: item.tanggal_mulai,
-                tanggal_akhir: item.tanggal_akhir,
-                lokasi: item.lokasi,
-                status: item.status,
-                createdAt: item.createdAt
-            }));
-            const json = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `info_export_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
-        }
-
-        // ==========================================================
-        //   EVENT HANDLERS
-        // ==========================================================
-        window.editInfo = function(id) {
-            const item = getInfoById(id);
-            if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
-            document.getElementById('editId').value = id;
-            document.getElementById('judulItem').value = item.judul || '';
-            document.getElementById('deskripsiItem').value = item.deskripsi || '';
-            document.getElementById('urutanItem').value = item.urutan || 0;
-            document.getElementById('tanggalMulaiItem').value = item.tanggal_mulai || '';
-            document.getElementById('tanggalAkhirItem').value = item.tanggal_akhir || '';
-            document.getElementById('lokasiItem').value = item.lokasi || '';
-            document.getElementById('fileItem').value = '';
-            document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Jadwal / Flyer';
-            STATE.isEditing = true;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
         window.confirmDelete = function(id) {
-            document.getElementById('deleteInformasiId').value = id;
+            document.getElementById('deleteAssetId').value = id;
             new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
         };
 
-        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-            const id = document.getElementById('deleteInformasiId').value;
-            if (id) {
-                deleteInfo(id);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+            const id = document.getElementById('deleteAssetId').value;
+            if (!id) return;
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                await PKD.callApi('deleteAsset', { id }, 'POST');
+                showToast('Aset berhasil dihapus', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                loadAssets(true);
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = 'Hapus';
             }
         });
 
-        window.toggleStatus = function(id) {
-            toggleStatus(id);
-        };
-
-        window.approveUsulan = function(id) {
-            approveUsulan(id);
-        };
-
-        window.rejectUsulan = function(id) {
-            rejectUsulan(id);
-        };
-
         // ==========================================================
-        //   FORM SUBMIT
+        //   UPLOAD ASSET
         // ==========================================================
-        document.getElementById('infoForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('editId').value;
-            const judul = document.getElementById('judulItem').value.trim();
-            const deskripsi = document.getElementById('deskripsiItem').value.trim();
-            const urutan = parseInt(document.getElementById('urutanItem').value) || 0;
-            const tanggalMulai = document.getElementById('tanggalMulaiItem').value;
-            const tanggalAkhir = document.getElementById('tanggalAkhirItem').value;
-            const lokasi = document.getElementById('lokasiItem').value.trim();
-            const fileInput = document.getElementById('fileItem');
+        document.getElementById('uploadAssetBtn').addEventListener('click', function() {
+            document.getElementById('assetJudul').value = '';
+            document.getElementById('assetDeskripsi').value = '';
+            document.getElementById('assetFile').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('previewImage').src = '#';
+            new bootstrap.Modal(document.getElementById('uploadAssetModal')).show();
+        });
 
-            if (!judul || !tanggalMulai) {
-                document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Judul dan tanggal mulai wajib diisi.</div>';
+        document.getElementById('assetFile').addEventListener('change', function() {
+            const file = this.files[0];
+            const previewContainer = document.getElementById('filePreview');
+            const previewImage = document.getElementById('previewImage');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    fileNameDisplay.textContent = file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+                previewImage.src = '#';
+            }
+        });
+
+        document.getElementById('submitUploadBtn').addEventListener('click', async function() {
+            const judul = document.getElementById('assetJudul').value.trim();
+            const deskripsi = document.getElementById('assetDeskripsi').value.trim();
+            const fileInput = document.getElementById('assetFile');
+            if (!judul || !fileInput.files.length) {
+                showToast('Judul dan file wajib diisi', 'error');
                 return;
             }
-
-            let fileData = null,
-                fileName = null;
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                if (file.size > 2 * 1024 * 1024) {
-                    document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Ukuran file maksimal 2 MB.</div>';
-                    return;
-                }
+            const file = fileInput.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Maksimal 5MB', 'error');
+                return;
+            }
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengupload...';
+            try {
                 const reader = new FileReader();
-                fileData = await new Promise(resolve => {
+                const base64 = await new Promise((resolve, reject) => {
                     reader.onload = e => resolve(e.target.result);
+                    reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
-                fileName = file.name;
+                await PKD.callApi('addAsset', {
+                    judul: judul,
+                    deskripsi: deskripsi,
+                    fileData: base64,
+                    fileName: file.name,
+                    uploadBy: 'admin'
+                }, 'POST');
+                showToast('Aset berhasil diupload', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
+                loadAssets(true);
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Upload';
             }
-
-            const data = { id, judul, deskripsi, urutan, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, lokasi,
-                fileData, fileName };
-            await saveInfo(data);
-            document.getElementById('formMessage').innerHTML = '';
-        });
-
-        document.getElementById('cancelEditBtn').addEventListener('click', function() {
-            document.getElementById('infoForm').reset();
-            document.getElementById('editId').value = '';
-            document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
-            STATE.isEditing = false;
-            document.getElementById('formMessage').innerHTML = '';
         });
 
         // ==========================================================
-        //   SEARCH & FILTER
+        //   REFRESH
         // ==========================================================
-        const debouncedSearch = debounce(function(query) {
-            STATE.searchQuery = query;
-            renderTable(STATE.informasiList);
-        }, 300);
-
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            debouncedSearch(e.target.value);
-        });
-
-        document.getElementById('filterJenis').addEventListener('change', function() {
-            STATE.jenisFilter = this.value;
-            renderTable(STATE.informasiList);
-        });
-
-        document.getElementById('filterStatus').addEventListener('change', function() {
-            STATE.statusFilter = this.value;
-            renderTable(STATE.informasiList);
-        });
-
-        // ==========================================================
-        //   BUTTONS
-        // ==========================================================
-        document.getElementById('exportDataBtn').addEventListener('click', exportData);
         document.getElementById('refreshDataBtn').addEventListener('click', function() {
-            loadInfoList(true);
-            loadUsulanList();
+            loadAssets(true);
         });
-        document.getElementById('refreshUsulanBtn').addEventListener('click', loadUsulanList);
 
         // ==========================================================
         //   LOGIN / LOGOUT
@@ -1318,15 +964,14 @@
                     getUserRole: () => 'guest',
                     verifyAdmin: async (u, p) => {
                         if (u === 'admin' && p === 'admin123') return { success: true };
-                        return { success: false, message: 'Username atau password salah' };
+                        return { success: false, message: 'Login gagal' };
                     },
                     setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
                     setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
                     persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
                     logout: () => { DataCache.clear();
                         window.location.href = '/bisaa/index.html'; },
-                    getInfoList: async () => { return { data: [] }; },
-                    callApi: async (action, params) => { throw new Error('API tidak tersedia'); }
+                    callApi: async () => { return { data: [] }; }
                 };
                 console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
             }
@@ -1351,8 +996,7 @@
                     PKD.setUserData({ nama: u });
                     PKD.persistAuthState();
                     bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-                    loadInfoList();
-                    loadUsulanList();
+                    loadAssets(false);
                 } else {
                     err.innerText = res.message || 'Login gagal';
                     err.style.display = 'block';
@@ -1369,28 +1013,13 @@
         //   INIT
         // ==========================================================
         function init() {
-            // Jika sudah login, langsung load data
+            initAuth();
+
             if (PKD.getUserRole() === 'admin') {
-                // Cek cache dulu
-                const cached = DataCache.getData('info');
-                if (cached && Array.isArray(cached)) {
-                    STATE.informasiList = cached;
-                    renderTable(STATE.informasiList);
-                    updateCacheStatus('Cache');
-                } else {
-                    loadDataFromStorage();
-                    renderTable(STATE.informasiList);
-                    updateCacheStatus('Storage');
-                }
-                loadUsulanList();
-                // Background refresh
-                setTimeout(() => {
-                    loadInfoList(true).catch(() => {});
-                }, 1000);
+                loadAssets(false);
             }
         }
 
-        // Jalankan init setelah DOM siap
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>

@@ -1,13 +1,5 @@
 // api.js - Modul Terpadu Komunikasi Backend (PKD GP Ansor Bantul)
-// Simpan file ini di root folder. Semua file HTML cukup menyertakan script ini:
-//   <script src="api.js"></script>
-// =============================================================================
-// VERSI: 2.2.0
-// TANGGAL: 2026-06-15
-// PERBAIKAN:
-//   - Menambahkan parameter timer_enabled dan timer_duration pada fungsi pretest/posttest
-//   - getAllDigitalApprovals sudah ditambahkan
-//   - Semua fungsi sudah lengkap dan terintegrasi dengan DataCache
+// Versi: 2.2.0 - Final Fix untuk subfolder /bisaa/
 // =============================================================================
 
 (function (global) {
@@ -15,6 +7,7 @@
 
   // ======================== KONFIGURASI ========================
   // Ganti dengan URL Apps Script Anda yang benar
+  // Anda bisa menimpa nilai ini dengan variabel global PKD_SCRIPT_URL
   const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwAMBAn2lgb7Vxvkig7Q45EwXuxDsP-X5ra-AuYJbVd2rlVOnqHaMZIFYQXOkZ4MRfWBA/exec';
   const SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
@@ -55,11 +48,13 @@
 
     document.getElementById('apiToastMessage').innerText = message;
     if (type === 'success') {
-      toastEl.classList.add('border-success'); toastEl.classList.remove('border-danger');
+      toastEl.classList.add('border-success');
+      toastEl.classList.remove('border-danger');
       document.getElementById('apiToastIcon').className = 'bi bi-check-circle-fill me-2 text-success';
       document.getElementById('apiToastTitle').innerText = 'Berhasil';
     } else {
-      toastEl.classList.add('border-danger'); toastEl.classList.remove('border-success');
+      toastEl.classList.add('border-danger');
+      toastEl.classList.remove('border-success');
       document.getElementById('apiToastIcon').className = 'bi bi-x-circle-fill me-2 text-danger';
       document.getElementById('apiToastTitle').innerText = 'Gagal';
     }
@@ -77,7 +72,8 @@
         try {
           const queryString = new URLSearchParams(finalParams).toString();
           const response = await fetch(`${SCRIPT_URL}?${queryString}`, {
-            method: 'GET', mode: 'cors',
+            method: 'GET',
+            mode: 'cors',
             headers: { 'Accept': 'application/json' }
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -187,7 +183,8 @@
     userData = {};
     sessionStorage.removeItem('pkd_auth');
     localStorage.removeItem('pkd_auth');
-    window.location.href = 'bisaa/index.html';
+    // Redirect ke halaman utama dengan prefix /bisaa/
+    window.location.href = '/bisaa/index.html';
   }
 
   async function verifyAdmin(username, password) {
@@ -218,7 +215,7 @@
             <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Admin')}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="dashboard_admin.html"><i class="bi bi-gear-wide me-2"></i>Dashboard</a></li>
+            <li><a class="dropdown-item" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-gear-wide me-2"></i>Dashboard</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
           </ul>
@@ -233,7 +230,7 @@
             <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Ketua PAC')}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="ketua_pac.html"><i class="bi bi-house-door me-2"></i>Dashboard Ketua PAC</a></li>
+            <li><a class="dropdown-item" href="/bisaa/ketua_pac.html"><i class="bi bi-house-door me-2"></i>Dashboard Ketua PAC</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
           </ul>
@@ -248,7 +245,7 @@
             <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Member')}
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="member.html"><i class="bi bi-person-badge me-2"></i>Profil Saya</a></li>
+            <li><a class="dropdown-item" href="/bisaa/member.html"><i class="bi bi-person-badge me-2"></i>Profil Saya</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
           </ul>
@@ -266,11 +263,11 @@
       logout();
     });
     document.getElementById('apiLoginBtn')?.addEventListener('click', () => {
-      window.location.href = 'login.html';
+      window.location.href = '/bisaa/login.html';
     });
   }
 
-  // ======================== DOMAIN FUNCTIONS ========================
+  // ======================== DOMAIN FUNCTIONS (Tidak berubah) ========================
   // --- Peserta ---
   async function getPesertaList(forceRefresh = false) {
     const cacheKey = 'pesertaList';
@@ -734,7 +731,7 @@
       if (requireLogin) {
         const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
         if (!auth && !userRole) {
-          window.location.href = 'login.html';
+          window.location.href = '/bisaa/login.html';
           return;
         }
       }

@@ -3,320 +3,1285 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Bantul · Skrining Admin</title>
-
-  <!-- Favicon & Font -->
-  <link rel="icon" type="image/png" href="../LOGO ANSOR.webp">
+  <title>Admin Skrining - PKD GP Ansor Bantul</title>
+  <link rel="icon" type="image/png" href="../LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
   <style>
+    /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; }
-    body { background: #f8fafc; color: #0f172a; }
-    .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
-    .navbar-brand img { max-height: 40px; margin-right: 12px; }
-    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
-    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155 !important; transition: all 0.15s; }
-    .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb !important; }
-    .nav-link.active { background: #2563eb !important; color: white !important; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
-    .nav-link i { margin-right: 6px; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; }
+    .container-card { max-width: 100%; padding: 0; margin: 0; }
+    .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; }
 
-    .container-card { max-width: 1400px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
-    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+    /* --- SIDEBAR UTAMA --- */
+    .sidebar-wrapper {
+      width: 260px;
+      max-width: 260px;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-right: 1px solid #1e293b;
+      overflow-x: hidden;
+      transition: all 0.3s ease;
+    }
+    .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
+    .content-wrapper {
+      flex: 1;
+      min-width: 0;
+      padding: 1.5rem;
+      background: #f8fafc;
+      transition: all 0.3s ease;
+    }
 
-    .nav-pills .nav-link { border-radius: 12px; padding: 0.6rem 1rem; margin-bottom: 4px; color: #334155; font-weight: 500; }
-    .nav-pills .nav-link i { font-size: 1.1rem; }
-    .nav-pills .nav-link.active { background-color: #2563eb; color: white !important; }
-    .sidebar-sticky { position: sticky; top: 80px; z-index: 1; }
+    /* --- BRAND SIDEBAR --- */
+    .brand-sidebar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+      border-bottom: 1px solid #1e293b;
+      margin-bottom: 0.5rem;
+      text-decoration: none; color: #ffffff;
+      transition: all 0.3s ease;
+    }
+    .brand-sidebar:hover { opacity: 0.8; }
+    .brand-sidebar img { height: 45px; width: auto; transition: all 0.3s ease; }
+    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; line-height: 1.2; transition: all 0.3s ease; }
+    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; transition: all 0.3s ease; }
+    .sidebar-wrapper.minimized .brand-sidebar { padding: 1.5rem 0.75rem 0.75rem 0.75rem; justify-content: center; }
+    .sidebar-wrapper.minimized .brand-sidebar img { height: 40px; margin: 0 auto; }
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
 
-    .skeleton-loader { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite linear; border-radius: 8px; height: 1.2em; width: 100%; }
-    @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* --- NAV PILLS --- */
+    .nav-pills .nav-link {
+      border-radius: 12px;
+      padding: 0.7rem 1rem;
+      margin: 0.2rem 0.8rem;
+      color: #cbd5e1 !important;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      width: auto;
+    }
+    .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
+    .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .nav-pills .nav-link i { font-size: 1.2rem; width: 24px; text-align: center; flex-shrink: 0; transition: all 0.3s ease; }
+    .nav-pills .nav-link span { transition: all 0.3s ease; }
 
-    .crud-table { max-height: 400px; overflow-y: auto; border-radius: 16px; }
-    .table-admin th { background-color: #f8fafc; font-weight: 600; }
+    /* --- MINIMIZED: MENU --- */
+    .sidebar-wrapper.minimized .nav-pills .nav-link {
+      padding: 0.7rem 0;
+      margin: 0.2rem 0.5rem;
+      justify-content: center;
+      min-height: 48px;
+      width: auto;
+    }
+    .sidebar-wrapper.minimized .nav-pills .nav-link i { margin-right: 0; font-size: 1.5rem; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link span { display: none; }
 
+    /* --- SUBMENU --- */
+    .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
+    .submenu.open { max-height: 500px; }
+    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.5rem; font-weight: 400; color: #94a3b8 !important; }
+    .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
+    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
+
+    /* --- SIDEBAR TOGGLE --- */
+    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: all 0.3s ease; }
+    .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
+    .sidebar-toggle button {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 0.25rem 0.6rem;
+      transition: all 0.2s;
+    }
+    .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
+
+    .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
+
+    /* --- BOTTOM NAV --- */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: #ffffff; border-top: 1px solid #e2e8f0;
+      z-index: 1050; display: flex; justify-content: space-around; padding: 8px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .bottom-nav .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1;
+      transition: all 0.2s;
+    }
+    .bottom-nav .nav-item i { font-size: 1.5rem; }
+    .bottom-nav .nav-item.active { color: #2563eb; }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 991px) {
+      .sidebar-wrapper { display: none; }
+      .content-wrapper { padding: 1rem; padding-bottom: 80px; }
+    }
+    @media (min-width: 992px) { .bottom-nav { display: none; } }
+
+    /* --- TABEL & LAINNYA --- */
+    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+    .btn-aksi { min-width: 80px; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast { background: white; border-left: 5px solid; border-radius: 16px; }
-
-    .signature-thumb { max-width: 80px; max-height: 40px; border-radius: 4px; cursor: pointer; }
-
-    .sidebar-minimized .col-md-3.col-lg-2 { flex: 0 0 auto; width: auto; max-width: 70px; }
-    .sidebar-minimized .col-md-9.col-lg-10 { flex: 1 0 0; width: auto; min-width: 0; }
-    .sidebar-minimized .sidebar-sticky .nav-link span, .sidebar-minimized .sidebar-sticky h6 span, .sidebar-minimized .sidebar-sticky hr { display: none; }
-    .sidebar-minimized .sidebar-sticky .nav-link { padding: 0.6rem 0.8rem; text-align: center; }
-    .sidebar-minimized .sidebar-sticky .nav-link i { font-size: 1.4rem; margin-right: 0; }
-    .sidebar-minimized .sidebar-sticky h6 i { font-size: 1.5rem; }
-    .sidebar-minimized .sidebar-sticky #toggleSidebarBtn { margin-left: auto; display: block; }
-    .sidebar-minimized .nav-link[title]:hover::after {
-      content: attr(title); position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-      background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;
-      white-space: nowrap; z-index: 1000; margin-left: 8px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    .cache-status {
+      font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
     }
-    .sidebar-minimized .nav-link { position: relative; }
+    .cache-status.live { background: #dcfce7; color: #16a34a; }
+    .cache-status.offline { background: #fee2e2; color: #dc2626; }
+    .loading-spinner {
+      display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* --- BADGE JENIS PERTANYAAN --- */
+    .badge-jenis { font-size: 0.75rem; padding: 4px 10px; border-radius: 50px; }
+    .badge-text { background: #e2e8f0; color: #475569; }
+    .badge-radio { background: #dbeafe; color: #2563eb; }
   </style>
 </head>
 <body>
 
-<!-- ==================== NAVBAR ==================== -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="../index.html">
-      <img src="../LOGO ANSOR.webp" alt="GP Ansor">
-      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
-    </a>
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="../index.html"><i class="bi bi-house-door"></i> Beranda</a></li>
-        <li class="nav-item"><a class="nav-link" href="../admin.html"><i class="bi bi-speedometer2"></i> Dashboard Admin</a></li>
-      </ul>
-      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
-    </div>
-  </div>
-</nav>
+<div class="container container-card">
+  <div class="admin-wrapper">
 
-<!-- ==================== KONTEN UTAMA DUA KOLOM ==================== -->
-<section class="container container-card">
-  <div class="row g-4">
-    <!-- Sidebar kiri -->
-    <div class="col-md-3 col-lg-2">
-      <div class="sidebar-sticky">
-        <div class="bg-light p-3 rounded-4 shadow-sm">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i><span>Menu Admin</span></h6>
-            <button class="btn btn-sm btn-outline-secondary" id="toggleSidebarBtn" title="Minimize/Maximize sidebar"><i class="bi bi-arrow-left-right"></i></button>
-          </div>
-          <div class="nav flex-column nav-pills">
-            <a class="nav-link active" href="skrining_admin.html" title="Skrining"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
-            <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
-            <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
-            <a class="nav-link" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-            <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
-            <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
-            <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
-            <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
-            <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></a>
-            <a class="nav-link" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-            <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
-            <a class="nav-link" href="sertifikat_admin.html" title="Sertifikat"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
-            <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
-            <hr class="my-2">
-            <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
-          </div>
+    <!-- SIDEBAR FULL -->
+    <div class="sidebar-wrapper" id="sidebarWrapper">
+      <div class="sidebar-toggle">
+        <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
+          <i class="bi bi-arrow-left-right"></i>
+        </button>
+      </div>
+
+      <a class="brand-sidebar" href="../index.html" title="Beranda">
+        <img src="../LOGO%20ANSOR.webp" alt="GP Ansor">
+        <div>
+          <div class="brand-sidebar-title">PKD GP Ansor</div>
+          <span class="brand-sidebar-sub">Kabupaten Bantul</span>
         </div>
+      </a>
+
+      <div class="nav flex-column nav-pills" id="sidebarMenu">
+        <!-- Dashboard -->
+        <a class="nav-link" href="dashboard_admin.html" title="Dashboard">
+          <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
+        </a>
+
+        <!-- Akademik -->
+        <div class="nav-link" data-target="akademik" title="Akademik">
+          <i class="bi bi-book me-2"></i><span>Akademik</span>
+        </div>
+        <div class="submenu" id="submenu-akademik">
+          <a class="nav-link" href="pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+          <a class="nav-link" href="posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+          <a class="nav-link" href="materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+        </div>
+
+        <!-- Peserta -->
+        <div class="nav-link" data-target="peserta" title="Peserta">
+          <i class="bi bi-people me-2"></i><span>Peserta</span>
+        </div>
+        <div class="submenu" id="submenu-peserta">
+          <a class="nav-link" href="peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+          <a class="nav-link" href="alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+          <a class="nav-link" href="kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+        </div>
+
+        <!-- Absensi -->
+        <div class="nav-link" data-target="absensi" title="Absensi">
+          <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
+        </div>
+        <div class="submenu" id="submenu-absensi">
+          <a class="nav-link" href="sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+          <a class="nav-link" href="data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+          <a class="nav-link" href="rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+        </div>
+
+        <!-- Informasi -->
+        <div class="nav-link" data-target="informasi" title="Informasi">
+          <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
+        </div>
+        <div class="submenu" id="submenu-informasi">
+          <a class="nav-link" href="informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
+          <a class="nav-link" href="asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+        </div>
+
+        <!-- SKRINING (AKTIF) - ITEM MENU TUNGGAL -->
+        <a class="nav-link active" href="skrining_admin.html" title="Skrining">
+          <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
+        </a>
+
+        <!-- Sertifikat -->
+        <a class="nav-link" href="sertifikat_admin.html" title="Sertifikat">
+          <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
+        </a>
+
+        <!-- Pengaturan -->
+        <a class="nav-link" href="pengaturan_admin.html" title="Pengaturan">
+          <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
+        </a>
+
+        <div class="sidebar-logout"></div>
+        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
+          <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
+        </a>
       </div>
     </div>
 
-    <!-- Konten kanan: Skrining -->
-    <div class="col-md-9 col-lg-10">
-      <div class="bg-white p-4 rounded-4 shadow-sm">
-        <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Manajemen Skrining</h2>
-        <ul class="nav nav-tabs mb-3" id="skriningTab" role="tablist">
-          <li class="nav-item"><button class="nav-link active" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button">📋 Pertanyaan Skrining</button></li>
-          <li class="nav-item"><button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" type="button">📊 Data Skrining</button></li>
-        </ul>
-        <div class="tab-content" id="skriningTabContent">
-          <div class="tab-pane fade show active" id="questions" role="tabpanel"><div id="questionsContainer">Memuat...</div></div>
-          <div class="tab-pane fade" id="data" role="tabpanel"><div id="dataContainer">Memuat...</div></div>
+    <!-- BOTTOM NAV (MOBILE) -->
+    <div class="bottom-nav">
+      <a href="dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
+      <a href="sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
+      <a href="sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+    </div>
+
+    <!-- KONTEN UTAMA -->
+    <div class="content-wrapper">
+      <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Manajemen Skrining</h2>
+
+      <!-- TOOLBAR -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <button class="btn btn-primary rounded-pill" id="addSkriningBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Skrining</button>
+          <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
+          <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <div class="input-group" style="max-width: 300px; display: inline-flex;">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama peserta...">
+          </div>
+          <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterHasil">
+            <option value="">Semua Hasil</option>
+            <option value="Layak">Layak</option>
+            <option value="Tidak Layak">Tidak Layak</option>
+            <option value="Perlu Tindak Lanjut">Perlu Tindak Lanjut</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TABLE SKRINING -->
+      <div id="skriningTableContainer" class="table-container">
+        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+      </div>
+
+      <!-- KELOLA PERTANYAAN -->
+      <div class="mt-5 pt-4 border-top">
+        <h4 class="mb-3"><i class="bi bi-question-circle me-2"></i>Kelola Pertanyaan Skrining</h4>
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <button class="btn btn-primary rounded-pill" id="addQuestionBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Pertanyaan</button>
+          <button class="btn btn-outline-secondary rounded-pill" id="loadDefaultQuestionsBtn"><i class="bi bi-arrow-repeat me-1"></i> Muat Default</button>
+        </div>
+        <div id="questionsTableContainer" class="table-container">
+          <div class="text-center py-3 text-muted">Memuat pertanyaan...</div>
         </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- ==================== FOOTER ==================== -->
-<footer class="footer-modern container text-center py-3 border-top mt-4">
-  <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
-</footer>
+<!-- ==================== MODAL "LAINNYA" ==================== -->
+<div class="modal fade" id="moreMenuModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><div class="row g-2">
+          <div class="col-6"><a href="skrining_admin.html" class="btn btn-outline-primary w-100 active">Skrining</a></div>
+          <div class="col-6"><a href="pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div>
+          <div class="col-6"><a href="posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div>
+          <div class="col-6"><a href="materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
+          <div class="col-6"><a href="alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
+          <div class="col-6"><a href="kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
+          <div class="col-6"><a href="informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
+          <div class="col-6"><a href="data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
+          <div class="col-6"><a href="rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
+          <div class="col-6"><a href="pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
+        </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL FORM SKRINING ==================== -->
+<div class="modal fade" id="skriningFormModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i><span id="formModalTitle">Tambah Skrining</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editSkriningId">
+        <div class="mb-3"><label class="form-label fw-semibold">Nama Peserta</label><input type="text" class="form-control" id="skriningNama" placeholder="Nama lengkap peserta" required></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Asal</label><input type="text" class="form-control" id="skriningAsal" placeholder="Asal peserta" required></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Hasil Skrining</label><select class="form-select" id="skriningHasil"><option value="Layak">Layak</option><option value="Tidak Layak">Tidak Layak</option><option value="Perlu Tindak Lanjut">Perlu Tindak Lanjut</option></select></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Tanggal</label><input type="date" class="form-control" id="skriningTanggal" required></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Keterangan</label><textarea class="form-control" id="skriningNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveSkriningBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DETAIL SKRINING ==================== -->
+<div class="modal fade" id="detailSkriningModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Skrining</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL HAPUS SKRINING ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
+        <p>Apakah Anda yakin ingin menghapus data skrining ini?</p>
+        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+        <input type="hidden" id="deleteSkriningId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL PERTANYAAN ==================== -->
+<div class="modal fade" id="questionFormModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="questionModalTitle">Tambah Pertanyaan</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editQuestionId">
+        <div class="mb-3"><label class="form-label fw-semibold">Teks Pertanyaan</label><textarea class="form-control" id="questionTeks" rows="2" required></textarea></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Jenis</label><select class="form-select" id="questionJenis"><option value="text">Text (Input / Textarea)</option><option value="radio">Radio (Pilihan)</option></select></div>
+        <div class="mb-3" id="questionOptionsGroup" style="display:none"><label class="form-label fw-semibold">Opsi (pisahkan dengan koma)</label><input type="text" class="form-control" id="questionOpsi" placeholder="Contoh: Ya,Tidak"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Urutan</label><input type="number" class="form-control" id="questionUrutan" value="1" min="1"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveQuestionBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL HAPUS PERTANYAAN ==================== -->
+<div class="modal fade" id="deleteQuestionModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
+        <p>Yakin ingin menghapus pertanyaan ini?</p>
+        <input type="hidden" id="deleteQuestionId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteQuestionBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ==================== MODAL LOGIN ==================== -->
 <div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div><div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div><div id="adminLoginError" class="text-danger mt-2 small" style="display:none;"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button></div></div></div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
+        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ==================== MODAL SKRINING ==================== -->
-<div class="modal fade" id="skriningModal" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="skriningModalLabel">Tambah/Edit Pertanyaan</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="skriningId"><div class="mb-3"><label class="form-label">Teks Pertanyaan</label><textarea class="form-control" id="skriningTeks" rows="2"></textarea></div><div class="mb-3"><label class="form-label">Jenis</label><select class="form-select" id="skriningJenis"><option value="text">Text</option><option value="radio">Radio</option></select></div><div class="mb-3"><label class="form-label">Opsi (pisahkan koma, jika radio)</label><input type="text" class="form-control" id="skriningOpsi"></div><div class="mb-3"><label class="form-label">Urutan</label><input type="number" class="form-control" id="skriningUrutan"></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" id="simpanSkriningBtn">Simpan</button></div></div></div>
+<!-- ==================== TOAST ==================== -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0">
+      <i class="bi me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Berhasil</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
 </div>
 
-<!-- ==================== MODAL DETAIL ==================== -->
-<div class="modal fade" id="detailModal" tabindex="-1">
-  <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title" id="detailModalLabel">Detail Skrining</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="detailModalBody"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div></div></div>
-</div>
-
-<!-- ==================== TOAST NOTIFIKASI ==================== -->
-<div class="toast-container">
-  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div>
-</div>
-
-<!-- ==================== SCRIPT ==================== -->
+<!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../api.js"></script>
+<script src="../dataCache.js"></script>
 
 <script>
-  window.togglePasswordVisibility = id => { const el = document.getElementById(id); if(el) el.type = el.type==='password'?'text':'password'; };
-  const { escapeHtml, showToast, getCached, saveCached } = PKD;
+  // =====================================================
+  //   KONFIGURASI & STATE
+  // =====================================================
+  window.togglePasswordVisibility = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
 
-  function renderSkeletonTable(rows=5, cols=6) {
-    let h = '<div class="skeleton-table p-3">';
-    for(let r=0;r<rows;r++) { h+='<div class="d-flex gap-2 mb-3">'; for(let c=0;c<cols;c++) h+='<div class="skeleton-loader" style="flex:1;height:1.5rem;"></div>'; h+='</div>'; }
-    return h+'</div>';
-  }
+  let STATE = {
+    skriningList: [],
+    filteredList: [],
+    searchQuery: '',
+    hasilFilter: '',
+    questionList: [],
+    isLoading: false,
+    isEditing: false,
+    isBackgroundUpdate: false
+  };
 
-  // ========== PERTANYAAN ==========
-  async function fetchSkriningQuestions() { return await PKD.getSkriningQuestions(true); }
+  // =====================================================
+  //   UTILITY FUNCTIONS
+  // =====================================================
 
-  function renderQuestions(questions, container) {
-    let html = `<div class="d-flex justify-content-between mb-3"><h5>📋 Daftar Pertanyaan</h5><button class="btn btn-success btn-sm" id="addSkriningBtn">➕ Tambah</button></div>`;
-    if (!questions.length) html += '<p class="text-muted">Belum ada pertanyaan.</p>';
-    else {
-      html += `<div class="table-responsive crud-table"><table class="table table-bordered table-sm table-admin"><thead><tr><th>ID</th><th>Teks</th><th>Jenis</th><th>Opsi</th><th>Urutan</th><th>Aksi</th></tr></thead><tbody>`;
-      questions.sort((a,b)=>(a.urutan||0)-(b.urutan||0)).forEach(q=>{
-        html += `<tr>
-          <td>${q.id}</td><td>${escapeHtml(q.teks)}</td><td>${q.jenis||'text'}</td><td>${escapeHtml(q.opsi||'')}</td><td>${q.urutan||''}</td>
-          <td><button class="btn btn-sm btn-warning edit-skrining" data-id="${q.id}">✏️</button> <button class="btn btn-sm btn-danger delete-skrining" data-id="${q.id}">🗑️</button></td>
-        </tr>`;
-      });
-      html += `</tbody></table></div>`;
+  function showToast(message, type = 'success') {
+    const toastEl = document.getElementById('notificationToast');
+    if (!toastEl) return;
+    const toast = new bootstrap.Toast(toastEl);
+    document.getElementById('toastMessage').innerText = message;
+    const icon = document.getElementById('toastIcon');
+    if (type === 'success') {
+      icon.className = 'bi bi-check-circle-fill text-success';
+      document.getElementById('toastTitle').innerText = 'Berhasil';
+    } else {
+      icon.className = 'bi bi-x-circle-fill text-danger';
+      document.getElementById('toastTitle').innerText = 'Gagal';
     }
-    container.innerHTML = html; container.classList.add('fade-in');
-    document.getElementById('addSkriningBtn')?.addEventListener('click', ()=>showSkriningModal());
-    document.querySelectorAll('.edit-skrining').forEach(b=>b.addEventListener('click',()=>{
-      const q = questions.find(q=>q.id==b.dataset.id); showSkriningModal(q);
-    }));
-    document.querySelectorAll('.delete-skrining').forEach(b=>b.addEventListener('click', async function(){
-      if(!confirm('Hapus pertanyaan ini?')) return;
-      await PKD.deleteSkriningQuestion(this.dataset.id); showToast('Pertanyaan dihapus','success'); loadQuestions();
-    }));
+    toast.show();
   }
 
-  async function loadQuestions() {
-    const container = document.getElementById('questionsContainer');
-    const cached = getCached('skriningQuestions');
-    if(cached) { renderQuestions(cached,container); fetchSkriningQuestions().then(n=>{ if(JSON.stringify(n)!==JSON.stringify(cached)){ renderQuestions(n,container); saveCached('skriningQuestions',n); } }).catch(console.warn); }
-    else { container.innerHTML = renderSkeletonTable(4,5); try { const d = await fetchSkriningQuestions(); renderQuestions(d,container); saveCached('skriningQuestions',d); } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`; } }
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      if (m === '"') return '&quot;';
+      return m;
+    });
   }
 
-  function showSkriningModal(question=null) {
-    const isEdit = !!question;
-    document.getElementById('skriningModalLabel').innerText = isEdit?'Edit Pertanyaan':'Tambah Pertanyaan';
-    document.getElementById('skriningId').value = isEdit?question.id:'';
-    document.getElementById('skriningTeks').value = isEdit?(question.teks||''):'';
-    document.getElementById('skriningJenis').value = isEdit?(question.jenis||'text'):'text';
-    document.getElementById('skriningOpsi').value = isEdit?(question.opsi||''):'';
-    document.getElementById('skriningUrutan').value = isEdit?(question.urutan||''):'';
-    const modal = new bootstrap.Modal(document.getElementById('skriningModal'));
-    modal.show();
-    document.getElementById('simpanSkriningBtn').onclick = async () => {
-      const id = document.getElementById('skriningId').value;
-      const teks = document.getElementById('skriningTeks').value;
-      const jenis = document.getElementById('skriningJenis').value;
-      const opsi = document.getElementById('skriningOpsi').value;
-      const urutan = document.getElementById('skriningUrutan').value;
-      try {
-        if(isEdit) await PKD.updateSkriningQuestion(id, teks, jenis, opsi, urutan);
-        else await PKD.addSkriningQuestion(teks, jenis, opsi, urutan);
-        showToast(isEdit?'Pertanyaan diperbarui':'Pertanyaan ditambahkan','success'); modal.hide(); loadQuestions();
-      } catch(e) { showToast('Gagal: '+e.message,'danger'); }
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function generateId() {
+    return 'sk' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  }
+
+  function getHasilBadge(hasil) {
+    if (hasil === 'Layak') return 'bg-success';
+    if (hasil === 'Tidak Layak') return 'bg-danger';
+    if (hasil === 'Perlu Tindak Lanjut') return 'bg-warning text-dark';
+    return 'bg-secondary';
+  }
+
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
     };
   }
 
-  // ========== DATA ==========
-  async function fetchSkriningResponses() { return await PKD.getSkriningResponses(true); }
+  // =====================================================
+  //   CACHE HELPERS
+  // =====================================================
 
-  function renderData(responses, container) {
-    if(!responses.length){ container.innerHTML='<p class="text-muted">Belum ada data skrining.</p>'; return; }
-    let html = `<div class="d-flex justify-content-between mb-3"><div class="filter-input w-25"><input type="text" class="form-control" id="filterSkrining" placeholder="🔍 Cari nama..."></div><button class="btn btn-success btn-sm" id="exportSkriningCSV">📥 Ekspor CSV</button></div>
-                <div class="table-responsive" style="max-height:500px;overflow-y:auto;"><table class="table table-bordered table-sm table-striped">
-                <thead><tr><th>Waktu</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Penyakit</th><th>Pernah</th><th>Alasan</th><th>Catatan</th><th>Tanda Tangan</th><th>Detail</th></tr></thead><tbody id="skriningDataBody">`;
-    responses.forEach(row=>{
-      const signatureThumb = row.signatureDriveId ? `https://drive.google.com/thumbnail?id=${row.signatureDriveId}&sz=w80` : '';
-      html += `<tr class="data-row">
-        <td>${escapeHtml(row.timestamp||'')}</td><td class="nama">${escapeHtml(row.nama||'')}</td><td>${escapeHtml(row.alamat||'')}</td>
-        <td>${escapeHtml(row.info||'')}</td><td>${escapeHtml(row.pengetahuan||'')}</td><td>${escapeHtml(row.qunut||'')}</td>
-        <td>${escapeHtml(row.penyakit||'')}</td><td>${escapeHtml(row.pernah||'')}</td><td>${escapeHtml(row.alasan||'')}</td><td>${escapeHtml(row.catatan||'')}</td>
-        <td>${row.signatureDriveId ? `<img src="${signatureThumb}" class="signature-thumb" onclick="window.open('https://drive.google.com/file/d/${row.signatureDriveId}/view')">` : '-'}</td>
-        <td><button class="btn btn-sm btn-outline-info btn-detail-skrining" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button></td></tr>`;
+  function loadDataFromCache() {
+    const cached = DataCache.getData('skrining');
+    if (cached && Array.isArray(cached)) {
+      STATE.skriningList = cached;
+      return true;
+    }
+    return false;
+  }
+
+  function updateCache(data) {
+    DataCache.updateData('skrining', data);
+    STATE.skriningList = data;
+  }
+
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+    }
+  }
+
+  function loadDataFromStorage() {
+    try {
+      const stored = localStorage.getItem('pkd_skrining_data');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.skriningList) {
+          STATE.skriningList = parsed.skriningList;
+        }
+      }
+    } catch (e) {}
+    if (STATE.skriningList.length === 0) {
+      STATE.skriningList = [];
+      saveDataToStorage();
+    }
+  }
+
+  function saveDataToStorage() {
+    try {
+      localStorage.setItem('pkd_skrining_data', JSON.stringify({
+        skriningList: STATE.skriningList
+      }));
+    } catch (e) {}
+  }
+
+  function getSkriningById(id) {
+    return STATE.skriningList.find(item => item.id === id);
+  }
+
+  // =====================================================
+  //   CRUD OPERATIONS (DATA SKRINING)
+  // =====================================================
+
+  function addSkrining(data) {
+    const newItem = {
+      id: generateId(),
+      nama: data.nama || '',
+      asal: data.asal || '',
+      tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
+      hasil: data.hasil || 'Layak',
+      catatan: data.catatan || ''
+    };
+    STATE.skriningList.unshift(newItem);
+    updateCache(STATE.skriningList);
+    saveDataToStorage();
+    return newItem;
+  }
+
+  function updateSkrining(id, data) {
+    const index = STATE.skriningList.findIndex(item => item.id === id);
+    if (index === -1) return null;
+    const updated = {
+      ...STATE.skriningList[index],
+      nama: data.nama !== undefined ? data.nama : STATE.skriningList[index].nama,
+      asal: data.asal !== undefined ? data.asal : STATE.skriningList[index].asal,
+      tanggal: data.tanggal !== undefined ? data.tanggal : STATE.skriningList[index].tanggal,
+      hasil: data.hasil !== undefined ? data.hasil : STATE.skriningList[index].hasil,
+      catatan: data.catatan !== undefined ? data.catatan : STATE.skriningList[index].catatan
+    };
+    STATE.skriningList[index] = updated;
+    updateCache(STATE.skriningList);
+    saveDataToStorage();
+    return updated;
+  }
+
+  function deleteSkrining(id) {
+    const index = STATE.skriningList.findIndex(item => item.id === id);
+    if (index === -1) return false;
+    STATE.skriningList.splice(index, 1);
+    updateCache(STATE.skriningList);
+    saveDataToStorage();
+    return true;
+  }
+
+  function getFilteredSkrining(query = '', hasil = '') {
+    let filtered = STATE.skriningList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama && item.nama.toLowerCase().includes(q)) ||
+        (item.asal && item.asal.toLowerCase().includes(q))
+      );
+    }
+    if (hasil !== '' && hasil !== '') {
+      filtered = filtered.filter(item => item.hasil === hasil);
+    }
+    return filtered;
+  }
+
+  // =====================================================
+  //   RENDER TABEL SKRINING
+  // =====================================================
+
+  function renderTable(data) {
+    const container = document.getElementById('skriningTableContainer');
+    if (!container) return;
+
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Nama Peserta</th>
+              <th>Asal</th>
+              <th>Tanggal</th>
+              <th>Hasil</th>
+              <th style="width: 200px;" class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += `
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              Tidak ada data skrining.
+            </td>
+          </tr>
+      `;
+    } else {
+      data.forEach((item, index) => {
+        const badge = getHasilBadge(item.hasil);
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
+            <td>${escapeHtml(item.asal || '-')}</td>
+            <td>${formatDate(item.tanggal)}</td>
+            <td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSkrining('${item.id}')" title="Lihat Detail">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSkrining('${item.id}')" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSkrining('${item.id}')" title="Hapus">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
+
+  // =====================================================
+  //   LOAD DATA SKRINING (ROBUST)
+  // =====================================================
+
+  async function loadData(forceRefresh = false) {
+    const container = document.getElementById('skriningTableContainer');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+    // 1. Coba API dengan force refresh
+    try {
+      let freshData = await PKD.getSkriningResponses(forceRefresh);
+      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+        STATE.skriningList = freshData;
+        updateCache(freshData);
+        saveDataToStorage();
+        renderTable(getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter));
+        updateCacheStatus('Live');
+        return;
+      }
+    } catch (e) {
+      console.warn('Gagal memuat data skrining dari API:', e);
+    }
+
+    // 2. Fallback ke DataCache
+    const cached = DataCache.getData('skrining');
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      STATE.skriningList = cached;
+      renderTable(getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter));
+      updateCacheStatus('Cache');
+      return;
+    }
+
+    // 3. Fallback ke localStorage
+    loadDataFromStorage();
+    if (STATE.skriningList.length > 0) {
+      renderTable(getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter));
+      updateCacheStatus('Storage');
+    } else {
+      container.innerHTML = '<div class="alert alert-info text-center">Tidak ada data skrining.</div>';
+      updateCacheStatus('Empty');
+    }
+  }
+
+  // =====================================================
+  //   LOAD PERTANYAAN SKRINING (ROBUST)
+  // =====================================================
+
+  async function loadQuestions(forceRefresh = false) {
+    const container = document.getElementById('questionsTableContainer');
+    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+
+    // 1. Coba API dengan force refresh
+    try {
+      let result = await PKD.getSkriningQuestions(forceRefresh);
+      if (result && Array.isArray(result) && result.length > 0) {
+        STATE.questionList = result;
+        DataCache.updateData('skriningQuestions', result);
+        localStorage.setItem('pkd_skrining_questions_data', JSON.stringify(result));
+        renderQuestionTable(STATE.questionList);
+        updateCacheStatus('Live');
+        return;
+      }
+    } catch (e) {
+      console.warn('Gagal memuat pertanyaan dari API:', e);
+    }
+
+    // 2. Fallback ke DataCache
+    const cached = DataCache.getData('skriningQuestions');
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      STATE.questionList = cached;
+      renderQuestionTable(STATE.questionList);
+      updateCacheStatus('Cache');
+      return;
+    }
+
+    // 3. Fallback ke localStorage
+    const stored = localStorage.getItem('pkd_skrining_questions_data');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        STATE.questionList = parsed;
+        renderQuestionTable(STATE.questionList);
+        updateCacheStatus('Storage');
+        return;
+      }
+    }
+
+    // 4. Tidak ada data
+    container.innerHTML = '<div class="alert alert-info text-center">Belum ada pertanyaan skrining.</div>';
+    updateCacheStatus('Empty');
+  }
+
+  function renderQuestionTable(questions) {
+    const container = document.getElementById('questionsTableContainer');
+    if (!questions || questions.length === 0) {
+      container.innerHTML = '<p class="text-muted text-center py-3">Belum ada pertanyaan skrining.</p>';
+      return;
+    }
+    questions.sort((a, b) => a.urutan - b.urutan);
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Pertanyaan</th>
+              <th>Jenis</th>
+              <th>Opsi</th>
+              <th>Urutan</th>
+              <th class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    questions.forEach((q, idx) => {
+      const badgeClass = q.jenis === 'radio' ? 'badge-radio' : 'badge-text';
+      html += `
+        <tr class="question-item">
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(q.teks)}</td>
+          <td><span class="badge ${badgeClass} badge-jenis">${q.jenis}</span></td>
+          <td>${escapeHtml(q.opsi || '-')}</td>
+          <td>${q.urutan}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-warning" onclick="editQuestion('${q.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteQuestion('${q.id}')"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>
+      `;
     });
-    html += `</tbody></table></div>`; container.innerHTML=html; container.classList.add('fade-in');
-    document.getElementById('filterSkrining')?.addEventListener('input', e=>{
-      const kw = e.target.value.toLowerCase();
-      document.querySelectorAll('#skriningDataBody .data-row').forEach(r=>{ const n = r.querySelector('.nama')?.innerText.toLowerCase()||''; r.style.display = n.includes(kw)?'':'none'; });
-    });
-    document.getElementById('exportSkriningCSV')?.addEventListener('click', ()=>exportCSV(responses));
-    document.querySelectorAll('.btn-detail-skrining').forEach(b=>b.addEventListener('click', function(){
-      try { const row = JSON.parse(decodeURIComponent(this.dataset.row)); showDetail(row); } catch(e) { showToast('Gagal menampilkan detail','danger'); }
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+  }
+
+  // =====================================================
+  //   EVENT HANDLERS (DATA SKRINING)
+  // =====================================================
+
+  function resetForm() {
+    document.getElementById('editSkriningId').value = '';
+    document.getElementById('skriningNama').value = '';
+    document.getElementById('skriningAsal').value = '';
+    document.getElementById('skriningHasil').value = 'Layak';
+    document.getElementById('skriningTanggal').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('skriningNote').value = '';
+    document.getElementById('formModalTitle').innerText = 'Tambah Skrining';
+    STATE.isEditing = false;
+  }
+
+  function openAddModal() {
+    resetForm();
+    new bootstrap.Modal(document.getElementById('skriningFormModal')).show();
+  }
+
+  function openEditModal(id) {
+    const item = getSkriningById(id);
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    document.getElementById('editSkriningId').value = id;
+    document.getElementById('skriningNama').value = item.nama || '';
+    document.getElementById('skriningAsal').value = item.asal || '';
+    document.getElementById('skriningHasil').value = item.hasil || 'Layak';
+    document.getElementById('skriningTanggal').value = item.tanggal || '';
+    document.getElementById('skriningNote').value = item.catatan || '';
+    document.getElementById('formModalTitle').innerText = 'Edit Skrining';
+    STATE.isEditing = true;
+    new bootstrap.Modal(document.getElementById('skriningFormModal')).show();
+  }
+
+  function openDetailModal(id) {
+    const item = getSkriningById(id);
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('detailSkriningModal'));
+    const content = document.getElementById('detailContent');
+    const badge = getHasilBadge(item.hasil);
+    let html = `
+      <div class="list-group list-group-flush">
+        <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama || '-')}</div>
+        <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
+        <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
+        <div class="list-group-item py-3"><strong>Hasil:</strong> <span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></div>
+        <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
+      </div>
+    `;
+    content.innerHTML = html;
+    modal.show();
+  }
+
+  function confirmDelete(id) {
+    document.getElementById('deleteSkriningId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  }
+
+  function executeDelete() {
+    const id = document.getElementById('deleteSkriningId').value;
+    if (!id) return;
+    const result = deleteSkrining(id);
+    if (result) {
+      showToast('Data skrining berhasil dihapus.', 'success');
+      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+      loadData();
+    } else {
+      showToast('Gagal menghapus data.', 'error');
+    }
+  }
+
+  function saveData() {
+    const id = document.getElementById('editSkriningId').value;
+    const nama = document.getElementById('skriningNama').value.trim();
+    const asal = document.getElementById('skriningAsal').value.trim();
+    const hasil = document.getElementById('skriningHasil').value;
+    const tanggal = document.getElementById('skriningTanggal').value;
+    const catatan = document.getElementById('skriningNote').value.trim();
+
+    if (!nama || !asal || !tanggal) {
+      showToast('Nama, asal, dan tanggal wajib diisi.', 'error');
+      return;
+    }
+
+    const data = { nama, asal, hasil, tanggal, catatan };
+
+    if (id === '') {
+      const newItem = addSkrining(data);
+      if (newItem) {
+        showToast('Data skrining berhasil ditambahkan.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide();
+        loadData();
+      } else {
+        showToast('Gagal menambahkan data.', 'error');
+      }
+    } else {
+      const updated = updateSkrining(id, data);
+      if (updated) {
+        showToast('Data skrining berhasil diperbarui.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide();
+        loadData();
+      } else {
+        showToast('Gagal memperbarui data.', 'error');
+      }
+    }
+  }
+
+  function exportData() {
+    const data = STATE.filteredList;
+    if (data.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
+    }
+    const exportData = data.map(item => ({
+      id: item.id,
+      nama: item.nama,
+      asal: item.asal,
+      tanggal: item.tanggal,
+      hasil: item.hasil,
+      catatan: item.catatan
     }));
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `skrining_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Berhasil mengekspor ${data.length} data skrining.`, 'success');
   }
 
-  async function loadData() {
-    const container = document.getElementById('dataContainer');
-    const cached = getCached('skriningResponses');
-    if(cached) { renderData(cached,container); fetchSkriningResponses().then(n=>{ if(JSON.stringify(n)!==JSON.stringify(cached)){ renderData(n,container); saveCached('skriningResponses',n); } }).catch(console.warn); }
-    else { container.innerHTML = renderSkeletonTable(5,7); try { const d = await fetchSkriningResponses(); renderData(d,container); saveCached('skriningResponses',d); } catch(e) { container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`; } }
+  // =====================================================
+  //   EVENT HANDLERS (PERTANYAAN)
+  // =====================================================
+
+  function resetQuestionForm() {
+    document.getElementById('editQuestionId').value = '';
+    document.getElementById('questionTeks').value = '';
+    document.getElementById('questionJenis').value = 'text';
+    document.getElementById('questionOpsi').value = '';
+    document.getElementById('questionUrutan').value = '1';
+    document.getElementById('questionModalTitle').innerText = 'Tambah Pertanyaan';
+    document.getElementById('questionOptionsGroup').style.display = 'none';
   }
 
-  function exportCSV(responses) {
-    const headers = ['Timestamp','Nama','Alamat','Info','Pengetahuan','Qunut','Penyakit','Pernah','Alasan','Catatan','Tanda Tangan'];
-    const rows = responses.map(r => [r.timestamp, r.nama, r.alamat, r.info, r.pengetahuan, r.qunut, r.penyakit, r.pernah, r.alasan, r.catatan, r.signatureDriveId ? `https://drive.google.com/file/d/${r.signatureDriveId}/view` : '']);
-    const csvContent = [headers,...rows].map(e=>e.map(c=>`"${c}"`).join(',')).join('\n');
-    const bom="\uFEFF"; const blob=new Blob([bom+csvContent],{type:'text/csv;charset=utf-8;'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='skrining_data.csv'; link.click(); URL.revokeObjectURL(link.href);
+  document.getElementById('questionJenis').addEventListener('change', function() {
+    document.getElementById('questionOptionsGroup').style.display = this.value === 'radio' ? 'block' : 'none';
+  });
+
+  document.getElementById('addQuestionBtn').addEventListener('click', function() {
+    resetQuestionForm();
+    new bootstrap.Modal(document.getElementById('questionFormModal')).show();
+  });
+
+  window.editQuestion = function(id) {
+    const q = STATE.questionList.find(item => item.id == id);
+    if (!q) return;
+    document.getElementById('editQuestionId').value = q.id;
+    document.getElementById('questionTeks').value = q.teks || '';
+    document.getElementById('questionJenis').value = q.jenis || 'text';
+    document.getElementById('questionOpsi').value = q.opsi || '';
+    document.getElementById('questionUrutan').value = q.urutan || 1;
+    document.getElementById('questionModalTitle').innerText = 'Edit Pertanyaan';
+    document.getElementById('questionOptionsGroup').style.display = q.jenis === 'radio' ? 'block' : 'none';
+    new bootstrap.Modal(document.getElementById('questionFormModal')).show();
+  };
+
+  document.getElementById('saveQuestionBtn').addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    const id = document.getElementById('editQuestionId').value;
+    const teks = document.getElementById('questionTeks').value.trim();
+    const jenis = document.getElementById('questionJenis').value;
+    const opsi = document.getElementById('questionOpsi').value.trim();
+    const urutan = parseInt(document.getElementById('questionUrutan').value) || 1;
+
+    if (!teks) {
+      showToast('Teks pertanyaan wajib diisi.', 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    try {
+      if (id === '') {
+        await PKD.addSkriningQuestion(teks, jenis, opsi, urutan);
+        showToast('Pertanyaan berhasil ditambahkan.', 'success');
+      } else {
+        await PKD.updateSkriningQuestion(id, teks, jenis, opsi, urutan);
+        showToast('Pertanyaan berhasil diperbarui.', 'success');
+      }
+      bootstrap.Modal.getInstance(document.getElementById('questionFormModal')).hide();
+      loadQuestions(true);
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  window.deleteQuestion = function(id) {
+    document.getElementById('deleteQuestionId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteQuestionModal')).show();
+  };
+
+  document.getElementById('confirmDeleteQuestionBtn').addEventListener('click', async function() {
+    const id = document.getElementById('deleteQuestionId').value;
+    try {
+      await PKD.deleteSkriningQuestion(id);
+      showToast('Pertanyaan berhasil dihapus.', 'success');
+      bootstrap.Modal.getInstance(document.getElementById('deleteQuestionModal')).hide();
+      loadQuestions(true);
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    }
+  });
+
+  document.getElementById('loadDefaultQuestionsBtn').addEventListener('click', async function() {
+    if (!confirm('Ini akan menghapus semua pertanyaan yang ada dan mengembalikan ke default. Lanjutkan?')) return;
+    for (const q of STATE.questionList) {
+      try { await PKD.deleteSkriningQuestion(q.id); } catch (e) {}
+    }
+    const defaults = [
+      { teks: "Nama Lengkap", jenis: "text", opsi: "", urutan: 1 },
+      { teks: "Alamat", jenis: "text", opsi: "", urutan: 2 },
+      { teks: "Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)", jenis: "text", opsi: "", urutan: 3 },
+      { teks: "Pengetahuan tentang Ansor", jenis: "text", opsi: "", urutan: 4 },
+      { teks: "Doa Qunut?", jenis: "radio", opsi: "Ya,Tidak", urutan: 5 },
+      { teks: "Riwayat penyakit", jenis: "text", opsi: "", urutan: 6 },
+      { teks: "Pernah rekrutmen PKD / diklatsar?", jenis: "radio", opsi: "Ya,Tidak", urutan: 7 },
+      { teks: "Alasan tertarik mengikuti PKD", jenis: "text", opsi: "", urutan: 8 },
+      { teks: "Catatan (opsional)", jenis: "text", opsi: "", urutan: 9 }
+    ];
+    for (const q of defaults) {
+      try { await PKD.addSkriningQuestion(q.teks, q.jenis, q.opsi, q.urutan); } catch (e) {}
+    }
+    showToast('Default questions loaded.', 'success');
+    loadQuestions(true);
+  });
+
+  // =====================================================
+  //   SEARCH & FILTER HANDLERS
+  // =====================================================
+
+  const debouncedSearch = debounce(function(query) {
+    STATE.searchQuery = query;
+    const filtered = getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter);
+    STATE.filteredList = filtered;
+    renderTable(filtered);
+  }, 300);
+
+  function handleSearch(e) { debouncedSearch(e.target.value); }
+
+  function handleHasilFilter(e) {
+    STATE.hasilFilter = e.target.value;
+    const filtered = getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter);
+    STATE.filteredList = filtered;
+    renderTable(filtered);
   }
 
-  function showDetail(row) {
-    let detail = '<h6>Detail Jawaban Tambahan</h6>';
-    if (row.dataJson) {
-      try {
-        const parsed = JSON.parse(row.dataJson);
-        detail += '<table class="table table-sm table-bordered">';
-        Object.keys(parsed).forEach(k => { detail += `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(parsed[k])}</td></tr>`; });
-        detail += '</table>';
-      } catch { detail += '<p>Data JSON tidak valid.</p>'; }
-    } else detail += '<p>Tidak ada data tambahan.</p>';
-    document.getElementById('detailModalLabel').innerHTML = 'Detail Skrining - ' + escapeHtml(row.nama);
-    document.getElementById('detailModalBody').innerHTML = detail;
-    new bootstrap.Modal(document.getElementById('detailModal')).show();
+  // =====================================================
+  //   SIDEBAR TOGGLE & DROPDOWN
+  // =====================================================
+
+  function initSidebarToggle() {
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    const sidebar = document.getElementById('sidebarWrapper');
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('minimized');
+        const icon = this.querySelector('i');
+        if (sidebar.classList.contains('minimized')) {
+          icon.classList.remove('bi-arrow-left-right');
+          icon.classList.add('bi-arrow-right-left');
+        } else {
+          icon.classList.remove('bi-arrow-right-left');
+          icon.classList.add('bi-arrow-left-right');
+        }
+      });
+    }
   }
 
-  // Init
-  document.addEventListener('DOMContentLoaded', () => {
+  function initSidebarDropdowns() {
+    document.querySelectorAll('.sidebar-wrapper .nav-link[data-target]').forEach(link => {
+      link.addEventListener('click', function() {
+        const target = this.dataset.target;
+        const submenu = document.getElementById('submenu-' + target);
+        if (submenu) submenu.classList.toggle('open');
+      });
+    });
+  }
+
+  // =====================================================
+  //   LOGIN / LOGOUT
+  // =====================================================
+
+  function initAuth() {
+    if (typeof PKD === 'undefined') {
+      window.PKD = {
+        getUserRole: () => 'guest',
+        verifyAdmin: async (u, p) => {
+          if (u === 'admin' && p === 'admin123') return { success: true };
+          return { success: false, message: 'Login gagal' };
+        },
+        setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
+        setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
+        persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
+        logout: () => { DataCache.clear(); window.location.href = '../index.html'; }
+      };
+      console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
+    }
+
     if (PKD.getUserRole() !== 'admin') {
       new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
-    } else { loadQuestions(); }
+    }
+  }
 
-    document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
-      const u = document.getElementById('adminUsername').value.trim();
-      const p = document.getElementById('adminPassword').value;
-      const err = document.getElementById('adminLoginError');
-      if(!u||!p){ err.innerText='Username dan password harus diisi'; err.style.display='block'; return; }
-      try {
-        const res = await PKD.verifyAdmin(u,p);
-        if(res.success){
-          PKD.setUserRole('admin'); PKD.setUserData({nama:u}); PKD.persistAuthState(); PKD.updateNavbarMenu();
-          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-          loadQuestions();
-        } else { err.innerText = res.message||'Login gagal'; err.style.display='block'; }
-      } catch(e) { err.innerText='Kesalahan: '+e.message; err.style.display='block'; }
+  function handleLogin() {
+    const u = document.getElementById('adminUsername').value.trim();
+    const p = document.getElementById('adminPassword').value;
+    const err = document.getElementById('adminLoginError');
+    if (!u || !p) {
+      err.innerText = 'Username dan password harus diisi';
+      err.style.display = 'block';
+      return;
+    }
+    PKD.verifyAdmin(u, p).then(async res => {
+      if (res.success) {
+        PKD.setUserRole('admin');
+        PKD.setUserData({ nama: u });
+        PKD.persistAuthState();
+        // Preload semua data
+        try {
+          const allData = await Promise.all([
+            PKD.getPesertaList ? PKD.getPesertaList() : [],
+            PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
+            PKD.getMateriList ? PKD.getMateriList() : [],
+            PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
+            PKD.getPretestResponses ? PKD.getPretestResponses() : [],
+            PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
+            PKD.getAlumniList ? PKD.getAlumniList() : [],
+            PKD.getKaderList ? PKD.getKaderList() : [],
+            PKD.getInformasiList ? PKD.getInformasiList() : [],
+            PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
+            PKD.getSertifikatList ? PKD.getSertifikatList() : []
+          ]);
+          DataCache.setAllData({
+            peserta: allData[0], sesi: allData[1], materi: allData[2], skrining: allData[3], pretest: allData[4], posttest: allData[5], alumni: allData[6], kader: allData[7], informasi: allData[8], absensi: allData[9], sertifikat: allData[10]
+          });
+        } catch (e) { console.warn('Gagal preload data:', e); }
+        bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+        loadData();
+        loadQuestions();
+      } else {
+        err.innerText = res.message || 'Login gagal';
+        err.style.display = 'block';
+      }
+    }).catch(e => {
+      err.innerText = 'Kesalahan: ' + e.message;
+      err.style.display = 'block';
     });
+  }
 
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', e=>{ e.preventDefault(); PKD.logout(); });
-    const toggleBtn = document.getElementById('toggleSidebarBtn');
-    if(toggleBtn){ toggleBtn.addEventListener('click', ()=>{ const row=document.querySelector('.row.g-4'); row.classList.toggle('sidebar-minimized'); const icon=toggleBtn.querySelector('i'); icon.classList.toggle('bi-arrow-left-right'); icon.classList.toggle('bi-arrow-right-left'); }); }
+  function handleLogout(e) {
+    e.preventDefault();
+    DataCache.clear();
+    if (PKD.logout) PKD.logout();
+  }
 
-    document.getElementById('questions-tab').addEventListener('shown.bs.tab', loadQuestions);
-    document.getElementById('data-tab').addEventListener('shown.bs.tab', loadData);
+  // =====================================================
+  //   INITIALIZATION
+  // =====================================================
 
-    document.addEventListener('click', function(e) {
-      const nav=document.getElementById('navbarMain'); const tog=document.querySelector('.navbar-toggler');
-      if(nav&&tog&&!nav.contains(e.target)&&!tog.contains(e.target)&&nav.classList.contains('show')) bootstrap.Collapse.getInstance(nav)?.hide();
+  function init() {
+    initSidebarToggle();
+    initSidebarDropdowns();
+    initAuth();
+
+    // Load data dari cache terlebih dahulu
+    const cached = DataCache.getData('skrining');
+    if (cached && Array.isArray(cached)) {
+      STATE.skriningList = cached;
+    } else {
+      loadDataFromStorage();
+    }
+
+    loadData();
+    loadQuestions();
+
+    // Event listeners
+    document.getElementById('addSkriningBtn')?.addEventListener('click', openAddModal);
+    document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      this.disabled = true;
+      loadData(true).then(() => {
+        loadQuestions(true);
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Data berhasil disegarkan', 'success');
+      }).catch(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Gagal menyegarkan', 'error');
+      });
     });
-  });
+    document.getElementById('saveSkriningBtn')?.addEventListener('click', saveData);
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
+    document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+    document.getElementById('filterHasil')?.addEventListener('change', handleHasilFilter);
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', handleLogout);
+    document.getElementById('adminLoginSubmit')?.addEventListener('click', handleLogin);
+
+    // Expose functions ke global
+    window.viewSkrining = openDetailModal;
+    window.editSkrining = openEditModal;
+    window.deleteSkrining = confirmDelete;
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
