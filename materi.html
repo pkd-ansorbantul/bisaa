@@ -6,7 +6,7 @@
   <title>PKD GP Ansor Kabupaten Bantul · Materi</title>
 
   <!-- Favicon & Font Modern -->
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -38,21 +38,18 @@
 </head>
 <body>
 
-<!-- ==================== MODE LOGIN CHECK (DIPERBAIKI) ==================== -->
+<!-- ==================== MODE LOGIN CHECK ==================== -->
 <script>
   (function() {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtPXxjYNTuKffR4LPxBlSML4ZdXrlPBHmVgxeuNYCCgCYW3t6iUTGYn_iTQAV5m-0Z/exec';
-
     async function checkLoginThenLoad() {
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getLoginMode`);
-        const data = await res.json();
-        const requireLogin = data.success ? data.enabled : false;
+        const res = await PKD.getLoginMode();
+        const requireLogin = res.success ? res.enabled : false;
 
         if (requireLogin) {
           const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
           if (!auth) {
-            window.location.href = 'login.html';
+            window.location.href = '/bisaa/login.html';
             return;
           }
         }
@@ -74,14 +71,14 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+    <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
+      <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="me-2">
       <span>
         <span class="brand-title">PKD GP Ansor</span>
         <span class="brand-sub">Kabupaten Bantul</span>
       </span>
     </a>
-    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto">
+    <a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto">
       <i class="bi bi-arrow-left"></i> Kembali
     </a>
   </div>
@@ -146,157 +143,43 @@
 
 <!-- Bootstrap JS & dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/bisaa/dataCache.js"></script>
+<script src="/bisaa/api.js"></script>
 
 <script>
   // =====================================================
   //   KONFIGURASI & STATE
   // =====================================================
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhkFxLG4RZd4tm3w_4j761hXz0gn4cmQFt-2JO0IEIBS-frohWV_c9CDA1fdM65lee/exec';
-  const CACHE_DURATION = 3600000; // 1 jam
+  // Tidak perlu SCRIPT_URL manual, gunakan PKD
 
   // =====================================================
   //   FUNGSI BANTU
   // =====================================================
-  function escapeHtml(unsafe) {
-    if (!unsafe) return '';
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      if (m === '"') return '&quot;';
+      return m;
+    });
   }
 
   function showToast(message, type = 'success') {
     const toastEl = document.getElementById('notificationToast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastIcon = document.getElementById('toastIcon');
-    const toastTitle = document.getElementById('toastTitle');
-
-    toastMessage.innerText = message;
-
+    if (!toastEl) return;
+    const toast = new bootstrap.Toast(toastEl);
+    document.getElementById('toastMessage').innerText = message;
+    const icon = document.getElementById('toastIcon');
     if (type === 'success') {
-      toastEl.classList.add('border-success');
-      toastEl.classList.remove('border-danger');
-      toastIcon.className = 'bi bi-check-circle-fill me-2 text-success';
-      toastTitle.innerText = 'Berhasil';
-      toastTitle.style.color = '#28a745';
+      icon.className = 'bi bi-check-circle-fill text-success';
+      document.getElementById('toastTitle').innerText = 'Berhasil';
     } else {
-      toastEl.classList.add('border-danger');
-      toastEl.classList.remove('border-success');
-      toastIcon.className = 'bi bi-x-circle-fill me-2 text-danger';
-      toastTitle.innerText = 'Gagal';
-      toastTitle.style.color = '#dc3545';
+      icon.className = 'bi bi-x-circle-fill text-danger';
+      document.getElementById('toastTitle').innerText = 'Gagal';
     }
-
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
     toast.show();
-  }
-
-  // =====================================================
-  //   PANGGILAN APPS SCRIPT (GET & POST)
-  // =====================================================
-  function callAppsScript(params, method = 'POST', timeout = 10000) {
-    return new Promise(async (resolve, reject) => {
-      if (method === 'GET') {
-        try {
-          const queryString = new URLSearchParams(params).toString();
-          const response = await fetch(`${SCRIPT_URL}?${queryString}`, {
-            method: 'GET',
-            mode: 'cors',
-            headers: { 'Accept': 'application/json' }
-          });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-          return resolve(data);
-        } catch (fetchError) {
-          console.warn('Fetch GET gagal, fallback ke JSONP:', fetchError);
-          const callbackName = 'jsonp_callback_' + Date.now();
-          const script = document.createElement('script');
-          let isResolved = false;
-          let timer = setTimeout(() => {
-            if (!isResolved) {
-              isResolved = true;
-              if (document.head.contains(script)) document.head.removeChild(script);
-              delete window[callbackName];
-              reject(new Error('⏱️ Timeout: Server tidak merespon JSONP.'));
-            }
-          }, timeout);
-
-          window[callbackName] = function(data) {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              resolve(data || {});
-            }
-            delete window[callbackName];
-            if (document.head.contains(script)) document.head.removeChild(script);
-          };
-
-          script.onerror = () => {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              delete window[callbackName];
-              if (document.head.contains(script)) document.head.removeChild(script);
-              reject(new Error('❌ Gagal memuat script JSONP.'));
-            }
-          };
-
-          const cleanParams = { ...params };
-          const queryString = new URLSearchParams({ ...cleanParams, callback: callbackName }).toString();
-          script.src = `${SCRIPT_URL}?${queryString}`;
-          document.head.appendChild(script);
-        }
-      } else {
-        fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(params)
-        })
-          .then(() => resolve({ success: true, message: 'Request sent (no-cors)' }))
-          .catch(reject);
-      }
-    });
-  }
-
-  // =====================================================
-  //   CACHE DI SESSIONSTORAGE
-  // =====================================================
-  function getCachedMateri() {
-    try {
-      const cached = sessionStorage.getItem('materiListCache');
-      const cachedTime = sessionStorage.getItem('materiListCacheTime');
-      if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < CACHE_DURATION) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  function saveCachedMateri(data) {
-    try {
-      sessionStorage.setItem('materiListCache', JSON.stringify(data));
-      sessionStorage.setItem('materiListCacheTime', Date.now().toString());
-    } catch (e) {}
-  }
-
-  async function fetchMateriList(forceRefresh = false) {
-    if (!forceRefresh) {
-      const cached = getCachedMateri();
-      if (cached) return cached;
-    }
-    try {
-      const res = await callAppsScript({ action: 'getMateriList' }, 'GET', 10000);
-      const data = res.data || [];
-      saveCachedMateri(data);
-      return data;
-    } catch (e) {
-      console.error('Gagal memuat materi:', e);
-      return [];
-    }
   }
 
   // =====================================================
@@ -375,12 +258,12 @@
     const container = document.getElementById('materiContainer');
     if (!container) return;
 
-    // 1. Coba ambil dari cache
-    let materi = getCachedMateri();
+    // 1. Coba ambil dari DataCache
+    let materi = DataCache.getData('materi');
     if (materi && materi.length) {
       renderMateriList(materi);
       // 2. Background update
-      fetchMateriList(true).then(newMateri => {
+      PKD.getMateriList(true).then(newMateri => {
         if (JSON.stringify(newMateri) !== JSON.stringify(materi)) {
           renderMateriList(newMateri);
         }
@@ -389,7 +272,7 @@
       // Tidak ada cache, tampilkan spinner
       container.innerHTML = '<div class="text-center my-4"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat materi...</p></div>';
       try {
-        materi = await fetchMateriList(true);
+        materi = await PKD.getMateriList(true);
         renderMateriList(materi);
       } catch (e) {
         container.innerHTML = `<div class="alert alert-danger">Gagal memuat materi: ${escapeHtml(e.message)}</div>`;

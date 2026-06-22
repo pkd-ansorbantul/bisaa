@@ -1,341 +1,743 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Kabupaten Bantul · Skrining</title>
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <style>
-    * { font-family: 'Inter', sans-serif; }
-    body { background: #f8fafc; color: #0f172a; }
-    .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
-    .navbar-brand img { max-height: 40px; margin-right: 12px; }
-    .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-    .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
-    .container-card { max-width: 1000px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
-    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
-    .signature-area { border: 2px dashed #cbd5e1; border-radius: 20px; background: white; padding: 12px; }
-    canvas { width: 100%; height: auto; max-width: 300px; max-height: 150px; background: white; display: block; border-radius: 12px; margin: 0 auto; }
-    .signature-buttons { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
-    .btn-signature { border-radius: 9999px; padding: 0.4rem 1.6rem; font-size: 0.9rem; }
-    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: 3rem; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Skrining PKD - GP Ansor Bantul</title>
+    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8fafc; color: #0f172a; min-height: 100vh; }
+        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
+        .navbar-brand img { max-height: 40px; margin-right: 12px; }
+        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+        .container-card {
+            max-width: 1000px;
+            background: white;
+            border-radius: 32px;
+            padding: 2rem;
+            margin: 30px auto;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(226,232,240,0.6);
+        }
+        .section-title {
+            font-weight: 650;
+            font-size: 1.75rem;
+            border-left: 6px solid #2563eb;
+            padding-left: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+        .signature-area { border: 2px dashed #cbd5e1; border-radius: 20px; background: white; padding: 12px; }
+        canvas { width: 100%; height: auto; max-width: 300px; max-height: 150px; background: white; display: block; border-radius: 12px; margin: 0 auto; }
+        .signature-buttons { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
+        .btn-signature { border-radius: 9999px; padding: 0.4rem 1.6rem; font-size: 0.9rem; }
+        .footer-modern {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 3rem;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .form-section { margin-bottom: 1.5rem; }
+        .form-section .form-label { font-weight: 600; color: #1e293b; }
+        .form-section .form-control, .form-section .form-select {
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+        }
+        .form-section .form-control:focus, .form-section .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .preview-table th { width: 35%; background: #f8fafc; }
+        .preview-table td { background: white; }
+        .preview-signature { border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; max-width: 200px; }
+        .question-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .radio-group .form-check { margin-right: 1.5rem; }
+        .radio-group .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
+        .cache-status {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            display: inline-block;
+        }
+        .cache-status.live { background: #dcfce7; color: #16a34a; }
+        .cache-status.offline { background: #fee2e2; color: #dc2626; }
+        .refresh-btn {
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        @media (max-width: 576px) {
+            .container-card { padding: 1rem; }
+            .refresh-btn { width: 40px; height: 40px; }
+        }
+    </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
-      <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
-    </a>
-    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto"><i class="bi bi-arrow-left"></i> Kembali</a>
-  </div>
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
+            <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="me-2">
+            <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary refresh-btn" id="refreshBtn" title="Segarkan Data">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
 </nav>
 
 <!-- Konten utama -->
-<div id="contentArea">
-  <section id="skriningSection" class="container container-card">
+<div id="contentArea" class="container container-card">
     <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Form Skrining PKD</h2>
-    <div id="skriningFormContainer">Memuat form...</div>
-  </section>
+    <div id="skriningFormContainer">
+        <!-- Akan diisi oleh JavaScript -->
+    </div>
 </div>
 
 <!-- Footer -->
 <footer class="footer-modern container">
-  <div class="d-flex justify-content-center align-items-center gap-2">
-    <i class="bi bi-c-circle"></i>
-    <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
-  </div>
+    <div class="d-flex justify-content-center align-items-center gap-2">
+        <i class="bi bi-c-circle"></i>
+        <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+    </div>
 </footer>
 
 <!-- Modal preview skrining -->
 <div class="modal fade" id="previewSkriningModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Preview Data Skrining</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4" id="previewSkriningBody"></div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-        <button type="button" class="btn btn-success rounded-pill px-4" id="previewKirimBtn">📤 Kirim Skrining</button>
-      </div>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+                <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Preview Data Skrining</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="previewSkriningBody">
+                <div class="text-center"><div class="spinner-border text-primary"></div></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success rounded-pill px-4" id="previewKirimBtn">📤 Kirim Skrining</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<!-- Toast notifikasi (dibuat oleh api.js) -->
+<!-- Toast notifikasi -->
+<div class="toast-container">
+    <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+        <div class="toast-header bg-white border-0">
+            <i class="bi me-2" id="toastIcon"></i>
+            <strong class="me-auto" id="toastTitle">Berhasil</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-<script src="api.js"></script>
+<script src="/bisaa/dataCache.js"></script>
+<script src="/bisaa/api.js"></script>
+
 <script>
-  // Bantuan lokal
-  function escapeHtml(unsafe) { return PKD.escapeHtml(unsafe); }
-  function showToast(message, type = 'success') { PKD.showToast(message, type); }
+    (function() {
+        'use strict';
 
-  // =====================================================
-  //   CACHE SKRINING (menggunakan PKD)
-  // =====================================================
-  async function fetchSkriningQuestions(forceRefresh = false) {
-    if (!forceRefresh) {
-      const cached = PKD.getCached('skriningQuestionsCache', 3600000);
-      if (cached) return cached;
-    }
-    try {
-      const questions = await PKD.getSkriningQuestions(true);
-      PKD.saveCached('skriningQuestionsCache', questions);
-      return questions;
-    } catch (e) {
-      console.error('Gagal memuat soal skrining:', e);
-      return [];
-    }
-  }
+        // =====================================================
+        //   STATE & CONFIG
+        // =====================================================
+        let questions = [];
+        let sigPad = null;
+        let isSubmitting = false;
+        let isRefreshing = false;
+        let isInitialLoad = true;
+        const FORM_STATE_KEY = 'skriningFormState';
 
-  // =====================================================
-  //   STATE & SIGNATURE
-  // =====================================================
-  function saveSkriningFormState() {
-    const form = document.getElementById('formSkriningDinamis');
-    if (!form) return;
-    const formData = new FormData(form);
-    const data = {};
-    formData.forEach((v, k) => data[k] = v);
-    if (window.sigPadSkrining && !window.sigPadSkrining.isEmpty()) {
-      data.signatureData = window.sigPadSkrining.toData();
-    }
-    localStorage.setItem('skriningFormState', JSON.stringify(data));
-  }
-
-  function restoreSkriningFormState() {
-    const saved = localStorage.getItem('skriningFormState');
-    if (!saved) return;
-    try {
-      const data = JSON.parse(saved);
-      const form = document.getElementById('formSkriningDinamis');
-      if (!form) return;
-      Object.keys(data).forEach(key => {
-        if (key === 'signatureData') return;
-        const field = form.querySelector(`[name="${key}"]`);
-        if (field) {
-          if (field.type === 'radio' || field.type === 'checkbox') {
-            field.checked = (field.value === data[key]);
-          } else {
-            field.value = data[key];
-          }
+        // =====================================================
+        //   UTILITY FUNCTIONS
+        // =====================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return m;
+            });
         }
-      });
-      if (data.signatureData && window.sigPadSkrining) {
-        window.sigPadSkrining.fromData(data.signatureData);
-      }
-    } catch (e) {}
-  }
 
-  function clearSkriningFormState() {
-    localStorage.removeItem('skriningFormState');
-  }
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('notificationToast');
+            if (!toastEl) return;
+            const toast = new bootstrap.Toast(toastEl);
+            document.getElementById('toastMessage').innerText = message;
+            const icon = document.getElementById('toastIcon');
+            if (type === 'success') {
+                icon.className = 'bi bi-check-circle-fill text-success';
+                document.getElementById('toastTitle').innerText = 'Berhasil';
+            } else if (type === 'error') {
+                icon.className = 'bi bi-x-circle-fill text-danger';
+                document.getElementById('toastTitle').innerText = 'Gagal';
+            } else {
+                icon.className = 'bi bi-info-circle-fill text-primary';
+                document.getElementById('toastTitle').innerText = 'Info';
+            }
+            toast.show();
+        }
 
-  function initSkriningSignaturePad() {
-    const canvas = document.getElementById('signatureCanvasSkrining');
-    if (!canvas) return;
-    window.sigPadSkrining = new SignaturePad(canvas, { backgroundColor: 'white', penColor: 'black' });
-    window.sigPadSkrining.clear();
-    document.getElementById('clearSkriningSign')?.addEventListener('click', () => { window.sigPadSkrining.clear(); saveSkriningFormState(); });
-    document.getElementById('undoSkriningSign')?.addEventListener('click', () => {
-      const data = window.sigPadSkrining.toData();
-      if (data) { data.pop(); window.sigPadSkrining.fromData(data); saveSkriningFormState(); }
-    });
-  }
+        function generateFieldName(teks) {
+            return teks.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+/g, '_')
+                .substring(0, 50);
+        }
 
-  function previewSkriningForm(e) {
-    e.preventDefault();
-    if (!window.sigPadSkrining || window.sigPadSkrining.isEmpty()) {
-      showToast('Tanda tangan assessor wajib!', 'danger');
-      return;
-    }
-    const form = document.getElementById('formSkriningDinamis');
-    const formData = new FormData(form);
-    const data = {};
-    formData.forEach((v, k) => data[k] = v);
-    const signatureDataURL = window.sigPadSkrining.toDataURL('image/jpeg', 0.2);
-    data.signature = signatureDataURL;
-    showSkriningPreview(data, signatureDataURL);
-  }
+        function isLongText(teks) {
+            const keywords = ['alamat', 'pengetahuan', 'alasan', 'catatan', 'deskripsi', 'riwayat'];
+            return keywords.some(k => teks.toLowerCase().includes(k));
+        }
 
-  function showSkriningPreview(data, signatureDataURL) {
-    const modalBody = document.getElementById('previewSkriningBody');
-    // Ambil pertanyaan tambahan yang sudah disimpan di global
-    const extraQuestions = window._skriningQuestions || [];
+        function saveFormState() {
+            const form = document.getElementById('formSkriningDinamis');
+            if (!form) return;
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((v, k) => data[k] = v);
+            if (sigPad && !sigPad.isEmpty()) {
+                data.signatureData = sigPad.toData();
+            }
+            try {
+                localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data));
+            } catch (e) {}
+        }
 
-    let html = `<table class="table table-bordered preview-table">`;
-    html += `<tr><th>Nama Lengkap</th><td>${escapeHtml(data.nama || '')}</td></tr>`;
-    html += `<tr><th>Alamat</th><td>${escapeHtml(data.alamat || '')}</td></tr>`;
-    html += `<tr><th>Info Rekrutmen</th><td>${escapeHtml(data.info || '')}</td></tr>`;
-    html += `<tr><th>Pengetahuan tentang Ansor</th><td>${escapeHtml(data.pengetahuan || '')}</td></tr>`;
+        function restoreFormState() {
+            const saved = localStorage.getItem(FORM_STATE_KEY);
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                const form = document.getElementById('formSkriningDinamis');
+                if (!form) return;
+                Object.keys(data).forEach(key => {
+                    if (key === 'signatureData') return;
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        if (field.type === 'radio' || field.type === 'checkbox') {
+                            field.checked = (field.value === data[key]);
+                        } else {
+                            field.value = data[key];
+                        }
+                    }
+                });
+                if (data.signatureData && sigPad) {
+                    sigPad.fromData(data.signatureData);
+                }
+            } catch (e) {}
+        }
 
-    extraQuestions.forEach(q => {
-      const key = `q_${q.id}`;
-      let value = data[key] || '';
-      html += `<tr><th>${escapeHtml(q.teks || 'Pertanyaan')}</th><td>${escapeHtml(value)}</td></tr>`;
-    });
+        function clearFormState() {
+            localStorage.removeItem(FORM_STATE_KEY);
+        }
 
-    html += `<tr><th>Doa Qunut?</th><td>${escapeHtml(data.qunut || '')}</td></tr>`;
-    html += `<tr><th>Riwayat Penyakit</th><td>${escapeHtml(data.penyakit || '')}</td></tr>`;
-    html += `<tr><th>Pernah rekrutmen/diklatsar?</th><td>${escapeHtml(data.pernah || '')}</td></tr>`;
-    html += `<tr><th>Alasan Tertarik</th><td>${escapeHtml(data.alasan || '')}</td></tr>`;
-    html += `<tr><th>Catatan</th><td>${escapeHtml(data.catatan || '')}</td></tr>`;
-    html += `<tr><th>Tanda Tangan Assessor</th><td><img src="${signatureDataURL}" class="preview-signature" alt="Signature" style="max-width:200px;"></td></tr>`;
-    html += `</table>`;
+        function getDefaultQuestions() {
+            return [
+                { id: 1, teks: 'Nama Lengkap', jenis: 'text', opsi: '', urutan: 1 },
+                { id: 2, teks: 'Alamat', jenis: 'text', opsi: '', urutan: 2 },
+                { id: 3, teks: 'Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)', jenis: 'text', opsi: '', urutan: 3 },
+                { id: 4, teks: 'Pengetahuan tentang Ansor', jenis: 'text', opsi: '', urutan: 4 },
+                { id: 5, teks: 'Doa Qunut?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 5 },
+                { id: 6, teks: 'Riwayat penyakit', jenis: 'text', opsi: '', urutan: 6 },
+                { id: 7, teks: 'Pernah rekrutmen PKD / diklatsar?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 7 },
+                { id: 8, teks: 'Alasan tertarik mengikuti PKD', jenis: 'text', opsi: '', urutan: 8 },
+                { id: 9, teks: 'Catatan (opsional)', jenis: 'text', opsi: '', urutan: 9 }
+            ];
+        }
 
-    modalBody.innerHTML = html;
-    window.__skriningPreviewData = { data, signatureDataURL };
-    new bootstrap.Modal(document.getElementById('previewSkriningModal')).show();
-  }
+        // =====================================================
+        //   CHECK LOGIN & REDIRECT (DIPERBAIKI)
+        // =====================================================
+        async function checkLoginAndRedirect() {
+            try {
+                const loginMode = await PKD.getLoginMode();
+                const requireLogin = loginMode.success ? loginMode.enabled : false;
 
-  // Submit skrining dari modal preview
-  document.getElementById('previewKirimBtn')?.addEventListener('click', async function() {
-    if (!window.__skriningPreviewData) return;
-    const btn = this;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+                if (requireLogin) {
+                    const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+                    // Jika belum login, redirect ke login
+                    if (!auth) {
+                        window.location.href = '/bisaa/login.html?return=skrining.html';
+                        return false;
+                    }
 
-    const { data, signatureDataURL } = window.__skriningPreviewData;
-    delete data.signature; // hapus field signature dari form (karena sudah diwakili oleh signatureDataURL)
-    const params = { action: 'submitSkrining', ...data, signature: signatureDataURL };
+                    // Cek role user (biarkan admin, member, atau ketua_pac bisa akses)
+                    let userRole = PKD.getUserRole();
+                    if (!userRole) {
+                        try {
+                            const parsed = JSON.parse(auth);
+                            userRole = parsed.role || null;
+                        } catch (e) {}
+                    }
+                    // Jika role masih null, redirect
+                    if (!userRole) {
+                        window.location.href = '/bisaa/login.html?return=skrining.html';
+                        return false;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal cek mode login, melanjutkan tanpa login:', e);
+            }
+            return true;
+        }
 
-    try {
-      // Gunakan callApi atau submitSkrining? Di api.js ada submitSkrining(formData), jadi kita bisa langsung panggil itu
-      // Namun fungsi submitSkrining di api.js menerima satu object formData, jadi bisa langsung dikirim.
-      // Pastikan properti 'action' tidak ikut terkirim ke server (api.js akan menambahkan action dari fungsi spesifik).
-      // Kita gunakan PKD.submitSkrining({...data, signature: signatureDataURL})
-      await PKD.submitSkrining(params);
-      showToast('✅ Skrining berhasil dikirim!', 'success');
-      document.getElementById('formSkriningDinamis')?.reset();
-      if (window.sigPadSkrining) window.sigPadSkrining.clear();
-      bootstrap.Modal.getInstance(document.getElementById('previewSkriningModal')).hide();
-      clearSkriningFormState();
-    } catch (e) {
-      showToast('❌ Gagal mengirim: ' + e.message, 'danger');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '📤 Kirim Skrining';
-    }
-  });
+        // =====================================================
+        //   DATA LOADING (menggunakan DataCache)
+        // =====================================================
+        async function loadSkriningQuestions(forceRefresh = false) {
+            try {
+                // Cek DataCache dulu
+                if (!forceRefresh) {
+                    const cached = DataCache.getData('skriningQuestions');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        questions = cached;
+                        if (isInitialLoad) {
+                            renderForm(false);
+                            isInitialLoad = false;
+                        } else {
+                            renderForm(false);
+                        }
+                        return;
+                    }
+                }
 
-  // =====================================================
-  //   RENDER FORM SKRINING
-  // =====================================================
-  function renderSkriningForm(extraQuestions) {
-    let html = `<form id="formSkriningDinamis">`;
-    let questionNumber = 1;
+                // Jika tidak ada cache atau force refresh, tampilkan spinner
+                const container = document.getElementById('skriningFormContainer');
+                if (!questions || questions.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center my-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mt-2 text-muted">Memuat data skrining...</p>
+                        </div>
+                    `;
+                }
 
-    html += `<div class="mb-3"><label class="form-label">${questionNumber++}. Nama Lengkap</label><input type="text" class="form-control" name="nama" placeholder="Contoh: Ahmad Fauzi" required></div>`;
-    html += `<div class="mb-3"><label class="form-label">${questionNumber++}. Alamat</label><textarea class="form-control" name="alamat" rows="2" placeholder="Contoh: Demangan RT 8 Bangunharjo Sewon" required></textarea></div>`;
-    html += `<div class="mb-3"><label class="form-label">${questionNumber++}. Info rekrutmen</label><input type="text" class="form-control" name="info" placeholder="Contoh: IG/FB/WA/Website/Teman/Saudara/Lainnya" required></div>`;
-    html += `<div class="mb-3"><label class="form-label">${questionNumber++}. Pengetahuan tentang Ansor</label><textarea class="form-control" name="pengetahuan" rows="2" placeholder="Contoh: Ansor merupakan Salah Satu Banom dari NU" required></textarea></div>`;
+                // Fetch dari API
+                const fresh = await PKD.getSkriningQuestions(true);
+                if (fresh && Array.isArray(fresh.data)) {
+                    const freshQuestions = fresh.data;
+                    questions = freshQuestions;
+                    DataCache.updateData('skriningQuestions', questions);
+                    renderForm(false);
+                } else {
+                    if (!questions || questions.length === 0) {
+                        questions = getDefaultQuestions();
+                        DataCache.updateData('skriningQuestions', questions);
+                        renderForm(false);
+                    }
+                }
+                isInitialLoad = false;
+            } catch (e) {
+                console.warn('Gagal fetch questions:', e);
+                if (!questions || questions.length === 0) {
+                    questions = getDefaultQuestions();
+                    DataCache.updateData('skriningQuestions', questions);
+                    renderForm(false);
+                }
+                isInitialLoad = false;
+            }
+        }
 
-    extraQuestions.forEach(q => {
-      if (q.jenis === 'radio') {
-        html += `<div class="mb-3"><label class="form-label">${questionNumber++}. ${q.teks}</label><div>`;
-        (q.opsi || '').split(',').forEach(ops => {
-          if (ops.trim()) html += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="q_${q.id}" value="${ops.trim()}"><label class="form-check-label">${ops.trim()}</label></div>`;
-        });
-        html += `</div></div>`;
-      } else {
-        html += `<div class="mb-3"><label class="form-label">${questionNumber++}. ${q.teks}</label><input type="text" class="form-control" name="q_${q.id}"></div>`;
-      }
-    });
+        // =====================================================
+        //   RENDER FORM
+        // =====================================================
+        function renderForm(showSpinner = false) {
+            const container = document.getElementById('skriningFormContainer');
+            if (!questions || questions.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning border-0 shadow-sm">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Belum ada pertanyaan skrining. Silakan hubungi administrator.
+                    </div>
+                `;
+                return;
+            }
 
-    html += `<div class="mb-3"><label class="form-label">${questionNumber++}. Doa Qunut?</label>
-                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="qunut" value="Ya"> Ya</div>
-                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="qunut" value="Tidak"> Tidak</div></div>
-              <div class="mb-3"><label class="form-label">${questionNumber++}. Riwayat penyakit</label><textarea class="form-control" name="penyakit"></textarea></div>
-              <div class="mb-3"><label class="form-label">${questionNumber++}. Pernah rekrutmen PKD/diklatsar?</label>
-                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="pernah" value="Ya"> Sudah</div>
-                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="pernah" value="Tidak"> Belum</div></div>
-              <div class="mb-3"><label class="form-label">${questionNumber++}. Alasan tertarik</label><textarea class="form-control" name="alasan" required></textarea></div>
-              <div class="mb-3"><label class="form-label">${questionNumber++}. Catatan</label><textarea class="form-control" name="catatan"></textarea></div>
-              <div class="mb-4">
-                <label class="form-label fw-bold">${questionNumber++}. ✍️ Tanda Tangan Assessor</label>
-                <div class="signature-area"><canvas id="signatureCanvasSkrining" width="250" height="120"></canvas></div>
-                <div class="signature-buttons">
-                  <button type="button" class="btn btn-outline-secondary btn-signature" id="clearSkriningSign">Hapus</button>
-                  <button type="button" class="btn btn-outline-primary btn-signature" id="undoSkriningSign">Undo</button>
+            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+
+            let html = '';
+            if (showSpinner) {
+                html = `
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2 text-muted">Memuat data skrining...</p>
+                    </div>
+                `;
+                container.innerHTML = html;
+                return;
+            }
+
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="text-muted small">Data: </span>
+                        <span id="dataStatus" class="badge bg-light text-dark">⏳ Memuat...</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" id="inlineRefreshBtn" title="Segarkan">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+                    </button>
                 </div>
-                <input type="hidden" id="signatureDataSkrining" name="signatureData">
-              </div>
-              <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">Kirim Skrining</button>
-            </form>`;
+                <form id="formSkriningDinamis" novalidate>
+            `;
 
-    document.getElementById('skriningFormContainer').innerHTML = html;
-    document.getElementById('skriningFormContainer').classList.add('fade-in');
-    initSkriningSignaturePad();
-    restoreSkriningFormState();
+            let questionNumber = 1;
+            sorted.forEach(q => {
+                const fieldName = generateFieldName(q.teks);
+                html += `<div class="form-section">`;
+                html += `<label class="form-label">`;
+                html += `<span class="question-number">${questionNumber}</span>`;
+                html += `${escapeHtml(q.teks)}`;
+                if (q.jenis !== 'radio') {
+                    html += ` <span class="text-danger">*</span>`;
+                }
+                html += `</label>`;
 
-    // Simpan pertanyaan ke global untuk preview
-    window._skriningQuestions = extraQuestions;
+                if (q.jenis === 'radio') {
+                    const options = (q.opsi || '').split(',').filter(s => s.trim() !== '');
+                    html += `<div class="radio-group">`;
+                    options.forEach((opt, idx) => {
+                        html += `
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="${fieldName}" value="${opt.trim()}" id="${fieldName}_${idx}" ${idx === 0 ? 'checked' : ''}>
+                                <label class="form-check-label" for="${fieldName}_${idx}">${opt.trim()}</label>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                } else {
+                    if (isLongText(q.teks)) {
+                        html += `<textarea class="form-control" name="${fieldName}" rows="3" placeholder="Masukkan jawaban Anda..." required></textarea>`;
+                    } else {
+                        html += `<input type="text" class="form-control" name="${fieldName}" placeholder="Masukkan jawaban Anda..." required>`;
+                    }
+                }
 
-    // Auto-save input
-    document.querySelectorAll('#formSkriningDinamis input, #formSkriningDinamis textarea, #formSkriningDinamis select').forEach(el => {
-      el.addEventListener('input', saveSkriningFormState);
-      el.addEventListener('change', saveSkriningFormState);
-    });
-    if (window.sigPadSkrining) {
-      window.sigPadSkrining.addEventListener('endStroke', saveSkriningFormState);
-    }
+                html += `</div>`;
+                questionNumber++;
+            });
 
-    // Submit form -> preview
-    document.getElementById('formSkriningDinamis').addEventListener('submit', previewSkriningForm);
-  }
+            // Signature pad
+            html += `
+                <div class="form-section">
+                    <label class="form-label fw-bold">
+                        <span class="question-number">${questionNumber}</span>
+                        ✍️ Tanda Tangan Assessor
+                    </label>
+                    <div class="signature-area">
+                        <canvas id="signatureCanvasSkrining" width="300" height="150"></canvas>
+                    </div>
+                    <div class="signature-buttons">
+                        <button type="button" class="btn btn-outline-secondary btn-signature" id="clearSkriningSign">
+                            <i class="bi bi-eraser me-1"></i> Hapus
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-signature" id="undoSkriningSign">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Undo
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill mt-3">
+                    <i class="bi bi-send me-2"></i> Kirim Skrining
+                </button>
+            `;
 
-  // =====================================================
-  //   LOAD SKRINING FORM (CACHE + BACKGROUND)
-  // =====================================================
-  async function loadSkriningForm() {
-    const container = document.getElementById('skriningFormContainer');
-    container.innerHTML = '<div class="text-center my-4"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat form...</p></div>';
+            html += `</form>`;
 
-    let extraQuestions = PKD.getCached('skriningQuestionsCache', 3600000);
-    if (extraQuestions) {
-      renderSkriningForm(extraQuestions);
-      fetchSkriningQuestions(true).then(newQ => {
-        if (JSON.stringify(newQ) !== JSON.stringify(extraQuestions)) {
-          renderSkriningForm(newQ);
+            container.innerHTML = html;
+            container.classList.add('fade-in');
+
+            // Inisialisasi signature pad
+            const canvas = document.getElementById('signatureCanvasSkrining');
+            if (canvas) {
+                sigPad = new SignaturePad(canvas, {
+                    backgroundColor: 'white',
+                    penColor: '#0f172a',
+                    minWidth: 1.5,
+                    maxWidth: 3
+                });
+                sigPad.clear();
+
+                document.getElementById('clearSkriningSign')?.addEventListener('click', () => {
+                    sigPad.clear();
+                    saveFormState();
+                });
+
+                document.getElementById('undoSkriningSign')?.addEventListener('click', () => {
+                    const data = sigPad.toData();
+                    if (data && data.length > 0) {
+                        data.pop();
+                        sigPad.fromData(data);
+                        saveFormState();
+                    }
+                });
+
+                sigPad.addEventListener('endStroke', saveFormState);
+            }
+
+            // Auto-save
+            document.querySelectorAll('#formSkriningDinamis input, #formSkriningDinamis textarea, #formSkriningDinamis select').forEach(el => {
+                el.addEventListener('input', saveFormState);
+                el.addEventListener('change', saveFormState);
+            });
+
+            // Restore saved state after render
+            setTimeout(() => {
+                restoreFormState();
+            }, 100);
+
+            // Submit handler
+            document.getElementById('formSkriningDinamis').addEventListener('submit', handleSubmit);
+
+            // Inline refresh
+            document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+                this.disabled = true;
+                loadSkriningQuestions(true).then(() => {
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+                    this.disabled = false;
+                    showToast('Data diperbarui', 'success');
+                }).catch(() => {
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+                    this.disabled = false;
+                    showToast('Gagal memperbarui', 'error');
+                });
+            });
         }
-      }).catch(console.warn);
-    } else {
-      extraQuestions = await fetchSkriningQuestions(true);
-      renderSkriningForm(extraQuestions);
-    }
-  }
 
-  // ========== MODE LOGIN CHECK ==========
-  (async function() {
-    try {
-      const loginMode = await PKD.getLoginMode();
-      const requireLogin = loginMode.success ? loginMode.enabled : false;
-      if (requireLogin) {
-        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-        if (!auth) {
-          window.location.href = 'login.html';
-          return;
+        // =====================================================
+        //   HANDLE SUBMIT
+        // =====================================================
+        async function handleSubmit(e) {
+            e.preventDefault();
+            if (isSubmitting) return;
+
+            if (!sigPad || sigPad.isEmpty()) {
+                showToast('Tanda tangan assessor wajib diisi!', 'error');
+                return;
+            }
+
+            const form = document.getElementById('formSkriningDinamis');
+            const formData = new FormData(form);
+            const answers = {};
+            formData.forEach((v, k) => answers[k] = v);
+
+            // Validasi
+            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+            let missing = [];
+            sorted.forEach(q => {
+                if (q.jenis !== 'radio') {
+                    const fieldName = generateFieldName(q.teks);
+                    if (!answers[fieldName] || answers[fieldName].trim() === '') {
+                        missing.push(q.teks);
+                    }
+                }
+            });
+            if (missing.length > 0) {
+                showToast(`Harap isi: ${missing.join(', ')}`, 'error');
+                return;
+            }
+
+            const signatureDataURL = sigPad.toDataURL('image/jpeg', 0.3);
+
+            // Preview
+            const modalBody = document.getElementById('previewSkriningBody');
+            let previewHtml = `
+                <div class="table-responsive">
+                    <table class="table table-bordered preview-table">
+                        <tbody>
+            `;
+            sorted.forEach(q => {
+                const fieldName = generateFieldName(q.teks);
+                const value = answers[fieldName] || '';
+                previewHtml += `
+                    <tr>
+                        <th style="width: 40%;">${escapeHtml(q.teks)}</th>
+                        <td>${escapeHtml(value)}</td>
+                    </tr>
+                `;
+            });
+            previewHtml += `
+                        <tr>
+                            <th>Tanda Tangan Assessor</th>
+                            <td><img src="${signatureDataURL}" class="preview-signature" alt="Tanda Tangan"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            modalBody.innerHTML = previewHtml;
+
+            window.__skriningPreviewData = {
+                answers: answers,
+                signatureDataURL: signatureDataURL
+            };
+
+            new bootstrap.Modal(document.getElementById('previewSkriningModal')).show();
         }
-      }
-    } catch(e) { console.warn('Gagal cek mode login', e); }
-    loadSkriningForm();
-  })();
+
+        // =====================================================
+        //   SUBMIT SKRINING
+        // =====================================================
+        document.getElementById('previewKirimBtn')?.addEventListener('click', async function() {
+            if (!window.__skriningPreviewData || isSubmitting) return;
+            isSubmitting = true;
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
+
+            const { answers, signatureDataURL } = window.__skriningPreviewData;
+            const params = { signature: signatureDataURL };
+            const fixedFields = ['nama', 'alamat', 'info', 'pengetahuan', 'qunut', 'penyakit', 'pernah', 'alasan', 'catatan'];
+            const dataJson = {};
+
+            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+            sorted.forEach(q => {
+                const fieldName = generateFieldName(q.teks);
+                const value = answers[fieldName] || '';
+                let isFixed = false;
+                const lowerTeks = q.teks.toLowerCase();
+                for (const f of fixedFields) {
+                    if (lowerTeks.includes(f)) {
+                        params[f] = value;
+                        isFixed = true;
+                        break;
+                    }
+                }
+                if (!isFixed) {
+                    dataJson[fieldName] = value;
+                }
+            });
+            params.dataJson = JSON.stringify(dataJson);
+
+            try {
+                const result = await PKD.submitSkrining(params);
+                if (result && result.success) {
+                    showToast('✅ Skrining berhasil dikirim!', 'success');
+                    document.getElementById('formSkriningDinamis')?.reset();
+                    if (sigPad) sigPad.clear();
+                    clearFormState();
+                    bootstrap.Modal.getInstance(document.getElementById('previewSkriningModal')).hide();
+                } else {
+                    showToast('❌ Gagal mengirim: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Gagal mengirim: ' + e.message, 'error');
+                console.error('Submit error:', e);
+            } finally {
+                isSubmitting = false;
+                btn.disabled = false;
+                btn.innerHTML = '📤 Kirim Skrining';
+            }
+        });
+
+        // =====================================================
+        //   REFRESH MANUAL
+        // =====================================================
+        async function manualRefresh() {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            const btn = document.getElementById('refreshBtn');
+            if (btn) {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                btn.disabled = true;
+            }
+            try {
+                await loadSkriningQuestions(true);
+                showToast('Data berhasil disegarkan', 'success');
+            } catch (e) {
+                showToast('Gagal menyegarkan data', 'error');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                    btn.disabled = false;
+                }
+                isRefreshing = false;
+            }
+        }
+
+        // =====================================================
+        //   INIT
+        // =====================================================
+        async function init() {
+            // ✅ LOGIN CHECK: Redirect hanya jika mode login aktif dan belum login
+            const canProceed = await checkLoginAndRedirect();
+            if (!canProceed) return;
+
+            // ✅ LOAD DARI DATACACHE DAHULU (CEPAT)
+            const cached = DataCache.getData('skriningQuestions');
+            if (cached && Array.isArray(cached) && cached.length > 0) {
+                questions = cached;
+                renderForm(false);
+                isInitialLoad = false;
+            } else {
+                // Jika tidak ada cache, tampilkan spinner saat load pertama
+                renderForm(true);
+            }
+
+            // ✅ REFRESH BACKGROUND (otomatis setelah halaman stabil)
+            setTimeout(() => {
+                loadSkriningQuestions(true);
+            }, 1000);
+
+            // Refresh button
+            document.getElementById('refreshBtn')?.addEventListener('click', manualRefresh);
+        }
+
+        // Run on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Expose for debug
+        window.__skrining = {
+            reload: loadSkriningQuestions,
+            refresh: manualRefresh,
+            questions: () => questions,
+            clearState: clearFormState
+        };
+
+    })();
 </script>
 </body>
 </html>

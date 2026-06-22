@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>PKD GP Ansor Bantul · Pre-test</title>
   <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
-  <!-- Font & Bootstrap -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    * { font-family: 'Inter', system-ui, sans-serif; }
-    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; }
     .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
     .navbar-brand img { max-height: 40px; margin-right: 12px; }
     .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
@@ -26,8 +25,6 @@
     .question-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 30px; line-height: 1.4; color: #0f172a; }
     .kahoot-options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 10px; }
     .kahoot-option { display: flex !important; align-items: center; padding: 1rem 1.5rem !important; border: none !important; border-radius: 18px !important; color: white !important; font-weight: 600 !important; font-size: 1.1rem !important; transition: transform 0.12s, box-shadow 0.15s !important; box-shadow: 0 6px 12px rgba(0,0,0,0.12) !important; width: 100%; text-align: left; }
-    .kahoot-option:hover:not(:disabled) { transform: scale(1.01); box-shadow: 0 10px 18px rgba(0,0,0,0.18) !important; }
-    .kahoot-option.selected { outline: 4px solid #1e293b !important; outline-offset: 2px; transform: scale(0.98); }
     .opt-red { background-color: #dc2626; }
     .opt-blue { background-color: #2563eb; }
     .opt-yellow { background-color: #eab308; color: #0f172a !important; }
@@ -36,532 +33,498 @@
     .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 576px) { .kahoot-options-grid { grid-template-columns: 1fr; } .quiz-header { flex-direction: column; } .container-card { padding: 1.5rem; } }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
 
-<!-- ==================== MODE LOGIN CHECK (dengan PKD) ==================== -->
-<script src="api.js"></script>
-<script>
-  (async function() {
-    try {
-      const loginMode = await PKD.getLoginMode();
-      const requireLogin = loginMode.success ? loginMode.enabled : false;
-      if (requireLogin) {
-        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-        if (!auth) {
-          window.location.href = 'login.html';
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Gagal cek login mode, lanjut tanpa login:', e);
-    }
-    // Setelah pengecekan, muat pretest
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadPretest);
-    } else {
-      loadPretest();
-    }
-  })();
-</script>
-
-<!-- Navbar -->
 <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+      <img src="LOGO ANSOR.webp" alt="GP Ansor">
       <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
     </a>
-    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-arrow-left"></i> Kembali</a>
   </div>
 </nav>
 
-<!-- Konten utama -->
 <div class="container container-card">
   <h2 class="section-title"><i class="bi bi-arrow-repeat me-2"></i>Pre‑test – Kahoot Style</h2>
-  <div id="pretestContainer">Memuat soal...</div>
+  <div id="pretestContainer"></div>
 </div>
 
-<!-- Footer -->
 <footer class="footer-modern container">
   <i class="bi bi-c-circle"></i> 2026 · Tim Instruktur GP Ansor Kabupaten Bantul
 </footer>
 
-<!-- Toast notifikasi (dibuat oleh api.js) -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0">
+      <i class="bi me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Berhasil</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="api.js"></script>
 
 <script>
-  // State pretest global
-  let pretestQuiz = null;
+  (function() {
+    'use strict';
 
-  // Fungsi bantu lokal (menggunakan PKD)
-  function escapeHtml(unsafe) { return PKD.escapeHtml(unsafe); }
-  function showToast(message, type = 'success') { PKD.showToast(message, type); }
+    const STORAGE_KEY = 'pkd_all_data';
+    const FORM_STATE_KEY = 'pretestQuiz';
 
-  // ========== CACHE ==========
-  function getCachedPretestQuestions() {
-    return PKD.getCached('pretestQuestionsCache', 3600000);
-  }
-  function saveCachedPretestQuestions(data) {
-    PKD.saveCached('pretestQuestionsCache', data);
-  }
-  function getCachedQuizSettings() {
-    return PKD.getCached('quizSettingsCache', 3600000);
-  }
-  function saveCachedQuizSettings(data) {
-    PKD.saveCached('quizSettingsCache', data);
-  }
+    let questions = [];
+    let quizSettings = {};
+    let pretestQuiz = null;
+    let pretestTimer = null;
+    let pretestTimeLeft = 0;
 
-  // ========== FETCH DATA ==========
-  async function fetchPretestQuestions(forceRefresh = false) {
-    if (!forceRefresh) {
-      const cached = getCachedPretestQuestions();
-      if (cached) return cached;
+    // ============================================================
+    //   UTILITY
+    // ============================================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        return m;
+      });
     }
-    const questions = await PKD.getPretestQuestions(true);
-    saveCachedPretestQuestions(questions);
-    return questions;
-  }
 
-  async function fetchQuizSettings(forceRefresh = false) {
-    if (!forceRefresh) {
-      const cached = getCachedQuizSettings();
-      if (cached) return cached;
+    function showToast(message, type = 'success') {
+      const toastEl = document.getElementById('notificationToast');
+      if (!toastEl) return;
+      const toast = new bootstrap.Toast(toastEl);
+      document.getElementById('toastMessage').innerText = message;
+      const icon = document.getElementById('toastIcon');
+      if (type === 'success') {
+        icon.className = 'bi bi-check-circle-fill text-success';
+        document.getElementById('toastTitle').innerText = 'Berhasil';
+      } else if (type === 'error') {
+        icon.className = 'bi bi-x-circle-fill text-danger';
+        document.getElementById('toastTitle').innerText = 'Gagal';
+      } else {
+        icon.className = 'bi bi-info-circle-fill text-primary';
+        document.getElementById('toastTitle').innerText = 'Info';
+      }
+      toast.show();
     }
-    const settings = await PKD.getQuizSettings(true);
-    saveCachedQuizSettings(settings);
-    return settings;
-  }
 
-  // ========== STATE LOCALSTORAGE ==========
-  function savePretestQuiz() {
-    if (!pretestQuiz) return;
-    const { timer, questions, ...state } = pretestQuiz;
-    if (questions && Array.isArray(questions)) {
-      state.questionIds = questions.map(q => q.id);
+    function getFromStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
     }
-    localStorage.setItem('pretestQuiz', JSON.stringify(state));
-  }
 
-  function loadSavedPretestQuiz() {
-    const saved = localStorage.getItem('pretestQuiz');
-    if (!saved) return null;
-    try {
-      const parsed = JSON.parse(saved);
-      parsed.nohp = parsed.nohp || '';
-      parsed.alamat = parsed.alamat || '';
-      parsed.started = parsed.started || false;
-      parsed.isFinished = parsed.isFinished || false;
-      parsed.answers = parsed.answers || [];
-      parsed.currentIndex = parsed.currentIndex || 0;
-      parsed.score = parsed.score || 0;
-      parsed.timerDuration = parsed.timerDuration || 30;
-      parsed.timeLeft = parsed.timeLeft || parsed.timerDuration;
-      return parsed;
-    } catch (e) {
-      console.warn('Gagal parse saved pretest:', e);
-      return null;
+    function saveToStorage(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
-  }
 
-  function clearPretestQuiz() {
-    localStorage.removeItem('pretestQuiz');
-    pretestQuiz = null;
-  }
+    function saveQuizState(state) {
+      try {
+        localStorage.setItem(FORM_STATE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
 
-  // ========== RENDER FORM AWAL ==========
-  function renderPretestStartForm() {
-    const quiz = pretestQuiz;
-    if (!quiz) return;
+    function loadQuizState() {
+      const saved = localStorage.getItem(FORM_STATE_KEY);
+      if (!saved) return null;
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
 
-    let html = `
-      <div class="card-kahoot">
-        <h4 class="mb-4">📝 Isi Data Diri untuk Memulai Pretest</h4>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nama Lengkap</label>
-          <input type="text" class="form-control" id="pretestNama" value="${escapeHtml(quiz.nama || '')}" placeholder="Masukkan nama lengkap" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nomor HP</label>
-          <input type="tel" class="form-control" id="pretestNohp" value="${escapeHtml(quiz.nohp || '')}" placeholder="Masukkan nomor HP" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Alamat</label>
-          <textarea class="form-control" id="pretestAlamat" rows="2" placeholder="Masukkan alamat" required>${escapeHtml(quiz.alamat || '')}</textarea>
-        </div>
-        <div class="text-center mt-4">
-          <button id="startPretestBtn" class="btn btn-success btn-lg rounded-pill px-5">🚀 Mulai Pretest</button>
-        </div>
-      </div>
-    `;
+    function clearQuizState() {
+      localStorage.removeItem(FORM_STATE_KEY);
+    }
 
-    document.getElementById('pretestContainer').innerHTML = html;
+    // ============================================================
+    //   LOAD DATA (HANYA DARI LOCALSTORAGE, TANPA LOOP)
+    // ============================================================
+    function loadMainData() {
+      const container = document.getElementById('pretestContainer');
 
-    document.getElementById('startPretestBtn').addEventListener('click', function() {
-      const nama = document.getElementById('pretestNama').value.trim();
-      const nohp = document.getElementById('pretestNohp').value.trim();
-      const alamat = document.getElementById('pretestAlamat').value.trim();
+      // 1. Cek localStorage (INSTANT)
+      let allData = getFromStorage();
+      let cachedQuestions = allData?.pretestQuestions || null;
+      let cachedSettings = allData?.quizSettings || null;
 
-      if (!nama || !nohp || !alamat) {
-        showToast('Nama, No HP, dan Alamat wajib diisi!', 'danger');
+      if (cachedQuestions && Array.isArray(cachedQuestions) && cachedQuestions.length > 0) {
+        questions = cachedQuestions;
+        quizSettings = cachedSettings || {};
+        renderFormDataDiri();
         return;
       }
 
-      quiz.nama = nama;
-      quiz.nohp = nohp;
-      quiz.alamat = alamat;
-      quiz.started = true;
-      quiz.currentIndex = 0;
-      quiz.score = 0;
-      quiz.answers = [];
-      quiz.timeLeft = quiz.timerDuration;
+      // 2. Jika tidak ada data, tampilkan spinner (hanya terjadi jika index.html belum di-load)
+      container.innerHTML = `
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2 text-muted">Memuat soal pretest...</p>
+        </div>
+      `;
 
-      savePretestQuiz();
-      renderPretestQuestion();
-    });
-  }
+      // 3. Ambil dari API (HANYA SEKALI) jika localStorage kosong
+      console.log('🔄 Mengambil data pretest dari API (hanya sekali)...');
+      Promise.all([PKD.getPretestQuestions(true), PKD.getQuizSettings(true)])
+        .then(([questionsRes, settingsRes]) => {
+          const freshQuestions = questionsRes?.data || [];
+          const freshSettings = settingsRes?.data || {};
 
-  // ========== RENDER PERTANYAAN ==========
-  function renderPretestQuestion() {
-    const container = document.getElementById('pretestContainer');
-    const quiz = pretestQuiz;
-    if (!quiz) return;
+          if (freshQuestions.length > 0) {
+            const all = getFromStorage() || {};
+            all.pretestQuestions = freshQuestions;
+            all.quizSettings = freshSettings;
+            saveToStorage(all);
 
-    if (!quiz.started) {
-      renderPretestStartForm();
-      return;
+            questions = freshQuestions;
+            quizSettings = freshSettings;
+            renderFormDataDiri();
+          } else {
+            container.innerHTML = `
+              <div class="alert alert-warning text-center">
+                <i class="bi bi-exclamation-triangle fs-4"></i>
+                <p class="mt-2 mb-0">Belum ada soal pretest. Silakan buka <strong>index.html</strong> terlebih dahulu.</p>
+              </div>
+            `;
+          }
+        })
+        .catch(e => {
+          container.innerHTML = `
+            <div class="alert alert-danger text-center">
+              <i class="bi bi-wifi-off fs-4"></i>
+              <p class="mt-2 mb-0">Koneksi ke server gagal. Pastikan koneksi internet stabil.</p>
+            </div>
+          `;
+          console.error(e);
+        });
     }
 
-    if (quiz.currentIndex >= quiz.questions.length) {
-      renderPretestSummary();
-      return;
-    }
+    // ============================================================
+    //   RENDER FORM DATA DIRI
+    // ============================================================
+    function renderFormDataDiri() {
+      const container = document.getElementById('pretestContainer');
 
-    const q = quiz.questions[quiz.currentIndex];
-    const progress = `${quiz.currentIndex + 1}/${quiz.questions.length}`;
-    const timerValue = quiz.timeLeft;
-
-    let html = `<div class="card-kahoot">`;
-    html += `<div class="quiz-header">`;
-    html += `<div class="timer-box"><i class="bi bi-hourglass-split"></i> <span id="timerDisplay">${timerValue}</span> detik</div>`;
-    html += `<div class="score-box"><i class="bi bi-star-fill"></i> Skor: ${quiz.score}</div>`;
-    html += `<div class="progress-box"><i class="bi bi-list-ol"></i> ${progress}</div>`;
-    html += `</div>`;
-
-    html += `<div class="mb-3 small text-muted">Nama: ${escapeHtml(quiz.nama)} | No HP: ${escapeHtml(quiz.nohp)} | Alamat: ${escapeHtml(quiz.alamat)}</div>`;
-
-    html += `<div class="question-text">${quiz.currentIndex + 1}. ${q.teks}</div>`;
-    html += `<div class="kahoot-options-grid">`;
-
-    (q.opsi || []).forEach((ops, i) => {
-      let colorClass = '';
-      if (i === 0) colorClass = 'opt-red';
-      else if (i === 1) colorClass = 'opt-blue';
-      else if (i === 2) colorClass = 'opt-yellow';
-      else if (i === 3) colorClass = 'opt-green';
-
-      const isAnswered = quiz.answers[quiz.currentIndex] !== undefined;
-      let disabled = isAnswered ? 'disabled' : '';
-
-      html += `<button type="button" class="option-btn kahoot-option ${colorClass}" data-qid="${q.id}" data-opt-index="${i}" ${disabled}>
-                <span class="opt-letter">${String.fromCharCode(65 + i)}.</span>
-                <span class="opt-text">${ops}</span>
-               </button>`;
-    });
-
-    html += `</div>`;
-
-    if (quiz.answers[quiz.currentIndex] !== undefined) {
-      html += `<div class="mt-4 text-center">
-                <button id="nextPretestBtn" class="btn btn-primary btn-lg rounded-pill px-5">Selanjutnya ➡️</button>
-               </div>`;
-    }
-
-    html += `</div>`;
-    container.innerHTML = html;
-
-    document.querySelectorAll('.kahoot-option').forEach(btn => {
-      btn.addEventListener('click', function() {
-        if (quiz.answers[quiz.currentIndex] !== undefined) return;
-        const qid = parseInt(this.dataset.qid);
-        const optIdx = parseInt(this.dataset.optIndex);
-        handlePretestAnswer(qid, optIdx);
-      });
-    });
-
-    const nextBtn = document.getElementById('nextPretestBtn');
-    if (nextBtn) {
-      nextBtn.addEventListener('click', function() {
-        nextPretestQuestion();
-      });
-    }
-
-    if (quiz.answers[quiz.currentIndex] === undefined) {
-      startPretestTimer();
-    }
-  }
-
-  function handlePretestAnswer(questionId, selectedIndex) {
-    const quiz = pretestQuiz;
-    if (!quiz) return;
-    if (quiz.answers[quiz.currentIndex] !== undefined) return;
-
-    const q = quiz.questions[quiz.currentIndex];
-    const isCorrect = (selectedIndex === q.jawaban);
-    if (isCorrect) quiz.score += 10;
-
-    quiz.answers[quiz.currentIndex] = {
-      questionId,
-      selectedOption: selectedIndex,
-      isCorrect
-    };
-
-    renderPretestQuestion();
-    savePretestQuiz();
-
-    setTimeout(() => {
-      if (quiz.currentIndex < quiz.questions.length && quiz.answers[quiz.currentIndex] !== undefined) {
-        nextPretestQuestion();
+      if (!questions || questions.length === 0) {
+        return; // data kosong
       }
-    }, 1500);
-  }
 
-  function startPretestTimer() {
-    const quiz = pretestQuiz;
-    if (!quiz) return;
-    if (quiz.timer) clearInterval(quiz.timer);
+      const savedQuiz = loadQuizState();
+      let nama = savedQuiz?.nama || '';
+      let nohp = savedQuiz?.nohp || '';
+      let alamat = savedQuiz?.alamat || '';
 
-    quiz.timeLeft = quiz.timerDuration;
-    updateTimerDisplay(quiz.timeLeft);
+      let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <span class="text-muted small">Status: </span>
+            <span class="badge bg-success text-white">✅ ${questions.length} soal siap</span>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary" id="inlineRefreshBtn" title="Segarkan (manual)">
+            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+          </button>
+        </div>
+        <div class="card-kahoot">
+          <h4 class="mb-4">📝 Isi Data Diri untuk Memulai Pretest</h4>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nama Lengkap</label>
+            <input type="text" class="form-control" id="pretestNama" value="${escapeHtml(nama)}" placeholder="Masukkan nama lengkap" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nomor HP</label>
+            <input type="tel" class="form-control" id="pretestNohp" value="${escapeHtml(nohp)}" placeholder="Masukkan nomor HP" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Alamat</label>
+            <textarea class="form-control" id="pretestAlamat" rows="2" placeholder="Masukkan alamat" required>${escapeHtml(alamat)}</textarea>
+          </div>
+          <div class="text-center mt-4">
+            <button id="startPretestBtn" class="btn btn-success btn-lg rounded-pill px-5">🚀 Mulai Pretest</button>
+          </div>
+        </div>
+      `;
 
-    quiz.timer = setInterval(() => {
-      if (!quiz) { clearInterval(quiz.timer); return; }
+      container.innerHTML = html;
+      container.classList.add('fade-in');
+
+      document.getElementById('startPretestBtn').addEventListener('click', function() {
+        const nama = document.getElementById('pretestNama').value.trim();
+        const nohp = document.getElementById('pretestNohp').value.trim();
+        const alamat = document.getElementById('pretestAlamat').value.trim();
+        if (!nama || !nohp || !alamat) {
+          showToast('Nama, No HP, dan Alamat wajib diisi!', 'danger');
+          return;
+        }
+        pretestQuiz = {
+          questions: questions,
+          currentIndex: 0,
+          score: 0,
+          answers: [],
+          timer: null,
+          timerDuration: quizSettings.pretest_timer || 30,
+          timeLeft: 0,
+          nama: nama,
+          nohp: nohp,
+          alamat: alamat,
+          started: true,
+          isFinished: false,
+          settings: quizSettings
+        };
+        saveQuizState(pretestQuiz);
+        renderPretestQuestion();
+      });
+
+      document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
+        // Refresh manual: ambil data dari API
+        console.log('🔄 Refresh manual...');
+        Promise.all([PKD.getPretestQuestions(true), PKD.getQuizSettings(true)])
+          .then(([questionsRes, settingsRes]) => {
+            const freshQuestions = questionsRes?.data || [];
+            const freshSettings = settingsRes?.data || {};
+
+            if (freshQuestions.length > 0) {
+              const all = getFromStorage() || {};
+              all.pretestQuestions = freshQuestions;
+              all.quizSettings = freshSettings;
+              saveToStorage(all);
+
+              questions = freshQuestions;
+              quizSettings = freshSettings;
+              renderFormDataDiri();
+              showToast('Data berhasil diperbarui', 'success');
+            } else {
+              showToast('Data di API kosong, mempertahankan data lokal', 'info');
+            }
+          })
+          .catch(e => {
+            showToast('Gagal refresh data: ' + e.message, 'error');
+          });
+      });
+
+      if (savedQuiz && !savedQuiz.isFinished && savedQuiz.started) {
+        if (confirm('Anda memiliki Pretest yang belum selesai. Lanjutkan?')) {
+          pretestQuiz = savedQuiz;
+          pretestQuiz.settings = quizSettings;
+          pretestQuiz.questions = questions;
+          renderPretestQuestion();
+          return;
+        } else {
+          clearQuizState();
+        }
+      }
+    }
+
+    // ============================================================
+    //   RENDER SOAL, TIMER, SUMMARY (TIDAK BERUBAH)
+    // ============================================================
+    function renderPretestQuestion() {
+      const container = document.getElementById('pretestContainer');
+      const quiz = pretestQuiz;
+      if (!quiz) return;
+      if (!quiz.started) { renderFormDataDiri(); return; }
+      if (quiz.currentIndex >= quiz.questions.length) { renderPretestSummary(); return; }
+
+      const q = quiz.questions[quiz.currentIndex];
+      const progress = `${quiz.currentIndex + 1}/${quiz.questions.length}`;
+      const timerValue = (q.timer_enabled ? q.timer_duration : quiz.timerDuration) || 30;
+
+      let html = `
+        <div class="card-kahoot">
+          <div class="quiz-header">
+            <div class="timer-box"><i class="bi bi-hourglass-split"></i> <span id="timerDisplay">${timerValue}</span> detik</div>
+            <div class="score-box"><i class="bi bi-star-fill"></i> Skor: ${quiz.score}</div>
+            <div class="progress-box"><i class="bi bi-list-ol"></i> ${progress}</div>
+          </div>
+          <div class="mb-3 small text-muted">Nama: ${escapeHtml(quiz.nama)} | No HP: ${escapeHtml(quiz.nohp)} | Alamat: ${escapeHtml(quiz.alamat)}</div>
+          <div class="question-text">${quiz.currentIndex + 1}. ${q.teks}</div>
+          <div class="kahoot-options-grid">
+      `;
+
+      (q.opsi || []).forEach((ops, i) => {
+        const colors = ['opt-red', 'opt-blue', 'opt-yellow', 'opt-green'];
+        const isAnswered = quiz.answers[quiz.currentIndex] !== undefined;
+        const disabled = isAnswered ? 'disabled' : '';
+
+        html += `
+          <button type="button" class="option-btn kahoot-option ${colors[i % 4]}" data-qid="${q.id}" data-opt-index="${i}" ${disabled}>
+            <span class="opt-letter">${String.fromCharCode(65 + i)}.</span>
+            <span class="opt-text">${ops}</span>
+          </button>
+        `;
+      });
+
+      html += `</div>`;
 
       if (quiz.answers[quiz.currentIndex] !== undefined) {
-        clearInterval(quiz.timer);
-        quiz.timer = null;
-        return;
+        html += `<div class="mt-4 text-center"><button id="nextPretestBtn" class="btn btn-primary btn-lg rounded-pill px-5">Selanjutnya ➡️</button></div>`;
       }
 
-      quiz.timeLeft -= 1;
-      updateTimerDisplay(quiz.timeLeft);
+      html += `</div>`;
+      container.innerHTML = html;
+      container.classList.add('fade-in');
 
-      if (quiz.timeLeft <= 0) {
-        clearInterval(quiz.timer);
-        quiz.timer = null;
-
-        if (quiz.answers[quiz.currentIndex] === undefined) {
-          const q = quiz.questions[quiz.currentIndex];
-          quiz.answers[quiz.currentIndex] = {
-            questionId: q.id,
-            selectedOption: null,
-            isCorrect: false
-          };
+      document.querySelectorAll('.kahoot-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (quiz.answers[quiz.currentIndex] !== undefined) return;
+          const qid = parseInt(this.dataset.qid);
+          const optIdx = parseInt(this.dataset.optIndex);
+          const isCorrect = (optIdx === q.jawaban);
+          if (isCorrect) quiz.score += 10;
+          quiz.answers[quiz.currentIndex] = { questionId: qid, selectedOption: optIdx, isCorrect };
+          saveQuizState(quiz);
           renderPretestQuestion();
-          savePretestQuiz();
-
           setTimeout(() => {
             if (quiz.currentIndex < quiz.questions.length && quiz.answers[quiz.currentIndex] !== undefined) {
               nextPretestQuestion();
             }
           }, 1500);
-        }
+        });
+      });
+
+      const nextBtn = document.getElementById('nextPretestBtn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+          nextPretestQuestion();
+        });
       }
-    }, 1000);
-  }
 
-  function updateTimerDisplay(seconds) {
-    const timerEl = document.getElementById('timerDisplay');
-    if (timerEl) {
-      timerEl.innerText = seconds;
-    }
-  }
-
-  function nextPretestQuestion() {
-    const quiz = pretestQuiz;
-    if (!quiz) return;
-    if (quiz.timer) {
-      clearInterval(quiz.timer);
-      quiz.timer = null;
-    }
-    quiz.currentIndex++;
-    quiz.timeLeft = quiz.timerDuration;
-    renderPretestQuestion();
-    savePretestQuiz();
-  }
-
-  function renderPretestSummary() {
-    const quiz = pretestQuiz;
-    if (!quiz) return;
-    quiz.isFinished = true;
-    savePretestQuiz();
-
-    const totalQuestions = quiz.questions.length;
-    const correctAnswers = quiz.answers.filter(a => a && a.isCorrect).length;
-    const score = quiz.score;
-
-    let html = `<div class="card-kahoot text-center">
-                  <h3 class="mb-4">🎉 Pretest Selesai! 🎉</h3>
-                  <div class="display-1 mb-3">${score}</div>
-                  <p class="lead">Jawaban benar: ${correctAnswers} dari ${totalQuestions}</p>
-                  <p><strong>Nama:</strong> ${escapeHtml(quiz.nama || '')}</p>
-                  <p><strong>No HP:</strong> ${escapeHtml(quiz.nohp || '')}</p>
-                  <p><strong>Alamat:</strong> ${escapeHtml(quiz.alamat || '')}</p>
-                  <hr>
-                  <button id="submitPretestResultBtn" class="btn btn-success btn-lg rounded-pill px-5 mt-3">✅ Kumpulkan Pretest</button>
-                  <button id="restartPretestBtn" class="btn btn-outline-secondary btn-lg rounded-pill px-5 mt-3 ms-2">🔄 Ulangi</button>
-                </div>`;
-    document.getElementById('pretestContainer').innerHTML = html;
-
-    document.getElementById('submitPretestResultBtn').addEventListener('click', async function() {
-      if (!quiz.nama) {
-        showToast('Nama belum diisi!', 'danger');
-        return;
-      }
-      try {
-        // Panggil submitPretest melalui PKD
-        const answers = JSON.stringify(quiz.answers.map(a => ({
-          qid: a.questionId,
-          selected: a.selectedOption,
-          correct: a.isCorrect
-        })));
-        await PKD.submitPretest(quiz.nama, quiz.nohp, quiz.alamat, answers, quiz.score);
-        showToast('Pretest berhasil dikirim!', 'success');
-        clearPretestQuiz();
-        // Redirect atau reset? Biarkan di halaman
-        location.reload();
-      } catch (e) {
-        showToast('Gagal mengirim: ' + e.message, 'danger');
-      }
-    });
-
-    document.getElementById('restartPretestBtn').addEventListener('click', function() {
-      clearPretestQuiz();
-      loadPretest();
-    });
-  }
-
-  // ========== FUNGSI UTAMA MEMUAT PRETEST ==========
-  async function loadPretest() {
-    const container = document.getElementById('pretestContainer');
-    container.innerHTML = '<div class="text-center my-4"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat soal...</p></div>';
-
-    let questions = getCachedPretestQuestions();
-    let settings = getCachedQuizSettings();
-
-    if (questions && settings) {
-      initPretestWithData(questions, settings);
-      // Background update
-      Promise.all([fetchPretestQuestions(true), fetchQuizSettings(true)])
-        .then(([newQuestions, newSettings]) => {
-          if (JSON.stringify(newQuestions) !== JSON.stringify(questions) ||
-              JSON.stringify(newSettings) !== JSON.stringify(settings)) {
-            initPretestWithData(newQuestions, newSettings);
+      if (quiz.answers[quiz.currentIndex] === undefined) {
+        let timeLeft = timerValue;
+        updateTimerDisplay(timeLeft);
+        if (pretestTimer) clearInterval(pretestTimer);
+        pretestTimer = setInterval(() => {
+          timeLeft -= 1;
+          updateTimerDisplay(timeLeft);
+          if (timeLeft <= 0) {
+            clearInterval(pretestTimer);
+            pretestTimer = null;
+            if (quiz.answers[quiz.currentIndex] === undefined) {
+              quiz.answers[quiz.currentIndex] = { questionId: q.id, selectedOption: null, isCorrect: false };
+              saveQuizState(quiz);
+              renderPretestQuestion();
+              setTimeout(() => {
+                if (quiz.currentIndex < quiz.questions.length && quiz.answers[quiz.currentIndex] !== undefined) {
+                  nextPretestQuestion();
+                }
+              }, 1500);
+            }
           }
-        })
-        .catch(console.warn);
-    } else {
-      try {
-        questions = await fetchPretestQuestions(true);
-        settings = await fetchQuizSettings(true);
-        initPretestWithData(questions, settings);
-      } catch (e) {
-        container.innerHTML = `<div class="alert alert-danger">Gagal memuat soal: ${escapeHtml(e.message)}</div>`;
+        }, 1000);
       }
     }
-  }
 
-  function initPretestWithData(questions, settings) {
-    const container = document.getElementById('pretestContainer');
-    if (!questions.length) {
-      container.innerHTML = '<div class="alert alert-info">Belum ada soal Pretest.</div>';
-      return;
+    function updateTimerDisplay(seconds) {
+      const el = document.getElementById('timerDisplay');
+      if (el) el.innerText = seconds;
     }
 
-    const savedQuiz = loadSavedPretestQuiz();
+    function nextPretestQuestion() {
+      if (!pretestQuiz) return;
+      pretestQuiz.currentIndex++;
+      saveQuizState(pretestQuiz);
+      renderPretestQuestion();
+    }
 
-    if (savedQuiz && !savedQuiz.isFinished) {
-      const currentIds = questions.map(q => q.id).sort();
-      const savedIds = savedQuiz.questionIds ? savedQuiz.questionIds.sort() : [];
+    function renderPretestSummary() {
+      const quiz = pretestQuiz;
+      if (!quiz) return;
+      quiz.isFinished = true;
+      saveQuizState(quiz);
 
-      const isSame = currentIds.length === savedIds.length &&
-                     currentIds.every((id, idx) => id === savedIds[idx]);
+      const total = quiz.questions.length;
+      const correct = quiz.answers.filter(a => a && a.isCorrect).length;
+      const score = quiz.score;
 
-      if (!isSame) {
-        const confirmReset = confirm(
-          'Soal Pretest telah diperbarui. Data jawaban sebelumnya tidak dapat dilanjutkan.\n\n' +
-          'Apakah Anda ingin memulai ulang dengan soal baru? (Data diri akan tetap tersimpan)'
-        );
-        if (confirmReset) {
-          const nama = savedQuiz.nama || '';
-          const nohp = savedQuiz.nohp || '';
-          const alamat = savedQuiz.alamat || '';
-          clearPretestQuiz();
-          pretestQuiz = {
-            questions: questions,
-            currentIndex: 0,
-            score: 0,
-            answers: [],
-            timer: null,
-            timerDuration: settings.pretest_timer ? 30 : 0,
-            timeLeft: settings.pretest_timer ? 30 : 0,
-            nama: nama,
-            nohp: nohp,
-            alamat: alamat,
-            started: false,
-            isFinished: false,
-            settings: settings
-          };
-          renderPretestStartForm();
-          return;
-        } else {
-          clearPretestQuiz();
-          renderPretestStartForm();
-          return;
+      let html = `
+        <div class="card-kahoot text-center">
+          <h3 class="mb-4">🎉 Pretest Selesai! 🎉</h3>
+          <div class="display-1 mb-3">${score}</div>
+          <p class="lead">Jawaban benar: ${correct} dari ${total}</p>
+          <p><strong>Nama:</strong> ${escapeHtml(quiz.nama || '')}</p>
+          <p><strong>No HP:</strong> ${escapeHtml(quiz.nohp || '')}</p>
+          <p><strong>Alamat:</strong> ${escapeHtml(quiz.alamat || '')}</p>
+          <hr>
+          <button id="submitPretestResultBtn" class="btn btn-success btn-lg rounded-pill px-5 mt-3">✅ Kumpulkan Pretest</button>
+          <button id="restartPretestBtn" class="btn btn-outline-secondary btn-lg rounded-pill px-5 mt-3 ms-2">🔄 Ulangi</button>
+        </div>
+      `;
+
+      document.getElementById('pretestContainer').innerHTML = html;
+
+      document.getElementById('submitPretestResultBtn').addEventListener('click', async function() {
+        try {
+          const answers = JSON.stringify(quiz.answers.map(a => ({
+            qid: a.questionId,
+            selected: a.selectedOption,
+            correct: a.isCorrect
+          })));
+          await PKD.submitPretest(quiz.nama, quiz.nohp, quiz.alamat, answers, quiz.score);
+          showToast('✅ Pretest berhasil dikirim!', 'success');
+          clearQuizState();
+          location.reload();
+        } catch (e) {
+          showToast('❌ Gagal mengirim: ' + e.message, 'danger');
         }
-      }
+      });
 
-      const resume = confirm('Anda memiliki Pretest yang belum selesai. Lanjutkan?');
-      if (resume) {
-        pretestQuiz = savedQuiz;
-        pretestQuiz.timer = null;
-        pretestQuiz.timeLeft = pretestQuiz.timerDuration || 30;
-        pretestQuiz.settings = settings;
-        pretestQuiz.questions = questions;
-        if (pretestQuiz.started) {
-          renderPretestQuestion();
-        } else {
-          renderPretestStartForm();
-        }
-        return;
-      } else {
-        clearPretestQuiz();
-      }
+      document.getElementById('restartPretestBtn').addEventListener('click', function() {
+        clearQuizState();
+        location.reload();
+      });
     }
 
-    pretestQuiz = {
-      questions: questions,
-      currentIndex: 0,
-      score: 0,
-      answers: [],
-      timer: null,
-      timerDuration: settings.pretest_timer ? 30 : 0,
-      timeLeft: settings.pretest_timer ? 30 : 0,
-      nama: '',
-      nohp: '',
-      alamat: '',
-      started: false,
-      isFinished: false,
-      settings: settings
+    // ============================================================
+    //   MAIN INIT (TANPA LOOP)
+    // ============================================================
+    window.loadPretest = function() {
+      // Cek login mode
+      PKD.getLoginMode().then(res => {
+        if (res.success && res.enabled) {
+          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+          if (!auth) {
+            window.location.href = 'login.html?return=pretest.html';
+            return;
+          }
+        }
+      }).catch(() => {});
+
+      // Load data utama (HANYA SEKALI)
+      loadMainData();
+
+      // Tombol refresh manual (hanya ketika diklik)
+      document.getElementById('refreshBtn')?.addEventListener('click', function() {
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+        // Hapus data dari localStorage agar dipaksa mengambil dari API
+        localStorage.removeItem(STORAGE_KEY);
+        loadMainData();
+        this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        this.disabled = false;
+      });
     };
-    renderPretestStartForm();
-  }
 
-  // Fungsi loadPretest didefinisikan di atas sudah, pastikan global
-  window.loadPretest = loadPretest;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', window.loadPretest);
+    } else {
+      window.loadPretest();
+    }
+
+  })();
 </script>
 </body>
 </html>

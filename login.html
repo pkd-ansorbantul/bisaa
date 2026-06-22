@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login · PKD GP Ansor Bantul</title>
+
   <!-- Font & Bootstrap -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <style>
     body {
       background: #f8fafc;
@@ -45,7 +47,7 @@
 <body>
   <div class="login-card">
     <div class="logo">
-      <img src="LOGO ANSOR.webp" alt="Logo Ansor">
+      <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor">
       <h4 class="fw-bold">Masuk ke Sistem</h4>
       <p class="text-muted">Gunakan akun Admin, Ketua PAC, atau Member</p>
     </div>
@@ -65,12 +67,14 @@
     <div id="errorMsg" class="text-danger small mb-3" style="display: none;"></div>
     <button class="btn btn-primary w-100 btn-login" id="loginBtn">Login</button>
     <div class="text-center mt-3">
-      <a href="index.html" class="text-decoration-none small">← Kembali ke Awal</a>
+      <a href="/bisaa/index.html" class="text-decoration-none small">← Kembali ke Awal</a>
     </div>
   </div>
 
-  <!-- Sertakan api.js -->
-  <script src="api.js"></script>
+  <!-- Sertakan api.js dan dataCache.js -->
+  <script src="/bisaa/dataCache.js"></script>
+  <script src="/bisaa/api.js"></script>
+
   <script>
     // Fungsi toggle visibility password
     function togglePassword() {
@@ -106,7 +110,7 @@
           PKD.setUserRole('admin');
           PKD.setUserData({ nama: username });
           PKD.persistAuthState();
-          window.location.href = 'admin/dashboard_admin.html';
+          window.location.href = '/bisaa/admin/dashboard_admin.html';
           return;
         }
       } catch (e) {
@@ -120,7 +124,7 @@
           PKD.setUserRole('ketua_pac');
           PKD.setUserData(pacRes.data || { nama: username });
           PKD.persistAuthState();
-          window.location.href = 'ketua_pac.html';
+          window.location.href = '/bisaa/ketua_pac.html';
           return;
         }
       } catch (e) {
@@ -134,7 +138,7 @@
           PKD.setUserRole('member');
           PKD.setUserData(memberRes.data || { nama: username });
           PKD.persistAuthState();
-          window.location.href = 'member.html';
+          window.location.href = '/bisaa/member.html';
           return;
         }
       } catch (e) {
@@ -152,11 +156,11 @@
     (function() {
       const role = PKD.getUserRole();
       if (role === 'admin') {
-        window.location.href = 'admin/dashboard_admin.html';
+        window.location.href = '/bisaa/admin/dashboard_admin.html';
       } else if (role === 'ketua_pac') {
-        window.location.href = 'ketua_pac.html';
+        window.location.href = '/bisaa/ketua_pac.html';
       } else if (role === 'member') {
-        window.location.href = 'member.html';
+        window.location.href = '/bisaa/member.html';
       }
     })();
   </script>
