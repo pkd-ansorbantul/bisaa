@@ -21,53 +21,63 @@
             background: #f8fafc;
             color: #0f172a;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
-        /* ===== SIDEBAR UTAMA (FIXED 260px) ===== */
+        /* ===== LAYOUT UTAMA ===== */
+        .container-card {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .admin-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* ===== SIDEBAR ===== */
         .sidebar-wrapper {
-            flex: 0 0 260px;
+            width: 260px;
             max-width: 260px;
             background: #0f172a;
             color: #f1f5f9;
             min-height: 100vh;
+            height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1000;
             border-right: 1px solid #1e293b;
-            overflow-y: auto;
-            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
             transition: all 0.3s ease;
         }
         .sidebar-wrapper.minimized {
-            flex: 0 0 70px;
+            width: 70px;
             max-width: 70px;
         }
 
-        /* ===== CONTENT WRAPPER ===== */
-        .content-wrapper {
-            margin-left: 260px;
-            padding: 1.5rem;
-            background: #f8fafc;
-            min-height: 100vh;
-            transition: all 0.3s ease;
-            width: 100%;
+        /* ===== BRAND AREA (TETAP) ===== */
+        .sidebar-brand-area {
+            flex-shrink: 0;
+            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+            border-bottom: 1px solid #1e293b;
         }
-        .sidebar-wrapper.minimized~.content-wrapper {
-            margin-left: 70px;
+        .sidebar-wrapper.minimized .sidebar-brand-area {
+            padding: 1.5rem 0.75rem 0.75rem 0.75rem;
+            display: flex;
+            justify-content: center;
         }
-
-        /* ===== BRAND SIDEBAR ===== */
         .brand-sidebar {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-            border-bottom: 1px solid #1e293b;
-            margin-bottom: 0.5rem;
             text-decoration: none;
             color: #ffffff;
-            transition: all 0.3s ease;
+            transition: opacity 0.2s;
         }
         .brand-sidebar:hover {
             opacity: 0.8;
@@ -75,41 +85,49 @@
         .brand-sidebar img {
             max-height: 45px;
             width: auto;
-            transition: all 0.3s ease;
         }
         .brand-sidebar-title {
             font-size: 1.2rem;
             font-weight: 700;
             color: #ffffff;
-            line-height: 1.2;
-            transition: all 0.3s ease;
         }
         .brand-sidebar-sub {
             font-size: 0.85rem;
             color: #94a3b8;
             display: block;
-            transition: all 0.3s ease;
         }
-
-        /* ----- MINIMIZED : BRAND ----- */
         .sidebar-wrapper.minimized .brand-sidebar {
-            padding: 1.5rem 0.75rem 0.75rem 0.75rem;
             justify-content: center;
         }
         .sidebar-wrapper.minimized .brand-sidebar img {
             max-height: 40px;
-            margin: 0 auto;
         }
         .sidebar-wrapper.minimized .brand-sidebar-title,
         .sidebar-wrapper.minimized .brand-sidebar-sub {
             display: none;
         }
 
-        /* ===== NAV PILLS ===== */
+        /* ===== MENU AREA (SCROLLABLE, SCROLLBAR DISEMBUNYIKAN) ===== */
+        .sidebar-menu-area {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 20px;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+        .sidebar-menu-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* ===== NAV PILLS (UNIFIKASI LEBAR BIRU) ===== */
         .nav-pills .nav-link {
+            width: calc(100% - 1.6rem);
+            margin: 0.2rem 0.8rem;
             border-radius: 12px;
             padding: 0.7rem 1rem;
-            margin: 0.2rem 0.8rem;
             color: #cbd5e1 !important;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -119,8 +137,8 @@
             cursor: pointer;
             background: transparent;
             border: none;
-            width: auto;
-            white-space: nowrap;
+            text-align: left;
+            box-shadow: none;
         }
         .nav-pills .nav-link:hover {
             background: rgba(255, 255, 255, 0.08);
@@ -131,51 +149,8 @@
             color: #ffffff !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
-        .nav-pills .nav-link i {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
-        .nav-pills .nav-link span {
-            transition: all 0.3s ease;
-        }
 
-        /* ----- MINIMIZED : NAV ----- */
-        .sidebar-wrapper.minimized .nav-pills .nav-link {
-            padding: 0.7rem 0;
-            margin: 0.2rem 0.5rem;
-            justify-content: center;
-            min-height: 48px;
-            width: auto;
-        }
-        .sidebar-wrapper.minimized .nav-pills .nav-link i {
-            margin-right: 0;
-            font-size: 1.5rem;
-        }
-        .sidebar-wrapper.minimized .nav-pills .nav-link span {
-            display: none;
-        }
-        .sidebar-wrapper.minimized .nav-pills .nav-link[title]:hover::after {
-            content: attr(title);
-            position: absolute;
-            left: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            background: #1e293b;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-left: 8px;
-            pointer-events: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* ===== SUBMENU ===== */
+        /* ===== SUBMENU (TOGGLE BUKA/TUTUP) ===== */
         .submenu {
             max-height: 0;
             overflow: hidden;
@@ -187,7 +162,8 @@
         }
         .submenu .nav-link {
             padding: 0.4rem 1rem;
-            margin: 0.1rem 0.5rem;
+            margin: 0.1rem 0.8rem;
+            width: calc(100% - 1.6rem);
             font-weight: 400;
             color: #94a3b8 !important;
         }
@@ -205,7 +181,6 @@
             display: flex;
             justify-content: flex-end;
             padding: 0.5rem 1.5rem;
-            transition: all 0.3s ease;
         }
         .sidebar-wrapper.minimized .sidebar-toggle {
             padding: 0.5rem 0.75rem;
@@ -224,28 +199,10 @@
             color: #ffffff;
         }
 
-        /* ===== LOGOUT ===== */
         .sidebar-logout {
             border-top: 1px solid #1e293b;
             margin-top: 0.5rem;
             padding-top: 0.5rem;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 991px) {
-            .sidebar-wrapper {
-                display: none;
-            }
-            .content-wrapper {
-                margin-left: 0 !important;
-                padding: 1rem;
-                padding-bottom: 80px;
-            }
-        }
-        @media (min-width: 992px) {
-            .bottom-nav {
-                display: none;
-            }
         }
 
         /* ===== BOTTOM NAV (MOBILE) ===== */
@@ -257,7 +214,7 @@
             background: #ffffff;
             border-top: 1px solid #e2e8f0;
             z-index: 1050;
-            display: flex;
+            display: none;
             justify-content: space-around;
             padding: 8px 0;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
@@ -279,8 +236,39 @@
         .bottom-nav .nav-item.active {
             color: #2563eb;
         }
-        .bottom-nav .nav-item:hover {
-            color: #2563eb;
+
+        @media (max-width: 991px) {
+            .sidebar-wrapper {
+                display: none;
+            }
+            .bottom-nav {
+                display: flex;
+            }
+            .content-wrapper {
+                margin-left: 0 !important;
+                padding: 1rem;
+                padding-bottom: 80px;
+                width: 100%;
+            }
+        }
+        @media (min-width: 992px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        /* ===== CONTENT WRAPPER ===== */
+        .content-wrapper {
+            margin-left: 260px;
+            padding: 1.5rem;
+            background: #f8fafc;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+            transition: all 0.3s ease;
+        }
+        .sidebar-wrapper.minimized ~ .content-wrapper {
+            margin-left: 70px;
+            width: calc(100% - 70px);
         }
 
         /* ===== UTILITY ===== */
@@ -329,18 +317,6 @@
                 transform: rotate(360deg);
             }
         }
-
-        /* ===== ASSET SPECIFIC ===== */
-        .table-container {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
-        }
-        .btn-aksi {
-            min-width: 80px;
-        }
         .cache-status {
             font-size: 0.8rem;
             padding: 4px 12px;
@@ -357,6 +333,17 @@
             color: #dc2626;
         }
 
+        /* ===== ASSET SPECIFIC ===== */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .btn-aksi {
+            min-width: 80px;
+        }
         .asset-thumb {
             max-width: 120px;
             max-height: 80px;
@@ -364,7 +351,6 @@
             border-radius: 8px;
             border: 1px solid #e2e8f0;
         }
-
         .upload-area {
             border: 2px dashed #cbd5e1;
             border-radius: 16px;
@@ -388,94 +374,93 @@
         <div class="admin-wrapper">
 
             <!-- ======================== -->
-            <!--   SIDEBAR (FIXED 260px)  -->
+            <!--   SIDEBAR                -->
             <!-- ======================== -->
             <div class="sidebar-wrapper" id="sidebarWrapper">
-                <!-- Toggle -->
                 <div class="sidebar-toggle">
                     <button id="toggleSidebarBtn" title="Minimize / Maximize Sidebar">
                         <i class="bi bi-arrow-left-right"></i>
                     </button>
                 </div>
 
-                <!-- Brand -->
-                <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
-                    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" />
-                    <div>
-                        <div class="brand-sidebar-title">PKD GP Ansor</div>
-                        <span class="brand-sidebar-sub">Kabupaten Bantul</span>
-                    </div>
-                </a>
-
-                <!-- Menu -->
-                <div class="nav flex-column nav-pills" id="sidebarMenu">
-                    <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
-                        <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-                    </a>
-
-                    <!-- Akademik -->
-                    <div class="nav-link" data-target="akademik" title="Akademik">
-                        <i class="bi bi-book me-2"></i><span>Akademik</span>
-                    </div>
-                    <div class="submenu" id="submenu-akademik">
-                        <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
-                        <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
-                        <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
-                    </div>
-
-                    <!-- Peserta -->
-                    <div class="nav-link" data-target="peserta" title="Peserta">
-                        <i class="bi bi-people me-2"></i><span>Peserta</span>
-                    </div>
-                    <div class="submenu" id="submenu-peserta">
-                        <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
-                        <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
-                        <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
-                    </div>
-
-                    <!-- Absensi -->
-                    <div class="nav-link" data-target="absensi" title="Absensi">
-                        <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
-                    </div>
-                    <div class="submenu" id="submenu-absensi">
-                        <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-                        <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-                        <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
-                    </div>
-
-                    <!-- Informasi -->
-                    <div class="nav-link" data-target="informasi" title="Informasi">
-                        <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
-                    </div>
-                    <div class="submenu" id="submenu-informasi">
-                        <a class="nav-link active" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-                        <a class="nav-link active" href="/bisaa/admin/aset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
-                    </div>
-
-                    <!-- Skrining -->
-                    <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
-                        <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
-                    </a>
-
-                    <!-- Sertifikat -->
-                    <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
-                        <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
-                    </a>
-
-                    <!-- Pengaturan -->
-                    <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
-                        <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
-                    </a>
-
-                    <!-- Logout -->
-                    <div class="sidebar-logout"></div>
-                    <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
-                        <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
+                <div class="sidebar-brand-area">
+                    <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
+                        <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" />
+                        <div>
+                            <div class="brand-sidebar-title">PKD GP Ansor</div>
+                            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
+                        </div>
                     </a>
                 </div>
-            </div>
-            <!-- END SIDEBAR -->
 
+                <!-- Menu -->
+                <div class="sidebar-menu-area">
+                    <div class="nav flex-column nav-pills" id="sidebarMenu">
+                        <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
+                            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
+                        </a>
+
+                        <!-- Akademik -->
+                        <div class="nav-link" data-target="akademik" title="Akademik">
+                            <i class="bi bi-book me-2"></i><span>Akademik</span>
+                        </div>
+                        <div class="submenu" id="submenu-akademik">
+                            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+                            <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+                            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+                        </div>
+
+                        <!-- Peserta -->
+                        <div class="nav-link" data-target="peserta" title="Peserta">
+                            <i class="bi bi-people me-2"></i><span>Peserta</span>
+                        </div>
+                        <div class="submenu" id="submenu-peserta">
+                            <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+                            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+                            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+                        </div>
+
+                        <!-- Absensi -->
+                        <div class="nav-link" data-target="absensi" title="Absensi">
+                            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
+                        </div>
+                        <div class="submenu" id="submenu-absensi">
+                            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+                            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+                            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+                        </div>
+
+                        <!-- Informasi (AKTIF) -->
+                        <div class="nav-link active" data-target="informasi" title="Informasi">
+                            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
+                        </div>
+                        <div class="submenu open" id="submenu-informasi">
+                            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
+                            <a class="nav-link active" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+                        </div>
+
+                        <!-- Skrining -->
+                        <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
+                            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
+                        </a>
+
+                        <!-- Sertifikat -->
+                        <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
+                            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
+                        </a>
+
+                        <!-- Pengaturan -->
+                        <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
+                            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
+                        </a>
+
+                        <div class="sidebar-logout"></div>
+                        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
+                            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
 
             <!-- ======================== -->
             <!--   BOTTOM NAV (MOBILE)    -->
@@ -485,16 +470,14 @@
                 <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
                 <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
                 <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-                <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal">
-                    <i class="bi bi-grid"></i><span>Lainnya</span>
-                </a>
+                <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
             </div>
 
 
             <!-- ======================== -->
             <!--   CONTENT WRAPPER        -->
             <!-- ======================== -->
-            <div class="content-wrapper" id="mainContent">
+            <div class="content-wrapper">
                 <h2 class="section-title"><i class="bi bi-image me-2"></i>Manajemen Aset Digital</h2>
 
                 <div class="row mb-3">
@@ -517,7 +500,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   MODAL "LAINNYA" (mobile)                                 -->
+    <!--   MODAL "LAINNYA" (MOBILE)                                  -->
     <!-- ========================================================== -->
     <div class="modal fade" id="moreMenuModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -539,6 +522,13 @@
                         <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
                         <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
                     </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -546,7 +536,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   MODAL UPLOAD                                             -->
+    <!--   MODAL UPLOAD                                              -->
     <!-- ========================================================== -->
     <div class="modal fade" id="uploadAssetModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -579,7 +569,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   MODAL HAPUS                                              -->
+    <!--   MODAL HAPUS                                               -->
     <!-- ========================================================== -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -603,7 +593,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   MODAL LOGIN                                              -->
+    <!--   MODAL LOGIN                                               -->
     <!-- ========================================================== -->
     <div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
@@ -636,7 +626,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   TOAST                                                    -->
+    <!--   TOAST                                                     -->
     <!-- ========================================================== -->
     <div class="toast-container">
         <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
@@ -651,7 +641,7 @@
 
 
     <!-- ========================================================== -->
-    <!--   SCRIPTS                                                  -->
+    <!--   SCRIPTS                                                   -->
     <!-- ========================================================== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
     </script>
@@ -661,366 +651,459 @@
     </script>
 
     <script>
-        // ==========================================================
-        //   TOGGLE PASSWORD VISIBILITY (global)
-        // ==========================================================
-        window.togglePasswordVisibility = function(id) {
-            const el = document.getElementById(id);
-            if (el) el.type = el.type === 'password' ? 'text' : 'password';
-        };
+        (function() {
+            'use strict';
 
-        // ==========================================================
-        //   SIDEBAR TOGGLE & DROPDOWN
-        // ==========================================================
-        (function initSidebar() {
-            const toggleBtn = document.getElementById('toggleSidebarBtn');
-            const sidebar = document.getElementById('sidebarWrapper');
-            if (toggleBtn && sidebar) {
-                toggleBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('minimized');
-                    const icon = this.querySelector('i');
-                    if (sidebar.classList.contains('minimized')) {
-                        icon.classList.remove('bi-arrow-left-right');
-                        icon.classList.add('bi-arrow-right-left');
-                    } else {
-                        icon.classList.remove('bi-arrow-right-left');
-                        icon.classList.add('bi-arrow-left-right');
+            let assetList = [];
+
+            // ==========================================================
+            //   TOGGLE PASSWORD VISIBILITY
+            // ==========================================================
+            window.togglePasswordVisibility = function(id) {
+                const el = document.getElementById(id);
+                if (el) el.type = el.type === 'password' ? 'text' : 'password';
+            };
+
+            // ==========================================================
+            //   UTILITY
+            // ==========================================================
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str).replace(/[&<>"]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    if (m === '"') return '&quot;';
+                    return m;
+                });
+            }
+
+            function showToast(message, type) {
+                const toastEl = document.getElementById('notificationToast');
+                if (!toastEl) return;
+                const toast = new bootstrap.Toast(toastEl);
+                document.getElementById('toastMessage').innerText = message;
+                const icon = document.getElementById('toastIcon');
+                if (type === 'success') {
+                    icon.className = 'bi bi-check-circle-fill text-success';
+                    document.getElementById('toastTitle').innerText = 'Berhasil';
+                } else if (type === 'error') {
+                    icon.className = 'bi bi-x-circle-fill text-danger';
+                    document.getElementById('toastTitle').innerText = 'Gagal';
+                } else {
+                    icon.className = 'bi bi-info-circle-fill text-primary';
+                    document.getElementById('toastTitle').innerText = 'Info';
+                }
+                toast.show();
+            }
+
+            function formatDate(d) {
+                if (!d) return '-';
+                const date = new Date(d);
+                return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+
+            function getDriveThumb(driveId) {
+                return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : '';
+            }
+
+            function updateCacheStatus(status) {
+                const el = document.getElementById('cacheStatus');
+                if (el) {
+                    el.textContent = status;
+                    el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+                }
+            }
+
+            // ==========================================================
+            //   CACHE HELPERS
+            // ==========================================================
+            function loadDataFromCache() {
+                const cached = DataCache.getData('asset');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    assetList = cached;
+                    return true;
+                }
+                return false;
+            }
+
+            function loadDataFromStorage() {
+                try {
+                    const stored = localStorage.getItem('pkd_asset_data');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed && parsed.assetList) {
+                            assetList = parsed.assetList;
+                        }
                     }
-                });
+                } catch (e) {}
+                if (assetList.length === 0) {
+                    assetList = [];
+                    saveDataToStorage();
+                }
             }
 
-            document.querySelectorAll('.sidebar-wrapper .nav-link[data-target]').forEach(link => {
-                link.addEventListener('click', function() {
-                    const target = this.dataset.target;
-                    const submenu = document.getElementById('submenu-' + target);
-                    if (submenu) submenu.classList.toggle('open');
-                });
-            });
+            function saveDataToStorage() {
+                try {
+                    localStorage.setItem('pkd_asset_data', JSON.stringify({ assetList: assetList }));
+                } catch (e) {}
+            }
 
-            const logoutBtn = document.getElementById('sidebarLogoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (typeof PKD !== 'undefined' && PKD.logout) {
-                        PKD.logout();
-                    } else {
-                        DataCache.clear();
-                        window.location.href = '/bisaa/index.html';
+            function updateCache(data) {
+                DataCache.updateData('asset', data);
+                assetList = data;
+            }
+
+            // ==========================================================
+            //   LOAD ASSETS
+            // ==========================================================
+            async function loadAssets(forceRefresh) {
+                const container = document.getElementById('assetContainer');
+                container.innerHTML =
+                    '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat aset...</p></div>';
+
+                try {
+                    // 1. Coba DataCache dulu
+                    if (!forceRefresh) {
+                        const cached = DataCache.getData('asset');
+                        if (cached && Array.isArray(cached) && cached.length > 0) {
+                            assetList = cached;
+                            renderAssets(container);
+                            updateCacheStatus('Cache');
+                            return;
+                        }
                     }
-                });
-            }
-        })();
 
-        // ==========================================================
-        //   MAIN STATE
-        // ==========================================================
-        let assetList = [];
-
-        // ==========================================================
-        //   UTILITY
-        // ==========================================================
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                if (m === '"') return '&quot;';
-                return m;
-            });
-        }
-
-        function showToast(message, type) {
-            const toastEl = document.getElementById('notificationToast');
-            if (!toastEl) return;
-            const toast = new bootstrap.Toast(toastEl);
-            document.getElementById('toastMessage').innerText = message;
-            const icon = document.getElementById('toastIcon');
-            if (type === 'success') {
-                icon.className = 'bi bi-check-circle-fill text-success';
-                document.getElementById('toastTitle').innerText = 'Berhasil';
-            } else if (type === 'error') {
-                icon.className = 'bi bi-x-circle-fill text-danger';
-                document.getElementById('toastTitle').innerText = 'Gagal';
-            } else {
-                icon.className = 'bi bi-info-circle-fill text-primary';
-                document.getElementById('toastTitle').innerText = 'Info';
-            }
-            toast.show();
-        }
-
-        function formatDate(d) {
-            if (!d) return '-';
-            const date = new Date(d);
-            return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-        }
-
-        function getDriveThumb(driveId) {
-            return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : '';
-        }
-
-        function updateCacheStatus(status) {
-            const el = document.getElementById('cacheStatus');
-            if (el) {
-                el.textContent = status;
-                el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-            }
-        }
-
-        // ==========================================================
-        //   LOAD ASSETS
-        // ==========================================================
-        async function loadAssets(forceRefresh) {
-            const container = document.getElementById('assetContainer');
-            container.innerHTML =
-                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat aset...</p></div>';
-
-            try {
-                if (!forceRefresh) {
-                    const cached = DataCache.getData('asset');
-                    if (cached && Array.isArray(cached) && cached.length > 0) {
-                        assetList = cached;
+                    // 2. Coba localStorage
+                    loadDataFromStorage();
+                    if (assetList.length > 0) {
                         renderAssets(container);
-                        updateCacheStatus('Cache');
+                        updateCacheStatus('Storage');
                         return;
                     }
+
+                    // 3. Ambil dari API
+                    const res = await PKD.callApi('getAssetList', {}, 'GET');
+                    assetList = res?.data || [];
+                    updateCache(assetList);
+                    saveDataToStorage();
+                    renderAssets(container);
+                    updateCacheStatus('Live');
+
+                } catch (e) {
+                    console.warn('Gagal load aset:', e);
+                    // Fallback ke cache/local jika API gagal
+                    if (assetList.length === 0) {
+                        container.innerHTML =
+                            '<div class="alert alert-danger">Gagal memuat data.</div>';
+                        updateCacheStatus('Error');
+                    }
+                }
+            }
+
+            // ==========================================================
+            //   RENDER ASSETS
+            // ==========================================================
+            function renderAssets(container) {
+                if (!assetList || assetList.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-image fs-4 d-block mb-2"></i>
+                            Belum ada aset digital. Klik "Upload Aset" untuk menambahkan.
+                        </div>
+                    `;
+                    return;
                 }
 
-                const res = await PKD.callApi('getAssetList', {}, 'GET');
-                assetList = res?.data || [];
-                DataCache.updateData('asset', assetList);
-                renderAssets(container);
-                updateCacheStatus('Live');
-            } catch (e) {
-                console.warn('Gagal load aset:', e);
-                container.innerHTML =
-                    '<div class="alert alert-danger">Gagal memuat data.</div>';
-                updateCacheStatus('Error');
-            }
-        }
-
-        // ==========================================================
-        //   RENDER ASSETS
-        // ==========================================================
-        function renderAssets(container) {
-            if (!assetList || assetList.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-info text-center">
-                        <i class="bi bi-image fs-4 d-block mb-2"></i>
-                        Belum ada aset digital. Klik "Upload Aset" untuk menambahkan.
-                    </div>
+                let html = `
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Judul</th>
+                                    <th>Deskripsi</th>
+                                    <th>Gambar</th>
+                                    <th>Upload</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
-                return;
-            }
 
-            let html = `
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Judul</th>
-                                <th>Deskripsi</th>
-                                <th>Gambar</th>
-                                <th>Upload</th>
-                                <th class="text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            assetList.forEach((item, idx) => {
-                const thumb = getDriveThumb(item.driveId);
-                html += `
-                    <tr>
-                        <td>${idx + 1}</td>
-                        <td><strong>${escapeHtml(item.judul || '')}</strong></td>
-                        <td>${escapeHtml(item.deskripsi || '-')}</td>
-                        <td>${thumb ? `<img src="${thumb}" class="asset-thumb" />` : '-'}</td>
-                        <td>${formatDate(item.timestamp)}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            html += `</tbody></table></div>`;
-            container.innerHTML = html;
-            container.classList.add('fade-in');
-        }
-
-        // ==========================================================
-        //   CONFIRM DELETE
-        // ==========================================================
-        window.confirmDelete = function(id) {
-            document.getElementById('deleteAssetId').value = id;
-            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-        };
-
-        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
-            const id = document.getElementById('deleteAssetId').value;
-            if (!id) return;
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            try {
-                await PKD.callApi('deleteAsset', { id }, 'POST');
-                showToast('Aset berhasil dihapus', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                loadAssets(true);
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            } finally {
-                this.disabled = false;
-                this.innerHTML = 'Hapus';
-            }
-        });
-
-        // ==========================================================
-        //   UPLOAD ASSET
-        // ==========================================================
-        document.getElementById('uploadAssetBtn').addEventListener('click', function() {
-            document.getElementById('assetJudul').value = '';
-            document.getElementById('assetDeskripsi').value = '';
-            document.getElementById('assetFile').value = '';
-            document.getElementById('filePreview').style.display = 'none';
-            document.getElementById('previewImage').src = '#';
-            new bootstrap.Modal(document.getElementById('uploadAssetModal')).show();
-        });
-
-        document.getElementById('assetFile').addEventListener('change', function() {
-            const file = this.files[0];
-            const previewContainer = document.getElementById('filePreview');
-            const previewImage = document.getElementById('previewImage');
-            const fileNameDisplay = document.getElementById('fileNameDisplay');
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                    fileNameDisplay.textContent = file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewContainer.style.display = 'none';
-                previewImage.src = '#';
-            }
-        });
-
-        document.getElementById('submitUploadBtn').addEventListener('click', async function() {
-            const judul = document.getElementById('assetJudul').value.trim();
-            const deskripsi = document.getElementById('assetDeskripsi').value.trim();
-            const fileInput = document.getElementById('assetFile');
-            if (!judul || !fileInput.files.length) {
-                showToast('Judul dan file wajib diisi', 'error');
-                return;
-            }
-            const file = fileInput.files[0];
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('Maksimal 5MB', 'error');
-                return;
-            }
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengupload...';
-            try {
-                const reader = new FileReader();
-                const base64 = await new Promise((resolve, reject) => {
-                    reader.onload = e => resolve(e.target.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
+                assetList.forEach((item, idx) => {
+                    const thumb = getDriveThumb(item.driveId);
+                    html += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td><strong>${escapeHtml(item.judul || '')}</strong></td>
+                            <td>${escapeHtml(item.deskripsi || '-')}</td>
+                            <td>${thumb ? `<img src="${thumb}" class="asset-thumb" />` : '-'}</td>
+                            <td>${formatDate(item.timestamp)}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
                 });
-                await PKD.callApi('addAsset', {
-                    judul: judul,
-                    deskripsi: deskripsi,
-                    fileData: base64,
-                    fileName: file.name,
-                    uploadBy: 'admin'
-                }, 'POST');
-                showToast('Aset berhasil diupload', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
-                loadAssets(true);
-            } catch (e) {
-                showToast('Gagal: ' + e.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Upload';
-            }
-        });
 
-        // ==========================================================
-        //   REFRESH
-        // ==========================================================
-        document.getElementById('refreshDataBtn').addEventListener('click', function() {
-            loadAssets(true);
-        });
-
-        // ==========================================================
-        //   LOGIN / LOGOUT
-        // ==========================================================
-        function initAuth() {
-            if (typeof PKD === 'undefined') {
-                window.PKD = {
-                    getUserRole: () => 'guest',
-                    verifyAdmin: async (u, p) => {
-                        if (u === 'admin' && p === 'admin123') return { success: true };
-                        return { success: false, message: 'Login gagal' };
-                    },
-                    setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
-                    setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
-                    persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
-                    logout: () => { DataCache.clear();
-                        window.location.href = '/bisaa/index.html'; },
-                    callApi: async () => { return { data: [] }; }
-                };
-                console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
+                html += `</tbody></table></div>`;
+                container.innerHTML = html;
+                container.classList.add('fade-in');
             }
 
-            if (PKD.getUserRole() !== 'admin') {
-                new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
-            }
-        }
+            // ==========================================================
+            //   CONFIRM DELETE
+            // ==========================================================
+            window.confirmDelete = function(id) {
+                document.getElementById('deleteAssetId').value = id;
+                new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+            };
 
-        function handleLogin() {
-            const u = document.getElementById('adminUsername').value.trim();
-            const p = document.getElementById('adminPassword').value;
-            const err = document.getElementById('adminLoginError');
-            if (!u || !p) {
-                err.innerText = 'Username dan password harus diisi';
-                err.style.display = 'block';
-                return;
-            }
-            PKD.verifyAdmin(u, p).then(async res => {
-                if (res.success) {
-                    PKD.setUserRole('admin');
-                    PKD.setUserData({ nama: u });
-                    PKD.persistAuthState();
-                    bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-                    loadAssets(false);
-                } else {
-                    err.innerText = res.message || 'Login gagal';
-                    err.style.display = 'block';
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+                const id = document.getElementById('deleteAssetId').value;
+                if (!id) return;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                try {
+                    await PKD.callApi('deleteAsset', { id }, 'POST');
+                    showToast('Aset berhasil dihapus', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                    loadAssets(true);
+                } catch (e) {
+                    showToast('Gagal: ' + e.message, 'error');
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = 'Hapus';
                 }
-            }).catch(e => {
-                err.innerText = 'Kesalahan: ' + e.message;
-                err.style.display = 'block';
             });
-        }
 
-        document.getElementById('adminLoginSubmit').addEventListener('click', handleLogin);
+            // ==========================================================
+            //   UPLOAD ASSET
+            // ==========================================================
+            document.getElementById('uploadAssetBtn').addEventListener('click', function() {
+                document.getElementById('assetJudul').value = '';
+                document.getElementById('assetDeskripsi').value = '';
+                document.getElementById('assetFile').value = '';
+                document.getElementById('filePreview').style.display = 'none';
+                document.getElementById('previewImage').src = '#';
+                new bootstrap.Modal(document.getElementById('uploadAssetModal')).show();
+            });
 
-        // ==========================================================
-        //   INIT
-        // ==========================================================
-        function init() {
-            initAuth();
+            document.getElementById('assetFile').addEventListener('change', function() {
+                const file = this.files[0];
+                const previewContainer = document.getElementById('filePreview');
+                const previewImage = document.getElementById('previewImage');
+                const fileNameDisplay = document.getElementById('fileNameDisplay');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        fileNameDisplay.textContent = file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.style.display = 'none';
+                    previewImage.src = '#';
+                }
+            });
 
-            if (PKD.getUserRole() === 'admin') {
-                loadAssets(false);
+            document.getElementById('submitUploadBtn').addEventListener('click', async function() {
+                const judul = document.getElementById('assetJudul').value.trim();
+                const deskripsi = document.getElementById('assetDeskripsi').value.trim();
+                const fileInput = document.getElementById('assetFile');
+                if (!judul || !fileInput.files.length) {
+                    showToast('Judul dan file wajib diisi', 'error');
+                    return;
+                }
+                const file = fileInput.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('Maksimal 5MB', 'error');
+                    return;
+                }
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengupload...';
+                try {
+                    const reader = new FileReader();
+                    const base64 = await new Promise((resolve, reject) => {
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    await PKD.callApi('addAsset', {
+                        judul: judul,
+                        deskripsi: deskripsi,
+                        fileData: base64,
+                        fileName: file.name,
+                        uploadBy: 'admin'
+                    }, 'POST');
+                    showToast('Aset berhasil diupload', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
+                    loadAssets(true);
+                } catch (e) {
+                    showToast('Gagal: ' + e.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Upload';
+                }
+            });
+
+            // ==========================================================
+            //   REFRESH
+            // ==========================================================
+            document.getElementById('refreshDataBtn').addEventListener('click', function() {
+                loadAssets(true);
+            });
+
+            // ==========================================================
+            //   SIDEBAR TOGGLE & DROPDOWN
+            // ==========================================================
+            function initSidebarToggle() {
+                const toggleBtn = document.getElementById('toggleSidebarBtn');
+                const sidebar = document.getElementById('sidebarWrapper');
+                if (toggleBtn && sidebar) {
+                    toggleBtn.addEventListener('click', function() {
+                        sidebar.classList.toggle('minimized');
+                        const icon = this.querySelector('i');
+                        if (sidebar.classList.contains('minimized')) {
+                            icon.classList.remove('bi-arrow-left-right');
+                            icon.classList.add('bi-arrow-right-left');
+                        } else {
+                            icon.classList.remove('bi-arrow-right-left');
+                            icon.classList.add('bi-arrow-left-right');
+                        }
+                    });
+                }
             }
-        }
 
-        document.addEventListener('DOMContentLoaded', init);
+            function initSidebarDropdowns() {
+                document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const target = this.dataset.target;
+                        const submenu = document.getElementById('submenu-' + target);
+                        if (submenu) submenu.classList.toggle('open');
+                    });
+                });
+            }
+
+            // ==========================================================
+            //   LOGIN / LOGOUT
+            // ==========================================================
+            function initAuth() {
+                if (typeof PKD === 'undefined') {
+                    window.PKD = {
+                        getUserRole: () => 'guest',
+                        verifyAdmin: async (u, p) => {
+                            if (u === 'admin' && p === 'admin123') return { success: true };
+                            return { success: false, message: 'Login gagal' };
+                        },
+                        setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
+                        setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
+                        persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
+                        logout: () => { DataCache.clear();
+                            window.location.href = '/bisaa/index.html'; },
+                        callApi: async () => { return { data: [] }; }
+                    };
+                    console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
+                }
+
+                if (PKD.getUserRole() !== 'admin') {
+                    new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+                }
+            }
+
+            function handleLogin() {
+                const u = document.getElementById('adminUsername').value.trim();
+                const p = document.getElementById('adminPassword').value;
+                const err = document.getElementById('adminLoginError');
+                if (!u || !p) {
+                    err.innerText = 'Username dan password harus diisi';
+                    err.style.display = 'block';
+                    return;
+                }
+                PKD.verifyAdmin(u, p).then(async res => {
+                    if (res.success) {
+                        PKD.setUserRole('admin');
+                        PKD.setUserData({ nama: u });
+                        PKD.persistAuthState();
+
+                        // Preload semua data
+                        try {
+                            const allData = await Promise.all([
+                                PKD.getPesertaList ? PKD.getPesertaList() : [],
+                                PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
+                                PKD.getMateriList ? PKD.getMateriList() : [],
+                                PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
+                                PKD.getPretestResponses ? PKD.getPretestResponses() : [],
+                                PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
+                                PKD.getAlumniList ? PKD.getAlumniList() : [],
+                                PKD.getKaderList ? PKD.getKaderList() : [],
+                                PKD.getInformasiList ? PKD.getInformasiList() : [],
+                                PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
+                                PKD.getSertifikatList ? PKD.getSertifikatList() : []
+                            ]);
+                            DataCache.setAllData({
+                                peserta: allData[0],
+                                sesi: allData[1],
+                                materi: allData[2],
+                                skrining: allData[3],
+                                pretest: allData[4],
+                                posttest: allData[5],
+                                alumni: allData[6],
+                                kader: allData[7],
+                                informasi: allData[8],
+                                absensi: allData[9],
+                                sertifikat: allData[10]
+                            });
+                        } catch (e) { console.warn('Gagal preload data:', e); }
+
+                        bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+                        loadAssets(false);
+                    } else {
+                        err.innerText = res.message || 'Login gagal';
+                        err.style.display = 'block';
+                    }
+                }).catch(e => {
+                    err.innerText = 'Kesalahan: ' + e.message;
+                    err.style.display = 'block';
+                });
+            }
+
+            document.getElementById('adminLoginSubmit').addEventListener('click', handleLogin);
+
+            function handleLogout(e) {
+                e.preventDefault();
+                DataCache.clear();
+                if (PKD.logout) PKD.logout();
+            }
+
+            // ==========================================================
+            //   INIT
+            // ==========================================================
+            function init() {
+                initSidebarToggle();
+                initSidebarDropdowns();
+                initAuth();
+
+                if (PKD.getUserRole() === 'admin') {
+                    loadAssets(false);
+                }
+
+                document.getElementById('sidebarLogoutBtn')?.addEventListener('click', handleLogout);
+                document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+                    const modalEl = document.getElementById('moreMenuModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    if (PKD.logout) PKD.logout();
+                    else window.location.href = '/bisaa/index.html';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', init);
+        })();
     </script>
 </body>
 </html>
