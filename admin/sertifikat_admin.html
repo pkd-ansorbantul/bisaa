@@ -123,35 +123,149 @@
         .cert-front .certificate-body strong { color: var(--primary-blue); font-weight: 600; }
         .cert-front .date-section { text-align: center; margin: 15px 0 8px; font-size: 0.95rem; cursor: grab; }
         .cert-front .organization { text-align: center; font-weight: 400; color: #000; margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5; cursor: grab; }
-        .cert-front .signatures-wrapper { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 60px; margin-top: 15px; }
-        .cert-front .signature-box { text-align: center; flex: 1; max-width: 200px; cursor: grab; }
-        .cert-front .signature-image { min-height: 50px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; }
-        .cert-front .signature-image img { max-height: 50px; max-width: 150px; object-fit: contain; }
-        .cert-front .signature-name { font-weight: 600; color: var(--primary-blue); font-size: 1rem; border-bottom: 1px solid var(--light-blue); padding-bottom: 3px; display: inline-block; min-width: 160px; text-align: center; margin-top: 5px; }
-        .cert-front .signature-title { font-weight: 400; font-size: 0.95rem; color: var(--primary-blue); margin-top: 4px; }
+        
+        /* --- SIGNATURES WRAPPER & BOX (Depan) --- */
+        .signatures-wrapper { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 60px; margin-top: 15px; }
+        .signature-box { text-align: center; flex: 1; max-width: 200px; cursor: grab; }
+        .signature-image { min-height: 50px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; }
+        .signature-image img { max-height: 50px; max-width: 150px; object-fit: contain; }
+        .signature-name { font-weight: 600; color: var(--primary-blue); font-size: 1rem; border-bottom: 1px solid var(--light-blue); padding-bottom: 3px; display: inline-block; min-width: 160px; text-align: center; margin-top: 5px; }
+        .signature-title { font-weight: 400; font-size: 0.95rem; color: var(--primary-blue); margin-top: 4px; }
 
-        .cert-back .certificate-inner { padding: 15px 45px; }
-        .cert-back .photo-box { width: 113px; height: 151px; background: #f5f5f5; border: 2px solid var(--gold); border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); flex-shrink: 0; overflow: hidden; position: relative; cursor: grab; }
-        .cert-back .photo-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .cert-back .photo-placeholder { color: #aaa; text-align: center; font-size: 0.7rem; }
-        .cert-back .photo-placeholder i { font-size: 2.2rem; margin-bottom: 4px; color: #ccc; }
-        .cert-back .info-container { text-align: left; cursor: grab; }
-        .cert-back .recipient-name { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--primary-blue); line-height: 1.2; margin-bottom: 5px; }
-        .cert-back .participant-detail { font-size: 1rem; font-weight: 400; color: #000; line-height: 1.6; }
-        .cert-back .participant-detail span { font-weight: 600; color: var(--primary-blue); }
-        .cert-back .center-wrapper { display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0 5px; flex-wrap: wrap; }
-        .cert-back .materi-wrapper { margin: 25px auto 10px; width: 95%; max-width: 1000px; }
-        .cert-back .materi-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; border: 1px solid #999; background: white; table-layout: fixed; margin: 0 auto; word-wrap: break-word; line-height: 1.2; }
-        .cert-back .materi-table th { background-color: var(--primary-blue); color: white; font-weight: 600; padding: 6px 3px; text-align: center; border: 1px solid #2d4b9e; }
-        .cert-back .materi-table td { padding: 5px 6px; border: 1px solid #aaa; vertical-align: top; word-wrap: break-word; }
-        .cert-back .materi-table th:first-child, .cert-back .materi-table td:first-child { width: 50px; text-align: center; }
-        .cert-back .materi-table th:nth-child(2), .cert-back .materi-table td:nth-child(2) { width: auto; }
-        .cert-back .materi-table th:nth-child(3), .cert-back .materi-table td:nth-child(3) { width: 25%; }
-        .cert-back .instruktur-umum { width: 95%; max-width: 1000px; margin: 5px auto 5px auto; display: flex; flex-direction: column; align-items: flex-end; cursor: grab; }
-        .cert-back .instruktur-title { font-size: 1rem; font-weight: 600; color: #000; margin-bottom: 5px; }
-        .cert-back .instruktur-qr { display: inline-block; text-align: center; margin: 5px 0; cursor: grab; }
-        .cert-back .nama-instruktur { margin-top: 3px; }
-        .cert-back .nama-instruktur strong { color: var(--primary-blue); font-size: 1rem; font-weight: 700; }
+        /* --- INSTRUKTUR BELAKANG (Segaris dengan Sekretaris) --- */
+        .signatures-wrapper.instruktur-wrapper {
+            justify-content: flex-end;
+            padding: 0 60px;
+            margin-top: 5px;
+        }
+        .instruktur-wrapper .signature-box {
+            flex: 0 0 200px;
+            max-width: 200px;
+            text-align: center;
+        }
+        .instruktur-wrapper .signature-image {
+            min-height: 50px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .instruktur-wrapper .signature-image img {
+            max-height: 50px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+
+        /* --- HALAMAN BELAKANG --- */
+        .cert-back .certificate-inner {
+            padding: 10px 45px 15px 45px;
+        }
+        .cert-back .photo-box {
+            width: 90px;
+            height: 120px;
+            background: #f5f5f5;
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+        }
+        .cert-back .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .cert-back .photo-placeholder {
+            color: #aaa;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+        .cert-back .photo-placeholder i {
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            color: #ccc;
+        }
+        .cert-back .info-container {
+            text-align: left;
+            cursor: grab;
+        }
+        .cert-back .recipient-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+        .cert-back .participant-detail {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #000;
+            line-height: 1.6;
+        }
+        .cert-back .participant-detail span {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        .cert-back .center-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 10px 0 5px;
+            flex-wrap: wrap;
+        }
+        .cert-back .materi-wrapper {
+            margin: 15px auto 10px;
+            width: 95%;
+            max-width: 1000px;
+        }
+        .cert-back .materi-table {
+            width: 100%;
+            font-size: 0.8rem;
+            border-collapse: collapse;
+            border: 1px solid #999;
+            background: white;
+            table-layout: fixed;
+            margin: 0 auto;
+            word-wrap: break-word;
+            line-height: 1.2;
+        }
+        .cert-back .materi-table th {
+            background-color: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 6px 3px;
+            text-align: center;
+            border: 1px solid #2d4b9e;
+        }
+        .cert-back .materi-table td {
+            padding: 5px 6px;
+            border: 1px solid #aaa;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+        .cert-back .materi-table th:first-child,
+        .cert-back .materi-table td:first-child {
+            width: 50px;
+            text-align: center;
+        }
+        .cert-back .materi-table th:nth-child(2),
+        .cert-back .materi-table td:nth-child(2) {
+            width: auto;
+        }
+        .cert-back .materi-table th:nth-child(3),
+        .cert-back .materi-table td:nth-child(3) {
+            width: 25%;
+        }
+
         .qr-code-uniform { width: 80px !important; height: 80px !important; max-width: 80px !important; max-height: 80px !important; border-radius: 8px; border: 1px solid #ddd; padding: 4px; background: white; object-fit: contain; }
         .draggable-item { cursor: grab; transition: none !important; user-select: none; }
         .draggable-item:active { cursor: grabbing; }
@@ -193,16 +307,193 @@
         .preview-control-bar .btn:hover { background: #e2e8f0; }
 
         .preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px 0; }
+
+        /* ==================== PERBAIKAN PRINT (FINAL ROBUST) ==================== */
         @media print {
-            @page { size: A4 landscape; margin: 0; }
-            body { background: white; margin: 0 !important; padding: 0 !important; }
-            .sidebar-wrapper, .bottom-nav, .sidebar-toggle, .brand-sidebar,
-            .navbar, .editor-toolbar, .properties-panel-horizontal, .preview-control-bar,
-            .extra-features-grid { display: none !important; }
-            .content-wrapper { padding: 0 !important; margin: 0 !important; }
-            .certificate-container { width: 29.7cm; height: 21cm; margin: 0 auto; page-break-after: always; box-shadow: none; }
-            .cert-back { page-break-after: auto; }
-            .resize-handle { display: none !important; }
+            /* Pastikan warna dan gambar tercetak */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+
+            /* Sembunyikan semua elemen UI yang tidak perlu */
+            .sidebar-wrapper,
+            .bottom-nav,
+            .navbar,
+            .editor-toolbar,
+            .properties-panel-horizontal,
+            .preview-control-bar,
+            .extra-features-grid,
+            .section-title,
+            #dataFormOffcanvas,
+            .offcanvas-backdrop,
+            .modal,
+            .toast-container,
+            .d-print-none,
+            .sidebar-toggle,
+            .brand-sidebar,
+            .sidebar-logout,
+            .container-card > h2.section-title,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .editor-toolbar,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .properties-panel-horizontal,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .preview-control-bar,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .extra-features-grid,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .offcanvas-backdrop,
+            .container-card > .admin-wrapper > .content-wrapper > .bg-white.p-4.rounded-4.shadow-sm > .modal {
+                display: none !important;
+            }
+
+            /* Tampilkan area preview dan kontainer sertifikat */
+            .container-card,
+            .admin-wrapper,
+            .content-wrapper,
+            .bg-white.p-4.rounded-4.shadow-sm,
+            #previewPanel,
+            .preview-wrap {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: none !important;
+                box-shadow: none !important;
+                border: none !important;
+                flex: 0 0 100% !important;
+            }
+
+            /* Reset container induk */
+            .container-card {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .admin-wrapper {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            /* Sertifikat container */
+            .certificate-container {
+                width: 29.7cm !important;
+                height: 21cm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                overflow: hidden !important;
+                position: relative !important;
+                left: auto !important;
+                top: auto !important;
+            }
+
+            .cert-front {
+                page-break-after: always !important;
+            }
+
+            .cert-back {
+                page-break-after: auto !important;
+            }
+
+            /* Hilangkan handle resize & cursor drag */
+            .resize-handle,
+            .draggable-item .resize-handle {
+                display: none !important;
+            }
+
+            .draggable-item {
+                cursor: default !important;
+            }
+        }
+
+        /* ==================== RESPONSIVE MOBILE (TAMBAHAN) ==================== */
+        @media (max-width: 768px) {
+            .editor-toolbar {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 8px 12px;
+                border-radius: 12px;
+            }
+            .editor-toolbar .btn-group {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .editor-toolbar .btn {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+            .editor-toolbar .separator {
+                display: none;
+            }
+            .editor-toolbar .ms-auto {
+                margin-left: 0 !important;
+                width: 100%;
+                text-align: center;
+                margin-top: 6px;
+            }
+            .editor-toolbar .ms-auto .btn {
+                width: 100%;
+            }
+
+            .properties-panel-horizontal {
+                flex-direction: column;
+                gap: 6px;
+                padding: 8px 12px;
+            }
+            .properties-panel-horizontal .group {
+                border-right: none;
+                padding-right: 0;
+                flex-wrap: wrap;
+                gap: 4px;
+                width: 100%;
+            }
+            .properties-panel-horizontal .group label {
+                font-size: 0.65rem;
+            }
+            .properties-panel-horizontal input[type="number"] {
+                width: 35px;
+                font-size: 0.65rem;
+            }
+
+            .preview-control-bar {
+                flex-direction: column;
+                gap: 6px;
+                padding: 8px 0;
+            }
+            .preview-control-bar .d-flex {
+                width: 100%;
+                justify-content: center;
+            }
+            .preview-control-bar .btn {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+            }
+
+            .preview-wrap {
+                padding: 10px 0;
+                gap: 10px;
+            }
+
+            .certificate-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1123/794;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+
+            .extra-features-grid .col-md-6 {
+                width: 100%;
+            }
+
+            /* Sembunyikan beberapa tombol di toolbar mobile yang kurang diperlukan */
+            #selectTool, #undoBtn, #redoBtn, #deleteBtn, #duplicateBtn, #bringForwardBtn, #sendBackwardBtn {
+                display: none !important;
+            }
         }
 
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
@@ -295,8 +586,8 @@
                     </div>
                     <div class="separator"></div>
                     <div class="btn-group">
-                        <button class="btn btn-success" id="directPrintBtn"><i class="fas fa-print"></i> Cetak</button>
-                        <button class="btn btn-info" id="downloadPDFBtn">📄 PDF</button>
+                        <!-- SATU TOMBOL CETAK / PDF -->
+                        <button class="btn btn-success" id="printBtn"><i class="fas fa-print"></i> Cetak / PDF</button>
                     </div>
                     <div class="ms-auto">
                         <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#dataFormOffcanvas"><i class="bi bi-pencil-square"></i> Edit Data</button>
@@ -393,10 +684,14 @@
                                     <div class="info-container draggable-item"><div class="recipient-name" id="namaValue">ULINNUHA</div><div class="participant-detail"><span>Tempat, Tanggal Lahir :</span> <span id="ttlValue">Bantul, 3 Agustus 1999</span><br><span>Utusan :</span> <span id="utusanValue">PAC GP ANSOR DLINGO</span></div></div>
                                 </div>
                                 <div class="materi-wrapper"><table class="materi-table"><thead><tr><th>NO</th><th>MATERI</th><th>INSTRUKTUR</th></tr></thead><tbody id="materi-table-body"></tbody></table></div>
-                                <div class="instruktur-umum draggable-item">
-                                    <div class="instruktur-title">Instruktur Pelatihan Kaderisasi Dasar</div>
-                                    <div class="instruktur-qr" id="qr-instruktur"></div>
-                                    <div class="nama-instruktur"><strong id="instrukturNama">Cahyo Galih</strong></div>
+                                
+                                <!-- FORMAT INSTRUKTUR PRESISI (Pojok Kanan, Segaris dengan Sekretaris) -->
+                                <div class="signatures-wrapper instruktur-wrapper">
+                                    <div class="signature-box draggable-item">
+                                        <div class="signature-image" id="qr-instruktur"></div>
+                                        <div class="signature-name" id="ttd-instruktur">Cahyo Galih</div>
+                                        <div class="signature-title">Instruktur</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -484,7 +779,7 @@
                 </div>
 
                 <!-- Generate CSV Result -->
-                <div id="generateCsvResult" class="mt-3"></div>
+                <div id="generateCsvResult" class="mt-3 d-print-none"></div>
             </div>
         </div>
     </div>
@@ -616,1255 +911,318 @@
         if (el) el.type = el.type === 'password' ? 'text' : 'password';
     };
 
-    // ======================== LOGIN / LOGOUT ========================
-    function initAuth() {
-        if (typeof PKD === 'undefined') {
-            window.PKD = {
-                getUserRole: () => 'guest',
-                verifyAdmin: async (u, p) => {
-                    if (u === 'admin' && p === 'admin123') return { success: true };
-                    return { success: false, message: 'Username atau password salah' };
-                },
-                setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
-                setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
-                persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
-                logout: () => { DataCache.clear(); window.location.href = '/bisaa/index.html'; },
-                callApi: async () => { return { data: [] }; }
-            };
-            console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
+    // ======================== EKSPOR INISIALISASI ========================
+    window.initSertifikatAdmin = function() {
+        if (window._sertifikatAdminInitialized) return;
+        window._sertifikatAdminInitialized = true;
+
+        function initAuth() {
+            if (typeof PKD === 'undefined') {
+                window.PKD = {
+                    getUserRole: () => 'guest',
+                    verifyAdmin: async (u, p) => {
+                        if (u === 'admin' && p === 'admin123') return { success: true };
+                        return { success: false };
+                    },
+                    setUserRole: (r) => {},
+                    setUserData: (d) => {},
+                    persistAuthState: () => {},
+                    logout: () => { DataCache.clear(); window.location.href = '/bisaa/index.html'; },
+                    callApi: async () => { return { data: [] }; }
+                };
+            }
+            if (PKD.getUserRole() !== 'admin') {
+                new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+            }
         }
 
-        if (PKD.getUserRole() !== 'admin') {
-            new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
+        function handleLogin() {
+            const u = document.getElementById('adminUsername').value.trim();
+            const p = document.getElementById('adminPassword').value;
+            const err = document.getElementById('adminLoginError');
+            if (!u || !p) { err.innerText = 'Username dan password harus diisi'; err.style.display = 'block'; return; }
+            PKD.verifyAdmin(u, p).then(async res => {
+                if (res.success) {
+                    PKD.setUserRole('admin'); PKD.setUserData({ nama: u }); PKD.persistAuthState();
+                    bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+                    loadPreviewSertifikat();
+                } else { err.innerText = res.message || 'Login gagal'; err.style.display = 'block'; }
+            }).catch(e => { err.innerText = 'Kesalahan: ' + e.message; err.style.display = 'block'; });
         }
-    }
+        document.getElementById('adminLoginSubmit').addEventListener('click', handleLogin);
+        function handleLogout(e) { e.preventDefault(); DataCache.clear(); if (PKD.logout) PKD.logout(); else window.location.href = '/bisaa/index.html'; }
 
-    function handleLogin() {
-        const u = document.getElementById('adminUsername').value.trim();
-        const p = document.getElementById('adminPassword').value;
-        const err = document.getElementById('adminLoginError');
-        if (!u || !p) {
-            err.innerText = 'Username dan password harus diisi';
-            err.style.display = 'block';
-            return;
+        function initSidebarToggle() {
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const sidebar = document.getElementById('sidebarWrapper');
+            if (toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('minimized');
+                    const icon = this.querySelector('i');
+                    if (sidebar.classList.contains('minimized')) { icon.classList.remove('bi-arrow-left-right'); icon.classList.add('bi-arrow-right-left'); }
+                    else { icon.classList.remove('bi-arrow-right-left'); icon.classList.add('bi-arrow-left-right'); }
+                });
+            }
         }
-        PKD.verifyAdmin(u, p).then(async res => {
-            if (res.success) {
-                PKD.setUserRole('admin');
-                PKD.setUserData({ nama: u });
-                PKD.persistAuthState();
 
+        function initSidebarDropdowns() {
+            document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+                link.addEventListener('click', function(e) { e.preventDefault(); const target = this.dataset.target; const submenu = document.getElementById('submenu-' + target); if (submenu) submenu.classList.toggle('open'); });
+            });
+        }
+
+        // ======================== LOGIKA EDITOR DRAG & DROP ========================
+        let objectHistory = [], historyIndex = -1, MAX_HISTORY = 50, selectedObject = null, dragData = null, resizeData = null;
+        function getAllEditableObjects() { return document.querySelectorAll('.draggable-item'); }
+
+        function getObjectState(el) {
+            const state = { id: el.dataset.id || el.id || 'obj', left: parseInt(el.style.left) || 0, top: parseInt(el.style.top) || 0, width: parseInt(el.style.width) || el.offsetWidth, height: parseInt(el.style.height) || el.offsetHeight, zIndex: parseInt(el.style.zIndex) || 0, marginTop: parseInt(el.style.marginTop) || 0, marginLeft: parseInt(el.style.marginLeft) || 0, type: el.dataset.type || 'unknown' };
+            if (el.classList.contains('editable-text') || ['H1','H2','H3','P','DIV'].includes(el.tagName)) {
+                const span = el.querySelector('span') || el;
+                state.textContent = span.textContent || '';
+                state.fontSize = span.style.fontSize || '';
+                state.fontFamily = span.style.fontFamily || '';
+                state.color = span.style.color || '';
+                state.fontWeight = span.style.fontWeight || '';
+                state.textAlign = span.style.textAlign || 'center';
+            }
+            return state;
+        }
+
+        function setObjectState(el, state) {
+            ['left','top','width','height','zIndex','marginTop','marginLeft'].forEach(k => { if (state[k] !== undefined) el.style[k] = state[k] + 'px'; });
+            if (el.classList.contains('editable-text') || ['H1','H2','H3','P','DIV'].includes(el.tagName)) {
+                const span = el.querySelector('span') || el;
+                if (state.textContent !== undefined) span.textContent = state.textContent;
+                if (state.fontSize !== undefined) span.style.fontSize = state.fontSize;
+                if (state.fontFamily !== undefined) span.style.fontFamily = state.fontFamily;
+                if (state.color !== undefined) span.style.color = state.color;
+                if (state.fontWeight !== undefined) span.style.fontWeight = state.fontWeight;
+                if (state.textAlign !== undefined) span.style.textAlign = state.textAlign;
+            }
+        }
+
+        function saveObjectState() {
+            const state = []; getAllEditableObjects().forEach(el => state.push(getObjectState(el)));
+            objectHistory = objectHistory.slice(0, historyIndex + 1); objectHistory.push(state); if (objectHistory.length > MAX_HISTORY) objectHistory.shift();
+            historyIndex = objectHistory.length - 1;
+            document.getElementById('undoBtn').disabled = historyIndex <= 0;
+            document.getElementById('redoBtn').disabled = historyIndex >= objectHistory.length - 1;
+        }
+
+        function restoreState(stateArray) {
+            const container = document.querySelector('.certificate-container') || document.body;
+            getAllEditableObjects().forEach(el => { if (el.dataset.type !== 'fixed') el.remove(); });
+            stateArray.forEach(state => {
+                const el = document.createElement('div'); el.className = 'draggable-item'; el.dataset.id = state.id; el.dataset.type = state.type; el.style.position = 'absolute';
+                if (state.type === 'text') { el.classList.add('editable-text'); const span = document.createElement('span'); span.textContent = state.textContent || 'Teks Baru'; span.style.fontSize = state.fontSize || '24px'; span.style.fontFamily = state.fontFamily || 'Inter'; span.style.color = state.color || '#000000'; span.style.fontWeight = state.fontWeight || 'normal'; span.style.textAlign = state.textAlign || 'center'; el.appendChild(span); }
+                else if (state.type === 'image') { const img = document.createElement('img'); img.src = state.src || 'https://via.placeholder.com/150'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'contain'; el.appendChild(img); }
+                else { const original = document.querySelector(`.draggable-item[data-id="${state.id}"]`); if (original) el.innerHTML = original.innerHTML; }
+                setObjectState(el, state); container.appendChild(el);
+            });
+            initDraggableItems();
+            document.getElementById('undoBtn').disabled = historyIndex <= 0;
+            document.getElementById('redoBtn').disabled = historyIndex >= objectHistory.length - 1;
+        }
+
+        function undo() { if (historyIndex > 0) { historyIndex--; restoreState(objectHistory[historyIndex]); deselectAll(); } }
+        function redo() { if (historyIndex < objectHistory.length - 1) { historyIndex++; restoreState(objectHistory[historyIndex]); deselectAll(); } }
+
+        function selectObject(el) { deselectAll(); el.classList.add('selected'); el.style.outline = '2px solid #2563eb'; selectedObject = el; showProperties(el); }
+        function deselectAll() { document.querySelectorAll('.draggable-item.selected').forEach(el => { el.classList.remove('selected'); el.style.outline = ''; }); selectedObject = null; hideProperties(); }
+
+        function showProperties(el) {
+            const state = getObjectState(el);
+            document.getElementById('propLeft').value = state.left; document.getElementById('propTop').value = state.top; document.getElementById('propWidth').value = state.width; document.getElementById('propHeight').value = state.height; document.getElementById('propZIndex').value = state.zIndex; document.getElementById('selectionInfo').innerText = `ID: ${el.dataset.id}`;
+            if (state.type === 'text' || el.classList.contains('editable-text')) {
+                document.getElementById('propTextContent').value = state.textContent || '';
+                document.getElementById('propFontSize').value = state.fontSize ? parseInt(state.fontSize) : 24;
+                document.getElementById('propFontFamily').value = state.fontFamily || 'Inter';
+                document.getElementById('propColor').value = state.color || '#000000';
+                document.getElementById('propFontWeight').value = state.fontWeight || 'normal';
+                document.getElementById('propTextAlign').value = state.textAlign || 'center';
+                document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'flex');
+            } else { document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'none'); }
+        }
+        function hideProperties() { document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'none'); document.getElementById('selectionInfo').innerText = 'Tidak ada objek dipilih'; }
+
+        function initDraggableItems() {
+            document.querySelectorAll('.draggable-item').forEach((el, index) => {
+                if (!el.dataset.id) el.dataset.id = 'obj-' + index;
+                ['nw','ne','sw','se','n','s','e','w'].forEach(pos => { const handle = document.createElement('div'); handle.className = 'resize-handle ' + pos; handle.dataset.handle = pos; el.appendChild(handle); });
+                el.addEventListener('click', function(e) { if (dragData || resizeData) return; selectObject(this); e.stopPropagation(); });
+                el.addEventListener('mousedown', function(e) {
+                    const handle = e.target.closest('.resize-handle');
+                    if (handle) { startResize(e, this, handle.dataset.handle); return; }
+                    if (!this.classList.contains('selected')) selectObject(this);
+                    startDrag(e, this);
+                });
+                el.addEventListener('touchstart', function(e) {
+                    const touch = e.touches[0]; const handle = e.target.closest('.resize-handle');
+                    if (handle) { startResizeTouch(e, this, handle.dataset.handle); return; }
+                    if (!this.classList.contains('selected')) selectObject(this);
+                    startDragTouch(e, this);
+                }, { passive: false });
+            });
+            setTimeout(saveObjectState, 500);
+        }
+
+        // (Drag/Resize functions - abbreviated for brevity, logic unchanged)
+        function startDrag(e, el) { dragData = { el, startX: e.clientX, startY: e.clientY, origLeft: parseInt(el.style.left) || 0, origTop: parseInt(el.style.top) || 0, parentRect: el.parentElement.getBoundingClientRect() }; el.classList.add('dragging'); e.preventDefault(); document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd); }
+        function onDragMove(e) { if (!dragData) return; let newLeft = dragData.origLeft + e.clientX - dragData.startX; let newTop = dragData.origTop + e.clientY - dragData.startY; newLeft = Math.max(0, Math.min(newLeft, dragData.parentRect.width - dragData.el.offsetWidth)); newTop = Math.max(0, Math.min(newTop, dragData.parentRect.height - dragData.el.offsetHeight)); dragData.el.style.left = newLeft + 'px'; dragData.el.style.top = newTop + 'px'; showProperties(dragData.el); }
+        function onDragEnd(e) { if (dragData) { dragData.el.classList.remove('dragging'); saveObjectState(); dragData = null; } document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd); }
+        function startDragTouch(e, el) { const touch = e.touches[0]; dragData = { el, startX: touch.clientX, startY: touch.clientY, origLeft: parseInt(el.style.left) || 0, origTop: parseInt(el.style.top) || 0, parentRect: el.parentElement.getBoundingClientRect() }; el.classList.add('dragging'); e.preventDefault(); document.addEventListener('touchmove', onDragTouchMove, { passive: false }); document.addEventListener('touchend', onDragTouchEnd, { passive: false }); }
+        function onDragTouchMove(e) { if (!dragData) return; const touch = e.touches[0]; let newLeft = dragData.origLeft + touch.clientX - dragData.startX; let newTop = dragData.origTop + touch.clientY - dragData.startY; newLeft = Math.max(0, Math.min(newLeft, dragData.parentRect.width - dragData.el.offsetWidth)); newTop = Math.max(0, Math.min(newTop, dragData.parentRect.height - dragData.el.offsetHeight)); dragData.el.style.left = newLeft + 'px'; dragData.el.style.top = newTop + 'px'; showProperties(dragData.el); }
+        function onDragTouchEnd(e) { if (dragData) { dragData.el.classList.remove('dragging'); saveObjectState(); dragData = null; } document.removeEventListener('touchmove', onDragTouchMove); document.removeEventListener('touchend', onDragTouchEnd); }
+
+        function startResize(e, el, handle) { resizeData = { el, handle, startX: e.clientX, startY: e.clientY, origWidth: el.offsetWidth, origHeight: el.offsetHeight, origLeft: parseInt(el.style.left) || 0, origTop: parseInt(el.style.top) || 0 }; el.classList.add('dragging'); e.preventDefault(); document.addEventListener('mousemove', onResizeMove); document.addEventListener('mouseup', onResizeEnd); }
+        function onResizeMove(e) { if (!resizeData) return; let newW = resizeData.origWidth, newH = resizeData.origHeight, newX = resizeData.origLeft, newY = resizeData.origTop; const h = resizeData.handle; if (h.includes('e')) newW = Math.max(20, resizeData.origWidth + e.clientX - resizeData.startX); if (h.includes('w')) { newW = Math.max(20, resizeData.origWidth - (e.clientX - resizeData.startX)); newX = resizeData.origLeft + resizeData.origWidth - newW; } if (h.includes('s')) newH = Math.max(20, resizeData.origHeight + e.clientY - resizeData.startY); if (h.includes('n')) { newH = Math.max(20, resizeData.origHeight - (e.clientY - resizeData.startY)); newY = resizeData.origTop + resizeData.origHeight - newH; } if (h === 'n' || h === 's') { if (h === 'n') { newH = Math.max(20, resizeData.origHeight - (e.clientY - resizeData.startY)); newY = resizeData.origTop + resizeData.origHeight - newH; } else newH = Math.max(20, resizeData.origHeight + e.clientY - resizeData.startY); } if (h === 'e' || h === 'w') { if (h === 'e') newW = Math.max(20, resizeData.origWidth + e.clientX - resizeData.startX); else { newW = Math.max(20, resizeData.origWidth - (e.clientX - resizeData.startX)); newX = resizeData.origLeft + resizeData.origWidth - newW; } } resizeData.el.style.width = newW + 'px'; resizeData.el.style.height = newH + 'px'; resizeData.el.style.left = newX + 'px'; resizeData.el.style.top = newY + 'px'; showProperties(resizeData.el); }
+        function onResizeEnd(e) { if (resizeData) { resizeData.el.classList.remove('dragging'); saveObjectState(); resizeData = null; } document.removeEventListener('mousemove', onResizeMove); document.removeEventListener('mouseup', onResizeEnd); }
+        function startResizeTouch(e, el, handle) { const touch = e.touches[0]; resizeData = { el, handle, startX: touch.clientX, startY: touch.clientY, origWidth: el.offsetWidth, origHeight: el.offsetHeight, origLeft: parseInt(el.style.left) || 0, origTop: parseInt(el.style.top) || 0 }; el.classList.add('dragging'); e.preventDefault(); document.addEventListener('touchmove', onResizeTouchMove, { passive: false }); document.addEventListener('touchend', onResizeTouchEnd, { passive: false }); }
+        function onResizeTouchMove(e) { if (!resizeData) return; const touch = e.touches[0]; let newW = resizeData.origWidth, newH = resizeData.origHeight, newX = resizeData.origLeft, newY = resizeData.origTop; const h = resizeData.handle; if (h.includes('e')) newW = Math.max(20, resizeData.origWidth + touch.clientX - resizeData.startX); if (h.includes('w')) { newW = Math.max(20, resizeData.origWidth - (touch.clientX - resizeData.startX)); newX = resizeData.origLeft + resizeData.origWidth - newW; } if (h.includes('s')) newH = Math.max(20, resizeData.origHeight + touch.clientY - resizeData.startY); if (h.includes('n')) { newH = Math.max(20, resizeData.origHeight - (touch.clientY - resizeData.startY)); newY = resizeData.origTop + resizeData.origHeight - newH; } resizeData.el.style.width = newW + 'px'; resizeData.el.style.height = newH + 'px'; resizeData.el.style.left = newX + 'px'; resizeData.el.style.top = newY + 'px'; showProperties(resizeData.el); }
+        function onResizeTouchEnd(e) { if (resizeData) { resizeData.el.classList.remove('dragging'); saveObjectState(); resizeData = null; } document.removeEventListener('touchmove', onResizeTouchMove); document.removeEventListener('touchend', onResizeTouchEnd); }
+
+        // ======================== LOGIKA TOOLBAR ========================
+        function addText() { const c = document.querySelector('.certificate-container'); if (!c) return; const el = document.createElement('div'); el.className = 'draggable-item editable-text'; el.dataset.type = 'text'; el.style.position = 'absolute'; el.style.left = '100px'; el.style.top = '100px'; el.style.width = '200px'; el.style.height = 'auto'; const span = document.createElement('span'); span.textContent = 'Teks Baru'; span.style.fontSize = '24px'; span.style.fontFamily = 'Inter'; span.style.color = '#000'; span.style.fontWeight = 'normal'; span.style.textAlign = 'center'; el.appendChild(span); c.appendChild(el); initDraggableItems(); saveObjectState(); selectObject(el); }
+        function addImage() { const c = document.querySelector('.certificate-container'); if (!c) return; const url = prompt('URL gambar:'); if (!url) return; const el = document.createElement('div'); el.className = 'draggable-item'; el.dataset.type = 'image'; el.style.position = 'absolute'; el.style.left = '100px'; el.style.top = '100px'; el.style.width = '150px'; el.style.height = '150px'; const img = document.createElement('img'); img.src = url; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'contain'; el.appendChild(img); c.appendChild(el); initDraggableItems(); saveObjectState(); selectObject(el); }
+        function duplicateObject() { if (!selectedObject) return; const clone = selectedObject.cloneNode(true); clone.dataset.id = 'obj-' + Date.now(); clone.style.left = (parseInt(selectedObject.style.left) + 20) + 'px'; clone.style.top = (parseInt(selectedObject.style.top) + 20) + 'px'; clone.classList.remove('selected'); clone.style.outline = ''; selectedObject.parentElement.appendChild(clone); initDraggableItems(); saveObjectState(); selectObject(clone); }
+        function deleteObject() { if (!selectedObject) return; if (confirm('Hapus?')) { selectedObject.remove(); selectedObject = null; hideProperties(); saveObjectState(); } }
+        function bringForward() { if (!selectedObject) return; const p = selectedObject.parentElement; const ch = Array.from(p.children); const idx = ch.indexOf(selectedObject); if (idx < ch.length - 1) p.insertBefore(selectedObject, ch[idx + 1].nextSibling); saveObjectState(); }
+        function sendBackward() { if (!selectedObject) return; const p = selectedObject.parentElement; const ch = Array.from(p.children); const idx = ch.indexOf(selectedObject); if (idx > 0) p.insertBefore(selectedObject, ch[idx - 1]); saveObjectState(); }
+
+        // ======================== LOGIKA PREVIEW SERTIFIKAT ========================
+        let materiList = [], csvParticipants = [], allApprovals = [];
+        const defaultLayout = { barcode: { top: 35, left: 15 }, logo: { top: 50, right: 30 }, qrInstruktur: { marginTop: 5 }, photoBox: { marginTop: 0 }, infoContainer: { marginTop: 0 } };
+        let currentLayout = { ...defaultLayout };
+
+        function initDefaultMateri() {
+            materiList = [{ nama: "Orientasi Pengkaderan", instruktur: "Nanang Zuhdi Santoso" }, { nama: "Ahlussunnah Wal Jama’ah I", instruktur: "Lupa" }, { nama: "Ke-Nahdlatul Ulama-an I", instruktur: "Dr. Attobari" }, { nama: "Organisasi dan Kepemimpinan", instruktur: "Wahdini" }, { nama: "Ke-GP Ansor-an I", instruktur: "Alan" }, { nama: "Dalil-dalil Amaliyah dan Tradisi Keagamaan NU", instruktur: "Mustaba" }, { nama: "Ke-Indonesia-an dan Ke-Bangsa-an", instruktur: "Tim Banser" }, { nama: "Pengenalan Aturan Organisasi GP Ansor", instruktur: "Danil" }, { nama: "Literasi Digital", instruktur: "Ulinnuha" }, { nama: "Analisis Sosial", instruktur: "Sucipto" }, { nama: "Rencana Kerja dan Tindak Lanjut", instruktur: "Cahyo Galih dkk" }, { nama: "Pembaitan", instruktur: "Tim Instruktur" }];
+        }
+        function renderMateriForm() { const c = document.getElementById('materi-list'); if (!c) return; c.innerHTML = materiList.map((item, idx) => `<div class="d-flex align-items-center gap-2 mb-2" data-index="${idx}"><div style="flex:1"><input type="text" class="form-control form-control-sm materi-nama" value="${PKD.escapeHtml(item.nama)}" placeholder="Materi"></div><div style="flex:1"><input type="text" class="form-control form-control-sm materi-instruktur" value="${PKD.escapeHtml(item.instruktur)}" placeholder="Instruktur"></div><button class="btn btn-sm btn-outline-danger hapus-materi" data-index="${idx}"><i class="bi bi-trash"></i></button></div>`).join(''); c.querySelectorAll('.materi-nama').forEach((inp, idx) => inp.addEventListener('input', function() { materiList[idx].nama = this.value; renderMateriTable(); })); c.querySelectorAll('.materi-instruktur').forEach((inp, idx) => inp.addEventListener('input', function() { materiList[idx].instruktur = this.value; renderMateriTable(); })); c.querySelectorAll('.hapus-materi').forEach(btn => btn.addEventListener('click', function(e) { e.preventDefault(); const idx = parseInt(this.dataset.index); if (materiList.length > 1) { materiList.splice(idx, 1); renderMateriForm(); renderMateriTable(); } else alert('Minimal 1 materi'); })); }
+        function renderMateriTable() { const tbody = document.getElementById('materi-table-body'); if (!tbody) return; tbody.innerHTML = materiList.map((item, idx) => `<tr><td>${idx+1}</td><td>${PKD.escapeHtml(item.nama)}</td><td>${PKD.escapeHtml(item.instruktur)}</td></tr>`).join(''); }
+
+        function generateCertFrontBarcode() { const nomor = document.getElementById('inputNomor')?.value.trim() || '001/PC-XI/SR-01.PKD/I/2026'; const container = document.getElementById('barcode-front'); if (!container) return; try { container.innerHTML = ''; JsBarcode(container, nomor, { format: "CODE128", width: 1, height: 15, displayValue: false, margin: 0, background: "transparent", lineColor: "#000000" }); } catch(e) { container.innerHTML = `<div style="font-size:0.4rem; word-break:break-all;">${nomor}</div>`; } }
+        function generateInstrukturQR() { const c = document.getElementById('qr-instruktur'); if (!c) return; const sel = document.getElementById('selectInstruktur'); let data = sel && sel.value ? JSON.parse(sel.value) : null; if (!data || !data.driveId) { c.innerHTML = '<div style="font-size:0.5rem; color:#aaa;">Menunggu tanda tangan...</div>'; return; } try { const base = window.location.origin; const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(base + '/bisaa/verifikasi_qr.html?role=instruktur&driveId=' + data.driveId)}&size=80&ecLevel=L`; const img = document.createElement('img'); img.src = qrUrl; img.className = 'qr-code-uniform'; c.innerHTML = ''; c.appendChild(img); } catch(e) { c.innerHTML = '<div style="font-size:0.5rem; color:#666;">QR Error</div>'; } }
+
+        function applyLayout() {
+            const ba = document.querySelector('.cert-front .barcode-area'); if (ba) { ba.style.top = currentLayout.barcode.top + 'px'; ba.style.left = currentLayout.barcode.left + 'px'; }
+            const lc = document.querySelector('.cert-front .logo-container'); if (lc) { lc.style.top = currentLayout.logo.top + 'px'; lc.style.right = currentLayout.logo.right + 'px'; }
+            const qi = document.querySelector('.cert-back .instruktur-wrapper .signature-image'); if (qi) qi.style.marginTop = currentLayout.qrInstruktur.marginTop + 'px';
+            const pb = document.querySelector('.cert-back .photo-box'); if (pb) pb.style.marginTop = currentLayout.photoBox.marginTop + 'px';
+            const ic = document.querySelector('.cert-back .info-container'); if (ic) ic.style.marginTop = currentLayout.infoContainer.marginTop + 'px';
+        }
+
+        function updateAllPreview() {
+            const getVal = (id) => document.getElementById(id)?.value.trim() || '';
+            if (document.getElementById('cert-number')) document.getElementById('cert-number').textContent = getVal('inputNomor') || '001/PC-XI/SR-01.PKD/I/2026';
+            if (document.getElementById('recipient-name')) document.getElementById('recipient-name').textContent = getVal('inputNama') || 'ULINNUHA';
+            if (document.getElementById('kapanewon-body')) document.getElementById('kapanewon-body').textContent = getVal('inputKapanewon') || 'Dlingo';
+            if (document.getElementById('kapanewon-org')) document.getElementById('kapanewon-org').textContent = getVal('inputKapanewon') || 'Dlingo';
+            if (document.getElementById('tanggal-pelaksanaan')) document.getElementById('tanggal-pelaksanaan').textContent = getVal('inputTglPelaksanaan') || '14 Februari sampai 15 Februari 2026';
+            if (document.getElementById('tempat')) document.getElementById('tempat').textContent = getVal('inputTempat') || 'MTs N 8 Bantul, D.I.Yogyakarta';
+            if (document.getElementById('tanggal-penerbitan')) document.getElementById('tanggal-penerbitan').textContent = getVal('inputTglTerbit') || 'Bantul, 16 Februari 2026';
+            if (document.getElementById('ttd-ketua-pc')) document.getElementById('ttd-ketua-pc').textContent = getVal('inputKetuaPC') || 'Ahmad Sidik';
+            if (document.getElementById('ttd-sekretaris')) document.getElementById('ttd-sekretaris').textContent = getVal('inputSekretaris') || 'Fatolani';
+            if (document.getElementById('namaValue')) document.getElementById('namaValue').textContent = getVal('inputNama') || 'ULINNUHA';
+            if (document.getElementById('ttlValue')) document.getElementById('ttlValue').textContent = getVal('inputTtl') || 'Bantul, 3 Agustus 1999';
+            if (document.getElementById('utusanValue')) document.getElementById('utusanValue').textContent = getVal('inputUtusan') || 'PAC GP ANSOR DLINGO';
+            const selInst = document.getElementById('selectInstruktur'); const instData = selInst && selInst.value ? JSON.parse(selInst.value) : null; const ttdInst = document.getElementById('ttd-instruktur'); if (ttdInst) ttdInst.textContent = instData ? instData.nama : (getVal('inputInstrukturUmum') || 'Cahyo Galih');
+            // Ketua PC QR
+            const selKetua = document.getElementById('selectKetuaPC'); const qrKetua = document.querySelector('#signature-ketua-pc .qr-code-uniform'); if (selKetua && selKetua.value) { try { const data = JSON.parse(selKetua.value); if (qrKetua) { const p = qrKetua.parentElement; const old = p.querySelector('.qr-placeholder-msg'); if (old) old.remove(); if (data.driveId) { const base = window.location.origin; qrKetua.src = `https://quickchart.io/qr?text=${encodeURIComponent(base + '/bisaa/verifikasi_qr.html?role=ketua_pc&driveId=' + data.driveId)}&size=80&ecLevel=L`; qrKetua.className = 'qr-code-uniform'; qrKetua.style.display = 'block'; } else { qrKetua.style.display = 'none'; const msg = document.createElement('div'); msg.className = 'qr-placeholder-msg small'; msg.textContent = '⚠️ Tanda tangan ketua belum diunggah'; p.appendChild(msg); } } } catch(e) {} }
+            // Sekretaris QR
+            const selSek = document.getElementById('selectSekretaris'); const qrSek = document.querySelector('#signature-sekretaris .qr-code-uniform'); if (selSek && selSek.value) { try { const data = JSON.parse(selSek.value); if (qrSek) { const p = qrSek.parentElement; const old = p.querySelector('.qr-placeholder-msg'); if (old) old.remove(); if (data.driveId) { const base = window.location.origin; qrSek.src = `https://quickchart.io/qr?text=${encodeURIComponent(base + '/bisaa/verifikasi_qr.html?role=sekretaris&driveId=' + data.driveId)}&size=80&ecLevel=L`; qrSek.className = 'qr-code-uniform'; qrSek.style.display = 'block'; } else { qrSek.style.display = 'none'; const msg = document.createElement('div'); msg.className = 'qr-placeholder-msg small'; msg.textContent = '⚠️ Tanda tangan sekretaris belum diunggah'; p.appendChild(msg); } } } catch(e) {} }
+            generateCertFrontBarcode(); generateInstrukturQR(); applyLayout();
+        }
+
+        function handleFotoPreview(e) { const file = e.target.files[0]; const prev = document.getElementById('fotoPreview'); const plc = document.getElementById('photoPlaceholder'); if (file && prev && plc) { const r = new FileReader(); r.onload = (ev) => { prev.src = ev.target.result; prev.style.display = 'block'; plc.style.display = 'none'; }; r.readAsDataURL(file); } else { if (prev) prev.style.display = 'none'; if (plc) plc.style.display = 'flex'; } }
+
+        function resetAllPreview() {
+            document.getElementById('inputNomor').value = '001/PC-XI/SR-01.PKD/I/2026'; document.getElementById('inputNama').value = 'ULINNUHA'; document.getElementById('inputKapanewon').value = 'Dlingo'; document.getElementById('inputTglPelaksanaan').value = '14 Februari sampai 15 Februari 2026'; document.getElementById('inputTempat').value = 'MTs N 8 Bantul, D.I.Yogyakarta'; document.getElementById('inputTglTerbit').value = 'Bantul, 16 Februari 2026'; document.getElementById('inputKetuaPC').value = 'Ahmad Sidik'; document.getElementById('inputSekretaris').value = 'Fatolani'; document.getElementById('inputTtl').value = 'Bantul, 3 Agustus 1999'; document.getElementById('inputUtusan').value = 'PAC GP ANSOR DLINGO'; document.getElementById('inputInstrukturUmum').value = 'Cahyo Galih'; document.getElementById('inputFoto').value = ''; const prev = document.getElementById('fotoPreview'); const plc = document.getElementById('photoPlaceholder'); if (prev) { prev.src = '#'; prev.style.display = 'none'; } if (plc) plc.style.display = 'flex'; initDefaultMateri(); renderMateriForm(); renderMateriTable(); currentLayout = JSON.parse(JSON.stringify(defaultLayout)); document.getElementById('layoutBarcodeTop').value = currentLayout.barcode.top; document.getElementById('layoutBarcodeLeft').value = currentLayout.barcode.left; document.getElementById('layoutLogoTop').value = currentLayout.logo.top; document.getElementById('layoutLogoRight').value = currentLayout.logo.right; document.getElementById('layoutQrInstrukturMarginTop').value = currentLayout.qrInstruktur.marginTop; document.getElementById('layoutPhotoBoxMarginTop').value = currentLayout.photoBox.marginTop; document.getElementById('layoutInfoContainerMarginTop').value = currentLayout.infoContainer.marginTop; loadPreviewSertifikat();
+        }
+
+        function loadDigitalApprovals() { PKD.getAllDigitalApprovals().then(res => { if (res.success && res.data) { allApprovals = res.data; populateSignatureDropdowns(); } }).catch(e => console.warn(e)); }
+        function populateSignatureDropdowns() {
+            const ketua = allApprovals.filter(a => a.role === 'ketua_pc'), sek = allApprovals.filter(a => a.role === 'sekretaris'), inst = allApprovals.filter(a => a.role === 'instruktur');
+            const fill = (id, list, placeholder) => { const sel = document.getElementById(id); if (!sel) return; sel.innerHTML = `<option value="">-- ${placeholder} --</option>`; list.forEach(item => { const opt = document.createElement('option'); opt.value = JSON.stringify({ nama: item.nama, driveId: item.driveId, kegunaan: item.kegunaan || '' }); opt.textContent = item.kegunaan || item.nama; sel.appendChild(opt); }); };
+            fill('selectKetuaPC', ketua, 'Pilih Ketua PC'); fill('selectSekretaris', sek, 'Pilih Sekretaris'); fill('selectInstruktur', inst, 'Pilih Instruktur');
+        }
+
+        function loadPreviewSertifikat() {
+            const container = document.getElementById('previewPanel'); if (!container) return;
+            initDefaultMateri(); renderMateriForm(); renderMateriTable();
+            (async () => {
+                const templates = await PKD.getCertificateTemplates(); const presets = await PKD.getCertPresets();
+                document.getElementById('previewTemplateSelect').innerHTML = '<option value="">-- Pilih Template --</option>' + templates.map(t => `<option value="${t.id}">${PKD.escapeHtml(t.nama_template)}</option>`).join('');
+                document.getElementById('previewPresetSelect').innerHTML = '<option value="">-- Pilih Preset --</option>' + presets.map(p => `<option value="${p.id}">${PKD.escapeHtml(p.name)}</option>`).join('');
+            })();
+            loadDigitalApprovals();
+
+            document.getElementById('tambahMateriBtn')?.addEventListener('click', () => { materiList.push({ nama: 'Materi Baru', instruktur: 'Instruktur Baru' }); renderMateriForm(); renderMateriTable(); });
+            document.querySelectorAll('#dataFormOffcanvas input[type="text"]').forEach(inp => inp.addEventListener('input', updateAllPreview));
+            document.getElementById('inputFoto')?.addEventListener('change', handleFotoPreview);
+            document.getElementById('resetPreviewBtn')?.addEventListener('click', resetAllPreview);
+            document.getElementById('selectKetuaPC')?.addEventListener('change', updateAllPreview);
+            document.getElementById('selectSekretaris')?.addEventListener('change', updateAllPreview);
+            document.getElementById('selectInstruktur')?.addEventListener('change', updateAllPreview);
+
+            document.querySelectorAll('#layoutAccordion input[type="number"]').forEach(inp => inp.addEventListener('input', function() { const val = parseInt(this.value) || 0; if (this.id === 'layoutBarcodeTop') currentLayout.barcode.top = val; else if (this.id === 'layoutBarcodeLeft') currentLayout.barcode.left = val; else if (this.id === 'layoutLogoTop') currentLayout.logo.top = val; else if (this.id === 'layoutLogoRight') currentLayout.logo.right = val; else if (this.id === 'layoutQrInstrukturMarginTop') currentLayout.qrInstruktur.marginTop = val; else if (this.id === 'layoutPhotoBoxMarginTop') currentLayout.photoBox.marginTop = val; else if (this.id === 'layoutInfoContainerMarginTop') currentLayout.infoContainer.marginTop = val; applyLayout(); }));
+            document.getElementById('resetLayoutBtn')?.addEventListener('click', function() { currentLayout = JSON.parse(JSON.stringify(defaultLayout)); document.getElementById('layoutBarcodeTop').value = currentLayout.barcode.top; document.getElementById('layoutBarcodeLeft').value = currentLayout.barcode.left; document.getElementById('layoutLogoTop').value = currentLayout.logo.top; document.getElementById('layoutLogoRight').value = currentLayout.logo.right; document.getElementById('layoutQrInstrukturMarginTop').value = currentLayout.qrInstruktur.marginTop; document.getElementById('layoutPhotoBoxMarginTop').value = currentLayout.photoBox.marginTop; document.getElementById('layoutInfoContainerMarginTop').value = currentLayout.infoContainer.marginTop; applyLayout(); });
+
+            document.getElementById('toggleDepanPreview')?.addEventListener('click', function() { document.querySelector('.cert-front').classList.toggle('d-none'); this.innerHTML = document.querySelector('.cert-front').classList.contains('d-none') ? '<i class="fas fa-file"></i> Tampilkan Depan' : '<i class="fas fa-file"></i> Sembunyikan Depan'; });
+            document.getElementById('toggleBelakangPreview')?.addEventListener('click', function() { document.querySelector('.cert-back').classList.toggle('d-none'); this.innerHTML = document.querySelector('.cert-back').classList.contains('d-none') ? '<i class="fas fa-file"></i> Tampilkan Belakang' : '<i class="fas fa-file"></i> Sembunyikan Belakang'; });
+
+            document.getElementById('generateFromCsvBtn')?.addEventListener('click', async function() {
+                const templateId = document.getElementById('previewTemplateSelect')?.value; const presetId = document.getElementById('previewPresetSelect')?.value; const start = parseInt(document.getElementById('previewStartNumber')?.value) || 1;
+                if (!templateId || !presetId) { alert('Pilih template dan preset'); return; }
+                if (!csvParticipants.length) { alert('Upload CSV terlebih dahulu'); return; }
+                if (!confirm(`Generate ${csvParticipants.length} sertifikat?`)) return;
+                this.disabled = true; this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
                 try {
-                    const allData = await Promise.all([
-                        PKD.getPesertaList ? PKD.getPesertaList() : [],
-                        PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
-                        PKD.getMateriList ? PKD.getMateriList() : [],
-                        PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
-                        PKD.getPretestResponses ? PKD.getPretestResponses() : [],
-                        PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
-                        PKD.getAlumniList ? PKD.getAlumniList() : [],
-                        PKD.getKaderList ? PKD.getKaderList() : [],
-                        PKD.getInformasiList ? PKD.getInformasiList() : [],
-                        PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
-                        PKD.getSertifikatList ? PKD.getSertifikatList() : []
-                    ]);
-                    DataCache.setAllData({
-                        peserta: allData[0], sesi: allData[1], materi: allData[2], skrining: allData[3], pretest: allData[4], posttest: allData[5], alumni: allData[6], kader: allData[7], informasi: allData[8], absensi: allData[9], sertifikat: allData[10]
-                    });
-                } catch (e) { console.warn('Gagal preload data:', e); }
-
-                bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-                loadPreviewSertifikat();
-            } else {
-                err.innerText = res.message || 'Login gagal';
-                err.style.display = 'block';
-            }
-        }).catch(e => {
-            err.innerText = 'Kesalahan: ' + e.message;
-            err.style.display = 'block';
-        });
-    }
-
-    document.getElementById('adminLoginSubmit').addEventListener('click', handleLogin);
-
-    function handleLogout(e) {
-        e.preventDefault();
-        DataCache.clear();
-        if (PKD.logout) PKD.logout();
-        else window.location.href = '/bisaa/index.html';
-    }
-
-    // ======================== SIDEBAR TOGGLE & DROPDOWN ========================
-    function initSidebarToggle() {
-        const toggleBtn = document.getElementById('toggleSidebarBtn');
-        const sidebar = document.getElementById('sidebarWrapper');
-        if (toggleBtn && sidebar) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('minimized');
-                const icon = this.querySelector('i');
-                if (sidebar.classList.contains('minimized')) {
-                    icon.classList.remove('bi-arrow-left-right');
-                    icon.classList.add('bi-arrow-right-left');
-                } else {
-                    icon.classList.remove('bi-arrow-right-left');
-                    icon.classList.add('bi-arrow-left-right');
-                }
-            });
-        }
-    }
-
-    function initSidebarDropdowns() {
-        document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = this.dataset.target;
-                const submenu = document.getElementById('submenu-' + target);
-                if (submenu) submenu.classList.toggle('open');
-            });
-        });
-    }
-
-    // ======================== VARIABEL EDITOR ========================
-    let objectHistory = [];
-    let historyIndex = -1;
-    const MAX_HISTORY = 50;
-    let selectedObject = null;
-    let dragData = null;
-    let resizeData = null;
-
-    function getAllEditableObjects() {
-        return document.querySelectorAll('.draggable-item');
-    }
-
-    function getObjectState(el) {
-        const id = el.dataset.id || el.id || el.getAttribute('data-id');
-        const state = {
-            id: id,
-            left: parseInt(el.style.left) || 0,
-            top: parseInt(el.style.top) || 0,
-            width: parseInt(el.style.width) || el.offsetWidth,
-            height: parseInt(el.style.height) || el.offsetHeight,
-            zIndex: parseInt(el.style.zIndex) || 0,
-            marginTop: parseInt(el.style.marginTop) || 0,
-            marginLeft: parseInt(el.style.marginLeft) || 0,
-            type: el.dataset.type || 'unknown'
-        };
-        if (el.classList.contains('editable-text') || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P' || el.tagName === 'DIV') {
-            const span = el.querySelector('span') || el;
-            state.textContent = span.textContent || '';
-            state.fontSize = span.style.fontSize || '';
-            state.fontFamily = span.style.fontFamily || '';
-            state.color = span.style.color || '';
-            state.fontWeight = span.style.fontWeight || '';
-            state.textAlign = span.style.textAlign || 'center';
-        }
-        return state;
-    }
-
-    function setObjectState(el, state) {
-        if (state.left !== undefined) el.style.left = state.left + 'px';
-        if (state.top !== undefined) el.style.top = state.top + 'px';
-        if (state.width !== undefined) el.style.width = state.width + 'px';
-        if (state.height !== undefined) el.style.height = state.height + 'px';
-        if (state.zIndex !== undefined) el.style.zIndex = state.zIndex;
-        if (state.marginTop !== undefined) el.style.marginTop = state.marginTop + 'px';
-        if (state.marginLeft !== undefined) el.style.marginLeft = state.marginLeft + 'px';
-        if (el.classList.contains('editable-text') || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P' || el.tagName === 'DIV') {
-            const span = el.querySelector('span') || el;
-            if (state.textContent !== undefined) span.textContent = state.textContent;
-            if (state.fontSize !== undefined) span.style.fontSize = state.fontSize;
-            if (state.fontFamily !== undefined) span.style.fontFamily = state.fontFamily;
-            if (state.color !== undefined) span.style.color = state.color;
-            if (state.fontWeight !== undefined) span.style.fontWeight = state.fontWeight;
-            if (state.textAlign !== undefined) span.style.textAlign = state.textAlign;
-        }
-    }
-
-    function saveObjectState() {
-        const state = [];
-        getAllEditableObjects().forEach(el => {
-            state.push(getObjectState(el));
-        });
-        objectHistory = objectHistory.slice(0, historyIndex + 1);
-        objectHistory.push(state);
-        if (objectHistory.length > MAX_HISTORY) objectHistory.shift();
-        historyIndex = objectHistory.length - 1;
-        updateUndoRedoButtons();
-    }
-
-    function restoreState(stateArray) {
-        const container = document.querySelector('.certificate-container') || document.body;
-        const existing = getAllEditableObjects();
-        existing.forEach(el => {
-            if (el.dataset.type !== 'fixed') {
-                el.remove();
-            }
-        });
-        stateArray.forEach(state => {
-            const el = document.createElement('div');
-            el.className = 'draggable-item';
-            el.dataset.id = state.id;
-            el.dataset.type = state.type;
-            el.style.position = 'absolute';
-            if (state.type === 'text') {
-                el.classList.add('editable-text');
-                const span = document.createElement('span');
-                span.textContent = state.textContent || 'Teks Baru';
-                span.style.fontSize = state.fontSize || '24px';
-                span.style.fontFamily = state.fontFamily || 'Inter';
-                span.style.color = state.color || '#000000';
-                span.style.fontWeight = state.fontWeight || 'normal';
-                span.style.textAlign = state.textAlign || 'center';
-                el.appendChild(span);
-            } else if (state.type === 'image') {
-                const img = document.createElement('img');
-                img.src = state.src || 'https://via.placeholder.com/150';
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'contain';
-                el.appendChild(img);
-            } else {
-                const original = document.querySelector(`.draggable-item[data-id="${state.id}"]`);
-                if (original) {
-                    el.innerHTML = original.innerHTML;
-                }
-            }
-            setObjectState(el, state);
-            const containerParent = document.querySelector('.certificate-container');
-            if (containerParent) {
-                containerParent.appendChild(el);
-            }
-        });
-        initDraggableItems();
-        updateUndoRedoButtons();
-    }
-
-    function undo() {
-        if (historyIndex <= 0) return;
-        historyIndex--;
-        restoreState(objectHistory[historyIndex]);
-        updateUndoRedoButtons();
-        deselectAll();
-    }
-
-    function redo() {
-        if (historyIndex >= objectHistory.length - 1) return;
-        historyIndex++;
-        restoreState(objectHistory[historyIndex]);
-        updateUndoRedoButtons();
-        deselectAll();
-    }
-
-    function updateUndoRedoButtons() {
-        const undoBtn = document.getElementById('undoBtn');
-        const redoBtn = document.getElementById('redoBtn');
-        if (undoBtn) undoBtn.disabled = historyIndex <= 0;
-        if (redoBtn) redoBtn.disabled = historyIndex >= objectHistory.length - 1;
-    }
-
-    function selectObject(el) {
-        deselectAll();
-        el.classList.add('selected');
-        el.style.outline = '2px solid #2563eb';
-        el.style.outlineOffset = '2px';
-        selectedObject = el;
-        showProperties(el);
-    }
-
-    function deselectAll() {
-        document.querySelectorAll('.draggable-item.selected').forEach(el => {
-            el.classList.remove('selected');
-            el.style.outline = '';
-        });
-        selectedObject = null;
-        hideProperties();
-    }
-
-    function showProperties(el) {
-        const state = getObjectState(el);
-        document.getElementById('propLeft').value = state.left;
-        document.getElementById('propTop').value = state.top;
-        document.getElementById('propWidth').value = state.width;
-        document.getElementById('propHeight').value = state.height;
-        document.getElementById('propZIndex').value = state.zIndex;
-        document.getElementById('selectionInfo').innerText = `ID: ${el.dataset.id} | Type: ${el.dataset.type}`;
-        if (state.type === 'text' || el.classList.contains('editable-text')) {
-            document.getElementById('propTextContent').value = state.textContent || '';
-            document.getElementById('propFontSize').value = state.fontSize ? parseInt(state.fontSize) : 24;
-            document.getElementById('propFontFamily').value = state.fontFamily || 'Inter';
-            document.getElementById('propColor').value = state.color || '#000000';
-            document.getElementById('propFontWeight').value = state.fontWeight || 'normal';
-            document.getElementById('propTextAlign').value = state.textAlign || 'center';
-            document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'flex');
-        } else {
-            document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'none');
-        }
-    }
-
-    function hideProperties() {
-        document.querySelectorAll('.prop-text-group').forEach(el => el.style.display = 'none');
-        document.getElementById('selectionInfo').innerText = 'Tidak ada objek dipilih';
-    }
-
-    function initDraggableItems() {
-        const elements = document.querySelectorAll('.draggable-item');
-        elements.forEach((el, index) => {
-            if (!el.dataset.id) el.dataset.id = 'obj-' + index;
-            const handlePositions = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
-            handlePositions.forEach(pos => {
-                const handle = document.createElement('div');
-                handle.className = 'resize-handle ' + pos;
-                handle.dataset.handle = pos;
-                el.appendChild(handle);
+                    const res = await PKD.generateCertificates(templateId, presetId, csvParticipants.map(p => ({ nama_lengkap: p.Nama, utusan: p.Utusan, tempat_tanggal_lahir: p.TTL })), start);
+                    document.getElementById('generateCsvResult').innerHTML = '<h6>Hasil:</h6><ul class="list-group">' + res.certificates.map(r => `<li class="list-group-item d-flex justify-content-between">${PKD.escapeHtml(r.nama)} - ${PKD.escapeHtml(r.nomor)} <a href="${PKD.escapeHtml(r.pdfUrl)}" target="_blank" class="btn btn-sm btn-success">Unduh</a></li>`).join('') + '</ul>';
+                    PKD.showToast('Sukses', 'success');
+                } catch (e) { PKD.showToast('Gagal: ' + e.message, 'danger'); } finally { this.disabled = false; this.innerHTML = 'Generate'; }
             });
 
-            el.addEventListener('click', function(e) {
-                if (dragData || resizeData) return;
-                selectObject(this);
-                e.stopPropagation();
+            // SATU TOMBOL CETAK / PDF
+            document.getElementById('printBtn')?.addEventListener('click', function() {
+                window.print();
             });
 
-            el.addEventListener('mousedown', function(e) {
-                const handle = e.target.closest('.resize-handle');
-                if (handle) {
-                    startResize(e, this, handle.dataset.handle);
-                    return;
-                }
-                if (!this.classList.contains('selected')) {
-                    selectObject(this);
-                }
-                startDrag(e, this);
-            });
+            document.getElementById('addTextBtn')?.addEventListener('click', addText);
+            document.getElementById('addImageBtn')?.addEventListener('click', addImage);
+            document.getElementById('deleteBtn')?.addEventListener('click', deleteObject);
+            document.getElementById('duplicateBtn')?.addEventListener('click', duplicateObject);
+            document.getElementById('bringForwardBtn')?.addEventListener('click', bringForward);
+            document.getElementById('sendBackwardBtn')?.addEventListener('click', sendBackward);
+            document.getElementById('undoBtn')?.addEventListener('click', undo);
+            document.getElementById('redoBtn')?.addEventListener('click', redo);
 
-            el.addEventListener('touchstart', function(e) {
-                const touch = e.touches[0];
-                const handle = e.target.closest('.resize-handle');
-                if (handle) {
-                    startResizeTouch(e, this, handle.dataset.handle);
-                    return;
-                }
-                if (!this.classList.contains('selected')) {
-                    selectObject(this);
-                }
-                startDragTouch(e, this);
-            }, { passive: false });
-        });
+            document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); } if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); } if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject) deleteObject(); if (e.key === 'd' && !e.ctrlKey && selectedObject) duplicateObject(); if (e.key === 't' && !e.ctrlKey) addText(); if (e.key === 'i' && !e.ctrlKey) addImage(); if (e.key === 'Escape') deselectAll(); });
+            document.addEventListener('click', function(e) { if (!e.target.closest('.draggable-item') && !e.target.closest('.properties-panel-horizontal') && !e.target.closest('.editor-toolbar')) deselectAll(); });
 
-        setTimeout(saveObjectState, 500);
-    }
+            document.querySelectorAll('#propertiesPanel input, #propertiesPanel select').forEach(inp => inp.addEventListener('input', function() {
+                if (!selectedObject) return; const state = getObjectState(selectedObject); const id = this.id, val = this.value;
+                if (id === 'propLeft') state.left = parseInt(val) || 0; else if (id === 'propTop') state.top = parseInt(val) || 0; else if (id === 'propWidth') state.width = parseInt(val) || 20; else if (id === 'propHeight') state.height = parseInt(val) || 20; else if (id === 'propZIndex') state.zIndex = parseInt(val) || 0; else if (id === 'propTextContent') state.textContent = val; else if (id === 'propFontSize') state.fontSize = val + 'px'; else if (id === 'propFontFamily') state.fontFamily = val; else if (id === 'propColor') state.color = val; else if (id === 'propFontWeight') state.fontWeight = val; else if (id === 'propTextAlign') state.textAlign = val;
+                setObjectState(selectedObject, state); saveObjectState();
+            }));
 
-    // Drag mouse
-    function startDrag(e, el) {
-        if (e.button !== 0) return;
-        const rect = el.getBoundingClientRect();
-        const parentRect = el.parentElement.getBoundingClientRect();
-        dragData = {
-            el: el,
-            startX: e.clientX,
-            startY: e.clientY,
-            origLeft: parseInt(el.style.left) || 0,
-            origTop: parseInt(el.style.top) || 0,
-            parentRect: parentRect
-        };
-        el.classList.add('dragging');
-        e.preventDefault();
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
-    }
-
-    function onDragMove(e) {
-        if (!dragData) return;
-        const deltaX = e.clientX - dragData.startX;
-        const deltaY = e.clientY - dragData.startY;
-        let newLeft = dragData.origLeft + deltaX;
-        let newTop = dragData.origTop + deltaY;
-        const parentWidth = dragData.parentRect.width;
-        const parentHeight = dragData.parentRect.height;
-        const elWidth = dragData.el.offsetWidth;
-        const elHeight = dragData.el.offsetHeight;
-        newLeft = Math.max(0, Math.min(newLeft, parentWidth - elWidth));
-        newTop = Math.max(0, Math.min(newTop, parentHeight - elHeight));
-        dragData.el.style.left = newLeft + 'px';
-        dragData.el.style.top = newTop + 'px';
-        showProperties(dragData.el);
-    }
-
-    function onDragEnd(e) {
-        if (dragData) {
-            dragData.el.classList.remove('dragging');
-            saveObjectState();
-            dragData = null;
-        }
-        document.removeEventListener('mousemove', onDragMove);
-        document.removeEventListener('mouseup', onDragEnd);
-    }
-
-    // Drag touch
-    function startDragTouch(e, el) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = el.getBoundingClientRect();
-        const parentRect = el.parentElement.getBoundingClientRect();
-        dragData = {
-            el: el,
-            startX: touch.clientX,
-            startY: touch.clientY,
-            origLeft: parseInt(el.style.left) || 0,
-            origTop: parseInt(el.style.top) || 0,
-            parentRect: parentRect
-        };
-        el.classList.add('dragging');
-        document.addEventListener('touchmove', onDragTouchMove, { passive: false });
-        document.addEventListener('touchend', onDragTouchEnd, { passive: false });
-    }
-
-    function onDragTouchMove(e) {
-        e.preventDefault();
-        if (!dragData) return;
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - dragData.startX;
-        const deltaY = touch.clientY - dragData.startY;
-        let newLeft = dragData.origLeft + deltaX;
-        let newTop = dragData.origTop + deltaY;
-        const parentWidth = dragData.parentRect.width;
-        const parentHeight = dragData.parentRect.height;
-        const elWidth = dragData.el.offsetWidth;
-        const elHeight = dragData.el.offsetHeight;
-        newLeft = Math.max(0, Math.min(newLeft, parentWidth - elWidth));
-        newTop = Math.max(0, Math.min(newTop, parentHeight - elHeight));
-        dragData.el.style.left = newLeft + 'px';
-        dragData.el.style.top = newTop + 'px';
-        showProperties(dragData.el);
-    }
-
-    function onDragTouchEnd(e) {
-        if (dragData) {
-            dragData.el.classList.remove('dragging');
-            saveObjectState();
-            dragData = null;
-        }
-        document.removeEventListener('touchmove', onDragTouchMove);
-        document.removeEventListener('touchend', onDragTouchEnd);
-    }
-
-    // Resize mouse
-    function startResize(e, el, handle) {
-        e.preventDefault();
-        const rect = el.getBoundingClientRect();
-        resizeData = {
-            el: el,
-            handle: handle,
-            startX: e.clientX,
-            startY: e.clientY,
-            origWidth: el.offsetWidth,
-            origHeight: el.offsetHeight,
-            origLeft: parseInt(el.style.left) || 0,
-            origTop: parseInt(el.style.top) || 0,
-            rect: rect
-        };
-        el.classList.add('dragging');
-        document.addEventListener('mousemove', onResizeMove);
-        document.addEventListener('mouseup', onResizeEnd);
-    }
-
-    function onResizeMove(e) {
-        if (!resizeData) return;
-        const deltaX = e.clientX - resizeData.startX;
-        const deltaY = e.clientY - resizeData.startY;
-        let newW = resizeData.origWidth,
-            newH = resizeData.origHeight;
-        let newX = resizeData.origLeft,
-            newY = resizeData.origTop;
-
-        const handle = resizeData.handle;
-        if (handle.includes('e')) newW = Math.max(20, resizeData.origWidth + deltaX);
-        if (handle.includes('w')) { newW = Math.max(20, resizeData.origWidth - deltaX);
-            newX = resizeData.origLeft + resizeData.origWidth - newW; }
-        if (handle.includes('s')) newH = Math.max(20, resizeData.origHeight + deltaY);
-        if (handle.includes('n')) { newH = Math.max(20, resizeData.origHeight - deltaY);
-            newY = resizeData.origTop + resizeData.origHeight - newH; }
-
-        if (handle === 'n') { newH = Math.max(20, resizeData.origHeight - deltaY);
-            newY = resizeData.origTop + resizeData.origHeight - newH; }
-        if (handle === 's') newH = Math.max(20, resizeData.origHeight + deltaY);
-        if (handle === 'e') newW = Math.max(20, resizeData.origWidth + deltaX);
-        if (handle === 'w') { newW = Math.max(20, resizeData.origWidth - deltaX);
-            newX = resizeData.origLeft + resizeData.origWidth - newW; }
-
-        resizeData.el.style.width = newW + 'px';
-        resizeData.el.style.height = newH + 'px';
-        resizeData.el.style.left = newX + 'px';
-        resizeData.el.style.top = newY + 'px';
-        showProperties(resizeData.el);
-    }
-
-    function onResizeEnd(e) {
-        if (resizeData) {
-            resizeData.el.classList.remove('dragging');
-            saveObjectState();
-            resizeData = null;
-        }
-        document.removeEventListener('mousemove', onResizeMove);
-        document.removeEventListener('mouseup', onResizeEnd);
-    }
-
-    // Resize touch
-    function startResizeTouch(e, el, handle) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        resizeData = {
-            el: el,
-            handle: handle,
-            startX: touch.clientX,
-            startY: touch.clientY,
-            origWidth: el.offsetWidth,
-            origHeight: el.offsetHeight,
-            origLeft: parseInt(el.style.left) || 0,
-            origTop: parseInt(el.style.top) || 0
-        };
-        el.classList.add('dragging');
-        document.addEventListener('touchmove', onResizeTouchMove, { passive: false });
-        document.addEventListener('touchend', onResizeTouchEnd, { passive: false });
-    }
-
-    function onResizeTouchMove(e) {
-        e.preventDefault();
-        if (!resizeData) return;
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - resizeData.startX;
-        const deltaY = touch.clientY - resizeData.startY;
-        let newW = resizeData.origWidth,
-            newH = resizeData.origHeight;
-        let newX = resizeData.origLeft,
-            newY = resizeData.origTop;
-
-        const handle = resizeData.handle;
-        if (handle.includes('e')) newW = Math.max(20, resizeData.origWidth + deltaX);
-        if (handle.includes('w')) { newW = Math.max(20, resizeData.origWidth - deltaX);
-            newX = resizeData.origLeft + resizeData.origWidth - newW; }
-        if (handle.includes('s')) newH = Math.max(20, resizeData.origHeight + deltaY);
-        if (handle.includes('n')) { newH = Math.max(20, resizeData.origHeight - deltaY);
-            newY = resizeData.origTop + resizeData.origHeight - newH; }
-
-        resizeData.el.style.width = newW + 'px';
-        resizeData.el.style.height = newH + 'px';
-        resizeData.el.style.left = newX + 'px';
-        resizeData.el.style.top = newY + 'px';
-        showProperties(resizeData.el);
-    }
-
-    function onResizeTouchEnd(e) {
-        if (resizeData) {
-            resizeData.el.classList.remove('dragging');
-            saveObjectState();
-            resizeData = null;
-        }
-        document.removeEventListener('touchmove', onResizeTouchMove);
-        document.removeEventListener('touchend', onResizeTouchEnd);
-    }
-
-    // ======================== TOOLBAR ACTIONS ========================
-    function addText() {
-        const container = document.querySelector('.certificate-container');
-        if (!container) return;
-        const el = document.createElement('div');
-        el.className = 'draggable-item editable-text';
-        el.dataset.type = 'text';
-        el.style.position = 'absolute';
-        el.style.left = '100px';
-        el.style.top = '100px';
-        el.style.width = '200px';
-        el.style.height = 'auto';
-        el.style.minHeight = '40px';
-        el.style.cursor = 'grab';
-        const span = document.createElement('span');
-        span.textContent = 'Teks Baru';
-        span.style.fontSize = '24px';
-        span.style.fontFamily = 'Inter';
-        span.style.color = '#000000';
-        span.style.fontWeight = 'normal';
-        span.style.textAlign = 'center';
-        span.style.display = 'block';
-        el.appendChild(span);
-        container.appendChild(el);
-        initDraggableItemsForElement(el);
-        saveObjectState();
-        selectObject(el);
-        PKD.showToast('Teks berhasil ditambahkan', 'success');
-    }
-
-    function addImage() {
-        const container = document.querySelector('.certificate-container');
-        if (!container) return;
-        const url = prompt('Masukkan URL gambar:', 'https://via.placeholder.com/150');
-        if (!url) return;
-        const el = document.createElement('div');
-        el.className = 'draggable-item';
-        el.dataset.type = 'image';
-        el.style.position = 'absolute';
-        el.style.left = '100px';
-        el.style.top = '100px';
-        el.style.width = '150px';
-        el.style.height = '150px';
-        el.style.cursor = 'grab';
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'contain';
-        el.appendChild(img);
-        container.appendChild(el);
-        initDraggableItemsForElement(el);
-        saveObjectState();
-        selectObject(el);
-        PKD.showToast('Gambar berhasil ditambahkan', 'success');
-    }
-
-    function duplicateObject() {
-        if (!selectedObject) return;
-        const clone = selectedObject.cloneNode(true);
-        const newId = 'obj-' + Date.now();
-        clone.dataset.id = newId;
-        clone.style.left = (parseInt(selectedObject.style.left) + 20) + 'px';
-        clone.style.top = (parseInt(selectedObject.style.top) + 20) + 'px';
-        clone.classList.remove('selected');
-        clone.style.outline = '';
-        selectedObject.parentElement.appendChild(clone);
-        initDraggableItemsForElement(clone);
-        saveObjectState();
-        selectObject(clone);
-        PKD.showToast('Objek berhasil diduplikat', 'success');
-    }
-
-    function deleteObject() {
-        if (!selectedObject) return;
-        if (confirm('Hapus objek ini?')) {
-            selectedObject.remove();
-            selectedObject = null;
-            hideProperties();
-            saveObjectState();
-            PKD.showToast('Objek dihapus', 'info');
-        }
-    }
-
-    function bringForward() {
-        if (!selectedObject) return;
-        const parent = selectedObject.parentElement;
-        const children = Array.from(parent.children);
-        const idx = children.indexOf(selectedObject);
-        if (idx < children.length - 1) {
-            const next = children[idx + 1];
-            parent.insertBefore(selectedObject, next.nextSibling);
-            saveObjectState();
-        }
-    }
-
-    function sendBackward() {
-        if (!selectedObject) return;
-        const parent = selectedObject.parentElement;
-        const children = Array.from(parent.children);
-        const idx = children.indexOf(selectedObject);
-        if (idx > 0) {
-            const prev = children[idx - 1];
-            parent.insertBefore(selectedObject, prev);
-            saveObjectState();
-        }
-    }
-
-    function initDraggableItemsForElement(el) {
-        el.classList.add('draggable-item');
-        const handlePositions = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
-        handlePositions.forEach(pos => {
-            const handle = document.createElement('div');
-            handle.className = 'resize-handle ' + pos;
-            handle.dataset.handle = pos;
-            el.appendChild(handle);
-        });
-        el.addEventListener('mousedown', function(e) {
-            const handle = e.target.closest('.resize-handle');
-            if (handle) { startResize(e, this, handle.dataset.handle); return; }
-            if (!this.classList.contains('selected')) selectObject(this);
-            startDrag(e, this);
-        });
-        el.addEventListener('touchstart', function(e) {
-            const handle = e.target.closest('.resize-handle');
-            if (handle) { startResizeTouch(e, this, handle.dataset.handle); return; }
-            if (!this.classList.contains('selected')) selectObject(this);
-            startDragTouch(e, this);
-        }, { passive: false });
-        el.addEventListener('click', function(e) {
-            if (dragData || resizeData) return;
-            selectObject(this);
-            e.stopPropagation();
-        });
-    }
-
-    // ======================== UPDATE PREVIEW ========================
-    let materiList = [];
-    let csvParticipants = [];
-    let allApprovals = [];
-
-    const defaultLayout = { barcode: { top: 35, left: 15 }, logo: { top: 50, right: 30 }, qrInstruktur: { marginTop: 5 }, photoBox: { marginTop: 0 }, infoContainer: { marginTop: 0 } };
-    let currentLayout = { ...defaultLayout };
-
-    function initDefaultMateri() {
-        materiList = [
-            { nama: "Orientasi Pengkaderan", instruktur: "Nanang Zuhdi Santoso" },
-            { nama: "Ahlussunnah Wal Jama’ah I", instruktur: "Lupa" },
-            { nama: "Ke-Nahdlatul Ulama-an I", instruktur: "Dr. Attobari" },
-            { nama: "Organisasi dan Kepemimpinan", instruktur: "Wahdini" },
-            { nama: "Ke-GP Ansor-an I", instruktur: "Alan" },
-            { nama: "Dalil-dalil Amaliyah dan Tradisi Keagamaan NU", instruktur: "Mustaba" },
-            { nama: "Ke-Indonesia-an dan Ke-Bangsa-an", instruktur: "Tim Banser" },
-            { nama: "Pengenalan Aturan Organisasi GP Ansor", instruktur: "Danil" },
-            { nama: "Literasi Digital", instruktur: "Ulinnuha" },
-            { nama: "Analisis Sosial", instruktur: "Sucipto" },
-            { nama: "Rencana Kerja dan Tindak Lanjut", instruktur: "Cahyo Galih dkk" },
-            { nama: "Pembaitan", instruktur: "Tim Instruktur" }
-        ];
-    }
-
-    function renderMateriForm() {
-        const container = document.getElementById('materi-list');
-        if (!container) return;
-        let html = '';
-        materiList.forEach((item, index) => {
-            html += `
-                <div class="d-flex align-items-center gap-2 mb-2" data-index="${index}">
-                    <div style="flex:1"><input type="text" class="form-control form-control-sm materi-nama" value="${PKD.escapeHtml(item.nama)}" placeholder="Materi"></div>
-                    <div style="flex:1"><input type="text" class="form-control form-control-sm materi-instruktur" value="${PKD.escapeHtml(item.instruktur)}" placeholder="Instruktur"></div>
-                    <button class="btn btn-sm btn-outline-danger hapus-materi" data-index="${index}"><i class="bi bi-trash"></i></button>
-                </div>`;
-        });
-        container.innerHTML = html;
-        container.querySelectorAll('.materi-nama').forEach((input, idx) => {
-            input.addEventListener('input', function() { materiList[idx].nama = this.value; renderMateriTable(); });
-        });
-        container.querySelectorAll('.materi-instruktur').forEach((input, idx) => {
-            input.addEventListener('input', function() { materiList[idx].instruktur = this.value; renderMateriTable(); });
-        });
-        container.querySelectorAll('.hapus-materi').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const index = parseInt(this.dataset.index);
-                if (materiList.length > 1) { materiList.splice(index, 1);
-                    renderMateriForm();
-                    renderMateriTable(); } else alert('Minimal satu materi harus ada.');
-            });
-        });
-    }
-
-    function renderMateriTable() {
-        const tbody = document.getElementById('materi-table-body');
-        if (!tbody) return;
-        let rows = '';
-        materiList.forEach((item, idx) => {
-            rows += `<tr><td>${idx + 1}</td><td>${PKD.escapeHtml(item.nama)}</td><td>${PKD.escapeHtml(item.instruktur)}</td></tr>`;
-        });
-        tbody.innerHTML = rows;
-    }
-
-    function generateCertFrontBarcode() {
-        const nomor = document.getElementById('inputNomor')?.value.trim() || '001/PC-XI/SR-01.PKD/I/2026';
-        const barcodeContainer = document.getElementById('barcode-front');
-        if (!barcodeContainer) return;
-        try {
-            barcodeContainer.innerHTML = '';
-            JsBarcode(barcodeContainer, nomor, {
-                format: "CODE128",
-                width: 1,
-                height: 15,
-                displayValue: false,
-                margin: 0,
-                background: "transparent",
-                lineColor: "#000000"
-            });
-        } catch (e) {
-            console.warn('Barcode gagal digenerate:', e);
-            barcodeContainer.innerHTML = `<div style="font-size:0.4rem; word-break:break-all;">${nomor}</div>`;
-        }
-    }
-
-    function generateInstrukturQR() {
-        const qrContainer = document.getElementById('qr-instruktur');
-        if (!qrContainer) return;
-        const selectInstruktur = document.getElementById('selectInstruktur');
-        let instrukturData = null;
-        if (selectInstruktur && selectInstruktur.value) {
-            try { instrukturData = JSON.parse(selectInstruktur.value); } catch (e) {}
-        }
-        if (!instrukturData || !instrukturData.driveId) {
-            qrContainer.innerHTML = '<div style="font-size:0.5rem; color:#aaa; text-align:center;">Menunggu tanda tangan...</div>';
-            return;
-        }
-        try {
-            const BASE_URL = window.location.origin;
-            const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(BASE_URL + '/bisaa/verifikasi_qr.html?role=instruktur&driveId=' + instrukturData.driveId)}&size=80&ecLevel=L`;
-            const img = document.createElement('img');
-            img.src = qrUrl;
-            img.className = 'qr-code-uniform';
-            qrContainer.innerHTML = '';
-            qrContainer.appendChild(img);
-        } catch (e) {
-            console.warn('QR Instruktur gagal:', e);
-            qrContainer.innerHTML = '<div style="font-size:0.5rem; color:#666;">QR Error</div>';
-        }
-    }
-
-    function applyLayout() {
-        const barcodeArea = document.querySelector('.cert-front .barcode-area');
-        if (barcodeArea) {
-            barcodeArea.style.top = currentLayout.barcode.top + 'px';
-            barcodeArea.style.left = currentLayout.barcode.left + 'px';
-        }
-        const logoContainer = document.querySelector('.cert-front .logo-container');
-        if (logoContainer) {
-            logoContainer.style.top = currentLayout.logo.top + 'px';
-            logoContainer.style.right = currentLayout.logo.right + 'px';
-        }
-        const qrInstruktur = document.querySelector('.cert-back .instruktur-qr');
-        if (qrInstruktur) qrInstruktur.style.marginTop = currentLayout.qrInstruktur.marginTop + 'px';
-        const photoBox = document.querySelector('.cert-back .photo-box');
-        if (photoBox) photoBox.style.marginTop = currentLayout.photoBox.marginTop + 'px';
-        const infoContainer = document.querySelector('.cert-back .info-container');
-        if (infoContainer) infoContainer.style.marginTop = currentLayout.infoContainer.marginTop + 'px';
-    }
-
-    function updateAllPreview() {
-        const getVal = (id) => document.getElementById(id)?.value.trim() || '';
-        if (document.getElementById('cert-number')) document.getElementById('cert-number').textContent = getVal('inputNomor') || '001/PC-XI/SR-01.PKD/I/2026';
-        if (document.getElementById('recipient-name')) document.getElementById('recipient-name').textContent = getVal('inputNama') || 'ULINNUHA';
-        if (document.getElementById('kapanewon-body')) document.getElementById('kapanewon-body').textContent = getVal('inputKapanewon') || 'Dlingo';
-        if (document.getElementById('kapanewon-org')) document.getElementById('kapanewon-org').textContent = getVal('inputKapanewon') || 'Dlingo';
-        if (document.getElementById('tanggal-pelaksanaan')) document.getElementById('tanggal-pelaksanaan').textContent = getVal('inputTglPelaksanaan') || '14 Februari sampai 15 Februari 2026';
-        if (document.getElementById('tempat')) document.getElementById('tempat').textContent = getVal('inputTempat') || 'MTs N 8 Bantul, D.I.Yogyakarta';
-        if (document.getElementById('tanggal-penerbitan')) document.getElementById('tanggal-penerbitan').textContent = getVal('inputTglTerbit') || 'Bantul, 16 Februari 2026';
-        if (document.getElementById('ttd-ketua-pc')) document.getElementById('ttd-ketua-pc').textContent = getVal('inputKetuaPC') || 'Ahmad Sidik';
-        if (document.getElementById('ttd-sekretaris')) document.getElementById('ttd-sekretaris').textContent = getVal('inputSekretaris') || 'Fatolani';
-        if (document.getElementById('namaValue')) document.getElementById('namaValue').textContent = getVal('inputNama') || 'ULINNUHA';
-        if (document.getElementById('ttlValue')) document.getElementById('ttlValue').textContent = getVal('inputTtl') || 'Bantul, 3 Agustus 1999';
-        if (document.getElementById('utusanValue')) document.getElementById('utusanValue').textContent = getVal('inputUtusan') || 'PAC GP ANSOR DLINGO';
-        if (document.getElementById('instrukturNama')) document.getElementById('instrukturNama').textContent = getVal('inputInstrukturUmum') || 'Cahyo Galih';
-
-        // Ketua PC
-        const selectKetuaPC = document.getElementById('selectKetuaPC');
-        const qrKetuaContainer = document.querySelector('#signature-ketua-pc .qr-code-uniform');
-        if (selectKetuaPC && selectKetuaPC.value) {
-            try {
-                const data = JSON.parse(selectKetuaPC.value);
-                if (qrKetuaContainer) {
-                    const parent = qrKetuaContainer.parentElement;
-                    const oldMsg = parent.querySelector('.qr-placeholder-msg');
-                    if (oldMsg) oldMsg.remove();
-                    if (data.driveId) {
-                        const BASE_URL = window.location.origin;
-                        const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(BASE_URL + '/bisaa/verifikasi_qr.html?role=ketua_pc&driveId=' + data.driveId)}&size=80&ecLevel=L`;
-                        qrKetuaContainer.src = qrUrl;
-                        qrKetuaContainer.className = 'qr-code-uniform';
-                        qrKetuaContainer.style.display = 'block';
-                        qrKetuaContainer.onerror = function() {
-                            this.style.display = 'none';
-                            parent.innerHTML += '<div class="text-danger small">QR Error</div>';
-                        };
-                    } else {
-                        qrKetuaContainer.style.display = 'none';
-                        const msg = document.createElement('div');
-                        msg.className = 'qr-placeholder-msg small';
-                        msg.textContent = '⚠️ Tanda tangan ketua belum diunggah';
-                        parent.appendChild(msg);
-                    }
-                }
-            } catch (e) { console.warn('Gagal generate QR Ketua PC:', e); }
+            setTimeout(initDraggableItems, 500);
+            setTimeout(updateAllPreview, 500);
         }
 
-        // Sekretaris
-        const selectSekretaris = document.getElementById('selectSekretaris');
-        const qrSekretarisContainer = document.querySelector('#signature-sekretaris .qr-code-uniform');
-        if (selectSekretaris && selectSekretaris.value) {
-            try {
-                const data = JSON.parse(selectSekretaris.value);
-                if (qrSekretarisContainer) {
-                    const parent = qrSekretarisContainer.parentElement;
-                    const oldMsg = parent.querySelector('.qr-placeholder-msg');
-                    if (oldMsg) oldMsg.remove();
-                    if (data.driveId) {
-                        const BASE_URL = window.location.origin;
-                        const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(BASE_URL + '/bisaa/verifikasi_qr.html?role=sekretaris&driveId=' + data.driveId)}&size=80&ecLevel=L`;
-                        qrSekretarisContainer.src = qrUrl;
-                        qrSekretarisContainer.className = 'qr-code-uniform';
-                        qrSekretarisContainer.style.display = 'block';
-                        qrSekretarisContainer.onerror = function() {
-                            this.style.display = 'none';
-                            parent.innerHTML += '<div class="text-danger small">QR Error</div>';
-                        };
-                    } else {
-                        qrSekretarisContainer.style.display = 'none';
-                        const msg = document.createElement('div');
-                        msg.className = 'qr-placeholder-msg small';
-                        msg.textContent = '⚠️ Tanda tangan sekretaris belum diunggah';
-                        parent.appendChild(msg);
-                    }
-                }
-            } catch (e) { console.warn('Gagal generate QR Sekretaris:', e); }
-        }
-
-        generateCertFrontBarcode();
-        generateInstrukturQR();
-        applyLayout();
-    }
-
-    function handleFotoPreview(e) {
-        const file = e.target.files[0];
-        const fotoPreview = document.getElementById('fotoPreview');
-        const fotoPlaceholder = document.getElementById('photoPlaceholder');
-        if (file && fotoPreview && fotoPlaceholder) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                fotoPreview.src = ev.target.result;
-                fotoPreview.style.display = 'block';
-                fotoPlaceholder.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            if (fotoPreview) fotoPreview.style.display = 'none';
-            if (fotoPlaceholder) fotoPlaceholder.style.display = 'flex';
-        }
-    }
-
-    function resetAllPreview() {
-        document.getElementById('inputNomor').value = '001/PC-XI/SR-01.PKD/I/2026';
-        document.getElementById('inputNama').value = 'ULINNUHA';
-        document.getElementById('inputKapanewon').value = 'Dlingo';
-        document.getElementById('inputTglPelaksanaan').value = '14 Februari sampai 15 Februari 2026';
-        document.getElementById('inputTempat').value = 'MTs N 8 Bantul, D.I.Yogyakarta';
-        document.getElementById('inputTglTerbit').value = 'Bantul, 16 Februari 2026';
-        document.getElementById('inputKetuaPC').value = 'Ahmad Sidik';
-        document.getElementById('inputSekretaris').value = 'Fatolani';
-        document.getElementById('inputTtl').value = 'Bantul, 3 Agustus 1999';
-        document.getElementById('inputUtusan').value = 'PAC GP ANSOR DLINGO';
-        document.getElementById('inputInstrukturUmum').value = 'Cahyo Galih';
-        document.getElementById('inputFoto').value = '';
-        const fotoPreview = document.getElementById('fotoPreview');
-        const fotoPlaceholder = document.getElementById('photoPlaceholder');
-        if (fotoPreview) { fotoPreview.src = '#';
-            fotoPreview.style.display = 'none'; }
-        if (fotoPlaceholder) fotoPlaceholder.style.display = 'flex';
-        initDefaultMateri();
-        renderMateriForm();
-        renderMateriTable();
-        currentLayout = JSON.parse(JSON.stringify(defaultLayout));
-        updateLayoutInputs();
-        loadPreviewSertifikat(); // reload
-    }
-
-    function updateLayoutInputs() {
-        document.getElementById('layoutBarcodeTop').value = currentLayout.barcode.top;
-        document.getElementById('layoutBarcodeLeft').value = currentLayout.barcode.left;
-        document.getElementById('layoutLogoTop').value = currentLayout.logo.top;
-        document.getElementById('layoutLogoRight').value = currentLayout.logo.right;
-        document.getElementById('layoutQrInstrukturMarginTop').value = currentLayout.qrInstruktur.marginTop;
-        document.getElementById('layoutPhotoBoxMarginTop').value = currentLayout.photoBox.marginTop;
-        document.getElementById('layoutInfoContainerMarginTop').value = currentLayout.infoContainer.marginTop;
-    }
-
-    function loadDigitalApprovals() {
-        PKD.getAllDigitalApprovals()
-            .then(res => {
-                if (res.success && res.data) {
-                    allApprovals = res.data;
-                    populateSignatureDropdowns();
-                }
-            })
-            .catch(e => console.warn('Gagal load tanda tangan:', e));
-    }
-
-    function populateSignatureDropdowns() {
-        const ketuaPcList = allApprovals.filter(a => a.role === 'ketua_pc');
-        const sekretarisList = allApprovals.filter(a => a.role === 'sekretaris');
-        const instrukturList = allApprovals.filter(a => a.role === 'instruktur');
-
-        function fillSelect(selectId, list, placeholder) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            select.innerHTML = `<option value="">-- ${placeholder} --</option>`;
-            list.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = JSON.stringify({ nama: item.nama, driveId: item.driveId, kegunaan: item.kegunaan || '', timestamp: item.timestamp });
-                // Tampilkan Kegunaan, fallback ke Nama jika kosong
-                const label = item.kegunaan ? item.kegunaan : item.nama;
-                opt.textContent = label;
-                select.appendChild(opt);
-            });
-        }
-        fillSelect('selectKetuaPC', ketuaPcList, 'Pilih Tanda Tangan Ketua PC');
-        fillSelect('selectSekretaris', sekretarisList, 'Pilih Tanda Tangan Sekretaris');
-        fillSelect('selectInstruktur', instrukturList, 'Pilih Tanda Tangan Instruktur');
-    }
-
-    function printCertificateDirect() {
-        const certFront = document.querySelector('.cert-front');
-        const certBack = document.querySelector('.cert-back');
-        const printWindow = window.open('', '_blank', 'width=1123,height=794');
-        if (!printWindow) { alert('Pop-up diblokir. Izinkan pop-up untuk mencetak.'); return; }
-        printWindow.document.write(`
-            <html><head><title>Cetak Sertifikat</title>
-            <style>
-                * { margin:0; padding:0; }
-                body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; background: white; }
-                .cert-container { width: 1123px; height: 794px; page-break-after: always; box-shadow: none; }
-                @media print {
-                    @page { size: A4 landscape; margin: 0; }
-                    body { padding: 0; }
-                    .cert-container { width: 100%; height: 100vh; page-break-after: always; }
-                    .resize-handle { display: none !important; }
-                }
-            </style>
-            <\/head><body>
-        `);
-        if (certFront) {
-            const cloneFront = certFront.cloneNode(true);
-            cloneFront.querySelectorAll('.resize-handle').forEach(h => h.remove());
-            printWindow.document.write(`<div class="cert-container">${cloneFront.outerHTML}</div>`);
-        }
-        if (certBack) {
-            const cloneBack = certBack.cloneNode(true);
-            cloneBack.querySelectorAll('.resize-handle').forEach(h => h.remove());
-            printWindow.document.write(`<div class="cert-container">${cloneBack.outerHTML}</div>`);
-        }
-        printWindow.document.write('<\/body><\/html>');
-        printWindow.document.close();
-        setTimeout(() => { printWindow.print(); }, 500);
-    }
-
-    async function downloadPDFFast() {
-        const frontEl = document.querySelector('.cert-front');
-        const backEl = document.querySelector('.cert-back');
-        const btn = document.getElementById('downloadPDFBtn');
-        if (!frontEl || !backEl) { alert('Sertifikat belum dimuat.'); return; }
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Membuat PDF...';
-        try {
-            const container = document.createElement('div');
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.gap = '20px';
-            container.style.padding = '20px';
-            container.style.background = 'white';
-            const frontClone = frontEl.cloneNode(true);
-            const backClone = backEl.cloneNode(true);
-            frontClone.querySelectorAll('.resize-handle').forEach(h => h.remove());
-            backClone.querySelectorAll('.resize-handle').forEach(h => h.remove());
-            container.appendChild(frontClone);
-            container.appendChild(backClone);
-            document.body.appendChild(container);
-            const opt = {
-                margin: 0,
-                filename: 'sertifikat.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'px', format: 'a4', orientation: 'landscape' }
-            };
-            await html2pdf().set(opt).from(container).save();
-            document.body.removeChild(container);
-            btn.innerHTML = '📄 PDF Cepat';
-            btn.disabled = false;
-            PKD.showToast('PDF berhasil diunduh!', 'success');
-        } catch (e) {
-            console.error(e);
-            btn.innerHTML = '📄 PDF Cepat';
-            btn.disabled = false;
-            PKD.showToast('Gagal membuat PDF: ' + e.message, 'danger');
-        }
-    }
-
-    function loadPreviewSertifikat() {
-        const container = document.getElementById('previewPanel');
-        if (!container) return;
-
-        // PREVIEW HTML SUDAH ADA DI HTML STATIS (Karena JS ini hanya menginisialisasi ulang)
-        initDefaultMateri();
-        renderMateriForm();
-        renderMateriTable();
-
-        (async () => {
-            const templates = await PKD.getCertificateTemplates();
-            const presets = await PKD.getCertPresets();
-            const templateSelect = document.getElementById('previewTemplateSelect');
-            const presetSelect = document.getElementById('previewPresetSelect');
-            if (templateSelect) templateSelect.innerHTML = '<option value="">-- Pilih Template --</option>' + templates.map(t =>
-                `<option value="${t.id}">${PKD.escapeHtml(t.nama_template)}</option>`).join('');
-            if (presetSelect) presetSelect.innerHTML = '<option value="">-- Pilih Preset --</option>' + presets.map(p =>
-                `<option value="${p.id}">${PKD.escapeHtml(p.name)}</option>`).join('');
-        })();
-
-        loadDigitalApprovals();
-
-        document.getElementById('tambahMateriBtn')?.addEventListener('click', () => {
-            materiList.push({ nama: 'Materi Baru', instruktur: 'Instruktur Baru' });
-            renderMateriForm();
-            renderMateriTable();
-        });
-
-        const formInputs = document.querySelectorAll('#dataFormOffcanvas input[type="text"]');
-        const fotoInput = document.getElementById('inputFoto');
-        const resetBtn = document.getElementById('resetPreviewBtn');
-
-        formInputs.forEach(input => { input.addEventListener('input', updateAllPreview); });
-        if (fotoInput) fotoInput.addEventListener('change', handleFotoPreview);
-        if (resetBtn) resetBtn.addEventListener('click', resetAllPreview);
-
-        document.getElementById('selectKetuaPC')?.addEventListener('change', updateAllPreview);
-        document.getElementById('selectSekretaris')?.addEventListener('change', updateAllPreview);
-        document.getElementById('selectInstruktur')?.addEventListener('change', updateAllPreview);
-
-        const layoutInputs = document.querySelectorAll('#layoutAccordion input[type="number"]');
-        layoutInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                const id = this.id;
-                let val = parseInt(this.value) || 0;
-                if (id === 'layoutBarcodeTop') currentLayout.barcode.top = val;
-                else if (id === 'layoutBarcodeLeft') currentLayout.barcode.left = val;
-                else if (id === 'layoutLogoTop') currentLayout.logo.top = val;
-                else if (id === 'layoutLogoRight') currentLayout.logo.right = val;
-                else if (id === 'layoutQrInstrukturMarginTop') currentLayout.qrInstruktur.marginTop = val;
-                else if (id === 'layoutPhotoBoxMarginTop') currentLayout.photoBox.marginTop = val;
-                else if (id === 'layoutInfoContainerMarginTop') currentLayout.infoContainer.marginTop = val;
-                applyLayout();
-            });
-        });
-
-        document.getElementById('resetLayoutBtn')?.addEventListener('click', function() {
-            currentLayout = JSON.parse(JSON.stringify(defaultLayout));
-            updateLayoutInputs();
-            applyLayout();
-        });
-
-        document.getElementById('toggleDepanPreview')?.addEventListener('click', function() {
-            const depan = document.querySelector('.cert-front');
-            depan.classList.toggle('d-none');
-            this.innerHTML = depan.classList.contains('d-none') ? '<i class="fas fa-file"></i> Tampilkan Depan' :
-                '<i class="fas fa-file"></i> Sembunyikan Depan';
-        });
-
-        document.getElementById('toggleBelakangPreview')?.addEventListener('click', function() {
-            const belakang = document.querySelector('.cert-back');
-            belakang.classList.toggle('d-none');
-            this.innerHTML = belakang.classList.contains('d-none') ? '<i class="fas fa-file"></i> Tampilkan Belakang' :
-                '<i class="fas fa-file"></i> Sembunyikan Belakang';
-        });
-
-        document.getElementById('generateFromCsvBtn')?.addEventListener('click', async function() {
-            const templateId = document.getElementById('previewTemplateSelect')?.value;
-            const presetId = document.getElementById('previewPresetSelect')?.value;
-            const start = parseInt(document.getElementById('previewStartNumber')?.value) || 1;
-            if (!templateId || !presetId) { alert('Pilih template dan preset'); return; }
-            if (!csvParticipants.length) { alert('Upload CSV terlebih dahulu'); return; }
-            const participants = csvParticipants.map(p => ({ nama_lengkap: p.Nama, utusan: p.Utusan,
-                tempat_tanggal_lahir: p.TTL }));
-            if (!confirm(`Generate ${participants.length} sertifikat?`)) return;
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
-            try {
-                const res = await PKD.generateCertificates(templateId, presetId, participants, start);
-                let html = '<h6>Hasil:</h6><ul class="list-group">';
-                res.certificates.forEach(r => html +=
-                    `<li class="list-group-item d-flex justify-content-between">${PKD.escapeHtml(r.nama)} - ${PKD.escapeHtml(r.nomor)} <a href="${PKD.escapeHtml(r.pdfUrl)}" target="_blank" class="btn btn-sm btn-success">Unduh</a></li>`
-                    );
-                html += '</ul>';
-                document.getElementById('generateCsvResult').innerHTML = html;
-                PKD.showToast('Sukses', 'success');
-            } catch (e) { PKD.showToast('Gagal: ' + e.message, 'danger'); } finally { this.disabled = false;
-                this.innerHTML = 'Generate'; }
-        });
-
-        document.getElementById('directPrintBtn')?.addEventListener('click', printCertificateDirect);
-        document.getElementById('downloadPDFBtn')?.addEventListener('click', downloadPDFFast);
-
-        document.getElementById('addTextBtn')?.addEventListener('click', addText);
-        document.getElementById('addImageBtn')?.addEventListener('click', addImage);
-        document.getElementById('deleteBtn')?.addEventListener('click', deleteObject);
-        document.getElementById('duplicateBtn')?.addEventListener('click', duplicateObject);
-        document.getElementById('bringForwardBtn')?.addEventListener('click', bringForward);
-        document.getElementById('sendBackwardBtn')?.addEventListener('click', sendBackward);
-        document.getElementById('undoBtn')?.addEventListener('click', undo);
-        document.getElementById('redoBtn')?.addEventListener('click', redo);
-
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'z') { e.preventDefault();
-                undo(); }
-            if (e.ctrlKey && e.key === 'y') { e.preventDefault();
-                redo(); }
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                if (selectedObject) deleteObject();
-            }
-            if (e.key === 'd' && !e.ctrlKey && !e.metaKey) {
-                if (selectedObject) duplicateObject();
-            }
-            if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
-                addText();
-            }
-            if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
-                addImage();
-            }
-            if (e.key === 'Escape') {
-                deselectAll();
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.draggable-item') && !e.target.closest('.properties-panel-horizontal') && !e.target.closest('.editor-toolbar')) {
-                deselectAll();
-            }
-        });
-
-        const propInputs = document.querySelectorAll('#propertiesPanel input, #propertiesPanel select');
-        propInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                if (!selectedObject) return;
-                const state = getObjectState(selectedObject);
-                const id = this.id;
-                let val = this.value;
-                if (id === 'propLeft') state.left = parseInt(val) || 0;
-                else if (id === 'propTop') state.top = parseInt(val) || 0;
-                else if (id === 'propWidth') state.width = parseInt(val) || 20;
-                else if (id === 'propHeight') state.height = parseInt(val) || 20;
-                else if (id === 'propZIndex') state.zIndex = parseInt(val) || 0;
-                else if (id === 'propTextContent') state.textContent = val;
-                else if (id === 'propFontSize') state.fontSize = val + 'px';
-                else if (id === 'propFontFamily') state.fontFamily = val;
-                else if (id === 'propColor') state.color = val;
-                else if (id === 'propFontWeight') state.fontWeight = val;
-                else if (id === 'propTextAlign') state.textAlign = val;
-                setObjectState(selectedObject, state);
-                saveObjectState();
-            });
-        });
-
-        setTimeout(initDraggableItems, 500);
-        setTimeout(updateAllPreview, 500);
-    }
-
-    function init() {
-        initSidebarToggle();
-        initSidebarDropdowns();
-        initAuth();
-
-        if (PKD.getUserRole() === 'admin') {
-            loadPreviewSertifikat();
-        }
-
+        initSidebarToggle(); initSidebarDropdowns(); initAuth();
+        if (PKD.getUserRole() === 'admin') loadPreviewSertifikat();
         document.getElementById('sidebarLogoutBtn')?.addEventListener('click', handleLogout);
-        document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-            const modalEl = document.getElementById('moreMenuModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-            if (PKD.logout) PKD.logout();
-            else window.location.href = '/bisaa/index.html';
-        });
-    }
+        document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { const m = bootstrap.Modal.getInstance(document.getElementById('moreMenuModal')); if (m) m.hide(); if (PKD.logout) PKD.logout(); else window.location.href = '/bisaa/index.html'; });
+    }; // end initSertifikatAdmin
 
-    document.addEventListener('DOMContentLoaded', init);
+    // ======================== PANGGIL INISIALISASI ========================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initSertifikatAdmin);
+    } else {
+        window.initSertifikatAdmin();
+    }
 </script>
 </body>
 </html>
