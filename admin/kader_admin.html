@@ -3,201 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Admin Kader - PKD GP Ansor Bantul</title>
+  <title>PKD GP Ansor Kabupaten Bantul · Statistik Kader</title>
+
+  <!-- Favicon & Font Modern -->
   <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Chart.js untuk grafik -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
   <style>
-    /* --- GLOBAL --- */
+    /* ===== GLOBAL ===== */
     * { font-family: 'Inter', sans-serif; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
 
-    /* --- LAYOUT UTAMA --- */
+    /* ===== LAYOUT UTAMA ===== */
     .container-card { max-width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
 
-    /* --- SIDEBAR --- */
+    /* ===== SIDEBAR STYLES (UNIVERSAL) ===== */
     .sidebar-wrapper {
-      width: 260px;
-      max-width: 260px;
-      background: #0f172a;
-      color: #f1f5f9;
-      min-height: 100vh;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-      border-right: 1px solid #1e293b;
-      display: flex;
-      flex-direction: column;
-      transition: all 0.3s ease;
+        width: 260px; max-width: 260px;
+        background: #0f172a; color: #f1f5f9;
+        min-height: 100vh; height: 100vh;
+        position: fixed; top: 0; left: 0; z-index: 1000;
+        border-right: 1px solid #1e293b;
+        display: flex; flex-direction: column;
+        transition: width 0.3s ease, max-width 0.3s ease;
     }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
 
-    /* --- BRAND AREA (TETAP) --- */
+    /* --- BRAND AREA --- */
     .sidebar-brand-area {
-      flex-shrink: 0;
-      padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-      border-bottom: 1px solid #1e293b;
+        flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+        border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
     }
     .sidebar-wrapper.minimized .sidebar-brand-area {
-      padding: 1.5rem 0.75rem 0.75rem 0.75rem;
-      display: flex;
-      justify-content: center;
+        padding: 1.5rem 0.75rem; display: flex; justify-content: center;
     }
     .brand-sidebar {
-      display: flex; align-items: center; gap: 12px;
-      text-decoration: none; color: #ffffff;
-      transition: opacity 0.2s;
+        display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease;
     }
     .brand-sidebar:hover { opacity: 0.8; }
-    .brand-sidebar img { max-height: 45px; width: auto; }
-    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; }
-    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; }
-    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; }
+    .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
+    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
+    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
-    .sidebar-wrapper.minimized .brand-sidebar-title,
-    .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
 
-    /* --- MENU AREA (SCROLLABLE, SCROLLBAR DISEMBUNYIKAN) --- */
-    .sidebar-menu-area {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-bottom: 20px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
+    /* --- MENU AREA --- */
+    .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
     .sidebar-menu-area::-webkit-scrollbar { display: none; }
 
-    /* --- NAV PILLS (UNIFIKASI LEBAR BIRU) --- */
+    /* --- NAV PILLS --- */
     .nav-pills .nav-link {
-      width: calc(100% - 1.6rem);
-      margin: 0.2rem 0.8rem;
-      border-radius: 12px;
-      padding: 0.7rem 1rem;
-      color: #cbd5e1 !important;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      text-align: left;
-      box-shadow: none;
+        width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
+        color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
+        align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none;
+        text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden;
     }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
-    .nav-pills .nav-link.active {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-    }
+    .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
+    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
 
-    /* --- SUBMENU (TOGGLE BUKA/TUTUP) --- */
-    .submenu {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-      padding-left: 1rem;
-    }
+    /* --- SUBMENU --- */
+    .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
-    .submenu .nav-link {
-      padding: 0.4rem 1rem;
-      margin: 0.1rem 0.8rem;
-      width: calc(100% - 1.6rem);
-      font-weight: 400;
-      color: #94a3b8 !important;
-    }
+    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
-    .submenu .nav-link.active {
-      background: #2563eb !important;
-      color: #ffffff !important;
-    }
+    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
+    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
+    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
+    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
+    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
+    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
 
     /* --- SIDEBAR TOGGLE --- */
-    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; }
+    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
-    .sidebar-toggle button {
-      background: rgba(255,255,255,0.1); border: none; color: #94a3b8;
-      border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s;
-    }
+    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
     .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
 
+    /* --- LOGOUT --- */
     .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
+    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
 
     /* --- BOTTOM NAV (MOBILE) --- */
     .bottom-nav {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      background: #ffffff; border-top: 1px solid #e2e8f0;
-      z-index: 1050; display: none;
-      justify-content: space-around; padding: 8px 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
+        z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
-    .bottom-nav .nav-item {
-      display: flex; flex-direction: column; align-items: center;
-      text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1;
-      transition: all 0.2s;
-    }
+    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
     .bottom-nav .nav-item i { font-size: 1.5rem; }
     .bottom-nav .nav-item.active { color: #2563eb; }
 
     @media (max-width: 991px) {
-      .sidebar-wrapper { display: none; }
-      .bottom-nav { display: flex; }
-      .content-wrapper { margin-left: 0; padding: 1rem; padding-bottom: 80px; width: 100%; }
+        .sidebar-wrapper { display: none; }
+        .bottom-nav { display: flex; }
+        .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; }
     }
-    @media (min-width: 992px) {
-      .bottom-nav { display: none; }
-    }
+    @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-    /* --- CONTENT WRAPPER --- */
+    /* ===== CONTENT WRAPPER ===== */
     .content-wrapper {
-      margin-left: 260px;
-      padding: 1.5rem;
-      background: #f8fafc;
-      min-height: 100vh;
-      width: calc(100% - 260px);
-      transition: all 0.3s ease;
+        margin-left: 260px; padding: 1.5rem; background: #f8fafc;
+        min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
     }
-    .sidebar-wrapper.minimized ~ .content-wrapper {
-      margin-left: 70px;
-      width: calc(100% - 70px);
+    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
+
+    /* ===== STATISTIK KADER ===== */
+    .stat-card {
+        background: white; border-radius: 24px; padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+        text-align: center; transition: transform 0.2s;
+        height: 100%; display: flex; flex-direction: column; justify-content: center;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
+    .stat-label { font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .chart-container { position: relative; height: 300px; width: 100%; margin-top: 20px; }
+    .table-kader { max-height: 400px; overflow-y: auto; }
+
+    .section-title {
+        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
     }
 
-    /* --- UTILITY --- */
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      margin-bottom: 1.8rem;
-      color: #0f172a;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
-    }
-    .cache-status {
-      font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
-    }
-    .cache-status.live { background: #dcfce7; color: #16a34a; }
-    .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .loading-spinner {
-      display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-    .btn-aksi { min-width: 80px; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
   </style>
 </head>
 <body>
 
+<!-- ==================== CONTAINER UTAMA ==================== -->
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- SIDEBAR -->
+    <!-- ==================== SIDEBAR ==================== -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle">
         <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
@@ -205,7 +154,6 @@
         </button>
       </div>
 
-      <!-- BRAND AREA -->
       <div class="sidebar-brand-area">
         <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
           <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
@@ -216,7 +164,6 @@
         </a>
       </div>
 
-      <!-- MENU AREA -->
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
           <!-- Dashboard -->
@@ -279,11 +226,17 @@
             <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
           </a>
 
+          <!-- Tanda Tangan -->
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
+            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+          </a>
+
           <!-- Pengaturan -->
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
           </a>
 
+          <!-- Logout -->
           <div class="sidebar-logout"></div>
           <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
             <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
@@ -292,7 +245,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAV (MOBILE) -->
+    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
@@ -301,35 +254,68 @@
       <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
-    <!-- KONTEN UTAMA -->
-    <div class="content-wrapper">
-      <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Manajemen Kader</h2>
-
-      <!-- TOOLBAR -->
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <button class="btn btn-primary rounded-pill" id="addKaderBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Kader</button>
-          <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
-          <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
-          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
-        </div>
-        <div class="col-md-6 text-md-end">
-          <div class="input-group" style="max-width: 300px; display: inline-flex;">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama kader...">
+    <!-- ==================== CONTENT WRAPPER ==================== -->
+    <div class="content-wrapper" id="mainContent">
+      <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Statistik Kader PKD GP Ansor Bantul</h2>
+      
+      <!-- Ringkasan statistik dalam kartu -->
+      <div class="row g-4 mb-5">
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-number" id="totalKader">-</div>
+            <div class="stat-label">Total Kader</div>
           </div>
-          <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterTingkatan">
-            <option value="">Semua Tingkatan</option>
-            <option value="Kader Muda">Kader Muda</option>
-            <option value="Kader Madya">Kader Madya</option>
-            <option value="Kader Utama">Kader Utama</option>
-          </select>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-number" id="totalPac">-</div>
+            <div class="stat-label">Jumlah PAC</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-number" id="totalPendidikan">-</div>
+            <div class="stat-label">Jenjang Pendidikan</div>
+          </div>
         </div>
       </div>
 
-      <!-- TABLE -->
-      <div id="kaderTableContainer" class="table-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+      <!-- Grafik dan tabel sebaran -->
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Sebaran per Utusan (PAC)</h5>
+          <div class="chart-container">
+            <canvas id="chartPac"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Sebaran Pendidikan Terakhir</h5>
+          <div class="chart-container">
+            <canvas id="chartPendidikan"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel detail kader -->
+      <div class="mt-5">
+        <h5 class="fw-bold mb-3"><i class="bi bi-table me-2"></i>Daftar Kader per PAC</h5>
+        <div class="table-kader">
+          <table class="table table-bordered table-hover table-sm">
+            <thead class="table-light">
+              <tr>
+                <th>No</th>
+                <th>Nama Lengkap</th>
+                <th>Utusan (PAC)</th>
+                <th>Pendidikan</th>
+                <th>Pekerjaan</th>
+                <th>Alamat</th>
+              </tr>
+            </thead>
+            <tbody id="kaderTableBody">
+              <tr><td colspan="6" class="text-center text-muted">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -365,127 +351,8 @@
   </div>
 </div>
 
-<!-- ==================== MODAL FORM (TAMBAH/EDIT) ==================== -->
-<div class="modal fade" id="kaderFormModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i><span id="formModalTitle">Tambah Kader</span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <input type="hidden" id="editKaderId">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Nama Lengkap</label>
-          <input type="text" class="form-control" id="kaderNama" placeholder="Nama lengkap kader" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Email</label>
-          <input type="email" class="form-control" id="kaderEmail" placeholder="email@example.com" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">No. HP</label>
-          <input type="text" class="form-control" id="kaderHp" placeholder="081234567890" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Asal (PAC)</label>
-          <input type="text" class="form-control" id="kaderAsal" placeholder="Contoh: Bantul, Sleman, ..." required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Tingkatan</label>
-          <select class="form-select" id="kaderTingkatan">
-            <option value="Kader Muda">Kader Muda</option>
-            <option value="Kader Madya">Kader Madya</option>
-            <option value="Kader Utama">Kader Utama</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Status</label>
-          <select class="form-select" id="kaderStatus">
-            <option value="Aktif">Aktif</option>
-            <option value="Tidak Aktif">Tidak Aktif</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Tanggal Bergabung</label>
-          <input type="date" class="form-control" id="kaderTanggal" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Keterangan</label>
-          <textarea class="form-control" id="kaderNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveKaderBtn">Simpan</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL DETAIL ==================== -->
-<div class="modal fade" id="detailKaderModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Kader</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL HAPUS ==================== -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 text-center">
-        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
-        <p>Apakah Anda yakin ingin menghapus kader ini?</p>
-        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
-        <input type="hidden" id="deleteKaderId">
-      </div>
-      <div class="modal-footer border-0 justify-content-center">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL LOGIN ==================== -->
-<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
-        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== TOAST ==================== -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
+<div class="toast-container">
   <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
     <div class="toast-header bg-white border-0">
       <i class="bi me-2" id="toastIcon"></i>
@@ -505,676 +372,189 @@
   (function() {
     'use strict';
 
-    let STATE = {
-      kaderList: [],
-      filteredList: [],
-      searchQuery: '',
-      tingkatanFilter: '',
-      isLoading: false,
-      isEditing: false,
-      isBackgroundUpdate: false
-    };
-
-    // =====================================================
-    //   DATA DUMMY (FALLBACK - HANYA SAAT API KOSONG)
-    // =====================================================
-    const DUMMY_KADER = [
-      { id: 'k1', nama: 'Ahmad Fauzi', email: 'ahmad@example.com', hp: '081234567890', asal: 'Bantul', tingkatan: 'Kader Utama', status: 'Aktif', tanggal: '2024-01-15', catatan: 'Kader teladan' },
-      { id: 'k2', nama: 'Siti Rahma', email: 'siti@example.com', hp: '081234567891', asal: 'Sleman', tingkatan: 'Kader Madya', status: 'Aktif', tanggal: '2024-01-20', catatan: '' },
-      { id: 'k3', nama: 'Budi Santoso', email: 'budi@example.com', hp: '081234567892', asal: 'Yogyakarta', tingkatan: 'Kader Muda', status: 'Aktif', tanggal: '2024-02-01', catatan: 'Kader baru' },
-      { id: 'k4', nama: 'Dewi Lestari', email: 'dewi@example.com', hp: '081234567893', asal: 'Kulon Progo', tingkatan: 'Kader Madya', status: 'Tidak Aktif', tanggal: '2024-02-10', catatan: 'Mengundurkan diri' },
-      { id: 'k5', nama: 'Eko Prasetyo', email: 'eko@example.com', hp: '081234567894', asal: 'Gunungkidul', tingkatan: 'Kader Utama', status: 'Aktif', tanggal: '2024-02-20', catatan: '' },
-      { id: 'k6', nama: 'Fitri Handayani', email: 'fitri@example.com', hp: '081234567895', asal: 'Bantul', tingkatan: 'Kader Muda', status: 'Aktif', tanggal: '2024-03-01', catatan: 'Kader berprestasi' },
-      { id: 'k7', nama: 'Galih Wicaksono', email: 'galih@example.com', hp: '081234567896', asal: 'Sleman', tingkatan: 'Kader Madya', status: 'Aktif', tanggal: '2024-03-10', catatan: '' },
-      { id: 'k8', nama: 'Hana Putri', email: 'hana@example.com', hp: '081234567897', asal: 'Yogyakarta', tingkatan: 'Kader Muda', status: 'Tidak Aktif', tanggal: '2024-03-20', catatan: 'Tidak aktif' },
-      { id: 'k9', nama: 'Indra Wijaya', email: 'indra@example.com', hp: '081234567898', asal: 'Kulon Progo', tingkatan: 'Kader Utama', status: 'Aktif', tanggal: '2024-04-01', catatan: '' },
-      { id: 'k10', nama: 'Joko Susilo', email: 'joko@example.com', hp: '081234567899', asal: 'Gunungkidul', tingkatan: 'Kader Madya', status: 'Aktif', tanggal: '2024-04-10', catatan: 'Aktif' }
-    ];
-
-    // =====================================================
-    //   UTILITY FUNCTIONS
-    // =====================================================
-    window.togglePasswordVisibility = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
-    };
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
-      });
-    }
-
-    function generateId() {
-      return 'k' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    function getTingkatanBadge(tingkatan) {
-      if (tingkatan === 'Kader Utama') return 'bg-primary';
-      if (tingkatan === 'Kader Madya') return 'bg-warning text-dark';
-      if (tingkatan === 'Kader Muda') return 'bg-info';
-      return 'bg-secondary';
-    }
-
-    function getStatusBadge(status) {
-      if (status === 'Aktif') return 'bg-success';
-      return 'bg-secondary';
-    }
-
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
-    }
-
-    function renderSkeleton() {
-      return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
-    // =====================================================
-    //   CACHE HELPERS
-    // =====================================================
-    function loadDataFromCache() {
-      const cached = DataCache.getData('kader');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.kaderList = cached;
-        return true;
-      }
-      return false;
-    }
-
-    function updateCache(data) {
-      DataCache.updateData('kader', data);
-      STATE.kaderList = data;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    function loadDataFromStorage() {
-      try {
-        const stored = localStorage.getItem('pkd_kader_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.kaderList) {
-            STATE.kaderList = parsed.kaderList;
-          }
+    // ==========================================================
+    //   SIDEBAR TOGGLE & SUBMENU
+    // ==========================================================
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+        document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+        const icon = this.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('bi-arrow-left-right');
+            icon.classList.toggle('bi-arrow-right-left');
         }
-      } catch (e) {}
-      if (STATE.kaderList.length === 0) {
-        STATE.kaderList = JSON.parse(JSON.stringify(DUMMY_KADER));
-        saveDataToStorage();
-      }
-    }
+    });
 
-    function saveDataToStorage() {
-      try {
-        localStorage.setItem('pkd_kader_data', JSON.stringify({
-          kaderList: STATE.kaderList
-        }));
-      } catch (e) {}
-    }
-
-    function getKaderById(id) {
-      return STATE.kaderList.find(item => item.id === id);
-    }
-
-    // =====================================================
-    //   CRUD OPERATIONS
-    // =====================================================
-    function addKader(data) {
-      const newItem = {
-        id: generateId(),
-        nama: data.nama || '',
-        email: data.email || '',
-        hp: data.hp || '',
-        asal: data.asal || '',
-        tingkatan: data.tingkatan || 'Kader Muda',
-        status: data.status || 'Aktif',
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-        catatan: data.catatan || ''
-      };
-      STATE.kaderList.unshift(newItem);
-      updateCache(STATE.kaderList);
-      saveDataToStorage();
-      return newItem;
-    }
-
-    function updateKader(id, data) {
-      const index = STATE.kaderList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const existing = STATE.kaderList[index];
-      const updated = {
-        ...existing,
-        nama: data.nama !== undefined ? data.nama : existing.nama,
-        email: data.email !== undefined ? data.email : existing.email,
-        hp: data.hp !== undefined ? data.hp : existing.hp,
-        asal: data.asal !== undefined ? data.asal : existing.asal,
-        tingkatan: data.tingkatan !== undefined ? data.tingkatan : existing.tingkatan,
-        status: data.status !== undefined ? data.status : existing.status,
-        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-        catatan: data.catatan !== undefined ? data.catatan : existing.catatan
-      };
-      STATE.kaderList[index] = updated;
-      updateCache(STATE.kaderList);
-      saveDataToStorage();
-      return updated;
-    }
-
-    function deleteKader(id) {
-      const index = STATE.kaderList.findIndex(item => item.id === id);
-      if (index === -1) return false;
-      STATE.kaderList.splice(index, 1);
-      updateCache(STATE.kaderList);
-      saveDataToStorage();
-      return true;
-    }
-
-    function getFilteredKader(query = '', tingkatan = '') {
-      let filtered = STATE.kaderList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item =>
-          (item.nama && item.nama.toLowerCase().includes(q)) ||
-          (item.email && item.email.toLowerCase().includes(q)) ||
-          (item.asal && item.asal.toLowerCase().includes(q)) ||
-          (item.hp && item.hp.toLowerCase().includes(q))
-        );
-      }
-      if (tingkatan !== '' && tingkatan !== '') {
-        filtered = filtered.filter(item => item.tingkatan === tingkatan);
-      }
-      return filtered;
-    }
-
-    // =====================================================
-    //   RENDER TABLE
-    // =====================================================
-    function renderTable(data) {
-      const container = document.getElementById('kaderTableContainer');
-      if (!container) return;
-
-      let html = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 50px;">#</th>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>No HP</th>
-                <th>Asal</th>
-                <th>Tingkatan</th>
-                <th>Status</th>
-                <th style="width: 200px;" class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.length === 0) {
-        html += `
-            <tr>
-              <td colspan="8" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Tidak ada data kader.
-              </td>
-            </tr>
-        `;
-      } else {
-        data.forEach((item, index) => {
-          const badgeTingkatan = getTingkatanBadge(item.tingkatan);
-          const badgeStatus = getStatusBadge(item.status);
-          html += `
-            <tr>
-              <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
-              <td>${escapeHtml(item.email || '-')}</td>
-              <td>${escapeHtml(item.hp || '-')}</td>
-              <td>${escapeHtml(item.asal || '-')}</td>
-              <td><span class="badge ${badgeTingkatan}">${escapeHtml(item.tingkatan || 'Kader Muda')}</span></td>
-              <td><span class="badge ${badgeStatus}">${escapeHtml(item.status || 'Aktif')}</span></td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewKader('${item.id}')" title="Lihat Detail">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editKader('${item.id}')" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteKader('${item.id}')" title="Hapus">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // =====================================================
-    //   LOAD DATA (ROBUST)
-    // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('kaderTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Coba API dengan force refresh
-      if (forceRefresh) {
-        try {
-          const freshData = await PKD.getKaderList(true);
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.kaderList = freshData;
-            updateCache(freshData);
-            saveDataToStorage();
-            renderTable(getFilteredKader(STATE.searchQuery, STATE.tingkatanFilter));
-            updateCacheStatus('Live');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-        }
-      }
-
-      // 2. Coba DataCache
-      const cached = DataCache.getData('kader');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.kaderList = cached;
-        renderTable(getFilteredKader(STATE.searchQuery, STATE.tingkatanFilter));
-        updateCacheStatus('Cache');
-        return;
-      }
-
-      // 3. Coba localStorage
-      loadDataFromStorage();
-      if (STATE.kaderList.length > 0) {
-        renderTable(getFilteredKader(STATE.searchQuery, STATE.tingkatanFilter));
-        updateCacheStatus('Storage');
-      } else {
-        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data kader.</div>`;
-        updateCacheStatus('Empty');
-      }
-    }
-
-    // =====================================================
-    //   EVENT HANDLERS
-    // =====================================================
-    function resetForm() {
-      document.getElementById('editKaderId').value = '';
-      document.getElementById('kaderNama').value = '';
-      document.getElementById('kaderEmail').value = '';
-      document.getElementById('kaderHp').value = '';
-      document.getElementById('kaderAsal').value = '';
-      document.getElementById('kaderTingkatan').value = 'Kader Muda';
-      document.getElementById('kaderStatus').value = 'Aktif';
-      document.getElementById('kaderTanggal').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('kaderNote').value = '';
-      document.getElementById('formModalTitle').innerText = 'Tambah Kader';
-      STATE.isEditing = false;
-    }
-
-    function openAddModal() {
-      resetForm();
-      new bootstrap.Modal(document.getElementById('kaderFormModal')).show();
-    }
-
-    function openEditModal(id) {
-      const item = getKaderById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      document.getElementById('editKaderId').value = id;
-      document.getElementById('kaderNama').value = item.nama || '';
-      document.getElementById('kaderEmail').value = item.email || '';
-      document.getElementById('kaderHp').value = item.hp || '';
-      document.getElementById('kaderAsal').value = item.asal || '';
-      document.getElementById('kaderTingkatan').value = item.tingkatan || 'Kader Muda';
-      document.getElementById('kaderStatus').value = item.status || 'Aktif';
-      document.getElementById('kaderTanggal').value = item.tanggal || '';
-      document.getElementById('kaderNote').value = item.catatan || '';
-      document.getElementById('formModalTitle').innerText = 'Edit Kader';
-      STATE.isEditing = true;
-      new bootstrap.Modal(document.getElementById('kaderFormModal')).show();
-    }
-
-    function openDetailModal(id) {
-      const item = getKaderById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      const modal = new bootstrap.Modal(document.getElementById('detailKaderModal'));
-      const content = document.getElementById('detailContent');
-      const badgeTingkatan = getTingkatanBadge(item.tingkatan);
-      const badgeStatus = getStatusBadge(item.status);
-      let html = `
-        <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama || '-')}</div>
-          <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
-          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.hp || '-')}</div>
-          <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
-          <div class="list-group-item py-3"><strong>Tingkatan:</strong> <span class="badge ${badgeTingkatan}">${escapeHtml(item.tingkatan || 'Kader Muda')}</span></div>
-          <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badgeStatus}">${escapeHtml(item.status || 'Aktif')}</span></div>
-          <div class="list-group-item py-3"><strong>Tanggal Bergabung:</strong> ${formatDate(item.tanggal)}</div>
-          <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
-        </div>
-      `;
-      content.innerHTML = html;
-      modal.show();
-    }
-
-    function confirmDelete(id) {
-      document.getElementById('deleteKaderId').value = id;
-      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    }
-
-    function executeDelete() {
-      const id = document.getElementById('deleteKaderId').value;
-      if (!id) return;
-      const result = deleteKader(id);
-      if (result) {
-        showToast('Kader berhasil dihapus.', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadData();
-      } else {
-        showToast('Gagal menghapus data.', 'error');
-      }
-    }
-
-    function saveData() {
-      const id = document.getElementById('editKaderId').value;
-      const nama = document.getElementById('kaderNama').value.trim();
-      const email = document.getElementById('kaderEmail').value.trim();
-      const hp = document.getElementById('kaderHp').value.trim();
-      const asal = document.getElementById('kaderAsal').value.trim();
-      const tingkatan = document.getElementById('kaderTingkatan').value;
-      const status = document.getElementById('kaderStatus').value;
-      const tanggal = document.getElementById('kaderTanggal').value;
-      const catatan = document.getElementById('kaderNote').value.trim();
-
-      if (!nama || !email || !hp || !asal || !tanggal) {
-        showToast('Nama, email, no HP, asal, dan tanggal wajib diisi.', 'error');
-        return;
-      }
-
-      const data = {
-        nama: nama,
-        email: email,
-        hp: hp,
-        asal: asal,
-        tingkatan: tingkatan,
-        status: status,
-        tanggal: tanggal,
-        catatan: catatan
-      };
-
-      if (id === '') {
-        const newItem = addKader(data);
-        if (newItem) {
-          showToast('Kader berhasil ditambahkan.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('kaderFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal menambahkan data.', 'error');
-        }
-      } else {
-        const updated = updateKader(id, data);
-        if (updated) {
-          showToast('Kader berhasil diperbarui.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('kaderFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal memperbarui data.', 'error');
-        }
-      }
-    }
-
-    function exportData() {
-      const data = STATE.filteredList;
-      if (data.length === 0) {
-        showToast('Tidak ada data untuk diekspor.', 'info');
-        return;
-      }
-      const exportData = data.map(item => ({
-        id: item.id,
-        nama: item.nama,
-        email: item.email,
-        hp: item.hp,
-        asal: item.asal,
-        tingkatan: item.tingkatan,
-        status: item.status,
-        tanggal: item.tanggal,
-        catatan: item.catatan
-      }));
-      const json = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `kader_export_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(`Berhasil mengekspor ${data.length} data kader.`, 'success');
-    }
-
-    // =====================================================
-    //   SEARCH & FILTER HANDLERS
-    // =====================================================
-    const debouncedSearch = debounce(function(query) {
-      STATE.searchQuery = query;
-      const filtered = getFilteredKader(STATE.searchQuery, STATE.tingkatanFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }, 300);
-
-    function handleSearch(e) { debouncedSearch(e.target.value); }
-
-    function handleTingkatanFilter(e) {
-      STATE.tingkatanFilter = e.target.value;
-      const filtered = getFilteredKader(STATE.searchQuery, STATE.tingkatanFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }
-
-    // =====================================================
-    //   SIDEBAR TOGGLE & DROPDOWN
-    // =====================================================
-    function initSidebarToggle() {
-      const toggleBtn = document.getElementById('toggleSidebarBtn');
-      const sidebar = document.getElementById('sidebarWrapper');
-      if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', function() {
-          sidebar.classList.toggle('minimized');
-          const icon = this.querySelector('i');
-          if (sidebar.classList.contains('minimized')) {
-            icon.classList.remove('bi-arrow-left-right');
-            icon.classList.add('bi-arrow-right-left');
-          } else {
-            icon.classList.remove('bi-arrow-right-left');
-            icon.classList.add('bi-arrow-left-right');
-          }
-        });
-      }
-    }
-
-    function initSidebarDropdowns() {
-      document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
         link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const target = this.dataset.target;
-          const submenu = document.getElementById('submenu-' + target);
-          if (submenu) submenu.classList.toggle('open');
+            e.preventDefault();
+            const target = this.dataset.target;
+            const submenu = document.getElementById('submenu-' + target);
+            if (submenu) submenu.classList.toggle('open');
         });
-      });
-    }
+    });
 
-    // =====================================================
-    //   LOGIN / LOGOUT
-    // =====================================================
-    function initAuth() {
-      if (typeof PKD === 'undefined') {
-        window.PKD = {
-          getUserRole: () => 'guest',
-          verifyAdmin: async (u, p) => {
-            if (u === 'admin' && p === 'admin123') return { success: true };
-            return { success: false, message: 'Login gagal' };
-          },
-          setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
-          setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
-          persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
-          logout: () => { DataCache.clear(); window.location.href = '/bisaa/index.html'; }
-        };
-        console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
-      }
+    // ==========================================================
+    //   LOGOUT
+    // ==========================================================
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (PKD.logout) PKD.logout();
+        else window.location.href = '/bisaa/index.html';
+    });
 
-      if (PKD.getUserRole() !== 'admin') {
-        new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
-      }
-    }
-
-    function handleLogin() {
-      const u = document.getElementById('adminUsername').value.trim();
-      const p = document.getElementById('adminPassword').value;
-      const err = document.getElementById('adminLoginError');
-      if (!u || !p) {
-        err.innerText = 'Username dan password harus diisi';
-        err.style.display = 'block';
-        return;
-      }
-      PKD.verifyAdmin(u, p).then(async res => {
-        if (res.success) {
-          PKD.setUserRole('admin');
-          PKD.setUserData({ nama: u });
-          PKD.persistAuthState();
-
-          // Preload semua data
-          try {
-            const allData = await Promise.all([
-              PKD.getPesertaList ? PKD.getPesertaList() : [],
-              PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
-              PKD.getMateriList ? PKD.getMateriList() : [],
-              PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
-              PKD.getPretestResponses ? PKD.getPretestResponses() : [],
-              PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
-              PKD.getAlumniList ? PKD.getAlumniList() : [],
-              PKD.getKaderList ? PKD.getKaderList() : [],
-              PKD.getInformasiList ? PKD.getInformasiList() : [],
-              PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
-              PKD.getSertifikatList ? PKD.getSertifikatList() : []
-            ]);
-            DataCache.setAllData({
-              peserta: allData[0], sesi: allData[1], materi: allData[2], skrining: allData[3], pretest: allData[4], posttest: allData[5], alumni: allData[6], kader: allData[7], informasi: allData[8], absensi: allData[9], sertifikat: allData[10]
-            });
-          } catch (e) { console.warn('Gagal preload data:', e); }
-
-          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-          loadData();
-        } else {
-          err.innerText = res.message || 'Login gagal';
-          err.style.display = 'block';
-        }
-      }).catch(e => {
-        err.innerText = 'Kesalahan: ' + e.message;
-        err.style.display = 'block';
-      });
-    }
-
-    function handleLogout(e) {
-      e.preventDefault();
-      DataCache.clear();
-      if (PKD.logout) PKD.logout();
-    }
-
-    // =====================================================
-    //   INITIALIZATION
-    // =====================================================
-    function init() {
-      initSidebarToggle();
-      initSidebarDropdowns();
-      initAuth();
-
-      // Load data
-      loadData();
-
-      // Event listeners
-      document.getElementById('addKaderBtn')?.addEventListener('click', openAddModal);
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        loadData(true).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-      });
-      document.getElementById('saveKaderBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('filterTingkatan')?.addEventListener('change', handleTingkatanFilter);
-      document.getElementById('sidebarLogoutBtn')?.addEventListener('click', handleLogout);
-      document.getElementById('adminLoginSubmit')?.addEventListener('click', handleLogin);
-      document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
         const modalEl = document.getElementById('moreMenuModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
         if (PKD.logout) PKD.logout();
         else window.location.href = '/bisaa/index.html';
-      });
+    });
 
-      // Expose functions
-      window.viewKader = openDetailModal;
-      window.editKader = openEditModal;
-      window.deleteKader = confirmDelete;
+    // ==========================================================
+    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
+    // ==========================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
+            window.location.href = '/bisaa/login.html';
+            return;
+        }
+
+        // Load data kader (dashboard statistik)
+        loadKaderData();
+    });
+
+    // ==========================================================
+    //   FUNGSI UTAMA: AMBIL DATA PESERTA DAN HITUNG STATISTIK
+    // ==========================================================
+    async function loadKaderData() {
+        try {
+            // Jika ingin mengubah sumber data, ganti PKD.getPesertaList() dengan PKD.getKaderList()
+            // Sesuai permintaan, kita ambil dari peserta karena kader berasal dari peserta yang aktif
+            const res = await PKD.getPesertaList();
+            if (!res || res.length === 0) {
+                // Data kosong → tampilkan pesan kosong
+                document.getElementById('totalKader').innerText = '0';
+                document.getElementById('totalPac').innerText = '0';
+                document.getElementById('totalPendidikan').innerText = '0';
+                document.getElementById('kaderTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada data kader.</td></tr>';
+                return;
+            }
+            
+            const peserta = res;
+            tampilkanStatistik(peserta);
+        } catch (e) {
+            console.error(e);
+            document.getElementById('totalKader').innerText = '?';
+            document.getElementById('totalPac').innerText = '?';
+            document.getElementById('totalPendidikan').innerText = '?';
+            document.getElementById('kaderTableBody').innerHTML = '<tr><td colspan="6" class="text-danger">Gagal memuat data.</td></tr>';
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    function tampilkanStatistik(peserta) {
+        // Hitung total kader
+        const total = peserta.length;
+        document.getElementById('totalKader').innerText = total;
+
+        // Hitung jumlah PAC unik dari kolom utusan
+        const pacMap = new Map(); // utusan -> jumlah
+        const pendidikanMap = new Map(); // pendidikan -> jumlah
+        const tableRows = [];
+
+        peserta.forEach((p, idx) => {
+            const utusan = p.utusan || 'Tidak diketahui';
+            const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
+            
+            // Hitung per utusan
+            pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
+            
+            // Hitung per pendidikan
+            pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
+
+            // Siapkan baris tabel
+            tableRows.push(`
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${escapeHtml(p.nama_lengkap || '')}</td>
+                    <td>${escapeHtml(utusan)}</td>
+                    <td>${escapeHtml(pendidikan)}</td>
+                    <td>${escapeHtml(p.pekerjaan || '')}</td>
+                    <td>${escapeHtml(p.alamat || '')}</td>
+                </tr>
+            `);
+        });
+
+        // Update tabel
+        document.getElementById('kaderTableBody').innerHTML = tableRows.join('');
+
+        // Update jumlah PAC
+        document.getElementById('totalPac').innerText = pacMap.size;
+
+        // Update jumlah jenis pendidikan (bukan total orang)
+        document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
+
+        // Buat grafik PAC
+        const pacLabels = Array.from(pacMap.keys());
+        const pacData = Array.from(pacMap.values());
+        renderChart('chartPac', 'bar', pacLabels, pacData, 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
+
+        // Buat grafik Pendidikan
+        const pendidikanLabels = Array.from(pendidikanMap.keys());
+        const pendidikanData = Array.from(pendidikanMap.values());
+        renderChart('chartPendidikan', 'pie', pendidikanLabels, pendidikanData, 'Pendidikan');
+    }
+
+    function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // Hancurkan chart lama jika ada
+        let existingChart = Chart.getChart(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        // Warna default untuk pie
+        const dynamicColors = [];
+        if (type === 'pie') {
+            for (let i = 0; i < labels.length; i++) {
+                dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
+            }
+        }
+
+        new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
+                    borderColor: type === 'pie' ? 'white' : '#2563eb',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: type === 'pie' ? 'right' : 'top',
+                    }
+                }
+            }
+        });
+    }
+
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
   })();
 </script>
 </body>

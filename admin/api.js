@@ -8,7 +8,7 @@
   // ======================== KONFIGURASI ========================
   // Ganti dengan URL Apps Script Anda yang benar
   // Anda bisa menimpa nilai ini dengan variabel global PKD_SCRIPT_URL
-  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbxGeNBJzfTtRpr4fZty_Cm5wIbI7ax8ekFml0VarBHNZEvmGgSX96bdBrX3nkpleFQdyA/exec';
+  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbxNpaLz5sxJ8tb71VyDtw489ZPCrz1OpDPZJoDi4OjP0fe_eOaLjjTnD1tljqmN4d4nDA/exec';
   const SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
   // ======================== STATE ========================

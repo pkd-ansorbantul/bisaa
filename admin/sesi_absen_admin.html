@@ -19,175 +19,114 @@
     .container-card { max-width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
 
-    /* --- SIDEBAR --- */
+    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
     .sidebar-wrapper {
-      width: 260px;
-      max-width: 260px;
-      background: #0f172a;
-      color: #f1f5f9;
-      min-height: 100vh;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-      border-right: 1px solid #1e293b;
-      display: flex;
-      flex-direction: column;
-      transition: all 0.3s ease;
+        width: 260px; max-width: 260px;
+        background: #0f172a; color: #f1f5f9;
+        min-height: 100vh; height: 100vh;
+        position: fixed; top: 0; left: 0; z-index: 1000;
+        border-right: 1px solid #1e293b;
+        display: flex; flex-direction: column;
+        transition: width 0.3s ease, max-width 0.3s ease;
     }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
 
-    /* --- BRAND AREA (TETAP) --- */
+    /* --- BRAND AREA --- */
     .sidebar-brand-area {
-      flex-shrink: 0;
-      padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-      border-bottom: 1px solid #1e293b;
+        flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+        border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
     }
     .sidebar-wrapper.minimized .sidebar-brand-area {
-      padding: 1.5rem 0.75rem 0.75rem 0.75rem;
-      display: flex;
-      justify-content: center;
+        padding: 1.5rem 0.75rem; display: flex; justify-content: center;
     }
     .brand-sidebar {
-      display: flex; align-items: center; gap: 12px;
-      text-decoration: none; color: #ffffff;
-      transition: opacity 0.2s;
+        display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease;
     }
     .brand-sidebar:hover { opacity: 0.8; }
-    .brand-sidebar img { max-height: 45px; width: auto; }
-    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; }
-    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; }
-    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; }
+    .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
+    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
+    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
-    .sidebar-wrapper.minimized .brand-sidebar-title,
-    .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
 
-    /* --- MENU AREA (SCROLLABLE, SCROLLBAR DISEMBUNYIKAN) --- */
-    .sidebar-menu-area {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-bottom: 20px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
+    /* --- MENU AREA --- */
+    .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
     .sidebar-menu-area::-webkit-scrollbar { display: none; }
 
-    /* --- NAV PILLS (UNIFIKASI LEBAR BIRU) --- */
+    /* --- NAV PILLS --- */
     .nav-pills .nav-link {
-      width: calc(100% - 1.6rem);
-      margin: 0.2rem 0.8rem;
-      border-radius: 12px;
-      padding: 0.7rem 1rem;
-      color: #cbd5e1 !important;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      text-align: left;
-      box-shadow: none;
+        width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
+        color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
+        align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none;
+        text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden;
     }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
-    .nav-pills .nav-link.active {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-    }
+    .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
+    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
 
-    /* --- SUBMENU (TOGGLE BUKA/TUTUP) --- */
-    .submenu {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-      padding-left: 1rem;
-    }
+    /* --- SUBMENU --- */
+    .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
-    .submenu .nav-link {
-      padding: 0.4rem 1rem;
-      margin: 0.1rem 0.8rem;
-      width: calc(100% - 1.6rem);
-      font-weight: 400;
-      color: #94a3b8 !important;
-    }
+    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
-    .submenu .nav-link.active {
-      background: #2563eb !important;
-      color: #ffffff !important;
-    }
+    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
+    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
+    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
+    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
+    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
+    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
 
     /* --- SIDEBAR TOGGLE --- */
-    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; }
+    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
-    .sidebar-toggle button {
-      background: rgba(255,255,255,0.1); border: none; color: #94a3b8;
-      border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s;
-    }
+    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
     .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
 
+    /* --- LOGOUT --- */
     .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
+    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
 
     /* --- BOTTOM NAV (MOBILE) --- */
     .bottom-nav {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      background: #ffffff; border-top: 1px solid #e2e8f0;
-      z-index: 1050; display: none;
-      justify-content: space-around; padding: 8px 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
+        z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
-    .bottom-nav .nav-item {
-      display: flex; flex-direction: column; align-items: center;
-      text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1;
-      transition: all 0.2s;
-    }
+    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
     .bottom-nav .nav-item i { font-size: 1.5rem; }
     .bottom-nav .nav-item.active { color: #2563eb; }
 
     @media (max-width: 991px) {
-      .sidebar-wrapper { display: none; }
-      .bottom-nav { display: flex; }
-      .content-wrapper { margin-left: 0; padding: 1rem; padding-bottom: 80px; width: 100%; }
+        .sidebar-wrapper { display: none; }
+        .bottom-nav { display: flex; }
+        .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; }
     }
-    @media (min-width: 992px) {
-      .bottom-nav { display: none; }
-    }
+    @media (min-width: 992px) { .bottom-nav { display: none; } }
 
     /* --- CONTENT WRAPPER --- */
     .content-wrapper {
-      margin-left: 260px;
-      padding: 1.5rem;
-      background: #f8fafc;
-      min-height: 100vh;
-      width: calc(100% - 260px);
-      transition: all 0.3s ease;
+        margin-left: 260px; padding: 1.5rem; background: #f8fafc;
+        min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
     }
-    .sidebar-wrapper.minimized ~ .content-wrapper {
-      margin-left: 70px;
-      width: calc(100% - 70px);
-    }
+    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
     /* --- UTILITY --- */
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      margin-bottom: 1.8rem;
-      color: #0f172a;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
+        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
     }
     .cache-status {
-      font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
+        font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
     }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
     .loading-spinner {
-      display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
+        display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
@@ -200,7 +139,7 @@
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- SIDEBAR -->
+    <!-- ==================== SIDEBAR ==================== -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle">
         <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
@@ -208,7 +147,6 @@
         </button>
       </div>
 
-      <!-- BRAND AREA -->
       <div class="sidebar-brand-area">
         <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
           <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
@@ -219,7 +157,6 @@
         </a>
       </div>
 
-      <!-- MENU AREA -->
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
           <!-- Dashboard -->
@@ -276,11 +213,17 @@
             <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
           </a>
 
+          <!-- Tanda Tangan -->
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
+            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+          </a>
+
           <!-- Pengaturan -->
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
           </a>
 
+          <!-- Logout -->
           <div class="sidebar-logout"></div>
           <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
             <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
@@ -289,7 +232,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM NAV (MOBILE) -->
+    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
@@ -298,7 +241,7 @@
       <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
-    <!-- KONTEN UTAMA -->
+    <!-- ==================== CONTENT WRAPPER ==================== -->
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-calendar-event me-2"></i>Manajemen Sesi Absen</h2>
 
@@ -463,27 +406,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL LOGIN ==================== -->
-<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3"><label class="form-label fw-semibold">Username</label><input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off"></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Password</label><div class="input-group"><input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off"><button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')"><i class="bi bi-eye"></i></button></div></div>
-        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== TOAST ==================== -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
   <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
@@ -498,39 +420,15 @@
 
 <!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
 <script src="/bisaa/api.js"></script>
 
 <script>
   (function() {
     'use strict';
 
-    let STATE = {
-      sesiAbsenList: [],
-      filteredList: [],
-      searchQuery: '',
-      isLoading: false,
-      isEditing: false,
-      isBackgroundUpdate: false
-    };
-
-    // =====================================================
-    //   DATA DUMMY (FALLBACK) - TIDAK AKAN DIPAKAI JIKA ADA API
-    // =====================================================
-    const SHEET_DATA = [
-      { id: 1, nama: 'Orientasi Pengkaderan', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '69f9f021-9ec8-49f7-95fc-2271ae2985ba' },
-      { id: 2, nama: 'ASWAJA I', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '6873e600-5e5d-4b65-8b5c-1f0b4129e902' },
-      { id: 3, nama: 'Dalil Amaliyah dan Tradisi Keagamaan NU', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '729f7ae0-747a-41af-8dc9-977478ceac82' },
-      { id: 4, nama: 'Ke-Indonesia-an dan Kebangsaan', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'fb2c78a7-3693-4d12-ad20-86d7c69b0236' },
-      { id: 5, nama: 'Ke-NU-an I', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '92298b36-5eaf-4bb3-8739-39988c3549d0' },
-      { id: 6, nama: 'Ke-GP Ansor-an I', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'a75170a4-a2a2-47d5-a2de-b91a6a0052ba' },
-      { id: 7, nama: 'Organisasi dan Kepemimpinan', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '2d8339e3-d001-4ad9-94ed-7bcd65e2277c' },
-      { id: 8, nama: 'Pengenalan Aturan Organisasi GP Ansor', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'd57902f4-7c74-403f-b345-eb12d207430b' },
-      { id: 9, nama: 'Literasi Digital', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'ca35f385-99aa-47d8-adbc-f6d9189a644b' },
-      { id: 10, nama: 'Andir - Ansos', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: '07af3462-77d8-4477-9dd9-788932e418b5' },
-      { id: 11, nama: 'Rencana Kerja dan Tindak Lanjut', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'b232c3ec-d601-401a-bffa-dc53acdd9666' },
-      { id: 12, nama: 'Pembaitan', waktu: 'Belum dijadwalkan', aktif: true, passwordHash: '7ce7ed30391fa62448263d832ae57b5d0a830e9e8dc18e89885e3be002eab305', qrToken: 'b92dd596-2917-4167-8dcd-3aab08a8891e' }
-    ];
+    let sesiAbsenList = [];
+    let filteredList = [];
+    let searchQuery = '';
 
     // =====================================================
     //   UTILITY FUNCTIONS
@@ -539,7 +437,6 @@
       const el = document.getElementById(id);
       if (el) el.type = el.type === 'password' ? 'text' : 'password';
     };
-    window.togglePasswordVisibility = function(id) { window.togglePassword(id); };
 
     function formatDate(dateStr) {
       if (!dateStr) return '-';
@@ -582,137 +479,176 @@
       toast.show();
     }
 
-    function renderSkeleton() {
-      return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
     // =====================================================
-    //   CACHE HELPERS
+    //   STORAGE
     // =====================================================
-    function loadDataFromCache() {
-      const cached = DataCache.getData('sesi');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.sesiAbsenList = cached;
-        return true;
-      }
-      return false;
+    function saveToStorage(data) {
+      try {
+        localStorage.setItem('pkd_sesi_absen_data', JSON.stringify(data));
+      } catch (e) {}
     }
 
-    function updateCache(data) {
-      DataCache.updateData('sesi', data);
-      STATE.sesiAbsenList = data;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    function loadDataFromStorage() {
+    function loadFromStorage() {
       try {
         const stored = localStorage.getItem('pkd_sesi_absen_data');
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed && parsed.sesiAbsenList && Array.isArray(parsed.sesiAbsenList) && parsed.sesiAbsenList.length > 0) {
-            STATE.sesiAbsenList = parsed.sesiAbsenList;
-            return true;
+          if (Array.isArray(parsed)) {
+            return parsed;
           }
         }
       } catch (e) {}
-      return false;
-    }
-
-    function saveDataToStorage() {
-      try {
-        localStorage.setItem('pkd_sesi_absen_data', JSON.stringify({
-          sesiAbsenList: STATE.sesiAbsenList
-        }));
-      } catch (e) {}
-    }
-
-    function getSesiAbsenById(id) {
-      const searchId = String(id);
-      return STATE.sesiAbsenList.find(item => String(item.id) === searchId);
+      return null;
     }
 
     // =====================================================
-    //   CRUD OPERATIONS (STATE ONLY)
+    //   SIDEBAR TOGGLE & SUBMENU
     // =====================================================
-    function addSesiAbsenToState(data) {
-      const newItem = {
-        id: generateId(),
-        nama: data.nama || '',
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-        waktu: data.waktu || '00:00',
-        kuota: data.kuota !== undefined ? data.kuota : 0,
-        catatan: data.catatan || '',
-        aktif: data.aktif !== undefined ? data.aktif : true,
-        password: data.password || '',
-        qrToken: generateQrToken()
-      };
-      STATE.sesiAbsenList.unshift(newItem);
-      updateCache(STATE.sesiAbsenList);
-      saveDataToStorage();
-      return newItem;
-    }
-
-    function updateSesiAbsenInState(id, data) {
-      const index = STATE.sesiAbsenList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const existing = STATE.sesiAbsenList[index];
-      const updated = {
-        ...existing,
-        nama: data.nama !== undefined ? data.nama : existing.nama,
-        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-        waktu: data.waktu !== undefined ? data.waktu : existing.waktu,
-        kuota: data.kuota !== undefined ? data.kuota : existing.kuota,
-        catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
-        aktif: data.aktif !== undefined ? data.aktif : existing.aktif,
-        password: data.password !== undefined ? data.password : existing.password
-      };
-      STATE.sesiAbsenList[index] = updated;
-      updateCache(STATE.sesiAbsenList);
-      saveDataToStorage();
-      return updated;
-    }
-
-    function deleteSesiAbsenFromState(id) {
-      const index = STATE.sesiAbsenList.findIndex(item => item.id === id);
-      if (index === -1) return false;
-      STATE.sesiAbsenList.splice(index, 1);
-      updateCache(STATE.sesiAbsenList);
-      saveDataToStorage();
-      return true;
-    }
-
-    function regenerateQRSesiInState(id) {
-      const index = STATE.sesiAbsenList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const newToken = generateQrToken();
-      STATE.sesiAbsenList[index].qrToken = newToken;
-      updateCache(STATE.sesiAbsenList);
-      saveDataToStorage();
-      return newToken;
-    }
-
-    function getFilteredSesiAbsen(query = '') {
-      let filtered = STATE.sesiAbsenList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item => (item.nama && item.nama.toLowerCase().includes(q)));
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+      const icon = this.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('bi-arrow-left-right');
+        icon.classList.toggle('bi-arrow-right-left');
       }
-      return filtered;
+    });
+
+    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.dataset.target;
+        const submenu = document.getElementById('submenu-' + target);
+        if (submenu) submenu.classList.toggle('open');
+      });
+    });
+
+    // =====================================================
+    //   LOGOUT
+    // =====================================================
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (PKD.logout) PKD.logout();
+      else window.location.href = '/bisaa/index.html';
+    });
+
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+      const modalEl = document.getElementById('moreMenuModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+      if (PKD.logout) PKD.logout();
+      else window.location.href = '/bisaa/index.html';
+    });
+
+    // =====================================================
+    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
+    // =====================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
+        window.location.href = '/bisaa/login.html';
+        return;
+      }
+
+      // Load data dari localStorage dulu
+      const stored = loadFromStorage();
+      if (stored && stored.length > 0) {
+        sesiAbsenList = stored;
+        renderTable(getFilteredSesiAbsen(searchQuery));
+        updateCacheStatus('LocalStorage');
+      } else {
+        renderTable([]);
+        updateCacheStatus('Empty');
+      }
+
+      // Ambil data dari API di background
+      fetchRawAPIData();
+
+      // Event listeners
+      document.getElementById('addSesiAbsenBtn')?.addEventListener('click', openAddModal);
+      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+        this.disabled = true;
+        fetchRawAPIData(true).then(() => {
+          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+          this.disabled = false;
+        }).catch(() => {
+          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+          this.disabled = false;
+        });
+      });
+      document.getElementById('saveSesiAbsenBtn')?.addEventListener('click', saveData);
+      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
+      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+      document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
+        if (window.__qrSesiCanvas) {
+          const link = document.createElement('a');
+          link.download = `QR_Sesi_${Date.now()}.png`;
+          link.href = window.__qrSesiCanvas.toDataURL('image/png');
+          link.click();
+        } else {
+          showToast('Tidak ada QR yang tersedia', 'warning');
+        }
+      });
+    });
+
+    // =====================================================
+    //   FETCH RAW API (LOGIKA UTAMA YANG DIPERBAIKI)
+    // =====================================================
+    async function fetchRawAPIData(forceRefresh = false) {
+      console.log('🔄 Mencoba mengambil data dari API...');
+      try {
+        const result = await PKD.callApi('getSesiAbsen', {}, 'GET');
+        console.log('📦 Respons mentah dari API:', result);
+
+        let rawData = result.data || result;
+        if (!Array.isArray(rawData)) {
+          if (result.sesiAbsenList && Array.isArray(result.sesiAbsenList)) {
+            rawData = result.sesiAbsenList;
+          } else {
+            throw new Error('Format data tidak dikenali: ' + JSON.stringify(result));
+          }
+        }
+
+        console.log('✅ Data berhasil diekstraksi:', rawData);
+
+        // JIKA DATA BERHASIL DIDAPATKAN
+        if (rawData.length > 0) {
+          sesiAbsenList = rawData;
+          saveToStorage(sesiAbsenList);
+          
+          // ★ PERBAIKAN PENTING: RESET FILTER PENCARIAN SAAT DATA BARU MASUK ★
+          document.getElementById('searchInput').value = '';
+          searchQuery = '';
+          
+          renderTable(getFilteredSesiAbsen(searchQuery));
+          updateCacheStatus('Live');
+          if (forceRefresh) {
+            showToast('Data berhasil disegarkan (' + rawData.length + ' sesi)', 'success');
+          }
+        } else {
+          // Data dari API kosong, jangan timpa data lokal
+          console.warn('⚠️ API mengembalikan array kosong. Mempertahankan data lokal.');
+          if (forceRefresh) {
+            showToast('Data dari server kosong, menampilkan data lokal', 'info');
+          }
+          if (sesiAbsenList.length === 0) {
+            renderTable([]);
+            updateCacheStatus('Empty');
+          }
+        }
+      } catch (e) {
+        console.error('❌ Gagal mengambil data:', e);
+        if (forceRefresh) {
+          showToast('Gagal mengambil data: ' + e.message, 'error');
+        }
+        if (sesiAbsenList.length > 0) {
+          renderTable(getFilteredSesiAbsen(searchQuery));
+          updateCacheStatus('Offline');
+        } else {
+          renderTable([]);
+          updateCacheStatus('Error');
+        }
+      }
     }
 
     // =====================================================
@@ -796,10 +732,30 @@
     }
 
     // =====================================================
+    //   FILTER
+    // =====================================================
+    function getFilteredSesiAbsen(query) {
+      let filtered = sesiAbsenList;
+      if (query.trim() !== '') {
+        const q = query.toLowerCase().trim();
+        filtered = filtered.filter(item => (item.nama && item.nama.toLowerCase().includes(q)));
+      }
+      return filtered;
+    }
+
+    function updateCacheStatus(status) {
+      const el = document.getElementById('cacheStatus');
+      if (el) {
+        el.textContent = status;
+        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+      }
+    }
+
+    // =====================================================
     //   QR GENERATION
     // =====================================================
     window.generateQRSesi = function(sesiId) {
-      const item = getSesiAbsenById(sesiId);
+      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
       if (!item) {
         showToast('Data tidak ditemukan', 'error');
         return;
@@ -807,8 +763,7 @@
 
       if (!item.qrToken) {
         item.qrToken = generateQrToken();
-        updateCache(STATE.sesiAbsenList);
-        saveDataToStorage();
+        saveToStorage(sesiAbsenList);
       }
 
       try {
@@ -851,7 +806,7 @@
     //   REGENERATE QR
     // =====================================================
     window.regenerateQRSesi = function(sesiId) {
-      const item = getSesiAbsenById(sesiId);
+      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
       if (!item) {
         showToast('Data tidak ditemukan', 'error');
         return;
@@ -866,9 +821,10 @@
 
       PKD.regenerateQRSesi(sesiId).then(res => {
         if (res.success) {
-          const newToken = regenerateQRSesiInState(sesiId);
+          item.qrToken = generateQrToken();
+          saveToStorage(sesiAbsenList);
           showToast('QR berhasil diregenerasi', 'success');
-          renderTable(getFilteredSesiAbsen(STATE.searchQuery));
+          renderTable(getFilteredSesiAbsen(searchQuery));
         } else {
           showToast('Gagal: ' + (res.message || 'Server error'), 'error');
         }
@@ -884,7 +840,7 @@
     //   VIEW ATTENDANCE
     // =====================================================
     window.viewAttendance = async function(sesiId) {
-      const item = getSesiAbsenById(sesiId);
+      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
       if (!item) {
         showToast('Data tidak ditemukan', 'error');
         return;
@@ -918,61 +874,7 @@
     };
 
     // =====================================================
-    //   LOAD DATA (ROBUST)
-    // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('sesiAbsenTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Coba ambil dari API dengan force refresh
-      if (forceRefresh) {
-        try {
-          const freshData = await PKD.getSesiAbsen(true);
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.sesiAbsenList = freshData;
-            updateCache(freshData);
-            saveDataToStorage();
-            renderTable(getFilteredSesiAbsen(STATE.searchQuery));
-            updateCacheStatus('Live');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-        }
-      }
-
-      // 2. Coba DataCache
-      const cached = DataCache.getData('sesi');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.sesiAbsenList = cached;
-        renderTable(getFilteredSesiAbsen(STATE.searchQuery));
-        updateCacheStatus('Cache');
-        return;
-      }
-
-      // 3. Coba localStorage
-      if (loadDataFromStorage()) {
-        renderTable(getFilteredSesiAbsen(STATE.searchQuery));
-        updateCacheStatus('Storage');
-        return;
-      }
-
-      // 4. Fallback ke data dummy
-      console.log('Cache & storage kosong, menggunakan fallback SHEET_DATA');
-      STATE.sesiAbsenList = JSON.parse(JSON.stringify(SHEET_DATA));
-      updateCache(STATE.sesiAbsenList);
-      saveDataToStorage();
-      renderTable(getFilteredSesiAbsen(STATE.searchQuery));
-      updateCacheStatus('Fallback');
-
-      // 5. Background update
-      setTimeout(() => {
-        loadData(true);
-      }, 1000);
-    }
-
-    // =====================================================
-    //   EVENT HANDLERS (CRUD)
+    //   CRUD HANDLERS
     // =====================================================
     function resetForm() {
       document.getElementById('editSesiAbsenId').value = '';
@@ -984,7 +886,6 @@
       document.getElementById('sesiNote').value = '';
       document.getElementById('sesiAktif').checked = true;
       document.getElementById('formModalTitle').innerText = 'Tambah Sesi Absen';
-      STATE.isEditing = false;
     }
 
     function openAddModal() {
@@ -993,7 +894,7 @@
     }
 
     window.editSesiAbsen = function(id) {
-      const item = getSesiAbsenById(id);
+      const item = sesiAbsenList.find(i => String(i.id) === String(id));
       if (!item) {
         showToast('Data tidak ditemukan.', 'error');
         return;
@@ -1007,12 +908,11 @@
       document.getElementById('sesiNote').value = item.catatan || '';
       document.getElementById('sesiAktif').checked = item.aktif !== undefined ? item.aktif : true;
       document.getElementById('formModalTitle').innerText = 'Edit Sesi Absen';
-      STATE.isEditing = true;
       new bootstrap.Modal(document.getElementById('sesiAbsenFormModal')).show();
     };
 
     window.viewSesiAbsen = function(id) {
-      const item = getSesiAbsenById(id);
+      const item = sesiAbsenList.find(i => String(i.id) === String(id));
       if (!item) {
         showToast('Data tidak ditemukan.', 'error');
         return;
@@ -1054,10 +954,11 @@
 
       PKD.deleteSesiAbsen(id).then(res => {
         if (res.success) {
-          const result = deleteSesiAbsenFromState(id);
+          sesiAbsenList = sesiAbsenList.filter(i => String(i.id) !== String(id));
+          saveToStorage(sesiAbsenList);
           showToast('Sesi absen berhasil dihapus.', 'success');
           bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-          renderTable(getFilteredSesiAbsen(STATE.searchQuery));
+          renderTable(getFilteredSesiAbsen(searchQuery));
         } else {
           showToast('Gagal: ' + (res.message || 'Server error'), 'error');
         }
@@ -1108,10 +1009,22 @@
       if (id === '') {
         PKD.addSesiAbsen(nama, waktu, aktif, password).then(res => {
           if (res.success) {
-            const newItem = addSesiAbsenToState(data);
+            const newItem = {
+              id: generateId(),
+              nama: nama,
+              tanggal: tanggal,
+              waktu: waktu,
+              kuota: kuotaNum,
+              catatan: catatan,
+              aktif: aktif,
+              password: password,
+              qrToken: generateQrToken()
+            };
+            sesiAbsenList.unshift(newItem);
+            saveToStorage(sesiAbsenList);
             showToast('Sesi absen berhasil ditambahkan.', 'success');
             bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
-            renderTable(getFilteredSesiAbsen(STATE.searchQuery));
+            renderTable(getFilteredSesiAbsen(searchQuery));
           } else {
             showToast('Gagal: ' + (res.message || 'Server error'), 'error');
           }
@@ -1124,10 +1037,14 @@
       } else {
         PKD.updateSesiAbsen(id, nama, waktu, aktif, password).then(res => {
           if (res.success) {
-            const updated = updateSesiAbsenInState(id, data);
+            const index = sesiAbsenList.findIndex(i => String(i.id) === String(id));
+            if (index !== -1) {
+              sesiAbsenList[index] = { ...sesiAbsenList[index], ...data };
+              saveToStorage(sesiAbsenList);
+            }
             showToast('Sesi absen berhasil diperbarui.', 'success');
             bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
-            renderTable(getFilteredSesiAbsen(STATE.searchQuery));
+            renderTable(getFilteredSesiAbsen(searchQuery));
           } else {
             showToast('Gagal: ' + (res.message || 'Server error'), 'error');
           }
@@ -1140,11 +1057,8 @@
       }
     }
 
-    // =====================================================
-    //   EXPORT DATA
-    // =====================================================
     function exportData() {
-      const data = STATE.filteredList;
+      const data = filteredList;
       if (data.length === 0) {
         showToast('Tidak ada data untuk diekspor.', 'info');
         return;
@@ -1178,9 +1092,9 @@
     //   SEARCH HANDLER
     // =====================================================
     const debouncedSearch = debounce(function(query) {
-      STATE.searchQuery = query;
-      const filtered = getFilteredSesiAbsen(STATE.searchQuery);
-      STATE.filteredList = filtered;
+      searchQuery = query;
+      const filtered = getFilteredSesiAbsen(searchQuery);
+      filteredList = filtered;
       renderTable(filtered);
     }, 300);
 
@@ -1188,167 +1102,14 @@
       debouncedSearch(e.target.value);
     }
 
-    // =====================================================
-    //   SIDEBAR TOGGLE & DROPDOWN
-    // =====================================================
-    function initSidebarToggle() {
-      const toggleBtn = document.getElementById('toggleSidebarBtn');
-      const sidebar = document.getElementById('sidebarWrapper');
-      if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', function() {
-          sidebar.classList.toggle('minimized');
-          const icon = this.querySelector('i');
-          if (sidebar.classList.contains('minimized')) {
-            icon.classList.remove('bi-arrow-left-right');
-            icon.classList.add('bi-arrow-right-left');
-          } else {
-            icon.classList.remove('bi-arrow-right-left');
-            icon.classList.add('bi-arrow-left-right');
-          }
-        });
-      }
+    function debounce(fn, delay) {
+      let timer;
+      return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
     }
 
-    function initSidebarDropdowns() {
-      document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const target = this.dataset.target;
-          const submenu = document.getElementById('submenu-' + target);
-          if (submenu) submenu.classList.toggle('open');
-        });
-      });
-    }
-
-    // =====================================================
-    //   LOGIN / LOGOUT
-    // =====================================================
-    function initAuth() {
-      if (typeof PKD === 'undefined') {
-        window.PKD = {
-          getUserRole: () => 'guest',
-          verifyAdmin: async (u, p) => {
-            if (u === 'admin' && p === 'admin123') return { success: true };
-            return { success: false, message: 'Login gagal' };
-          },
-          setUserRole: (r) => { console.warn('PKD mock: setUserRole', r); },
-          setUserData: (d) => { console.warn('PKD mock: setUserData', d); },
-          persistAuthState: () => { console.warn('PKD mock: persistAuthState'); },
-          logout: () => { DataCache.clear(); window.location.href = '/bisaa/index.html'; }
-        };
-        console.warn('PKD tidak terdefinisi. Menggunakan mock PKD.');
-      }
-
-      if (PKD.getUserRole() !== 'admin') {
-        new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
-      }
-    }
-
-    function handleLogin() {
-      const u = document.getElementById('adminUsername').value.trim();
-      const p = document.getElementById('adminPassword').value;
-      const err = document.getElementById('adminLoginError');
-      if (!u || !p) {
-        err.innerText = 'Username dan password harus diisi';
-        err.style.display = 'block';
-        return;
-      }
-      PKD.verifyAdmin(u, p).then(async res => {
-        if (res.success) {
-          PKD.setUserRole('admin');
-          PKD.setUserData({ nama: u });
-          PKD.persistAuthState();
-
-          // Preload semua data
-          try {
-            const allData = await Promise.all([
-              PKD.getPesertaList ? PKD.getPesertaList() : [],
-              PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
-              PKD.getMateriList ? PKD.getMateriList() : [],
-              PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
-              PKD.getPretestResponses ? PKD.getPretestResponses() : [],
-              PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
-              PKD.getAlumniList ? PKD.getAlumniList() : [],
-              PKD.getKaderList ? PKD.getKaderList() : [],
-              PKD.getInformasiList ? PKD.getInformasiList() : [],
-              PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
-              PKD.getSertifikatList ? PKD.getSertifikatList() : []
-            ]);
-            DataCache.setAllData({
-              peserta: allData[0], sesi: allData[1], materi: allData[2], skrining: allData[3], pretest: allData[4], posttest: allData[5], alumni: allData[6], kader: allData[7], informasi: allData[8], absensi: allData[9], sertifikat: allData[10]
-            });
-          } catch (e) { console.warn('Gagal preload data:', e); }
-
-          bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
-          loadData();
-        } else {
-          err.innerText = res.message || 'Login gagal';
-          err.style.display = 'block';
-        }
-      }).catch(e => {
-        err.innerText = 'Kesalahan: ' + e.message;
-        err.style.display = 'block';
-      });
-    }
-
-    function handleLogout(e) {
-      e.preventDefault();
-      DataCache.clear();
-      if (PKD.logout) PKD.logout();
-    }
-
-    // =====================================================
-    //   INITIALIZATION
-    // =====================================================
-    function init() {
-      initSidebarToggle();
-      initSidebarDropdowns();
-      initAuth();
-
-      // Load data
-      loadData();
-
-      // Event listeners
-      document.getElementById('addSesiAbsenBtn')?.addEventListener('click', openAddModal);
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        loadData(true).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-      });
-      document.getElementById('saveSesiAbsenBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('sidebarLogoutBtn')?.addEventListener('click', handleLogout);
-      document.getElementById('adminLoginSubmit')?.addEventListener('click', handleLogin);
-      document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
-        if (window.__qrSesiCanvas) {
-          const link = document.createElement('a');
-          link.download = `QR_Sesi_${Date.now()}.png`;
-          link.href = window.__qrSesiCanvas.toDataURL('image/png');
-          link.click();
-        } else {
-          showToast('Tidak ada QR yang tersedia', 'warning');
-        }
-      });
-      document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-        const modalEl = document.getElementById('moreMenuModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        if (PKD.logout) PKD.logout();
-        else window.location.href = '/bisaa/index.html';
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
   })();
 </script>
 </body>
