@@ -11,15 +11,59 @@
     <style>
         * { font-family: 'Inter', sans-serif; }
         body { background: #f8fafc; color: #0f172a; }
-        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
-        .navbar-brand img { max-height: 40px; margin-right: 12px; }
-        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
-        .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; color: #334155; transition: all 0.15s; }
-        .nav-link:hover { background: rgba(37,99,235,0.06); color: #2563eb; }
-        .nav-link.active { background: #2563eb; color: white; box-shadow: 0 4px 10px rgba(37,99,235,0.2); }
-        .container-card { max-width: 1200px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
-        .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+        
+        /* Header sederhana tanpa navbar */
+        .header-simple {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(203,213,225,0.3);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .header-simple .brand {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #0a3d62;
+        }
+        .header-simple .brand img {
+            max-height: 40px;
+            margin-right: 12px;
+        }
+        .header-simple .brand-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0a3d62;
+        }
+        .header-simple .brand-sub {
+            font-size: 0.9rem;
+            color: #6c757d;
+            display: block;
+        }
+        .btn-kembali {
+            border-radius: 50px;
+            padding: 0.4rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .container-card {
+            max-width: 1200px;
+            background: white;
+            border-radius: 32px;
+            padding: 2rem;
+            margin: 30px auto;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(226,232,240,0.6);
+        }
+        .section-title {
+            font-weight: 650;
+            font-size: 1.75rem;
+            border-left: 6px solid #2563eb;
+            padding-left: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
 
         /* FLYER */
         .flyer-section { position: relative; margin-bottom: 2rem; }
@@ -90,30 +134,24 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="index.html">
-                <img src="LOGO ANSOR.webp" alt="GP Ansor">
-                <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
-            </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="pretest.html">Pre-test</a></li>
-                    <li class="nav-item"><a class="nav-link" href="posttest.html">Post-test</a></li>
-                    <li class="nav-item"><a class="nav-link" href="absen.html">Absen</a></li>
-                    <li class="nav-item"><a class="nav-link" href="skrining.html">Skrining</a></li>
-                    <li class="nav-item"><a class="nav-link" href="peserta.html">Peserta</a></li>
-                    <li class="nav-item"><a class="nav-link" href="materi.html">Materi</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="informasi.html">Informasi</a></li>
-                    <li class="nav-item"><a class="nav-link" href="usulan_form.html">Usulan PKD</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
+    <!-- Header Sederhana dengan Tombol Kembali -->
+    <header class="header-simple">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a href="index.html" class="brand">
+                <img src="LOGO ANSOR.webp" alt="GP Ansor">
+                <div>
+                    <span class="brand-title">PKD GP Ansor</span>
+                    <span class="brand-sub">Kabupaten Bantul</span>
+                </div>
+            </a>
+            <a href="index.html" class="btn btn-outline-primary btn-kembali">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
     <div class="container container-card">
         <h2 class="section-title"><i class="bi bi-calendar-heart me-2"></i>Jadwal & Flyer PKD</h2>
         <div id="infoContainer" class="py-4">
@@ -121,6 +159,7 @@
         </div>
     </div>
 
+    <!-- Modal Zoom Flyer -->
     <div class="modal fade" id="zoomModal" tabindex="-1">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
@@ -137,14 +176,17 @@
         </div>
     </div>
 
+    <!-- Footer -->
     <footer class="footer-modern container">
         <div class="d-flex justify-content-center align-items-center gap-2">
             <i class="bi bi-c-circle"></i><span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="api.js"></script>
+
     <script>
         // ================= KONFIGURASI =================
         // Tidak perlu scriptUrl lagi, gunakan PKD

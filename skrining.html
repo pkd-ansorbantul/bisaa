@@ -287,7 +287,7 @@
         }
 
         // =====================================================
-        //   CHECK LOGIN & REDIRECT (DIPERBAIKI)
+        //   CHECK LOGIN & REDIRECT
         // =====================================================
         async function checkLoginAndRedirect() {
             try {
@@ -296,13 +296,11 @@
 
                 if (requireLogin) {
                     const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-                    // Jika belum login, redirect ke login
                     if (!auth) {
                         window.location.href = '/bisaa/login.html?return=skrining.html';
                         return false;
                     }
 
-                    // Cek role user (biarkan admin, member, atau ketua_pac bisa akses)
                     let userRole = PKD.getUserRole();
                     if (!userRole) {
                         try {
@@ -310,7 +308,6 @@
                             userRole = parsed.role || null;
                         } catch (e) {}
                     }
-                    // Jika role masih null, redirect
                     if (!userRole) {
                         window.location.href = '/bisaa/login.html?return=skrining.html';
                         return false;
@@ -332,11 +329,17 @@
                     const cached = DataCache.getData('skriningQuestions');
                     if (cached && Array.isArray(cached) && cached.length > 0) {
                         questions = cached;
+                        renderForm(false);
+                        
+                        // --- UPDATE STATUS ---
+                        const statusEl = document.getElementById('dataStatus');
+                        if (statusEl) {
+                            statusEl.textContent = '✅ Siap';
+                            statusEl.className = 'badge bg-success text-white';
+                        }
+                        // -----------------------
                         if (isInitialLoad) {
-                            renderForm(false);
                             isInitialLoad = false;
-                        } else {
-                            renderForm(false);
                         }
                         return;
                     }
@@ -360,11 +363,28 @@
                     questions = freshQuestions;
                     DataCache.updateData('skriningQuestions', questions);
                     renderForm(false);
+                    
+                    // --- UPDATE STATUS ---
+                    const statusEl = document.getElementById('dataStatus');
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Siap';
+                        statusEl.className = 'badge bg-success text-white';
+                    }
+                    // -----------------------
+
                 } else {
                     if (!questions || questions.length === 0) {
                         questions = getDefaultQuestions();
                         DataCache.updateData('skriningQuestions', questions);
                         renderForm(false);
+                        
+                        // --- UPDATE STATUS ---
+                        const statusEl = document.getElementById('dataStatus');
+                        if (statusEl) {
+                            statusEl.textContent = '⚠️ Default';
+                            statusEl.className = 'badge bg-warning text-dark';
+                        }
+                        // -----------------------
                     }
                 }
                 isInitialLoad = false;
@@ -374,6 +394,14 @@
                     questions = getDefaultQuestions();
                     DataCache.updateData('skriningQuestions', questions);
                     renderForm(false);
+                    
+                    // --- UPDATE STATUS ---
+                    const statusEl = document.getElementById('dataStatus');
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Offline';
+                        statusEl.className = 'badge bg-danger text-white';
+                    }
+                    // -----------------------
                 }
                 isInitialLoad = false;
             }
@@ -532,13 +560,26 @@
             document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
                 this.disabled = true;
+                const statusEl = document.getElementById('dataStatus');
+                if (statusEl) {
+                    statusEl.textContent = '🔄 Memuat...';
+                    statusEl.className = 'badge bg-light text-dark';
+                }
                 loadSkriningQuestions(true).then(() => {
                     this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
                     this.disabled = false;
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Siap';
+                        statusEl.className = 'badge bg-success text-white';
+                    }
                     showToast('Data diperbarui', 'success');
                 }).catch(() => {
                     this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
                     this.disabled = false;
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Gagal';
+                        statusEl.className = 'badge bg-danger text-white';
+                    }
                     showToast('Gagal memperbarui', 'error');
                 });
             });
@@ -707,6 +748,12 @@
             if (cached && Array.isArray(cached) && cached.length > 0) {
                 questions = cached;
                 renderForm(false);
+                // Update status
+                const statusEl = document.getElementById('dataStatus');
+                if (statusEl) {
+                    statusEl.textContent = '✅ Siap';
+                    statusEl.className = 'badge bg-success text-white';
+                }
                 isInitialLoad = false;
             } else {
                 // Jika tidak ada cache, tampilkan spinner saat load pertama

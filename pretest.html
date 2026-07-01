@@ -152,8 +152,16 @@
       localStorage.removeItem(FORM_STATE_KEY);
     }
 
+    // Soal Default (jika server gagal merespon)
+    function getDefaultQuestions() {
+      return [
+        { id: 1, teks: 'Aswaja adalah singkatan dari…', opsi: ['Ahli Sunnah wal Jamaah','Ahlus Sunnah wal Jamaah','Ahlussunnah wal Jama\'ah','Ahli Sunah wal Jamaah'], jawaban: 1, urutan: 1, timer_enabled: false, timer_duration: 30 },
+        { id: 2, teks: 'Dalam bidang aqidah, Aswaja mengikuti ajaran…', opsi: ['Imam Syafi\'i','Imam Asy\'ari','Imam Ahmad','Imam Ghazali'], jawaban: 1, urutan: 2, timer_enabled: false, timer_duration: 30 }
+      ];
+    }
+
     // ============================================================
-    //   LOAD DATA (HANYA DARI LOCALSTORAGE, TANPA LOOP)
+    //   LOAD DATA (LOGIKA TANPA LOOP)
     // ============================================================
     function loadMainData() {
       const container = document.getElementById('pretestContainer');
@@ -170,7 +178,7 @@
         return;
       }
 
-      // 2. Jika tidak ada data, tampilkan spinner (hanya terjadi jika index.html belum di-load)
+      // 2. Jika tidak ada data, tampilkan spinner
       container.innerHTML = `
         <div class="text-center py-5">
           <div class="spinner-border text-primary"></div>
@@ -178,7 +186,7 @@
         </div>
       `;
 
-      // 3. Ambil dari API (HANYA SEKALI) jika localStorage kosong
+      // 3. Ambil dari API (HANYA SEKALI)
       console.log('🔄 Mengambil data pretest dari API (hanya sekali)...');
       Promise.all([PKD.getPretestQuestions(true), PKD.getQuizSettings(true)])
         .then(([questionsRes, settingsRes]) => {
@@ -195,22 +203,30 @@
             quizSettings = freshSettings;
             renderFormDataDiri();
           } else {
-            container.innerHTML = `
-              <div class="alert alert-warning text-center">
-                <i class="bi bi-exclamation-triangle fs-4"></i>
-                <p class="mt-2 mb-0">Belum ada soal pretest. Silakan buka <strong>index.html</strong> terlebih dahulu.</p>
-              </div>
-            `;
+            console.warn('⚠️ API mengembalikan data kosong. Menggunakan default questions.');
+            const defaultQs = getDefaultQuestions();
+            const all = getFromStorage() || {};
+            all.pretestQuestions = defaultQs;
+            all.quizSettings = freshSettings || {};
+            saveToStorage(all);
+
+            questions = defaultQs;
+            quizSettings = freshSettings || {};
+            renderFormDataDiri();
+            showToast('Soal pretest masih default. Admin dapat menambahkan soal.', 'info');
           }
         })
         .catch(e => {
-          container.innerHTML = `
-            <div class="alert alert-danger text-center">
-              <i class="bi bi-wifi-off fs-4"></i>
-              <p class="mt-2 mb-0">Koneksi ke server gagal. Pastikan koneksi internet stabil.</p>
-            </div>
-          `;
-          console.error(e);
+          console.error('❌ Gagal fetch data, menggunakan soal default:', e);
+          // Jika gagal, gunakan default questions dan simpan ke storage
+          const defaultQs = getDefaultQuestions();
+          const all = getFromStorage() || {};
+          all.pretestQuestions = defaultQs;
+          saveToStorage(all);
+          questions = defaultQs;
+          quizSettings = {};
+          renderFormDataDiri();
+          showToast('⚠️ Gagal memuat data dari server. Menggunakan soal default.', 'error');
         });
     }
 
@@ -220,8 +236,15 @@
     function renderFormDataDiri() {
       const container = document.getElementById('pretestContainer');
 
+      // Jika benar-benar tidak ada soal (selalu dipastikan ada dari fallback)
       if (!questions || questions.length === 0) {
-        return; // data kosong
+        container.innerHTML = `
+          <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle fs-4"></i>
+            <p class="mt-2 mb-0">Belum ada soal pretest yang tersedia.</p>
+          </div>
+        `;
+        return;
       }
 
       const savedQuiz = loadQuizState();
@@ -290,8 +313,9 @@
       });
 
       document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
-        // Refresh manual: ambil data dari API
-        console.log('🔄 Refresh manual...');
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...';
+        this.disabled = true;
+        
         Promise.all([PKD.getPretestQuestions(true), PKD.getQuizSettings(true)])
           .then(([questionsRes, settingsRes]) => {
             const freshQuestions = questionsRes?.data || [];
@@ -313,6 +337,10 @@
           })
           .catch(e => {
             showToast('Gagal refresh data: ' + e.message, 'error');
+          })
+          .finally(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+            this.disabled = false;
           });
       });
 
@@ -330,7 +358,7 @@
     }
 
     // ============================================================
-    //   RENDER SOAL, TIMER, SUMMARY (TIDAK BERUBAH)
+    //   RENDER SOAL, TIMER, SUMMARY
     // ============================================================
     function renderPretestQuestion() {
       const container = document.getElementById('pretestContainer');
@@ -489,7 +517,7 @@
     }
 
     // ============================================================
-    //   MAIN INIT (TANPA LOOP)
+    //   MAIN INIT
     // ============================================================
     window.loadPretest = function() {
       // Cek login mode

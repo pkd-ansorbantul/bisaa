@@ -13,54 +13,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ========== GAYA DASAR ========== */
-    .navbar-brand {
-      line-height: 1.2;
+    /* ========== RESET & BASE ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .brand-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #0a3d62;
-    }
-    .brand-sub {
-      font-size: 0.9rem;
-      font-weight: 400;
-      color: #6c757d;
-      display: block;
-      margin-top: 2px;
-      letter-spacing: 0.5px;
-    }
-    .navbar-brand img {
-      height: 45px;
-      width: auto;
-      margin-right: 12px;
-      transition: transform 0.3s ease;
-      will-change: transform;
-    }
-    .navbar-brand img:hover {
-      transform: scale(1.05);
-    }
-    .nav-link.active {
-      font-weight: 600;
-      color: #0a3d62 !important;
-    }
-    .nav-link {
-      color: #495057 !important;
-      margin: 0 4px;
-    }
-    .nav-link:hover {
-      color: #0a3d62 !important;
-    }
-    @media (max-width: 991px) {
-      .navbar-brand img {
-        height: 40px;
-      }
-      .brand-title {
-        font-size: 1.2rem;
-      }
-    }
-    * { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
     body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: #f8fafc;
       color: #0f172a;
       line-height: 1.6;
@@ -68,107 +28,319 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* ========== PREMIUM NAVBAR ========== */
     .navbar {
-      background: rgba(255,255,255,0.8) !important;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      padding: 0.75rem 0;
     }
     .navbar-brand {
       font-weight: 700;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
       color: #0f172a !important;
+    }
+    .navbar-brand img {
+      height: 48px;
+      width: auto;
+      margin-right: 14px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .navbar-brand img:hover {
+      transform: scale(1.08) rotate(-2deg);
+    }
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0a3d62;
+      letter-spacing: -0.02em;
+    }
+    .brand-sub {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: #64748b;
+      display: block;
+      margin-top: 2px;
+      letter-spacing: 0.3px;
     }
     .nav-link {
       font-weight: 500;
       border-radius: 9999px;
       padding: 0.5rem 1.2rem;
-      margin: 0 0.2rem;
+      margin: 0 0.15rem;
       color: #334155 !important;
-      transition: all 0.15s;
+      transition: all 0.2s ease;
     }
     .nav-link:hover {
-      background: rgba(37,99,235,0.06);
+      background: rgba(37, 99, 235, 0.08);
       color: #2563eb !important;
     }
     .nav-link.active {
       background: #2563eb !important;
-      color: white !important;
-      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
     }
-    .nav-link i { margin-right: 6px; }
+    .navbar-toggler {
+      border: none;
+      padding: 0.5rem;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .navbar-toggler:focus {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
 
-    .container-card {
-      max-width: 1000px;
-      background: white;
-      border-radius: 32px;
-      padding: 2rem 2rem;
-      margin: 30px auto;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      border: 1px solid #e2e8f0;
-      flex: 1;
+    /* ========== HERO / HEADER SECTION ========== */
+    .hero-wrapper {
+      background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+      border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+      padding: 3rem 0 1.5rem 0;
+      position: relative;
+      overflow: hidden;
     }
-    .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      margin-bottom: 1.8rem;
+    .hero-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -10%;
+      width: 60%;
+      height: 120%;
+      background: radial-gradient(ellipse at 30% 40%, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-wrapper::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      right: -5%;
+      width: 50%;
+      height: 100%;
+      background: radial-gradient(ellipse at 70% 60%, rgba(37, 99, 235, 0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #0a3d62 0%, #2563eb 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    .hero-sub {
+      font-size: 1.2rem;
+      color: #475569;
+      font-weight: 400;
+      max-width: 540px;
+    }
+    .hero-logo {
+      max-width: 180px;
+      opacity: 0.92;
+      filter: drop-shadow(0 8px 24px rgba(37, 99, 235, 0.10));
+    }
+    .hero-tagline {
+      font-size: 1rem;
+      color: #64748b;
+      letter-spacing: 0.3px;
+      font-weight: 400;
+      margin-top: 0.25rem;
+    }
+
+    /* ========== BADGE TOTAL KADER – PREMIUM ========== */
+    .total-badge-premium {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
+      color: #ffffff;
+      padding: 0.6rem 1.8rem;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .total-badge-premium::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .total-badge-premium i {
+      font-size: 1.3rem;
+      margin-right: 0.1rem;
+    }
+    .total-badge-premium .badge-number {
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    @media (max-width: 576px) {
+      .total-badge-premium {
+        width: 100%;
+        justify-content: center;
+        border-radius: 20px;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+        white-space: normal;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
+      }
+      .total-badge-premium .badge-number {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* ========== CARD MENU – GLASSMORPHISM ========== */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    @media (min-width: 768px) {
+      .menu-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    @media (min-width: 1200px) {
+      .menu-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .menu-card {
+      position: relative;
+      background: rgba(255, 255, 255, 0.70);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 28px;
+      padding: 1.8rem 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      text-decoration: none;
       color: #0f172a;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
-      letter-spacing: -0.01em;
     }
-
-    .feature-icon {
-      font-size: 2.2rem;
-      color: #2563eb;
-      background: rgba(37,99,235,0.08);
-      width: 80px;
-      height: 80px;
+    .menu-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.12), 0 6px 20px rgba(0, 0, 0, 0.05);
+      border-color: rgba(37, 99, 235, 0.2);
+      background: rgba(255, 255, 255, 0.85);
+    }
+    .menu-card:active {
+      transform: scale(0.96);
+      transition-duration: 0.1s;
+    }
+    .menu-card .icon-wrapper {
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 30px;
+      font-size: 2rem;
+      color: #2563eb;
       margin-bottom: 1rem;
+      transition: all 0.3s;
+      border: 1px solid rgba(37, 99, 235, 0.05);
     }
-
-    .btn-rounded {
-      border-radius: 9999px;
-      padding: 0.6rem 2rem;
+    .menu-card:hover .icon-wrapper {
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+      transform: scale(1.05);
+    }
+    .menu-card .card-label {
       font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.15rem;
+    }
+    .menu-card .card-desc {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: 400;
     }
 
+    /* ========== LOGIN PROMPT (GLASS) ========== */
+    #loginPrompt {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 2rem;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(8px);
+      border-radius: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      margin-top: 1.5rem;
+    }
+    #loginPrompt h5 {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* ========== FOOTER ========== */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
-      margin-top: 3rem;
+      margin-top: auto;
       text-align: center;
-      padding: 1.5rem 0;
-      border-top: 1px solid #e2e8f0;
-      background: white;
+      padding: 2rem 0;
+      border-top: 1px solid rgba(203, 213, 225, 0.4);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
     }
 
-    /* ========== GAYA FAQ PANEL ========== */
+    /* ========== FAQ CHATBOT – PREMIUM ========== */
     .chatbot-button {
       position: fixed;
       bottom: 30px;
       right: 30px;
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
       color: white;
       border: none;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.35);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 30px;
       z-index: 1032;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .chatbot-button:hover {
-      background: #1d4ed8;
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.45);
     }
     .chatbot-panel {
       position: fixed;
@@ -176,21 +348,22 @@
       right: 30px;
       width: 380px;
       max-width: calc(100vw - 60px);
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
       z-index: 1031;
       display: none;
       flex-direction: column;
       overflow: hidden;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.5);
       max-height: 80vh;
     }
     .chatbot-panel.show {
       display: flex;
     }
     .chatbot-header {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
       color: white;
       padding: 16px 20px;
       font-weight: 600;
@@ -203,19 +376,24 @@
       background: none;
       border: none;
       color: white;
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .chatbot-header button:hover {
+      opacity: 1;
     }
     .faq-content {
-      padding: 16px;
+      padding: 20px;
       overflow-y: auto;
-      max-height: 400px;
-      background: #f8fafc;
+      max-height: 380px;
+      background: transparent;
     }
     .faq-item {
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
       padding-bottom: 0.75rem;
-      border-bottom: 1px dashed #cbd5e1;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.3);
     }
     .faq-item:last-child {
       border-bottom: none;
@@ -223,59 +401,89 @@
     .faq-item .fw-bold {
       color: #0f172a;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .faq-item .text-muted {
       font-size: 0.9rem;
+      color: #475569;
     }
 
-    /* Kartu menu */
-    .menu-card {
-      cursor: pointer;
-      transition: box-shadow 0.2s, background-color 0.2s;
+    /* ========== ANIMATIONS ========== */
+    .fade-up {
+      animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    .menu-card:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
-      background-color: #f9f9fc;
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.2s; }
+
+    /* ========== RESPONSIVE TWEAKS ========== */
+    @media (max-width: 576px) {
+      .hero-title {
+        font-size: 2rem;
+      }
+      .hero-sub {
+        font-size: 1rem;
+      }
+      .menu-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+      .menu-card {
+        padding: 1.2rem 0.8rem;
+        min-height: 130px;
+      }
+      .menu-card .icon-wrapper {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+      }
+      .menu-card .card-label {
+        font-size: 0.9rem;
+      }
+      .menu-card .card-desc {
+        font-size: 0.7rem;
+      }
+      .chatbot-panel {
+        right: 10px;
+        width: calc(100vw - 20px);
+        bottom: 90px;
+      }
     }
 
-    .content-logo {
-      max-width: 200px;
-      opacity: 0.9;
+    /* ========== SCROLLBAR PREMIUM ========== */
+    ::-webkit-scrollbar {
+      width: 8px;
     }
-
-    /* Badge total peserta */
-    .total-peserta-badge {
-      background: linear-gradient(135deg, #2563eb, #1e4bb3);
-      color: white;
-      padding: 0.5rem 1.5rem;
-      border-radius: 9999px;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(37,99,235,0.2);
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
     }
-
-    /* Spinner */
-    .spinner-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
+    ::-webkit-scrollbar-thumb {
+      background: #2563eb;
+      border-radius: 10px;
     }
-
-    /* Login prompt */
-    #loginPrompt {
-      display: none;
-      text-align: center;
-      padding: 2rem;
-      background: #f8fafc;
-      border-radius: 16px;
-      border: 1px dashed #cbd5e1;
+    ::-webkit-scrollbar-thumb:hover {
+      background: #1e4bb3;
     }
   </style>
 </head>
 <body>
 
-<!-- ==================== NAVBAR MODERN ==================== -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+<!-- ==================== NAVBAR ==================== -->
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
       <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="me-2">
@@ -284,109 +492,126 @@
         <span class="brand-sub">Kabupaten Bantul</span>
       </span>
     </a>
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarMain">
-      <!-- Menu navigasi utama (diisi oleh JS jika login) -->
       <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+        <!-- Dynamic menu will be injected by JS if needed -->
       </ul>
       <div class="d-flex align-items-center gap-2 ms-auto" id="navbarUserMenu"></div>
     </div>
   </div>
 </nav>
 
-<!-- ==================== KONTEN UTAMA ==================== -->
+<!-- ==================== HERO & CONTENT ==================== -->
 <div id="contentArea">
-  <section id="berandaSection" class="container container-card">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="section-title mb-0"><i class="bi bi-house-heart-fill me-2"></i>Selamat Datang di Sistem PKD</h2>
-      <!-- Badge total peserta realtime -->
-      <div id="totalPesertaBadge" class="total-peserta-badge d-none"></div>
+  <section class="hero-wrapper">
+    <div class="container hero-content">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+          <div class="d-flex align-items-start flex-column">
+            <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
+              <h1 class="hero-title fade-up">Pelatihan Kepemimpinan Dasar</h1>
+              <span class="total-badge-premium d-none" id="totalPesertaBadge">
+                <i class="bi bi-people-fill"></i>
+                <span>Total Kader</span>
+                <span class="badge-number" id="totalCount">0</span>
+              </span>
+            </div>
+            <p class="hero-sub fade-up delay-1">
+              Platform digital resmi <strong>PKD GP Ansor Kabupaten Bantul</strong> – mencetak kader pemimpin yang berakhlak, nasionalis, dan berwawasan kebangsaan.
+            </p>
+            <div class="mt-3 fade-up delay-2">
+              <a href="#menu-section" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                <i class="bi bi-grid me-2"></i>Mulai Jelajahi
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5 text-center fade-up delay-2">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor" class="hero-logo">
+          <div class="hero-tagline">"Berdaya, Berkhidmat, Berkemajuan"</div>
+        </div>
+      </div>
     </div>
-    <div class="row align-items-center">
-      <div class="col-lg-6">
-        <p style="font-size:1.2rem; line-height:1.7;">Portal digital <strong>Pelatihan Kepemimpinan Dasar (PKD) GP Ansor Kabupaten Bantul</strong>.</p>
-        <p class="mb-4">Gunakan menu di bawah untuk mengakses fitur:</p>
+  </section>
 
-        <!-- MENU GRID -->
-        <div class="row g-4" id="menuGrid">
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('pretest.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-pencil-square"></i></div>
-              <div><strong>Pre-test</strong><br><span class="text-muted small">Uji pengetahuan awal sebelum pelatihan.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('posttest.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-trophy"></i></div>
-              <div><strong>Post-test</strong><br><span class="text-muted small">Evaluasi setelah materi selesai.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('absen.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-qr-code"></i></div>
-              <div><strong>Absen Digital</strong><br><span class="text-muted small">Scan QR atau masukkan password sesi.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('skrining.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-clipboard-check"></i></div>
-              <div><strong>Skrining</strong><br><span class="text-muted small">Form pendataan awal peserta.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <a href="/bisaa/peserta.html" class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card text-decoration-none text-dark" target="_blank" rel="noopener noreferrer">
-              <div class="feature-icon mb-3"><i class="bi bi-person-badge"></i></div>
-              <div><strong>Peserta</strong><br><span class="text-muted small">Isi data diri peserta PKD.</span></div>
-            </a>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('materi.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-file-earmark-pdf"></i></div>
-              <div><strong>Materi</strong><br><span class="text-muted small">Akses materi pelatihan, tayangkan langsung.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('about.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-info-circle"></i></div>
-              <div><strong>Tentang Kami</strong><br><span class="text-muted small">Informasi seputar PKD GP Ansor Bantul.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <div class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card" onclick="navigateTo('informasi.html')" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-newspaper"></i></div>
-              <div><strong>Informasi</strong><br><span class="text-muted small">Flyer, galeri, video & timeline PKD.</span></div>
-            </div>
-          </div>
-          <div class="col-6 col-md-4 col-lg-6 col-xl-4">
-            <a href="/bisaa/verifikasi.html" class="d-flex flex-column align-items-center justify-content-center text-center h-100 p-3 border rounded-4 shadow-sm menu-card text-decoration-none text-dark" role="button">
-              <div class="feature-icon mb-3"><i class="bi bi-qr-code-scan"></i></div>
-              <div><strong>Verifikasi Sertifikat</strong><br><span class="text-muted small">Scan QR untuk cek keaslian sertifikat.</span></div>
-            </a>
-          </div>
-        </div>
-        <!-- Login Prompt (jika mode login aktif) -->
-        <div id="loginPrompt">
-          <h5><i class="bi bi-shield-lock"></i> Akses Terbatas</h5>
-          <p>Anda harus login untuk mengakses menu.</p>
-          <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='/bisaa/login.html'">Login</button>
-        </div>
+  <section id="menu-section" class="container container-card" style="margin-top: -20px; position: relative; z-index: 2;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <h2 class="section-title mb-0" style="border-left-color: #2563eb;">
+        <i class="bi bi-grid-3x3-gap-fill me-2"></i>Menu Utama
+      </h2>
+    </div>
+
+    <!-- Login Prompt (hidden by default) -->
+    <div id="loginPrompt" class="fade-up">
+      <h5><i class="bi bi-shield-lock"></i> Akses Terbatas</h5>
+      <p class="text-muted">Anda harus login untuk mengakses seluruh menu.</p>
+      <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='/bisaa/login.html'">Login</button>
+    </div>
+
+    <!-- MENU GRID -->
+    <div class="menu-grid" id="menuGrid">
+      <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-pencil-square"></i></div>
+        <div class="card-label">Pre-test</div>
+        <div class="card-desc">Uji pengetahuan awal</div>
       </div>
-      <div class="col-lg-6 text-center">
-        <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor" class="content-logo mt-4 mt-lg-0">
-        <div class="mt-3 text-muted">"Berdaya, Berkhidmat, Berkemajuan"</div>
+      <div class="menu-card fade-up delay-1" onclick="navigateTo('posttest.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-trophy"></i></div>
+        <div class="card-label">Post-test</div>
+        <div class="card-desc">Evaluasi akhir</div>
+      </div>
+      <div class="menu-card fade-up delay-2" onclick="navigateTo('absen.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-qr-code"></i></div>
+        <div class="card-label">Absen Digital</div>
+        <div class="card-desc">Scan QR / password</div>
+      </div>
+      <div class="menu-card fade-up delay-2" onclick="navigateTo('skrining.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-clipboard-check"></i></div>
+        <div class="card-label">Skrining</div>
+        <div class="card-desc">Pendataan awal</div>
+      </div>
+      <div class="menu-card fade-up delay-3" onclick="navigateTo('peserta.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-person-badge"></i></div>
+        <div class="card-label">Peserta</div>
+        <div class="card-desc">Isi data diri</div>
+      </div>
+      <div class="menu-card fade-up delay-3" onclick="navigateTo('materi.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-file-earmark-pdf"></i></div>
+        <div class="card-label">Materi</div>
+        <div class="card-desc">Akses modul</div>
+      </div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('about.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-info-circle"></i></div>
+        <div class="card-label">Tentang Kami</div>
+        <div class="card-desc">Informasi PKD</div>
+      </div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('informasi.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-newspaper"></i></div>
+        <div class="card-label">Informasi</div>
+        <div class="card-desc">Flyer & timeline</div>
+      </div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('verifikasi.html')" role="button">
+        <div class="icon-wrapper"><i class="bi bi-qr-code-scan"></i></div>
+        <div class="card-label">Verifikasi</div>
+        <div class="card-desc">Cek sertifikat</div>
       </div>
     </div>
-    <hr class="my-5">
+
+    <hr class="my-4">
+    <div class="text-center text-muted small">
+      <i class="bi bi-shield-check me-1"></i> Sistem aman & terintegrasi
+    </div>
   </section>
 </div>
 
 <!-- ==================== FOOTER ==================== -->
 <footer class="footer-modern container">
-  <div class="d-flex justify-content-center align-items-center gap-2">
+  <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
     <i class="bi bi-c-circle"></i>
-    <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul. Semua Hak Dilindungi</span>
+    <span>Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul</span>
   </div>
 </footer>
 
@@ -402,86 +627,73 @@
     </div>
     <div class="faq-content">
       <div class="faq-item">
-        <div class="fw-bold">📅 Kapan pretest dilaksanakan?</div>
-        <div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Anda bisa mengaksesnya di menu "Pre‑test" setelah login.</div>
+        <div class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Kapan pretest dilaksanakan?</div>
+        <div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Akses di menu "Pre‑test" setelah login.</div>
       </div>
       <div class="faq-item">
-        <div class="fw-bold">📝 Bagaimana cara mendaftar PKD?</div>
-        <div class="text-muted small">
-          Pendaftaran dilakukan melalui <a href="/bisaa/peserta.html" target="_blank">Menu Peserta</a>. 
-          Isi data diri dan tunggu konfirmasi, atau bisa menghubungi admin.
-        </div>
+        <div class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Bagaimana cara mendaftar PKD?</div>
+        <div class="text-muted small">Pendaftaran melalui <a href="/bisaa/peserta.html" target="_blank">Menu Peserta</a>. Isi data dan tunggu konfirmasi.</div>
       </div>
       <div class="faq-item">
-        <div class="fw-bold">📚 Materi apa saja yang tersedia?</div>
-        <div class="text-muted small">Materi pelatihan meliputi kepemimpinan, keorganisasian, dan wawasan kebangsaan. Akses di menu "Materi".</div>
+        <div class="fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Materi apa saja yang tersedia?</div>
+        <div class="text-muted small">Materi meliputi kepemimpinan, keorganisasian, dan wawasan kebangsaan. Akses di menu "Materi".</div>
       </div>
-
-      <!-- Kontak Admin via WhatsApp -->
       <div class="faq-item" id="waContactItem"></div>
-
       <div class="faq-item">
-        <div class="fw-bold">📍 Alamat sekretariat?</div>
-        <div class="text-muted small">Jl. Imogiri Timur KM 10, Bantul.</div>
+        <div class="fw-bold"><i class="bi bi-geo-alt me-2"></i>Alamat sekretariat?</div>
+        <div class="text-muted small">Jl. Imogiri Timur KM 10, Bantul, DIY.</div>
       </div>
       <div class="faq-item">
-        <div class="fw-bold">🔐 Bagaimana cara login?</div>
-        <div class="text-muted small">Klik tombol "Login" di pojok kanan atas, gunakan username dan password yang telah diberikan panitia.</div>
+        <div class="fw-bold"><i class="bi bi-shield-lock me-2"></i>Bagaimana cara login?</div>
+        <div class="text-muted small">Klik tombol "Login" di pojok kanan atas. Gunakan username & password yang diberikan panitia.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ==================== BOOTSTRAP JS ==================== -->
+<!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/bisaa/dataCache.js"></script>
 <script src="/bisaa/api.js"></script>
 
 <script>
-  // =====================================================
-  //   STATE DARI PKD
-  // =====================================================
-  // userRole, userData, dll. sudah di-load oleh api.js
-
+  // ==========================================
+  // STATE
+  // ==========================================
   let realtimeEnabled = false;
   let requireLogin = false;
 
-  // =====================================================
-  //   FUNGSI NAVIGASI (DIPERBAIKI)
-  // =====================================================
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
   function navigateTo(url) {
-    // Pastikan url tidak memiliki prefix /bisaa/ ganda
     const cleanUrl = url.replace(/^\/bisaa\//, '');
     if (requireLogin && !PKD.getUserRole()) {
-      // Mode login aktif & belum login → alihkan ke login
       window.location.href = '/bisaa/login.html?redirect=' + encodeURIComponent('/bisaa/' + cleanUrl);
     } else {
       window.location.href = '/bisaa/' + cleanUrl;
     }
   }
 
-  // =====================================================
-  //   TOTAL PESERTA REALTIME
-  // =====================================================
+  // ==========================================
+  // TOTAL KADER – PREMIUM BADGE
+  // ==========================================
   async function updateTotalPeserta() {
     if (!realtimeEnabled) return;
     try {
-      // Ambil dari DataCache dulu
       const allData = DataCache.getAllData();
       const total = allData?.peserta?.length || 0;
       const badge = document.getElementById('totalPesertaBadge');
-      if (badge) {
+      const countSpan = document.getElementById('totalCount');
+      if (badge && countSpan) {
         badge.classList.remove('d-none');
-        badge.innerHTML = `<i class="bi bi-people-fill me-1"></i> Total Kader: ${total}`;
+        countSpan.textContent = total;
       }
-      // Update dari API di background
       const res = await PKD.getTotalPeserta();
       if (res.success && res.total !== total) {
-        badge.innerHTML = `<i class="bi bi-people-fill me-1"></i> Total Kader: ${res.total}`;
-        // Update DataCache
+        if (countSpan) countSpan.textContent = res.total;
         const all = DataCache.getAllData() || {};
         if (!all.peserta) all.peserta = [];
-        // Simpan total tidak perlu diubah, hanya untuk keperluan badge
       }
     } catch (e) {
       console.warn('Gagal mengambil total peserta:', e);
@@ -501,9 +713,9 @@
     }
   }
 
-  // =====================================================
-  //   MODE LOGIN CHECK
-  // =====================================================
+  // ==========================================
+  // LOGIN MODE CHECK
+  // ==========================================
   async function checkLoginMode() {
     try {
       const res = await PKD.getLoginMode();
@@ -513,7 +725,7 @@
         document.getElementById('menuGrid').style.display = 'none';
         document.getElementById('loginPrompt').style.display = 'block';
       } else {
-        document.getElementById('menuGrid').style.display = '';
+        document.getElementById('menuGrid').style.display = 'grid';
         document.getElementById('loginPrompt').style.display = 'none';
       }
     } catch (e) {
@@ -521,9 +733,9 @@
     }
   }
 
-  // =====================================================
-  //   KONTAK WHATSAPP DI FAQ
-  // =====================================================
+  // ==========================================
+  // WA CONTACT (FAQ)
+  // ==========================================
   function updateWAContact() {
     const waItem = document.getElementById('waContactItem');
     if (!waItem) return;
@@ -534,8 +746,8 @@
     waItem.dataset.correctAnswer = correctAnswer;
 
     waItem.innerHTML = `
-      <div class="fw-bold mb-2">📞 Kontak Admin via WhatsApp</div>
-      <div class="text-muted small mb-2">Isi data di bawah, pesan akan langsung terkirim ke admin.</div>
+      <div class="fw-bold mb-2"><i class="bi bi-whatsapp me-2"></i>Kontak Admin via WhatsApp</div>
+      <div class="text-muted small mb-2">Isi data, pesan akan langsung terkirim ke admin.</div>
       <div class="mb-2">
         <input type="text" class="form-control form-control-sm" id="waName" placeholder="Nama Anda" maxlength="100">
       </div>
@@ -585,24 +797,16 @@
     });
   }
 
-  // =====================================================
-  //   FAQ PANEL TOGGLE
-  // =====================================================
+  // ==========================================
+  // FAQ TOGGLE
+  // ==========================================
   (function() {
     const toggleBtn = document.getElementById('chatbotToggleBtn');
     const panel = document.getElementById('chatbotPanel');
     const closeBtn = document.getElementById('chatbotCloseBtn');
 
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function() {
-        panel.classList.toggle('show');
-      });
-    }
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function() {
-        panel.classList.remove('show');
-      });
-    }
+    toggleBtn?.addEventListener('click', () => panel.classList.toggle('show'));
+    closeBtn?.addEventListener('click', () => panel.classList.remove('show'));
 
     document.addEventListener('click', function(e) {
       if (panel && toggleBtn && !panel.contains(e.target) && !toggleBtn.contains(e.target) && panel.classList.contains('show')) {
@@ -611,55 +815,45 @@
     });
   })();
 
-  // =====================================================
-  //   LOAD SEMUA DATA KE DATACACHE (INITIAL LOAD)
-  // =====================================================
+  // ==========================================
+  // INITIAL DATA LOAD
+  // ==========================================
   async function loadInitialData() {
-    // Cek apakah data sudah ada di DataCache
     const existing = DataCache.getAllData();
-    if (existing) {
-      try {
-        // Pastikan data pretestQuestions ada dan tidak kosong
-        if (existing.pretestQuestions && existing.pretestQuestions.length > 0) {
-          console.log('✅ Data sudah ada di DataCache, tidak perlu fetch ulang.');
-          // Perbarui badge total peserta
-          const badge = document.getElementById('totalPesertaBadge');
-          if (badge) {
-            const total = existing.peserta?.length || 0;
-            badge.classList.remove('d-none');
-            badge.innerHTML = `<i class="bi bi-people-fill me-1"></i> Total Kader: ${total}`;
-          }
-          return;
-        }
-      } catch (e) {
-        console.warn('Gagal parse data existing:', e);
+    if (existing && existing.pretestQuestions && existing.pretestQuestions.length > 0) {
+      console.log('✅ Data sudah ada di DataCache, tidak perlu fetch ulang.');
+      const badge = document.getElementById('totalPesertaBadge');
+      const countSpan = document.getElementById('totalCount');
+      if (badge && countSpan) {
+        const total = existing.peserta?.length || 0;
+        badge.classList.remove('d-none');
+        countSpan.textContent = total;
       }
+      return;
     }
 
-    // Jika tidak ada atau tidak valid, ambil dari API
     try {
       console.log('🔄 Mengambil data awal dari API...');
       const result = await PKD.callApi('getAllData', {}, 'GET');
       if (result && result.success) {
         const data = result.data || {};
-        // Pastikan struktur data lengkap
-        if (!data.pretestQuestions) data.pretestQuestions = [];
-        if (!data.posttestQuestions) data.posttestQuestions = [];
-        if (!data.skriningQuestions) data.skriningQuestions = [];
-        if (!data.quizSettings) data.quizSettings = {};
-        if (!data.peserta) data.peserta = [];
-        if (!data.sesi) data.sesi = [];
-        if (!data.materi) data.materi = [];
+        data.pretestQuestions = data.pretestQuestions || [];
+        data.posttestQuestions = data.posttestQuestions || [];
+        data.skriningQuestions = data.skriningQuestions || [];
+        data.quizSettings = data.quizSettings || {};
+        data.peserta = data.peserta || [];
+        data.sesi = data.sesi || [];
+        data.materi = data.materi || [];
 
         DataCache.setAllData(data);
         console.log('✅ Data berhasil disimpan ke DataCache:', data);
 
-        // Perbarui badge total peserta
         const badge = document.getElementById('totalPesertaBadge');
-        if (badge) {
+        const countSpan = document.getElementById('totalCount');
+        if (badge && countSpan) {
           const total = data.peserta?.length || 0;
           badge.classList.remove('d-none');
-          badge.innerHTML = `<i class="bi bi-people-fill me-1"></i> Total Kader: ${total}`;
+          countSpan.textContent = total;
         }
       } else {
         console.warn('⚠️ Gagal mengambil data dari API:', result);
@@ -669,20 +863,17 @@
     }
   }
 
-  // =====================================================
-  //   INISIALISASI
-  // =====================================================
+  // ==========================================
+  // INIT
+  // ==========================================
   window.onload = function() {
-    // PKD.loadAuthState() sudah dipanggil oleh api.js saat DOMContentLoaded,
-    // sehingga userRole dan userData sudah terisi.
-    // Tetap panggil updateWAContact (selalu tampil).
     updateWAContact();
     loadRealtimeSetting();
     checkLoginMode();
     loadInitialData();
   };
 
-  // Tutup navbar saat klik di luar
+  // Close navbar on outside click
   document.addEventListener('click', function(event) {
     const navbar = document.getElementById('navbarMain');
     const toggler = document.querySelector('.navbar-toggler');
