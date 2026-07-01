@@ -483,6 +483,18 @@
                     <div class="btn-group">
                         <button class="btn btn-success" id="printBtn"><i class="fas fa-print"></i> Cetak / PDF</button>
                     </div>
+                    <div class="separator"></div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="saveLayoutCloudBtn"><i class="bi bi-cloud-upload"></i> Simpan ke Cloud</button>
+                        <button class="btn btn-outline-secondary" id="loadLayoutCloudBtn"><i class="bi bi-cloud-download"></i> Muat Cloud</button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="btn-group">
+                        <select id="layoutSelectCloud" class="form-select form-select-sm" style="width: 200px;">
+                            <option value="">-- Pilih Layout Cloud --</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" id="applyLayoutCloudBtn">Terapkan</button>
+                    </div>
                     <div class="ms-auto d-flex gap-2 align-items-center">
                         <div class="btn-group me-2" role="group">
                             <input type="checkbox" class="btn-check" id="barcodeToggle" checked>
@@ -809,7 +821,6 @@
                     <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
                     <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
                     <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
-                    <div class="col-6"><a href="/bisaa/admin/tanda_tangan_admin.html" class="btn btn-outline-primary w-100">Tanda Tangan</a></div>
                     <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
                 </div>
                 <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
@@ -878,7 +889,10 @@
                     setUserData: (d) => {},
                     persistAuthState: () => {},
                     logout: () => { DataCache.clear(); window.location.href = '/bisaa/index.html'; },
-                    callApi: async () => { return { data: [] }; }
+                    callApi: async () => { return { data: [] }; },
+                    saveCertificateLayout: async (nama, data_json) => { return { success: true, id: 'mock' }; },
+                    getCertificateLayout: async (id) => { return { success: false }; },
+                    listCertificateLayouts: async () => { return { success: true, data: [] }; }
                 };
             }
             if (PKD.getUserRole() !== 'admin') {
@@ -994,7 +1008,7 @@
             getAllEditableObjects().forEach(el => { if (el.dataset.type !== 'fixed') el.remove(); });
             stateArray.forEach(state => {
                 const el = document.createElement('div'); el.className = 'draggable-item'; el.dataset.id = state.id; el.dataset.type = state.type; el.style.position = 'absolute';
-                if (state.type === 'text') { el.classList.add('editable-text'); const span = document.createElement('span'); span.textContent = state.textContent || 'Teks Baru'; span.style.fontSize = state.fontSize || '24px'; span.style.fontFamily = state.fontFamily || 'Inter'; span.style.color = state.color || '#000000'; span.style.fontWeight = state.fontWeight || 'normal'; span.style.textAlign = state.textAlign || 'center'; span.style.letterSpacing = state.letterSpacing || '0px'; span.style.lineHeight = state.lineHeight || '1.2'; span.style.fontStyle = state.fontStyle || 'normal'; span.style.textDecoration = state.textDecoration || 'none'; el.appendChild(span); }
+                if (state.type === 'text') { el.classList.add('editable-text'); const span = document.createElement('span'); span.textContent = state.textContent || ''; span.style.fontSize = state.fontSize || '24px'; span.style.fontFamily = state.fontFamily || 'Inter'; span.style.color = state.color || '#000000'; span.style.fontWeight = state.fontWeight || 'normal'; span.style.textAlign = state.textAlign || 'center'; span.style.letterSpacing = state.letterSpacing || '0px'; span.style.lineHeight = state.lineHeight || '1.2'; span.style.fontStyle = state.fontStyle || 'normal'; span.style.textDecoration = state.textDecoration || 'none'; el.appendChild(span); }
                 else if (state.type === 'image') { const img = document.createElement('img'); img.src = state.src || 'https://via.placeholder.com/150'; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'contain'; el.appendChild(img); }
                 else { const original = document.querySelector(`.draggable-item[data-id="${state.id}"]`); if (original) el.innerHTML = original.innerHTML; }
                 setObjectState(el, state); container.appendChild(el);
@@ -1091,7 +1105,40 @@
         function onResizeTouchEnd(e) { if (resizeData) { resizeData.el.classList.remove('dragging'); saveObjectState(); resizeData = null; } document.removeEventListener('touchmove', onResizeTouchMove); document.removeEventListener('touchend', onResizeTouchEnd); }
 
         // ======================== LOGIKA TOOLBAR ========================
-        function addText() { const c = document.querySelector('.certificate-container'); if (!c) return; const el = document.createElement('div'); el.className = 'draggable-item editable-text'; el.dataset.type = 'text'; el.style.position = 'absolute'; el.style.left = '100px'; el.style.top = '100px'; el.style.width = '200px'; el.style.height = 'auto'; const span = document.createElement('span'); span.textContent = 'Teks Baru'; span.style.fontSize = '24px'; span.style.fontFamily = 'Inter'; span.style.color = '#000'; span.style.fontWeight = 'normal'; span.style.textAlign = 'center'; span.style.letterSpacing = '0px'; span.style.lineHeight = '1.2'; el.appendChild(span); c.appendChild(el); initDraggableItems(); saveObjectState(); selectObject(el); }
+        function addText() { 
+            const c = document.querySelector('.certificate-container'); 
+            if (!c) return; 
+            const el = document.createElement('div'); 
+            el.className = 'draggable-item editable-text'; 
+            el.dataset.type = 'text'; 
+            el.style.position = 'absolute'; 
+            el.style.left = '100px'; 
+            el.style.top = '100px'; 
+            el.style.width = '200px'; 
+            el.style.height = 'auto'; 
+            const span = document.createElement('span'); 
+            span.textContent = ''; // ← kosong, bukan "Teks Baru"
+            span.style.fontSize = '24px'; 
+            span.style.fontFamily = 'Inter'; 
+            span.style.color = '#000'; 
+            span.style.fontWeight = 'normal'; 
+            span.style.textAlign = 'center'; 
+            span.style.letterSpacing = '0px'; 
+            span.style.lineHeight = '1.2'; 
+            el.appendChild(span); 
+            c.appendChild(el); 
+            initDraggableItems(); 
+            saveObjectState(); 
+            selectObject(el); 
+            // Langsung aktifkan edit mode
+            span.contentEditable = true;
+            span.focus();
+            const range = document.createRange();
+            range.selectNodeContents(span);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
         function addImage() { const c = document.querySelector('.certificate-container'); if (!c) return; const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = function(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(ev) { const url = ev.target.result; const el = document.createElement('div'); el.className = 'draggable-item'; el.dataset.type = 'image'; el.style.position = 'absolute'; el.style.left = '100px'; el.style.top = '100px'; el.style.width = '150px'; el.style.height = '150px'; const img = document.createElement('img'); img.src = url; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'contain'; el.appendChild(img); c.appendChild(el); initDraggableItems(); saveObjectState(); selectObject(el); }; reader.readAsDataURL(file); }; input.click(); }
         function duplicateObject() { if (!selectedObject) return; const clone = selectedObject.cloneNode(true); clone.dataset.id = 'obj-' + Date.now(); clone.style.left = (parseInt(selectedObject.style.left) + 20) + 'px'; clone.style.top = (parseInt(selectedObject.style.top) + 20) + 'px'; clone.classList.remove('selected'); clone.style.outline = ''; selectedObject.parentElement.appendChild(clone); initDraggableItems(); saveObjectState(); selectObject(clone); }
         function deleteObject() { if (!selectedObject) return; if (confirm('Hapus?')) { selectedObject.remove(); selectedObject = null; hideProperties(); saveObjectState(); } }
@@ -1239,6 +1286,104 @@
             fill('selectKetuaPC', ketua, 'Pilih Ketua PC'); fill('selectSekretaris', sek, 'Pilih Sekretaris'); fill('selectInstruktur', inst, 'Pilih Instruktur');
         }
 
+        // --- FUNGSI LAYOUT CLOUD ---
+        async function saveLayoutToCloud() {
+            const allObjects = getAllEditableObjects();
+            const state = [];
+            allObjects.forEach(el => {
+                const s = getObjectState(el);
+                if (s.top >= 0 && s.left >= 0 && s.top < 800 && s.left < 1200) {
+                    state.push(s);
+                }
+            });
+            const nama = prompt('Masukkan nama layout ini (contoh: Layout PKD Dlingo):', 'Layout Saya');
+            if (!nama || nama.trim() === '') return;
+            try {
+                const res = await PKD.saveCertificateLayout(nama.trim(), state);
+                if (res.success) {
+                    PKD.showToast('Layout berhasil disimpan ke Cloud!', 'success');
+                    loadCloudLayoutList();
+                } else {
+                    PKD.showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'danger');
+                }
+            } catch (e) {
+                PKD.showToast('Gagal: ' + e.message, 'danger');
+            }
+        }
+
+        async function loadLayoutFromCloud(identifier) {
+            if (!identifier) return;
+            try {
+                const res = await PKD.getCertificateLayout(identifier);
+                if (res.success && res.data) {
+                    const oldObjects = getAllEditableObjects();
+                    oldObjects.forEach(el => el.remove());
+                    restoreState(res.data);
+                    PKD.showToast('Layout Cloud berhasil dipulihkan!', 'success');
+                } else {
+                    PKD.showToast('Layout tidak ditemukan: ' + (res.message || ''), 'warning');
+                }
+            } catch (e) {
+                PKD.showToast('Gagal memuat cloud: ' + e.message, 'danger');
+            }
+        }
+
+        async function loadCloudLayoutList() {
+            const select = document.getElementById('layoutSelectCloud');
+            if (!select) return;
+            try {
+                const res = await PKD.listCertificateLayouts();
+                if (res.success && res.data) {
+                    select.innerHTML = '<option value="">-- Pilih Layout Cloud --</option>';
+                    res.data.forEach(layout => {
+                        const opt = document.createElement('option');
+                        opt.value = layout.id;
+                        opt.textContent = `${layout.nama} (${new Date(layout.updatedAt).toLocaleDateString()})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.warn('Gagal load list layout:', e);
+            }
+        }
+
+        async function loadSavedLayout() {
+            // 1. Coba muat dari Cloud dulu (jika ada default)
+            const defaultCloudId = localStorage.getItem('pkd_default_cloud_layout_id');
+            if (defaultCloudId) {
+                try {
+                    const res = await PKD.getCertificateLayout(defaultCloudId);
+                    if (res.success && res.data) {
+                        restoreState(res.data);
+                        PKD.showToast('Layout Cloud default dipulihkan.', 'info');
+                        return;
+                    }
+                } catch (e) { /* Fallback ke lokal */ }
+            }
+            // 2. Fallback ke LocalStorage jika cloud gagal atau tidak ada
+            const saved = localStorage.getItem('pkd_saved_layout');
+            if (!saved) return;
+            try {
+                const state = JSON.parse(saved);
+                if (state && state.length > 0) {
+                    restoreState(state);
+                    PKD.showToast('Layout lokal dipulihkan.', 'info');
+                }
+            } catch (e) {
+                console.warn('Gagal memuat layout tersimpan:', e);
+            }
+        }
+
+        function clearAllObjects() {
+            if (!confirm('Hapus semua objek yang dapat diedit (teks, gambar)?\nElemen tetap seperti border dan logo tidak akan dihapus.')) return;
+            const objects = getAllEditableObjects();
+            objects.forEach(el => el.remove());
+            selectedObject = null;
+            hideProperties();
+            saveObjectState();
+            PKD.showToast('Semua objek telah dihapus.', 'info');
+        }
+
         function loadPreviewSertifikat() {
             const container = document.getElementById('previewPanel'); if (!container) return;
             initDefaultMateri(); renderMateriForm(); renderMateriTable();
@@ -1319,6 +1464,13 @@
             document.getElementById('undoBtn')?.addEventListener('click', undo);
             document.getElementById('redoBtn')?.addEventListener('click', redo);
 
+            // Tombol layout cloud
+            document.getElementById('saveLayoutCloudBtn')?.addEventListener('click', saveLayoutToCloud);
+            document.getElementById('applyLayoutCloudBtn')?.addEventListener('click', function() {
+                const val = document.getElementById('layoutSelectCloud').value;
+                if (val) loadLayoutFromCloud(val);
+            });
+
             document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); } if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); } if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject) deleteObject(); if (e.key === 'd' && !e.ctrlKey && selectedObject) duplicateObject(); if (e.key === 't' && !e.ctrlKey) addText(); if (e.key === 'i' && !e.ctrlKey) addImage(); if (e.key === 'Escape') deselectAll(); });
             document.addEventListener('click', function(e) { if (!e.target.closest('.draggable-item') && !e.target.closest('.properties-panel-horizontal') && !e.target.closest('.editor-toolbar')) deselectAll(); });
 
@@ -1330,6 +1482,8 @@
 
             setTimeout(initDraggableItems, 500);
             setTimeout(updateAllPreview, 500);
+            setTimeout(loadSavedLayout, 1000);
+            setTimeout(loadCloudLayoutList, 1500);
         }
 
         initSidebarToggle(); initSidebarDropdowns(); initAuth();
