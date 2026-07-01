@@ -1,5 +1,5 @@
 // api.js - Modul Terpadu Komunikasi Backend (PKD GP Ansor Bantul)
-// Versi: 2.2.0 - Final Fix untuk subfolder /bisaa/
+// Versi: 2.5.0 - Menambahkan dukungan kontrol sesi absen (start/stop) dan status
 // =============================================================================
 
 (function (global) {
@@ -8,7 +8,7 @@
   // ======================== KONFIGURASI ========================
   // Ganti dengan URL Apps Script Anda yang benar
   // Anda bisa menimpa nilai ini dengan variabel global PKD_SCRIPT_URL
-  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwJ756SRqRKuk4Uro20fp9ONGScc3K8d1tEqTy7d79Vqou0eO6xE4_ECRaf9aHo2Gbm/exec';
+  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx6smekTRGzp6TM56qjMACYnbSIt6LAEKcCneHrgtVsm9USWyWrS7wQxSjiwp4vZRvSJg/exec';
   const SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
   // ======================== STATE ========================
@@ -267,14 +267,15 @@
     });
   }
 
-  // ======================== DOMAIN FUNCTIONS (Tidak berubah) ========================
+  // ======================== DOMAIN FUNCTIONS ========================
+
   // --- Peserta ---
-  async function getPesertaList(forceRefresh = false) {
+  async function getPesertaList(status = null) {
     const cacheKey = 'pesertaList';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPesertaList', {}, 'GET');
+    if (!status) { const c = getCached(cacheKey); if (c) return c; }
+    const res = await callApi('getPesertaList', { status }, 'GET');
     const data = res.data || [];
-    saveCached(cacheKey, data);
+    if (!status) saveCached(cacheKey, data);
     return data;
   }
 
@@ -300,6 +301,27 @@
 
   async function getTotalPeserta() {
     return await callApi('getTotalPeserta', {}, 'GET');
+  }
+
+  async function approvePeserta(id) {
+    return await callApi('approvePeserta', { id }, 'POST');
+  }
+
+  async function rejectPeserta(id) {
+    return await callApi('rejectPeserta', { id }, 'POST');
+  }
+
+  async function getPesertaById(id) {
+    return await callApi('getPesertaById', { id }, 'GET');
+  }
+
+  // --- Form Settings ---
+  async function getFormSettings() {
+    return await callApi('getFormSettings', {}, 'GET');
+  }
+
+  async function setFormSettings(fields) {
+    return await callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST');
   }
 
   // --- Alumni ---
@@ -355,9 +377,18 @@
     return await callApi('regenerateQRSesi', { id }, 'POST');
   }
 
+  // --- Fungsi baru untuk kontrol sesi absen (start/stop) ---
+  async function toggleAttendanceSession(id, open) {
+    return await callApi('toggleAttendanceSession', { id, open }, 'POST');
+  }
+
+  async function getAttendanceSessionStatus(id) {
+    return await callApi('getAttendanceSessionStatus', { id }, 'GET');
+  }
+
   // --- Absensi ---
-  async function submitAbsen(nama, sesiId, tandaTangan, password, qrToken) {
-    return await callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken }, 'POST');
+  async function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
+    return await callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
   }
 
   async function getAbsensiResponses(forceRefresh = false) {
@@ -618,6 +649,19 @@
     return await callApi('verifyCertificate', { nomor }, 'GET');
   }
 
+  // --- Layout Sertifikat ---
+  async function saveCertificateLayout(nama, data_json, id = null) {
+    return await callApi('saveCertificateLayout', { nama, data_json, id }, 'POST');
+  }
+
+  async function getCertificateLayout(identifier) {
+    return await callApi('getCertificateLayout', { id: identifier, nama: identifier }, 'GET');
+  }
+
+  async function listCertificateLayouts() {
+    return await callApi('listCertificateLayouts', {}, 'GET');
+  }
+
   // --- Tanda Tangan Digital ---
   async function submitDigitalSignature(role, nama, signature, password) {
     return await callApi('submitDigitalSignature', { role, nama, signature, password }, 'POST');
@@ -790,6 +834,13 @@
     exportPesertaCSV,
     importPesertaCSV,
     getTotalPeserta,
+    approvePeserta,
+    rejectPeserta,
+    getPesertaById,
+
+    // Form Settings
+    getFormSettings,
+    setFormSettings,
 
     // Alumni
     alumni: {
@@ -805,6 +856,9 @@
     updateSesiAbsen,
     deleteSesiAbsen,
     regenerateQRSesi,
+    // Fungsi kontrol sesi absen
+    toggleAttendanceSession,
+    getAttendanceSessionStatus,
 
     // Absensi
     submitAbsen,
@@ -865,6 +919,11 @@
     getUploadedCertificates,
     uploadManualCertificate,
     verifyCertificate,
+
+    // Layout Sertifikat
+    saveCertificateLayout,
+    getCertificateLayout,
+    listCertificateLayouts,
 
     // Tanda Tangan Digital
     submitDigitalSignature,

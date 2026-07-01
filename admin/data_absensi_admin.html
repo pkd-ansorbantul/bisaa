@@ -711,7 +711,8 @@
                     nama_sesi: data.nama_sesi || '',
                     tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
                     status: data.status || 'Hadir',
-                    catatan: data.catatan || ''
+                    catatan: data.catatan || '',
+                    pesertaId: data.pesertaId || ''
                 };
                 STATE.absensiList.unshift(newItem);
                 updateCache(STATE.absensiList);
@@ -731,7 +732,8 @@
                     nama_sesi: data.nama_sesi !== undefined ? data.nama_sesi : existing.nama_sesi,
                     tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
                     status: data.status !== undefined ? data.status : existing.status,
-                    catatan: data.catatan !== undefined ? data.catatan : existing.catatan
+                    catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
+                    pesertaId: data.pesertaId !== undefined ? data.pesertaId : existing.pesertaId
                 };
                 STATE.absensiList[index] = updated;
                 updateCache(STATE.absensiList);
@@ -780,6 +782,7 @@
                                     <th>Sesi</th>
                                     <th>Tanggal</th>
                                     <th>Status</th>
+                                    <th>ID Peserta</th>
                                     <th style="width:200px;" class="text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -789,7 +792,7 @@
                 if (data.length === 0) {
                     html += `
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                                 Tidak ada data absensi.
                             </td>
@@ -805,6 +808,7 @@
                                 <td>${escapeHtml(item.nama_sesi || '-')}</td>
                                 <td>${formatDate(item.tanggal)}</td>
                                 <td><span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></td>
+                                <td><code>${escapeHtml(item.pesertaId || '-')}</code></td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAbsensi('${item.id}')" title="Lihat Detail">
                                         <i class="bi bi-eye"></i>
@@ -948,6 +952,7 @@
                         <div class="list-group-item py-3"><strong>Sesi:</strong> ${escapeHtml(item.nama_sesi || '-')}</div>
                         <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
                         <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></div>
+                        <div class="list-group-item py-3"><strong>ID Peserta:</strong> <code>${escapeHtml(item.pesertaId || '-')}</code></div>
                         <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
                     </div>
                 `;
@@ -996,7 +1001,8 @@
                     nama_sesi: sesi ? sesi.nama : 'Unknown',
                     tanggal: tanggal,
                     status: status,
-                    catatan: catatan
+                    catatan: catatan,
+                    pesertaId: peserta ? peserta.id : '' // tambahkan pesertaId
                 };
 
                 if (id === '') {
@@ -1032,7 +1038,8 @@
                     sesi: item.nama_sesi,
                     tanggal: item.tanggal,
                     status: item.status,
-                    catatan: item.catatan
+                    catatan: item.catatan,
+                    pesertaId: item.pesertaId
                 }));
                 const json = JSON.stringify(exportData, null, 2);
                 const blob = new Blob([json], { type: 'application/json' });

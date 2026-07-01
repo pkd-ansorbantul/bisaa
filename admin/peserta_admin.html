@@ -125,6 +125,10 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     .btn-aksi { min-width: 80px; }
+    .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 50px; }
+    .status-badge.pending { background: #fef3c7; color: #d97706; }
+    .status-badge.approved { background: #d1fae5; color: #059669; }
+    .status-badge.rejected { background: #fee2e2; color: #dc2626; }
   </style>
 </head>
 <body>
@@ -262,8 +266,9 @@
           </div>
           <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterStatus">
             <option value="">Semua Status</option>
-            <option value="Aktif">Aktif</option>
-            <option value="Tidak Aktif">Tidak Aktif</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Disetujui</option>
+            <option value="rejected">Ditolak</option>
           </select>
         </div>
       </div>
@@ -271,6 +276,18 @@
       <!-- TABLE -->
       <div id="pesertaTableContainer" class="table-container">
         <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+      </div>
+
+      <!-- FORM SETTINGS SECTION -->
+      <div class="mt-5 pt-4 border-top">
+        <h4><i class="bi bi-gear me-2"></i>Pengaturan Field Wajib Form Peserta</h4>
+        <p class="text-muted small">Centang field yang wajib diisi oleh peserta. Field yang tidak dicentang menjadi opsional.</p>
+        <form id="formSettingsForm">
+          <div id="formSettingsContainer" class="row g-3">
+            <!-- akan diisi oleh JS -->
+          </div>
+          <button type="submit" class="btn btn-primary rounded-pill mt-3">Simpan Pengaturan</button>
+        </form>
       </div>
     </div>
   </div>
@@ -320,7 +337,7 @@
         <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="pesertaEmail" placeholder="email@example.com" required></div>
         <div class="mb-3"><label class="form-label fw-semibold">No. HP</label><input type="text" class="form-control" id="pesertaHp" placeholder="081234567890" required></div>
         <div class="mb-3"><label class="form-label fw-semibold">Asal</label><input type="text" class="form-control" id="pesertaAsal" placeholder="Asal peserta" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Status</label><select class="form-select" id="pesertaStatus"><option value="Aktif">Aktif</option><option value="Tidak Aktif">Tidak Aktif</option></select></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Status</label><select class="form-select" id="pesertaStatus"><option value="pending">Pending</option><option value="approved">Disetujui</option><option value="rejected">Ditolak</option></select></div>
         <div class="mb-3"><label class="form-label fw-semibold">Tanggal Daftar</label><input type="date" class="form-control" id="pesertaTanggal" required></div>
         <div class="mb-3"><label class="form-label fw-semibold">Keterangan</label><textarea class="form-control" id="pesertaNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea></div>
       </div>
@@ -431,8 +448,9 @@
     }
 
     function getStatusBadge(status) {
-      if (status === 'Aktif') return 'bg-success';
-      return 'bg-secondary';
+      if (status === 'approved') return 'bg-success';
+      if (status === 'rejected') return 'bg-danger';
+      return 'bg-warning text-dark';
     }
 
     function showToast(message, type = 'success') {
@@ -502,7 +520,7 @@
     });
 
     // =====================================================
-    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
+    //   LOGIN AUTH CHECK
     // =====================================================
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
@@ -512,6 +530,7 @@
 
       // Load data
       loadData();
+      loadFormSettings();
 
       // Event listeners
       document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
@@ -543,6 +562,9 @@
       document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
       document.getElementById('searchInput')?.addEventListener('input', handleSearch);
       document.getElementById('filterStatus')?.addEventListener('change', handleStatusFilter);
+
+      // Form Settings
+      document.getElementById('formSettingsForm')?.addEventListener('submit', saveFormSettings);
     });
 
     // =====================================================
@@ -576,18 +598,16 @@
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed && parsed.pesertaList) {
-            // Anti-dummy filter: buang data dummy yang masih tersimpan
+            // Anti-dummy filter
             const knownDummyKeywords = ['ahmad fauzi', 'siti rahma', 'budi santoso', 'dewi lestari', 'eko prasetyo', 'fitri handayani', 'galih wicaksono', 'hana putri', 'indra wijaya', 'joko susilo'];
             const cleanedList = parsed.pesertaList.filter(item => {
               const nama = (item.nama || '').toLowerCase().trim();
               return !knownDummyKeywords.includes(nama);
             });
 
-            // Hanya gunakan jika setelah filter masih ada data
             if (cleanedList.length > 0) {
               STATE.pesertaList = cleanedList;
             } else {
-              // Jika semua data adalah dummy, hapus penyimpanan
               localStorage.removeItem('pkd_peserta_data');
               STATE.pesertaList = [];
             }
@@ -623,7 +643,7 @@
         email: data.email || '',
         hp: data.hp || '',
         asal: data.asal || '',
-        status: data.status || 'Aktif',
+        status: data.status || 'pending',
         tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
         catatan: data.catatan || ''
       };
@@ -697,7 +717,7 @@
                 <th>No HP</th>
                 <th>Asal</th>
                 <th>Status</th>
-                <th style="width: 200px;" class="text-center">Aksi</th>
+                <th style="width: 250px;" class="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -722,8 +742,16 @@
               <td>${escapeHtml(item.email || '-')}</td>
               <td>${escapeHtml(item.hp || '-')}</td>
               <td>${escapeHtml(item.asal || '-')}</td>
-              <td><span class="badge ${badge}">${escapeHtml(item.status || 'Aktif')}</span></td>
+              <td><span class="badge ${badge} status-badge">${escapeHtml(item.status || 'pending')}</span></td>
               <td class="text-center">
+                ${item.status === 'pending' ? `
+                  <button class="btn btn-sm btn-success btn-aksi" onclick="approvePeserta('${item.id}')" title="Setujui">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger btn-aksi" onclick="rejectPeserta('${item.id}')" title="Tolak">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                ` : ''}
                 <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewPeserta('${item.id}')" title="Lihat Detail">
                   <i class="bi bi-eye"></i>
                 </button>
@@ -758,7 +786,8 @@
       // 1. Coba API dengan force refresh
       if (forceRefresh) {
         try {
-          const freshData = await PKD.getPesertaList(true);
+          // Ambil semua peserta (tanpa filter status)
+          const freshData = await PKD.getPesertaList();
           if (freshData && Array.isArray(freshData) && freshData.length > 0) {
             STATE.pesertaList = freshData;
             updateCache(freshData);
@@ -793,6 +822,101 @@
     }
 
     // =====================================================
+    //   APPROVE / REJECT
+    // =====================================================
+    window.approvePeserta = async function(id) {
+      if (!confirm('Setujui peserta ini? QR Code akan aktif untuk peserta.')) return;
+      try {
+        const res = await PKD.approvePeserta(id);
+        if (res.success) {
+          showToast('Peserta disetujui', 'success');
+          loadData(true);
+        } else {
+          showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    };
+
+    window.rejectPeserta = async function(id) {
+      if (!confirm('Tolak peserta ini?')) return;
+      try {
+        const res = await PKD.rejectPeserta(id);
+        if (res.success) {
+          showToast('Peserta ditolak', 'success');
+          loadData(true);
+        } else {
+          showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    };
+
+    // =====================================================
+    //   FORM SETTINGS
+    // =====================================================
+    async function loadFormSettings() {
+      const container = document.getElementById('formSettingsContainer');
+      container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
+      try {
+        const res = await PKD.getFormSettings();
+        if (res.success) {
+          const requiredFields = res.data || [];
+          const allFields = [
+            { id: 'nama_lengkap', label: 'Nama Lengkap' },
+            { id: 'tempat_tgl_lahir', label: 'Tempat & Tgl Lahir' },
+            { id: 'pekerjaan', label: 'Pekerjaan' },
+            { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir' },
+            { id: 'alamat', label: 'Alamat' },
+            { id: 'no_hp', label: 'No HP' },
+            { id: 'email', label: 'Email' },
+            { id: 'utusan', label: 'Utusan (PAC)' },
+            { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi' },
+            { id: 'foto', label: 'Foto' },
+            { id: 'surat_rekomendasi', label: 'Surat Rekomendasi' }
+          ];
+          let html = '';
+          allFields.forEach(f => {
+            const checked = requiredFields.includes(f.id) ? 'checked' : '';
+            html += `
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="field_${f.id}" value="${f.id}" ${checked}>
+                  <label class="form-check-label" for="field_${f.id}">
+                    ${f.label}
+                  </label>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = '<div class="col-12 text-danger">Gagal memuat pengaturan.</div>';
+        }
+      } catch (e) {
+        container.innerHTML = '<div class="col-12 text-danger">Error: ' + e.message + '</div>';
+      }
+    }
+
+    async function saveFormSettings(e) {
+      e.preventDefault();
+      const checkboxes = document.querySelectorAll('#formSettingsContainer input[type="checkbox"]:checked');
+      const fields = Array.from(checkboxes).map(cb => cb.value);
+      try {
+        const res = await PKD.setFormSettings(fields);
+        if (res.success) {
+          showToast('Pengaturan field wajib berhasil disimpan', 'success');
+        } else {
+          showToast('Gagal menyimpan', 'error');
+        }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // =====================================================
     //   EVENT HANDLERS
     // =====================================================
     function resetForm() {
@@ -801,7 +925,7 @@
       document.getElementById('pesertaEmail').value = '';
       document.getElementById('pesertaHp').value = '';
       document.getElementById('pesertaAsal').value = '';
-      document.getElementById('pesertaStatus').value = 'Aktif';
+      document.getElementById('pesertaStatus').value = 'pending';
       document.getElementById('pesertaTanggal').value = new Date().toISOString().slice(0, 10);
       document.getElementById('pesertaNote').value = '';
       document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
@@ -824,7 +948,7 @@
       document.getElementById('pesertaEmail').value = item.email || '';
       document.getElementById('pesertaHp').value = item.hp || '';
       document.getElementById('pesertaAsal').value = item.asal || '';
-      document.getElementById('pesertaStatus').value = item.status || 'Aktif';
+      document.getElementById('pesertaStatus').value = item.status || 'pending';
       document.getElementById('pesertaTanggal').value = item.tanggal || '';
       document.getElementById('pesertaNote').value = item.catatan || '';
       document.getElementById('formModalTitle').innerText = 'Edit Peserta';
@@ -847,7 +971,7 @@
           <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
           <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.hp || '-')}</div>
           <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
-          <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'Aktif')}</span></div>
+          <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'pending')}</span></div>
           <div class="list-group-item py-3"><strong>Tanggal Daftar:</strong> ${formatDate(item.tanggal)}</div>
           <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
         </div>
