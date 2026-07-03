@@ -1,19 +1,17 @@
-// api.js - Modul Terpadu Komunikasi Backend (PKD GP Ansor Bantul)
-// Versi: 2.5.0 - Menambahkan dukungan kontrol sesi absen (start/stop) dan status
+// api.js - Modul Terpadu Final (Compatible with No-CORS & V8)
+// Versi: 3.1.0 - Menambahkan getPesertaCredentials, Realtime getLoginMode
 // =============================================================================
 
 (function (global) {
   'use strict';
 
   // ======================== KONFIGURASI ========================
-  // Ganti dengan URL Apps Script Anda yang benar
-  // Anda bisa menimpa nilai ini dengan variabel global PKD_SCRIPT_URL
-  const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx6smekTRGzp6TM56qjMACYnbSIt6LAEKcCneHrgtVsm9USWyWrS7wQxSjiwp4vZRvSJg/exec';
-  const SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
+  var SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydrBQUwfKN_smPUuxEPEZ4bv-MmmDow55zs-P4E4W-hP6qdmgR3NtxTeAIcE-If9F0kg/exec';
+  var SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
   // ======================== STATE ========================
-  let userRole = null;
-  let userData = {};
+  var userRole = null;
+  var userData = {};
 
   // ======================== FUNGSI BANTU ========================
   function escapeHtml(unsafe) {
@@ -26,11 +24,10 @@
       .replace(/'/g, "&#039;");
   }
 
-  // ======================== TOAST NOTIFIKASI ========================
-  function showToast(message, type = 'success') {
-    let toastEl = document.getElementById('apiToast');
+  function showToast(message, type) {
+    var toastEl = document.getElementById('apiToast');
     if (!toastEl) {
-      const container = document.createElement('div');
+      var container = document.createElement('div');
       container.className = 'toast-container position-fixed top-0 end-0 p-3';
       container.id = 'apiToastContainer';
       container.innerHTML = `
@@ -45,7 +42,6 @@
       document.body.appendChild(container);
       toastEl = document.getElementById('apiToast');
     }
-
     document.getElementById('apiToastMessage').innerText = message;
     if (type === 'success') {
       toastEl.classList.add('border-success');
@@ -63,75 +59,101 @@
     }
   }
 
-  // ======================== PANGGILAN API (GET/POST) ========================
-  function callApi(action, params = {}, method = 'GET', timeout = 30000) {
-    const finalParams = { action, ...params };
+  // ======================== PANGGILAN API ========================
+  function callApi(action, params, method, timeout) {
+    params = params || {};
+    method = method || 'GET';
+    timeout = timeout || 30000;
+    var finalParams = { action: action };
+    for (var key in params) {
+      if (params.hasOwnProperty(key)) {
+        finalParams[key] = params[key];
+      }
+    }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(function(resolve, reject) {
       if (method === 'GET') {
         try {
-          const queryString = new URLSearchParams(finalParams).toString();
-          const response = await fetch(`${SCRIPT_URL}?${queryString}`, {
+          var queryString = new URLSearchParams(finalParams).toString();
+          fetch(SCRIPT_URL + '?' + queryString, {
             method: 'GET',
             mode: 'cors',
             headers: { 'Accept': 'application/json' }
-          });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-          return resolve(data);
-        } catch (fetchError) {
-          console.warn('Fetch GET gagal, fallback JSONP:', fetchError);
-          // Fallback JSONP
-          const callbackName = 'jsonp_cb_' + Date.now() + '_' + Math.random().toString(36).substring(7);
-          const script = document.createElement('script');
-          let isResolved = false;
-          const timer = setTimeout(() => {
-            if (!isResolved) {
-              isResolved = true;
-              if (document.head.contains(script)) document.head.removeChild(script);
-              delete global[callbackName];
-              reject(new Error('Timeout: Server tidak merespon JSONP'));
-            }
-          }, timeout);
+          })
+            .then(function(response) {
+              if (!response.ok) throw new Error('HTTP ' + response.status);
+              return response.json();
+            })
+            .then(function(data) { resolve(data); })
+            .catch(function(fetchError) {
+              console.warn('Fetch GET gagal, fallback ke JSONP:', fetchError);
+              // JSONP fallback
+              var callbackName = 'jsonp_cb_' + Date.now();
+              var script = document.createElement('script');
+              var isResolved = false;
+              var timer = setTimeout(function() {
+                if (!isResolved) {
+                  isResolved = true;
+                  if (document.head.contains(script)) document.head.removeChild(script);
+                  delete global[callbackName];
+                  reject(new Error('Timeout: Server tidak merespon JSONP'));
+                }
+              }, timeout);
 
-          global[callbackName] = function (data) {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              resolve(data || {});
-            }
-            delete global[callbackName];
-            if (document.head.contains(script)) document.head.removeChild(script);
-          };
+              global[callbackName] = function(data) {
+                if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timer);
+                  resolve(data || {});
+                }
+                delete global[callbackName];
+                if (document.head.contains(script)) document.head.removeChild(script);
+              };
 
-          script.onerror = () => {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              delete global[callbackName];
-              if (document.head.contains(script)) document.head.removeChild(script);
-              reject(new Error('Gagal memuat script JSONP'));
-            }
-          };
+              script.onerror = function() {
+                if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timer);
+                  delete global[callbackName];
+                  if (document.head.contains(script)) document.head.removeChild(script);
+                  reject(new Error('Gagal memuat script JSONP'));
+                }
+              };
 
-          const cleanParams = { ...finalParams };
-          delete cleanParams.tandaTangan;
-          delete cleanParams.signature;
-          const qs = new URLSearchParams({ ...cleanParams, callback: callbackName }).toString();
-          script.src = `${SCRIPT_URL}?${qs}`;
-          document.head.appendChild(script);
+              var cleanParams = { action: action };
+              for (var k in params) {
+                if (k !== 'tandaTangan' && k !== 'signature' && params.hasOwnProperty(k)) {
+                  cleanParams[k] = params[k];
+                }
+              }
+              var qs = new URLSearchParams({ callback: callbackName });
+              for (var kk in cleanParams) {
+                if (cleanParams.hasOwnProperty(kk)) qs.append(kk, cleanParams[kk]);
+              }
+              script.src = SCRIPT_URL + '?' + qs.toString();
+              document.head.appendChild(script);
+            });
+        } catch (e) {
+          reject(e);
         }
       } else {
-        // POST
+        // POST - Gunakan 'no-cors' karena Apps Script Web App tidak mengirim header CORS manual
         try {
-          const body = new URLSearchParams(finalParams);
-          const response = await fetch(SCRIPT_URL, {
+          var body = new URLSearchParams(finalParams);
+          fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body
-          });
-          return resolve({ success: true, message: 'Request sent (no-cors)' });
+            body: body
+          })
+            .then(function() {
+              // Karena mode 'no-cors', response tidak bisa dibaca (opaque).
+              // Anggap sukses jika tidak ada error jaringan.
+              resolve({ success: true });
+            })
+            .catch(function(e) {
+              reject(e);
+            });
         } catch (e) {
           reject(e);
         }
@@ -140,10 +162,11 @@
   }
 
   // ======================== CACHE UTILS ========================
-  function getCached(key, maxAge = 3600000) {
+  function getCached(key, maxAge) {
+    maxAge = maxAge || 3600000;
     try {
-      const data = sessionStorage.getItem(key + '_data');
-      const time = sessionStorage.getItem(key + '_time');
+      var data = sessionStorage.getItem(key + '_data');
+      var time = sessionStorage.getItem(key + '_time');
       if (data && time && (Date.now() - parseInt(time)) < maxAge) {
         return JSON.parse(data);
       }
@@ -160,17 +183,16 @@
 
   // ======================== AUTH ========================
   function persistAuthState() {
-    const state = { role: userRole, data: userData };
-    sessionStorage.setItem('pkd_auth', JSON.stringify(state));
-    localStorage.setItem('pkd_auth', JSON.stringify(state));
+    var state = { role: userRole, data: userData };
+    try { sessionStorage.setItem('pkd_auth', JSON.stringify(state)); } catch (e) {}
+    try { localStorage.setItem('pkd_auth', JSON.stringify(state)); } catch (e) {}
   }
 
   function loadAuthState() {
-    let serialized = sessionStorage.getItem('pkd_auth');
-    if (!serialized) serialized = localStorage.getItem('pkd_auth');
+    var serialized = sessionStorage.getItem('pkd_auth') || localStorage.getItem('pkd_auth');
     if (serialized) {
       try {
-        const state = JSON.parse(serialized);
+        var state = JSON.parse(serialized);
         userRole = state.role || null;
         userData = state.data || {};
       } catch (e) {}
@@ -183,27 +205,11 @@
     userData = {};
     sessionStorage.removeItem('pkd_auth');
     localStorage.removeItem('pkd_auth');
-    // Redirect ke halaman utama dengan prefix /bisaa/
     window.location.href = '/bisaa/index.html';
   }
 
-  async function verifyAdmin(username, password) {
-    const res = await callApi('verifyAdmin', { username, password }, 'GET');
-    return res;
-  }
-
-  async function verifyKetuaPAC(username, password) {
-    const res = await callApi('verifyKetuaPAC', { username, password }, 'GET');
-    return res;
-  }
-
-  async function verifyMember(username, password) {
-    const res = await callApi('verifyMember', { username, password }, 'GET');
-    return res;
-  }
-
   function updateNavbarMenu() {
-    const menu = document.getElementById('navbarUserMenu');
+    var menu = document.getElementById('navbarUserMenu');
     if (!menu) return;
     if (userRole === 'admin') {
       menu.innerHTML = `
@@ -258,590 +264,648 @@
         <button class="btn btn-outline-primary rounded-pill px-4" id="apiLoginBtn">Login</button>`;
     }
 
-    document.getElementById('apiLogoutBtn')?.addEventListener('click', (e) => {
+    document.getElementById('apiLogoutBtn')?.addEventListener('click', function(e) {
       e.preventDefault();
       logout();
     });
-    document.getElementById('apiLoginBtn')?.addEventListener('click', () => {
+    document.getElementById('apiLoginBtn')?.addEventListener('click', function() {
       window.location.href = '/bisaa/login.html';
     });
   }
 
   // ======================== DOMAIN FUNCTIONS ========================
 
+  // --- Auth verification ---
+  function verifyAdmin(username, password) {
+    return callApi('verifyAdmin', { username: username, password: password }, 'GET');
+  }
+  function verifyKetuaPAC(username, password) {
+    return callApi('verifyKetuaPAC', { username: username, password: password }, 'GET');
+  }
+  function verifyMember(username, password) {
+    return callApi('verifyMember', { username: username, password: password }, 'GET');
+  }
+
   // --- Peserta ---
-  async function getPesertaList(status = null) {
-    const cacheKey = 'pesertaList';
-    if (!status) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPesertaList', { status }, 'GET');
-    const data = res.data || [];
-    if (!status) saveCached(cacheKey, data);
-    return data;
+  function getPesertaList(status) {
+    var cacheKey = 'pesertaList';
+    if (!status) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getPesertaList', { status: status }, 'GET').then(function(res) {
+      var data = res.data || [];
+      if (!status) saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function submitPeserta(formData) {
-    return await callApi('submitPeserta', formData, 'POST');
+  function submitPeserta(formData) {
+    return callApi('submitPeserta', formData, 'POST');
   }
-
-  async function deletePeserta(id) {
-    return await callApi('deletePeserta', { id }, 'POST');
+  function deletePeserta(id) {
+    return callApi('deletePeserta', { id: id }, 'POST');
   }
-
-  async function updatePeserta(formData) {
-    return await callApi('updatePeserta', formData, 'POST');
+  function updatePeserta(formData) {
+    return callApi('updatePeserta', formData, 'POST');
   }
-
-  async function exportPesertaCSV() {
-    return await callApi('exportPesertaCSV', {}, 'GET');
+  function exportPesertaCSV() {
+    return callApi('exportPesertaCSV', {}, 'GET');
   }
-
-  async function importPesertaCSV(csvData, fileName) {
-    return await callApi('importPesertaCSV', { csvData, fileName }, 'POST');
+  function importPesertaCSV(csvData, fileName) {
+    return callApi('importPesertaCSV', { csvData: csvData, fileName: fileName }, 'POST');
   }
-
-  async function getTotalPeserta() {
-    return await callApi('getTotalPeserta', {}, 'GET');
+  function getTotalPeserta() {
+    return callApi('getTotalPeserta', {}, 'GET');
   }
-
-  async function approvePeserta(id) {
-    return await callApi('approvePeserta', { id }, 'POST');
+  function approvePeserta(id) {
+    return callApi('approvePeserta', { id: id }, 'POST');
   }
-
-  async function rejectPeserta(id) {
-    return await callApi('rejectPeserta', { id }, 'POST');
+  function rejectPeserta(id) {
+    return callApi('rejectPeserta', { id: id }, 'POST');
   }
-
-  async function getPesertaById(id) {
-    return await callApi('getPesertaById', { id }, 'GET');
+  function getPesertaById(id) {
+    return callApi('getPesertaById', { id: id }, 'GET');
+  }
+  // 🆕 FITUR BARU: Mendapatkan kredensial peserta (Username & Indikasi Password)
+  function getPesertaCredentials(id) {
+    return callApi('getPesertaCredentials', { id: id }, 'GET');
   }
 
   // --- Form Settings ---
-  async function getFormSettings() {
-    return await callApi('getFormSettings', {}, 'GET');
+  function getFormSettings() {
+    return callApi('getFormSettings', {}, 'GET');
   }
-
-  async function setFormSettings(fields) {
-    return await callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST');
+  function setFormSettings(fields) {
+    return callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST');
   }
 
   // --- Alumni ---
-  async function getAlumniList(forceRefresh = false) {
-    const cacheKey = 'alumniList';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getAlumniList', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getAlumniList(forceRefresh) {
+    var cacheKey = 'alumniList';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getAlumniList', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function moveToAlumni(id) {
-    return await callApi('moveToAlumni', { id }, 'POST');
+  function moveToAlumni(id) {
+    return callApi('moveToAlumni', { id: id }, 'POST');
   }
-
-  async function moveMultipleToAlumni(ids) {
-    return await callApi('moveMultipleToAlumni', { ids: JSON.stringify(ids) }, 'POST');
+  function moveMultipleToAlumni(ids) {
+    return callApi('moveMultipleToAlumni', { ids: JSON.stringify(ids) }, 'POST');
   }
-
-  async function moveBackToActive(id) {
-    return await callApi('moveBackToActive', { id }, 'POST');
+  function moveBackToActive(id) {
+    return callApi('moveBackToActive', { id: id }, 'POST');
   }
 
   // --- Sesi Absen ---
-  async function getSesiAbsen(forceRefresh = false) {
-    const cacheKey = 'sesiAbsen';
+  function getSesiAbsen(forceRefresh) {
+    var cacheKey = 'sesiAbsen';
     if (!forceRefresh) {
-      const c = getCached(cacheKey);
+      var c = getCached(cacheKey);
       if (c && Array.isArray(c) && c.length > 0) return c;
     }
-    const res = await callApi('getSesiAbsen', {}, 'GET');
-    const data = res.data || [];
-    if (Array.isArray(data) && data.length > 0) {
-      saveCached(cacheKey, data);
-    }
-    return data;
+    return callApi('getSesiAbsen', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      if (Array.isArray(data) && data.length > 0) {
+        saveCached(cacheKey, data);
+      }
+      return data;
+    });
   }
-
-  async function addSesiAbsen(nama, waktu, aktif, password) {
-    return await callApi('addSesiAbsen', { nama, waktu, aktif, password }, 'POST');
+  function addSesiAbsen(nama, waktu, aktif, password) {
+    return callApi('addSesiAbsen', { nama: nama, waktu: waktu, aktif: aktif, password: password }, 'POST');
   }
-
-  async function updateSesiAbsen(id, nama, waktu, aktif, password) {
-    return await callApi('updateSesiAbsen', { id, nama, waktu, aktif, password }, 'POST');
+  function updateSesiAbsen(id, nama, waktu, aktif, password) {
+    return callApi('updateSesiAbsen', { id: id, nama: nama, waktu: waktu, aktif: aktif, password: password }, 'POST');
   }
-
-  async function deleteSesiAbsen(id) {
-    return await callApi('deleteSesiAbsen', { id }, 'POST');
+  function deleteSesiAbsen(id) {
+    return callApi('deleteSesiAbsen', { id: id }, 'POST');
   }
-
-  async function regenerateQRSesi(id) {
-    return await callApi('regenerateQRSesi', { id }, 'POST');
+  function regenerateQRSesi(id) {
+    return callApi('regenerateQRSesi', { id: id }, 'POST');
   }
-
-  // --- Fungsi baru untuk kontrol sesi absen (start/stop) ---
-  async function toggleAttendanceSession(id, open) {
-    return await callApi('toggleAttendanceSession', { id, open }, 'POST');
+  function toggleAttendanceSession(id, open) {
+    return callApi('toggleAttendanceSession', { id: id, open: open }, 'POST');
   }
-
-  async function getAttendanceSessionStatus(id) {
-    return await callApi('getAttendanceSessionStatus', { id }, 'GET');
+  function getAttendanceSessionStatus(id) {
+    return callApi('getAttendanceSessionStatus', { id: id }, 'GET');
   }
 
   // --- Absensi ---
-  async function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
-    return await callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
+  function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
+    return callApi('submitAbsen', {
+      nama: nama,
+      sesiId: sesiId,
+      tandaTangan: tandaTangan,
+      password: password,
+      qrToken: qrToken,
+      pesertaId: pesertaId
+    }, 'POST');
   }
-
-  async function getAbsensiResponses(forceRefresh = false) {
-    const cacheKey = 'absensiResponses';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getAbsensiResponses', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getAbsensiResponses(forceRefresh) {
+    var cacheKey = 'absensiResponses';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getAbsensiResponses', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function getAttendanceBySesi(sesiId) {
-    return await callApi('getAttendanceBySesi', { sesiId }, 'GET');
+  function getAttendanceBySesi(sesiId) {
+    return callApi('getAttendanceBySesi', { sesiId: sesiId }, 'GET');
   }
-
-  async function getAttendanceMatrix(forceRefresh = false) {
-    const cacheKey = 'rekapAbsensi';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getAttendanceMatrix', {}, 'GET');
-    const data = { peserta: res.peserta || [], sesi: res.sesi || [], hadirSet: new Set(res.hadirSet || []) };
-    saveCached(cacheKey, data);
-    return data;
+  function getAttendanceMatrix(forceRefresh) {
+    var cacheKey = 'rekapAbsensi';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getAttendanceMatrix', {}, 'GET').then(function(res) {
+      var data = { peserta: res.peserta || [], sesi: res.sesi || [], hadirSet: new Set(res.hadirSet || []) };
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function exportAttendanceMatrixCSV() {
-    return await callApi('exportAttendanceMatrixCSV', {}, 'GET');
+  function exportAttendanceMatrixCSV() {
+    return callApi('exportAttendanceMatrixCSV', {}, 'GET');
   }
 
   // --- Skrining ---
-  async function getSkriningQuestions(forceRefresh = false) {
-    const cacheKey = 'skriningQuestions';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getSkriningQuestions', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getSkriningQuestions(forceRefresh) {
+    var cacheKey = 'skriningQuestions';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getSkriningQuestions', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addSkriningQuestion(teks, jenis, opsi, urutan) {
-    return await callApi('addSkriningQuestion', { teks, jenis, opsi, urutan }, 'POST');
+  function addSkriningQuestion(teks, jenis, opsi, urutan) {
+    return callApi('addSkriningQuestion', { teks: teks, jenis: jenis, opsi: opsi, urutan: urutan }, 'POST');
   }
-
-  async function updateSkriningQuestion(id, teks, jenis, opsi, urutan) {
-    return await callApi('updateSkriningQuestion', { id, teks, jenis, opsi, urutan }, 'POST');
+  function updateSkriningQuestion(id, teks, jenis, opsi, urutan) {
+    return callApi('updateSkriningQuestion', { id: id, teks: teks, jenis: jenis, opsi: opsi, urutan: urutan }, 'POST');
   }
-
-  async function deleteSkriningQuestion(id) {
-    return await callApi('deleteSkriningQuestion', { id }, 'POST');
+  function deleteSkriningQuestion(id) {
+    return callApi('deleteSkriningQuestion', { id: id }, 'POST');
   }
-
-  async function getSkriningResponses(forceRefresh = false) {
-    const cacheKey = 'skriningResponses';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getSkriningResponses', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getSkriningResponses(forceRefresh) {
+    var cacheKey = 'skriningResponses';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getSkriningResponses', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function submitSkrining(formData) {
-    return await callApi('submitSkrining', formData, 'POST');
+  function submitSkrining(formData) {
+    return callApi('submitSkrining', formData, 'POST');
   }
 
   // --- Pretest ---
-  async function getPretestQuestions(forceRefresh = false) {
-    const cacheKey = 'pretestSoal';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPretestQuestions', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getPretestQuestions(forceRefresh) {
+    var cacheKey = 'pretestSoal';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getPretestQuestions', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addPretestQuestion(teks, opsi, jawaban, urutan, timer_enabled = false, timer_duration = 30) {
-    return await callApi('addPretestQuestion', { teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST');
+  function addPretestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+    return callApi('addPretestQuestion', {
+      teks: teks,
+      opsi: opsi,
+      jawaban: jawaban,
+      urutan: urutan,
+      timer_enabled: timer_enabled,
+      timer_duration: timer_duration
+    }, 'POST');
   }
-
-  async function updatePretestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
-    return await callApi('updatePretestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST');
+  function updatePretestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+    return callApi('updatePretestQuestion', {
+      id: id,
+      teks: teks,
+      opsi: opsi,
+      jawaban: jawaban,
+      urutan: urutan,
+      timer_enabled: timer_enabled,
+      timer_duration: timer_duration
+    }, 'POST');
   }
-
-  async function deletePretestQuestion(id) {
-    return await callApi('deletePretestQuestion', { id }, 'POST');
+  function deletePretestQuestion(id) {
+    return callApi('deletePretestQuestion', { id: id }, 'POST');
   }
-
-  async function getPretestResponses(forceRefresh = false) {
-    const cacheKey = 'pretestResponses';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPretestResponses', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getPretestResponses(forceRefresh) {
+    var cacheKey = 'pretestResponses';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getPretestResponses', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function submitPretest(nama, nohp, alamat, answers, score) {
-    return await callApi('submitPretest', { nama, nohp, alamat, answers, score }, 'POST');
+  function submitPretest(nama, nohp, alamat, answers, score) {
+    return callApi('submitPretest', { nama: nama, nohp: nohp, alamat: alamat, answers: answers, score: score }, 'POST');
   }
 
   // --- Posttest ---
-  async function getPosttestQuestions(forceRefresh = false) {
-    const cacheKey = 'posttestSoal';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPosttestQuestions', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getPosttestQuestions(forceRefresh) {
+    var cacheKey = 'posttestSoal';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getPosttestQuestions', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addPosttestQuestion(teks, opsi, jawaban, urutan, timer_enabled = false, timer_duration = 30) {
-    return await callApi('addPosttestQuestion', { teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST');
+  function addPosttestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+    return callApi('addPosttestQuestion', {
+      teks: teks,
+      opsi: opsi,
+      jawaban: jawaban,
+      urutan: urutan,
+      timer_enabled: timer_enabled,
+      timer_duration: timer_duration
+    }, 'POST');
   }
-
-  async function updatePosttestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
-    return await callApi('updatePosttestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST');
+  function updatePosttestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+    return callApi('updatePosttestQuestion', {
+      id: id,
+      teks: teks,
+      opsi: opsi,
+      jawaban: jawaban,
+      urutan: urutan,
+      timer_enabled: timer_enabled,
+      timer_duration: timer_duration
+    }, 'POST');
   }
-
-  async function deletePosttestQuestion(id) {
-    return await callApi('deletePosttestQuestion', { id }, 'POST');
+  function deletePosttestQuestion(id) {
+    return callApi('deletePosttestQuestion', { id: id }, 'POST');
   }
-
-  async function getPosttestResponses(forceRefresh = false) {
-    const cacheKey = 'posttestResponses';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getPosttestResponses', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getPosttestResponses(forceRefresh) {
+    var cacheKey = 'posttestResponses';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getPosttestResponses', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function submitPosttest(nama, nohp, alamat, answers, score) {
-    return await callApi('submitPosttest', { nama, nohp, alamat, answers, score }, 'POST');
+  function submitPosttest(nama, nohp, alamat, answers, score) {
+    return callApi('submitPosttest', { nama: nama, nohp: nohp, alamat: alamat, answers: answers, score: score }, 'POST');
   }
 
   // --- Materi ---
-  async function getMateriList(forceRefresh = false) {
-    const cacheKey = 'materiList';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getMateriList', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getMateriList(forceRefresh) {
+    var cacheKey = 'materiList';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getMateriList', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addMateri(judul, deskripsi, fileData, fileName, uploadBy) {
-    return await callApi('addMateri', { judul, deskripsi, fileData, fileName, uploadBy }, 'POST');
+  function addMateri(judul, deskripsi, fileData, fileName, uploadBy) {
+    return callApi('addMateri', {
+      judul: judul,
+      deskripsi: deskripsi,
+      fileData: fileData,
+      fileName: fileName,
+      uploadBy: uploadBy
+    }, 'POST');
   }
-
-  async function deleteMateri(id, fileId) {
-    return await callApi('deleteMateri', { id, fileId }, 'POST');
+  function deleteMateri(id, fileId) {
+    return callApi('deleteMateri', { id: id, fileId: fileId }, 'POST');
   }
 
   // --- Informasi ---
-  async function getInfoList(forceRefresh = false) {
-    const cacheKey = 'adminInfoCache';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getInfoList', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getInfoList(forceRefresh) {
+    var cacheKey = 'adminInfoCache';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getInfoList', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addInfo(jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName) {
-    return await callApi('addInfo', { jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName }, 'POST');
+  function addInfo(jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName) {
+    return callApi('addInfo', {
+      jenis: jenis,
+      judul: judul,
+      deskripsi: deskripsi,
+      urutan: urutan,
+      tanggal_mulai: tanggal_mulai,
+      tanggal_akhir: tanggal_akhir,
+      lokasi: lokasi,
+      fileData: fileData,
+      fileName: fileName
+    }, 'POST');
   }
-
-  async function updateInfo(id, jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName) {
-    return await callApi('updateInfo', { id, jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName }, 'POST');
+  function updateInfo(id, jenis, judul, deskripsi, urutan, tanggal_mulai, tanggal_akhir, lokasi, fileData, fileName) {
+    return callApi('updateInfo', {
+      id: id,
+      jenis: jenis,
+      judul: judul,
+      deskripsi: deskripsi,
+      urutan: urutan,
+      tanggal_mulai: tanggal_mulai,
+      tanggal_akhir: tanggal_akhir,
+      lokasi: lokasi,
+      fileData: fileData,
+      fileName: fileName
+    }, 'POST');
   }
-
-  async function deleteInfo(id) {
-    return await callApi('deleteInfo', { id }, 'POST');
+  function deleteInfo(id) {
+    return callApi('deleteInfo', { id: id }, 'POST');
   }
-
-  async function toggleInfoStatus(id) {
-    return await callApi('toggleInfoStatus', { id }, 'POST');
+  function toggleInfoStatus(id) {
+    return callApi('toggleInfoStatus', { id: id }, 'POST');
   }
 
   // --- Usulan ---
-  async function getUsulanList() {
-    return await callApi('getUsulanList', {}, 'GET');
+  function getUsulanList() {
+    return callApi('getUsulanList', {}, 'GET');
   }
-
-  async function updateUsulanStatus(id, status, adminName) {
-    return await callApi('updateUsulanStatus', { id, status, adminName }, 'POST');
+  function updateUsulanStatus(id, status, adminName) {
+    return callApi('updateUsulanStatus', { id: id, status: status, adminName: adminName }, 'POST');
   }
-
-  async function submitUsulan(formData) {
-    return await callApi('submitUsulan', formData, 'POST');
+  function submitUsulan(formData) {
+    return callApi('submitUsulan', formData, 'POST');
   }
 
   // --- Sertifikat ---
-  async function getCertificateTemplates(forceRefresh = false) {
-    const cacheKey = 'certTemplates';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getCertificateTemplates', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getCertificateTemplates(forceRefresh) {
+    var cacheKey = 'certTemplates';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getCertificateTemplates', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function getCertPresets(forceRefresh = false) {
-    const cacheKey = 'certPresets';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getCertPresets', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getCertPresets(forceRefresh) {
+    var cacheKey = 'certPresets';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getCertPresets', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function addCertPreset(name, config) {
-    return await callApi('addCertPreset', { name, config }, 'POST');
+  function addCertPreset(name, config) {
+    return callApi('addCertPreset', { name: name, config: config }, 'POST');
   }
-
-  async function updateCertPreset(id, name, config) {
-    return await callApi('updateCertPreset', { id, name, config }, 'POST');
+  function updateCertPreset(id, name, config) {
+    return callApi('updateCertPreset', { id: id, name: name, config: config }, 'POST');
   }
-
-  async function deleteCertPreset(id) {
-    return await callApi('deleteCertPreset', { id }, 'POST');
+  function deleteCertPreset(id) {
+    return callApi('deleteCertPreset', { id: id }, 'POST');
   }
-
-  async function addCertificateTemplateManual(nama_template, doc_template_id, config) {
-    return await callApi('addCertificateTemplateManual', { nama_template, doc_template_id, config }, 'POST');
+  function addCertificateTemplateManual(nama_template, doc_template_id, config) {
+    return callApi('addCertificateTemplateManual', { nama_template: nama_template, doc_template_id: doc_template_id, config: config }, 'POST');
   }
-
-  async function updateCertificateTemplate(id, nama_template, doc_template_id, config) {
-    return await callApi('updateCertificateTemplate', { id, nama_template, doc_template_id, config }, 'POST');
+  function updateCertificateTemplate(id, nama_template, doc_template_id, config) {
+    return callApi('updateCertificateTemplate', { id: id, nama_template: nama_template, doc_template_id: doc_template_id, config: config }, 'POST');
   }
-
-  async function deleteCertificateTemplate(id) {
-    return await callApi('deleteCertificateTemplate', { id }, 'POST');
+  function deleteCertificateTemplate(id) {
+    return callApi('deleteCertificateTemplate', { id: id }, 'POST');
   }
-
-  async function generateCertificates(templateId, presetId, participants, startNumber, customData = {}) {
-    return await callApi('generateCertificates', {
-      templateId,
-      presetId,
+  function generateCertificates(templateId, presetId, participants, startNumber, customData) {
+    return callApi('generateCertificates', {
+      templateId: templateId,
+      presetId: presetId,
       participants: JSON.stringify(participants),
-      startNumber,
-      customData: JSON.stringify(customData)
+      startNumber: startNumber,
+      customData: JSON.stringify(customData || {})
     }, 'POST');
   }
-
-  async function getUploadedCertificates(forceRefresh = false) {
-    const cacheKey = 'uploadedCerts';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getUploadedCertificates', {}, 'GET');
-    const data = res.data || [];
-    saveCached(cacheKey, data);
-    return data;
+  function getUploadedCertificates(forceRefresh) {
+    var cacheKey = 'uploadedCerts';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getUploadedCertificates', {}, 'GET').then(function(res) {
+      var data = res.data || [];
+      saveCached(cacheKey, data);
+      return data;
+    });
   }
-
-  async function uploadManualCertificate(pesertaId, nomorSertifikat, fileData) {
-    return await callApi('uploadManualCertificate', { pesertaId, nomorSertifikat, fileData }, 'POST');
+  function uploadManualCertificate(pesertaId, nomorSertifikat, fileData) {
+    return callApi('uploadManualCertificate', { pesertaId: pesertaId, nomorSertifikat: nomorSertifikat, fileData: fileData }, 'POST');
   }
-
-  async function verifyCertificate(nomor) {
-    return await callApi('verifyCertificate', { nomor }, 'GET');
+  function verifyCertificate(nomor) {
+    return callApi('verifyCertificate', { nomor: nomor }, 'GET');
+  }
+  function getNextCertificateNumber() {
+    return callApi('getNextCertificateNumber', {}, 'GET');
   }
 
   // --- Layout Sertifikat ---
-  async function saveCertificateLayout(nama, data_json, id = null) {
-    return await callApi('saveCertificateLayout', { nama, data_json, id }, 'POST');
+  function saveCertificateLayout(nama, data_json, id) {
+    return callApi('saveCertificateLayout', { nama: nama, data_json: data_json, id: id }, 'POST');
   }
-
-  async function getCertificateLayout(identifier) {
-    return await callApi('getCertificateLayout', { id: identifier, nama: identifier }, 'GET');
+  function getCertificateLayout(identifier) {
+    return callApi('getCertificateLayout', { id: identifier, nama: identifier }, 'GET');
   }
-
-  async function listCertificateLayouts() {
-    return await callApi('listCertificateLayouts', {}, 'GET');
+  function listCertificateLayouts() {
+    return callApi('listCertificateLayouts', {}, 'GET');
   }
 
   // --- Tanda Tangan Digital ---
-  async function submitDigitalSignature(role, nama, signature, password) {
-    return await callApi('submitDigitalSignature', { role, nama, signature, password }, 'POST');
+  function submitDigitalSignature(role, nama, signature, password) {
+    return callApi('submitDigitalSignature', { role: role, nama: nama, signature: signature, password: password }, 'POST');
+  }
+  function getDigitalApproval(role) {
+    return callApi('getDigitalApproval', { role: role }, 'GET');
+  }
+  function getAllDigitalApprovals() {
+    return callApi('getAllDigitalApprovals', {}, 'GET');
   }
 
-  async function getDigitalApproval(role) {
-    return await callApi('getDigitalApproval', { role }, 'GET');
+  // --- RTL ---
+  function getRTLTasks(pesertaId) {
+    return callApi('getRTLTasks', { pesertaId: pesertaId }, 'GET');
   }
-
-  async function getAllDigitalApprovals() {
-    return await callApi('getAllDigitalApprovals', {}, 'GET');
+  function addRTLTask(judul, deskripsi, deadline, status, pesertaId, fileDriveId, catatan) {
+    return callApi('addRTLTask', {
+      judul: judul,
+      deskripsi: deskripsi,
+      deadline: deadline,
+      status: status,
+      pesertaId: pesertaId,
+      fileDriveId: fileDriveId,
+      catatan: catatan
+    }, 'POST');
+  }
+  function updateRTLTask(id, judul, deskripsi, deadline, status, pesertaId, fileDriveId, catatan) {
+    return callApi('updateRTLTask', {
+      id: id,
+      judul: judul,
+      deskripsi: deskripsi,
+      deadline: deadline,
+      status: status,
+      pesertaId: pesertaId,
+      fileDriveId: fileDriveId,
+      catatan: catatan
+    }, 'POST');
+  }
+  function deleteRTLTask(id) {
+    return callApi('deleteRTLTask', { id: id }, 'POST');
+  }
+  function submitRTLAttachment(taskId, fileData, fileName) {
+    return callApi('submitRTLAttachment', { taskId: taskId, fileData: fileData, fileName: fileName }, 'POST');
+  }
+  function getRTLAttachments(taskId) {
+    return callApi('getRTLAttachments', { taskId: taskId }, 'GET');
   }
 
   // --- Pengaturan ---
-  async function getQuizSettings(forceRefresh = false) {
-    const cacheKey = 'quizSettings';
-    if (!forceRefresh) { const c = getCached(cacheKey); if (c) return c; }
-    const res = await callApi('getQuizSettings', {}, 'GET');
-    const data = res.data || {};
-    saveCached(cacheKey, data);
-    return data;
+  function getQuizSettings(forceRefresh) {
+    var cacheKey = 'quizSettings';
+    if (!forceRefresh) {
+      var c = getCached(cacheKey);
+      if (c) return c;
+    }
+    return callApi('getQuizSettings', {}, 'GET').then(function(res) {
+      var data = res.data || {};
+      saveCached(cacheKey, data);
+      return data;
+    });
+  }
+  
+  // 🚀 PERBAIKAN UTAMA: Hapus cache 5 menit agar Mode Login Publik realtime.
+  function getLoginMode() {
+    return callApi('getLoginMode', {}, 'GET');
   }
 
-  async function getLoginMode() {
-    const cacheKey = 'loginMode';
-    const c = getCached(cacheKey, 300000);
-    if (c) return c;
-    const res = await callApi('getLoginMode', {}, 'GET');
-    saveCached(cacheKey, res);
-    return res;
+  function setLoginMode(enabled) {
+    return callApi('setLoginMode', { enabled: enabled }, 'POST');
   }
-
-  async function setLoginMode(enabled) {
-    return await callApi('setLoginMode', { enabled }, 'POST');
+  function getDashboardStats() {
+    return callApi('getDashboardStats', {}, 'GET');
   }
-
-  async function getDashboardStats() {
-    return await callApi('getDashboardStats', {}, 'GET');
+  function getRealtimeSetting() {
+    return callApi('getRealtimeSetting', {}, 'GET');
   }
-
-  async function getRealtimeSetting() {
-    return await callApi('getRealtimeSetting', {}, 'GET');
-  }
-
-  async function setRealtimeSetting(enabled) {
-    return await callApi('setRealtimeSetting', { enabled }, 'POST');
+  function setRealtimeSetting(enabled) {
+    return callApi('setRealtimeSetting', { enabled: enabled }, 'POST');
   }
 
   // --- Member ---
-  async function getMemberData(username) {
-    return await callApi('getMemberData', { username }, 'GET');
+  function getMemberData(username) {
+    return callApi('getMemberData', { username: username }, 'GET');
+  }
+  function getMemberSkrining(nama) {
+    return callApi('getMemberSkrining', { nama: nama }, 'GET');
+  }
+  function getMemberAbsensi(nama) {
+    return callApi('getMemberAbsensi', { nama: nama }, 'GET');
+  }
+  function getMemberSertifikat(nama) {
+    return callApi('getMemberSertifikat', { nama: nama }, 'GET');
+  }
+  function updateMemberProfile(username, data) {
+    return callApi('updateMemberProfile', { username: username, ...data }, 'POST');
   }
 
-  async function getMemberSkrining(nama) {
-    return await callApi('getMemberSkrining', { nama }, 'GET');
+  // --- Lupa Akun ---
+  function getMemberUsername(params) {
+    return callApi('getMemberUsername', params, 'GET');
   }
-
-  async function getMemberAbsensi(nama) {
-    return await callApi('getMemberAbsensi', { nama }, 'GET');
+  function verifyMemberForgot(params) {
+    return callApi('verifyMemberForgot', params, 'GET');
   }
-
-  async function getMemberSertifikat(nama) {
-    return await callApi('getMemberSertifikat', { nama }, 'GET');
-  }
-
-  async function updateMemberProfile(username, nama_lengkap, email, nohp, password, foto) {
-    return await callApi('updateMemberProfile', {
-      username,
-      nama_lengkap,
-      email,
-      no_hp: nohp,
-      password,
-      foto
-    }, 'POST');
+  function resetMemberPassword(params) {
+    return callApi('resetMemberPassword', params, 'POST');
   }
 
   // --- Kontak ---
-  async function submitKontak(nama, email, pesan, username, role, ip) {
-    return await callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'GET');
+  function submitKontak(nama, email, pesan, username, role, ip) {
+    return callApi('submitKontak', { nama: nama, email: email, pesan: pesan, username: username, role: role, ip: ip }, 'GET');
   }
 
-  // ======================== SIDEBAR HANDLER ========================
-  function initSidebar() {
-    const toggleBtn = document.getElementById('toggleSidebarBtn');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () {
-        const row = document.querySelector('.row.g-4');
-        if (row) row.classList.toggle('sidebar-minimized');
-        const icon = this.querySelector('i');
-        if (icon) {
-          icon.classList.toggle('bi-arrow-left-right');
-          icon.classList.toggle('bi-arrow-right-left');
-        }
-      });
-    }
-
-    const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
-    if (sidebarLogoutBtn) {
-      sidebarLogoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        logout();
-      });
-    }
+  // --- VISIBILITAS PER MENU ---
+  function getPublicVisibility() {
+    return callApi('getPublicVisibility', {}, 'GET');
   }
-
-  // ======================== CHECK LOGIN MODE ========================
-  async function checkLoginModeAndRedirect() {
-    try {
-      const res = await getLoginMode();
-      const requireLogin = res.success ? res.enabled : false;
-      if (requireLogin) {
-        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-        if (!auth && !userRole) {
-          window.location.href = '/bisaa/login.html';
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Gagal cek login mode, lanjutkan', e);
-    }
-  }
-
-  // ======================== NAVBAR COLLAPSE ========================
-  function initNavbarCollapse() {
-    document.addEventListener('click', function (e) {
-      const navbar = document.getElementById('navbarMain');
-      const toggler = document.querySelector('.navbar-toggler');
-      if (navbar && toggler && !navbar.contains(e.target) && !toggler.contains(e.target) && navbar.classList.contains('show')) {
-        if (typeof bootstrap !== 'undefined') {
-          bootstrap.Collapse.getInstance(navbar)?.hide();
-        }
-      }
-    });
+  function setPublicVisibility(data) {
+    return callApi('setPublicVisibility', { data: JSON.stringify(data) }, 'POST');
   }
 
   // ======================== EKSPOR MODUL ========================
   global.PKD = {
-    // Config
-    SCRIPT_URL,
-
-    // State
-    getUserRole: () => userRole,
-    getUserData: () => userData,
-    setUserRole: (role) => { userRole = role; },
-    setUserData: (data) => { userData = data; },
-
-    // Utils
-    escapeHtml,
-    showToast,
-    callApi,
-
-    // Cache
-    getCached,
-    saveCached,
-
-    // Auth
-    persistAuthState,
-    loadAuthState,
-    logout,
-    verifyAdmin,
-    verifyKetuaPAC,
-    verifyMember,
-    updateNavbarMenu,
-
+    SCRIPT_URL: SCRIPT_URL,
+    getUserRole: function() { return userRole; },
+    getUserData: function() { return userData; },
+    setUserRole: function(role) { userRole = role; },
+    setUserData: function(data) { userData = data; },
+    escapeHtml: escapeHtml,
+    showToast: showToast,
+    callApi: callApi,
+    getCached: getCached,
+    saveCached: saveCached,
+    persistAuthState: persistAuthState,
+    loadAuthState: loadAuthState,
+    logout: logout,
+    updateNavbarMenu: updateNavbarMenu,
+    verifyAdmin: verifyAdmin,
+    verifyKetuaPAC: verifyKetuaPAC,
+    verifyMember: verifyMember,
     // Peserta
-    getPesertaList,
-    submitPeserta,
-    deletePeserta,
-    updatePeserta,
-    exportPesertaCSV,
-    importPesertaCSV,
-    getTotalPeserta,
-    approvePeserta,
-    rejectPeserta,
-    getPesertaById,
-
+    getPesertaList: getPesertaList,
+    submitPeserta: submitPeserta,
+    deletePeserta: deletePeserta,
+    updatePeserta: updatePeserta,
+    exportPesertaCSV: exportPesertaCSV,
+    importPesertaCSV: importPesertaCSV,
+    getTotalPeserta: getTotalPeserta,
+    approvePeserta: approvePeserta,
+    rejectPeserta: rejectPeserta,
+    getPesertaById: getPesertaById,
+    getPesertaCredentials: getPesertaCredentials, // 🆕 Fitur Baru
     // Form Settings
-    getFormSettings,
-    setFormSettings,
-
+    getFormSettings: getFormSettings,
+    setFormSettings: setFormSettings,
     // Alumni
     alumni: {
       getList: getAlumniList,
@@ -849,117 +913,111 @@
       moveMultipleToAlumni: moveMultipleToAlumni,
       moveBackToActive: moveBackToActive
     },
-
     // Sesi Absen
-    getSesiAbsen,
-    addSesiAbsen,
-    updateSesiAbsen,
-    deleteSesiAbsen,
-    regenerateQRSesi,
-    // Fungsi kontrol sesi absen
-    toggleAttendanceSession,
-    getAttendanceSessionStatus,
-
+    getSesiAbsen: getSesiAbsen,
+    addSesiAbsen: addSesiAbsen,
+    updateSesiAbsen: updateSesiAbsen,
+    deleteSesiAbsen: deleteSesiAbsen,
+    regenerateQRSesi: regenerateQRSesi,
+    toggleAttendanceSession: toggleAttendanceSession,
+    getAttendanceSessionStatus: getAttendanceSessionStatus,
     // Absensi
-    submitAbsen,
-    getAbsensiResponses,
-    getAttendanceBySesi,
-    getAttendanceMatrix,
-    exportAttendanceMatrixCSV,
-
+    submitAbsen: submitAbsen,
+    getAbsensiResponses: getAbsensiResponses,
+    getAttendanceBySesi: getAttendanceBySesi,
+    getAttendanceMatrix: getAttendanceMatrix,
+    exportAttendanceMatrixCSV: exportAttendanceMatrixCSV,
     // Skrining
-    getSkriningQuestions,
-    addSkriningQuestion,
-    updateSkriningQuestion,
-    deleteSkriningQuestion,
-    getSkriningResponses,
-    submitSkrining,
-
+    getSkriningQuestions: getSkriningQuestions,
+    addSkriningQuestion: addSkriningQuestion,
+    updateSkriningQuestion: updateSkriningQuestion,
+    deleteSkriningQuestion: deleteSkriningQuestion,
+    getSkriningResponses: getSkriningResponses,
+    submitSkrining: submitSkrining,
     // Pretest
-    getPretestQuestions,
-    addPretestQuestion,
-    updatePretestQuestion,
-    deletePretestQuestion,
-    getPretestResponses,
-    submitPretest,
-
+    getPretestQuestions: getPretestQuestions,
+    addPretestQuestion: addPretestQuestion,
+    updatePretestQuestion: updatePretestQuestion,
+    deletePretestQuestion: deletePretestQuestion,
+    getPretestResponses: getPretestResponses,
+    submitPretest: submitPretest,
     // Posttest
-    getPosttestQuestions,
-    addPosttestQuestion,
-    updatePosttestQuestion,
-    deletePosttestQuestion,
-    getPosttestResponses,
-    submitPosttest,
-
+    getPosttestQuestions: getPosttestQuestions,
+    addPosttestQuestion: addPosttestQuestion,
+    updatePosttestQuestion: updatePosttestQuestion,
+    deletePosttestQuestion: deletePosttestQuestion,
+    getPosttestResponses: getPosttestResponses,
+    submitPosttest: submitPosttest,
     // Materi
-    getMateriList,
-    addMateri,
-    deleteMateri,
-
+    getMateriList: getMateriList,
+    addMateri: addMateri,
+    deleteMateri: deleteMateri,
     // Info
-    getInfoList,
-    addInfo,
-    updateInfo,
-    deleteInfo,
-    toggleInfoStatus,
-    getUsulanList,
-    updateUsulanStatus,
-    submitUsulan,
-
+    getInfoList: getInfoList,
+    addInfo: addInfo,
+    updateInfo: updateInfo,
+    deleteInfo: deleteInfo,
+    toggleInfoStatus: toggleInfoStatus,
+    // Usulan
+    getUsulanList: getUsulanList,
+    updateUsulanStatus: updateUsulanStatus,
+    submitUsulan: submitUsulan,
     // Sertifikat
-    getCertificateTemplates,
-    getCertPresets,
-    addCertPreset,
-    updateCertPreset,
-    deleteCertPreset,
-    addCertificateTemplateManual,
-    updateCertificateTemplate,
-    deleteCertificateTemplate,
-    generateCertificates,
-    getUploadedCertificates,
-    uploadManualCertificate,
-    verifyCertificate,
-
-    // Layout Sertifikat
-    saveCertificateLayout,
-    getCertificateLayout,
-    listCertificateLayouts,
-
-    // Tanda Tangan Digital
-    submitDigitalSignature,
-    getDigitalApproval,
-    getAllDigitalApprovals,
-
+    getCertificateTemplates: getCertificateTemplates,
+    getCertPresets: getCertPresets,
+    addCertPreset: addCertPreset,
+    updateCertPreset: updateCertPreset,
+    deleteCertPreset: deleteCertPreset,
+    addCertificateTemplateManual: addCertificateTemplateManual,
+    updateCertificateTemplate: updateCertificateTemplate,
+    deleteCertificateTemplate: deleteCertificateTemplate,
+    generateCertificates: generateCertificates,
+    getUploadedCertificates: getUploadedCertificates,
+    uploadManualCertificate: uploadManualCertificate,
+    verifyCertificate: verifyCertificate,
+    getNextCertificateNumber: getNextCertificateNumber,
+    // Layout
+    saveCertificateLayout: saveCertificateLayout,
+    getCertificateLayout: getCertificateLayout,
+    listCertificateLayouts: listCertificateLayouts,
+    // Tanda Tangan
+    submitDigitalSignature: submitDigitalSignature,
+    getDigitalApproval: getDigitalApproval,
+    getAllDigitalApprovals: getAllDigitalApprovals,
+    // RTL
+    getRTLTasks: getRTLTasks,
+    addRTLTask: addRTLTask,
+    updateRTLTask: updateRTLTask,
+    deleteRTLTask: deleteRTLTask,
+    submitRTLAttachment: submitRTLAttachment,
+    getRTLAttachments: getRTLAttachments,
     // Pengaturan
-    getQuizSettings,
-    getLoginMode,
-    setLoginMode,
-    getDashboardStats,
-    getRealtimeSetting,
-    setRealtimeSetting,
-
+    getQuizSettings: getQuizSettings,
+    getLoginMode: getLoginMode,
+    setLoginMode: setLoginMode,
+    getDashboardStats: getDashboardStats,
+    getRealtimeSetting: getRealtimeSetting,
+    setRealtimeSetting: setRealtimeSetting,
     // Member
-    getMemberData,
-    getMemberSkrining,
-    getMemberAbsensi,
-    getMemberSertifikat,
-    updateMemberProfile,
-
+    getMemberData: getMemberData,
+    getMemberSkrining: getMemberSkrining,
+    getMemberAbsensi: getMemberAbsensi,
+    getMemberSertifikat: getMemberSertifikat,
+    updateMemberProfile: updateMemberProfile,
+    // Lupa Akun
+    getMemberUsername: getMemberUsername,
+    verifyMemberForgot: verifyMemberForgot,
+    resetMemberPassword: resetMemberPassword,
     // Kontak
-    submitKontak,
-
-    // UI Helpers
-    initSidebar,
-    initNavbarCollapse,
-    checkLoginModeAndRedirect
+    submitKontak: submitKontak,
+    // Visibilitas
+    getPublicVisibility: getPublicVisibility,
+    setPublicVisibility: setPublicVisibility
   };
 
   // ======================== AUTO INIT ========================
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', function() {
     loadAuthState();
-    initSidebar();
-    initNavbarCollapse();
-    checkLoginModeAndRedirect();
   });
 
 })(window);

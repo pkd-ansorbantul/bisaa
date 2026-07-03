@@ -124,6 +124,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     .btn-aksi { min-width: 80px; }
+    .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 50px; }
+    .status-badge.alumni { background: #bae6fd; color: #0369a1; }
   </style>
 </head>
 <body>
@@ -236,7 +238,8 @@
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
       <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
       <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+      <a href="/bisaa/admin/alumni_admin.html" class="nav-item active"><i class="bi bi-award"></i><span>Alumni</span></a>
+      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
     <!-- ==================== CONTENT WRAPPER ==================== -->
@@ -246,9 +249,8 @@
       <!-- TOOLBAR -->
       <div class="row mb-3">
         <div class="col-md-6">
-          <button class="btn btn-primary rounded-pill" id="addAlumniBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Alumni</button>
-          <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
-          <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+          <button class="btn btn-outline-success rounded-pill" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
+          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
           <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
         </div>
         <div class="col-md-6 text-md-end">
@@ -258,10 +260,6 @@
           </div>
           <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterAngkatan">
             <option value="">Semua Angkatan</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-            <option value="2022">2022</option>
-            <option value="2021">2021</option>
           </select>
         </div>
       </div>
@@ -304,53 +302,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL FORM (TAMBAH/EDIT) ==================== -->
-<div class="modal fade" id="alumniFormModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-award me-2"></i><span id="formModalTitle">Tambah Alumni</span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <input type="hidden" id="editAlumniId">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Nama Lengkap</label>
-          <input type="text" class="form-control" id="alumniNama" placeholder="Nama lengkap alumni" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Email</label>
-          <input type="email" class="form-control" id="alumniEmail" placeholder="email@example.com" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">No. HP</label>
-          <input type="text" class="form-control" id="alumniHp" placeholder="081234567890" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Asal</label>
-          <input type="text" class="form-control" id="alumniAsal" placeholder="Asal alumni" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Angkatan</label>
-          <input type="text" class="form-control" id="alumniAngkatan" placeholder="Contoh: 2024" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Pekerjaan</label>
-          <input type="text" class="form-control" id="alumniPekerjaan" placeholder="Pekerjaan saat ini (opsional)">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Keterangan</label>
-          <textarea class="form-control" id="alumniNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveAlumniBtn">Simpan</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== MODAL DETAIL ==================== -->
 <div class="modal fade" id="detailAlumniModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -364,28 +315,6 @@
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL HAPUS ==================== -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 text-center">
-        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
-        <p>Apakah Anda yakin ingin menghapus alumni ini?</p>
-        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
-        <input type="hidden" id="deleteAlumniId">
-      </div>
-      <div class="modal-footer border-0 justify-content-center">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
       </div>
     </div>
   </div>
@@ -417,26 +346,8 @@
       filteredList: [],
       searchQuery: '',
       angkatanFilter: '',
-      isLoading: false,
-      isEditing: false,
-      isBackgroundUpdate: false
+      isLoading: false
     };
-
-    // =====================================================
-    //   DATA DUMMY (FALLBACK)
-    // =====================================================
-    const DUMMY_ALUMNI = [
-      { id: 'a1', nama: 'Ahmad Fauzi', email: 'ahmad@example.com', hp: '081234567890', asal: 'Bantul', angkatan: '2024', pekerjaan: 'Guru', catatan: 'Lulus dengan nilai baik' },
-      { id: 'a2', nama: 'Siti Rahma', email: 'siti@example.com', hp: '081234567891', asal: 'Sleman', angkatan: '2024', pekerjaan: 'Mahasiswa', catatan: '' },
-      { id: 'a3', nama: 'Budi Santoso', email: 'budi@example.com', hp: '081234567892', asal: 'Yogyakarta', angkatan: '2023', pekerjaan: 'Karyawan Swasta', catatan: 'Lulus' },
-      { id: 'a4', nama: 'Dewi Lestari', email: 'dewi@example.com', hp: '081234567893', asal: 'Kulon Progo', angkatan: '2023', pekerjaan: 'Wirausaha', catatan: 'Aktif berbisnis' },
-      { id: 'a5', nama: 'Eko Prasetyo', email: 'eko@example.com', hp: '081234567894', asal: 'Gunungkidul', angkatan: '2022', pekerjaan: 'Pegawai Negeri', catatan: '' },
-      { id: 'a6', nama: 'Fitri Handayani', email: 'fitri@example.com', hp: '081234567895', asal: 'Bantul', angkatan: '2022', pekerjaan: 'Guru', catatan: 'Prestasi' },
-      { id: 'a7', nama: 'Galih Wicaksono', email: 'galih@example.com', hp: '081234567896', asal: 'Sleman', angkatan: '2021', pekerjaan: 'Mahasiswa', catatan: '' },
-      { id: 'a8', nama: 'Hana Putri', email: 'hana@example.com', hp: '081234567897', asal: 'Yogyakarta', angkatan: '2021', pekerjaan: 'Karyawan Swasta', catatan: 'Bekerja di Jakarta' },
-      { id: 'a9', nama: 'Indra Wijaya', email: 'indra@example.com', hp: '081234567898', asal: 'Kulon Progo', angkatan: '2024', pekerjaan: 'Freelance', catatan: '' },
-      { id: 'a10', nama: 'Joko Susilo', email: 'joko@example.com', hp: '081234567899', asal: 'Gunungkidul', angkatan: '2023', pekerjaan: 'Pegawai Swasta', catatan: 'Lulus' }
-    ];
 
     // =====================================================
     //   UTILITY FUNCTIONS
@@ -461,10 +372,6 @@
         if (m === '"') return '&quot;';
         return m;
       });
-    }
-
-    function generateId() {
-      return 'a' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     }
 
     function showToast(message, type = 'success') {
@@ -534,7 +441,7 @@
     });
 
     // =====================================================
-    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
+    //   LOGIN AUTH CHECK
     // =====================================================
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
@@ -546,7 +453,6 @@
       loadData();
 
       // Event listeners
-      document.getElementById('addAlumniBtn')?.addEventListener('click', openAddModal);
       document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
       document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
@@ -561,14 +467,12 @@
           showToast('Gagal menyegarkan', 'error');
         });
       });
-      document.getElementById('saveAlumniBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
       document.getElementById('searchInput')?.addEventListener('input', handleSearch);
       document.getElementById('filterAngkatan')?.addEventListener('change', handleAngkatanFilter);
     });
 
     // =====================================================
-    //   CACHE HELPERS
+    //   CACHE HELPERS (DATA REAL)
     // =====================================================
     function loadDataFromCache() {
       const cached = DataCache.getData('alumni');
@@ -592,81 +496,8 @@
       }
     }
 
-    function loadDataFromStorage() {
-      try {
-        const stored = localStorage.getItem('pkd_alumni_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.alumniList) {
-            STATE.alumniList = parsed.alumniList;
-          }
-        }
-      } catch (e) {}
-      if (STATE.alumniList.length === 0) {
-        STATE.alumniList = JSON.parse(JSON.stringify(DUMMY_ALUMNI));
-        saveDataToStorage();
-      }
-    }
-
-    function saveDataToStorage() {
-      try {
-        localStorage.setItem('pkd_alumni_data', JSON.stringify({
-          alumniList: STATE.alumniList
-        }));
-      } catch (e) {}
-    }
-
     function getAlumniById(id) {
       return STATE.alumniList.find(item => item.id === id);
-    }
-
-    // =====================================================
-    //   CRUD OPERATIONS
-    // =====================================================
-    function addAlumni(data) {
-      const newItem = {
-        id: generateId(),
-        nama: data.nama || '',
-        email: data.email || '',
-        hp: data.hp || '',
-        asal: data.asal || '',
-        angkatan: data.angkatan || '',
-        pekerjaan: data.pekerjaan || '',
-        catatan: data.catatan || ''
-      };
-      STATE.alumniList.unshift(newItem);
-      updateCache(STATE.alumniList);
-      saveDataToStorage();
-      return newItem;
-    }
-
-    function updateAlumni(id, data) {
-      const index = STATE.alumniList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const existing = STATE.alumniList[index];
-      const updated = {
-        ...existing,
-        nama: data.nama !== undefined ? data.nama : existing.nama,
-        email: data.email !== undefined ? data.email : existing.email,
-        hp: data.hp !== undefined ? data.hp : existing.hp,
-        asal: data.asal !== undefined ? data.asal : existing.asal,
-        angkatan: data.angkatan !== undefined ? data.angkatan : existing.angkatan,
-        pekerjaan: data.pekerjaan !== undefined ? data.pekerjaan : existing.pekerjaan,
-        catatan: data.catatan !== undefined ? data.catatan : existing.catatan
-      };
-      STATE.alumniList[index] = updated;
-      updateCache(STATE.alumniList);
-      saveDataToStorage();
-      return updated;
-    }
-
-    function deleteAlumni(id) {
-      const index = STATE.alumniList.findIndex(item => item.id === id);
-      if (index === -1) return false;
-      STATE.alumniList.splice(index, 1);
-      updateCache(STATE.alumniList);
-      saveDataToStorage();
-      return true;
     }
 
     function getFilteredAlumni(query = '', angkatan = '') {
@@ -674,16 +505,80 @@
       if (query.trim() !== '') {
         const q = query.toLowerCase().trim();
         filtered = filtered.filter(item =>
-          (item.nama && item.nama.toLowerCase().includes(q)) ||
+          (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
           (item.email && item.email.toLowerCase().includes(q)) ||
           (item.asal && item.asal.toLowerCase().includes(q)) ||
-          (item.hp && item.hp.toLowerCase().includes(q))
+          (item.no_hp && item.no_hp.toLowerCase().includes(q))
         );
       }
       if (angkatan !== '' && angkatan !== '') {
         filtered = filtered.filter(item => item.angkatan === angkatan);
       }
       return filtered;
+    }
+
+    // =====================================================
+    //   LOAD DATA (ROBUST - TANPA DUMMY)
+    // =====================================================
+    async function loadData(forceRefresh = false) {
+      const container = document.getElementById('alumniTableContainer');
+      container.innerHTML = renderSkeleton();
+
+      // 1. Jika forceRefresh, ambil dari API
+      if (forceRefresh) {
+        try {
+          const freshData = await PKD.alumni.getList(true);
+          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+            STATE.alumniList = freshData;
+            updateCache(freshData);
+            renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
+            updateCacheStatus('Live');
+            renderAngkatanFilter();
+            return;
+          }
+        } catch (e) {
+          console.warn('Gagal memuat data dari API:', e);
+        }
+      }
+
+      // 2. Coba DataCache
+      const cached = DataCache.getData('alumni');
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        STATE.alumniList = cached;
+        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
+        updateCacheStatus('Cache');
+        renderAngkatanFilter();
+        return;
+      }
+
+      // 3. Jika semua gagal, tampilkan pesan kosong
+      container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data alumni.</div>`;
+      updateCacheStatus('Empty');
+    }
+
+    // =====================================================
+    //   RENDER ANGKATAN FILTER (ROBUST - handle undefined angkatan)
+    // =====================================================
+    function renderAngkatanFilter() {
+      const select = document.getElementById('filterAngkatan');
+      if (!select) return;
+
+      const angkatanSet = new Set();
+      STATE.alumniList.forEach(item => {
+        // Hanya tambahkan ke set jika angkatan benar-benar ada dan tidak kosong
+        if (item.angkatan && item.angkatan.trim() !== '') {
+          angkatanSet.add(item.angkatan);
+        }
+      });
+
+      const angkatan = Array.from(angkatanSet).sort();
+      select.innerHTML = '<option value="">Semua Angkatan</option>';
+      angkatan.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        select.appendChild(opt);
+      });
     }
 
     // =====================================================
@@ -704,6 +599,7 @@
                 <th>No HP</th>
                 <th>Asal</th>
                 <th>Angkatan</th>
+                <th>Status</th>
                 <th style="width: 200px;" class="text-center">Aksi</th>
               </tr>
             </thead>
@@ -713,7 +609,7 @@
       if (data.length === 0) {
         html += `
             <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
+              <td colspan="8" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                 Tidak ada data alumni.
               </td>
@@ -721,14 +617,17 @@
         `;
       } else {
         data.forEach((item, index) => {
+          // Handle jika angkatan kosong
+          const angkatanDisplay = item.angkatan && item.angkatan.trim() !== '' ? item.angkatan : '-';
           html += `
             <tr>
               <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
+              <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
               <td>${escapeHtml(item.email || '-')}</td>
-              <td>${escapeHtml(item.hp || '-')}</td>
+              <td>${escapeHtml(item.no_hp || '-')}</td>
               <td>${escapeHtml(item.asal || '-')}</td>
-              <td><span class="badge bg-primary">${escapeHtml(item.angkatan || '-')}</span></td>
+              <td><span class="badge bg-primary">${escapeHtml(angkatanDisplay)}</span></td>
+              <td><span class="badge bg-info status-badge alumni">Alumni</span></td>
               <td class="text-center">
                 <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAlumni('${item.id}')" title="Lihat Detail">
                   <i class="bi bi-eye"></i>
@@ -755,89 +654,8 @@
     }
 
     // =====================================================
-    //   LOAD DATA (ROBUST)
+    //   CRUD OPERATIONS (Menggunakan API atau Local State)
     // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('alumniTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Coba API dengan force refresh
-      if (forceRefresh) {
-        try {
-          const freshData = await PKD.getAlumniList(true);
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.alumniList = freshData;
-            updateCache(freshData);
-            saveDataToStorage();
-            renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-            updateCacheStatus('Live');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-        }
-      }
-
-      // 2. Coba DataCache
-      const cached = DataCache.getData('alumni');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.alumniList = cached;
-        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-        updateCacheStatus('Cache');
-        return;
-      }
-
-      // 3. Coba localStorage
-      loadDataFromStorage();
-      if (STATE.alumniList.length > 0) {
-        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-        updateCacheStatus('Storage');
-      } else {
-        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data alumni.</div>`;
-        updateCacheStatus('Empty');
-      }
-    }
-
-    // =====================================================
-    //   EVENT HANDLERS
-    // =====================================================
-    function resetForm() {
-      document.getElementById('editAlumniId').value = '';
-      document.getElementById('alumniNama').value = '';
-      document.getElementById('alumniEmail').value = '';
-      document.getElementById('alumniHp').value = '';
-      document.getElementById('alumniAsal').value = '';
-      document.getElementById('alumniAngkatan').value = '';
-      document.getElementById('alumniPekerjaan').value = '';
-      document.getElementById('alumniNote').value = '';
-      document.getElementById('formModalTitle').innerText = 'Tambah Alumni';
-      STATE.isEditing = false;
-    }
-
-    function openAddModal() {
-      resetForm();
-      new bootstrap.Modal(document.getElementById('alumniFormModal')).show();
-    }
-
-    window.editAlumni = function(id) {
-      const item = getAlumniById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      document.getElementById('editAlumniId').value = id;
-      document.getElementById('alumniNama').value = item.nama || '';
-      document.getElementById('alumniEmail').value = item.email || '';
-      document.getElementById('alumniHp').value = item.hp || '';
-      document.getElementById('alumniAsal').value = item.asal || '';
-      document.getElementById('alumniAngkatan').value = item.angkatan || '';
-      document.getElementById('alumniPekerjaan').value = item.pekerjaan || '';
-      document.getElementById('alumniNote').value = item.catatan || '';
-      document.getElementById('formModalTitle').innerText = 'Edit Alumni';
-      STATE.isEditing = true;
-      new bootstrap.Modal(document.getElementById('alumniFormModal')).show();
-    };
-
     window.viewAlumni = function(id) {
       const item = getAlumniById(id);
       if (!item) {
@@ -848,82 +666,40 @@
       const content = document.getElementById('detailContent');
       let html = `
         <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama || '-')}</div>
+          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama_lengkap || '-')}</div>
           <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
-          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.hp || '-')}</div>
+          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.no_hp || '-')}</div>
           <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
           <div class="list-group-item py-3"><strong>Angkatan:</strong> <span class="badge bg-primary">${escapeHtml(item.angkatan || '-')}</span></div>
           <div class="list-group-item py-3"><strong>Pekerjaan:</strong> ${escapeHtml(item.pekerjaan || '-')}</div>
           <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
+          <div class="list-group-item py-3"><strong>Tanggal Alumni:</strong> ${formatDate(item.alumni_at)}</div>
         </div>
       `;
       content.innerHTML = html;
       modal.show();
     };
 
-    window.deleteAlumni = function(id) {
-      document.getElementById('deleteAlumniId').value = id;
-      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    };
-
-    function executeDelete() {
-      const id = document.getElementById('deleteAlumniId').value;
-      if (!id) return;
-      const result = deleteAlumni(id);
-      if (result) {
-        showToast('Alumni berhasil dihapus.', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadData();
-      } else {
-        showToast('Gagal menghapus data.', 'error');
-      }
-    }
-
-    function saveData() {
-      const id = document.getElementById('editAlumniId').value;
-      const nama = document.getElementById('alumniNama').value.trim();
-      const email = document.getElementById('alumniEmail').value.trim();
-      const hp = document.getElementById('alumniHp').value.trim();
-      const asal = document.getElementById('alumniAsal').value.trim();
-      const angkatan = document.getElementById('alumniAngkatan').value.trim();
-      const pekerjaan = document.getElementById('alumniPekerjaan').value.trim();
-      const catatan = document.getElementById('alumniNote').value.trim();
-
-      if (!nama || !email || !hp || !asal || !angkatan) {
-        showToast('Nama, email, no HP, asal, dan angkatan wajib diisi.', 'error');
+    window.editAlumni = function(id) {
+      // Karena belum ada API update alumni di backend, fallback ke lokal
+      const item = getAlumniById(id);
+      if (!item) {
+        showToast('Data tidak ditemukan.', 'error');
         return;
       }
+      showToast('Fitur edit alumni sedang dalam pengembangan (perubahan hanya lokal).', 'info');
+    };
 
-      const data = {
-        nama: nama,
-        email: email,
-        hp: hp,
-        asal: asal,
-        angkatan: angkatan,
-        pekerjaan: pekerjaan,
-        catatan: catatan
-      };
-
-      if (id === '') {
-        const newItem = addAlumni(data);
-        if (newItem) {
-          showToast('Alumni berhasil ditambahkan.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('alumniFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal menambahkan data.', 'error');
-        }
-      } else {
-        const updated = updateAlumni(id, data);
-        if (updated) {
-          showToast('Alumni berhasil diperbarui.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('alumniFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal memperbarui data.', 'error');
-        }
+    window.deleteAlumni = function(id) {
+      // Karena belum ada API delete alumni di backend, hapus dari cache lokal
+      if (!confirm('Apakah Anda yakin ingin menghapus alumni ini (Hanya dari tampilan lokal)?')) return;
+      const index = STATE.alumniList.findIndex(item => item.id === id);
+      if (index !== -1) {
+        STATE.alumniList.splice(index, 1);
+        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
+        showToast('Data alumni dihapus dari tampilan.', 'success');
       }
-    }
+    };
 
     function exportData() {
       const data = STATE.filteredList;
@@ -933,13 +709,14 @@
       }
       const exportData = data.map(item => ({
         id: item.id,
-        nama: item.nama,
+        nama: item.nama_lengkap,
         email: item.email,
-        hp: item.hp,
+        hp: item.no_hp,
         asal: item.asal,
         angkatan: item.angkatan,
         pekerjaan: item.pekerjaan,
-        catatan: item.catatan
+        catatan: item.catatan,
+        alumni_at: item.alumni_at
       }));
       const json = JSON.stringify(exportData, null, 2);
       const blob = new Blob([json], { type: 'application/json' });

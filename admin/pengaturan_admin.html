@@ -152,6 +152,22 @@
         }
         .login-mode-status.on { background: #dcfce7; color: #16a34a; border-left: 4px solid #16a34a; }
         .login-mode-status.off { background: #fee2e2; color: #dc2626; border-left: 4px solid #dc2626; }
+        
+        /* ===== VISIBILITAS TOGGLE STYLE ===== */
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+            margin-top: 0.25em;
+            margin-left: -3.5em;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23cbd5e1'/%3e%3c/svg%3e");
+        }
+        .form-switch .form-check-input:checked {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23ffffff'/%3e%3c/svg%3e");
+        }
+        .form-switch .form-check-label {
+            margin-left: 0.5rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -339,6 +355,29 @@
                     </div>
                     <div id="loginModeStatus" class="login-mode-status"></div>
                 </div>
+
+                <!-- ========================================================== -->
+                <!--   BAGIAN: VISIBILITAS MENU PER HALAMAN                 -->
+                <!-- ========================================================== -->
+                <div class="settings-card">
+                    <div class="card-title"><i class="bi bi-eye-fill"></i> Visibilitas Menu Publik</div>
+                    <p class="text-muted small mb-3">
+                        Aktifkan atau nonaktifkan akses menu tertentu tanpa harus login (Guest). 
+                        <br>Jika tombol <strong>ON</strong>, menu dapat diakses publik tanpa login. Jika <strong>OFF</strong>, menu hanya bisa diakses setelah login.
+                    </p>
+                    <div class="row g-3" id="menuVisibilityContainer">
+                        <!-- Akan diisi oleh JavaScript -->
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button class="btn btn-primary rounded-pill px-4" id="saveVisibilityBtn">
+                            <i class="bi bi-save me-1"></i> Simpan Pengaturan Menu
+                        </button>
+                    </div>
+                </div>
+                <!-- ========================================================== -->
 
                 <!-- Section: Akun Admin -->
                 <div class="settings-card">
@@ -693,6 +732,82 @@
             }
 
             // ==========================================================
+            //   LOAD & SIMPAN VISIBILITAS MENU PER HALAMAN
+            // ==========================================================
+            async function loadVisibilitySettings() {
+                const container = document.getElementById('menuVisibilityContainer');
+                
+                try {
+                    const res = await PKD.getPublicVisibility();
+                    if (res.success && res.data) {
+                        const visibility = res.data;
+                        // Daftar menu default
+                        const menuLabels = {
+                            pretest: 'Pre-test',
+                            posttest: 'Post-test',
+                            absen: 'Absen Digital',
+                            skrining: 'Skrining',
+                            peserta: 'Peserta',
+                            materi: 'Materi',
+                            informasi: 'Informasi',
+                            asset: 'Aset Digital',
+                            verifikasi: 'Verifikasi Sertifikat',
+                            kader: 'Kader'
+                        };
+                        
+                        let html = '';
+                        for (const [key, label] of Object.entries(menuLabels)) {
+                            // Default to true if not explicitly set to false
+                            const isEnabled = visibility[key] !== false;
+                            html += `
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input visibility-toggle" type="checkbox" id="vis_${key}" data-key="${key}" ${isEnabled ? 'checked' : ''}>
+                                        <label class="form-check-label fw-semibold" for="vis_${key}">${label}</label>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="col-12 text-danger">Gagal memuat data visibilitas.</div>';
+                    }
+                } catch (e) {
+                    console.warn('Gagal load visibility:', e);
+                    container.innerHTML = `<div class="col-12 text-danger">Error: ${escapeHtml(e.message)}</div>`;
+                }
+            }
+
+            document.getElementById('saveVisibilityBtn')?.addEventListener('click', async function() {
+                const toggles = document.querySelectorAll('.visibility-toggle');
+                const data = {};
+                toggles.forEach(t => {
+                    data[t.dataset.key] = t.checked;
+                });
+
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+                btn.disabled = true;
+
+                try {
+                    const res = await PKD.setPublicVisibility(data);
+                    if (res.success) {
+                        showToast('Pengaturan visibilitas menu berhasil disimpan.', 'success');
+                        // Clear cache so changes take effect immediately on public pages
+                        DataCache.clear(); 
+                    } else {
+                        showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'error');
+                    }
+                } catch (e) {
+                    showToast('Gagal: ' + e.message, 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // ==========================================================
             //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
             // ==========================================================
             document.addEventListener('DOMContentLoaded', function() {
@@ -704,6 +819,7 @@
                 loadGeneralSettings();
                 loadSystemInfo();
                 loadLoginMode();
+                loadVisibilitySettings(); // Muat pengaturan visibilitas
 
                 // Background update setelah 1 detik
                 setTimeout(() => {
@@ -753,9 +869,18 @@
                     try {
                         const res = await PKD.setLoginMode(enabled);
                         if (res.success) {
-                            updateLoginModeStatus(enabled);
-                            showToast(`Mode login berhasil diubah menjadi ${enabled ? 'Wajib Login' : 'Guest'}`, 'success');
-                            DataCache.clear();
+                            // Bersihkan cache sessionStorage dan DataCache agar langsung realtime
+                            sessionStorage.removeItem('loginMode_data');
+                            sessionStorage.removeItem('loginMode_time');
+                            DataCache.removeData('loginMode');
+                            
+                            // Reload ulang status dari server
+                            const freshRes = await PKD.getLoginMode();
+                            if(freshRes.success) {
+                                document.getElementById('loginModeToggle').checked = freshRes.enabled;
+                                updateLoginModeStatus(freshRes.enabled);
+                                showToast(`Mode login berhasil diubah menjadi ${freshRes.enabled ? 'Wajib Login' : 'Guest'}`, 'success');
+                            }
                         } else {
                             throw new Error(res.message || 'Gagal menyimpan');
                         }
@@ -858,6 +983,7 @@
             // ==========================================================
             async function loadLoginMode() {
                 try {
+                    // Memanggil API langsung tanpa cache (realtime)
                     const res = await PKD.getLoginMode();
                     const enabled = res.success ? res.enabled : false;
                     document.getElementById('loginModeToggle').checked = enabled;

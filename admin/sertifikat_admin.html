@@ -31,7 +31,7 @@
         .container-card { max-width: 100%; padding: 0; margin: 0; }
         .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
 
-        /* --- SIDEBAR (Standar) --- */
+        /* --- SIDEBAR UNIVERSAL --- */
         .sidebar-wrapper {
             width: 260px; max-width: 260px; background: #0f172a; color: #f1f5f9;
             min-height: 100vh; height: 100vh; position: fixed; top: 0; left: 0;
@@ -71,7 +71,7 @@
         .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
         .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
 
-        /* --- BOTTOM NAV (MOBILE) --- */
+        /* --- BOTTOM NAV (MOBILE) UNIVERSAL --- */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
         .bottom-nav .nav-item i { font-size: 1.5rem; }
@@ -396,7 +396,7 @@
 
 <div class="container container-card">
     <div class="admin-wrapper">
-        <!-- SIDEBAR (STANDAR) -->
+        <!-- SIDEBAR UNIVERSAL -->
         <div class="sidebar-wrapper" id="sidebarWrapper">
             <div class="sidebar-toggle"><button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar"><i class="bi bi-arrow-left-right"></i></button></div>
             <div class="sidebar-brand-area">
@@ -407,49 +407,59 @@
             </div>
             <div class="sidebar-menu-area">
                 <div class="nav flex-column nav-pills">
+                    <!-- Dashboard -->
                     <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+                    <!-- Akademik -->
                     <div class="nav-link" data-target="akademik"><i class="bi bi-book me-2"></i><span>Akademik</span></div>
                     <div class="submenu" id="submenu-akademik">
                         <a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
                         <a class="nav-link" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
                         <a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
                     </div>
+                    <!-- Peserta -->
                     <div class="nav-link" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
                     <div class="submenu" id="submenu-peserta">
                         <a class="nav-link" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
                         <a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
                         <a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
                     </div>
+                    <!-- Absensi -->
                     <div class="nav-link" data-target="absensi"><i class="bi bi-calendar-check me-2"></i><span>Absensi</span></div>
                     <div class="submenu" id="submenu-absensi">
                         <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
                         <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
                         <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
                     </div>
+                    <!-- Informasi -->
                     <div class="nav-link" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
                     <div class="submenu" id="submenu-informasi">
                         <a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
                         <a class="nav-link" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
                     </div>
+                    <!-- Skrining -->
                     <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+                    <!-- Sertifikat (AKTIF) -->
                     <a class="nav-link active" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
-                    <!-- Tambahkan menu Tanda Tangan -->
+                    <!-- Tanda Tangan -->
                     <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+                    <!-- RTL & Tugas -->
+                    <a class="nav-link" href="/bisaa/admin/rtl_admin.html"><i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span></a>
+                    <!-- Pengaturan -->
                     <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+                    <!-- Logout -->
                     <div class="sidebar-logout"></div>
                     <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
                 </div>
             </div>
         </div>
 
-        <!-- BOTTOM NAV -->
+        <!-- BOTTOM NAV (MOBILE) UNIVERSAL -->
         <div class="bottom-nav">
             <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
             <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
             <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
             <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item active"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-            <!-- Tambahkan menu Tanda Tangan di bottom nav -->
-            <a href="/bisaa/admin/tanda_tangan_admin.html" class="nav-item"><i class="bi bi-pencil-square"></i><span>TTD</span></a>
+            <a href="/bisaa/admin/rtl_admin.html" class="nav-item"><i class="bi bi-file-earmark-text"></i><span>RTL</span></a>
             <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
         </div>
 
@@ -509,6 +519,12 @@
                             <option value="biru">🎨 PKD Ansor</option>
                         </select>
                         <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#dataFormOffcanvas"><i class="bi bi-pencil-square"></i> Data</button>
+                        <div class="separator"></div>
+                        <div class="btn-group">
+                            <button class="btn btn-success" id="generateFromPesertaHtmlBtn">
+                                <i class="bi bi-people-fill"></i> Generate dari Peserta (HTML)
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -829,7 +845,7 @@
     </div>
 </div>
 
-<!-- ==================== MODAL LOGIN ==================== -->
+<!-- ==================== MODAL LOGIN (Admin) ==================== -->
 <div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -1383,6 +1399,235 @@
             saveObjectState();
             PKD.showToast('Semua objek telah dihapus.', 'info');
         }
+
+        // --- GENERATE SERTIFIKAT DARI DATA PESERTA (HTML LANGSUNG) ---
+        document.getElementById('generateFromPesertaHtmlBtn')?.addEventListener('click', async function() {
+            const templateId = document.getElementById('previewTemplateSelect')?.value;
+            const presetId = document.getElementById('previewPresetSelect')?.value;
+            const startNumber = parseInt(document.getElementById('previewStartNumber')?.value) || 1;
+
+            if (!templateId || !presetId) {
+                PKD.showToast('Pilih template dan preset terlebih dahulu.', 'warning');
+                return;
+            }
+
+            // Ambil data peserta yang sudah disetujui
+            const pesertaList = await PKD.getPesertaList('approved');
+            if (!pesertaList || pesertaList.length === 0) {
+                PKD.showToast('Tidak ada peserta yang disetujui.', 'info');
+                return;
+            }
+
+            if (!confirm(`Generate ${pesertaList.length} sertifikat menggunakan layout HTML?`)) return;
+
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+            // Ambil elemen sertifikat asli sebagai template
+            const certFront = document.querySelector('.cert-front');
+            const certBack = document.querySelector('.cert-back');
+            if (!certFront || !certBack) {
+                PKD.showToast('Elemen sertifikat tidak ditemukan.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            const results = [];
+            let currentNumber = startNumber;
+
+            // Loop setiap peserta
+            for (const peserta of pesertaList) {
+                // Clone elemen sertifikat
+                const frontClone = certFront.cloneNode(true);
+                const backClone = certBack.cloneNode(true);
+                frontClone.style.display = 'block';
+                backClone.style.display = 'block';
+                const previewWrap = document.querySelector('.preview-wrap');
+                previewWrap.appendChild(frontClone);
+                previewWrap.appendChild(backClone);
+
+                // --- UPDATE DATA DEPAN ---
+                const namaEl = frontClone.querySelector('#recipient-name');
+                if (namaEl) namaEl.textContent = peserta.nama_lengkap || '';
+
+                // Ambil nilai dari form data di offcanvas (atau bisa juga dari preset)
+                const tglPelaksanaan = document.getElementById('inputTglPelaksanaan').value || '14 Februari sampai 15 Februari 2026';
+                const tempat = document.getElementById('inputTempat').value || 'MTs N 8 Bantul, D.I.Yogyakarta';
+                const tglTerbit = document.getElementById('inputTglTerbit').value || 'Bantul, 16 Februari 2026';
+                const ketuaPC = document.getElementById('inputKetuaPC').value || 'Ahmad Sidik';
+                const sekretaris = document.getElementById('inputSekretaris').value || 'Fatolani';
+
+                // Update teks body (tanggal & tempat)
+                const bodyEl = frontClone.querySelector('#certificate-body');
+                if (bodyEl) {
+                    bodyEl.innerHTML = bodyEl.innerHTML.replace(
+                        /<strong id="tanggal-pelaksanaan">.*?<\/strong>/,
+                        `<strong id="tanggal-pelaksanaan">${tglPelaksanaan}</strong>`
+                    ).replace(
+                        /<strong id="tempat">.*?<\/strong>/,
+                        `<strong id="tempat">${tempat}</strong>`
+                    );
+                }
+
+                // Tanggal penerbitan
+                const dateEl = frontClone.querySelector('#tanggal-penerbitan');
+                if (dateEl) dateEl.textContent = tglTerbit;
+
+                // Tanda tangan
+                const ketuaEl = frontClone.querySelector('#ttd-ketua-pc');
+                if (ketuaEl) ketuaEl.textContent = ketuaPC;
+                const sekretarisEl = frontClone.querySelector('#ttd-sekretaris');
+                if (sekretarisEl) sekretarisEl.textContent = sekretaris;
+
+                // --- UPDATE DATA BELAKANG ---
+                const namaBack = backClone.querySelector('#namaValue');
+                if (namaBack) namaBack.textContent = peserta.nama_lengkap || '';
+                const ttlBack = backClone.querySelector('#ttlValue');
+                if (ttlBack) ttlBack.textContent = peserta.tempat_tgl_lahir || 'Bantul, 3 Agustus 1999';
+                const utusanBack = backClone.querySelector('#utusanValue');
+                if (utusanBack) utusanBack.textContent = peserta.utusan || 'PAC GP ANSOR DLINGO';
+
+                // Foto
+                const fotoImg = backClone.querySelector('#fotoPreview');
+                const fotoPlaceholder = backClone.querySelector('#photoPlaceholder');
+                if (peserta.fotoDriveId) {
+                    const fotoUrl = `https://drive.google.com/thumbnail?id=${peserta.fotoDriveId}&sz=w150`;
+                    fotoImg.src = fotoUrl;
+                    fotoImg.style.display = 'block';
+                    fotoPlaceholder.style.display = 'none';
+                } else {
+                    fotoImg.style.display = 'none';
+                    fotoPlaceholder.style.display = 'flex';
+                }
+
+                // --- GENERATE NOMOR SERTIFIKAT DARI SERVER ---
+                let nomorSertifikat = '';
+                try {
+                    const numberRes = await PKD.callApi('getNextCertificateNumber', {}, 'GET');
+                    if (numberRes.success) {
+                        const number = numberRes.number;
+                        const year = new Date().getFullYear();
+                        nomorSertifikat = `${String(number).padStart(3,'0')}/PC-XI/SR-01.PKD/I/${year}`;
+                    } else {
+                        nomorSertifikat = `001/PC-XI/SR-01.PKD/I/${new Date().getFullYear()}`;
+                    }
+                } catch (e) {
+                    nomorSertifikat = `001/PC-XI/SR-01.PKD/I/${new Date().getFullYear()}`;
+                }
+
+                // Update nomor di tampilan depan
+                const certNumberEl = frontClone.querySelector('#cert-number');
+                if (certNumberEl) certNumberEl.textContent = `NO : ${nomorSertifikat}`;
+
+                // Generate barcode
+                const barcodeContainer = frontClone.querySelector('#barcode-front');
+                if (barcodeContainer) {
+                    try {
+                        barcodeContainer.innerHTML = '';
+                        JsBarcode(barcodeContainer, nomorSertifikat, {
+                            format: "CODE128",
+                            width: 1,
+                            height: 15,
+                            displayValue: false,
+                            margin: 0,
+                            background: "transparent",
+                            lineColor: "#000000"
+                        });
+                    } catch (e) {
+                        barcodeContainer.innerHTML = `<div style="font-size:0.4rem;">${nomorSertifikat}</div>`;
+                    }
+                }
+
+                // --- GENERATE PDF MENGGUNAKAN html2pdf.js ---
+                const pdfContainer = document.createElement('div');
+                pdfContainer.appendChild(frontClone);
+                pdfContainer.appendChild(backClone);
+                pdfContainer.style.width = '1123px'; // A4 landscape
+                pdfContainer.style.margin = '0 auto';
+                document.body.appendChild(pdfContainer);
+
+                try {
+                    const pdfBlob = await html2pdf()
+                        .set({
+                            margin: 0,
+                            filename: `Sertifikat_${peserta.nama_lengkap}_${nomorSertifikat}.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: {
+                                scale: 2,
+                                useCORS: true,
+                                allowTaint: false,
+                                logging: false
+                            },
+                            jsPDF: {
+                                unit: 'px',
+                                format: [1123, 794],
+                                orientation: 'landscape'
+                            }
+                        })
+                        .from(pdfContainer)
+                        .outputPdf('blob');
+
+                    // Convert blob ke base64 untuk upload
+                    const base64PDF = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(pdfBlob);
+                    });
+
+                    // Upload ke server dan catat di spreadsheet
+                    const uploadRes = await PKD.callApi('uploadManualCertificate', {
+                        pesertaId: peserta.id,
+                        nomorSertifikat: nomorSertifikat,
+                        fileData: base64PDF
+                    }, 'POST');
+
+                    if (uploadRes.success) {
+                        results.push({
+                            nama: peserta.nama_lengkap,
+                            nomor: nomorSertifikat,
+                            pdfUrl: uploadRes.pdfUrl
+                        });
+                    } else {
+                        results.push({
+                            nama: peserta.nama_lengkap,
+                            nomor: nomorSertifikat,
+                            error: uploadRes.error || 'Gagal upload'
+                        });
+                    }
+                } catch (e) {
+                    results.push({
+                        nama: peserta.nama_lengkap,
+                        nomor: nomorSertifikat,
+                        error: e.message
+                    });
+                } finally {
+                    // Hapus clone dari DOM
+                    frontClone.remove();
+                    backClone.remove();
+                    pdfContainer.remove();
+                }
+            }
+
+            // Tampilkan hasil di area generateCsvResult
+            const resultContainer = document.getElementById('generateCsvResult');
+            resultContainer.innerHTML = '<h6>Hasil:</h6><ul class="list-group">' +
+                results.map(r => {
+                    if (r.error) {
+                        return `<li class="list-group-item text-danger">${PKD.escapeHtml(r.nama)} - ${PKD.escapeHtml(r.nomor)} - Error: ${PKD.escapeHtml(r.error)}</li>`;
+                    } else {
+                        return `<li class="list-group-item d-flex justify-content-between">${PKD.escapeHtml(r.nama)} - ${PKD.escapeHtml(r.nomor)} <a href="${PKD.escapeHtml(r.pdfUrl)}" target="_blank" class="btn btn-sm btn-success">Unduh</a></li>`;
+                    }
+                }).join('') +
+                '</ul>';
+
+            PKD.showToast(`Selesai. ${results.filter(r => !r.error).length} berhasil, ${results.filter(r => r.error).length} gagal.`, 'info');
+
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
 
         function loadPreviewSertifikat() {
             const container = document.getElementById('previewPanel'); if (!container) return;

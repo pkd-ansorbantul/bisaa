@@ -140,6 +140,7 @@
         .asset-thumb { max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
         .upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 2rem; text-align: center; background: #f8fafc; transition: all 0.2s; }
         .upload-area:hover { border-color: #2563eb; background: #eff6ff; }
+        .share-dropdown .dropdown-toggle { padding: 0.2rem 0.6rem; }
     </style>
 </head>
 <body>
@@ -151,7 +152,7 @@
         <div class="admin-wrapper">
 
             <!-- ======================== -->
-            <!--   SIDEBAR                -->
+            <!--   SIDEBAR UNIVERSAL     -->
             <!-- ======================== -->
             <div class="sidebar-wrapper" id="sidebarWrapper">
                 <div class="sidebar-toggle">
@@ -173,6 +174,7 @@
                 <!-- Menu -->
                 <div class="sidebar-menu-area">
                     <div class="nav flex-column nav-pills" id="sidebarMenu">
+                        <!-- Dashboard -->
                         <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
                             <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
                         </a>
@@ -231,11 +233,17 @@
                             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
                         </a>
 
+                        <!-- RTL & Tugas -->
+                        <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+                            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
+                        </a>
+
                         <!-- Pengaturan -->
                         <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
                             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
                         </a>
 
+                        <!-- Logout -->
                         <div class="sidebar-logout"></div>
                         <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
                             <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
@@ -243,17 +251,20 @@
                     </div>
                 </div>
             </div>
+            <!-- END SIDEBAR -->
 
             <!-- ======================== -->
-            <!--   BOTTOM NAV (MOBILE)    -->
+            <!--   BOTTOM NAV (MOBILE)   -->
             <!-- ======================== -->
             <div class="bottom-nav">
                 <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
                 <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
                 <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
                 <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+                <a href="/bisaa/admin/rtl_admin.html" class="nav-item"><i class="bi bi-file-earmark-text"></i><span>RTL</span></a>
                 <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
             </div>
+            <!-- END BOTTOM NAV -->
 
             <!-- ======================== -->
             <!--   CONTENT WRAPPER        -->
@@ -329,11 +340,17 @@
                 <div class="modal-body p-4">
                     <div class="mb-3"><label class="form-label fw-semibold">Judul</label><input type="text" class="form-control" id="assetJudul" required /></div>
                     <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea class="form-control" id="assetDeskripsi" rows="2"></textarea></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Jenis</label>
+                        <select class="form-select" id="assetJenis">
+                            <option value="gambar">Gambar</option>
+                            <option value="sertifikat">Sertifikat</option>
+                        </select>
+                    </div>
                     <div class="mb-3 upload-area" id="uploadDropZone">
                         <i class="bi bi-cloud-upload fs-1 text-muted"></i>
                         <p class="mb-1"><strong>Klik atau drag & drop file di sini</strong></p>
-                        <p class="text-muted small">Format: JPG, PNG, WEBP, GIF (Max 5MB)</p>
-                        <input type="file" class="form-control" id="assetFile" accept="image/*" required style="max-width:300px;margin:0 auto;" />
+                        <p class="text-muted small">Format: JPG, PNG, WEBP, GIF, PDF (Max 5MB)</p>
+                        <input type="file" class="form-control" id="assetFile" accept="image/*,application/pdf" required style="max-width:300px;margin:0 auto;" />
                     </div>
                     <div id="filePreview" class="mt-2 text-center" style="display:none;">
                         <img id="previewImage" src="#" class="img-thumbnail" style="max-height:150px;" />
@@ -455,6 +472,10 @@
                 return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : '';
             }
 
+            function getDriveViewUrl(driveId) {
+                return driveId ? `https://drive.google.com/file/d/${driveId}/view` : '#';
+            }
+
             function updateCacheStatus(status) {
                 const el = document.getElementById('cacheStatus');
                 if (el) {
@@ -519,6 +540,7 @@
                 document.getElementById('uploadAssetBtn').addEventListener('click', function() {
                     document.getElementById('assetJudul').value = '';
                     document.getElementById('assetDeskripsi').value = '';
+                    document.getElementById('assetJenis').value = 'gambar';
                     document.getElementById('assetFile').value = '';
                     document.getElementById('filePreview').style.display = 'none';
                     document.getElementById('previewImage').src = '#';
@@ -547,6 +569,7 @@
                 document.getElementById('submitUploadBtn').addEventListener('click', async function() {
                     const judul = document.getElementById('assetJudul').value.trim();
                     const deskripsi = document.getElementById('assetDeskripsi').value.trim();
+                    const jenis = document.getElementById('assetJenis').value;
                     const fileInput = document.getElementById('assetFile');
                     if (!judul || !fileInput.files.length) {
                         showToast('Judul dan file wajib diisi', 'error');
@@ -570,6 +593,7 @@
                         await PKD.callApi('addAsset', {
                             judul: judul,
                             deskripsi: deskripsi,
+                            jenis: jenis,
                             fileData: base64,
                             fileName: file.name,
                             uploadBy: 'admin'
@@ -715,7 +739,8 @@
                                     <th>#</th>
                                     <th>Judul</th>
                                     <th>Deskripsi</th>
-                                    <th>Gambar</th>
+                                    <th>Jenis</th>
+                                    <th>Pratinjau / File</th>
                                     <th>Upload</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
@@ -725,14 +750,41 @@
 
                 assetList.forEach((item, idx) => {
                     const thumb = getDriveThumb(item.driveId);
+                    const viewUrl = getDriveViewUrl(item.driveId);
+                    const isPdf = item.jenis === 'sertifikat' || (item.jenis === 'sertifikat' && item.driveId);
+                    // Tampilkan pratinjau: untuk gambar gunakan thumb, untuk pdf gunakan ikon
+                    let previewHtml = '-';
+                    if (item.driveId) {
+                        if (isPdf) {
+                            previewHtml = `<a href="${viewUrl}" target="_blank"><i class="bi bi-file-earmark-pdf fs-2 text-danger"></i></a>`;
+                        } else {
+                            previewHtml = `<img src="${thumb}" class="asset-thumb" />`;
+                        }
+                    }
                     html += `
                         <tr>
                             <td>${idx + 1}</td>
                             <td><strong>${escapeHtml(item.judul || '')}</strong></td>
                             <td>${escapeHtml(item.deskripsi || '-')}</td>
-                            <td>${thumb ? `<img src="${thumb}" class="asset-thumb" />` : '-'}</td>
+                            <td><span class="badge ${isPdf ? 'bg-danger' : 'bg-info'}">${escapeHtml(item.jenis || 'gambar')}</span></td>
+                            <td>${previewHtml}</td>
                             <td>${formatDate(item.timestamp)}</td>
                             <td class="text-center">
+                                <div class="btn-group share-dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-share"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="${viewUrl}" target="_blank"><i class="bi bi-box-arrow-up-right me-2"></i> Buka</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="https://wa.me/?text=${encodeURIComponent('Lihat aset ini: ' + viewUrl)}" target="_blank"><i class="bi bi-whatsapp me-2 text-success"></i> WhatsApp</a></li>
+                                        <li><a class="dropdown-item" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(viewUrl)}" target="_blank"><i class="bi bi-facebook me-2 text-primary"></i> Facebook</a></li>
+                                        <li><a class="dropdown-item" href="https://twitter.com/intent/tweet?url=${encodeURIComponent(viewUrl)}&text=${encodeURIComponent(item.judul || 'Aset PKD')}" target="_blank"><i class="bi bi-twitter me-2 text-info"></i> Twitter</a></li>
+                                        <li><a class="dropdown-item" href="mailto:?subject=${encodeURIComponent(item.judul || 'Aset PKD')}&body=${encodeURIComponent('Lihat aset ini: ' + viewUrl)}"><i class="bi bi-envelope me-2 text-secondary"></i> Email</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><button class="dropdown-item" onclick="copyLink('${viewUrl}')"><i class="bi bi-files me-2"></i> Salin Link</button></li>
+                                    </ul>
+                                </div>
                                 <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>
@@ -743,6 +795,35 @@
                 container.innerHTML = html;
                 container.classList.add('fade-in');
             }
+
+            // ==========================================================
+            //   COPY LINK
+            // ==========================================================
+            window.copyLink = function(url) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        showToast('Link berhasil disalin!', 'success');
+                    }).catch(() => {
+                        // fallback
+                        const input = document.createElement('input');
+                        input.value = url;
+                        document.body.appendChild(input);
+                        input.select();
+                        document.execCommand('copy');
+                        input.remove();
+                        showToast('Link berhasil disalin!', 'success');
+                    });
+                } else {
+                    // fallback
+                    const input = document.createElement('input');
+                    input.value = url;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    input.remove();
+                    showToast('Link berhasil disalin!', 'success');
+                }
+            };
 
             // ==========================================================
             //   CONFIRM DELETE

@@ -130,7 +130,7 @@
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- ==================== SIDEBAR ==================== -->
+    <!-- ==================== SIDEBAR UNIVERSAL ==================== -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle">
         <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
@@ -155,7 +155,7 @@
             <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
           </a>
 
-          <!-- Akademik -->
+          <!-- Akademik (AKTIF) -->
           <div class="nav-link active" data-target="akademik" title="Akademik">
             <i class="bi bi-book me-2"></i><span>Akademik</span>
           </div>
@@ -215,6 +215,11 @@
             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
           </a>
 
+          <!-- RTL & Tugas -->
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
+          </a>
+
           <!-- Pengaturan -->
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
@@ -229,12 +234,13 @@
       </div>
     </div>
 
-    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
+    <!-- ==================== BOTTOM NAV (MOBILE) UNIVERSAL ==================== -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
       <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
       <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+      <a href="/bisaa/admin/rtl_admin.html" class="nav-item"><i class="bi bi-file-earmark-text"></i><span>RTL</span></a>
       <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
@@ -312,11 +318,34 @@
       </div>
       <div class="modal-body p-4">
         <input type="hidden" id="editMateriId">
-        <div class="mb-3"><label class="form-label fw-semibold">Judul Materi</label><input type="text" class="form-control" id="materiJudul" placeholder="Judul materi" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea class="form-control" id="materiDeskripsi" rows="3" placeholder="Deskripsi materi (opsional)"></textarea></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Link Materi</label><input type="url" class="form-control" id="materiLink" placeholder="https://example.com/materi.pdf" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Kategori</label><select class="form-select" id="materiKategori"><option value="Umum">Umum</option><option value="Kaderisasi">Kaderisasi</option><option value="Keagamaan">Keagamaan</option><option value="Kepemimpinan">Kepemimpinan</option><option value="Lainnya">Lainnya</option></select></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Tanggal</label><input type="date" class="form-control" id="materiTanggal" required></div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Judul Materi</label>
+          <input type="text" class="form-control" id="materiJudul" placeholder="Judul materi" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Deskripsi</label>
+          <textarea class="form-control" id="materiDeskripsi" rows="3" placeholder="Deskripsi materi (opsional)"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Upload File Materi</label>
+          <input type="file" class="form-control" id="materiFile" accept=".pdf,.ppt,.pptx,.doc,.docx,.jpg,.png,.webp" required>
+          <div class="form-text text-muted">Format: PDF, PPT, DOC, JPG, PNG, WEBP (Maks 5MB)</div>
+          <div id="filePreview" class="mt-2 small text-muted"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Kategori</label>
+          <select class="form-select" id="materiKategori">
+            <option value="Umum">Umum</option>
+            <option value="Kaderisasi">Kaderisasi</option>
+            <option value="Keagamaan">Keagamaan</option>
+            <option value="Kepemimpinan">Kepemimpinan</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Tanggal</label>
+          <input type="date" class="form-control" id="materiTanggal" required>
+        </div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
@@ -392,22 +421,6 @@
       isEditing: false,
       isBackgroundUpdate: false
     };
-
-    // =====================================================
-    //   DATA DUMMY (FALLBACK) - TIDAK DIGUNAKAN JIKA ADA API
-    // =====================================================
-    const DUMMY_MATERI = [
-      { id: 'm1', judul: 'Pengantar Kaderisasi', deskripsi: 'Materi dasar tentang kaderisasi GP Ansor', link: 'https://example.com/materi/1', kategori: 'Kaderisasi', tanggal: '2024-01-15' },
-      { id: 'm2', judul: 'Manajemen Organisasi', deskripsi: 'Tata kelola organisasi yang efektif', link: 'https://example.com/materi/2', kategori: 'Kepemimpinan', tanggal: '2024-01-20' },
-      { id: 'm3', judul: 'Fiqih Dasar', deskripsi: 'Pengetahuan dasar fiqih untuk kader', link: 'https://example.com/materi/3', kategori: 'Keagamaan', tanggal: '2024-02-01' },
-      { id: 'm4', judul: 'Strategi Dakwah', deskripsi: 'Pendekatan strategis dalam berdakwah', link: 'https://example.com/materi/4', kategori: 'Umum', tanggal: '2024-02-10' },
-      { id: 'm5', judul: 'Kepemimpinan Transformasional', deskripsi: 'Gaya kepemimpinan untuk perubahan', link: 'https://example.com/materi/5', kategori: 'Kepemimpinan', tanggal: '2024-02-20' },
-      { id: 'm6', judul: 'Kaderisasi Tingkat Dasar', deskripsi: 'Materi kaderisasi untuk tingkat dasar', link: 'https://example.com/materi/6', kategori: 'Kaderisasi', tanggal: '2024-03-01' },
-      { id: 'm7', judul: 'Sejarah GP Ansor', deskripsi: 'Sejarah berdirinya GP Ansor', link: 'https://example.com/materi/7', kategori: 'Umum', tanggal: '2024-03-10' },
-      { id: 'm8', judul: 'Akhlakul Karimah', deskripsi: 'Pembentukan akhlak mulia', link: 'https://example.com/materi/8', kategori: 'Keagamaan', tanggal: '2024-03-20' },
-      { id: 'm9', judul: 'Public Speaking', deskripsi: 'Teknik berbicara di depan umum', link: 'https://example.com/materi/9', kategori: 'Lainnya', tanggal: '2024-04-01' },
-      { id: 'm10', judul: 'Manajemen Konflik', deskripsi: 'Strategi penyelesaian konflik', link: 'https://example.com/materi/10', kategori: 'Kepemimpinan', tanggal: '2024-04-10' }
-    ];
 
     // =====================================================
     //   UTILITY FUNCTIONS
@@ -573,10 +586,6 @@
           }
         }
       } catch (e) {}
-      if (STATE.materiList.length === 0) {
-        STATE.materiList = JSON.parse(JSON.stringify(DUMMY_MATERI));
-        saveDataToStorage();
-      }
     }
 
     function saveDataToStorage() {
@@ -599,9 +608,12 @@
         id: generateId(),
         judul: data.judul || '',
         deskripsi: data.deskripsi || '',
-        link: data.link || '',
+        fileId: data.fileId || '',
+        tipe: data.tipe || '',
         kategori: data.kategori || 'Umum',
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 10)
+        tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
+        timestamp: data.timestamp || new Date().toISOString(),
+        uploadBy: data.uploadBy || 'admin'
       };
       STATE.materiList.unshift(newItem);
       updateCache(STATE.materiList);
@@ -617,9 +629,12 @@
         ...existing,
         judul: data.judul !== undefined ? data.judul : existing.judul,
         deskripsi: data.deskripsi !== undefined ? data.deskripsi : existing.deskripsi,
-        link: data.link !== undefined ? data.link : existing.link,
+        fileId: data.fileId !== undefined ? data.fileId : existing.fileId,
+        tipe: data.tipe !== undefined ? data.tipe : existing.tipe,
         kategori: data.kategori !== undefined ? data.kategori : existing.kategori,
-        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal
+        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
+        timestamp: data.timestamp || existing.timestamp,
+        uploadBy: data.uploadBy || existing.uploadBy
       };
       STATE.materiList[index] = updated;
       updateCache(STATE.materiList);
@@ -668,6 +683,7 @@
                 <th>Judul Materi</th>
                 <th>Kategori</th>
                 <th>Tanggal</th>
+                <th style="width: 200px;" class="text-center">File</th>
                 <th style="width: 250px;" class="text-center">Aksi</th>
               </tr>
             </thead>
@@ -677,7 +693,7 @@
       if (data.length === 0) {
         html += `
             <tr>
-              <td colspan="5" class="text-center py-5 text-muted">
+              <td colspan="6" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                 Tidak ada data materi.
               </td>
@@ -685,12 +701,20 @@
         `;
       } else {
         data.forEach((item, index) => {
+          const fileUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/view` : '#';
+          const fileIcon = item.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
+                            item.tipe === 'ppt' || item.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' :
+                            item.tipe === 'doc' || item.tipe === 'docx' ? 'bi-file-word-fill text-primary' :
+                            'bi-file-earmark-fill text-secondary';
           html += `
             <tr>
               <td>${index + 1}</td>
               <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
               <td><span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></td>
               <td>${formatDate(item.tanggal)}</td>
+              <td class="text-center">
+                ${item.fileId ? `<a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-info"><i class="${fileIcon}"></i> Unduh</a>` : '-'}
+              </td>
               <td class="text-center">
                 <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewMateri('${item.id}')" title="Lihat Detail">
                   <i class="bi bi-eye"></i>
@@ -717,13 +741,13 @@
     }
 
     // =====================================================
-    //   LOAD DATA (ROBUST)
+    //   LOAD DATA (ROBUST - TANPA DUMMY)
     // =====================================================
     async function loadData(forceRefresh = false) {
       const container = document.getElementById('materiTableContainer');
       container.innerHTML = renderSkeleton();
 
-      // 1. Coba API dengan force refresh
+      // 1. Jika forceRefresh (tombol Segarkan), ambil langsung dari API dan JANGAN fallback ke cache jika gagal/kosong
       if (forceRefresh) {
         try {
           const freshData = await PKD.getMateriList(true);
@@ -734,13 +758,24 @@
             renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
             updateCacheStatus('Live');
             return;
+          } else {
+            // API mengembalikan array kosong: kosongkan data lokal dan tampilkan kosong
+            STATE.materiList = [];
+            updateCache([]);
+            saveDataToStorage();
+            renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
+            updateCacheStatus('Empty');
+            return;
           }
         } catch (e) {
           console.warn('Gagal memuat data dari API:', e);
+          container.innerHTML = `<div class="alert alert-danger">Gagal memuat data dari server.</div>`;
+          updateCacheStatus('Error');
+          return; // Berhenti, jangan lanjut ke cache
         }
       }
 
-      // 2. Coba DataCache
+      // 2. Jika bukan refresh paksa, coba DataCache
       const cached = DataCache.getData('materi');
       if (cached && Array.isArray(cached) && cached.length > 0) {
         STATE.materiList = cached;
@@ -767,7 +802,8 @@
       document.getElementById('editMateriId').value = '';
       document.getElementById('materiJudul').value = '';
       document.getElementById('materiDeskripsi').value = '';
-      document.getElementById('materiLink').value = '';
+      document.getElementById('materiFile').value = '';
+      document.getElementById('filePreview').innerHTML = '';
       document.getElementById('materiKategori').value = 'Umum';
       document.getElementById('materiTanggal').value = new Date().toISOString().slice(0, 10);
       document.getElementById('formModalTitle').innerText = 'Tambah Materi';
@@ -788,7 +824,8 @@
       document.getElementById('editMateriId').value = id;
       document.getElementById('materiJudul').value = item.judul || '';
       document.getElementById('materiDeskripsi').value = item.deskripsi || '';
-      document.getElementById('materiLink').value = item.link || '';
+      document.getElementById('materiFile').value = '';
+      document.getElementById('filePreview').innerHTML = item.fileId ? `File saat ini: <a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank">Lihat</a>` : '';
       document.getElementById('materiKategori').value = item.kategori || 'Umum';
       document.getElementById('materiTanggal').value = item.tanggal || '';
       document.getElementById('formModalTitle').innerText = 'Edit Materi';
@@ -804,13 +841,17 @@
       }
       const modal = new bootstrap.Modal(document.getElementById('detailMateriModal'));
       const content = document.getElementById('detailContent');
+      let fileHtml = '-';
+      if (item.fileId) {
+        fileHtml = `<a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i> Unduh</a>`;
+      }
       let html = `
         <div class="list-group list-group-flush">
           <div class="list-group-item py-3"><strong>Judul:</strong> ${escapeHtml(item.judul || '-')}</div>
           <div class="list-group-item py-3"><strong>Kategori:</strong> <span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></div>
           <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
           <div class="list-group-item py-3"><strong>Deskripsi:</strong> ${escapeHtml(item.deskripsi || '-')}</div>
-          <div class="list-group-item py-3"><strong>Link:</strong> ${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i> Buka Materi</a>` : '-'}</div>
+          <div class="list-group-item py-3"><strong>File:</strong> ${fileHtml}</div>
         </div>
       `;
       content.innerHTML = html;
@@ -839,42 +880,88 @@
       const id = document.getElementById('editMateriId').value;
       const judul = document.getElementById('materiJudul').value.trim();
       const deskripsi = document.getElementById('materiDeskripsi').value.trim();
-      const link = document.getElementById('materiLink').value.trim();
+      const fileInput = document.getElementById('materiFile');
       const kategori = document.getElementById('materiKategori').value;
       const tanggal = document.getElementById('materiTanggal').value;
 
-      if (!judul || !link || !tanggal) {
-        showToast('Judul, link, dan tanggal wajib diisi.', 'error');
+      if (!judul || !tanggal) {
+        showToast('Judul dan tanggal wajib diisi.', 'error');
         return;
       }
 
-      const data = {
-        judul: judul,
-        deskripsi: deskripsi,
-        link: link,
-        kategori: kategori,
-        tanggal: tanggal
-      };
-
-      if (id === '') {
-        const newItem = addMateri(data);
-        if (newItem) {
-          showToast('Materi berhasil ditambahkan.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal menambahkan data.', 'error');
-        }
-      } else {
-        const updated = updateMateri(id, data);
-        if (updated) {
-          showToast('Materi berhasil diperbarui.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal memperbarui data.', 'error');
-        }
+      if (!fileInput || !fileInput.files.length) {
+        showToast('File wajib diunggah.', 'error');
+        return;
       }
+
+      const file = fileInput.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Ukuran file maksimal 5 MB.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+        const fileName = file.name;
+        const fileExt = fileName.split('.').pop().toLowerCase();
+
+        try {
+          if (id) {
+            // Update existing: upload file baru dan simpan fileId
+            const res = await PKD.addMateri(judul, deskripsi, base64, fileName, 'admin');
+            if (res.success) {
+              // Update data lokal dengan fileId baru
+              const updated = updateMateri(id, {
+                judul: judul,
+                deskripsi: deskripsi,
+                fileId: res.fileId,
+                tipe: fileExt,
+                kategori: kategori,
+                tanggal: tanggal,
+                uploadBy: 'admin',
+                timestamp: new Date().toISOString()
+              });
+              if (updated) {
+                showToast('Materi berhasil diperbarui.', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+                loadData();
+              } else {
+                showToast('Gagal memperbarui data lokal.', 'error');
+              }
+            } else {
+              showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
+            }
+          } else {
+            // Add new with file
+            const res = await PKD.addMateri(judul, deskripsi, base64, fileName, 'admin');
+            if (res.success) {
+              const newItem = addMateri({
+                judul: judul,
+                deskripsi: deskripsi,
+                fileId: res.fileId,
+                tipe: fileExt,
+                kategori: kategori,
+                tanggal: tanggal,
+                timestamp: new Date().toISOString(),
+                uploadBy: 'admin'
+              });
+              if (newItem) {
+                showToast('Materi berhasil ditambahkan.', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+                loadData();
+              } else {
+                showToast('Gagal menambahkan data lokal.', 'error');
+              }
+            } else {
+              showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
+            }
+          }
+        } catch (e) {
+          showToast('Error: ' + e.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
     }
 
     function exportData() {
@@ -887,7 +974,8 @@
         id: item.id,
         judul: item.judul,
         deskripsi: item.deskripsi,
-        link: item.link,
+        fileId: item.fileId,
+        tipe: item.tipe,
         kategori: item.kategori,
         tanggal: item.tanggal
       }));

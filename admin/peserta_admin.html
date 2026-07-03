@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <style>
     /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; }
@@ -129,6 +131,34 @@
     .status-badge.pending { background: #fef3c7; color: #d97706; }
     .status-badge.approved { background: #d1fae5; color: #059669; }
     .status-badge.rejected { background: #fee2e2; color: #dc2626; }
+
+    /* --- FORM BUILDER STYLES --- */
+    .field-builder-card {
+        background: #f8fafc; border-radius: 16px; padding: 1rem; margin-bottom: 1rem;
+        border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;
+        transition: all 0.2s;
+    }
+    .field-builder-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .field-builder-card .field-label { font-weight: 600; margin-bottom: 0; }
+    .field-builder-card .field-meta { font-size: 0.85rem; color: #64748b; }
+    .field-builder-card .field-actions .btn { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
+
+    /* --- FORM DYNAMIC STYLES (dari peserta.html) --- */
+    .admin-contact { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; }
+    .template-card { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; transition: background 0.2s; }
+    .template-card:hover { background: #f1f5f9; }
+    .template-card .btn { border-radius: 50px; padding: 0.4rem 1.2rem; }
+    .whatsapp-btn { background-color: #25d366; color: white; border: none; }
+    .whatsapp-btn:hover { background-color: #1da851; color: white; }
+    #signatureCanvasAdmin { width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 8px; background: #fff; touch-action: none; }
+    .capture-hint { font-size: 0.8rem; color: #64748b; }
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: 99999; display: none; justify-content: center; align-items: center; flex-direction: column; }
+    #qrResult { display: none; text-align: center; margin-top: 20px; padding: 1.5rem; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
+    #qrResult h5 { color: #2563eb; }
+    #qrCodeContainer canvas { border-radius: 12px; border: 1px solid #e2e8f0; padding: 8px; background: white; }
+
+    /* --- KREDENSIAL MODAL --- */
+    .credential-modal-qr { max-width: 200px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: white; }
   </style>
 </head>
 <body>
@@ -246,13 +276,16 @@
 
     <!-- ==================== CONTENT WRAPPER ==================== -->
     <div class="content-wrapper">
-      <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Manajemen Peserta</h2>
+      <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Manajemen Peserta & Form Builder</h2>
 
       <!-- TOOLBAR -->
       <div class="row mb-3">
         <div class="col-md-6">
           <button class="btn btn-primary rounded-pill" id="addPesertaBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Peserta</button>
           <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
+          <button class="btn btn-outline-warning rounded-pill ms-2" id="moveToAlumniBtn" disabled>
+            <i class="bi bi-arrow-right-circle me-1"></i> Pindahkan ke Alumni
+          </button>
           <button class="btn btn-outline-danger rounded-pill ms-2" id="clearCacheBtn">
             <i class="bi bi-trash me-1"></i> Hapus Cache
           </button>
@@ -273,22 +306,32 @@
         </div>
       </div>
 
-      <!-- TABLE -->
+      <!-- TABLE PESERTA -->
       <div id="pesertaTableContainer" class="table-container">
         <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
       </div>
 
-      <!-- FORM SETTINGS SECTION -->
+      <!-- ========================================================== -->
+      <!--   BAGIAN: FORM BUILDER (KELOLA FIELD ISIAN)                -->
+      <!-- ========================================================== -->
       <div class="mt-5 pt-4 border-top">
-        <h4><i class="bi bi-gear me-2"></i>Pengaturan Field Wajib Form Peserta</h4>
-        <p class="text-muted small">Centang field yang wajib diisi oleh peserta. Field yang tidak dicentang menjadi opsional.</p>
-        <form id="formSettingsForm">
-          <div id="formSettingsContainer" class="row g-3">
-            <!-- akan diisi oleh JS -->
-          </div>
-          <button type="submit" class="btn btn-primary rounded-pill mt-3">Simpan Pengaturan</button>
-        </form>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4><i class="bi bi-gear me-2"></i>Form Builder - Kelola Field Isian Peserta</h4>
+          <button class="btn btn-primary rounded-pill btn-sm" id="addFieldBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Field Baru</button>
+        </div>
+        <p class="text-muted small">Kelola field yang muncul di form pendaftaran (Peserta & Admin). <strong>Field Core</strong> (Nama, Email, dll.) tidak bisa dihapus, tapi bisa diedit Label, Tipe, dan status Wajibnya.</p>
+        <div id="formBuilderContainer" class="row g-3">
+          <!-- akan diisi oleh JS -->
+          <div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>
+        </div>
+        <div class="mt-3 text-end">
+          <button class="btn btn-success rounded-pill px-4" id="saveFormStructureBtn">
+            <i class="bi bi-save me-1"></i> Simpan Struktur Form
+          </button>
+        </div>
       </div>
+      <!-- ========================================================== -->
+
     </div>
   </div>
 </div>
@@ -323,27 +366,64 @@
   </div>
 </div>
 
-<!-- ==================== MODAL FORM (TAMBAH/EDIT) ==================== -->
+<!-- ==================== MODAL FORM (TAMBAH/EDIT PESERTA) - DINAMIS ==================== -->
 <div class="modal fade" id="pesertaFormModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-primary text-white border-0 rounded-top-4">
         <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i><span id="formModalTitle">Tambah Peserta</span></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4">
+      <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
         <input type="hidden" id="editPesertaId">
-        <div class="mb-3"><label class="form-label fw-semibold">Nama Lengkap</label><input type="text" class="form-control" id="pesertaNama" placeholder="Nama lengkap peserta" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="pesertaEmail" placeholder="email@example.com" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">No. HP</label><input type="text" class="form-control" id="pesertaHp" placeholder="081234567890" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Asal</label><input type="text" class="form-control" id="pesertaAsal" placeholder="Asal peserta" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Status</label><select class="form-select" id="pesertaStatus"><option value="pending">Pending</option><option value="approved">Disetujui</option><option value="rejected">Ditolak</option></select></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Tanggal Daftar</label><input type="date" class="form-control" id="pesertaTanggal" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Keterangan</label><textarea class="form-control" id="pesertaNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea></div>
+        <div id="dynamicAdminFormContainer"></div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
         <button type="button" class="btn btn-primary rounded-pill px-4" id="savePesertaBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL FIELD EDITOR (TAMBAH/EDIT FIELD CUSTOM) ==================== -->
+<div class="modal fade" id="fieldEditorModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="fieldModalTitle">Tambah Field Baru</span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editFieldId">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Label Field</label>
+          <input type="text" class="form-control" id="fieldLabel" placeholder="Misal: Nama Ibu Kandung" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Tipe Input</label>
+          <select class="form-select" id="fieldType">
+            <option value="text">Text (Input Teks)</option>
+            <option value="textarea">Textarea (Teks Panjang)</option>
+            <option value="radio">Radio (Pilihan Ganda)</option>
+            <option value="select">Select (Dropdown)</option>
+            <option value="file">File Upload</option>
+          </select>
+        </div>
+        <div class="mb-3" id="fieldOptionsGroup" style="display:none;">
+          <label class="form-label fw-semibold">Opsi (Pisahkan dengan koma)</label>
+          <input type="text" class="form-control" id="fieldOptions" placeholder="Contoh: Ya,Tidak,Lainnya">
+        </div>
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="fieldRequired">
+            <label class="form-check-label" for="fieldRequired">Wajib diisi (Required)</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveFieldBtn">Simpan Field</button>
       </div>
     </div>
   </div>
@@ -387,6 +467,32 @@
   </div>
 </div>
 
+<!-- ==================== MODAL KREDENSIAL (FITUR BARU) ==================== -->
+<div class="modal fade" id="credentialModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Kredensial Login Peserta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <p class="mb-2"><strong>Nama:</strong> <span id="credentialNama"></span></p>
+        <div id="credentialQrContainer" class="mb-3"></div>
+        <p><strong>Username:</strong> <span id="credentialUsername" class="fw-bold text-primary"></span></p>
+        <p><strong>Password:</strong> <span id="credentialPassword" class="fw-bold text-danger"></span></p>
+        <p class="small text-muted">* Password dapat diubah oleh peserta melalui halaman Member setelah login.</p>
+        <div class="alert alert-info small mt-2 text-start">
+          <i class="bi bi-info-circle"></i> Scan QR Code untuk absen. Gunakan Username & Password untuk login.
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="copyCredentialBtn"><i class="bi bi-clipboard"></i> Salin Kredensial</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== TOAST ==================== -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
   <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
@@ -411,11 +517,13 @@
     let STATE = {
       pesertaList: [],
       filteredList: [],
+      formStructure: [],
       searchQuery: '',
       statusFilter: '',
       isLoading: false,
       isEditing: false,
-      isBackgroundUpdate: false
+      signaturePad: null,
+      editingFieldId: null
     };
 
     // =====================================================
@@ -444,7 +552,7 @@
     }
 
     function generateId() {
-      return 'p' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      return 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     }
 
     function getStatusBadge(status) {
@@ -529,26 +637,30 @@
       }
 
       // Load data
-      loadData();
-      loadFormSettings();
+      loadPesertaData();
+      loadFormStructure();
 
       // Event listeners
       document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
       document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+      document.getElementById('addFieldBtn')?.addEventListener('click', openAddFieldModal);
+      document.getElementById('saveFormStructureBtn')?.addEventListener('click', saveFormStructure);
+      document.getElementById('saveFieldBtn')?.addEventListener('click', saveField);
       
       document.getElementById('clearCacheBtn')?.addEventListener('click', function() {
-        if (confirm('Hapus semua cache lokal? Data dummy dari sesi sebelumnya akan hilang. Data akan dimuat ulang dari server.')) {
+        if (confirm('Hapus semua cache lokal? Data akan dimuat ulang dari server.')) {
           DataCache.clear();
           localStorage.removeItem('pkd_peserta_data');
           showToast('Cache lokal dibersihkan. Memuat ulang data...', 'info');
-          loadData(true);
+          loadPesertaData(true);
+          loadFormStructure(true);
         }
       });
 
       document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
         this.disabled = true;
-        loadData(true).then(() => {
+        Promise.all([loadPesertaData(true), loadFormStructure(true)]).then(() => {
           this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
           this.disabled = false;
           showToast('Data berhasil disegarkan', 'success');
@@ -562,15 +674,12 @@
       document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
       document.getElementById('searchInput')?.addEventListener('input', handleSearch);
       document.getElementById('filterStatus')?.addEventListener('change', handleStatusFilter);
-
-      // Form Settings
-      document.getElementById('formSettingsForm')?.addEventListener('submit', saveFormSettings);
     });
 
     // =====================================================
     //   CACHE HELPERS
     // =====================================================
-    function loadDataFromCache() {
+    function loadPesertaFromCache() {
       const cached = DataCache.getData('peserta');
       if (cached && Array.isArray(cached) && cached.length > 0) {
         STATE.pesertaList = cached;
@@ -579,7 +688,7 @@
       return false;
     }
 
-    function updateCache(data) {
+    function updatePesertaCache(data) {
       DataCache.updateData('peserta', data);
       STATE.pesertaList = data;
     }
@@ -592,36 +701,23 @@
       }
     }
 
-    function loadDataFromStorage() {
+    function loadPesertaFromStorage() {
       try {
         const stored = localStorage.getItem('pkd_peserta_data');
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed && parsed.pesertaList) {
-            // Anti-dummy filter
-            const knownDummyKeywords = ['ahmad fauzi', 'siti rahma', 'budi santoso', 'dewi lestari', 'eko prasetyo', 'fitri handayani', 'galih wicaksono', 'hana putri', 'indra wijaya', 'joko susilo'];
-            const cleanedList = parsed.pesertaList.filter(item => {
-              const nama = (item.nama || '').toLowerCase().trim();
-              return !knownDummyKeywords.includes(nama);
-            });
-
-            if (cleanedList.length > 0) {
-              STATE.pesertaList = cleanedList;
-            } else {
-              localStorage.removeItem('pkd_peserta_data');
-              STATE.pesertaList = [];
-            }
+            STATE.pesertaList = parsed.pesertaList;
           }
         }
       } catch (e) {}
-      
       if (STATE.pesertaList.length === 0) {
         STATE.pesertaList = [];
-        saveDataToStorage();
+        savePesertaToStorage();
       }
     }
 
-    function saveDataToStorage() {
+    function savePesertaToStorage() {
       try {
         localStorage.setItem('pkd_peserta_data', JSON.stringify({
           pesertaList: STATE.pesertaList
@@ -634,22 +730,23 @@
     }
 
     // =====================================================
-    //   CRUD OPERATIONS
+    //   CRUD OPERATIONS (PESERTA)
     // =====================================================
     function addPeserta(data) {
       const newItem = {
         id: generateId(),
-        nama: data.nama || '',
+        nama_lengkap: data.nama_lengkap || '',
         email: data.email || '',
-        hp: data.hp || '',
-        asal: data.asal || '',
+        no_hp: data.no_hp || '',
+        utusan: data.utusan || '',
         status: data.status || 'pending',
         tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-        catatan: data.catatan || ''
+        catatan: data.catatan || '',
+        custom_data: data.custom_data || {} 
       };
       STATE.pesertaList.unshift(newItem);
-      updateCache(STATE.pesertaList);
-      saveDataToStorage();
+      updatePesertaCache(STATE.pesertaList);
+      savePesertaToStorage();
       return newItem;
     }
 
@@ -659,17 +756,18 @@
       const existing = STATE.pesertaList[index];
       const updated = {
         ...existing,
-        nama: data.nama !== undefined ? data.nama : existing.nama,
+        nama_lengkap: data.nama_lengkap !== undefined ? data.nama_lengkap : existing.nama_lengkap,
         email: data.email !== undefined ? data.email : existing.email,
-        hp: data.hp !== undefined ? data.hp : existing.hp,
-        asal: data.asal !== undefined ? data.asal : existing.asal,
+        no_hp: data.no_hp !== undefined ? data.no_hp : existing.no_hp,
+        utusan: data.utusan !== undefined ? data.utusan : existing.utusan,
         status: data.status !== undefined ? data.status : existing.status,
         tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-        catatan: data.catatan !== undefined ? data.catatan : existing.catatan
+        catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
+        custom_data: data.custom_data !== undefined ? data.custom_data : existing.custom_data
       };
       STATE.pesertaList[index] = updated;
-      updateCache(STATE.pesertaList);
-      saveDataToStorage();
+      updatePesertaCache(STATE.pesertaList);
+      savePesertaToStorage();
       return updated;
     }
 
@@ -677,8 +775,8 @@
       const index = STATE.pesertaList.findIndex(item => item.id === id);
       if (index === -1) return false;
       STATE.pesertaList.splice(index, 1);
-      updateCache(STATE.pesertaList);
-      saveDataToStorage();
+      updatePesertaCache(STATE.pesertaList);
+      savePesertaToStorage();
       return true;
     }
 
@@ -687,10 +785,10 @@
       if (query.trim() !== '') {
         const q = query.toLowerCase().trim();
         filtered = filtered.filter(item =>
-          (item.nama && item.nama.toLowerCase().includes(q)) ||
+          (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
           (item.email && item.email.toLowerCase().includes(q)) ||
-          (item.asal && item.asal.toLowerCase().includes(q)) ||
-          (item.hp && item.hp.toLowerCase().includes(q))
+          (item.utusan && item.utusan.toLowerCase().includes(q)) ||
+          (item.no_hp && item.no_hp.toLowerCase().includes(q))
         );
       }
       if (status !== '' && status !== '') {
@@ -700,7 +798,48 @@
     }
 
     // =====================================================
-    //   RENDER TABLE
+    //   LOAD PESERTA DATA
+    // =====================================================
+    async function loadPesertaData(forceRefresh = false) {
+      const container = document.getElementById('pesertaTableContainer');
+      container.innerHTML = renderSkeleton();
+
+      if (forceRefresh) {
+        try {
+          const freshData = await PKD.getPesertaList();
+          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+            STATE.pesertaList = freshData;
+            updatePesertaCache(freshData);
+            savePesertaToStorage();
+            renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
+            updateCacheStatus('Live');
+            return;
+          }
+        } catch (e) {
+          console.warn('Gagal memuat data dari API:', e);
+        }
+      }
+
+      const cached = DataCache.getData('peserta');
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        STATE.pesertaList = cached;
+        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
+        updateCacheStatus('Cache');
+        return;
+      }
+
+      loadPesertaFromStorage();
+      if (STATE.pesertaList.length > 0) {
+        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
+        updateCacheStatus('Storage');
+      } else {
+        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data peserta.</div>`;
+        updateCacheStatus('Empty');
+      }
+    }
+
+    // =====================================================
+    //   RENDER TABLE (DENGAN CHECKBOX & TOMBOL KREDENSIAL)
     // =====================================================
     function renderTable(data) {
       const container = document.getElementById('pesertaTableContainer');
@@ -711,13 +850,15 @@
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
+                <th style="width: 40px;"><input type="checkbox" id="selectAllPeserta"></th>
                 <th style="width: 50px;">#</th>
                 <th>Nama</th>
                 <th>Email</th>
                 <th>No HP</th>
-                <th>Asal</th>
+                <th>Utusan</th>
                 <th>Status</th>
-                <th style="width: 250px;" class="text-center">Aksi</th>
+                <th style="width: 200px;">Aksi</th>
+                <th style="width: 120px;">Kredensial</th>
               </tr>
             </thead>
             <tbody>
@@ -726,7 +867,7 @@
       if (data.length === 0) {
         html += `
             <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
+              <td colspan="9" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-4 d-block mb-2"></i>
                 Tidak ada data peserta.
               </td>
@@ -737,11 +878,12 @@
           const badge = getStatusBadge(item.status);
           html += `
             <tr>
+              <td><input type="checkbox" class="peserta-checkbox" value="${item.id}"></td>
               <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
+              <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
               <td>${escapeHtml(item.email || '-')}</td>
-              <td>${escapeHtml(item.hp || '-')}</td>
-              <td>${escapeHtml(item.asal || '-')}</td>
+              <td>${escapeHtml(item.no_hp || '-')}</td>
+              <td>${escapeHtml(item.utusan || '-')}</td>
               <td><span class="badge ${badge} status-badge">${escapeHtml(item.status || 'pending')}</span></td>
               <td class="text-center">
                 ${item.status === 'pending' ? `
@@ -762,6 +904,13 @@
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
+              <td class="text-center">
+                ${item.status === 'approved' ? `
+                  <button class="btn btn-sm btn-outline-primary" onclick="showCredentials('${item.id}')" title="Lihat Kredensial">
+                    <i class="bi bi-key-fill"></i>
+                  </button>
+                ` : '-'}
+              </td>
             </tr>
           `;
         });
@@ -774,63 +923,63 @@
       `;
 
       container.innerHTML = html;
+
+      // Setup checkbox logic
+      document.getElementById('selectAllPeserta')?.addEventListener('change', function() {
+        document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.checked = this.checked);
+        toggleMoveToAlumniBtn();
+      });
+      document.querySelectorAll('.peserta-checkbox').forEach(cb => {
+        cb.addEventListener('change', toggleMoveToAlumniBtn);
+      });
     }
 
     // =====================================================
-    //   LOAD DATA (ROBUST)
+    //   SELECT ALL / TOGGLE MOVE BUTTON
     // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('pesertaTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Coba API dengan force refresh
-      if (forceRefresh) {
-        try {
-          // Ambil semua peserta (tanpa filter status)
-          const freshData = await PKD.getPesertaList();
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.pesertaList = freshData;
-            updateCache(freshData);
-            saveDataToStorage();
-            renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
-            updateCacheStatus('Live');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-        }
-      }
-
-      // 2. Coba DataCache
-      const cached = DataCache.getData('peserta');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.pesertaList = cached;
-        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
-        updateCacheStatus('Cache');
-        return;
-      }
-
-      // 3. Coba localStorage (DENGAN ANTI-DUMMY)
-      loadDataFromStorage();
-      if (STATE.pesertaList.length > 0) {
-        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
-        updateCacheStatus('Storage');
-      } else {
-        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data peserta.</div>`;
-        updateCacheStatus('Empty');
-      }
+    function toggleMoveToAlumniBtn() {
+      const checked = document.querySelectorAll('.peserta-checkbox:checked');
+      document.getElementById('moveToAlumniBtn').disabled = checked.length === 0;
     }
 
     // =====================================================
-    //   APPROVE / REJECT
+    //   APPROVE / REJECT (MODIFIED FOR CREDENTIALS)
     // =====================================================
     window.approvePeserta = async function(id) {
-      if (!confirm('Setujui peserta ini? QR Code akan aktif untuk peserta.')) return;
+      if (!confirm('Setujui peserta ini? QR Code dan akun member akan dibuat.')) return;
       try {
         const res = await PKD.approvePeserta(id);
         if (res.success) {
-          showToast('Peserta disetujui', 'success');
-          loadData(true);
+          showToast('Peserta disetujui.', 'success');
+          loadPesertaData(true); // Reload table
+          
+          // Jika ada username & password baru, tampilkan modal
+          if (res.username && res.password) {
+            const item = getPesertaById(id);
+            document.getElementById('credentialNama').innerText = item.nama_lengkap || '-';
+            document.getElementById('credentialUsername').innerText = res.username;
+            document.getElementById('credentialPassword').innerText = res.password;
+            // Generate QR
+            const qrContainer = document.getElementById('credentialQrContainer');
+            qrContainer.innerHTML = '';
+            const qr = qrcode(0, 'M');
+            qr.addData(`peserta_id=${id}`);
+            qr.make();
+            const canvas = document.createElement('canvas');
+            const size = qr.getModuleCount() * 8;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            for (let row = 0; row < qr.getModuleCount(); row++) {
+              for (let col = 0; col < qr.getModuleCount(); col++) {
+                ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+                ctx.fillRect(col * 8, row * 8, 8, 8);
+              }
+            }
+            qrContainer.appendChild(canvas);
+            qrContainer.querySelector('canvas').classList.add('credential-modal-qr');
+            new bootstrap.Modal(document.getElementById('credentialModal')).show();
+          }
         } else {
           showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
         }
@@ -845,7 +994,7 @@
         const res = await PKD.rejectPeserta(id);
         if (res.success) {
           showToast('Peserta ditolak', 'success');
-          loadData(true);
+          loadPesertaData(true);
         } else {
           showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
         }
@@ -855,85 +1004,261 @@
     };
 
     // =====================================================
-    //   FORM SETTINGS
+    //   SHOW CREDENTIALS
     // =====================================================
-    async function loadFormSettings() {
-      const container = document.getElementById('formSettingsContainer');
-      container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
+    window.showCredentials = async function(id) {
       try {
-        const res = await PKD.getFormSettings();
+        const res = await PKD.getPesertaCredentials(id);
         if (res.success) {
-          const requiredFields = res.data || [];
-          const allFields = [
-            { id: 'nama_lengkap', label: 'Nama Lengkap' },
-            { id: 'tempat_tgl_lahir', label: 'Tempat & Tgl Lahir' },
-            { id: 'pekerjaan', label: 'Pekerjaan' },
-            { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir' },
-            { id: 'alamat', label: 'Alamat' },
-            { id: 'no_hp', label: 'No HP' },
-            { id: 'email', label: 'Email' },
-            { id: 'utusan', label: 'Utusan (PAC)' },
-            { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi' },
-            { id: 'foto', label: 'Foto' },
-            { id: 'surat_rekomendasi', label: 'Surat Rekomendasi' }
-          ];
-          let html = '';
-          allFields.forEach(f => {
-            const checked = requiredFields.includes(f.id) ? 'checked' : '';
-            html += `
-              <div class="col-md-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="field_${f.id}" value="${f.id}" ${checked}>
-                  <label class="form-check-label" for="field_${f.id}">
-                    ${f.label}
-                  </label>
-                </div>
-              </div>
-            `;
-          });
-          container.innerHTML = html;
+          const item = getPesertaById(id);
+          document.getElementById('credentialNama').innerText = item.nama_lengkap || '-';
+          document.getElementById('credentialUsername').innerText = res.username;
+          document.getElementById('credentialPassword').innerText = '(Tersimpan di sistem)';
+          
+          const qrContainer = document.getElementById('credentialQrContainer');
+          qrContainer.innerHTML = '';
+          const qr = qrcode(0, 'M');
+          qr.addData(`peserta_id=${id}`);
+          qr.make();
+          const canvas = document.createElement('canvas');
+          const size = qr.getModuleCount() * 8;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          for (let row = 0; row < qr.getModuleCount(); row++) {
+            for (let col = 0; col < qr.getModuleCount(); col++) {
+              ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+              ctx.fillRect(col * 8, row * 8, 8, 8);
+            }
+          }
+          qrContainer.appendChild(canvas);
+          qrContainer.querySelector('canvas').classList.add('credential-modal-qr');
+          
+          new bootstrap.Modal(document.getElementById('credentialModal')).show();
         } else {
-          container.innerHTML = '<div class="col-12 text-danger">Gagal memuat pengaturan.</div>';
+          showToast('Belum ada akun member untuk peserta ini.', 'warning');
         }
       } catch (e) {
-        container.innerHTML = '<div class="col-12 text-danger">Error: ' + e.message + '</div>';
+        showToast('Gagal mengambil kredensial: ' + e.message, 'error');
       }
-    }
+    };
 
-    async function saveFormSettings(e) {
-      e.preventDefault();
-      const checkboxes = document.querySelectorAll('#formSettingsContainer input[type="checkbox"]:checked');
-      const fields = Array.from(checkboxes).map(cb => cb.value);
+    // =====================================================
+    //   COPY CREDENTIALS
+    // =====================================================
+    document.getElementById('copyCredentialBtn')?.addEventListener('click', function() {
+      const nama = document.getElementById('credentialNama').innerText;
+      const username = document.getElementById('credentialUsername').innerText;
+      const password = document.getElementById('credentialPassword').innerText;
+      const text = `Nama: ${nama}\nUsername: ${username}\nPassword: ${password}`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Kredensial berhasil disalin!', 'success');
+      }).catch(() => {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Kredensial berhasil disalin!', 'success');
+      });
+    });
+
+    // =====================================================
+    //   MOVE TO ALUMNI
+    // =====================================================
+    document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
+      const checked = document.querySelectorAll('.peserta-checkbox:checked');
+      if (checked.length === 0) return;
+      
+      if (!confirm(`Pindahkan ${checked.length} peserta terpilih ke Alumni?`)) return;
+
+      const ids = Array.from(checked).map(cb => cb.value);
+      const btn = this;
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memindahkan...';
+
       try {
-        const res = await PKD.setFormSettings(fields);
+        const res = await PKD.alumni.moveMultipleToAlumni(ids);
         if (res.success) {
-          showToast('Pengaturan field wajib berhasil disimpan', 'success');
+          showToast(`Berhasil memindahkan ${res.moved} peserta ke Alumni.`, 'success');
+          loadPesertaData(true);
         } else {
-          showToast('Gagal menyimpan', 'error');
+          showToast('Gagal memindahkan: ' + (res.error || 'Unknown error'), 'error');
         }
       } catch (e) {
         showToast('Error: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       }
-    }
+    });
 
     // =====================================================
-    //   EVENT HANDLERS
+    //   EVENT HANDLERS (PESERTA CRUD)
     // =====================================================
     function resetForm() {
       document.getElementById('editPesertaId').value = '';
-      document.getElementById('pesertaNama').value = '';
-      document.getElementById('pesertaEmail').value = '';
-      document.getElementById('pesertaHp').value = '';
-      document.getElementById('pesertaAsal').value = '';
-      document.getElementById('pesertaStatus').value = 'pending';
-      document.getElementById('pesertaTanggal').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('pesertaNote').value = '';
       document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
       STATE.isEditing = false;
+      const container = document.getElementById('dynamicAdminFormContainer');
+      container.innerHTML = '';
+      if (STATE.signaturePad) {
+        STATE.signaturePad.clear();
+      }
+    }
+
+    function buildDynamicForm(data = null) {
+      const container = document.getElementById('dynamicAdminFormContainer');
+      let html = '';
+
+      html += `
+        <div class="admin-contact">
+          <h6><i class="bi bi-telephone-fill me-2"></i>Konfirmasi Administrasi ke Panitia Lokal</h6>
+          <p class="mb-1">Sebelum mengisi formulir, silakan hubungi panitia untuk memastikan kelengkapan administrasi.</p>
+          <a href="https://wa.me/6283866675521?text=Halo%20Panitia%20PKD%2C%20saya%20ingin%20konfirmasi%20administrasi%20peserta." target="_blank" class="btn btn-success btn-sm rounded-pill mt-2 whatsapp-btn">
+            <i class="bi bi-whatsapp me-1"></i> Hubungi Admin Instruktur (0838-6667-5521)
+          </a>
+          <p class="small text-muted mt-2 mb-0">Nomor kontak sesuai flyer resmi PKD GP Ansor Bantul.</p>
+        </div>
+      `;
+
+      STATE.formStructure.forEach(field => {
+        const val = data ? data[field.id] || '' : '';
+        const isRequired = field.required ? 'required' : '';
+        const labelHtml = `<label class="form-label fw-bold">${escapeHtml(field.label)}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>`;
+        
+        if (field.id === 'foto') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <input type="file" class="form-control" name="${field.id}" accept="image/*" id="input_${field.id}" ${isRequired}>
+              <img id="preview_${field.id}" src="#" alt="Preview" style="max-width: 200px; display: none;" class="mt-2 rounded border">
+            </div>
+          `;
+        } else if (field.id === 'surat_rekomendasi') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <div class="template-card mb-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                  <div>
+                    <h6 class="fw-semibold mb-1"><i class="bi bi-file-earmark-word me-1"></i>Download Template Surat Rekomendasi</h6>
+                    <p class="small text-muted mb-0"><strong>Pilih salah satu template</strong> di lengkapi di cetak, kemudian upload formulir</p>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap mt-2 mt-sm-0">
+                    <a href="Surat Rekomendasi PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                      <i class="bi bi-file-earmark-word me-1"></i> Template PAC
+                    </a>
+                    <a href="Surat Rekomendasi Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                      <i class="bi bi-file-earmark-word me-1"></i> Template Masjid
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <input type="file" class="form-control" name="${field.id}" accept=".pdf,image/*" id="input_${field.id}" ${isRequired}>
+              <div id="preview_${field.id}" class="mt-2 small text-muted"></div>
+            </div>
+          `;
+        } else if (field.type === 'textarea') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <textarea class="form-control" name="${field.id}" rows="3" placeholder="Masukkan jawaban Anda..." ${isRequired}>${escapeHtml(val)}</textarea>
+            </div>
+          `;
+        } else if (field.type === 'radio') {
+          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+          html += `<div class="mb-3">${labelHtml}<div class="radio-group">`;
+          options.forEach((opt, idx) => {
+            const checked = val === opt ? 'checked' : '';
+            html += `
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt)}" id="${field.id}_${idx}" ${checked} ${isRequired}>
+                <label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt)}</label>
+              </div>
+            `;
+          });
+          html += `</div></div>`;
+        } else if (field.type === 'select') {
+          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+          html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" ${isRequired}>`;
+          html += `<option value="">-- Pilih --</option>`;
+          options.forEach(opt => {
+            const selected = val === opt ? 'selected' : '';
+            html += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+          });
+          html += `</select></div>`;
+        } else {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <input type="text" class="form-control" name="${field.id}" placeholder="Masukkan ${escapeHtml(field.label)}" value="${escapeHtml(val)}" ${isRequired}>
+            </div>
+          `;
+        }
+      });
+
+      html += `
+        <div class="mb-3">
+          <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
+          <div class="border rounded p-2" style="background: #fff;"><canvas id="signatureCanvasAdmin"></canvas></div>
+          <div class="mt-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSignatureAdmin"><i class="bi bi-eraser"></i> Hapus</button>
+            <small class="text-muted ms-2">Gambar tanda tangan dengan mouse atau jari (pada layar sentuh).</small>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      document.querySelectorAll('#dynamicAdminFormContainer input[type="file"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          const previewId = `preview_${this.name}`;
+          const previewEl = document.getElementById(previewId);
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+              if (this.name === 'foto') {
+                previewEl.src = ev.target.result;
+                previewEl.style.display = 'block';
+              } else {
+                previewEl.innerHTML = `File dipilih: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+              }
+            }.bind(this);
+            reader.readAsDataURL(file);
+          } else {
+            if (this.name === 'foto') {
+              previewEl.style.display = 'none';
+            } else {
+              previewEl.innerHTML = '';
+            }
+          }
+        });
+      });
+
+      const canvas = document.getElementById('signatureCanvasAdmin');
+      if (canvas) {
+        if (STATE.signaturePad) STATE.signaturePad.clear();
+        STATE.signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)', penColor: 'rgb(0,0,0)' });
+        function resizeCanvas() {
+          const ratio = Math.max(window.devicePixelRatio || 1, 1);
+          canvas.width = canvas.offsetWidth * ratio;
+          canvas.height = canvas.offsetHeight * ratio;
+          canvas.getContext("2d").scale(ratio, ratio);
+          STATE.signaturePad.clear();
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+        document.getElementById('clearSignatureAdmin').addEventListener('click', () => STATE.signaturePad.clear());
+      }
     }
 
     function openAddModal() {
       resetForm();
+      buildDynamicForm();
       new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
     }
 
@@ -943,16 +1268,14 @@
         showToast('Data tidak ditemukan.', 'error');
         return;
       }
+      resetForm();
       document.getElementById('editPesertaId').value = id;
-      document.getElementById('pesertaNama').value = item.nama || '';
-      document.getElementById('pesertaEmail').value = item.email || '';
-      document.getElementById('pesertaHp').value = item.hp || '';
-      document.getElementById('pesertaAsal').value = item.asal || '';
-      document.getElementById('pesertaStatus').value = item.status || 'pending';
-      document.getElementById('pesertaTanggal').value = item.tanggal || '';
-      document.getElementById('pesertaNote').value = item.catatan || '';
       document.getElementById('formModalTitle').innerText = 'Edit Peserta';
       STATE.isEditing = true;
+      
+      const mergedItem = { ...item, ...(item.custom_data || {}) };
+      buildDynamicForm(mergedItem);
+
       new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
     };
 
@@ -965,14 +1288,23 @@
       const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
       const content = document.getElementById('detailContent');
       const badge = getStatusBadge(item.status);
+      
+      let customHtml = '';
+      STATE.formStructure.forEach(field => {
+        if (field.type === 'file' || field.id === 'tanda_tangan' || field.id === 'status' || field.id === 'createdAt') return;
+        const val = item[field.id];
+        customHtml += `<div class="list-group-item py-3"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val || '-')}</div>`;
+      });
+
       let html = `
         <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama || '-')}</div>
+          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama_lengkap || '-')}</div>
           <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
-          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.hp || '-')}</div>
-          <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
+          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.no_hp || '-')}</div>
+          <div class="list-group-item py-3"><strong>Utusan:</strong> ${escapeHtml(item.utusan || '-')}</div>
           <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'pending')}</span></div>
           <div class="list-group-item py-3"><strong>Tanggal Daftar:</strong> ${formatDate(item.tanggal)}</div>
+          ${customHtml}
           <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
         </div>
       `;
@@ -992,55 +1324,122 @@
       if (result) {
         showToast('Peserta berhasil dihapus.', 'success');
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadData();
+        loadPesertaData();
       } else {
         showToast('Gagal menghapus data.', 'error');
       }
     }
 
-    function saveData() {
+    async function saveData() {
       const id = document.getElementById('editPesertaId').value;
-      const nama = document.getElementById('pesertaNama').value.trim();
-      const email = document.getElementById('pesertaEmail').value.trim();
-      const hp = document.getElementById('pesertaHp').value.trim();
-      const asal = document.getElementById('pesertaAsal').value.trim();
-      const status = document.getElementById('pesertaStatus').value;
-      const tanggal = document.getElementById('pesertaTanggal').value;
-      const catatan = document.getElementById('pesertaNote').value.trim();
+      const form = document.querySelector('#dynamicAdminFormContainer');
+      if (!form) return;
 
-      if (!nama || !email || !hp || !asal || !tanggal) {
-        showToast('Nama, email, no HP, asal, dan tanggal wajib diisi.', 'error');
+      const formData = new FormData(form);
+      const data = {
+        action: id ? 'updatePeserta' : 'submitPeserta',
+        id: id || '',
+        custom_data: {}
+      };
+
+      STATE.formStructure.forEach(field => {
+        const val = formData.get(field.id);
+        if (field.type === 'file') {
+          const fileInput = document.getElementById(`input_${field.id}`);
+          if (fileInput && fileInput.files.length > 0) {
+            data[field.id] = fileInput.files[0];
+          }
+        } else {
+          const coreFields = ['nama_lengkap', 'email', 'no_hp', 'utusan', 'status', 'tanggal', 'catatan'];
+          if (coreFields.includes(field.id)) {
+            data[field.id] = val || '';
+          } else {
+            data.custom_data[field.id] = val || '';
+          }
+        }
+      });
+
+      if (STATE.signaturePad && !STATE.signaturePad.isEmpty()) {
+        data.tanda_tangan = STATE.signaturePad.toDataURL('image/jpeg', 0.2);
+      }
+
+      const missing = [];
+      STATE.formStructure.forEach(field => {
+        if (field.required) {
+          const fileInput = document.getElementById(`input_${field.id}`);
+          const isFile = field.type === 'file';
+          let isEmpty = true;
+          if (isFile) {
+            isEmpty = !fileInput || !fileInput.files.length;
+          } else {
+            const val = formData.get(field.id);
+            isEmpty = !val || val.trim() === '';
+          }
+          if (isEmpty) {
+            missing.push(field.label);
+          }
+        }
+      });
+
+      if (missing.length > 0) {
+        showToast('Harap isi: ' + missing.join(', '), 'error');
         return;
       }
 
-      const data = {
-        nama: nama,
-        email: email,
-        hp: hp,
-        asal: asal,
-        status: status,
-        tanggal: tanggal,
-        catatan: catatan
-      };
+      const fileFields = STATE.formStructure.filter(f => f.type === 'file');
+      for (let f of fileFields) {
+        if (data[f.id]) {
+          const file = data[f.id];
+          if (file.size > 5 * 1024 * 1024) {
+            showToast('Ukuran ' + f.label + ' maksimal 5 MB.', 'error');
+            return;
+          }
+          data[f.id] = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+      }
 
-      if (id === '') {
-        const newItem = addPeserta(data);
-        if (newItem) {
-          showToast('Peserta berhasil ditambahkan.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
-          loadData();
+      if (data.utusan === 'Lainnya') {
+        data.utusan = 'Lainnya - ' + (data.utusan_luar || '');
+        delete data.utusan_luar;
+      }
+
+      const btn = document.getElementById('savePesertaBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+
+      try {
+        let result;
+        if (id === '') {
+          delete data.id;
+          result = await PKD.submitPeserta(data);
+          if (result.success) {
+            showToast('Peserta berhasil ditambahkan.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
+            loadPesertaData(true);
+          } else {
+            throw new Error(result.error || 'Gagal menambahkan');
+          }
         } else {
-          showToast('Gagal menambahkan data.', 'error');
+          result = await PKD.updatePeserta(data);
+          if (result.success) {
+            showToast('Peserta berhasil diperbarui.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
+            loadPesertaData(true);
+          } else {
+            throw new Error(result.error || 'Gagal memperbarui');
+          }
         }
-      } else {
-        const updated = updatePeserta(id, data);
-        if (updated) {
-          showToast('Peserta berhasil diperbarui.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
-          loadData();
-        } else {
-          showToast('Gagal memperbarui data.', 'error');
-        }
+      } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       }
     }
 
@@ -1052,13 +1451,14 @@
       }
       const exportData = data.map(item => ({
         id: item.id,
-        nama: item.nama,
+        nama: item.nama_lengkap,
         email: item.email,
-        hp: item.hp,
-        asal: item.asal,
+        hp: item.no_hp,
+        utusan: item.utusan,
         status: item.status,
         tanggal: item.tanggal,
-        catatan: item.catatan
+        catatan: item.catatan,
+        ...(item.custom_data || {})
       }));
       const json = JSON.stringify(exportData, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
@@ -1072,7 +1472,7 @@
     }
 
     // =====================================================
-    //   SEARCH & FILTER HANDLERS
+    //   SEARCH & FILTER
     // =====================================================
     const debouncedSearch = debounce(function(query) {
       STATE.searchQuery = query;
@@ -1088,6 +1488,220 @@
       const filtered = getFilteredPeserta(STATE.searchQuery, STATE.statusFilter);
       STATE.filteredList = filtered;
       renderTable(filtered);
+    }
+
+    // =====================================================
+    //   LOAD & SAVE FORM STRUCTURE - DENGAN PERBAIKAN PARSING
+    // =====================================================
+    async function loadFormStructure(forceRefresh = false) {
+      try {
+        const res = await PKD.getFormSettings();
+        let fields = [];
+
+        // ✅ PERBAIKAN: Pastikan data yang diterima benar-benar Array
+        if (res.success && res.data) {
+          // Jika data adalah string JSON, parse terlebih dahulu
+          if (typeof res.data === 'string') {
+            try {
+              fields = JSON.parse(res.data);
+            } catch (e) {
+              fields = [];
+            }
+          } else if (Array.isArray(res.data)) {
+            fields = res.data;
+          } else {
+            fields = [];
+          }
+
+          // Jika data masih berupa array string (versi lama), konversi ke objek dinamis
+          if (Array.isArray(fields) && fields.length > 0 && typeof fields[0] === 'string') {
+            const coreLabels = {
+              nama_lengkap: 'Nama Lengkap',
+              tempat_tgl_lahir: 'Tempat & Tanggal Lahir',
+              pekerjaan: 'Pekerjaan',
+              pendidikan_terakhir: 'Pendidikan Terakhir',
+              alamat: 'Alamat',
+              no_hp: 'No HP',
+              email: 'Email',
+              utusan: 'Utusan (PAC)',
+              pengalaman_organisasi: 'Pengalaman Organisasi',
+              foto: 'Foto',
+              surat_rekomendasi: 'Surat Rekomendasi'
+            };
+            fields = fields.map(id => ({
+              id: id,
+              label: coreLabels[id] || id,
+              type: (id === 'foto' || id === 'surat_rekomendasi') ? 'file' : (id === 'pengalaman_organisasi' || id === 'alamat') ? 'textarea' : 'text',
+              options: '',
+              required: true,
+              isCore: true
+            }));
+          }
+
+          STATE.formStructure = fields;
+          renderFormStructure();
+        } else {
+          showToast('Gagal memuat struktur form', 'error');
+        }
+      } catch (e) {
+        console.warn('Gagal load form structure:', e);
+        // Fallback ke default jika terjadi error fatal
+        STATE.formStructure = [
+          { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true, isCore: true },
+          { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', required: true, isCore: true },
+          { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', required: true, isCore: true },
+          { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', required: true, isCore: true },
+          { id: 'alamat', label: 'Alamat', type: 'textarea', required: true, isCore: true },
+          { id: 'no_hp', label: 'No HP', type: 'text', required: true, isCore: true },
+          { id: 'email', label: 'Email', type: 'text', required: true, isCore: true },
+          { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
+          { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', required: true, isCore: true },
+          { id: 'foto', label: 'Foto', type: 'file', required: true, isCore: true },
+          { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', required: true, isCore: true }
+        ];
+        renderFormStructure();
+      }
+    }
+
+    function renderFormStructure() {
+      const container = document.getElementById('formBuilderContainer');
+      if (!STATE.formStructure || STATE.formStructure.length === 0) {
+        container.innerHTML = '<div class="col-12 text-muted">Belum ada field yang terdefinisi.</div>';
+        return;
+      }
+
+      let html = '';
+      STATE.formStructure.forEach(field => {
+        const isCore = field.isCore === true;
+        html += `
+          <div class="col-md-6 col-lg-4">
+            <div class="field-builder-card">
+              <div>
+                <div class="field-label">${escapeHtml(field.label)}</div>
+                <div class="field-meta">
+                  ${isCore ? '<span class="badge bg-secondary">Core</span>' : `<span class="badge bg-info">${field.type}</span>`}
+                  ${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}
+                </div>
+              </div>
+              <div class="field-actions">
+                <button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>
+                ${!isCore ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteField('${field.id}')"><i class="bi bi-trash"></i></button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function openAddFieldModal() {
+      document.getElementById('editFieldId').value = '';
+      document.getElementById('fieldLabel').value = '';
+      document.getElementById('fieldType').value = 'text';
+      document.getElementById('fieldOptions').value = '';
+      document.getElementById('fieldRequired').checked = false;
+      document.getElementById('fieldModalTitle').innerText = 'Tambah Field Baru';
+      document.getElementById('fieldOptionsGroup').style.display = 'none';
+      STATE.editingFieldId = null;
+      new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+    }
+
+    window.editField = function(id) {
+      const field = STATE.formStructure.find(f => f.id === id);
+      if (!field) {
+        showToast('Field tidak ditemukan.', 'error');
+        return;
+      }
+      document.getElementById('editFieldId').value = field.id;
+      document.getElementById('fieldLabel').value = field.label || '';
+      document.getElementById('fieldType').value = field.type || 'text';
+      document.getElementById('fieldOptions').value = field.options || '';
+      document.getElementById('fieldRequired').checked = field.required || false;
+      document.getElementById('fieldModalTitle').innerText = 'Edit Field';
+      document.getElementById('fieldOptionsGroup').style.display = (field.type === 'radio' || field.type === 'select') ? 'block' : 'none';
+      STATE.editingFieldId = field.id;
+      new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+    };
+
+    window.deleteField = function(id) {
+      if (!confirm('Yakin ingin menghapus field ini?')) return;
+      STATE.formStructure = STATE.formStructure.filter(f => f.id !== id);
+      renderFormStructure();
+    };
+
+    document.getElementById('fieldType').addEventListener('change', function() {
+      document.getElementById('fieldOptionsGroup').style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
+    });
+
+    function saveField() {
+      const id = document.getElementById('editFieldId').value;
+      const label = document.getElementById('fieldLabel').value.trim();
+      const type = document.getElementById('fieldType').value;
+      const options = document.getElementById('fieldOptions').value.trim();
+      const required = document.getElementById('fieldRequired').checked;
+
+      if (!label) {
+        showToast('Label field wajib diisi.', 'error');
+        return;
+      }
+
+      if ((type === 'radio' || type === 'select') && !options) {
+        showToast('Opsi wajib diisi untuk tipe Radio/Select.', 'error');
+        return;
+      }
+
+      if (id) {
+        const idx = STATE.formStructure.findIndex(f => f.id === id);
+        if (idx !== -1) {
+          STATE.formStructure[idx].label = label;
+          STATE.formStructure[idx].type = type;
+          STATE.formStructure[idx].options = options;
+          STATE.formStructure[idx].required = required;
+        }
+      } else {
+        const newField = {
+          id: generateId(),
+          label: label,
+          type: type,
+          options: options,
+          required: required,
+          isCore: false
+        };
+        STATE.formStructure.push(newField);
+      }
+      bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide();
+      renderFormStructure();
+      showToast('Field berhasil disimpan.', 'success');
+    }
+
+    async function saveFormStructure() {
+      const payload = STATE.formStructure.map(f => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+        options: f.options,
+        required: f.required
+      }));
+
+      const btn = document.getElementById('saveFormStructureBtn');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+      try {
+        const res = await PKD.setFormSettings(payload);
+        if (res.success) {
+          showToast('Struktur form berhasil disimpan.', 'success');
+          DataCache.updateData('formSettings', payload);
+        } else {
+          throw new Error(res.message || 'Gagal menyimpan');
+        }
+      } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     }
 
   })();
