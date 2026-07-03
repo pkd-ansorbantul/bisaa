@@ -1,168 +1,262 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login · PKD GP Ansor Bantul</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Login · PKD GP Ansor Bantul</title>
 
-  <!-- Font & Bootstrap -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Font & Bootstrap -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <style>
-    body {
-      background: #f8fafc;
-      font-family: 'Inter', sans-serif;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-    }
-    .login-card {
-      max-width: 400px;
-      width: 100%;
-      background: white;
-      border-radius: 32px;
-      padding: 2rem;
-      box-shadow: 0 20px 35px -8px rgba(0,0,0,0.1);
-      border: 1px solid rgba(226,232,240,0.6);
-    }
-    .logo {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .logo img {
-      height: 60px;
-      margin-bottom: 0.5rem;
-    }
-    .btn-login {
-      border-radius: 9999px;
-      padding: 0.6rem;
-      font-weight: 600;
-    }
-  </style>
+    <style>
+        /* ===== GLOBAL PREMIUM ===== */
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        body {
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        /* ===== PREMIUM LOGIN CARD ===== */
+        .login-card {
+            max-width: 420px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 32px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-card .logo {
+            text-align: center;
+            margin-bottom: 1.8rem;
+        }
+        .login-card .logo img {
+            height: 60px;
+            width: auto;
+            margin-bottom: 0.5rem;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .login-card .logo img:hover {
+            transform: scale(1.05) rotate(-2deg);
+        }
+        .login-card .logo h4 {
+            font-weight: 700;
+            color: #0a3d62;
+            letter-spacing: -0.02em;
+        }
+        .login-card .logo p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        /* ===== PREMIUM FORM ===== */
+        .form-control {
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .btn-login {
+            border-radius: 9999px;
+            padding: 0.6rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #2563eb, #1e4bb3);
+            border: none;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        }
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        /* ===== LINKS ===== */
+        .login-card a {
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .login-card a:hover {
+            color: #2563eb !important;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 576px) {
+            .login-card { padding: 1.8rem 1.2rem; }
+        }
+    </style>
 </head>
 <body>
-  <div class="login-card">
-    <div class="logo">
-      <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor">
-      <h4 class="fw-bold">Masuk ke Sistem</h4>
-      <p class="text-muted">Gunakan akun Admin, Ketua PAC, atau Member</p>
+
+    <div class="login-card">
+        <div class="logo">
+            <img src="LOGO ANSOR.webp" alt="Logo Ansor">
+            <h4>Masuk ke Sistem</h4>
+            <p>Gunakan akun Admin, Ketua PAC, atau Member</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Masukkan username" autocomplete="off" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off" required>
+                    <button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePassword()">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="errorMsg" class="text-danger small mb-3" style="display: none;"></div>
+            <button type="submit" class="btn btn-primary w-100 btn-login" id="loginBtn">Login</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="forgot_account.html" class="text-decoration-none small text-muted">Lupa Username / Password?</a>
+            <br>
+            <a href="index.html" class="text-decoration-none small" style="margin-top: 0.5rem; display: inline-block;">← Kembali ke Awal</a>
+        </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Username</label>
-      <input type="text" id="username" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off">
+
+    <!-- ==================== TOAST ==================== -->
+    <div class="toast-container">
+        <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+            <div class="toast-header bg-white border-0">
+                <i class="bi me-2" id="toastIcon"></i>
+                <strong class="me-auto" id="toastTitle">Berhasil</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Password</label>
-      <div class="input-group">
-        <input type="password" id="password" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off">
-        <button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePassword()">
-          <i class="bi bi-eye"></i>
-        </button>
-      </div>
-    </div>
-    <div id="errorMsg" class="text-danger small mb-3" style="display: none;"></div>
-    <button class="btn btn-primary w-100 btn-login" id="loginBtn">Login</button>
-    <div class="text-center mt-3">
-      <a href="/bisaa/index.html" class="text-decoration-none small">← Kembali ke Awal</a>
-    </div>
-  </div>
 
-  <!-- Sertakan api.js dan dataCache.js -->
-  <script src="/bisaa/dataCache.js"></script>
-  <script src="/bisaa/api.js"></script>
+    <!-- ==================== SCRIPTS ==================== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+    <script src="api.js">
+    </script>
 
-  <script>
-    // Fungsi toggle visibility password
-    function togglePassword() {
-      const pwd = document.getElementById('password');
-      pwd.type = pwd.type === 'password' ? 'text' : 'password';
-    }
-
-    // Tombol login
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorDiv = document.getElementById('errorMsg');
-
-      // Validasi input
-      if (!username || !password) {
-        errorDiv.innerText = 'Username dan password harus diisi!';
-        errorDiv.style.display = 'block';
-        return;
-      }
-
-      // Indikator loading
-      const btn = document.getElementById('loginBtn');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memeriksa...';
-      errorDiv.style.display = 'none';
-
-      // 1. Coba login sebagai admin
-      try {
-        const adminRes = await PKD.verifyAdmin(username, password);
-        if (adminRes.success && adminRes.role) {
-          // Simpan state admin
-          PKD.setUserRole('admin');
-          PKD.setUserData({ nama: username });
-          PKD.persistAuthState();
-          window.location.href = '/bisaa/admin/dashboard_admin.html';
-          return;
+    <script>
+        // =====================================================
+        //   TOGGLE PASSWORD VISIBILITY
+        // =====================================================
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            pwd.type = pwd.type === 'password' ? 'text' : 'password';
         }
-      } catch (e) {
-        console.warn('Admin login error:', e);
-      }
 
-      // 2. Coba login sebagai ketua PAC
-      try {
-        const pacRes = await PKD.verifyKetuaPAC(username, password);
-        if (pacRes.success && pacRes.role === 'ketua_pac') {
-          PKD.setUserRole('ketua_pac');
-          PKD.setUserData(pacRes.data || { nama: username });
-          PKD.persistAuthState();
-          window.location.href = '/bisaa/ketua_pac.html';
-          return;
-        }
-      } catch (e) {
-        console.warn('Ketua PAC login error:', e);
-      }
+        // =====================================================
+        //   CEK SUDAH LOGIN – LANGSUNG REDIRECT
+        // =====================================================
+        (function checkAlreadyLoggedIn() {
+            const role = PKD.getUserRole();
+            if (role === 'admin') {
+                window.location.href = '/bisaa/admin/dashboard_admin.html';
+            } else if (role === 'ketua_pac') {
+                window.location.href = '/bisaa/ketua_pac.html';
+            } else if (role === 'member') {
+                window.location.href = '/bisaa/member.html';
+            }
+        })();
 
-      // 3. Coba login sebagai member
-      try {
-        const memberRes = await PKD.verifyMember(username, password);
-        if (memberRes.success && memberRes.role === 'member') {
-          PKD.setUserRole('member');
-          PKD.setUserData(memberRes.data || { nama: username });
-          PKD.persistAuthState();
-          window.location.href = '/bisaa/member.html';
-          return;
-        }
-      } catch (e) {
-        console.warn('Member login error:', e);
-      }
+        // =====================================================
+        //   LOGIN FORM HANDLER
+        // =====================================================
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-      // 4. Jika semua gagal
-      errorDiv.innerText = 'Username atau password salah!';
-      errorDiv.style.display = 'block';
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    });
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('errorMsg');
 
-    // Cek apakah sudah login – langsung redirect
-    (function() {
-      const role = PKD.getUserRole();
-      if (role === 'admin') {
-        window.location.href = '/bisaa/admin/dashboard_admin.html';
-      } else if (role === 'ketua_pac') {
-        window.location.href = '/bisaa/ketua_pac.html';
-      } else if (role === 'member') {
-        window.location.href = '/bisaa/member.html';
-      }
-    })();
-  </script>
+            if (!username || !password) {
+                errorDiv.innerText = 'Username dan password harus diisi!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('loginBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memeriksa...';
+            errorDiv.style.display = 'none';
+
+            // 1. Coba login sebagai admin
+            try {
+                const adminRes = await PKD.verifyAdmin(username, password);
+                if (adminRes.success && adminRes.role) {
+                    PKD.setUserRole('admin');
+                    PKD.setUserData({ nama: username });
+                    PKD.persistAuthState();
+                    window.location.href = '/bisaa/admin/dashboard_admin.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Admin login error:', e);
+            }
+
+            // 2. Coba login sebagai ketua PAC
+            try {
+                const pacRes = await PKD.verifyKetuaPAC(username, password);
+                if (pacRes.success && pacRes.role === 'ketua_pac') {
+                    PKD.setUserRole('ketua_pac');
+                    PKD.setUserData(pacRes.data || { nama: username });
+                    PKD.persistAuthState();
+                    window.location.href = '/bisaa/ketua_pac.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Ketua PAC login error:', e);
+            }
+
+            // 3. Coba login sebagai member
+            try {
+                const memberRes = await PKD.verifyMember(username, password);
+                if (memberRes.success && memberRes.role === 'member') {
+                    PKD.setUserRole('member');
+                    PKD.setUserData(memberRes.data || { nama: username });
+                    PKD.persistAuthState();
+                    window.location.href = '/bisaa/member.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Member login error:', e);
+            }
+
+            // 4. Jika semua gagal
+            errorDiv.innerText = 'Username atau password salah!';
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    </script>
 </body>
 </html>

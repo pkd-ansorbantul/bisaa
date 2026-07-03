@@ -1,7 +1,7 @@
 // dataCache.js - Cache Manager untuk PKD GP Ansor Kabupaten Bantul
-// Versi: 2.2.0
-// Tanggal: 2026-06-15
-// Perubahan: Menghapus batasan tipe data, mendukung objek dan array
+// Versi: 2.2.1
+// Tanggal: 2026-07-02
+// Perubahan: Memperbaiki self-initialization agar tidak menimpa cache yang sudah ada
 // ======================================================================
 
 const DataCache = {
@@ -31,7 +31,7 @@ const DataCache = {
     const payload = {
       data: data,
       timestamp: Date.now(),
-      version: '2.2.0'
+      version: '2.2.1'
     };
 
     try {
@@ -94,7 +94,7 @@ const DataCache = {
   /**
    * Mengambil data spesifik dari cache
    * @param {string} type - Tipe data (peserta, sesi, materi, skrining, pretest, posttest, alumni, kader, informasi, absensi, sertifikat)
-   * @returns {any|null} - Data atau null jika tidak ada (bisa array, objek, dll.)
+   * @returns {any|null} - Data atau null jika tidak ada
    */
   getData(type) {
     if (!type) return null;
@@ -277,7 +277,7 @@ const DataCache = {
 };
 
 // ================================================================
-// SELF-INITIALIZATION (auto-load saat pertama kali dijalankan)
+// SELF-INITIALIZATION (TIDAK MENIMPA DATA YANG SUDAH ADA)
 // ================================================================
 
 (function() {
@@ -316,7 +316,7 @@ const DataCache = {
 
 if (typeof window !== 'undefined') {
   window.DataCache = DataCache;
-  console.log('DataCache: Siap digunakan. Versi 2.2.0');
+  console.log('DataCache: Siap digunakan. Versi 2.2.1');
 }
 
 // ================================================================

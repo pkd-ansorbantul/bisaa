@@ -69,6 +69,21 @@
     .session-status.open { background: #d1fae5; color: #059669; }
     .session-status.closed { background: #fee2e2; color: #dc2626; }
 
+    /* Refresh button style */
+    .refresh-btn {
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: none;
+        background: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: #f1f5f9; }
+
     @media (max-width: 576px) { .container-card { padding: 1.5rem; } }
   </style>
 </head>
@@ -84,9 +99,14 @@
         <span class="brand-sub">Kabupaten Bantul</span>
       </span>
     </a>
-    <a href="index.html" class="btn btn-outline-primary rounded-pill px-4 ms-auto">
-      <i class="bi bi-arrow-left"></i> Kembali
-    </a>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <button class="refresh-btn" id="refreshBtn" title="Segarkan Data">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Kembali
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -123,655 +143,708 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="api.js"></script>
+<script src="dataCache.js"></script>
 
 <script>
   // =====================================================
-  //   KONFIGURASI & STATE
+  //   LOGIKA VISIBILITAS PER MENU (absen) + OPTIMASI
   // =====================================================
-
-  function escapeHtmlLocal(unsafe) { return PKD.escapeHtml(unsafe); }
-  function showToastLocal(message, type = 'success') { PKD.showToast(message, type); }
-
-  function togglePasswordLocal(id) {
-    const input = document.getElementById(id);
-    input.type = input.type === 'password' ? 'text' : 'password';
-  }
-  window.togglePassword = togglePasswordLocal;
-
-  let currentMode = 'peserta'; // 'peserta' or 'panitia'
-  let sesiList = [];
-  let userRole = PKD.getUserRole();
-
-  // =====================================================
-  //   CACHE LOGIN MODE SETTING
-  // =====================================================
-  async function getLoginModeSetting() {
-    const cacheKey = 'loginMode';
-    const cached = PKD.getCached(cacheKey, 300000);
-    if (cached) return cached;
-    const res = await PKD.getLoginMode();
-    PKD.saveCached(cacheKey, res);
-    return res;
-  }
-
-  // =====================================================
-  //   CACHE SESSION
-  // =====================================================
-  async function fetchSesiAbsen(forceRefresh = false) {
-    if (!forceRefresh) {
-      const cached = PKD.getCached('absenSesiCache', 300000);
-      if (cached) return cached;
-    }
-    const data = await PKD.getSesiAbsen(true);
-    PKD.saveCached('absenSesiCache', data);
-    return data;
-  }
-
-  // =====================================================
-  //   PENGELOLAAN STATE LOCALSTORAGE
-  // =====================================================
-  function saveAbsenFormState() {
-    const nama = document.getElementById('namaAbsen')?.value || '';
-    const sesiId = document.getElementById('pilihSesiAbsen')?.value || '';
-    let signatureData = null;
-    if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
-      signatureData = window.sigPadAbsen.toData();
-    }
-    localStorage.setItem('absenFormState', JSON.stringify({ nama, sesiId, signatureData }));
-  }
-
-  function restoreAbsenFormState() {
-    const saved = localStorage.getItem('absenFormState');
-    if (!saved) return;
-    try {
-      const { nama, sesiId, signatureData } = JSON.parse(saved);
-      if (nama) document.getElementById('namaAbsen').value = nama;
-      if (sesiId) document.getElementById('pilihSesiAbsen').value = sesiId;
-      if (signatureData && window.sigPadAbsen) {
-        window.sigPadAbsen.fromData(signatureData);
-      }
-    } catch (e) {}
-  }
-
-  function clearAbsenFormState() {
-    localStorage.removeItem('absenFormState');
-  }
-
-  // =====================================================
-  //   SIGNATURE PAD
-  // =====================================================
-  function initAbsenSignaturePad() {
-    const canvas = document.getElementById('signatureCanvasAbsen');
-    if (!canvas) return;
-    window.sigPadAbsen = new SignaturePad(canvas, { backgroundColor: 'white', penColor: 'black' });
-    window.sigPadAbsen.clear();
-    document.getElementById('clearAbsenSign')?.addEventListener('click', () => { window.sigPadAbsen.clear(); saveAbsenFormState(); });
-    document.getElementById('undoAbsenSign')?.addEventListener('click', () => {
-      const data = window.sigPadAbsen.toData();
-      if (data) { data.pop(); window.sigPadAbsen.fromData(data); saveAbsenFormState(); }
-    });
-    window.sigPadAbsen.addEventListener('endStroke', saveAbsenFormState);
-  }
-
-  // =====================================================
-  //   QR SCANNER (hanya untuk panitia)
-  // =====================================================
-  let barcodeScannerActive = false;
-  let videoStream = null;
-  let videoElement = null;
-  let animationFrameId = null;
-  let barcodeDetector = null;
-  let quaggaInitialized = false;
-
-  function canScanParticipantQR() {
-    return userRole === 'admin' || userRole === 'ketua_pac';
-  }
-
-  async function initBarcodeScanner() {
-    const readerDiv = document.getElementById('barcode-reader');
-    const container = document.getElementById('barcode-video-container');
-    const closeBtn = document.getElementById('closeScannerBtn');
-
-    if (!canScanParticipantQR()) {
-      showToastLocal('Maaf, fitur scan QR ID peserta hanya untuk Admin dan Ketua PAC.', 'danger');
-      return;
-    }
-
-    if (barcodeScannerActive) {
-      stopBarcodeScanner();
-      return;
-    }
-
-    // Cek dukungan native BarcodeDetector
-    if ('BarcodeDetector' in window) {
+  (function() {
+    async function checkAccessAndLoad() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        videoStream = stream;
-
-        videoElement = document.createElement('video');
-        videoElement.srcObject = stream;
-        videoElement.autoplay = true;
-        videoElement.playsInline = true;
-        videoElement.style.width = '100%';
-        videoElement.style.maxHeight = '400px';
-        container.innerHTML = '';
-        container.appendChild(videoElement);
-
-        readerDiv.style.display = 'block';
-        barcodeScannerActive = true;
-
-        barcodeDetector = new BarcodeDetector({ 
-          formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'code_93', 'codabar', 'databar', 'qr_code'] 
-        });
-
-        detectLoopNative();
-        document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (native)...';
-        return;
-      } catch (err) {
-        console.warn('Native barcode detector gagal, fallback ke Quagga:', err);
-      }
-    }
-
-    // Fallback Quagga
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      videoStream = stream;
-
-      videoElement = document.createElement('video');
-      videoElement.srcObject = stream;
-      videoElement.autoplay = true;
-      videoElement.playsInline = true;
-      videoElement.style.width = '100%';
-      videoElement.style.maxHeight = '400px';
-      container.innerHTML = '';
-      container.appendChild(videoElement);
-
-      readerDiv.style.display = 'block';
-      barcodeScannerActive = true;
-
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: container,
-          constraints: {
-            width: 640,
-            height: 480,
-            facingMode: "environment"
-          },
-        },
-        decoder: {
-          readers: [
-            "code_128_reader",
-            "ean_reader",
-            "ean_8_reader",
-            "upc_reader",
-            "upc_e_reader",
-            "code_39_reader",
-            "code_93_reader",
-            "codabar_reader",
-            "databar_reader"
-          ]
-        },
-        locate: true,
-        numOfWorkers: 2,
-        frequency: 10
-      }, function(err) {
-        if (err) {
-          console.error('Quagga init error:', err);
-          document.getElementById('barcode-reader-results').innerHTML = 'Gagal memulai scanner. Coba input manual.';
-          return;
-        }
-        Quagga.start();
-        quaggaInitialized = true;
-        document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (Quagga)...';
-      });
-
-      Quagga.onDetected(function(result) {
-        if (result && result.codeResult && result.codeResult.code) {
-          const decodedText = result.codeResult.code;
-          onBarcodeDetected(decodedText);
-        }
-      });
-
-    } catch (err) {
-      console.error('Gagal mengakses kamera:', err);
-      alert('Tidak dapat mengakses kamera. Pastikan Anda memberi izin atau gunakan input manual.');
-      readerDiv.style.display = 'none';
-      barcodeScannerActive = false;
-    }
-  }
-
-  function detectLoopNative() {
-    if (!barcodeScannerActive || !videoElement || videoElement.readyState < 2) {
-      animationFrameId = requestAnimationFrame(detectLoopNative);
-      return;
-    }
-
-    if (barcodeDetector) {
-      barcodeDetector.detect(videoElement)
-        .then(barcodes => {
-          if (barcodes.length > 0) {
-            const barcode = barcodes[0];
-            const decodedText = barcode.rawValue;
-            if (decodedText) {
-              onBarcodeDetected(decodedText);
-              return;
-            }
-          }
-          animationFrameId = requestAnimationFrame(detectLoopNative);
-        })
-        .catch(err => {
-          console.warn('Native detect error:', err);
-          animationFrameId = requestAnimationFrame(detectLoopNative);
-        });
-    } else {
-      animationFrameId = requestAnimationFrame(detectLoopNative);
-    }
-  }
-
-  function onBarcodeDetected(decodedText) {
-    // Cek apakah hasil scan berisi peserta_id
-    const match = decodedText.match(/peserta_id=([^&]+)/);
-    if (match) {
-      const pesertaId = match[1];
-      PKD.getPesertaById(pesertaId).then(res => {
-        if (res.success && res.data) {
-          if (res.data.status !== 'approved') {
-            showToastLocal('Peserta belum disetujui oleh admin. QR tidak aktif.', 'warning');
-            stopBarcodeScanner();
+        if (typeof PKD === 'undefined') {
+          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          if (typeof PKD === 'undefined') {
+            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+            mainInit();
             return;
           }
-          document.getElementById('namaAbsen').value = res.data.nama_lengkap;
-          // Simpan ID peserta untuk dikirim saat submit
-          window._scannedPesertaId = pesertaId;
-          showToastLocal('Nama peserta ditemukan: ' + res.data.nama_lengkap, 'success');
-          stopBarcodeScanner();
-        } else {
-          showToastLocal('ID Peserta tidak ditemukan', 'error');
-          stopBarcodeScanner();
         }
-      });
-      return;
-    }
 
-    // Logika lama untuk scan sesi (sesi_id & token)
-    const sesiMatch = decodedText.match(/sesi_id=([^&]+)/);
-    if (sesiMatch) {
-      const sesiId = sesiMatch[1];
-      const tokenMatch = decodedText.match(/token=([^&]+)/);
-      const token = tokenMatch ? tokenMatch[1] : '';
-      // Pilih sesi di dropdown
-      const select = document.getElementById('pilihSesiAbsen');
-      if (select) {
-        select.value = sesiId;
-        showToastLocal('Sesi terpilih: ' + select.options[select.selectedIndex].text, 'success');
-      }
-      // Simpan token untuk submit
-      window._scannedToken = token;
-      stopBarcodeScanner();
-      return;
-    }
+        // ✅ JALANKAN SECARA PARALEL
+        const [visRes, loginRes] = await Promise.all([
+            PKD.getPublicVisibility().catch(() => null),
+            PKD.getLoginMode().catch(() => null)
+        ]);
 
-    showToastLocal('Format QR tidak dikenali. Pastikan QR yang benar.', 'warning');
-    stopBarcodeScanner();
-  }
+        let requireLogin = true;
+        if (visRes && visRes.success && visRes.data) {
+          requireLogin = visRes.data.absen !== false;
+        } else if (loginRes && loginRes.success) {
+          requireLogin = loginRes.enabled;
+        }
 
-  function stopBarcodeScanner() {
-    barcodeScannerActive = false;
-    
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-
-    if (quaggaInitialized) {
-      Quagga.stop();
-      Quagga.offDetected();
-      quaggaInitialized = false;
-    }
-
-    if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
-      videoStream = null;
-    }
-
-    if (videoElement) {
-      videoElement.srcObject = null;
-      videoElement.remove();
-      videoElement = null;
-    }
-
-    document.getElementById('barcode-reader').style.display = 'none';
-    document.getElementById('barcode-video-container').innerHTML = '';
-    document.getElementById('barcode-reader-results').innerHTML = '';
-    barcodeDetector = null;
-  }
-
-  // =====================================================
-  //   RENDER FORM BERDASARKAN MODE
-  // =====================================================
-  function renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRMode) {
-    sesiList = sesiListData;
-    const container = document.getElementById('absenContainer');
-    const isPanitia = currentMode === 'panitia';
-
-    if (!sesiList.length) {
-      container.innerHTML = '<div class="alert alert-info">Belum ada sesi absen aktif.</div>';
-      return;
-    }
-
-    let html = '';
-
-    if (isPanitia) {
-      // Mode Panitia: tampilkan daftar sesi dengan kontrol start/stop dan tombol scan QR
-      html += `<div class="mb-3 d-flex justify-content-between align-items-center">
-        <h5><i class="bi bi-shield-lock"></i> Panel Panitia</h5>
-        <button class="btn btn-outline-secondary" id="scanParticipantBtn">
-          <i class="bi bi-upc-scan"></i> Scan QR ID Peserta
-        </button>
-      </div>`;
-      html += `<div class="list-group">`;
-      sesiList.forEach(s => {
-        // Ambil status sesi dari server atau cache
-        const isOpen = s.submission_open !== undefined ? s.submission_open : true;
-        html += `
-          <div class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <strong>${escapeHtmlLocal(s.nama)}</strong><br>
-              <span class="session-status ${isOpen ? 'open' : 'closed'}">
-                ${isOpen ? 'Buka' : 'Tutup'}
-              </span>
-            </div>
-            <div>
-              <button class="btn btn-sm ${isOpen ? 'btn-warning' : 'btn-success'} toggle-session" data-id="${s.id}" data-open="${!isOpen}">
-                ${isOpen ? 'Hentikan' : 'Mulai'}
-              </button>
-            </div>
-          </div>
-        `;
-      });
-      html += `</div>`;
-      // Jika ada sesi yang dipilih, tampilkan form absen (untuk input manual)
-      // Bisa ditambahkan form sederhana untuk panitia mengabsen manual
-      html += `
-        <hr>
-        <h5>Absen Manual (Panitia)</h5>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nama Peserta</label>
-          <input type="text" class="form-control" id="namaAbsen" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Sesi</label>
-          <select class="form-select" id="pilihSesiAbsen">
-            ${sesiList.map(s => `<option value="${s.id}">${escapeHtmlLocal(s.nama)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-          <div class="signature-area"><canvas id="signatureCanvasAbsen" width="250" height="120"></canvas></div>
-          <div class="signature-buttons">
-            <button type="button" class="btn btn-outline-secondary" id="clearAbsenSign">Hapus</button>
-            <button type="button" class="btn btn-outline-primary" id="undoAbsenSign">Undo</button>
-          </div>
-        </div>
-        <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>
-      `;
-    } else {
-      // Mode Peserta: form biasa
-      html = `<div class="mb-4 ${isQRMode ? 'qr-mode' : ''}">`;
-      html += `<h5>Pilih Sesi</h5><select class="form-select" id="pilihSesiAbsen" ${isQRMode ? 'disabled' : ''}>`;
-      sesiList.forEach(s => {
-        const selected = (sesiIdFromUrl && s.id == sesiIdFromUrl) ? 'selected' : '';
-        html += `<option value="${s.id}" ${selected}>${escapeHtmlLocal(s.nama)} (${escapeHtmlLocal(s.waktu || '')})</option>`;
-      });
-      html += `</select></div>`;
-
-      html += `<div class="mb-3">
-                 <label class="form-label fw-bold">Nama Lengkap</label>
-                 <input type="text" class="form-control" id="namaAbsen" required>
-               </div>`;
-
-      if (isQRMode) {
-        html += `<input type="hidden" id="qrTokenAbsen" value="${escapeHtmlLocal(tokenFromUrl)}">`;
-        html += `<div class="alert alert-success mb-3">
-                  <i class="bi bi-check-circle"></i> Absen via QR – token terisi otomatis.
-                </div>`;
-      } else {
-        html += `<div class="mb-3 password-field-wrapper">
-                  <label class="form-label fw-bold">🔑 Password Sesi</label>
-                  <div class="input-group">
-                    <input type="password" class="form-control" id="passwordAbsen" placeholder="Masukkan password sesi">
-                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('passwordAbsen')">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                  </div>
-                </div>`;
-      }
-
-      html += `<div class="mb-3">
-                 <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-                 <div class="signature-area"><canvas id="signatureCanvasAbsen" width="250" height="120"></canvas></div>
-                 <div class="signature-buttons">
-                   <button type="button" class="btn btn-outline-secondary" id="clearAbsenSign">Hapus</button>
-                   <button type="button" class="btn btn-outline-primary" id="undoAbsenSign">Undo</button>
-                 </div>
-               </div>
-               <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>`;
-    }
-
-    container.innerHTML = html;
-
-    // Inisialisasi signature pad selalu
-    initAbsenSignaturePad();
-
-    // Event listener untuk tombol toggle session (mode panitia)
-    if (isPanitia) {
-      document.querySelectorAll('.toggle-session').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = this.dataset.id;
-          const open = this.dataset.open === 'true';
-          const originalText = this.innerHTML;
-          this.disabled = true;
-          this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-          try {
-            const res = await PKD.toggleAttendanceSession(id, open);
-            if (res.success) {
-              showToastLocal(`Sesi ${open ? 'dibuka' : 'ditutup'} untuk absen.`, 'success');
-              // Refresh data
-              await loadAbsenSesi(true);
-            } else {
-              showToastLocal('Gagal mengubah status.', 'error');
-            }
-          } catch (e) {
-            showToastLocal('Error: ' + e.message, 'error');
-          } finally {
-            this.disabled = false;
-            this.innerHTML = originalText;
+        if (requireLogin) {
+          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+          if (!auth) {
+            window.location.href = '/bisaa/login.html?return=absen.html';
+            return;
           }
-        });
-      });
+        }
 
-      // Tombol scan QR ID peserta
-      document.getElementById('scanParticipantBtn')?.addEventListener('click', initBarcodeScanner);
+        // Lanjutkan inisialisasi halaman
+        mainInit();
+
+      } catch (e) {
+        console.error('Error di checkAccess:', e);
+        mainInit();
+      }
     }
 
-    // Submit handler (sama untuk kedua mode)
-    document.getElementById('submitAbsenBtn').addEventListener('click', async function() {
-      const btn = this;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
-
-      if (!window.sigPadAbsen || window.sigPadAbsen.isEmpty()) {
-        showToastLocal('Tanda tangan wajib!', 'danger');
-        btn.disabled = false;
-        btn.innerHTML = '📋 Kirim Absen';
-        return;
-      }
-      const nama = document.getElementById('namaAbsen').value.trim();
-      if (!nama) {
-        showToastLocal('Nama wajib diisi!', 'danger');
-        btn.disabled = false;
-        btn.innerHTML = '📋 Kirim Absen';
-        return;
-      }
-      const sesiId = document.getElementById('pilihSesiAbsen').value;
-
-      let params = {
-        action: 'submitAbsen',
-        nama: nama,
-        sesiId: sesiId,
-        tandaTangan: window.sigPadAbsen.toDataURL('image/jpeg', 0.2)
+    function mainInit() {
+      // =====================================================
+      //   KONFIGURASI & STATE
+      // =====================================================
+      function escapeHtmlLocal(unsafe) { return PKD.escapeHtml(unsafe); }
+      function showToastLocal(message, type = 'success') { PKD.showToast(message, type); }
+      window.togglePassword = function(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
       };
 
-      // Jika ada pesertaId dari scan ID, kirim
-      if (window._scannedPesertaId) {
-        params.pesertaId = window._scannedPesertaId;
+      let currentMode = 'peserta';
+      let sesiList = [];
+      let userRole = PKD.getUserRole();
+
+      // =====================================================
+      //   CACHE-FIRST: AMBIL SESI DARI DATACACHE
+      // =====================================================
+      function getCachedSesi() {
+        const allData = DataCache.getAllData();
+        return allData?.sesi || null;
       }
 
-      if (isQRMode && !isPanitia) {
-        params.qrToken = document.getElementById('qrTokenAbsen').value;
-      } else if (!isPanitia) {
-        const password = document.getElementById('passwordAbsen').value.trim();
-        if (!password) {
-          showToastLocal('Password sesi wajib diisi!', 'danger');
-          btn.disabled = false;
-          btn.innerHTML = '📋 Kirim Absen';
+      // =====================================================
+      //   AMBIL SESI DARI API (untuk background fetch)
+      // =====================================================
+      async function fetchSesiAbsen(forceRefresh = false) {
+        if (!forceRefresh) {
+          const cached = PKD.getCached('absenSesiCache', 300000);
+          if (cached) return cached;
+        }
+        const data = await PKD.getSesiAbsen(true);
+        PKD.saveCached('absenSesiCache', data);
+        return data;
+      }
+
+      // =====================================================
+      //   PENGELOLAAN STATE LOCALSTORAGE
+      // =====================================================
+      function saveAbsenFormState() {
+        const nama = document.getElementById('namaAbsen')?.value || '';
+        const sesiId = document.getElementById('pilihSesiAbsen')?.value || '';
+        let signatureData = null;
+        if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
+          signatureData = window.sigPadAbsen.toData();
+        }
+        localStorage.setItem('absenFormState', JSON.stringify({ nama, sesiId, signatureData }));
+      }
+
+      function restoreAbsenFormState() {
+        const saved = localStorage.getItem('absenFormState');
+        if (!saved) return;
+        try {
+          const { nama, sesiId, signatureData } = JSON.parse(saved);
+          if (nama) document.getElementById('namaAbsen').value = nama;
+          if (sesiId) document.getElementById('pilihSesiAbsen').value = sesiId;
+          if (signatureData && window.sigPadAbsen) {
+            window.sigPadAbsen.fromData(signatureData);
+          }
+        } catch (e) {}
+      }
+
+      function clearAbsenFormState() {
+        localStorage.removeItem('absenFormState');
+      }
+
+      // =====================================================
+      //   SIGNATURE PAD
+      // =====================================================
+      function initAbsenSignaturePad() {
+        const canvas = document.getElementById('signatureCanvasAbsen');
+        if (!canvas) return;
+        window.sigPadAbsen = new SignaturePad(canvas, { backgroundColor: 'white', penColor: 'black' });
+        window.sigPadAbsen.clear();
+        document.getElementById('clearAbsenSign')?.addEventListener('click', () => { window.sigPadAbsen.clear(); saveAbsenFormState(); });
+        document.getElementById('undoAbsenSign')?.addEventListener('click', () => {
+          const data = window.sigPadAbsen.toData();
+          if (data) { data.pop(); window.sigPadAbsen.fromData(data); saveAbsenFormState(); }
+        });
+        window.sigPadAbsen.addEventListener('endStroke', saveAbsenFormState);
+      }
+
+      // =====================================================
+      //   QR SCANNER (hanya untuk panitia)
+      // =====================================================
+      let barcodeScannerActive = false;
+      let videoStream = null;
+      let videoElement = null;
+      let animationFrameId = null;
+      let barcodeDetector = null;
+      let quaggaInitialized = false;
+
+      function canScanParticipantQR() {
+        return userRole === 'admin' || userRole === 'ketua_pac';
+      }
+
+      async function initBarcodeScanner() {
+        const readerDiv = document.getElementById('barcode-reader');
+        const container = document.getElementById('barcode-video-container');
+        const closeBtn = document.getElementById('closeScannerBtn');
+
+        if (!canScanParticipantQR()) {
+          showToastLocal('Maaf, fitur scan QR ID peserta hanya untuk Admin dan Ketua PAC.', 'danger');
           return;
         }
-        params.password = password;
-      }
 
-      try {
-        const result = await PKD.submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, params.pesertaId);
-        showToastLocal('✅ Absen berhasil tercatat!', 'success');
-        window.sigPadAbsen.clear();
-        document.getElementById('namaAbsen').value = '';
-        if (!isPanitia) document.getElementById('passwordAbsen').value = '';
-        clearAbsenFormState();
-        window._scannedPesertaId = null;
-        window._scannedToken = null;
-        if (isQRMode && !isPanitia) {
-          window.history.replaceState({}, document.title, window.location.pathname);
+        if (barcodeScannerActive) {
+          stopBarcodeScanner();
+          return;
         }
-      } catch (e) {
-        showToastLocal('❌ ' + (e.message || 'Terjadi kesalahan'), 'danger');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '📋 Kirim Absen';
-      }
-    });
 
-    // Auto-save for nama field (only in peserta mode)
-    if (!isPanitia) {
-      if (!isQRMode) {
-        restoreAbsenFormState();
-        document.getElementById('namaAbsen')?.addEventListener('input', saveAbsenFormState);
-        document.getElementById('pilihSesiAbsen')?.addEventListener('change', saveAbsenFormState);
-      } else {
-        document.getElementById('pilihSesiAbsen').value = sesiIdFromUrl;
-      }
-    }
-  }
-
-  // =====================================================
-  //   LOAD ABSEN SESI
-  // =====================================================
-  async function loadAbsenSesi(forceRefresh = false) {
-    const container = document.getElementById('absenContainer');
-    const urlParams = new URLSearchParams(window.location.search);
-    const sesiIdFromUrl = urlParams.get('sesi_id');
-    const tokenFromUrl = urlParams.get('token');
-    const isQRMode = !!(sesiIdFromUrl && tokenFromUrl);
-
-    if (isQRMode) clearAbsenFormState();
-
-    // Tampilkan spinner segera
-    container.innerHTML = `
-      <div class="text-center my-4">
-        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div>
-        <p class="mt-2 text-muted">Memuat sesi tersedia...</p>
-      </div>`;
-
-    try {
-      let sesiListData = await fetchSesiAbsen(forceRefresh);
-      // Jika mode panitia, kita perlu memuat status submission_open untuk setiap sesi
-      if (currentMode === 'panitia') {
-        // Ambil status per sesi
-        for (let s of sesiListData) {
+        if ('BarcodeDetector' in window) {
           try {
-            const status = await PKD.getAttendanceSessionStatus(s.id);
-            s.submission_open = status.open;
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            videoStream = stream;
+
+            videoElement = document.createElement('video');
+            videoElement.srcObject = stream;
+            videoElement.autoplay = true;
+            videoElement.playsInline = true;
+            videoElement.style.width = '100%';
+            videoElement.style.maxHeight = '400px';
+            container.innerHTML = '';
+            container.appendChild(videoElement);
+
+            readerDiv.style.display = 'block';
+            barcodeScannerActive = true;
+
+            barcodeDetector = new BarcodeDetector({ 
+              formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'code_93', 'codabar', 'databar', 'qr_code'] 
+            });
+
+            detectLoopNative();
+            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (native)...';
+            return;
+          } catch (err) {
+            console.warn('Native barcode detector gagal, fallback ke Quagga:', err);
+          }
+        }
+
+        // Fallback Quagga
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          videoStream = stream;
+
+          videoElement = document.createElement('video');
+          videoElement.srcObject = stream;
+          videoElement.autoplay = true;
+          videoElement.playsInline = true;
+          videoElement.style.width = '100%';
+          videoElement.style.maxHeight = '400px';
+          container.innerHTML = '';
+          container.appendChild(videoElement);
+
+          readerDiv.style.display = 'block';
+          barcodeScannerActive = true;
+
+          Quagga.init({
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: container,
+              constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment"
+              },
+            },
+            decoder: {
+              readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "code_39_reader",
+                "code_93_reader",
+                "codabar_reader",
+                "databar_reader"
+              ]
+            },
+            locate: true,
+            numOfWorkers: 2,
+            frequency: 10
+          }, function(err) {
+            if (err) {
+              console.error('Quagga init error:', err);
+              document.getElementById('barcode-reader-results').innerHTML = 'Gagal memulai scanner. Coba input manual.';
+              return;
+            }
+            Quagga.start();
+            quaggaInitialized = true;
+            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (Quagga)...';
+          });
+
+          Quagga.onDetected(function(result) {
+            if (result && result.codeResult && result.codeResult.code) {
+              const decodedText = result.codeResult.code;
+              onBarcodeDetected(decodedText);
+            }
+          });
+
+        } catch (err) {
+          console.error('Gagal mengakses kamera:', err);
+          alert('Tidak dapat mengakses kamera. Pastikan Anda memberi izin atau gunakan input manual.');
+          readerDiv.style.display = 'none';
+          barcodeScannerActive = false;
+        }
+      }
+
+      function detectLoopNative() {
+        if (!barcodeScannerActive || !videoElement || videoElement.readyState < 2) {
+          animationFrameId = requestAnimationFrame(detectLoopNative);
+          return;
+        }
+
+        if (barcodeDetector) {
+          barcodeDetector.detect(videoElement)
+            .then(barcodes => {
+              if (barcodes.length > 0) {
+                const barcode = barcodes[0];
+                const decodedText = barcode.rawValue;
+                if (decodedText) {
+                  onBarcodeDetected(decodedText);
+                  return;
+                }
+              }
+              animationFrameId = requestAnimationFrame(detectLoopNative);
+            })
+            .catch(err => {
+              console.warn('Native detect error:', err);
+              animationFrameId = requestAnimationFrame(detectLoopNative);
+            });
+        } else {
+          animationFrameId = requestAnimationFrame(detectLoopNative);
+        }
+      }
+
+      function onBarcodeDetected(decodedText) {
+        const match = decodedText.match(/peserta_id=([^&]+)/);
+        if (match) {
+          const pesertaId = match[1];
+          PKD.getPesertaById(pesertaId).then(res => {
+            if (res.success && res.data) {
+              if (res.data.status !== 'approved') {
+                showToastLocal('Peserta belum disetujui oleh admin. QR tidak aktif.', 'warning');
+                stopBarcodeScanner();
+                return;
+              }
+              document.getElementById('namaAbsen').value = res.data.nama_lengkap;
+              window._scannedPesertaId = pesertaId;
+              showToastLocal('Nama peserta ditemukan: ' + res.data.nama_lengkap, 'success');
+              stopBarcodeScanner();
+            } else {
+              showToastLocal('ID Peserta tidak ditemukan', 'error');
+              stopBarcodeScanner();
+            }
+          });
+          return;
+        }
+
+        const sesiMatch = decodedText.match(/sesi_id=([^&]+)/);
+        if (sesiMatch) {
+          const sesiId = sesiMatch[1];
+          const tokenMatch = decodedText.match(/token=([^&]+)/);
+          const token = tokenMatch ? tokenMatch[1] : '';
+          const select = document.getElementById('pilihSesiAbsen');
+          if (select) {
+            select.value = sesiId;
+            showToastLocal('Sesi terpilih: ' + select.options[select.selectedIndex].text, 'success');
+          }
+          window._scannedToken = token;
+          stopBarcodeScanner();
+          return;
+        }
+
+        showToastLocal('Format QR tidak dikenali. Pastikan QR yang benar.', 'warning');
+        stopBarcodeScanner();
+      }
+
+      function stopBarcodeScanner() {
+        barcodeScannerActive = false;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+        if (quaggaInitialized) {
+          Quagga.stop();
+          Quagga.offDetected();
+          quaggaInitialized = false;
+        }
+        if (videoStream) {
+          videoStream.getTracks().forEach(track => track.stop());
+          videoStream = null;
+        }
+        if (videoElement) {
+          videoElement.srcObject = null;
+          videoElement.remove();
+          videoElement = null;
+        }
+        document.getElementById('barcode-reader').style.display = 'none';
+        document.getElementById('barcode-video-container').innerHTML = '';
+        document.getElementById('barcode-reader-results').innerHTML = '';
+        barcodeDetector = null;
+      }
+
+      // =====================================================
+      //   RENDER FORM BERDASARKAN MODE
+      // =====================================================
+      function renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRMode) {
+        sesiList = sesiListData;
+        const container = document.getElementById('absenContainer');
+        const isPanitia = currentMode === 'panitia';
+
+        if (!sesiList.length) {
+          container.innerHTML = '<div class="alert alert-info">Belum ada sesi absen aktif.</div>';
+          return;
+        }
+
+        let html = '';
+
+        if (isPanitia) {
+          html += `<div class="mb-3 d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-shield-lock"></i> Panel Panitia</h5>
+            <button class="btn btn-outline-secondary" id="scanParticipantBtn">
+              <i class="bi bi-upc-scan"></i> Scan QR ID Peserta
+            </button>
+          </div>`;
+          html += `<div class="list-group">`;
+          sesiList.forEach(s => {
+            const isOpen = s.submission_open !== undefined ? s.submission_open : true;
+            html += `
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${escapeHtmlLocal(s.nama)}</strong><br>
+                  <span class="session-status ${isOpen ? 'open' : 'closed'}">
+                    ${isOpen ? 'Buka' : 'Tutup'}
+                  </span>
+                </div>
+                <div>
+                  <button class="btn btn-sm ${isOpen ? 'btn-warning' : 'btn-success'} toggle-session" data-id="${s.id}" data-open="${!isOpen}">
+                    ${isOpen ? 'Hentikan' : 'Mulai'}
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          html += `
+            <hr>
+            <h5>Absen Manual (Panitia)</h5>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nama Peserta</label>
+              <input type="text" class="form-control" id="namaAbsen" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Sesi</label>
+              <select class="form-select" id="pilihSesiAbsen">
+                ${sesiList.map(s => `<option value="${s.id}">${escapeHtmlLocal(s.nama)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
+              <div class="signature-area"><canvas id="signatureCanvasAbsen" width="250" height="120"></canvas></div>
+              <div class="signature-buttons">
+                <button type="button" class="btn btn-outline-secondary" id="clearAbsenSign">Hapus</button>
+                <button type="button" class="btn btn-outline-primary" id="undoAbsenSign">Undo</button>
+              </div>
+            </div>
+            <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>
+          `;
+        } else {
+          html = `<div class="mb-4 ${isQRMode ? 'qr-mode' : ''}">`;
+          html += `<h5>Pilih Sesi</h5><select class="form-select" id="pilihSesiAbsen" ${isQRMode ? 'disabled' : ''}>`;
+          sesiList.forEach(s => {
+            const selected = (sesiIdFromUrl && s.id == sesiIdFromUrl) ? 'selected' : '';
+            html += `<option value="${s.id}" ${selected}>${escapeHtmlLocal(s.nama)} (${escapeHtmlLocal(s.waktu || '')})</option>`;
+          });
+          html += `</select></div>`;
+
+          html += `<div class="mb-3">
+                     <label class="form-label fw-bold">Nama Lengkap</label>
+                     <input type="text" class="form-control" id="namaAbsen" required>
+                   </div>`;
+
+          if (isQRMode) {
+            html += `<input type="hidden" id="qrTokenAbsen" value="${escapeHtmlLocal(tokenFromUrl)}">`;
+            html += `<div class="alert alert-success mb-3">
+                      <i class="bi bi-check-circle"></i> Absen via QR – token terisi otomatis.
+                    </div>`;
+          } else {
+            html += `<div class="mb-3 password-field-wrapper">
+                      <label class="form-label fw-bold">🔑 Password Sesi</label>
+                      <div class="input-group">
+                        <input type="password" class="form-control" id="passwordAbsen" placeholder="Masukkan password sesi">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('passwordAbsen')">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                      </div>
+                    </div>`;
+          }
+
+          html += `<div class="mb-3">
+                     <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
+                     <div class="signature-area"><canvas id="signatureCanvasAbsen" width="250" height="120"></canvas></div>
+                     <div class="signature-buttons">
+                       <button type="button" class="btn btn-outline-secondary" id="clearAbsenSign">Hapus</button>
+                       <button type="button" class="btn btn-outline-primary" id="undoAbsenSign">Undo</button>
+                     </div>
+                   </div>
+                   <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>`;
+        }
+
+        container.innerHTML = html;
+
+        initAbsenSignaturePad();
+
+        if (isPanitia) {
+          document.querySelectorAll('.toggle-session').forEach(btn => {
+            btn.addEventListener('click', async function() {
+              const id = this.dataset.id;
+              const open = this.dataset.open === 'true';
+              const originalText = this.innerHTML;
+              this.disabled = true;
+              this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+              try {
+                const res = await PKD.toggleAttendanceSession(id, open);
+                if (res.success) {
+                  showToastLocal(`Sesi ${open ? 'dibuka' : 'ditutup'} untuk absen.`, 'success');
+                  await loadAbsenSesi(true);
+                } else {
+                  showToastLocal('Gagal mengubah status.', 'error');
+                }
+              } catch (e) {
+                showToastLocal('Error: ' + e.message, 'error');
+              } finally {
+                this.disabled = false;
+                this.innerHTML = originalText;
+              }
+            });
+          });
+          document.getElementById('scanParticipantBtn')?.addEventListener('click', initBarcodeScanner);
+        }
+
+        document.getElementById('submitAbsenBtn').addEventListener('click', async function() {
+          const btn = this;
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+
+          if (!window.sigPadAbsen || window.sigPadAbsen.isEmpty()) {
+            showToastLocal('Tanda tangan wajib!', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+            return;
+          }
+          const nama = document.getElementById('namaAbsen').value.trim();
+          if (!nama) {
+            showToastLocal('Nama wajib diisi!', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+            return;
+          }
+          const sesiId = document.getElementById('pilihSesiAbsen').value;
+
+          let params = {
+            action: 'submitAbsen',
+            nama: nama,
+            sesiId: sesiId,
+            tandaTangan: window.sigPadAbsen.toDataURL('image/jpeg', 0.2)
+          };
+
+          if (window._scannedPesertaId) {
+            params.pesertaId = window._scannedPesertaId;
+          }
+
+          if (isQRMode && !isPanitia) {
+            params.qrToken = document.getElementById('qrTokenAbsen').value;
+          } else if (!isPanitia) {
+            const password = document.getElementById('passwordAbsen').value.trim();
+            if (!password) {
+              showToastLocal('Password sesi wajib diisi!', 'danger');
+              btn.disabled = false;
+              btn.innerHTML = '📋 Kirim Absen';
+              return;
+            }
+            params.password = password;
+          }
+
+          try {
+            const result = await PKD.submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, params.pesertaId);
+            showToastLocal('✅ Absen berhasil tercatat!', 'success');
+            window.sigPadAbsen.clear();
+            document.getElementById('namaAbsen').value = '';
+            if (!isPanitia) document.getElementById('passwordAbsen').value = '';
+            clearAbsenFormState();
+            window._scannedPesertaId = null;
+            window._scannedToken = null;
+            if (isQRMode && !isPanitia) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
           } catch (e) {
-            s.submission_open = true;
+            showToastLocal('❌ ' + (e.message || 'Terjadi kesalahan'), 'danger');
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+          }
+        });
+
+        if (!isPanitia) {
+          if (!isQRMode) {
+            restoreAbsenFormState();
+            document.getElementById('namaAbsen')?.addEventListener('input', saveAbsenFormState);
+            document.getElementById('pilihSesiAbsen')?.addEventListener('change', saveAbsenFormState);
+          } else {
+            document.getElementById('pilihSesiAbsen').value = sesiIdFromUrl;
           }
         }
       }
-      renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRMode);
-    } catch (err) {
-      container.innerHTML = `<div class="alert alert-danger">Gagal memuat sesi: ${escapeHtmlLocal(err.message)}</div>`;
-    }
-  }
 
-  // =====================================================
-  //   MODE SWITCHING
-  // =====================================================
-  async function switchMode(mode) {
-    if (mode === currentMode) return;
-    if (mode === 'panitia') {
-      // Periksa role
-      userRole = PKD.getUserRole();
-      if (userRole !== 'admin' && userRole !== 'ketua_pac') {
-        showToastLocal('Anda harus login sebagai Admin atau Ketua PAC untuk mengakses Mode Panitia.', 'warning');
-        // Arahkan ke login
-        window.location.href = 'login.html';
-        return;
-      }
-    }
-    currentMode = mode;
-    // Update tampilan tombol
-    document.getElementById('modePesertaBtn').classList.toggle('active', mode === 'peserta');
-    document.getElementById('modePesertaBtn').classList.toggle('btn-outline-primary', mode === 'peserta');
-    document.getElementById('modePesertaBtn').classList.toggle('btn-outline-secondary', mode !== 'peserta');
-    document.getElementById('modePanitiaBtn').classList.toggle('active', mode === 'panitia');
-    document.getElementById('modePanitiaBtn').classList.toggle('btn-outline-secondary', mode === 'panitia');
-    document.getElementById('modePanitiaBtn').classList.toggle('btn-outline-primary', mode !== 'panitia');
+      // =====================================================
+      //   LOAD ABSEN SESI (CACHE-FIRST + FETCH INSTAN)
+      // =====================================================
+      async function loadAbsenSesi(forceRefresh = false) {
+        const container = document.getElementById('absenContainer');
+        const urlParams = new URLSearchParams(window.location.search);
+        const sesiIdFromUrl = urlParams.get('sesi_id');
+        const tokenFromUrl = urlParams.get('token');
+        const isQRMode = !!(sesiIdFromUrl && tokenFromUrl);
 
-    // Reload sesi dengan mode baru
-    await loadAbsenSesi(true);
-  }
+        if (isQRMode) clearAbsenFormState();
 
-  // =====================================================
-  //   INISIALISASI
-  // =====================================================
-  document.addEventListener('DOMContentLoaded', async () => {
-    // Cek login mode
-    try {
-      const loginMode = await getLoginModeSetting();
-      const requireLogin = loginMode.success && loginMode.enabled;
-      if (requireLogin) {
-        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-        if (!auth) {
-          window.location.href = 'login.html';
-          return;
+        // 1. Cek cache terlebih dahulu
+        const cachedSesi = getCachedSesi();
+        let sesiListData = cachedSesi;
+
+        // Tampilkan instan jika cache ada, atau spinner jika tidak ada
+        if (cachedSesi && Array.isArray(cachedSesi) && cachedSesi.length > 0 && !forceRefresh) {
+          if (currentMode === 'panitia') {
+            for (let s of sesiListData) {
+              try {
+                const status = await PKD.getAttendanceSessionStatus(s.id);
+                s.submission_open = status.open;
+              } catch (e) {
+                s.submission_open = true;
+              }
+            }
+          }
+          renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRMode);
+          console.log('✅ Absen: data sesi dari cache, ditampilkan instan.');
+        } else {
+          container.innerHTML = `
+            <div class="text-center my-4">
+              <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div>
+              <p class="mt-2 text-muted">Memuat sesi tersedia...</p>
+            </div>`;
+        }
+
+        // 2. Background fetch instan (tanpa setTimeout)
+        try {
+          const freshSesi = await fetchSesiAbsen(true);
+          if (freshSesi && Array.isArray(freshSesi) && freshSesi.length > 0) {
+            if (JSON.stringify(freshSesi) !== JSON.stringify(sesiListData)) {
+              sesiListData = freshSesi;
+              const all = DataCache.getAllData() || {};
+              all.sesi = freshSesi;
+              DataCache.setAllData(all);
+
+              if (currentMode === 'panitia') {
+                for (let s of freshSesi) {
+                  try {
+                    const status = await PKD.getAttendanceSessionStatus(s.id);
+                    s.submission_open = status.open;
+                  } catch (e) {
+                    s.submission_open = true;
+                  }
+                }
+              }
+              renderForm(freshSesi, sesiIdFromUrl, tokenFromUrl, isQRMode);
+              console.log('✅ Absen: data sesi diperbarui dari API.');
+            }
+          } else if (!cachedSesi || cachedSesi.length === 0) {
+            container.innerHTML = '<div class="alert alert-info text-center">Belum ada sesi absen tersedia.</div>';
+          }
+        } catch (e) {
+          if (!cachedSesi || cachedSesi.length === 0) {
+            container.innerHTML = `<div class="alert alert-danger">Gagal memuat sesi: ${escapeHtmlLocal(e.message)}</div>`;
+          }
         }
       }
-    } catch(e) {
-      console.warn('Gagal cek login mode, lanjutkan');
+
+      // =====================================================
+      //   MODE SWITCHING
+      // =====================================================
+      async function switchMode(mode) {
+        if (mode === currentMode) return;
+        if (mode === 'panitia') {
+          userRole = PKD.getUserRole();
+          if (userRole !== 'admin' && userRole !== 'ketua_pac') {
+            showToastLocal('Anda harus login sebagai Admin atau Ketua PAC untuk mengakses Mode Panitia.', 'warning');
+            window.location.href = 'login.html';
+            return;
+          }
+        }
+        currentMode = mode;
+        document.getElementById('modePesertaBtn').classList.toggle('active', mode === 'peserta');
+        document.getElementById('modePesertaBtn').classList.toggle('btn-outline-primary', mode === 'peserta');
+        document.getElementById('modePesertaBtn').classList.toggle('btn-outline-secondary', mode !== 'peserta');
+        document.getElementById('modePanitiaBtn').classList.toggle('active', mode === 'panitia');
+        document.getElementById('modePanitiaBtn').classList.toggle('btn-outline-secondary', mode === 'panitia');
+        document.getElementById('modePanitiaBtn').classList.toggle('btn-outline-primary', mode !== 'panitia');
+
+        await loadAbsenSesi(true);
+      }
+
+      // =====================================================
+      //   INISIALISASI
+      // =====================================================
+      async function init() {
+        currentMode = 'peserta';
+        document.getElementById('modePesertaBtn').classList.add('active');
+        document.getElementById('modePanitiaBtn').classList.remove('active');
+
+        document.getElementById('modePesertaBtn').addEventListener('click', () => switchMode('peserta'));
+        document.getElementById('modePanitiaBtn').addEventListener('click', () => switchMode('panitia'));
+
+        await loadAbsenSesi(false);
+
+        document.getElementById('refreshBtn')?.addEventListener('click', function() {
+          this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+          this.disabled = true;
+          loadAbsenSesi(true).then(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+          }).catch(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+          });
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
     }
 
-    // Mode default: peserta
-    currentMode = 'peserta';
-    document.getElementById('modePesertaBtn').classList.add('active');
-    document.getElementById('modePanitiaBtn').classList.remove('active');
-
-    // Event listener mode buttons
-    document.getElementById('modePesertaBtn').addEventListener('click', () => switchMode('peserta'));
-    document.getElementById('modePanitiaBtn').addEventListener('click', () => switchMode('panitia'));
-
-    // Muat data sesi
-    await loadAbsenSesi(false);
-  });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
+    } else {
+      checkAccessAndLoad();
+    }
+  })();
 </script>
 </body>
 </html>

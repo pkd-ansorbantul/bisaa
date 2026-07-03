@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   
   <style>
-    /* ========== GAYA ASLI TETAP ========== */
+    /* ===== GAYA ASLI TETAP ===== */
     .navbar-brand {
       line-height: 1.2;
     }
@@ -166,6 +166,21 @@
       max-height: 400px;
       overflow-y: auto;
     }
+
+    /* Refresh button style */
+    .refresh-btn {
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: none;
+        background: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
@@ -326,382 +341,288 @@
 
 <!-- ==================== SCRIPT UTAMA ==================== -->
 <script>
-  // =====================================================
-  //   KONFIGURASI & STATE
-  // =====================================================
-  const scriptUrl = 'https://script.google.com/macros/s/AKfycbxtPXxjYNTuKffR4LPxBlSML4ZdXrlPBHmVgxeuNYCCgCYW3t6iUTGYn_iTQAV5m-0Z/exec'; // GANTI DENGAN URL ANDA!
+  (function() {
+    'use strict';
 
-  let userRole = null;        // null, 'admin', 'member'
-  let userData = {};          // { username, nama, email, nohp } untuk member, { username, nama } untuk admin
+    // =====================================================
+    //   FUNGSI BANTU
+    // =====================================================
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
 
-  // =====================================================
-  //   FUNGSI BANTU
-  // =====================================================
-  function escapeHtml(unsafe) {
-    if (!unsafe) return '';
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
+    window.togglePasswordVisibility = function(inputId) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    };
 
-  window.togglePasswordVisibility = function(inputId) {
-    const input = document.getElementById(inputId);
-    input.type = input.type === 'password' ? 'text' : 'password';
-  };
+    function showToast(message, type = 'success') {
+      const toastEl = document.getElementById('notificationToast');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+      const toastTitle = document.getElementById('toastTitle');
 
-  // =====================================================
-  //   PANGGILAN APPS SCRIPT
-  // =====================================================
-  async function callAppsScript(params, method = 'GET', timeout = 30000) {
-    return new Promise(async (resolve, reject) => {
-      const queryString = new URLSearchParams(params).toString();
-      if (method === 'GET') {
-        try {
-          const res = await fetch(`${scriptUrl}?${queryString}`, { method: 'GET', mode: 'cors' });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          resolve(data);
-        } catch (fetchError) {
-          console.warn('Fetch GET gagal, fallback ke JSONP:', fetchError);
-          const callbackName = 'jsonp_callback_' + Date.now();
-          const script = document.createElement('script');
-          let isResolved = false;
-          let timer = setTimeout(() => {
-            if (!isResolved) {
-              isResolved = true;
-              if (document.head.contains(script)) document.head.removeChild(script);
-              delete window[callbackName];
-              reject(new Error('⏱️ Timeout: Server tidak merespon JSONP.'));
-            }
-          }, timeout);
+      toastMessage.innerText = message;
 
-          window[callbackName] = function(data) {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              resolve(data || {});
-            }
-            delete window[callbackName];
-            if (document.head.contains(script)) document.head.removeChild(script);
-          };
-
-          script.onerror = (err) => {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              delete window[callbackName];
-              if (document.head.contains(script)) document.head.removeChild(script);
-              reject(new Error('❌ Gagal memuat script JSONP. Pastikan endpoint mendukung JSONP.'));
-            }
-          };
-
-          const cleanParams = { ...params };
-          delete cleanParams.tandaTangan;
-          delete cleanParams.signature;
-
-          const newQuery = new URLSearchParams({ ...cleanParams, callback: callbackName }).toString();
-          script.src = `${scriptUrl}?${newQuery}`;
-          document.head.appendChild(script);
-        }
+      if (type === 'success') {
+        toastEl.classList.add('border-success');
+        toastEl.classList.remove('border-danger');
+        toastIcon.className = 'bi bi-check-circle-fill me-2 text-success';
+        toastTitle.innerText = 'Berhasil';
+        toastTitle.style.color = '#28a745';
       } else {
-        fetch(scriptUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(params)
-        })
-          .then(() => resolve({ success: true, message: 'Request sent (no-cors)' }))
-          .catch(reject);
+        toastEl.classList.add('border-danger');
+        toastEl.classList.remove('border-success');
+        toastIcon.className = 'bi bi-x-circle-fill me-2 text-danger';
+        toastTitle.innerText = 'Gagal';
+        toastTitle.style.color = '#dc3545';
       }
-    });
-  }
 
-  // =====================================================
-  //   PERSISTENSI AUTH (navbar)
-  // =====================================================
-  function persistAuthState() {
-    const state = { role: userRole, data: userData };
-    sessionStorage.setItem('pkd_auth', JSON.stringify(state));
-    localStorage.setItem('pkd_auth', JSON.stringify(state));
-  }
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+    }
 
-  function loadAuthState() {
-    let serialized = sessionStorage.getItem('pkd_auth') || localStorage.getItem('pkd_auth');
-    if (serialized) {
+    // =====================================================
+    //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
+    // =====================================================
+    async function checkAccessAndLoad() {
       try {
-        const state = JSON.parse(serialized);
-        userRole = state.role || null;
-        userData = state.data || {};
-      } catch (e) {
-        console.warn('Gagal parse auth state', e);
-      }
-    }
-    updateNavbarMenu();
-  }
-
-  function updateNavbarMenu() {
-    const menu = document.getElementById('navbarUserMenu');
-    if (!menu) return;
-    if (userRole === 'admin') {
-      menu.innerHTML = `
-        <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
-          <i class="bi bi-shield-fill me-1"></i>Admin
-        </span>
-        <div class="dropdown">
-          <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Admin')}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="admin.html"><i class="bi bi-gear-wide me-2"></i>Panel Admin</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><button class="dropdown-item" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
-          </ul>
-        </div>
-      `;
-    } else if (userRole === 'member') {
-      menu.innerHTML = `
-        <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
-          <i class="bi bi-person-fill me-1"></i>Member
-        </span>
-        <div class="dropdown">
-          <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Member')}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="member.html"><i class="bi bi-person-badge me-2"></i>Profil Saya</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><button class="dropdown-item" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
-          </ul>
-        </div>
-      `;
-    } else {
-      menu.innerHTML = `
-        <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
-          <i class="bi bi-person-circle me-1"></i>Guest
-        </span>
-        <button class="btn btn-outline-primary rounded-pill px-4" id="loginBtn">
-          <i class="bi bi-shield-lock me-1"></i>Login
-        </button>
-      `;
-    }
-
-    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      logout();
-    });
-
-    document.getElementById('loginBtn')?.addEventListener('click', () => {
-      new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
-    });
-  }
-
-  function logout() {
-    userRole = null;
-    userData = {};
-    sessionStorage.removeItem('pkd_auth');
-    localStorage.removeItem('pkd_auth');
-    window.location.href = 'index.html';
-  }
-
-  // =====================================================
-  //   LOGIN ADMIN (modal)
-  // =====================================================
-  document.getElementById('adminLoginSubmit').addEventListener('click', async function() {
-    const username = document.getElementById('adminUsername').value.trim();
-    const password = document.getElementById('adminPassword').value.trim();
-    const errorDiv = document.getElementById('adminLoginError');
-
-    if (!username || !password) {
-      errorDiv.innerText = 'Username dan password harus diisi!';
-      errorDiv.style.display = 'block';
-      return;
-    }
-
-    try {
-      const res = await callAppsScript({
-        action: 'verifyAdmin',
-        username: username,
-        password: password
-      }, 'GET');
-
-      if (res.success && res.role) {
-        userRole = 'admin';
-        userData = { username, nama: username };
-        persistAuthState();
-        showToast('Login admin berhasil', 'success');
-
-        const modal = bootstrap.Modal.getInstance(document.getElementById('adminLoginModal'));
-        modal.hide();
-        window.location.reload();
-      } else {
-        errorDiv.innerText = 'Username atau password salah!';
-        errorDiv.style.display = 'block';
-      }
-    } catch (err) {
-      errorDiv.innerText = 'Kesalahan koneksi: ' + err.message;
-      errorDiv.style.display = 'block';
-    }
-  });
-
-  // =====================================================
-  //   TOAST
-  // =====================================================
-  function showToast(message, type = 'success') {
-    const toastEl = document.getElementById('notificationToast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastIcon = document.getElementById('toastIcon');
-    const toastTitle = document.getElementById('toastTitle');
-
-    toastMessage.innerText = message;
-
-    if (type === 'success') {
-      toastEl.classList.add('border-success');
-      toastEl.classList.remove('border-danger');
-      toastIcon.className = 'bi bi-check-circle-fill me-2 text-success';
-      toastTitle.innerText = 'Berhasil';
-      toastTitle.style.color = '#28a745';
-    } else {
-      toastEl.classList.add('border-danger');
-      toastEl.classList.remove('border-success');
-      toastIcon.className = 'bi bi-x-circle-fill me-2 text-danger';
-      toastTitle.innerText = 'Gagal';
-      toastTitle.style.color = '#dc3545';
-    }
-
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-    toast.show();
-  }
-
-  // =====================================================
-  //   FUNGSI UTAMA: AMBIL DATA PESERTA DAN HITUNG STATISTIK
-  // =====================================================
-  async function loadKaderData() {
-    try {
-      const res = await callAppsScript({ action: 'getPesertaList' }, 'GET');
-      if (!res.success) throw new Error('Gagal mengambil data peserta');
-      
-      const peserta = res.data || [];
-      tampilkanStatistik(peserta);
-    } catch (e) {
-      console.error(e);
-      document.getElementById('totalKader').innerText = '?';
-      document.getElementById('totalPac').innerText = '?';
-      document.getElementById('totalPendidikan').innerText = '?';
-      document.getElementById('kaderTableBody').innerHTML = '<tr><td colspan="6" class="text-danger">Gagal memuat data.</td></tr>';
-    }
-  }
-
-  function tampilkanStatistik(peserta) {
-    // Hitung total kader
-    const total = peserta.length;
-    document.getElementById('totalKader').innerText = total;
-
-    // Hitung jumlah PAC unik dari kolom utusan
-    const pacMap = new Map(); // utusan -> jumlah
-    const pendidikanMap = new Map(); // pendidikan -> jumlah
-    const tableRows = [];
-
-    peserta.forEach((p, idx) => {
-      const utusan = p.utusan || 'Tidak diketahui';
-      const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
-      
-      // Hitung per utusan
-      pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
-      
-      // Hitung per pendidikan
-      pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
-
-      // Siapkan baris tabel
-      tableRows.push(`
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${escapeHtml(p.nama_lengkap || '')}</td>
-          <td>${escapeHtml(utusan)}</td>
-          <td>${escapeHtml(pendidikan)}</td>
-          <td>${escapeHtml(p.pekerjaan || '')}</td>
-          <td>${escapeHtml(p.alamat || '')}</td>
-        </tr>
-      `);
-    });
-
-    // Update tabel
-    document.getElementById('kaderTableBody').innerHTML = tableRows.join('');
-
-    // Update jumlah PAC
-    document.getElementById('totalPac').innerText = pacMap.size;
-
-    // Update jumlah jenis pendidikan (bukan total orang)
-    document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
-
-    // Buat grafik PAC
-    const pacLabels = Array.from(pacMap.keys());
-    const pacData = Array.from(pacMap.values());
-    renderChart('chartPac', 'bar', pacLabels, pacData, 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
-
-    // Buat grafik Pendidikan
-    const pendidikanLabels = Array.from(pendidikanMap.keys());
-    const pendidikanData = Array.from(pendidikanMap.values());
-    renderChart('chartPendidikan', 'pie', pendidikanLabels, pendidikanData, 'Pendidikan');
-  }
-
-  function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    
-    // Hancurkan chart lama jika ada
-    let existingChart = Chart.getChart(canvasId);
-    if (existingChart) {
-      existingChart.destroy();
-    }
-
-    // Warna default untuk pie
-    const dynamicColors = [];
-    if (type === 'pie') {
-      for (let i = 0; i < labels.length; i++) {
-        dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
-      }
-    }
-
-    new Chart(ctx, {
-      type: type,
-      data: {
-        labels: labels,
-        datasets: [{
-          label: label,
-          data: data,
-          backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
-          borderColor: type === 'pie' ? 'white' : '#2563eb',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: type === 'pie' ? 'right' : 'top',
+        if (typeof PKD === 'undefined') {
+          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          if (typeof PKD === 'undefined') {
+            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+            initMain();
+            return;
           }
         }
-      }
-    });
-  }
 
-  // =====================================================
-  //   INISIALISASI
-  // =====================================================
-  window.onload = function() {
-    loadAuthState();
-    loadKaderData();
+        // ✅ JALANKAN SECARA PARALEL
+        const [visRes, loginRes] = await Promise.all([
+            PKD.getPublicVisibility().catch(() => null),
+            PKD.getLoginMode().catch(() => null)
+        ]);
 
-    // Tutup navbar otomatis saat klik di luar
-    document.addEventListener('click', function(event) {
-      const navbar = document.getElementById('navbarMain');
-      const toggler = document.querySelector('.navbar-toggler');
-      if (!navbar || !toggler) return;
-      const isClickInside = navbar.contains(event.target) || toggler.contains(event.target);
-      if (!isClickInside && navbar.classList.contains('show')) {
-        const bsCollapse = bootstrap.Collapse.getInstance(navbar);
-        if (bsCollapse) bsCollapse.hide();
+        let requireLogin = true;
+        if (visRes && visRes.success && visRes.data) {
+          requireLogin = visRes.data.kader !== false;
+        } else if (loginRes && loginRes.success) {
+          requireLogin = loginRes.enabled;
+        }
+
+        if (requireLogin) {
+          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+          if (!auth) {
+            window.location.href = '/bisaa/login.html?return=kader.html';
+            return;
+          }
+        }
+
+        initMain();
+
+      } catch (e) {
+        console.error('Error di checkAccess:', e);
+        initMain();
       }
-    });
-  };
+    }
+
+    // =====================================================
+    //   LOAD DATA KADER (CACHE-FIRST + FETCH INSTAN)
+    // =====================================================
+    async function loadKaderData(forceRefresh = false) {
+      const container = document.getElementById('kaderTableBody');
+
+      // 1. Cek cache dulu
+      let cachedPeserta = null;
+      if (!forceRefresh) {
+        cachedPeserta = DataCache.getData('peserta');
+        if (cachedPeserta && Array.isArray(cachedPeserta) && cachedPeserta.length > 0) {
+          tampilkanStatistik(cachedPeserta);
+          console.log('✅ Kader: data peserta dari cache, ditampilkan instan.');
+        }
+      }
+
+      // Jika tidak ada cache (atau cache kosong), tampilkan spinner di tabel
+      if (!cachedPeserta || cachedPeserta.length === 0) {
+        document.getElementById('totalKader').innerText = '-';
+        document.getElementById('totalPac').innerText = '-';
+        document.getElementById('totalPendidikan').innerText = '-';
+        container.innerHTML = '<tr><td colspan="6" class="text-center text-muted"><div class="spinner-border text-primary"></div><p class="mt-2">Memuat data...</p></td></tr>';
+      }
+
+      // 2. Background fetch instan (tanpa setTimeout)
+      try {
+        const freshPeserta = await PKD.getPesertaList();
+        if (freshPeserta && freshPeserta.length > 0) {
+          // Hanya update UI jika datanya berbeda dengan cache
+          if (JSON.stringify(freshPeserta) !== JSON.stringify(cachedPeserta)) {
+            DataCache.updateData('peserta', freshPeserta);
+            tampilkanStatistik(freshPeserta);
+            console.log('✅ Kader: data peserta diperbarui dari API.');
+          }
+        } else if (!cachedPeserta || cachedPeserta.length === 0) {
+          // Data kosong → tampilkan pesan kosong
+          document.getElementById('totalKader').innerText = '0';
+          document.getElementById('totalPac').innerText = '0';
+          document.getElementById('totalPendidikan').innerText = '0';
+          container.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada data kader.</td></tr>';
+        }
+      } catch (e) {
+        console.error('Gagal fetch data kader:', e);
+        // Jika cache awal kosong, tampilkan error
+        if (!cachedPeserta || cachedPeserta.length === 0) {
+          document.getElementById('totalKader').innerText = '?';
+          document.getElementById('totalPac').innerText = '?';
+          document.getElementById('totalPendidikan').innerText = '?';
+          container.innerHTML = '<tr><td colspan="6" class="text-danger">Gagal memuat data.</td></tr>';
+        }
+      }
+    }
+
+    // =====================================================
+    //   FUNGSI RENDER STATISTIK
+    // =====================================================
+    function tampilkanStatistik(peserta) {
+      // Hitung total kader
+      const total = peserta.length;
+      document.getElementById('totalKader').innerText = total;
+
+      // Hitung jumlah PAC unik dari kolom utusan
+      const pacMap = new Map(); // utusan -> jumlah
+      const pendidikanMap = new Map(); // pendidikan -> jumlah
+      const tableRows = [];
+
+      peserta.forEach((p, idx) => {
+        const utusan = p.utusan || 'Tidak diketahui';
+        const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
+        
+        // Hitung per utusan
+        pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
+        
+        // Hitung per pendidikan
+        pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
+
+        // Siapkan baris tabel
+        tableRows.push(`
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${escapeHtml(p.nama_lengkap || '')}</td>
+            <td>${escapeHtml(utusan)}</td>
+            <td>${escapeHtml(pendidikan)}</td>
+            <td>${escapeHtml(p.pekerjaan || '')}</td>
+            <td>${escapeHtml(p.alamat || '')}</td>
+          </tr>
+        `);
+      });
+
+      // Update tabel
+      document.getElementById('kaderTableBody').innerHTML = tableRows.join('');
+
+      // Update jumlah PAC
+      document.getElementById('totalPac').innerText = pacMap.size;
+
+      // Update jumlah jenis pendidikan (bukan total orang)
+      document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
+
+      // Buat grafik PAC
+      const pacLabels = Array.from(pacMap.keys());
+      const pacData = Array.from(pacMap.values());
+      renderChart('chartPac', 'bar', pacLabels, pacData, 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
+
+      // Buat grafik Pendidikan
+      const pendidikanLabels = Array.from(pendidikanMap.keys());
+      const pendidikanData = Array.from(pendidikanMap.values());
+      renderChart('chartPendidikan', 'pie', pendidikanLabels, pendidikanData, 'Pendidikan');
+    }
+
+    // =====================================================
+    //   RENDER CHART
+    // =====================================================
+    function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      
+      // Hancurkan chart lama jika ada
+      let existingChart = Chart.getChart(canvasId);
+      if (existingChart) {
+        existingChart.destroy();
+      }
+
+      // Warna default untuk pie
+      const dynamicColors = [];
+      if (type === 'pie') {
+        for (let i = 0; i < labels.length; i++) {
+          dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
+        }
+      }
+
+      new Chart(ctx, {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: label,
+            data: data,
+            backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
+            borderColor: type === 'pie' ? 'white' : '#2563eb',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: type === 'pie' ? 'right' : 'top',
+            }
+          }
+        }
+      });
+    }
+
+    // =====================================================
+    //   INISIALISASI HALAMAN
+    // =====================================================
+    function initMain() {
+      // Muat data dengan cache-first
+      loadKaderData();
+
+      // Event listener tombol refresh
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+          this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+          this.disabled = true;
+          loadKaderData(true).then(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+          }).catch(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+          });
+        });
+      }
+
+      // Tutup navbar otomatis saat klik di luar
+      document.addEventListener('click', function(event) {
+        const navbar = document.getElementById('navbarMain');
+        const toggler = document.querySelector('.navbar-toggler');
+        if (!navbar || !toggler) return;
+        const isClickInside = navbar.contains(event.target) || toggler.contains(event.target);
+        if (!isClickInside && navbar.classList.contains('show')) {
+          const bsCollapse = bootstrap.Collapse.getInstance(navbar);
+          if (bsCollapse) bsCollapse.hide();
+        }
+      });
+    }
+
+    // Jalankan pengecekan akses saat halaman siap
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
+    } else {
+      checkAccessAndLoad();
+    }
+  })();
 </script>
 </body>
 </html>

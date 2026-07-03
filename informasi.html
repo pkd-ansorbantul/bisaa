@@ -131,6 +131,21 @@
         .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: 2rem; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; }
         @media (max-width: 992px) { .flyer-card { flex: 0 0 calc(33.333% - 0.67rem); } }
         @media (max-width: 768px) { .flyer-card { flex: 0 0 80%; } .timeline-node { margin: 0 0.5rem; } .connector { min-width: 20px; } }
+
+        /* Refresh button style */
+        .refresh-btn {
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: none;
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -145,9 +160,14 @@
                     <span class="brand-sub">Kabupaten Bantul</span>
                 </div>
             </a>
-            <a href="index.html" class="btn btn-outline-primary btn-kembali">
-                <i class="bi bi-arrow-left"></i> Kembali
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <button class="refresh-btn" id="refreshBtn" title="Segarkan Data">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+                <a href="index.html" class="btn btn-outline-primary btn-kembali">
+                    <i class="bi bi-arrow-left"></i> Kembali
+                </a>
+            </div>
         </div>
     </header>
 
@@ -186,55 +206,207 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="api.js"></script>
+    <script src="dataCache.js"></script>
 
     <script>
-        // ================= KONFIGURASI =================
-        // Tidak perlu scriptUrl lagi, gunakan PKD
+        (function() {
+            'use strict';
 
-        let allData = [];
-        let flyers = [];        // item dengan url
-        let timelines = [];     // item dengan tanggal_mulai (setelah dibersihkan dan diperbaiki)
-        let currentFlyerIndex = 0, currentZoomIndex = 0;
-        let calendarYear, calendarMonth;
-        let zoomScale = 1, translateX = 0, translateY = 0, isDragging = false, startX, startY;
+            // ================= KONFIGURASI =================
+            let allData = [];
+            let flyers = [];
+            let timelines = [];
+            let currentFlyerIndex = 0, currentZoomIndex = 0;
+            let calendarYear, calendarMonth;
+            let zoomScale = 1, translateX = 0, translateY = 0, isDragging = false, startX, startY;
 
-        // Fungsi untuk memperbaiki rentang tanggal (swap jika end < start)
-        function fixDateRange(startStr, endStr) {
-            if (!startStr) return null;
-            let start = new Date(startStr);
-            let end = endStr ? new Date(endStr) : null;
-            if (end && isNaN(end.getTime())) end = null;
-            if (end && end < start) {
-                console.warn(`Tanggal akhir (${endStr}) lebih kecil dari tanggal mulai (${startStr}), akan ditukar.`);
-                let temp = start;
-                start = end;
-                end = temp;
+            // Fungsi escapeHtml lokal
+            function escapeHtmlLocal(s) { return PKD.escapeHtml(s); }
+
+            // Fungsi untuk memperbaiki rentang tanggal
+            function fixDateRange(startStr, endStr) {
+                if (!startStr) return null;
+                let start = new Date(startStr);
+                let end = endStr ? new Date(endStr) : null;
+                if (end && isNaN(end.getTime())) end = null;
+                if (end && end < start) {
+                    let temp = start;
+                    start = end;
+                    end = temp;
+                }
+                return { start, end };
             }
-            return { start, end };
-        }
 
-        // Format tanggal untuk ditampilkan
-        function formatDateRange(startDate, endDate) {
-            const format = (d) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-            if (!startDate) return '';
-            if (endDate && endDate > startDate) {
-                return `${format(startDate)} - ${format(endDate)}`;
-            } else {
-                return format(startDate);
+            function formatDateRange(startDate, endDate) {
+                const format = (d) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                if (!startDate) return '';
+                if (endDate && endDate > startDate) {
+                    return `${format(startDate)} - ${format(endDate)}`;
+                } else {
+                    return format(startDate);
+                }
             }
-        }
 
-        // Fungsi escapeHtml lokal (gunakan PKD.escapeHtml)
-        function escapeHtmlLocal(s) { return PKD.escapeHtml(s); }
+            function showToast(message, type) {
+                const toastEl = document.getElementById('notificationToast');
+                if (!toastEl) {
+                    // Buat toast manual jika belum ada
+                    const container = document.createElement('div');
+                    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                    container.innerHTML = `
+                        <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+                            <div class="toast-header bg-white border-0">
+                                <i class="bi me-2" id="toastIcon"></i>
+                                <strong class="me-auto" id="toastTitle">Berhasil</strong>
+                                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                            </div>
+                            <div class="toast-body" id="toastMessage"></div>
+                        </div>`;
+                    document.body.appendChild(container);
+                }
+                const toastElFinal = document.getElementById('notificationToast');
+                const toast = new bootstrap.Toast(toastElFinal);
+                document.getElementById('toastMessage').innerText = message;
+                const icon = document.getElementById('toastIcon');
+                if (type === 'success') {
+                    icon.className = 'bi bi-check-circle-fill text-success';
+                    document.getElementById('toastTitle').innerText = 'Berhasil';
+                } else if (type === 'error') {
+                    icon.className = 'bi bi-x-circle-fill text-danger';
+                    document.getElementById('toastTitle').innerText = 'Gagal';
+                } else {
+                    icon.className = 'bi bi-info-circle-fill text-primary';
+                    document.getElementById('toastTitle').innerText = 'Info';
+                }
+                toast.show();
+            }
 
-        // ================= FETCH DATA =================
-        async function fetchData() {
-            try {
-                const data = await PKD.getInfoList(true);
-                allData = data || [];
-                
+            // =====================================================
+            //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
+            // =====================================================
+            async function checkAccessAndLoad() {
+                try {
+                    if (typeof PKD === 'undefined') {
+                        console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        if (typeof PKD === 'undefined') {
+                            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+                            loadInfoData();
+                            return;
+                        }
+                    }
+
+                    // ✅ JALANKAN SECARA PARALEL
+                    const [visRes, loginRes] = await Promise.all([
+                        PKD.getPublicVisibility().catch(() => null),
+                        PKD.getLoginMode().catch(() => null)
+                    ]);
+
+                    let requireLogin = true;
+                    if (visRes && visRes.success && visRes.data) {
+                        requireLogin = visRes.data.informasi !== false;
+                    } else if (loginRes && loginRes.success) {
+                        requireLogin = loginRes.enabled;
+                    }
+
+                    if (requireLogin) {
+                        const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+                        if (!auth) {
+                            window.location.href = '/bisaa/login.html?return=informasi.html';
+                            return;
+                        }
+                    }
+
+                    // Lanjutkan load halaman
+                    loadInfoData();
+
+                    // Event listener tombol refresh
+                    document.getElementById('refreshBtn')?.addEventListener('click', function() {
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                        this.disabled = true;
+                        loadInfoData(true).then(() => {
+                            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                            this.disabled = false;
+                        }).catch(() => {
+                            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                            this.disabled = false;
+                        });
+                    });
+
+                } catch (e) {
+                    console.error('Error di checkAccess:', e);
+                    loadInfoData();
+                }
+            }
+
+            // ================= LOAD DATA (CACHE-FIRST + FETCH INSTAN) =================
+            async function loadInfoData(forceRefresh = false) {
+                const container = document.getElementById('infoContainer');
+
+                // 1. Cek cache dulu (instan)
+                if (!forceRefresh) {
+                    const cached = DataCache.getData('info');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        allData = cached;
+                        processData();
+                        renderAll();
+                        console.log('✅ Informasi: data dari cache, ditampilkan instan.');
+                        // 2. Background fetch instan (tanpa setTimeout)
+                        refreshDataFromAPI();
+                        return;
+                    }
+                }
+
+                // 3. Jika cache kosong, tampilkan spinner dan ambil dari API
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                        <p>Memuat informasi...</p>
+                    </div>
+                `;
+
+                try {
+                    const data = await PKD.getInfoList(true);
+                    allData = data || [];
+                    DataCache.updateData('info', allData);
+                    processData();
+                    renderAll();
+                } catch (e) {
+                    console.error('Gagal fetch info:', e);
+                    // Fallback ke cache
+                    const cachedFallback = DataCache.getData('info');
+                    if (cachedFallback && Array.isArray(cachedFallback) && cachedFallback.length > 0) {
+                        allData = cachedFallback;
+                        processData();
+                        renderAll();
+                        showToast('Gagal terhubung ke server. Menggunakan data cache.', 'error');
+                    } else {
+                        container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${escapeHtmlLocal(e.message)}</div>`;
+                    }
+                }
+            }
+
+            // Refresh background – panggil setelah render dari cache
+            async function refreshDataFromAPI() {
+                try {
+                    const data = await PKD.getInfoList(true);
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        if (JSON.stringify(data) !== JSON.stringify(allData)) {
+                            allData = data;
+                            DataCache.updateData('info', allData);
+                            processData();
+                            renderAll();
+                            console.log('✅ Informasi: data diperbarui dari API.');
+                        }
+                    }
+                } catch (e) {
+                    // Abaikan error background
+                }
+            }
+
+            // ================= PROSES DATA =================
+            function processData() {
                 flyers = allData.filter(item => item.url && item.url.trim() !== '');
-                
                 timelines = allData.filter(item => item.tanggal_mulai && item.tanggal_mulai.trim() !== '')
                                    .map(item => {
                                         const { start, end } = fixDateRange(item.tanggal_mulai, item.tanggal_akhir);
@@ -249,282 +421,284 @@
                                    })
                                    .filter(t => t !== null)
                                    .sort((a,b) => a.startDate - b.startDate);
-                
-                renderAll();
-            } catch(e) {
-                document.getElementById('infoContainer').innerHTML = `<div class="alert alert-danger">Gagal memuat: ${escapeHtmlLocal(e.message)}</div>`;
-                console.error(e);
-            }
-        }
-
-        // ================= RENDER SEMUA =================
-        function renderAll() {
-            const container = document.getElementById('infoContainer');
-            let html = '';
-
-            // FLYER SECTION
-            if (flyers.length) {
-                html += `<div class="flyer-section mb-4"><h4 class="mb-3 fw-bold"><i class="bi bi-images me-2"></i>Flyer Kegiatan</h4>
-                         <div class="d-flex align-items-center position-relative">
-                            <div class="flyer-nav left ${currentFlyerIndex === 0 ? 'disabled' : ''}" onclick="slideFlyers(-1)"><i class="bi bi-chevron-left"></i></div>
-                            <div class="flyer-container" id="flyerContainer">`;
-                flyers.forEach((f, idx) => {
-                    const thumbUrl = f.url ? `https://lh3.googleusercontent.com/d/${f.url}=w300` : '';
-                    html += `<div class="flyer-card" data-flyer-idx="${idx}" data-flyer-title="${escapeHtmlLocal(f.judul).toLowerCase()}" onclick="zoomFlyer(${idx})">
-                                ${thumbUrl ? `<img src="${thumbUrl}" alt="${escapeHtmlLocal(f.judul)}" loading="lazy">` : `<div class="bg-light text-center py-5"><i class="bi bi-file-earmark-image fs-1"></i></div>`}
-                                <div class="flyer-card-body">
-                                    <h6 class="fw-semibold">${escapeHtmlLocal(f.judul)}</h6>
-                                    <span class="status-badge ${f.status === 'selesai' ? 'selesai' : 'aktif'}">${f.status === 'selesai' ? 'Selesai' : 'Aktif'}</span>
-                                </div>
-                            </div>`;
-                });
-                html += `</div><div class="flyer-nav right ${currentFlyerIndex + 5 >= flyers.length ? 'disabled' : ''}" onclick="slideFlyers(1)"><i class="bi bi-chevron-right"></i></div>
-                         </div></div>`;
-            } else {
-                html += `<div class="alert alert-secondary mb-4">📌 Belum ada flyer yang diunggah.</div>`;
             }
 
-            // TIMELINE SECTION
-            html += `<div class="timeline-section mt-3"><h4 class="mb-3 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Timeline Kegiatan</h4>`;
-            if (timelines.length === 0) {
-                html += `<div class="alert alert-warning">⚠️ Belum ada kegiatan dengan tanggal_mulai.</div>`;
-            } else {
-                html += `<div class="timeline-track" id="timelineTrack">`;
-                timelines.forEach((t, idx) => {
-                    const tanggalRange = formatDateRange(t.startDate, t.endDate);
-                    const isSelesai = t.status === 'selesai';
-                    const lokasi = t.lokasi || '';
-                    html += `<div class="timeline-node" data-timeline-title="${escapeHtmlLocal(t.judul).toLowerCase()}" data-timeline-start="${t.startDate.toISOString()}" onclick="handleTimelineClick('${escapeHtmlLocal(t.judul).toLowerCase()}')">
-                                <div class="timeline-dot ${isSelesai ? 'selesai' : ''}"></div>
-                                <div class="timeline-label">${escapeHtmlLocal(t.judul)}</div>
-                                ${tanggalRange ? `<div class="timeline-date"><i class="bi bi-calendar3 me-1"></i>${tanggalRange}</div>` : ''}
-                                ${lokasi ? `<div class="timeline-location"><i class="bi bi-geo-alt-fill me-1"></i>${escapeHtmlLocal(lokasi)}</div>` : ''}
-                                <span class="status-badge ${isSelesai ? 'selesai' : 'aktif'}">${isSelesai ? 'Selesai' : 'Aktif'}</span>
-                            </div>`;
-                    if (idx < timelines.length - 1) {
-                        const nextSelesai = timelines[idx+1].status === 'selesai';
-                        html += `<div class="connector ${nextSelesai ? 'selesai' : ''}"></div>`;
-                    }
-                });
+            // ================= RENDER SEMUA =================
+            function renderAll() {
+                const container = document.getElementById('infoContainer');
+                let html = '';
+
+                // FLYER SECTION
+                if (flyers.length) {
+                    html += `<div class="flyer-section mb-4"><h4 class="mb-3 fw-bold"><i class="bi bi-images me-2"></i>Flyer Kegiatan</h4>
+                             <div class="d-flex align-items-center position-relative">
+                                <div class="flyer-nav left ${currentFlyerIndex === 0 ? 'disabled' : ''}" onclick="slideFlyers(-1)"><i class="bi bi-chevron-left"></i></div>
+                                <div class="flyer-container" id="flyerContainer">`;
+                    flyers.forEach((f, idx) => {
+                        const thumbUrl = f.url ? `https://lh3.googleusercontent.com/d/${f.url}=w300` : '';
+                        html += `<div class="flyer-card" data-flyer-idx="${idx}" data-flyer-title="${escapeHtmlLocal(f.judul).toLowerCase()}" onclick="zoomFlyer(${idx})">
+                                    ${thumbUrl ? `<img src="${thumbUrl}" alt="${escapeHtmlLocal(f.judul)}" loading="lazy">` : `<div class="bg-light text-center py-5"><i class="bi bi-file-earmark-image fs-1"></i></div>`}
+                                    <div class="flyer-card-body">
+                                        <h6 class="fw-semibold">${escapeHtmlLocal(f.judul)}</h6>
+                                        <span class="status-badge ${f.status === 'selesai' ? 'selesai' : 'aktif'}">${f.status === 'selesai' ? 'Selesai' : 'Aktif'}</span>
+                                    </div>
+                                </div>`;
+                    });
+                    html += `</div><div class="flyer-nav right ${currentFlyerIndex + 5 >= flyers.length ? 'disabled' : ''}" onclick="slideFlyers(1)"><i class="bi bi-chevron-right"></i></div>
+                             </div></div>`;
+                } else {
+                    html += `<div class="alert alert-secondary mb-4">📌 Belum ada flyer yang diunggah.</div>`;
+                }
+
+                // TIMELINE SECTION
+                html += `<div class="timeline-section mt-3"><h4 class="mb-3 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Timeline Kegiatan</h4>`;
+                if (timelines.length === 0) {
+                    html += `<div class="alert alert-warning">⚠️ Belum ada kegiatan dengan tanggal_mulai.</div>`;
+                } else {
+                    html += `<div class="timeline-track" id="timelineTrack">`;
+                    timelines.forEach((t, idx) => {
+                        const tanggalRange = formatDateRange(t.startDate, t.endDate);
+                        const isSelesai = t.status === 'selesai';
+                        const lokasi = t.lokasi || '';
+                        html += `<div class="timeline-node" data-timeline-title="${escapeHtmlLocal(t.judul).toLowerCase()}" data-timeline-start="${t.startDate.toISOString()}" onclick="handleTimelineClick('${escapeHtmlLocal(t.judul).toLowerCase()}')">
+                                    <div class="timeline-dot ${isSelesai ? 'selesai' : ''}"></div>
+                                    <div class="timeline-label">${escapeHtmlLocal(t.judul)}</div>
+                                    ${tanggalRange ? `<div class="timeline-date"><i class="bi bi-calendar3 me-1"></i>${tanggalRange}</div>` : ''}
+                                    ${lokasi ? `<div class="timeline-location"><i class="bi bi-geo-alt-fill me-1"></i>${escapeHtmlLocal(lokasi)}</div>` : ''}
+                                    <span class="status-badge ${isSelesai ? 'selesai' : 'aktif'}">${isSelesai ? 'Selesai' : 'Aktif'}</span>
+                                </div>`;
+                        if (idx < timelines.length - 1) {
+                            const nextSelesai = timelines[idx+1].status === 'selesai';
+                            html += `<div class="connector ${nextSelesai ? 'selesai' : ''}"></div>`;
+                        }
+                    });
+                    html += `</div>`;
+                }
                 html += `</div>`;
-            }
-            html += `</div>`;
 
-            // KALENDER
-            html += `<div class="calendar-section mt-4"><h4 class="mb-3 fw-bold"><i class="bi bi-calendar-week me-2"></i>Kalender Kegiatan</h4>
-                     <div class="calendar-nav">
-                        <button id="prevMonthBtn"><i class="bi bi-chevron-left"></i> Sebelumnya</button>
-                        <span id="calendarMonthLabel" class="fw-bold fs-5"></span>
-                        <button id="nextMonthBtn">Berikutnya <i class="bi bi-chevron-right"></i></button>
-                     </div>
-                     <div class="calendar-grid" id="calendarGrid"></div>
-                     </div>`;
-            
-            container.innerHTML = html;
-            
-            const today = new Date();
-            calendarYear = today.getFullYear();
-            calendarMonth = today.getMonth();
-            renderCalendar();
-            
-            document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
-                calendarMonth--;
-                if(calendarMonth < 0){ calendarMonth = 11; calendarYear--; }
+                // KALENDER
+                html += `<div class="calendar-section mt-4"><h4 class="mb-3 fw-bold"><i class="bi bi-calendar-week me-2"></i>Kalender Kegiatan</h4>
+                         <div class="calendar-nav">
+                            <button id="prevMonthBtn"><i class="bi bi-chevron-left"></i> Sebelumnya</button>
+                            <span id="calendarMonthLabel" class="fw-bold fs-5"></span>
+                            <button id="nextMonthBtn">Berikutnya <i class="bi bi-chevron-right"></i></button>
+                         </div>
+                         <div class="calendar-grid" id="calendarGrid"></div>
+                         </div>`;
+                
+                container.innerHTML = html;
+                container.classList.add('fade-in');
+                
+                const today = new Date();
+                calendarYear = today.getFullYear();
+                calendarMonth = today.getMonth();
                 renderCalendar();
-            });
-            document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
-                calendarMonth++;
-                if(calendarMonth > 11){ calendarMonth = 0; calendarYear++; }
-                renderCalendar();
-            });
-            
-            setTimeout(() => {
-                const flyerContainer = document.getElementById('flyerContainer');
-                if(flyerContainer && flyers.length) {
-                    const activeCard = flyerContainer.querySelector(`.flyer-card[data-flyer-idx="${currentFlyerIndex}"]`);
-                    if(activeCard) activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            }, 100);
-        }
-
-        // ================= KALENDER =================
-        function renderCalendar() {
-            const year = calendarYear, month = calendarMonth;
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month+1, 0).getDate();
-            const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-            document.getElementById('calendarMonthLabel').innerText = `${monthNames[month]} ${year}`;
-            
-            let gridHtml = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'].map(d => `<div class="calendar-day-header">${d}</div>`).join('');
-            for(let i=0; i<firstDay; i++) gridHtml += `<div class="calendar-day other-month"></div>`;
-            
-            for(let day=1; day<=daysInMonth; day++) {
-                const date = new Date(year, month, day);
-                const dateStr = date.toISOString().split('T')[0];
-                let eventInfo = null;
-                let isSelesai = false;
-                for(const t of timelines) {
-                    if (date >= t.startDate && date <= t.endDate) {
-                        eventInfo = t;
-                        if(t.status === 'selesai') isSelesai = true;
-                        break;
-                    }
-                }
-                let classes = 'calendar-day';
-                if(eventInfo) classes += ' has-event' + (isSelesai ? ' selesai' : '');
-                if(date.toDateString() === new Date().toDateString()) classes += ' today';
-                const titleAttr = eventInfo ? `data-title="${escapeHtmlLocal(eventInfo.judul)}"` : '';
-                gridHtml += `<div class="${classes}" data-date="${dateStr}" ${titleAttr}>${day}</div>`;
-            }
-            document.getElementById('calendarGrid').innerHTML = gridHtml;
-            
-            document.querySelectorAll('.calendar-day.has-event').forEach(el => {
-                el.addEventListener('click', () => {
-                    const dateStr = el.dataset.date;
-                    const clickedDate = new Date(dateStr);
-                    const matched = timelines.find(t => clickedDate >= t.startDate && clickedDate <= t.endDate);
-                    if(matched) handleTimelineClick(matched.judul.toLowerCase());
+                
+                document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+                    calendarMonth--;
+                    if(calendarMonth < 0){ calendarMonth = 11; calendarYear--; }
+                    renderCalendar();
                 });
-            });
-        }
+                document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
+                    calendarMonth++;
+                    if(calendarMonth > 11){ calendarMonth = 0; calendarYear++; }
+                    renderCalendar();
+                });
+                
+                setTimeout(() => {
+                    const flyerContainer = document.getElementById('flyerContainer');
+                    if(flyerContainer && flyers.length) {
+                        const activeCard = flyerContainer.querySelector(`.flyer-card[data-flyer-idx="${currentFlyerIndex}"]`);
+                        if(activeCard) activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }, 100);
+            }
 
-        // ================= KLIK TIMELINE =================
-        function handleTimelineClick(titleLower) {
-            // 1. Highlight dan scroll ke node timeline
-            const targetNode = document.querySelector(`.timeline-node[data-timeline-title="${titleLower}"]`);
-            if(targetNode) {
-                document.querySelectorAll('.timeline-node.highlight').forEach(n => n.classList.remove('highlight'));
-                targetNode.classList.add('highlight');
-                targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                const dot = targetNode.querySelector('.timeline-dot');
-                if(dot) { dot.style.transform = 'scale(1.3)'; setTimeout(() => dot.style.transform = '', 400); }
-            }
-            
-            const timeline = timelines.find(t => t.judul.toLowerCase() === titleLower);
-            if(!timeline) return;
-            
-            // 2. Update kalender ke bulan startDate, highlight tanggal start
-            const startDate = timeline.startDate;
-            calendarYear = startDate.getFullYear();
-            calendarMonth = startDate.getMonth();
-            renderCalendar();
-            setTimeout(() => {
-                const targetDate = startDate.toISOString().split('T')[0];
-                const dayEl = document.querySelector(`.calendar-day[data-date="${targetDate}"]`);
-                if(dayEl) {
-                    document.querySelectorAll('.calendar-day.highlighted').forEach(h => h.classList.remove('highlighted'));
-                    dayEl.classList.add('highlighted');
-                    dayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // ================= KALENDER =================
+            function renderCalendar() {
+                const year = calendarYear, month = calendarMonth;
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month+1, 0).getDate();
+                const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                document.getElementById('calendarMonthLabel').innerText = `${monthNames[month]} ${year}`;
+                
+                let gridHtml = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'].map(d => `<div class="calendar-day-header">${d}</div>`).join('');
+                for(let i=0; i<firstDay; i++) gridHtml += `<div class="calendar-day other-month"></div>`;
+                
+                for(let day=1; day<=daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateStr = date.toISOString().split('T')[0];
+                    let eventInfo = null;
+                    let isSelesai = false;
+                    for(const t of timelines) {
+                        if (date >= t.startDate && date <= t.endDate) {
+                            eventInfo = t;
+                            if(t.status === 'selesai') isSelesai = true;
+                            break;
+                        }
+                    }
+                    let classes = 'calendar-day';
+                    if(eventInfo) classes += ' has-event' + (isSelesai ? ' selesai' : '');
+                    if(date.toDateString() === new Date().toDateString()) classes += ' today';
+                    const titleAttr = eventInfo ? `data-title="${escapeHtmlLocal(eventInfo.judul)}"` : '';
+                    gridHtml += `<div class="${classes}" data-date="${dateStr}" ${titleAttr}>${day}</div>`;
                 }
-            }, 50);
-            
-            // 3. Cari flyer yang terkait
-            let relatedFlyerIndex = -1;
-            const timelineTitleLower = timeline.judul.toLowerCase();
-            const exactMatch = flyers.findIndex(f => f.judul.toLowerCase() === timelineTitleLower);
-            if(exactMatch !== -1) {
-                relatedFlyerIndex = exactMatch;
-            } else {
-                const parts = timelineTitleLower.split(/\s+/);
-                for(let part of parts) {
-                    if(part.length < 3) continue;
-                    const matchIdx = flyers.findIndex(f => f.judul.toLowerCase().includes(part));
-                    if(matchIdx !== -1) { relatedFlyerIndex = matchIdx; break; }
-                }
+                document.getElementById('calendarGrid').innerHTML = gridHtml;
+                
+                document.querySelectorAll('.calendar-day.has-event').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const dateStr = el.dataset.date;
+                        const clickedDate = new Date(dateStr);
+                        const matched = timelines.find(t => clickedDate >= t.startDate && clickedDate <= t.endDate);
+                        if(matched) handleTimelineClick(matched.judul.toLowerCase());
+                    });
+                });
             }
-            
-            if(relatedFlyerIndex !== -1) {
-                const flyerContainer = document.getElementById('flyerContainer');
-                if(flyerContainer) {
-                    const targetCard = flyerContainer.querySelector(`.flyer-card[data-flyer-idx="${relatedFlyerIndex}"]`);
-                    if(targetCard) {
-                        document.querySelectorAll('.flyer-card.highlight').forEach(c => c.classList.remove('highlight'));
-                        targetCard.classList.add('highlight');
-                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                        currentFlyerIndex = relatedFlyerIndex;
-                        const leftBtn = document.querySelector('.flyer-nav.left');
-                        const rightBtn = document.querySelector('.flyer-nav.right');
-                        if(leftBtn) leftBtn.classList.toggle('disabled', currentFlyerIndex === 0);
-                        if(rightBtn) rightBtn.classList.toggle('disabled', currentFlyerIndex + 5 >= flyers.length);
-                        setTimeout(() => targetCard.classList.remove('highlight'), 2000);
+
+            // ================= KLIK TIMELINE =================
+            function handleTimelineClick(titleLower) {
+                const targetNode = document.querySelector(`.timeline-node[data-timeline-title="${titleLower}"]`);
+                if(targetNode) {
+                    document.querySelectorAll('.timeline-node.highlight').forEach(n => n.classList.remove('highlight'));
+                    targetNode.classList.add('highlight');
+                    targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const dot = targetNode.querySelector('.timeline-dot');
+                    if(dot) { dot.style.transform = 'scale(1.3)'; setTimeout(() => dot.style.transform = '', 400); }
+                }
+                
+                const timeline = timelines.find(t => t.judul.toLowerCase() === titleLower);
+                if(!timeline) return;
+                
+                const startDate = timeline.startDate;
+                calendarYear = startDate.getFullYear();
+                calendarMonth = startDate.getMonth();
+                renderCalendar();
+                setTimeout(() => {
+                    const targetDate = startDate.toISOString().split('T')[0];
+                    const dayEl = document.querySelector(`.calendar-day[data-date="${targetDate}"]`);
+                    if(dayEl) {
+                        document.querySelectorAll('.calendar-day.highlighted').forEach(h => h.classList.remove('highlighted'));
+                        dayEl.classList.add('highlighted');
+                        dayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 50);
+                
+                let relatedFlyerIndex = -1;
+                const timelineTitleLower = timeline.judul.toLowerCase();
+                const exactMatch = flyers.findIndex(f => f.judul.toLowerCase() === timelineTitleLower);
+                if(exactMatch !== -1) {
+                    relatedFlyerIndex = exactMatch;
+                } else {
+                    const parts = timelineTitleLower.split(/\s+/);
+                    for(let part of parts) {
+                        if(part.length < 3) continue;
+                        const matchIdx = flyers.findIndex(f => f.judul.toLowerCase().includes(part));
+                        if(matchIdx !== -1) { relatedFlyerIndex = matchIdx; break; }
+                    }
+                }
+                
+                if(relatedFlyerIndex !== -1) {
+                    const flyerContainer = document.getElementById('flyerContainer');
+                    if(flyerContainer) {
+                        const targetCard = flyerContainer.querySelector(`.flyer-card[data-flyer-idx="${relatedFlyerIndex}"]`);
+                        if(targetCard) {
+                            document.querySelectorAll('.flyer-card.highlight').forEach(c => c.classList.remove('highlight'));
+                            targetCard.classList.add('highlight');
+                            targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                            currentFlyerIndex = relatedFlyerIndex;
+                            const leftBtn = document.querySelector('.flyer-nav.left');
+                            const rightBtn = document.querySelector('.flyer-nav.right');
+                            if(leftBtn) leftBtn.classList.toggle('disabled', currentFlyerIndex === 0);
+                            if(rightBtn) rightBtn.classList.toggle('disabled', currentFlyerIndex + 5 >= flyers.length);
+                            setTimeout(() => targetCard.classList.remove('highlight'), 2000);
+                        }
                     }
                 }
             }
-        }
 
-        // ================= SLIDE FLYER =================
-        function slideFlyers(direction) {
-            let newIdx = currentFlyerIndex + direction;
-            if(newIdx < 0) newIdx = 0;
-            if(newIdx >= flyers.length) newIdx = flyers.length - 1;
-            currentFlyerIndex = newIdx;
-            const container = document.getElementById('flyerContainer');
-            if(container) {
-                const target = container.querySelector(`.flyer-card[data-flyer-idx="${currentFlyerIndex}"]`);
-                if(target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            // ================= SLIDE FLYER =================
+            function slideFlyers(direction) {
+                let newIdx = currentFlyerIndex + direction;
+                if(newIdx < 0) newIdx = 0;
+                if(newIdx >= flyers.length) newIdx = flyers.length - 1;
+                currentFlyerIndex = newIdx;
+                const container = document.getElementById('flyerContainer');
+                if(container) {
+                    const target = container.querySelector(`.flyer-card[data-flyer-idx="${currentFlyerIndex}"]`);
+                    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+                const leftBtn = document.querySelector('.flyer-nav.left');
+                const rightBtn = document.querySelector('.flyer-nav.right');
+                if(leftBtn) leftBtn.classList.toggle('disabled', currentFlyerIndex === 0);
+                if(rightBtn) rightBtn.classList.toggle('disabled', currentFlyerIndex + 5 >= flyers.length);
             }
-            const leftBtn = document.querySelector('.flyer-nav.left');
-            const rightBtn = document.querySelector('.flyer-nav.right');
-            if(leftBtn) leftBtn.classList.toggle('disabled', currentFlyerIndex === 0);
-            if(rightBtn) rightBtn.classList.toggle('disabled', currentFlyerIndex + 5 >= flyers.length);
-        }
 
-        // ================= ZOOM FLYER =================
-        function zoomFlyer(index) {
-            currentZoomIndex = index;
-            updateZoomImage();
-            new bootstrap.Modal(document.getElementById('zoomModal')).show();
-        }
-        function updateZoomImage() {
-            const f = flyers[currentZoomIndex];
-            if(f && f.url) {
-                const imgUrl = `https://lh3.googleusercontent.com/d/${f.url}=w1200`;
-                document.getElementById('zoomImage').src = imgUrl;
-                document.getElementById('zoomTitle').innerText = f.judul || 'Flyer';
-            } else {
-                document.getElementById('zoomImage').src = '';
-                document.getElementById('zoomTitle').innerText = 'Tidak ada gambar';
+            // ================= ZOOM FLYER =================
+            function zoomFlyer(index) {
+                currentZoomIndex = index;
+                updateZoomImage();
+                new bootstrap.Modal(document.getElementById('zoomModal')).show();
             }
-            zoomScale = 1; translateX = 0; translateY = 0;
-            document.getElementById('zoomImage').style.transform = 'translate(0px,0px) scale(1)';
-        }
-        document.getElementById('prevFlyerBtn')?.addEventListener('click', () => {
-            if(currentZoomIndex > 0) { currentZoomIndex--; updateZoomImage(); }
-        });
-        document.getElementById('nextFlyerBtn')?.addEventListener('click', () => {
-            if(currentZoomIndex < flyers.length-1) { currentZoomIndex++; updateZoomImage(); }
-        });
-        const zoomImg = () => document.getElementById('zoomImage');
-        zoomImg().addEventListener('wheel', (e) => {
-            e.preventDefault();
-            zoomScale = Math.min(5, Math.max(0.5, zoomScale + (e.deltaY>0 ? -0.1 : 0.1)));
-            zoomImg().style.transform = `translate(${translateX}px,${translateY}px) scale(${zoomScale})`;
-        });
-        zoomImg().addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX - translateX;
-            startY = e.clientY - translateY;
-            e.target.style.cursor = 'grabbing';
-        });
-        window.addEventListener('mousemove', (e) => {
-            if(isDragging) {
-                translateX = e.clientX - startX;
-                translateY = e.clientY - startY;
+            function updateZoomImage() {
+                const f = flyers[currentZoomIndex];
+                if(f && f.url) {
+                    const imgUrl = `https://lh3.googleusercontent.com/d/${f.url}=w1200`;
+                    document.getElementById('zoomImage').src = imgUrl;
+                    document.getElementById('zoomTitle').innerText = f.judul || 'Flyer';
+                } else {
+                    document.getElementById('zoomImage').src = '';
+                    document.getElementById('zoomTitle').innerText = 'Tidak ada gambar';
+                }
+                zoomScale = 1; translateX = 0; translateY = 0;
+                document.getElementById('zoomImage').style.transform = 'translate(0px,0px) scale(1)';
+            }
+            document.getElementById('prevFlyerBtn')?.addEventListener('click', () => {
+                if(currentZoomIndex > 0) { currentZoomIndex--; updateZoomImage(); }
+            });
+            document.getElementById('nextFlyerBtn')?.addEventListener('click', () => {
+                if(currentZoomIndex < flyers.length-1) { currentZoomIndex++; updateZoomImage(); }
+            });
+            const zoomImg = () => document.getElementById('zoomImage');
+            zoomImg().addEventListener('wheel', (e) => {
+                e.preventDefault();
+                zoomScale = Math.min(5, Math.max(0.5, zoomScale + (e.deltaY>0 ? -0.1 : 0.1)));
                 zoomImg().style.transform = `translate(${translateX}px,${translateY}px) scale(${zoomScale})`;
-            }
-        });
-        window.addEventListener('mouseup', () => {
-            if(isDragging) {
-                isDragging = false;
-                zoomImg().style.cursor = 'grab';
-            }
-        });
-        document.getElementById('zoomModal')?.addEventListener('hidden.bs.modal', () => {
-            zoomScale = 1; translateX = 0; translateY = 0;
-            zoomImg().style.transform = 'translate(0px,0px) scale(1)';
-        });
+            });
+            zoomImg().addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                e.target.style.cursor = 'grabbing';
+            });
+            window.addEventListener('mousemove', (e) => {
+                if(isDragging) {
+                    translateX = e.clientX - startX;
+                    translateY = e.clientY - startY;
+                    zoomImg().style.transform = `translate(${translateX}px,${translateY}px) scale(${zoomScale})`;
+                }
+            });
+            window.addEventListener('mouseup', () => {
+                if(isDragging) {
+                    isDragging = false;
+                    zoomImg().style.cursor = 'grab';
+                }
+            });
+            document.getElementById('zoomModal')?.addEventListener('hidden.bs.modal', () => {
+                zoomScale = 1; translateX = 0; translateY = 0;
+                zoomImg().style.transform = 'translate(0px,0px) scale(1)';
+            });
 
-        window.addEventListener('DOMContentLoaded', fetchData);
+            // =====================================================
+            //   EKSEKUSI UTAMA
+            // =====================================================
+            // Jalankan pengecekan akses saat halaman siap
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
+            } else {
+                checkAccessAndLoad();
+            }
+
+        })();
     </script>
 </body>
 </html>

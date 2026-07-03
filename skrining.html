@@ -287,121 +287,139 @@
         }
 
         // =====================================================
-        //   CHECK LOGIN & REDIRECT
+        //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
         // =====================================================
-        async function checkLoginAndRedirect() {
+        async function checkAccessAndLoad() {
             try {
-                const loginMode = await PKD.getLoginMode();
-                const requireLogin = loginMode.success ? loginMode.enabled : false;
+                if (typeof PKD === 'undefined') {
+                    console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    if (typeof PKD === 'undefined') {
+                        console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+                        init();
+                        return;
+                    }
+                }
+
+                // ✅ JALANKAN SECARA PARALEL
+                const [visRes, loginRes] = await Promise.all([
+                    PKD.getPublicVisibility().catch(() => null),
+                    PKD.getLoginMode().catch(() => null)
+                ]);
+
+                let requireLogin = true;
+                if (visRes && visRes.success && visRes.data) {
+                    requireLogin = visRes.data.skrining !== false; // default: true (harus login)
+                } else if (loginRes && loginRes.success) {
+                    requireLogin = loginRes.enabled;
+                }
 
                 if (requireLogin) {
                     const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
                     if (!auth) {
                         window.location.href = '/bisaa/login.html?return=skrining.html';
-                        return false;
-                    }
-
-                    let userRole = PKD.getUserRole();
-                    if (!userRole) {
-                        try {
-                            const parsed = JSON.parse(auth);
-                            userRole = parsed.role || null;
-                        } catch (e) {}
-                    }
-                    if (!userRole) {
-                        window.location.href = '/bisaa/login.html?return=skrining.html';
-                        return false;
-                    }
-                }
-            } catch (e) {
-                console.warn('Gagal cek mode login, melanjutkan tanpa login:', e);
-            }
-            return true;
-        }
-
-        // =====================================================
-        //   DATA LOADING (menggunakan DataCache)
-        // =====================================================
-        async function loadSkriningQuestions(forceRefresh = false) {
-            try {
-                // Cek DataCache dulu
-                if (!forceRefresh) {
-                    const cached = DataCache.getData('skriningQuestions');
-                    if (cached && Array.isArray(cached) && cached.length > 0) {
-                        questions = cached;
-                        renderForm(false);
-                        
-                        // --- UPDATE STATUS ---
-                        const statusEl = document.getElementById('dataStatus');
-                        if (statusEl) {
-                            statusEl.textContent = '✅ Siap';
-                            statusEl.className = 'badge bg-success text-white';
-                        }
-                        // -----------------------
-                        if (isInitialLoad) {
-                            isInitialLoad = false;
-                        }
                         return;
                     }
                 }
 
-                // Jika tidak ada cache atau force refresh, tampilkan spinner
-                const container = document.getElementById('skriningFormContainer');
-                if (!questions || questions.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center my-4">
-                            <div class="spinner-border text-primary"></div>
-                            <p class="mt-2 text-muted">Memuat data skrining...</p>
-                        </div>
-                    `;
-                }
+                init();
 
-                // Fetch dari API
+            } catch (e) {
+                console.error('Error di checkAccess:', e);
+                init();
+            }
+        }
+
+        // =====================================================
+        //   DATA LOADING (Cache-First + Background Fetch Instan)
+        // =====================================================
+        async function loadSkriningQuestions(forceRefresh = false) {
+            const container = document.getElementById('skriningFormContainer');
+
+            // 1. Cek cache dulu (sinkron)
+            if (!forceRefresh) {
+                const cached = DataCache.getData('skriningQuestions');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    questions = cached;
+                    renderForm(false);
+                    const statusEl = document.getElementById('dataStatus');
+                    if (statusEl) {
+                        statusEl.textContent = '✅ Siap';
+                        statusEl.className = 'badge bg-success text-white';
+                    }
+                    if (isInitialLoad) isInitialLoad = false;
+                    console.log('✅ Skrining: data pertanyaan dari cache, ditampilkan instan.');
+                    return;
+                }
+            }
+
+            // 2. Jika cache kosong, tampilkan spinner
+            if (!questions || questions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-2 text-muted">Memuat data skrining...</p>
+                    </div>
+                `;
+            }
+
+            // 3. Ambil dari API
+            try {
                 const fresh = await PKD.getSkriningQuestions(true);
                 if (fresh && Array.isArray(fresh.data)) {
                     const freshQuestions = fresh.data;
                     questions = freshQuestions;
                     DataCache.updateData('skriningQuestions', questions);
                     renderForm(false);
-                    
-                    // --- UPDATE STATUS ---
                     const statusEl = document.getElementById('dataStatus');
                     if (statusEl) {
                         statusEl.textContent = '✅ Siap';
                         statusEl.className = 'badge bg-success text-white';
                     }
-                    // -----------------------
-
                 } else {
-                    if (!questions || questions.length === 0) {
+                    // API kosong, coba fallback ke cache atau default
+                    const cached = DataCache.getData('skriningQuestions');
+                    if (cached && Array.isArray(cached) && cached.length > 0) {
+                        questions = cached;
+                        renderForm(false);
+                        const statusEl = document.getElementById('dataStatus');
+                        if (statusEl) {
+                            statusEl.textContent = '⚠️ Cache (API kosong)';
+                            statusEl.className = 'badge bg-warning text-dark';
+                        }
+                    } else if (!questions || questions.length === 0) {
                         questions = getDefaultQuestions();
                         DataCache.updateData('skriningQuestions', questions);
                         renderForm(false);
-                        
-                        // --- UPDATE STATUS ---
                         const statusEl = document.getElementById('dataStatus');
                         if (statusEl) {
                             statusEl.textContent = '⚠️ Default';
                             statusEl.className = 'badge bg-warning text-dark';
                         }
-                        // -----------------------
                     }
                 }
                 isInitialLoad = false;
             } catch (e) {
                 console.warn('Gagal fetch questions:', e);
-                if (!questions || questions.length === 0) {
+                // Fallback ke cache atau default
+                const cached = DataCache.getData('skriningQuestions');
+                if (cached && Array.isArray(cached) && cached.length > 0) {
+                    questions = cached;
+                    renderForm(false);
+                    const statusEl = document.getElementById('dataStatus');
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Offline (cache)';
+                        statusEl.className = 'badge bg-danger text-white';
+                    }
+                } else if (!questions || questions.length === 0) {
                     questions = getDefaultQuestions();
                     DataCache.updateData('skriningQuestions', questions);
                     renderForm(false);
-                    
-                    // --- UPDATE STATUS ---
                     const statusEl = document.getElementById('dataStatus');
                     if (statusEl) {
-                        statusEl.textContent = '❌ Offline';
+                        statusEl.textContent = '❌ Offline (default)';
                         statusEl.className = 'badge bg-danger text-white';
                     }
-                    // -----------------------
                 }
                 isInitialLoad = false;
             }
@@ -736,19 +754,14 @@
         }
 
         // =====================================================
-        //   INIT
+        //   INISIALISASI (DIOPTIMALKAN)
         // =====================================================
-        async function init() {
-            // ✅ LOGIN CHECK: Redirect hanya jika mode login aktif dan belum login
-            const canProceed = await checkLoginAndRedirect();
-            if (!canProceed) return;
-
-            // ✅ LOAD DARI DATACACHE DAHULU (CEPAT)
+        function init() {
+            // 1. LOAD DARI DATACACHE DAHULU (CEPAT)
             const cached = DataCache.getData('skriningQuestions');
             if (cached && Array.isArray(cached) && cached.length > 0) {
                 questions = cached;
                 renderForm(false);
-                // Update status
                 const statusEl = document.getElementById('dataStatus');
                 if (statusEl) {
                     statusEl.textContent = '✅ Siap';
@@ -756,24 +769,23 @@
                 }
                 isInitialLoad = false;
             } else {
-                // Jika tidak ada cache, tampilkan spinner saat load pertama
                 renderForm(true);
             }
 
-            // ✅ REFRESH BACKGROUND (otomatis setelah halaman stabil)
-            setTimeout(() => {
-                loadSkriningQuestions(true);
-            }, 1000);
+            // 2. BACKGROUND FETCH INSTAN (SETELAH RENDER, TANPA TIMEOUT)
+            loadSkriningQuestions(true);
 
             // Refresh button
             document.getElementById('refreshBtn')?.addEventListener('click', manualRefresh);
         }
 
-        // Run on DOM ready
+        // =====================================================
+        //   EKSEKUSI UTAMA
+        // =====================================================
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
+            document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
         } else {
-            init();
+            checkAccessAndLoad();
         }
 
         // Expose for debug

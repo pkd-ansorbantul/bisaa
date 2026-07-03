@@ -173,6 +173,20 @@
     #scanBarcodeBtn {
       white-space: nowrap;
     }
+    /* Refresh button style */
+    .refresh-btn {
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: none;
+        background: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
@@ -187,7 +201,10 @@
         <span class="brand-sub">Kabupaten Bantul</span>
       </span>
     </a>
-    <div class="ms-auto">
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <button class="refresh-btn" id="refreshBtn" title="Segarkan Data">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
       <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
         <i class="bi bi-house-door me-1"></i>Beranda
       </a>
@@ -256,6 +273,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- api.js -->
 <script src="api.js"></script>
+<script src="dataCache.js"></script>
 
 <script>
   // =====================================================
@@ -273,7 +291,7 @@
       .replace(/'/g, "&#039;");
   }
 
-  // Cache hasil verifikasi
+  // Cache hasil verifikasi (lokal)
   function cacheResult(nomor, data) {
     try {
       localStorage.setItem('verify_' + nomor, JSON.stringify(data));
@@ -285,7 +303,7 @@
       const cached = localStorage.getItem('verify_' + nomor);
       if (cached) {
         const data = JSON.parse(cached);
-        if (data._timestamp && (Date.now() - data._timestamp < 3600000)) {
+        if (data._timestamp && (Date.now() - data._timestamp < 3600000)) { // cache 1 jam
           return data;
         }
       }
@@ -294,398 +312,433 @@
   }
 
   // =====================================================
-  //   VERIFIKASI SERTIFIKAT
+  //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
   // =====================================================
-  async function verifyCertificate(nomor) {
-    const resultDiv = document.getElementById('verifyResult');
-    const spinner = document.getElementById('loadingSpinner');
-    resultDiv.style.display = 'none';
-    spinner.style.display = 'block';
-
-    const cleanedNomor = nomor ? nomor.toString().trim().replace(/\s+/g, ' ') : '';
-    if (!cleanedNomor) {
-      spinner.style.display = 'none';
-      showResult('<div class="alert alert-danger mb-0">Masukkan nomor sertifikat terlebih dahulu.</div>', false);
-      return;
-    }
-
-    // Cek cache
-    const cached = getCachedResult(cleanedNomor);
-    if (cached) {
-      spinner.style.display = 'none';
-      renderVerificationResult(cached);
-      return;
-    }
-
-    try {
-      if (typeof PKD === 'undefined' || typeof PKD.verifyCertificate !== 'function') {
-        spinner.style.display = 'none';
-        showResult('<div class="alert alert-danger mb-0">Sistem tidak tersedia. Pastikan API sudah dimuat.</div>', false);
-        return;
-      }
-
-      const res = await PKD.verifyCertificate(cleanedNomor);
-      spinner.style.display = 'none';
-      if (res.success && res.data) {
-        const dataWithTimestamp = { ...res.data, _timestamp: Date.now() };
-        cacheResult(cleanedNomor, dataWithTimestamp);
-        renderVerificationResult(res.data);
-      } else {
-        showResult(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor "${escapeHtmlLocal(cleanedNomor)}" tidak ditemukan.</div>`, false);
-      }
-    } catch (e) {
-      spinner.style.display = 'none';
-      showResult(`<div class="alert alert-danger mb-0">Gagal memverifikasi: ${escapeHtmlLocal(e.message)}</div>`, false);
-    }
-  }
-
-  function renderVerificationResult(data) {
-    const ttdKetuaPC = data.ttd_ketua_pc || '';
-    const ttdSekretaris = data.ttd_sekretaris || '';
-    const ttdInstruktur = data.ttd_instruktur || '';
-    const hasSignatures = ttdKetuaPC || ttdSekretaris || ttdInstruktur;
-
-    const html = `
-      <div class="verification-result verification-valid">
-        <div class="text-center mb-3">
-          <span class="badge-status bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>Sertifikat VALID</span>
-        </div>
-        <hr>
-        <div class="row">
-          <div class="col-md-6">
-            <p class="mb-1"><strong>Nama:</strong> ${escapeHtmlLocal(data.nama_peserta || '-')}</p>
-            <p class="mb-1"><strong>Nomor Sertifikat:</strong> ${escapeHtmlLocal(data.nomor_sertifikat || '-')}</p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-1"><strong>Lokasi PKD:</strong> ${escapeHtmlLocal(data.lokasi || 'Kabupaten Bantul')}</p>
-            <p class="mb-1"><strong>Tanggal Terbit:</strong> ${escapeHtmlLocal(data.createdAt || '-')}</p>
-          </div>
-        </div>
-
-        ${hasSignatures ? `
-        <hr>
-        <h6 class="text-center fw-bold mb-3">Tanda Tangan Digital</h6>
-        <div class="row g-3 text-center">
-          <div class="col-md-4">
-            <p class="mb-1 fw-bold">Ketua PC</p>
-            ${ttdKetuaPC ? `<img src="https://drive.google.com/thumbnail?id=${ttdKetuaPC}&sz=w300" class="signature-img" alt="Tanda tangan Ketua PC">` : '<p class="text-muted">Belum tersedia</p>'}
-          </div>
-          <div class="col-md-4">
-            <p class="mb-1 fw-bold">Sekretaris</p>
-            ${ttdSekretaris ? `<img src="https://drive.google.com/thumbnail?id=${ttdSekretaris}&sz=w300" class="signature-img" alt="Tanda tangan Sekretaris">` : '<p class="text-muted">Belum tersedia</p>'}
-          </div>
-          <div class="col-md-4">
-            <p class="mb-1 fw-bold">Instruktur</p>
-            ${ttdInstruktur ? `<img src="https://drive.google.com/thumbnail?id=${ttdInstruktur}&sz=w300" class="signature-img" alt="Tanda tangan Instruktur">` : '<p class="text-muted">Belum tersedia</p>'}
-          </div>
-        </div>
-        ` : ''}
-
-        <div class="text-center mt-3">
-          ${data.pdf_url ? `<a href="${escapeHtmlLocal(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-4"><i class="bi bi-file-pdf"></i> Lihat Sertifikat</a>` : ''}
-        </div>
-      </div>
-    `;
-    showResult(html, true);
-  }
-
-  function showResult(content, isValid = true) {
-    const resultDiv = document.getElementById('verifyResult');
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = content;
-    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  // =====================================================
-  //   BARCODE SCANNER (Native + QuaggaJS fallback)
-  // =====================================================
-  let barcodeScannerActive = false;
-  let barcodeDetector = null;
-  let videoStream = null;
-  let videoElement = null;
-  let animationFrameId = null;
-  let quaggaInitialized = false;
-
-  async function initBarcodeScanner() {
-    const readerDiv = document.getElementById('barcode-reader');
-    const container = document.getElementById('barcode-video-container');
-    const closeBtn = document.getElementById('closeScannerBtn');
-
-    // Jika sudah aktif, tutup dulu
-    if (barcodeScannerActive) {
-      stopBarcodeScanner();
-      return;
-    }
-
-    // Cek dukungan BarcodeDetector (native)
-    if ('BarcodeDetector' in window) {
+  (function() {
+    async function checkAccessAndLoad() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        videoStream = stream;
+        if (typeof PKD === 'undefined') {
+          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          if (typeof PKD === 'undefined') {
+            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+            initMain();
+            return;
+          }
+        }
 
-        videoElement = document.createElement('video');
-        videoElement.srcObject = stream;
-        videoElement.autoplay = true;
-        videoElement.playsInline = true;
-        videoElement.style.width = '100%';
-        videoElement.style.maxHeight = '400px';
-        container.innerHTML = '';
-        container.appendChild(videoElement);
+        // ✅ JALANKAN SECARA PARALEL
+        const [visRes, loginRes] = await Promise.all([
+            PKD.getPublicVisibility().catch(() => null),
+            PKD.getLoginMode().catch(() => null)
+        ]);
 
-        readerDiv.style.display = 'block';
-        barcodeScannerActive = true;
+        let requireLogin = true;
+        if (visRes && visRes.success && visRes.data) {
+          requireLogin = visRes.data.verifikasi !== false;
+        } else if (loginRes && loginRes.success) {
+          requireLogin = loginRes.enabled;
+        }
 
-        barcodeDetector = new BarcodeDetector({ 
-          formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'code_93', 'codabar', 'databar', 'qr_code'] 
-        });
+        if (requireLogin) {
+          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+          if (!auth) {
+            window.location.href = '/bisaa/login.html?return=verifikasi.html';
+            return;
+          }
+        }
 
-        detectLoopNative();
-        document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (native)...';
-        return;
-      } catch (err) {
-        console.warn('Native barcode detector gagal, fallback ke Quagga:', err);
-        // Lanjut ke fallback
+        initMain();
+
+      } catch (e) {
+        console.error('Error di checkAccess:', e);
+        initMain();
       }
     }
 
-    // Fallback: Gunakan QuaggaJS
-    try {
-      // Minta izin kamera
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      videoStream = stream;
+    function initMain() {
+      // =====================================================
+      //   VERIFIKASI SERTIFIKAT
+      // =====================================================
+      async function verifyCertificate(nomor) {
+        const resultDiv = document.getElementById('verifyResult');
+        const spinner = document.getElementById('loadingSpinner');
+        resultDiv.style.display = 'none';
+        spinner.style.display = 'block';
 
-      // Siapkan video untuk Quagga
-      videoElement = document.createElement('video');
-      videoElement.srcObject = stream;
-      videoElement.autoplay = true;
-      videoElement.playsInline = true;
-      videoElement.style.width = '100%';
-      videoElement.style.maxHeight = '400px';
-      container.innerHTML = '';
-      container.appendChild(videoElement);
-
-      readerDiv.style.display = 'block';
-      barcodeScannerActive = true;
-
-      // Konfigurasi Quagga
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: container,
-          constraints: {
-            width: 640,
-            height: 480,
-            facingMode: "environment"
-          },
-        },
-        decoder: {
-          readers: [
-            "code_128_reader",
-            "ean_reader",
-            "ean_8_reader",
-            "upc_reader",
-            "upc_e_reader",
-            "code_39_reader",
-            "code_93_reader",
-            "codabar_reader",
-            "databar_reader"
-          ]
-        },
-        locate: true,
-        numOfWorkers: 2,
-        frequency: 10
-      }, function(err) {
-        if (err) {
-          console.error('Quagga init error:', err);
-          document.getElementById('barcode-reader-results').innerHTML = 'Gagal memulai scanner. Coba input manual.';
+        const cleanedNomor = nomor ? nomor.toString().trim().replace(/\s+/g, ' ') : '';
+        if (!cleanedNomor) {
+          spinner.style.display = 'none';
+          showResult('<div class="alert alert-danger mb-0">Masukkan nomor sertifikat terlebih dahulu.</div>', false);
           return;
         }
-        Quagga.start();
-        quaggaInitialized = true;
-        document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (Quagga)...';
-      });
 
-      Quagga.onDetected(function(result) {
-        if (result && result.codeResult && result.codeResult.code) {
-          const decodedText = result.codeResult.code;
-          onBarcodeDetected(decodedText);
+        // Cek cache hasil verifikasi sebelumnya
+        const cached = getCachedResult(cleanedNomor);
+        if (cached) {
+          spinner.style.display = 'none';
+          renderVerificationResult(cached);
+          return;
         }
-      });
 
-    } catch (err) {
-      console.error('Gagal mengakses kamera:', err);
-      alert('Tidak dapat mengakses kamera. Pastikan Anda memberi izin atau gunakan input manual.');
-      readerDiv.style.display = 'none';
-      barcodeScannerActive = false;
-    }
-  }
+        try {
+          if (typeof PKD === 'undefined' || typeof PKD.verifyCertificate !== 'function') {
+            spinner.style.display = 'none';
+            showResult('<div class="alert alert-danger mb-0">Sistem tidak tersedia. Pastikan API sudah dimuat.</div>', false);
+            return;
+          }
 
-  function detectLoopNative() {
-    if (!barcodeScannerActive || !videoElement || videoElement.readyState < 2) {
-      animationFrameId = requestAnimationFrame(detectLoopNative);
-      return;
-    }
+          const res = await PKD.verifyCertificate(cleanedNomor);
+          spinner.style.display = 'none';
+          if (res.success && res.data) {
+            const dataWithTimestamp = { ...res.data, _timestamp: Date.now() };
+            cacheResult(cleanedNomor, dataWithTimestamp);
+            renderVerificationResult(res.data);
+          } else {
+            showResult(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor "${escapeHtmlLocal(cleanedNomor)}" tidak ditemukan.</div>`, false);
+          }
+        } catch (e) {
+          spinner.style.display = 'none';
+          showResult(`<div class="alert alert-danger mb-0">Gagal memverifikasi: ${escapeHtmlLocal(e.message)}</div>`, false);
+        }
+      }
 
-    if (barcodeDetector) {
-      barcodeDetector.detect(videoElement)
-        .then(barcodes => {
-          if (barcodes.length > 0) {
-            const barcode = barcodes[0];
-            const decodedText = barcode.rawValue;
-            if (decodedText) {
-              onBarcodeDetected(decodedText);
+      function renderVerificationResult(data) {
+        const ttdKetuaPC = data.ttd_ketua_pc || '';
+        const ttdSekretaris = data.ttd_sekretaris || '';
+        const ttdInstruktur = data.ttd_instruktur || '';
+        const hasSignatures = ttdKetuaPC || ttdSekretaris || ttdInstruktur;
+
+        const html = `
+          <div class="verification-result verification-valid">
+            <div class="text-center mb-3">
+              <span class="badge-status bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>Sertifikat VALID</span>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Nama:</strong> ${escapeHtmlLocal(data.nama_peserta || '-')}</p>
+                <p class="mb-1"><strong>Nomor Sertifikat:</strong> ${escapeHtmlLocal(data.nomor_sertifikat || '-')}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Lokasi PKD:</strong> ${escapeHtmlLocal(data.lokasi || 'Kabupaten Bantul')}</p>
+                <p class="mb-1"><strong>Tanggal Terbit:</strong> ${escapeHtmlLocal(data.createdAt || '-')}</p>
+              </div>
+            </div>
+
+            ${hasSignatures ? `
+            <hr>
+            <h6 class="text-center fw-bold mb-3">Tanda Tangan Digital</h6>
+            <div class="row g-3 text-center">
+              <div class="col-md-4">
+                <p class="mb-1 fw-bold">Ketua PC</p>
+                ${ttdKetuaPC ? `<img src="https://drive.google.com/thumbnail?id=${ttdKetuaPC}&sz=w300" class="signature-img" alt="Tanda tangan Ketua PC">` : '<p class="text-muted">Belum tersedia</p>'}
+              </div>
+              <div class="col-md-4">
+                <p class="mb-1 fw-bold">Sekretaris</p>
+                ${ttdSekretaris ? `<img src="https://drive.google.com/thumbnail?id=${ttdSekretaris}&sz=w300" class="signature-img" alt="Tanda tangan Sekretaris">` : '<p class="text-muted">Belum tersedia</p>'}
+              </div>
+              <div class="col-md-4">
+                <p class="mb-1 fw-bold">Instruktur</p>
+                ${ttdInstruktur ? `<img src="https://drive.google.com/thumbnail?id=${ttdInstruktur}&sz=w300" class="signature-img" alt="Tanda tangan Instruktur">` : '<p class="text-muted">Belum tersedia</p>'}
+              </div>
+            </div>
+            ` : ''}
+
+            <div class="text-center mt-3">
+              ${data.pdf_url ? `<a href="${escapeHtmlLocal(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-4"><i class="bi bi-file-pdf"></i> Lihat Sertifikat</a>` : ''}
+            </div>
+          </div>
+        `;
+        showResult(html, true);
+      }
+
+      function showResult(content, isValid = true) {
+        const resultDiv = document.getElementById('verifyResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = content;
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // =====================================================
+      //   BARCODE SCANNER (Native + QuaggaJS fallback)
+      // =====================================================
+      let barcodeScannerActive = false;
+      let barcodeDetector = null;
+      let videoStream = null;
+      let videoElement = null;
+      let animationFrameId = null;
+      let quaggaInitialized = false;
+
+      async function initBarcodeScanner() {
+        const readerDiv = document.getElementById('barcode-reader');
+        const container = document.getElementById('barcode-video-container');
+        const closeBtn = document.getElementById('closeScannerBtn');
+
+        if (barcodeScannerActive) {
+          stopBarcodeScanner();
+          return;
+        }
+
+        if ('BarcodeDetector' in window) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            videoStream = stream;
+
+            videoElement = document.createElement('video');
+            videoElement.srcObject = stream;
+            videoElement.autoplay = true;
+            videoElement.playsInline = true;
+            videoElement.style.width = '100%';
+            videoElement.style.maxHeight = '400px';
+            container.innerHTML = '';
+            container.appendChild(videoElement);
+
+            readerDiv.style.display = 'block';
+            barcodeScannerActive = true;
+
+            barcodeDetector = new BarcodeDetector({ 
+              formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'code_93', 'codabar', 'databar', 'qr_code'] 
+            });
+
+            detectLoopNative();
+            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (native)...';
+            return;
+          } catch (err) {
+            console.warn('Native barcode detector gagal, fallback ke Quagga:', err);
+          }
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          videoStream = stream;
+
+          videoElement = document.createElement('video');
+          videoElement.srcObject = stream;
+          videoElement.autoplay = true;
+          videoElement.playsInline = true;
+          videoElement.style.width = '100%';
+          videoElement.style.maxHeight = '400px';
+          container.innerHTML = '';
+          container.appendChild(videoElement);
+
+          readerDiv.style.display = 'block';
+          barcodeScannerActive = true;
+
+          Quagga.init({
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: container,
+              constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment"
+              },
+            },
+            decoder: {
+              readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "code_39_reader",
+                "code_93_reader",
+                "codabar_reader",
+                "databar_reader"
+              ]
+            },
+            locate: true,
+            numOfWorkers: 2,
+            frequency: 10
+          }, function(err) {
+            if (err) {
+              console.error('Quagga init error:', err);
+              document.getElementById('barcode-reader-results').innerHTML = 'Gagal memulai scanner. Coba input manual.';
               return;
             }
-          }
-          animationFrameId = requestAnimationFrame(detectLoopNative);
-        })
-        .catch(err => {
-          console.warn('Native detect error:', err);
-          animationFrameId = requestAnimationFrame(detectLoopNative);
-        });
-    } else {
-      animationFrameId = requestAnimationFrame(detectLoopNative);
-    }
-  }
+            Quagga.start();
+            quaggaInitialized = true;
+            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (Quagga)...';
+          });
 
-  function onBarcodeDetected(decodedText) {
-    // Hentikan scanner setelah berhasil
-    stopBarcodeScanner();
+          Quagga.onDetected(function(result) {
+            if (result && result.codeResult && result.codeResult.code) {
+              const decodedText = result.codeResult.code;
+              onBarcodeDetected(decodedText);
+            }
+          });
 
-    let nomor = decodedText.trim();
-
-    // Ekstrak nomor dari berbagai format
-    const prefix = "Sertifikat No: ";
-    if (nomor.startsWith(prefix)) {
-      const afterPrefix = nomor.substring(prefix.length);
-      const dashIndex = afterPrefix.indexOf(" - ");
-      if (dashIndex !== -1) {
-        nomor = afterPrefix.substring(0, dashIndex).trim();
-      } else {
-        nomor = afterPrefix.trim();
-      }
-    } else if (nomor.includes('?nomor=')) {
-      try {
-        const url = new URL(nomor);
-        const paramNomor = url.searchParams.get('nomor');
-        if (paramNomor) nomor = paramNomor;
-      } catch (e) {}
-    } else if (nomor.startsWith('{') && nomor.endsWith('}')) {
-      try {
-        const parsed = JSON.parse(nomor);
-        if (parsed.nomor) nomor = parsed.nomor;
-      } catch (e) {}
-    }
-
-    // Isi input dengan nomor
-    const input = document.getElementById('certNumberInput');
-    if (input) input.value = nomor;
-
-    document.getElementById('barcode-reader-results').innerHTML = `Barcode terdeteksi: ${escapeHtmlLocal(nomor)}`;
-
-    // Jalankan verifikasi
-    verifyCertificate(nomor);
-  }
-
-  function stopBarcodeScanner() {
-    barcodeScannerActive = false;
-    
-    // Hentikan native loop
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-
-    // Hentikan Quagga jika aktif
-    if (quaggaInitialized) {
-      Quagga.stop();
-      Quagga.offDetected();
-      quaggaInitialized = false;
-    }
-
-    // Hentikan stream video
-    if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
-      videoStream = null;
-    }
-
-    // Hapus elemen video
-    if (videoElement) {
-      videoElement.srcObject = null;
-      videoElement.remove();
-      videoElement = null;
-    }
-
-    document.getElementById('barcode-reader').style.display = 'none';
-    document.getElementById('barcode-video-container').innerHTML = '';
-    document.getElementById('barcode-reader-results').innerHTML = '';
-    barcodeDetector = null;
-  }
-
-  // =====================================================
-  //   AMBIL PARAMETER DARI URL
-  // =====================================================
-  function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-  }
-
-  // =====================================================
-  //   INITIALIZATION
-  // =====================================================
-  document.addEventListener('DOMContentLoaded', function() {
-    // Event listener tombol verifikasi manual
-    const verifyBtn = document.getElementById('verifyByNumberBtn');
-    if (verifyBtn) {
-      verifyBtn.addEventListener('click', function() {
-        const nomor = document.getElementById('certNumberInput').value;
-        verifyCertificate(nomor);
-      });
-    }
-
-    // Event listener input (tekan Enter)
-    const input = document.getElementById('certNumberInput');
-    if (input) {
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          const verifyBtn = document.getElementById('verifyByNumberBtn');
-          if (verifyBtn) verifyBtn.click();
+        } catch (err) {
+          console.error('Gagal mengakses kamera:', err);
+          alert('Tidak dapat mengakses kamera. Pastikan Anda memberi izin atau gunakan input manual.');
+          readerDiv.style.display = 'none';
+          barcodeScannerActive = false;
         }
-      });
-    }
+      }
 
-    // Tombol scan barcode
-    const scanBtn = document.getElementById('scanBarcodeBtn');
-    if (scanBtn) {
-      scanBtn.addEventListener('click', function() {
-        initBarcodeScanner();
-      });
-    }
+      function detectLoopNative() {
+        if (!barcodeScannerActive || !videoElement || videoElement.readyState < 2) {
+          animationFrameId = requestAnimationFrame(detectLoopNative);
+          return;
+        }
 
-    // Tombol tutup scanner
-    const closeBtn = document.getElementById('closeScannerBtn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function() {
+        if (barcodeDetector) {
+          barcodeDetector.detect(videoElement)
+            .then(barcodes => {
+              if (barcodes.length > 0) {
+                const barcode = barcodes[0];
+                const decodedText = barcode.rawValue;
+                if (decodedText) {
+                  onBarcodeDetected(decodedText);
+                  return;
+                }
+              }
+              animationFrameId = requestAnimationFrame(detectLoopNative);
+            })
+            .catch(err => {
+              console.warn('Native detect error:', err);
+              animationFrameId = requestAnimationFrame(detectLoopNative);
+            });
+        } else {
+          animationFrameId = requestAnimationFrame(detectLoopNative);
+        }
+      }
+
+      function onBarcodeDetected(decodedText) {
+        stopBarcodeScanner();
+
+        let nomor = decodedText.trim();
+        const prefix = "Sertifikat No: ";
+        if (nomor.startsWith(prefix)) {
+          const afterPrefix = nomor.substring(prefix.length);
+          const dashIndex = afterPrefix.indexOf(" - ");
+          if (dashIndex !== -1) {
+            nomor = afterPrefix.substring(0, dashIndex).trim();
+          } else {
+            nomor = afterPrefix.trim();
+          }
+        } else if (nomor.includes('?nomor=')) {
+          try {
+            const url = new URL(nomor);
+            const paramNomor = url.searchParams.get('nomor');
+            if (paramNomor) nomor = paramNomor;
+          } catch (e) {}
+        } else if (nomor.startsWith('{') && nomor.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(nomor);
+            if (parsed.nomor) nomor = parsed.nomor;
+          } catch (e) {}
+        }
+
+        const input = document.getElementById('certNumberInput');
+        if (input) input.value = nomor;
+
+        document.getElementById('barcode-reader-results').innerHTML = `Barcode terdeteksi: ${escapeHtmlLocal(nomor)}`;
+        verifyCertificate(nomor);
+      }
+
+      function stopBarcodeScanner() {
+        barcodeScannerActive = false;
+        
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+
+        if (quaggaInitialized) {
+          Quagga.stop();
+          Quagga.offDetected();
+          quaggaInitialized = false;
+        }
+
+        if (videoStream) {
+          videoStream.getTracks().forEach(track => track.stop());
+          videoStream = null;
+        }
+
+        if (videoElement) {
+          videoElement.srcObject = null;
+          videoElement.remove();
+          videoElement = null;
+        }
+
+        document.getElementById('barcode-reader').style.display = 'none';
+        document.getElementById('barcode-video-container').innerHTML = '';
+        document.getElementById('barcode-reader-results').innerHTML = '';
+        barcodeDetector = null;
+      }
+
+      // =====================================================
+      //   AMBIL PARAMETER DARI URL
+      // =====================================================
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      // =====================================================
+      //   INISIALISASI
+      // =====================================================
+      const verifyBtn = document.getElementById('verifyByNumberBtn');
+      if (verifyBtn) {
+        verifyBtn.addEventListener('click', function() {
+          const nomor = document.getElementById('certNumberInput').value;
+          verifyCertificate(nomor);
+        });
+      }
+
+      const input = document.getElementById('certNumberInput');
+      if (input) {
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            const verifyBtn = document.getElementById('verifyByNumberBtn');
+            if (verifyBtn) verifyBtn.click();
+          }
+        });
+      }
+
+      const scanBtn = document.getElementById('scanBarcodeBtn');
+      if (scanBtn) {
+        scanBtn.addEventListener('click', function() {
+          initBarcodeScanner();
+        });
+      }
+
+      const closeBtn = document.getElementById('closeScannerBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          stopBarcodeScanner();
+        });
+      }
+
+      document.getElementById('refreshBtn')?.addEventListener('click', function() {
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+        window.location.reload();
+      });
+
+      const nomorFromUrl = getQueryParam('nomor');
+      if (nomorFromUrl) {
+        const input = document.getElementById('certNumberInput');
+        if (input) input.value = nomorFromUrl;
+        setTimeout(() => {
+          verifyCertificate(nomorFromUrl);
+        }, 100); // 100ms delay untuk memastikan DOM siap
+      }
+
+      window.addEventListener('beforeunload', function() {
         stopBarcodeScanner();
       });
     }
 
-    // Cek parameter URL
-    const nomorFromUrl = getQueryParam('nomor');
-    if (nomorFromUrl) {
-      const input = document.getElementById('certNumberInput');
-      if (input) input.value = nomorFromUrl;
-      setTimeout(() => {
-        verifyCertificate(nomorFromUrl);
-      }, 500);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
+    } else {
+      checkAccessAndLoad();
     }
-  });
-
-  // Bersihkan scanner saat halaman ditutup
-  window.addEventListener('beforeunload', function() {
-    stopBarcodeScanner();
-  });
+  })();
 </script>
 </body>
 </html>

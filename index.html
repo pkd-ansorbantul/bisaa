@@ -13,471 +13,78 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ========== RESET & BASE ========== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: #f8fafc;
-      color: #0f172a;
-      line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ========== PREMIUM NAVBAR ========== */
-    .navbar {
-      background: rgba(255, 255, 255, 0.72) !important;
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-      padding: 0.75rem 0;
-    }
-    .navbar-brand {
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #0f172a !important;
-    }
-    .navbar-brand img {
-      height: 48px;
-      width: auto;
-      margin-right: 14px;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .navbar-brand img:hover {
-      transform: scale(1.08) rotate(-2deg);
-    }
-    .brand-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #0a3d62;
-      letter-spacing: -0.02em;
-    }
-    .brand-sub {
-      font-size: 0.85rem;
-      font-weight: 400;
-      color: #64748b;
-      display: block;
-      margin-top: 2px;
-      letter-spacing: 0.3px;
-    }
-    .nav-link {
-      font-weight: 500;
-      border-radius: 9999px;
-      padding: 0.5rem 1.2rem;
-      margin: 0 0.15rem;
-      color: #334155 !important;
-      transition: all 0.2s ease;
-    }
-    .nav-link:hover {
-      background: rgba(37, 99, 235, 0.08);
-      color: #2563eb !important;
-    }
-    .nav-link.active {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-    }
-    .navbar-toggler {
-      border: none;
-      padding: 0.5rem;
-      border-radius: 12px;
-      transition: all 0.2s;
-    }
-    .navbar-toggler:focus {
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
+    /* Navbar */
+    .navbar { background: rgba(255, 255, 255, 0.72) !important; backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); padding: 0.75rem 0; }
+    .navbar-brand { font-weight: 700; letter-spacing: -0.02em; color: #0f172a !important; }
+    .navbar-brand img { height: 48px; width: auto; margin-right: 14px; transition: transform 0.3s; }
+    .navbar-brand img:hover { transform: scale(1.08) rotate(-2deg); }
+    .brand-title { font-size: 1.4rem; font-weight: 700; color: #0a3d62; }
+    .brand-sub { font-size: 0.85rem; font-weight: 400; color: #64748b; display: block; margin-top: 2px; }
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; margin: 0 0.15rem; color: #334155 !important; transition: all 0.2s; }
+    .nav-link:hover { background: rgba(37, 99, 235, 0.08); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: #fff !important; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); }
+    .navbar-toggler { border: none; padding: 0.5rem; border-radius: 12px; }
+    .navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
 
-    /* ========== HERO / HEADER SECTION ========== */
-    .hero-wrapper {
-      background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-      border-bottom: 1px solid rgba(203, 213, 225, 0.4);
-      padding: 3rem 0 1.5rem 0;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero-wrapper::before {
-      content: '';
-      position: absolute;
-      top: -30%;
-      left: -10%;
-      width: 60%;
-      height: 120%;
-      background: radial-gradient(ellipse at 30% 40%, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero-wrapper::after {
-      content: '';
-      position: absolute;
-      bottom: -20%;
-      right: -5%;
-      width: 50%;
-      height: 100%;
-      background: radial-gradient(ellipse at 70% 60%, rgba(37, 99, 235, 0.03) 0%, transparent 60%);
-      pointer-events: none;
-    }
+    /* Hero */
+    .hero-wrapper { background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%); border-bottom: 1px solid rgba(203, 213, 225, 0.4); padding: 3rem 0 1.5rem 0; position: relative; overflow: hidden; }
+    .hero-wrapper::before { content: ''; position: absolute; top: -30%; left: -10%; width: 60%; height: 120%; background: radial-gradient(ellipse at 30% 40%, rgba(37, 99, 235, 0.04) 0%, transparent 70%); pointer-events: none; }
+    .hero-wrapper::after { content: ''; position: absolute; bottom: -20%; right: -5%; width: 50%; height: 100%; background: radial-gradient(ellipse at 70% 60%, rgba(37, 99, 235, 0.03) 0%, transparent 60%); pointer-events: none; }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-title { font-size: 2.8rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; background: linear-gradient(135deg, #0a3d62 0%, #2563eb 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 1.2rem; color: #475569; font-weight: 400; max-width: 540px; }
+    .hero-logo { max-width: 180px; opacity: 0.92; filter: drop-shadow(0 8px 24px rgba(37, 99, 235, 0.10)); }
+    .hero-tagline { font-size: 1rem; color: #64748b; margin-top: 0.25rem; }
 
-    .hero-content {
-      position: relative;
-      z-index: 1;
-    }
-    .hero-title {
-      font-size: 2.8rem;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #0a3d62 0%, #2563eb 80%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.5rem;
-    }
-    .hero-sub {
-      font-size: 1.2rem;
-      color: #475569;
-      font-weight: 400;
-      max-width: 540px;
-    }
-    .hero-logo {
-      max-width: 180px;
-      opacity: 0.92;
-      filter: drop-shadow(0 8px 24px rgba(37, 99, 235, 0.10));
-    }
-    .hero-tagline {
-      font-size: 1rem;
-      color: #64748b;
-      letter-spacing: 0.3px;
-      font-weight: 400;
-      margin-top: 0.25rem;
-    }
+    /* Total Kader Badge */
+    .total-badge-premium { display: inline-flex; align-items: center; gap: 0.6rem; background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%); color: #ffffff; padding: 0.6rem 1.8rem; border-radius: 60px; font-weight: 600; font-size: 1rem; box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.15); white-space: nowrap; }
+    .total-badge-premium::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%); pointer-events: none; }
+    .total-badge-premium i { font-size: 1.3rem; margin-right: 0.1rem; }
+    .total-badge-premium .badge-number { font-weight: 700; font-size: 1.2rem; }
+    @media (max-width: 576px) { .total-badge-premium { width: 100%; justify-content: center; border-radius: 20px; padding: 0.75rem 1.5rem; font-size: 0.95rem; white-space: normal; text-align: center; } }
 
-    /* ========== BADGE TOTAL KADER – PREMIUM ========== */
-    .total-badge-premium {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.6rem;
-      background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
-      color: #ffffff;
-      padding: 0.6rem 1.8rem;
-      border-radius: 60px;
-      font-weight: 600;
-      font-size: 1rem;
-      box-shadow: 0 8px 30px rgba(37, 99, 235, 0.35);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      letter-spacing: 0.2px;
-      white-space: nowrap;
-    }
-    .total-badge-premium::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
-      pointer-events: none;
-    }
-    .total-badge-premium i {
-      font-size: 1.3rem;
-      margin-right: 0.1rem;
-    }
-    .total-badge-premium .badge-number {
-      font-weight: 700;
-      font-size: 1.2rem;
-    }
-    @media (max-width: 576px) {
-      .total-badge-premium {
-        width: 100%;
-        justify-content: center;
-        border-radius: 20px;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-        white-space: normal;
-        text-align: center;
-        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
-      }
-      .total-badge-premium .badge-number {
-        font-size: 1.1rem;
-      }
-    }
+    /* Menu Grid */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 0.5rem; }
+    @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
+    .menu-card { position: relative; background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(12px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 28px; padding: 1.8rem 1.2rem; text-align: center; cursor: pointer; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; text-decoration: none; color: #0f172a; }
+    .menu-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 50px rgba(37, 99, 235, 0.12), 0 6px 20px rgba(0, 0, 0, 0.05); border-color: rgba(37, 99, 235, 0.2); background: rgba(255, 255, 255, 0.85); }
+    .menu-card:active { transform: scale(0.96); }
+    .menu-card .icon-wrapper { width: 72px; height: 72px; border-radius: 24px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02)); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #2563eb; margin-bottom: 1rem; transition: all 0.3s; border: 1px solid rgba(37, 99, 235, 0.05); }
+    .menu-card:hover .icon-wrapper { background: linear-gradient(135deg, #2563eb, #1e4bb3); color: #fff; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25); transform: scale(1.05); }
+    .menu-card .card-label { font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; margin-bottom: 0.15rem; }
+    .menu-card .card-desc { font-size: 0.8rem; color: #64748b; font-weight: 400; }
 
-    /* ========== CARD MENU – GLASSMORPHISM ========== */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1.5rem;
-      margin-top: 0.5rem;
-    }
-    @media (min-width: 768px) {
-      .menu-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-    @media (min-width: 1200px) {
-      .menu-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
+    /* Login Prompt */
+    #loginPrompt { display: none; text-align: center; padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(8px); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); margin-top: 1.5rem; }
+    #loginPrompt h5 { font-weight: 600; color: #0f172a; }
 
-    .menu-card {
-      position: relative;
-      background: rgba(255, 255, 255, 0.70);
-      backdrop-filter: blur(12px) saturate(180%);
-      -webkit-backdrop-filter: blur(12px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      border-radius: 28px;
-      padding: 1.8rem 1.2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 160px;
-      text-decoration: none;
-      color: #0f172a;
-    }
-    .menu-card:hover {
-      transform: translateY(-6px) scale(1.02);
-      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.12), 0 6px 20px rgba(0, 0, 0, 0.05);
-      border-color: rgba(37, 99, 235, 0.2);
-      background: rgba(255, 255, 255, 0.85);
-    }
-    .menu-card:active {
-      transform: scale(0.96);
-      transition-duration: 0.1s;
-    }
-    .menu-card .icon-wrapper {
-      width: 72px;
-      height: 72px;
-      border-radius: 24px;
-      background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      color: #2563eb;
-      margin-bottom: 1rem;
-      transition: all 0.3s;
-      border: 1px solid rgba(37, 99, 235, 0.05);
-    }
-    .menu-card:hover .icon-wrapper {
-      background: linear-gradient(135deg, #2563eb, #1e4bb3);
-      color: #ffffff;
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
-      transform: scale(1.05);
-    }
-    .menu-card .card-label {
-      font-weight: 600;
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.15rem;
-    }
-    .menu-card .card-desc {
-      font-size: 0.8rem;
-      color: #64748b;
-      font-weight: 400;
-    }
+    /* Footer */
+    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 2rem 0; border-top: 1px solid rgba(203, 213, 225, 0.4); background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(4px); }
 
-    /* ========== LOGIN PROMPT (GLASS) ========== */
-    #loginPrompt {
-      display: none;
-      text-align: center;
-      padding: 2.5rem 2rem;
-      background: rgba(255, 255, 255, 0.55);
-      backdrop-filter: blur(8px);
-      border-radius: 32px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-      margin-top: 1.5rem;
-    }
-    #loginPrompt h5 {
-      font-weight: 600;
-      color: #0f172a;
-    }
+    /* FAQ Chatbot */
+    .chatbot-button { position: fixed; bottom: 30px; right: 30px; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1e4bb3); color: white; border: none; box-shadow: 0 8px 32px rgba(37, 99, 235, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 1032; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .chatbot-button:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(37, 99, 235, 0.45); }
+    .chatbot-panel { position: fixed; bottom: 100px; right: 30px; width: 380px; max-width: calc(100vw - 60px); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px) saturate(180%); border-radius: 28px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12); z-index: 1031; display: none; flex-direction: column; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.5); max-height: 80vh; }
+    .chatbot-panel.show { display: flex; }
+    .chatbot-header { background: linear-gradient(135deg, #2563eb, #1e4bb3); color: white; padding: 16px 20px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .chatbot-header button { background: none; border: none; color: white; font-size: 22px; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; }
+    .chatbot-header button:hover { opacity: 1; }
+    .faq-content { padding: 20px; overflow-y: auto; max-height: 380px; background: transparent; }
+    .faq-item { margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(203, 213, 225, 0.3); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-item .fw-bold { color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .faq-item .text-muted { font-size: 0.9rem; color: #475569; }
 
-    /* ========== FOOTER ========== */
-    .footer-modern {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: auto;
-      text-align: center;
-      padding: 2rem 0;
-      border-top: 1px solid rgba(203, 213, 225, 0.4);
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(4px);
-    }
+    /* Animations */
+    .fade-up { animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .delay-1 { animation-delay: 0.05s; } .delay-2 { animation-delay: 0.1s; } .delay-3 { animation-delay: 0.15s; } .delay-4 { animation-delay: 0.2s; }
 
-    /* ========== FAQ CHATBOT – PREMIUM ========== */
-    .chatbot-button {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #2563eb, #1e4bb3);
-      color: white;
-      border: none;
-      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.35);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      z-index: 1032;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .chatbot-button:hover {
-      transform: scale(1.08);
-      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.45);
-    }
-    .chatbot-panel {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      width: 380px;
-      max-width: calc(100vw - 60px);
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px) saturate(180%);
-      border-radius: 28px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-      z-index: 1031;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      max-height: 80vh;
-    }
-    .chatbot-panel.show {
-      display: flex;
-    }
-    .chatbot-header {
-      background: linear-gradient(135deg, #2563eb, #1e4bb3);
-      color: white;
-      padding: 16px 20px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .chatbot-header button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 22px;
-      cursor: pointer;
-      opacity: 0.8;
-      transition: opacity 0.2s;
-    }
-    .chatbot-header button:hover {
-      opacity: 1;
-    }
-    .faq-content {
-      padding: 20px;
-      overflow-y: auto;
-      max-height: 380px;
-      background: transparent;
-    }
-    .faq-item {
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.3);
-    }
-    .faq-item:last-child {
-      border-bottom: none;
-    }
-    .faq-item .fw-bold {
-      color: #0f172a;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .faq-item .text-muted {
-      font-size: 0.9rem;
-      color: #475569;
-    }
-
-    /* ========== ANIMATIONS ========== */
-    .fade-up {
-      animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .delay-1 { animation-delay: 0.05s; }
-    .delay-2 { animation-delay: 0.1s; }
-    .delay-3 { animation-delay: 0.15s; }
-    .delay-4 { animation-delay: 0.2s; }
-
-    /* ========== RESPONSIVE TWEAKS ========== */
-    @media (max-width: 576px) {
-      .hero-title {
-        font-size: 2rem;
-      }
-      .hero-sub {
-        font-size: 1rem;
-      }
-      .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-      }
-      .menu-card {
-        padding: 1.2rem 0.8rem;
-        min-height: 130px;
-      }
-      .menu-card .icon-wrapper {
-        width: 56px;
-        height: 56px;
-        font-size: 1.5rem;
-      }
-      .menu-card .card-label {
-        font-size: 0.9rem;
-      }
-      .menu-card .card-desc {
-        font-size: 0.7rem;
-      }
-      .chatbot-panel {
-        right: 10px;
-        width: calc(100vw - 20px);
-        bottom: 90px;
-      }
-    }
-
-    /* ========== SCROLLBAR PREMIUM ========== */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2563eb;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #1e4bb3;
-    }
+    @media (max-width: 576px) { .hero-title { font-size: 2rem; } .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } .menu-card { padding: 1.2rem 0.8rem; min-height: 130px; } .menu-card .icon-wrapper { width: 56px; height: 56px; font-size: 1.5rem; } .menu-card .card-label { font-size: 0.9rem; } .menu-card .card-desc { font-size: 0.7rem; } .chatbot-panel { right: 10px; width: calc(100vw - 20px); bottom: 90px; } }
+    ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } ::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: #1e4bb3; }
   </style>
 </head>
 <body>
@@ -496,9 +103,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <!-- Dynamic menu will be injected by JS if needed -->
-      </ul>
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0"></ul>
       <div class="d-flex align-items-center gap-2 ms-auto" id="navbarUserMenu"></div>
     </div>
   </div>
@@ -544,66 +149,26 @@
       </h2>
     </div>
 
-    <!-- Login Prompt (hidden by default) -->
     <div id="loginPrompt" class="fade-up">
       <h5><i class="bi bi-shield-lock"></i> Akses Terbatas</h5>
       <p class="text-muted">Anda harus login untuk mengakses seluruh menu.</p>
       <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='/bisaa/login.html'">Login</button>
     </div>
 
-    <!-- MENU GRID -->
     <div class="menu-grid" id="menuGrid">
-      <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-pencil-square"></i></div>
-        <div class="card-label">Pre-test</div>
-        <div class="card-desc">Uji pengetahuan awal</div>
-      </div>
-      <div class="menu-card fade-up delay-1" onclick="navigateTo('posttest.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-trophy"></i></div>
-        <div class="card-label">Post-test</div>
-        <div class="card-desc">Evaluasi akhir</div>
-      </div>
-      <div class="menu-card fade-up delay-2" onclick="navigateTo('absen.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-qr-code"></i></div>
-        <div class="card-label">Absen Digital</div>
-        <div class="card-desc">Scan QR / password</div>
-      </div>
-      <div class="menu-card fade-up delay-2" onclick="navigateTo('skrining.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-clipboard-check"></i></div>
-        <div class="card-label">Skrining</div>
-        <div class="card-desc">Pendataan awal</div>
-      </div>
-      <div class="menu-card fade-up delay-3" onclick="navigateTo('peserta.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-person-badge"></i></div>
-        <div class="card-label">Peserta</div>
-        <div class="card-desc">Isi data diri</div>
-      </div>
-      <div class="menu-card fade-up delay-3" onclick="navigateTo('materi.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-file-earmark-pdf"></i></div>
-        <div class="card-label">Materi</div>
-        <div class="card-desc">Akses modul</div>
-      </div>
-      <div class="menu-card fade-up delay-4" onclick="navigateTo('about.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-info-circle"></i></div>
-        <div class="card-label">Tentang Kami</div>
-        <div class="card-desc">Informasi PKD</div>
-      </div>
-      <div class="menu-card fade-up delay-4" onclick="navigateTo('informasi.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-newspaper"></i></div>
-        <div class="card-label">Informasi</div>
-        <div class="card-desc">Flyer & timeline</div>
-      </div>
-      <div class="menu-card fade-up delay-4" onclick="navigateTo('verifikasi.html')" role="button">
-        <div class="icon-wrapper"><i class="bi bi-qr-code-scan"></i></div>
-        <div class="card-label">Verifikasi</div>
-        <div class="card-desc">Cek sertifikat</div>
-      </div>
+      <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html')"><div class="icon-wrapper"><i class="bi bi-pencil-square"></i></div><div class="card-label">Pre-test</div><div class="card-desc">Uji pengetahuan awal</div></div>
+      <div class="menu-card fade-up delay-1" onclick="navigateTo('posttest.html')"><div class="icon-wrapper"><i class="bi bi-trophy"></i></div><div class="card-label">Post-test</div><div class="card-desc">Evaluasi akhir</div></div>
+      <div class="menu-card fade-up delay-2" onclick="navigateTo('absen.html')"><div class="icon-wrapper"><i class="bi bi-qr-code"></i></div><div class="card-label">Absen Digital</div><div class="card-desc">Scan QR / password</div></div>
+      <div class="menu-card fade-up delay-2" onclick="navigateTo('skrining.html')"><div class="icon-wrapper"><i class="bi bi-clipboard-check"></i></div><div class="card-label">Skrining</div><div class="card-desc">Pendataan awal</div></div>
+      <div class="menu-card fade-up delay-3" onclick="navigateTo('peserta.html')"><div class="icon-wrapper"><i class="bi bi-person-badge"></i></div><div class="card-label">Peserta</div><div class="card-desc">Isi data diri</div></div>
+      <div class="menu-card fade-up delay-3" onclick="navigateTo('materi.html')"><div class="icon-wrapper"><i class="bi bi-file-earmark-pdf"></i></div><div class="card-label">Materi</div><div class="card-desc">Akses modul</div></div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('about.html')"><div class="icon-wrapper"><i class="bi bi-info-circle"></i></div><div class="card-label">Tentang Kami</div><div class="card-desc">Informasi PKD</div></div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('informasi.html')"><div class="icon-wrapper"><i class="bi bi-newspaper"></i></div><div class="card-label">Informasi</div><div class="card-desc">Flyer & timeline</div></div>
+      <div class="menu-card fade-up delay-4" onclick="navigateTo('verifikasi.html')"><div class="icon-wrapper"><i class="bi bi-qr-code-scan"></i></div><div class="card-label">Verifikasi</div><div class="card-desc">Cek sertifikat</div></div>
     </div>
 
     <hr class="my-4">
-    <div class="text-center text-muted small">
-      <i class="bi bi-shield-check me-1"></i> Sistem aman & terintegrasi
-    </div>
+    <div class="text-center text-muted small"><i class="bi bi-shield-check me-1"></i> Sistem aman & terintegrasi</div>
   </section>
 </div>
 
@@ -617,36 +182,16 @@
 
 <!-- ==================== FAQ PANEL ==================== -->
 <div>
-  <button class="chatbot-button" id="chatbotToggleBtn" title="FAQ - Pusat Bantuan">
-    <i class="bi bi-question-circle-fill"></i>
-  </button>
+  <button class="chatbot-button" id="chatbotToggleBtn"><i class="bi bi-question-circle-fill"></i></button>
   <div class="chatbot-panel" id="chatbotPanel">
-    <div class="chatbot-header">
-      <span><i class="bi bi-question-circle me-2"></i>FAQ - Pusat Bantuan</span>
-      <button id="chatbotCloseBtn"><i class="bi bi-x-lg"></i></button>
-    </div>
+    <div class="chatbot-header"><span><i class="bi bi-question-circle me-2"></i>FAQ - Pusat Bantuan</span><button id="chatbotCloseBtn"><i class="bi bi-x-lg"></i></button></div>
     <div class="faq-content">
-      <div class="faq-item">
-        <div class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Kapan pretest dilaksanakan?</div>
-        <div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Akses di menu "Pre‑test" setelah login.</div>
-      </div>
-      <div class="faq-item">
-        <div class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Bagaimana cara mendaftar PKD?</div>
-        <div class="text-muted small">Pendaftaran melalui <a href="/bisaa/peserta.html" target="_blank">Menu Peserta</a>. Isi data dan tunggu konfirmasi.</div>
-      </div>
-      <div class="faq-item">
-        <div class="fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Materi apa saja yang tersedia?</div>
-        <div class="text-muted small">Materi meliputi kepemimpinan, keorganisasian, dan wawasan kebangsaan. Akses di menu "Materi".</div>
-      </div>
+      <div class="faq-item"><div class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Kapan pretest dilaksanakan?</div><div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Akses di menu "Pre‑test" setelah login.</div></div>
+      <div class="faq-item"><div class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Bagaimana cara mendaftar PKD?</div><div class="text-muted small">Pendaftaran melalui <a href="/bisaa/peserta.html" target="_blank">Menu Peserta</a>. Isi data dan tunggu konfirmasi.</div></div>
+      <div class="faq-item"><div class="fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Materi apa saja yang tersedia?</div><div class="text-muted small">Materi meliputi kepemimpinan, keorganisasian, dan wawasan kebangsaan. Akses di menu "Materi".</div></div>
       <div class="faq-item" id="waContactItem"></div>
-      <div class="faq-item">
-        <div class="fw-bold"><i class="bi bi-geo-alt me-2"></i>Alamat sekretariat?</div>
-        <div class="text-muted small">Jl. Imogiri Timur KM 10, Bantul, DIY.</div>
-      </div>
-      <div class="faq-item">
-        <div class="fw-bold"><i class="bi bi-shield-lock me-2"></i>Bagaimana cara login?</div>
-        <div class="text-muted small">Klik tombol "Login" di pojok kanan atas. Gunakan username & password yang diberikan panitia.</div>
-      </div>
+      <div class="faq-item"><div class="fw-bold"><i class="bi bi-geo-alt me-2"></i>Alamat sekretariat?</div><div class="text-muted small">Jl. Imogiri Timur KM 10, Bantul, DIY.</div></div>
+      <div class="faq-item"><div class="fw-bold"><i class="bi bi-shield-lock me-2"></i>Bagaimana cara login?</div><div class="text-muted small">Klik tombol "Login" di pojok kanan atas. Gunakan username & password yang diberikan panitia.</div></div>
     </div>
   </div>
 </div>
@@ -657,15 +202,8 @@
 <script src="/bisaa/api.js"></script>
 
 <script>
-  // ==========================================
-  // STATE
-  // ==========================================
-  let realtimeEnabled = false;
   let requireLogin = false;
 
-  // ==========================================
-  // NAVIGATION
-  // ==========================================
   function navigateTo(url) {
     const cleanUrl = url.replace(/^\/bisaa\//, '');
     if (requireLogin && !PKD.getUserRole()) {
@@ -675,52 +213,23 @@
     }
   }
 
-  // ==========================================
-  // TOTAL KADER – PREMIUM BADGE
-  // ==========================================
-  async function updateTotalPeserta() {
-    if (!realtimeEnabled) return;
-    try {
-      const allData = DataCache.getAllData();
-      const total = allData?.peserta?.length || 0;
-      const badge = document.getElementById('totalPesertaBadge');
-      const countSpan = document.getElementById('totalCount');
-      if (badge && countSpan) {
-        badge.classList.remove('d-none');
-        countSpan.textContent = total;
-      }
-      const res = await PKD.getTotalPeserta();
-      if (res.success && res.total !== total) {
-        if (countSpan) countSpan.textContent = res.total;
-        const all = DataCache.getAllData() || {};
-        if (!all.peserta) all.peserta = [];
-      }
-    } catch (e) {
-      console.warn('Gagal mengambil total peserta:', e);
+  // Update total peserta dari cache (tanpa fetch ulang)
+  function updateTotalFromCache() {
+    const allData = DataCache.getAllData();
+    const total = allData?.peserta?.length || 0;
+    const badge = document.getElementById('totalPesertaBadge');
+    const countSpan = document.getElementById('totalCount');
+    if (badge && countSpan) {
+      badge.classList.remove('d-none');
+      countSpan.textContent = total;
     }
   }
 
-  async function loadRealtimeSetting() {
-    try {
-      const res = await PKD.getRealtimeSetting();
-      realtimeEnabled = res.success && res.enabled;
-      if (realtimeEnabled) {
-        updateTotalPeserta();
-        setInterval(updateTotalPeserta, 30000);
-      }
-    } catch (e) {
-      console.warn('Gagal memuat pengaturan realtime:', e);
-    }
-  }
-
-  // ==========================================
-  // LOGIN MODE CHECK
-  // ==========================================
+  // Cek login mode
   async function checkLoginMode() {
     try {
       const res = await PKD.getLoginMode();
       requireLogin = res.success ? res.enabled : false;
-
       if (requireLogin && !PKD.getUserRole()) {
         document.getElementById('menuGrid').style.display = 'none';
         document.getElementById('loginPrompt').style.display = 'block';
@@ -728,86 +237,43 @@
         document.getElementById('menuGrid').style.display = 'grid';
         document.getElementById('loginPrompt').style.display = 'none';
       }
-    } catch (e) {
-      console.warn('Gagal memeriksa mode login', e);
-    }
+    } catch (e) {}
   }
 
-  // ==========================================
-  // WA CONTACT (FAQ)
-  // ==========================================
+  // WA Contact
   function updateWAContact() {
     const waItem = document.getElementById('waContactItem');
     if (!waItem) return;
-
     const num1 = Math.floor(Math.random() * 10) + 1;
     const num2 = Math.floor(Math.random() * 10) + 1;
-    const correctAnswer = num1 + num2;
-    waItem.dataset.correctAnswer = correctAnswer;
-
+    waItem.dataset.correctAnswer = num1 + num2;
     waItem.innerHTML = `
       <div class="fw-bold mb-2"><i class="bi bi-whatsapp me-2"></i>Kontak Admin via WhatsApp</div>
       <div class="text-muted small mb-2">Isi data, pesan akan langsung terkirim ke admin.</div>
-      <div class="mb-2">
-        <input type="text" class="form-control form-control-sm" id="waName" placeholder="Nama Anda" maxlength="100">
-      </div>
-      <div class="mb-2">
-        <textarea class="form-control form-control-sm" id="waMessage" rows="2" placeholder="Permasalahan / pesan" maxlength="500"></textarea>
-      </div>
-      <div class="mb-2">
-        <label class="form-label small">Verifikasi: Berapa ${num1} + ${num2}?</label>
-        <input type="number" class="form-control form-control-sm" id="waCaptcha" placeholder="Jawaban">
-      </div>
-      <button class="btn btn-success btn-sm w-100" id="waSendBtn">
-        <i class="bi bi-whatsapp"></i> Kirim ke WhatsApp
-      </button>
+      <div class="mb-2"><input type="text" class="form-control form-control-sm" id="waName" placeholder="Nama Anda" maxlength="100"></div>
+      <div class="mb-2"><textarea class="form-control form-control-sm" id="waMessage" rows="2" placeholder="Permasalahan / pesan" maxlength="500"></textarea></div>
+      <div class="mb-2"><label class="form-label small">Verifikasi: Berapa ${num1} + ${num2}?</label><input type="number" class="form-control form-control-sm" id="waCaptcha" placeholder="Jawaban"></div>
+      <button class="btn btn-success btn-sm w-100" id="waSendBtn"><i class="bi bi-whatsapp"></i> Kirim ke WhatsApp</button>
     `;
-
     document.getElementById('waSendBtn')?.addEventListener('click', function() {
       const name = document.getElementById('waName').value.trim();
       const message = document.getElementById('waMessage').value.trim();
       const captcha = document.getElementById('waCaptcha').value.trim();
-
-      if (name === '' || message === '' || captcha === '') {
-        alert('Mohon isi semua field, termasuk verifikasi.');
-        return;
-      }
-
-      if (parseInt(captcha) !== parseInt(waItem.dataset.correctAnswer)) {
-        alert('Jawaban verifikasi salah. Silakan coba lagi.');
-        return;
-      }
-
-      const now = new Date();
-      const waktu = now.toLocaleString('id-ID', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
-
-      const phoneNumber = '6283866675521';
-      const pesanFormatted = 
-        `*Pesan dari Halaman FAQ PKD GP Ansor Kabupaten Bantul*%0A%0A` +
-        `*Nama:* ${encodeURIComponent(name)}%0A` +
-        `*Waktu Kirim:* ${encodeURIComponent(waktu)}%0A` +
-        `*Pesan:*%0A${encodeURIComponent(message)}%0A%0A` +
-        `_Dikirim melalui fitur kontak WhatsApp di website PKD._`;
-
-      const waUrl = `https://wa.me/${phoneNumber}?text=${pesanFormatted}`;
-      window.open(waUrl, '_blank');
+      if (!name || !message || !captcha) { alert('Mohon isi semua field.'); return; }
+      if (parseInt(captcha) !== parseInt(waItem.dataset.correctAnswer)) { alert('Verifikasi salah.'); return; }
+      const waktu = new Date().toLocaleString('id-ID');
+      const pesan = `*Pesan dari FAQ PKD GP Ansor Kabupaten Bantul*%0A%0A*Nama:* ${encodeURIComponent(name)}%0A*Waktu:* ${encodeURIComponent(waktu)}%0A*Pesan:*%0A${encodeURIComponent(message)}`;
+      window.open(`https://wa.me/6283866675521?text=${pesan}`, '_blank');
     });
   }
 
-  // ==========================================
-  // FAQ TOGGLE
-  // ==========================================
+  // FAQ Toggle
   (function() {
     const toggleBtn = document.getElementById('chatbotToggleBtn');
     const panel = document.getElementById('chatbotPanel');
     const closeBtn = document.getElementById('chatbotCloseBtn');
-
     toggleBtn?.addEventListener('click', () => panel.classList.toggle('show'));
     closeBtn?.addEventListener('click', () => panel.classList.remove('show'));
-
     document.addEventListener('click', function(e) {
       if (panel && toggleBtn && !panel.contains(e.target) && !toggleBtn.contains(e.target) && panel.classList.contains('show')) {
         panel.classList.remove('show');
@@ -815,73 +281,21 @@
     });
   })();
 
-  // ==========================================
-  // INITIAL DATA LOAD
-  // ==========================================
-  async function loadInitialData() {
-    const existing = DataCache.getAllData();
-    if (existing && existing.pretestQuestions && existing.pretestQuestions.length > 0) {
-      console.log('✅ Data sudah ada di DataCache, tidak perlu fetch ulang.');
-      const badge = document.getElementById('totalPesertaBadge');
-      const countSpan = document.getElementById('totalCount');
-      if (badge && countSpan) {
-        const total = existing.peserta?.length || 0;
-        badge.classList.remove('d-none');
-        countSpan.textContent = total;
-      }
-      return;
-    }
-
-    try {
-      console.log('🔄 Mengambil data awal dari API...');
-      const result = await PKD.callApi('getAllData', {}, 'GET');
-      if (result && result.success) {
-        const data = result.data || {};
-        data.pretestQuestions = data.pretestQuestions || [];
-        data.posttestQuestions = data.posttestQuestions || [];
-        data.skriningQuestions = data.skriningQuestions || [];
-        data.quizSettings = data.quizSettings || {};
-        data.peserta = data.peserta || [];
-        data.sesi = data.sesi || [];
-        data.materi = data.materi || [];
-
-        DataCache.setAllData(data);
-        console.log('✅ Data berhasil disimpan ke DataCache:', data);
-
-        const badge = document.getElementById('totalPesertaBadge');
-        const countSpan = document.getElementById('totalCount');
-        if (badge && countSpan) {
-          const total = data.peserta?.length || 0;
-          badge.classList.remove('d-none');
-          countSpan.textContent = total;
-        }
-      } else {
-        console.warn('⚠️ Gagal mengambil data dari API:', result);
-      }
-    } catch (e) {
-      console.error('❌ Gagal load data awal:', e);
-    }
-  }
-
-  // ==========================================
-  // INIT
-  // ==========================================
-  window.onload = function() {
-    updateWAContact();
-    loadRealtimeSetting();
+  // Init
+  document.addEventListener('DOMContentLoaded', function() {
+    updateTotalFromCache();
     checkLoginMode();
-    loadInitialData();
-  };
+    updateWAContact();
+    PKD.updateNavbarMenu(); // update user menu
+  });
 
   // Close navbar on outside click
   document.addEventListener('click', function(event) {
     const navbar = document.getElementById('navbarMain');
     const toggler = document.querySelector('.navbar-toggler');
     if (!navbar || !toggler) return;
-    const isClickInside = navbar.contains(event.target) || toggler.contains(event.target);
-    if (!isClickInside && navbar.classList.contains('show')) {
-      const bsCollapse = bootstrap.Collapse.getInstance(navbar);
-      if (bsCollapse) bsCollapse.hide();
+    if (!navbar.contains(event.target) && !toggler.contains(event.target) && navbar.classList.contains('show')) {
+      bootstrap.Collapse.getInstance(navbar)?.hide();
     }
   });
 </script>

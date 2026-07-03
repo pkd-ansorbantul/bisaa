@@ -38,25 +38,11 @@
 </head>
 <body>
 
-<!-- ==================== MODE LOGIN CHECK ==================== -->
+<!-- ==================== PENGE CEKAN VISIBILITAS & LOGIN (PARALEL) ==================== -->
 <script>
   (function() {
-    async function checkLoginThenLoad() {
-      try {
-        const res = await PKD.getLoginMode();
-        const requireLogin = res.success ? res.enabled : false;
-
-        if (requireLogin) {
-          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-          if (!auth) {
-            window.location.href = '/bisaa/login.html';
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Gagal cek mode login, lanjut tanpa login:', e);
-      }
-
+    // Fungsi init utama
+    function initPage() {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadMateriList);
       } else {
@@ -64,7 +50,49 @@
       }
     }
 
-    checkLoginThenLoad();
+    async function checkAccessAndLoad() {
+      try {
+        // Pastikan PKD sudah didefinisikan
+        if (typeof PKD === 'undefined') {
+          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          if (typeof PKD === 'undefined') {
+            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
+            initPage();
+            return;
+          }
+        }
+
+        // ✅ JALANKAN SECARA PARALEL (PEMERIKSAAN VISIBILITAS & LOGIN MODE)
+        const [visRes, loginRes] = await Promise.all([
+            PKD.getPublicVisibility().catch(() => null),
+            PKD.getLoginMode().catch(() => null)
+        ]);
+
+        let requireLogin = true;
+        if (visRes && visRes.success && visRes.data) {
+          requireLogin = visRes.data.materi !== false; // default: true (harus login)
+        } else if (loginRes && loginRes.success) {
+          requireLogin = loginRes.enabled;
+        }
+
+        if (requireLogin) {
+          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
+          if (!auth) {
+            window.location.href = '/bisaa/login.html?return=materi.html';
+            return;
+          }
+        }
+
+        initPage();
+
+      } catch (e) {
+        console.error('Error di checkAccess:', e);
+        initPage();
+      }
+    }
+
+    checkAccessAndLoad();
   })();
 </script>
 
@@ -119,6 +147,9 @@
         <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen onload="document.getElementById('previewMateriSpinner').style.display='none';"></iframe>
       </div>
       <div class="modal-footer border-0 bg-dark rounded-bottom-4">
+        <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
+          <i class="bi bi-fullscreen"></i> Fullscreen (F5)
+        </button>
         <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
         <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4">
           <i class="bi bi-download me-1"></i>Unduh
@@ -147,11 +178,6 @@
 <script src="/bisaa/api.js"></script>
 
 <script>
-  // =====================================================
-  //   KONFIGURASI & STATE
-  // =====================================================
-  // Tidak perlu SCRIPT_URL manual, gunakan PKD
-
   // =====================================================
   //   FUNGSI BANTU
   // =====================================================
@@ -183,12 +209,50 @@
   }
 
   // =====================================================
+  //   FULLSCREEN / PRESENTASI MODE
+  // =====================================================
+  function toggleFullscreen() {
+    const iframe = document.getElementById('previewMateriIframe');
+    if (!iframe) return;
+    if (!document.fullscreenElement) {
+      iframe.requestFullscreen().then(() => {
+        const modalHeader = document.querySelector('#previewMateriModal .modal-header');
+        const modalFooter = document.querySelector('#previewMateriModal .modal-footer');
+        if (modalHeader) modalHeader.style.display = 'none';
+        if (modalFooter) modalFooter.style.display = 'none';
+      }).catch(err => {
+        console.warn('Gagal fullscreen:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('previewMateriModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (e.key === 'F5' || e.keyCode === 116) {
+      e.preventDefault();
+      toggleFullscreen();
+    }
+  });
+
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+      const modalHeader = document.querySelector('#previewMateriModal .modal-header');
+      const modalFooter = document.querySelector('#previewMateriModal .modal-footer');
+      if (modalHeader) modalHeader.style.display = '';
+      if (modalFooter) modalFooter.style.display = '';
+    }
+  });
+
+  // =====================================================
   //   RENDER DAFTAR MATERI
   // =====================================================
   function renderMateriList(materi) {
     const container = document.getElementById('materiContainer');
     if (!container) return;
-    if (!materi.length) {
+    if (!materi || materi.length === 0) {
       container.innerHTML = '<div class="alert alert-info text-center">Belum ada materi yang diunggah.</div>';
       return;
     }
@@ -197,7 +261,9 @@
     materi.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(m => {
       const fileUrl = `https://drive.google.com/file/d/${m.fileId}/view`;
       const previewUrl = `https://drive.google.com/file/d/${m.fileId}/preview`;
-      const icon = m.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' : 'bi-file-ppt-fill text-warning';
+      const icon = m.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' : 
+                  (m.tipe === 'ppt' || m.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' : 
+                  (m.tipe === 'doc' || m.tipe === 'docx' ? 'bi-file-word-fill text-primary' : 'bi-file-earmark-fill text-secondary'));
       
       html += `
         <div class="col-md-6">
@@ -209,7 +275,7 @@
               </div>
               <p class="card-text text-muted small">${escapeHtml(m.deskripsi || '')}</p>
               <div class="d-flex justify-content-between align-items-center">
-                <span class="badge bg-light text-dark">${m.tipe.toUpperCase()}</span>
+                <span class="badge bg-light text-dark">${(m.tipe || 'file').toUpperCase()}</span>
                 <div>
                   <button class="btn btn-primary btn-sm rounded-pill px-3 me-1 preview-materi-btn" 
                     data-judul="${escapeHtml(m.judul)}" 
@@ -234,7 +300,6 @@
     container.innerHTML = html;
     container.classList.add('fade-in');
 
-    // Event listener untuk tombol preview
     document.querySelectorAll('.preview-materi-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const judul = this.dataset.judul;
@@ -252,42 +317,51 @@
   }
 
   // =====================================================
-  //   LOAD MATERI (cache dulu, lalu background update)
+  //   LOAD MATERI (CACHE-FIRST + BACKGROUND FETCH INSTAN)
   // =====================================================
   async function loadMateriList() {
     const container = document.getElementById('materiContainer');
-    if (!container) return;
-
-    // 1. Coba ambil dari DataCache
+    
+    // 1. Baca dari DataCache secara instan
     let materi = DataCache.getData('materi');
     if (materi && materi.length) {
       renderMateriList(materi);
-      // 2. Background update
-      PKD.getMateriList(true).then(newMateri => {
-        if (JSON.stringify(newMateri) !== JSON.stringify(materi)) {
-          renderMateriList(newMateri);
-        }
-      }).catch(err => console.warn('Gagal update materi:', err));
     } else {
-      // Tidak ada cache, tampilkan spinner
       container.innerHTML = '<div class="text-center my-4"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat materi...</p></div>';
-      try {
-        materi = await PKD.getMateriList(true);
-        renderMateriList(materi);
-      } catch (e) {
+    }
+
+    // 2. Background fetch tanpa penundaan (instant fetch)
+    try {
+      const freshMateri = await PKD.getMateriList(true);
+      if (freshMateri && freshMateri.length > 0) {
+        if (JSON.stringify(freshMateri) !== JSON.stringify(materi)) {
+          DataCache.updateData('materi', freshMateri);
+          renderMateriList(freshMateri);
+        }
+      } else if (!materi || materi.length === 0) {
+        // Jika API kosong dan cache kosong
+        container.innerHTML = '<div class="alert alert-info text-center">Belum ada materi yang diunggah.</div>';
+      }
+    } catch (e) {
+      console.warn('Gagal fetch materi:', e);
+      // Jika cache awal kosong dan API error, tampilkan error
+      if (!materi || materi.length === 0) {
         container.innerHTML = `<div class="alert alert-danger">Gagal memuat materi: ${escapeHtml(e.message)}</div>`;
       }
     }
   }
 
-  // Reset iframe saat modal ditutup
   document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function () {
     document.getElementById('previewMateriIframe').src = '';
     document.getElementById('previewMateriSpinner').style.display = 'flex';
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
   });
 
-  // Pastikan fungsi tersedia di global scope
+  // Ekspos fungsi ke global
   window.loadMateriList = loadMateriList;
+  window.toggleFullscreen = toggleFullscreen;
 </script>
 </body>
 </html>
