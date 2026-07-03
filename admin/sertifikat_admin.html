@@ -1716,7 +1716,20 @@
                 if (val) loadLayoutFromCloud(val);
             });
 
-            document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); } if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); } if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject) deleteObject(); if (e.key === 'd' && !e.ctrlKey && selectedObject) duplicateObject(); if (e.key === 't' && !e.ctrlKey) addText(); if (e.key === 'i' && !e.ctrlKey) addImage(); if (e.key === 'Escape') deselectAll(); });
+                  document.addEventListener('keydown', function(e) {
+        // 🔥 PERBAIKAN: Abaikan shortcut jika sedang mengetik di input, textarea, atau modal
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.modal, .offcanvas')) {
+            return;
+        }
+
+        if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+        if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject) deleteObject();
+        if (e.key === 'd' && !e.ctrlKey && selectedObject) duplicateObject();
+        if (e.key === 't' && !e.ctrlKey) addText();
+        if (e.key === 'i' && !e.ctrlKey) addImage();
+        if (e.key === 'Escape') deselectAll();
+      });
             document.addEventListener('click', function(e) { if (!e.target.closest('.draggable-item') && !e.target.closest('.properties-panel-horizontal') && !e.target.closest('.editor-toolbar')) deselectAll(); });
 
             document.querySelectorAll('#propertiesPanel input, #propertiesPanel select').forEach(inp => inp.addEventListener('input', function() {
