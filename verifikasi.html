@@ -1,744 +1,509 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Verifikasi Sertifikat - PKD GP Ansor Bantul</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Verifikasi Keaslian Sertifikat - PKD GP Ansor Bantul</title>
 
-  <!-- Favicon & Font Modern -->
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- QuaggaJS untuk fallback barcode -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <!-- Favicon & Font -->
+    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <style>
-    * {
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    }
-    body {
-      background: #f8fafc;
-      color: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .navbar {
-      background: rgba(255,255,255,0.8) !important;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    }
-    .navbar-brand {
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: #0f172a !important;
-    }
-    .navbar-brand img {
-      height: 40px;
-      width: auto;
-      margin-right: 10px;
-    }
-    .brand-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #0a3d62;
-    }
-    .brand-sub {
-      font-size: 0.8rem;
-      font-weight: 400;
-      color: #6c757d;
-      display: block;
-      margin-top: 2px;
-    }
-    .container-card {
-      max-width: 900px;
-      background: white;
-      border-radius: 32px;
-      padding: 2rem;
-      margin: 30px auto;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-      border: 1px solid rgba(226,232,240,0.6);
-      flex: 1;
-    }
-    .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      margin-bottom: 1.5rem;
-      color: #0f172a;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
-    }
-    #barcode-reader {
-      width: 100%;
-      border: 2px dashed #cbd5e1;
-      border-radius: 24px;
-      padding: 16px;
-      background: #f1f5f9;
-      min-height: 250px;
-      display: none;
-      position: relative;
-    }
-    #barcode-reader video, #barcode-reader canvas {
-      border-radius: 16px;
-      width: 100%;
-      max-height: 400px;
-      object-fit: cover;
-    }
-    #barcode-reader .btn-close-scanner {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 10;
-      background: rgba(255,255,255,0.8);
-      border-radius: 50%;
-      padding: 4px 8px;
-      cursor: pointer;
-    }
-    #barcode-reader .drawingBuffer {
-      display: none;
-    }
-    .footer-modern {
-      font-size: 0.85rem;
-      color: #64748b;
-      text-align: center;
-      padding: 1.5rem 0;
-      border-top: 1px solid #e2e8f0;
-      background: white;
-      margin-top: auto;
-    }
-    .btn-rounded {
-      border-radius: 9999px;
-      padding: 0.6rem 2rem;
-      font-weight: 600;
-    }
-    .container-card {
-      animation: fadeInUp 0.5s ease-out;
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    #loadingSpinner {
-      display: none;
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 2rem;
-      height: 2rem;
-      border: 3px solid rgba(37,99,235,0.2);
-      border-radius: 50%;
-      border-top-color: #2563eb;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .verification-result {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 10px;
-      background-color: #f8f9fa;
-      border-left: 4px solid #2563eb;
-    }
-    .verification-valid {
-      border-left-color: #28a745;
-      background-color: #d4edda;
-    }
-    .verification-invalid {
-      border-left-color: #dc3545;
-      background-color: #f8d7da;
-    }
-    .signature-img {
-      max-height: 80px;
-      max-width: 200px;
-      object-fit: contain;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 8px;
-      background: white;
-    }
-    .badge-status {
-      font-size: 1.1rem;
-      padding: 8px 24px;
-      border-radius: 50px;
-    }
-    .scan-btn-wrapper {
-      display: flex;
-      gap: 8px;
-    }
-    #scanBarcodeBtn {
-      white-space: nowrap;
-    }
-    /* Refresh button style */
-    .refresh-btn {
-        border-radius: 50%;
-        width: 44px;
-        height: 44px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: none;
-        background: white;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-    }
-    .refresh-btn:hover { background: #f1f5f9; }
-  </style>
+    <!-- Library untuk QR Scanner -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: rgba(255,255,255,0.8) !important;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(203,213,225,0.3);
+        }
+        .navbar-brand img { height: 40px; margin-right: 12px; }
+        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
+        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
+        .container-card {
+            max-width: 700px;
+            background: white;
+            border-radius: 32px;
+            padding: 2rem;
+            margin: 30px auto;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(226,232,240,0.6);
+        }
+        .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+        .footer-modern {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+            margin-top: auto;
+        }
+        .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
+        
+        /* ===== STYLE KARTU HASIL ===== */
+        .result-card {
+            margin-top: 20px;
+            border-radius: 16px;
+            padding: 20px;
+            background: #d1fae5;
+            border-left: 6px solid #059669;
+            text-align: left;
+            display: none;
+        }
+        .result-card .badge-valid { background: #059669; color: white; padding: 6px 20px; border-radius: 50px; font-size: 0.9rem; display: inline-block; margin-bottom: 15px; }
+        .result-row { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px; }
+        .result-item { flex: 1; min-width: 200px; }
+        .result-item strong { display: block; font-size: 0.8rem; color: #0f172a; margin-bottom: 2px; }
+        .result-item span { font-weight: 600; font-size: 0.95rem; color: #0f172a; }
+        .input-group .btn { border-radius: 0 8px 8px 0; }
+        .btn-scan { border-radius: 8px !important; margin-left: 8px; }
+        @media (max-width: 576px) { .container-card { padding: 1.5rem; } }
+
+        /* ===== LOADING SPINNER ===== */
+        .loading-state {
+            text-align: center;
+            padding: 20px 10px;
+        }
+        .loading-state .spinner-border {
+            width: 2.5rem;
+            height: 2.5rem;
+            color: #2563eb;
+        }
+
+        /* ===== QR SCANNER STYLES ===== */
+        #scannerOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #scannerOverlay video, #scannerOverlay canvas {
+            max-width: 90vw;
+            max-height: 80vh;
+            border-radius: 16px;
+            background: #000;
+        }
+        #scannerOverlay .drawingBuffer {
+            display: none;
+        }
+        .scanner-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10000;
+        }
+        .scanner-close:hover {
+            background: rgba(255,255,255,0.4);
+        }
+        /* Tombol Hentikan Scanner */
+        .scanner-stop {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            padding: 10px 30px;
+        }
+        .scanner-status {
+            color: #ccc;
+            margin-top: 15px;
+            font-size: 1rem;
+            font-weight: 500;
+            z-index: 10000;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Navbar -->
 <nav class="navbar navbar-expand navbar-light bg-white sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor">
-      <span>
-        <span class="brand-title">PKD GP Ansor</span>
-        <span class="brand-sub">Kabupaten Bantul</span>
-      </span>
-    </a>
-    <div class="ms-auto d-flex align-items-center gap-2">
-      <button class="refresh-btn" id="refreshBtn" title="Segarkan Data">
-        <i class="bi bi-arrow-clockwise"></i>
-      </button>
-      <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
-        <i class="bi bi-house-door me-1"></i>Beranda
-      </a>
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
+            <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
+            <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+        </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm refresh-btn" id="refreshBtn" title="Segarkan"><i class="bi bi-arrow-clockwise"></i></button>
+            <a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-house-door me-1"></i> Beranda</a>
+        </div>
     </div>
-  </div>
 </nav>
 
-<!-- Konten Utama -->
 <div class="container container-card">
-  <h2 class="section-title">
-    <i class="bi bi-upc-scan me-2"></i>Verifikasi Keaslian Sertifikat
-  </h2>
+    <h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Keaslian Sertifikat</h2>
 
-  <!-- Input manual + tombol scan barcode -->
-  <div class="mb-4">
-    <label class="form-label fw-semibold">Masukkan Nomor Sertifikat</label>
-    <div class="scan-btn-wrapper">
-      <div class="input-group flex-grow-1">
-        <input type="text" class="form-control form-control-lg" id="certNumberInput" placeholder="Contoh: 001/PC-XI/SR-01.PKD/I/2026">
-        <button class="btn btn-primary btn-lg" type="button" id="verifyByNumberBtn">
-          <i class="bi bi-search"></i> Cek
-        </button>
-      </div>
-      <button class="btn btn-outline-secondary btn-lg" type="button" id="scanBarcodeBtn" title="Scan barcode pada sertifikat">
-        <i class="bi bi-upc-scan"></i>
-      </button>
+    <p class="text-muted small mb-2">Masukkan Nomor Sertifikat</p>
+    <div class="d-flex gap-2">
+        <div class="input-group flex-grow-1">
+            <input type="text" class="form-control form-control-lg" id="certNumberInput" placeholder="Contoh: 001/PC-XI/SR-01.PKD/I/2026" value="002/PC-XI/SR-01.PKD/VI/2026">
+            <button class="btn btn-primary btn-lg" id="verifyBtn"><i class="bi bi-search me-1"></i> Cek</button>
+        </div>
+        <button class="btn btn-outline-secondary btn-lg btn-scan" id="scanBtn" title="Scan QR"><i class="bi bi-qr-code"></i></button>
     </div>
-    <div class="form-text text-muted small">Atau klik ikon <i class="bi bi-upc-scan"></i> untuk memindai barcode pada sertifikat.</div>
-  </div>
+    <div class="form-text text-muted small mt-1">Atau klik ikon <i class="bi bi-qr-code"></i> untuk memindai QR pada sertifikat.</div>
 
-  <!-- Area kamera untuk scan barcode -->
-  <div id="barcode-reader" class="position-relative mb-4">
-    <div class="btn-close-scanner" id="closeScannerBtn" title="Tutup kamera">
-      <i class="bi bi-x-lg"></i>
+    <!-- ==================== KARTU HASIL DENGAN LOADING ==================== -->
+    <div id="resultContainer" class="result-card">
+        <!-- Bagian untuk Loading -->
+        <div id="loadingIndicator" class="loading-state">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Memverifikasi...</span>
+            </div>
+            <p class="mt-2 text-muted">Sedang memverifikasi nomor sertifikat, harap tunggu...</p>
+        </div>
+
+        <!-- Bagian untuk Hasil Verifikasi -->
+        <div id="resultContent" style="display: none;">
+            <div class="badge-valid"><i class="bi bi-check-circle-fill me-1"></i> Sertifikat VALID</div>
+            <hr class="my-3">
+            <div class="result-row">
+                <!-- Akan diisi oleh JavaScript -->
+            </div>
+        </div>
     </div>
-    <div id="barcode-video-container"></div>
-    <div id="barcode-reader-results" class="mt-2 small text-muted"></div>
-  </div>
 
-  <!-- Indikator proses -->
-  <div id="loadingSpinner" class="text-center my-3">
-    <div class="loading-spinner" role="status">
-      <span class="visually-hidden">Memverifikasi...</span>
+    <div class="text-center mt-3">
+        <a href="/bisaa/index.html" class="btn btn-outline-secondary rounded-pill px-5"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
     </div>
-    <p class="mt-2">Memverifikasi sertifikat, harap tunggu...</p>
-  </div>
-
-  <!-- Hasil verifikasi -->
-  <div id="verifyResult" class="mt-4" style="display: none;"></div>
-
-  <div class="text-center mt-3">
-    <a href="index.html" class="btn btn-outline-secondary rounded-pill px-5">
-      <i class="bi bi-arrow-left me-1"></i>Kembali
-    </a>
-  </div>
 </div>
 
-<!-- Footer -->
 <footer class="footer-modern">
-  <div class="container">
-    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
-  </div>
+    <div class="container"><i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</div>
 </footer>
 
-<!-- Bootstrap JS -->
+<!-- ==================== QR SCANNER OVERLAY ==================== -->
+<div id="scannerOverlay">
+    <button class="scanner-close" id="closeScanner"><i class="bi bi-x-lg"></i></button>
+    <div id="scannerVideoContainer"></div>
+    <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
+    <!-- Tombol Hentikan Scanner -->
+    <button class="btn btn-danger btn-lg rounded-pill scanner-stop" id="stopScannerBtn">
+        <i class="bi bi-stop-circle me-2"></i> Hentikan
+    </button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- api.js -->
-<script src="api.js"></script>
-<script src="dataCache.js"></script>
+<script src="/bisaa/api.js"></script>
+<script src="/bisaa/dataCache.js"></script>
 
 <script>
-  // =====================================================
-  //   FUNGSI BANTU
-  // =====================================================
-  function escapeHtmlLocal(unsafe) {
-    if (typeof PKD !== 'undefined' && PKD.escapeHtml) {
-      return PKD.escapeHtml(unsafe);
-    }
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+    (function() {
+        'use strict';
 
-  // Cache hasil verifikasi (lokal)
-  function cacheResult(nomor, data) {
-    try {
-      localStorage.setItem('verify_' + nomor, JSON.stringify(data));
-    } catch (e) {}
-  }
-
-  function getCachedResult(nomor) {
-    try {
-      const cached = localStorage.getItem('verify_' + nomor);
-      if (cached) {
-        const data = JSON.parse(cached);
-        if (data._timestamp && (Date.now() - data._timestamp < 3600000)) { // cache 1 jam
-          return data;
-        }
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  // =====================================================
-  //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
-  // =====================================================
-  (function() {
-    async function checkAccessAndLoad() {
-      try {
-        if (typeof PKD === 'undefined') {
-          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
-          await new Promise(resolve => setTimeout(resolve, 300));
-          if (typeof PKD === 'undefined') {
-            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
-            initMain();
-            return;
-          }
-        }
-
-        // ✅ JALANKAN SECARA PARALEL
-        const [visRes, loginRes] = await Promise.all([
-            PKD.getPublicVisibility().catch(() => null),
-            PKD.getLoginMode().catch(() => null)
-        ]);
-
-        let requireLogin = true;
-        if (visRes && visRes.success && visRes.data) {
-          requireLogin = visRes.data.verifikasi !== false;
-        } else if (loginRes && loginRes.success) {
-          requireLogin = loginRes.enabled;
-        }
-
-        if (requireLogin) {
-          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-          if (!auth) {
-            window.location.href = '/bisaa/login.html?return=verifikasi.html';
-            return;
-          }
-        }
-
-        initMain();
-
-      } catch (e) {
-        console.error('Error di checkAccess:', e);
-        initMain();
-      }
-    }
-
-    function initMain() {
-      // =====================================================
-      //   VERIFIKASI SERTIFIKAT
-      // =====================================================
-      async function verifyCertificate(nomor) {
-        const resultDiv = document.getElementById('verifyResult');
-        const spinner = document.getElementById('loadingSpinner');
-        resultDiv.style.display = 'none';
-        spinner.style.display = 'block';
-
-        const cleanedNomor = nomor ? nomor.toString().trim().replace(/\s+/g, ' ') : '';
-        if (!cleanedNomor) {
-          spinner.style.display = 'none';
-          showResult('<div class="alert alert-danger mb-0">Masukkan nomor sertifikat terlebih dahulu.</div>', false);
-          return;
-        }
-
-        // Cek cache hasil verifikasi sebelumnya
-        const cached = getCachedResult(cleanedNomor);
-        if (cached) {
-          spinner.style.display = 'none';
-          renderVerificationResult(cached);
-          return;
-        }
-
-        try {
-          if (typeof PKD === 'undefined' || typeof PKD.verifyCertificate !== 'function') {
-            spinner.style.display = 'none';
-            showResult('<div class="alert alert-danger mb-0">Sistem tidak tersedia. Pastikan API sudah dimuat.</div>', false);
-            return;
-          }
-
-          const res = await PKD.verifyCertificate(cleanedNomor);
-          spinner.style.display = 'none';
-          if (res.success && res.data) {
-            const dataWithTimestamp = { ...res.data, _timestamp: Date.now() };
-            cacheResult(cleanedNomor, dataWithTimestamp);
-            renderVerificationResult(res.data);
-          } else {
-            showResult(`<div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor "${escapeHtmlLocal(cleanedNomor)}" tidak ditemukan.</div>`, false);
-          }
-        } catch (e) {
-          spinner.style.display = 'none';
-          showResult(`<div class="alert alert-danger mb-0">Gagal memverifikasi: ${escapeHtmlLocal(e.message)}</div>`, false);
-        }
-      }
-
-      function renderVerificationResult(data) {
-        const ttdKetuaPC = data.ttd_ketua_pc || '';
-        const ttdSekretaris = data.ttd_sekretaris || '';
-        const ttdInstruktur = data.ttd_instruktur || '';
-        const hasSignatures = ttdKetuaPC || ttdSekretaris || ttdInstruktur;
-
-        const html = `
-          <div class="verification-result verification-valid">
-            <div class="text-center mb-3">
-              <span class="badge-status bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>Sertifikat VALID</span>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-md-6">
-                <p class="mb-1"><strong>Nama:</strong> ${escapeHtmlLocal(data.nama_peserta || '-')}</p>
-                <p class="mb-1"><strong>Nomor Sertifikat:</strong> ${escapeHtmlLocal(data.nomor_sertifikat || '-')}</p>
-              </div>
-              <div class="col-md-6">
-                <p class="mb-1"><strong>Lokasi PKD:</strong> ${escapeHtmlLocal(data.lokasi || 'Kabupaten Bantul')}</p>
-                <p class="mb-1"><strong>Tanggal Terbit:</strong> ${escapeHtmlLocal(data.createdAt || '-')}</p>
-              </div>
-            </div>
-
-            ${hasSignatures ? `
-            <hr>
-            <h6 class="text-center fw-bold mb-3">Tanda Tangan Digital</h6>
-            <div class="row g-3 text-center">
-              <div class="col-md-4">
-                <p class="mb-1 fw-bold">Ketua PC</p>
-                ${ttdKetuaPC ? `<img src="https://drive.google.com/thumbnail?id=${ttdKetuaPC}&sz=w300" class="signature-img" alt="Tanda tangan Ketua PC">` : '<p class="text-muted">Belum tersedia</p>'}
-              </div>
-              <div class="col-md-4">
-                <p class="mb-1 fw-bold">Sekretaris</p>
-                ${ttdSekretaris ? `<img src="https://drive.google.com/thumbnail?id=${ttdSekretaris}&sz=w300" class="signature-img" alt="Tanda tangan Sekretaris">` : '<p class="text-muted">Belum tersedia</p>'}
-              </div>
-              <div class="col-md-4">
-                <p class="mb-1 fw-bold">Instruktur</p>
-                ${ttdInstruktur ? `<img src="https://drive.google.com/thumbnail?id=${ttdInstruktur}&sz=w300" class="signature-img" alt="Tanda tangan Instruktur">` : '<p class="text-muted">Belum tersedia</p>'}
-              </div>
-            </div>
-            ` : ''}
-
-            <div class="text-center mt-3">
-              ${data.pdf_url ? `<a href="${escapeHtmlLocal(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-4"><i class="bi bi-file-pdf"></i> Lihat Sertifikat</a>` : ''}
-            </div>
-          </div>
-        `;
-        showResult(html, true);
-      }
-
-      function showResult(content, isValid = true) {
-        const resultDiv = document.getElementById('verifyResult');
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = content;
-        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-
-      // =====================================================
-      //   BARCODE SCANNER (Native + QuaggaJS fallback)
-      // =====================================================
-      let barcodeScannerActive = false;
-      let barcodeDetector = null;
-      let videoStream = null;
-      let videoElement = null;
-      let animationFrameId = null;
-      let quaggaInitialized = false;
-
-      async function initBarcodeScanner() {
-        const readerDiv = document.getElementById('barcode-reader');
-        const container = document.getElementById('barcode-video-container');
-        const closeBtn = document.getElementById('closeScannerBtn');
-
-        if (barcodeScannerActive) {
-          stopBarcodeScanner();
-          return;
-        }
-
-        if ('BarcodeDetector' in window) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            videoStream = stream;
-
-            videoElement = document.createElement('video');
-            videoElement.srcObject = stream;
-            videoElement.autoplay = true;
-            videoElement.playsInline = true;
-            videoElement.style.width = '100%';
-            videoElement.style.maxHeight = '400px';
-            container.innerHTML = '';
-            container.appendChild(videoElement);
-
-            readerDiv.style.display = 'block';
-            barcodeScannerActive = true;
-
-            barcodeDetector = new BarcodeDetector({ 
-              formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'code_93', 'codabar', 'databar', 'qr_code'] 
+        // ==================== FUNGSI UTAMA VERIFIKASI ====================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return m;
             });
-
-            detectLoopNative();
-            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (native)...';
-            return;
-          } catch (err) {
-            console.warn('Native barcode detector gagal, fallback ke Quagga:', err);
-          }
         }
 
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-          videoStream = stream;
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
 
-          videoElement = document.createElement('video');
-          videoElement.srcObject = stream;
-          videoElement.autoplay = true;
-          videoElement.playsInline = true;
-          videoElement.style.width = '100%';
-          videoElement.style.maxHeight = '400px';
-          container.innerHTML = '';
-          container.appendChild(videoElement);
-
-          readerDiv.style.display = 'block';
-          barcodeScannerActive = true;
-
-          Quagga.init({
-            inputStream: {
-              name: "Live",
-              type: "LiveStream",
-              target: container,
-              constraints: {
-                width: 640,
-                height: 480,
-                facingMode: "environment"
-              },
-            },
-            decoder: {
-              readers: [
-                "code_128_reader",
-                "ean_reader",
-                "ean_8_reader",
-                "upc_reader",
-                "upc_e_reader",
-                "code_39_reader",
-                "code_93_reader",
-                "codabar_reader",
-                "databar_reader"
-              ]
-            },
-            locate: true,
-            numOfWorkers: 2,
-            frequency: 10
-          }, function(err) {
-            if (err) {
-              console.error('Quagga init error:', err);
-              document.getElementById('barcode-reader-results').innerHTML = 'Gagal memulai scanner. Coba input manual.';
-              return;
+        async function verifyCertificate(nomor) {
+            if (!nomor) {
+                alert("Masukkan nomor sertifikat terlebih dahulu.");
+                return;
             }
-            Quagga.start();
-            quaggaInitialized = true;
-            document.getElementById('barcode-reader-results').innerHTML = 'Memindai barcode (Quagga)...';
-          });
 
-          Quagga.onDetected(function(result) {
-            if (result && result.codeResult && result.codeResult.code) {
-              const decodedText = result.codeResult.code;
-              onBarcodeDetected(decodedText);
-            }
-          });
+            const container = document.getElementById('resultContainer');
+            const loading = document.getElementById('loadingIndicator');
+            const content = document.getElementById('resultContent');
+            const contentRow = content.querySelector('.result-row');
 
-        } catch (err) {
-          console.error('Gagal mengakses kamera:', err);
-          alert('Tidak dapat mengakses kamera. Pastikan Anda memberi izin atau gunakan input manual.');
-          readerDiv.style.display = 'none';
-          barcodeScannerActive = false;
-        }
-      }
+            // Tampilkan loading
+            container.style.display = 'block';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            container.className = 'result-card';
 
-      function detectLoopNative() {
-        if (!barcodeScannerActive || !videoElement || videoElement.readyState < 2) {
-          animationFrameId = requestAnimationFrame(detectLoopNative);
-          return;
-        }
+            try {
+                const certRes = await PKD.verifyCertificate(nomor);
+                
+                loading.style.display = 'none';
+                content.style.display = 'block';
 
-        if (barcodeDetector) {
-          barcodeDetector.detect(videoElement)
-            .then(barcodes => {
-              if (barcodes.length > 0) {
-                const barcode = barcodes[0];
-                const decodedText = barcode.rawValue;
-                if (decodedText) {
-                  onBarcodeDetected(decodedText);
-                  return;
+                if (!certRes.success || !certRes.data) {
+                    container.className = 'result-card bg-danger-subtle border-danger';
+                    contentRow.innerHTML = `
+                        <div class="text-danger text-center w-100">
+                            <i class="bi bi-exclamation-circle-fill fs-2"></i>
+                            <h5 class="mt-2">Sertifikat TIDAK DITEMUKAN</h5>
+                            <p class="small">Nomor sertifikat "${escapeHtml(nomor)}" tidak terdaftar di database kami.</p>
+                        </div>
+                    `;
+                    return;
                 }
-              }
-              animationFrameId = requestAnimationFrame(detectLoopNative);
-            })
-            .catch(err => {
-              console.warn('Native detect error:', err);
-              animationFrameId = requestAnimationFrame(detectLoopNative);
-            });
-        } else {
-          animationFrameId = requestAnimationFrame(detectLoopNative);
+
+                const data = certRes.data;
+                const tanggalTerbit = formatDate(data.createdAt);
+
+                // Ambil data persetujuan digital
+                let approvalsHtml = '';
+                try {
+                    const approvalsRes = await PKD.getAllDigitalApprovals();
+                    if (approvalsRes.success && approvalsRes.data) {
+                        const filtered = approvalsRes.data.filter(a => 
+                            a.peserta_nama && a.peserta_nama.toLowerCase() === data.nama_peserta.toLowerCase()
+                        );
+                        if (filtered.length > 0) {
+                            approvalsHtml = filtered.map(a => {
+                                let roleLabel = 'Instruktur';
+                                if (a.role === 'ketua_pc') roleLabel = 'Ketua PC';
+                                else if (a.role === 'sekretaris') roleLabel = 'Sekretaris';
+                                return `<div class="mt-1"><span class="badge bg-light text-dark">${roleLabel}: ${escapeHtml(a.nama)}</span></div>`;
+                            }).join('');
+                        } else {
+                            approvalsHtml = `<div class="text-muted small">Belum ada data persetujuan digital.</div>`;
+                        }
+                    }
+                } catch (e) { console.warn('Gagal ambil approvals', e); }
+
+                container.className = 'result-card';
+
+                contentRow.innerHTML = `
+                    <div class="result-item">
+                        <strong>Nama:</strong>
+                        <span>${escapeHtml(data.nama_peserta)}</span>
+                    </div>
+                    <div class="result-item">
+                        <strong>Lokasi PKD:</strong>
+                        <span>${escapeHtml(data.lokasi || 'Kabupaten Bantul')}</span>
+                    </div>
+                    <div class="result-item">
+                        <strong>Nomor Sertifikat:</strong>
+                        <span>${escapeHtml(data.nomor_sertifikat)}</span>
+                    </div>
+                    <div class="result-item">
+                        <strong>Tanggal Terbit:</strong>
+                        <span class="text-muted">${tanggalTerbit}</span>
+                    </div>
+                    ${approvalsHtml ? `<div class="w-100 mt-2"><hr class="my-2"><strong class="small">Persetujuan Digital:</strong> ${approvalsHtml}</div>` : ''}
+                `;
+
+                if (data.pdf_url) {
+                    contentRow.innerHTML += `
+                        <div class="w-100 mt-2">
+                            <a href="${escapeHtml(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                <i class="bi bi-file-pdf me-1"></i> Lihat PDF
+                            </a>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                container.className = 'result-card bg-danger-subtle border-danger';
+                contentRow.innerHTML = `
+                    <div class="text-danger text-center w-100">
+                        <i class="bi bi-exclamation-circle-fill fs-2"></i>
+                        <h5 class="mt-2">Terjadi Kesalahan</h5>
+                        <p class="small">${escapeHtml(err.message)}</p>
+                    </div>
+                `;
+            }
         }
-      }
 
-      function onBarcodeDetected(decodedText) {
-        stopBarcodeScanner();
+        // ==================== SCANNER QR CODE ====================
+        let scannerActive = false;
+        let quaggaInitialized = false;
 
-        let nomor = decodedText.trim();
-        const prefix = "Sertifikat No: ";
-        if (nomor.startsWith(prefix)) {
-          const afterPrefix = nomor.substring(prefix.length);
-          const dashIndex = afterPrefix.indexOf(" - ");
-          if (dashIndex !== -1) {
-            nomor = afterPrefix.substring(0, dashIndex).trim();
-          } else {
-            nomor = afterPrefix.trim();
-          }
-        } else if (nomor.includes('?nomor=')) {
-          try {
-            const url = new URL(nomor);
-            const paramNomor = url.searchParams.get('nomor');
-            if (paramNomor) nomor = paramNomor;
-          } catch (e) {}
-        } else if (nomor.startsWith('{') && nomor.endsWith('}')) {
-          try {
-            const parsed = JSON.parse(nomor);
-            if (parsed.nomor) nomor = parsed.nomor;
-          } catch (e) {}
+        const scannerOverlay = document.getElementById('scannerOverlay');
+        const closeScannerBtn = document.getElementById('closeScanner');
+        const stopScannerBtn = document.getElementById('stopScannerBtn');
+        const scannerStatus = document.getElementById('scannerStatus');
+        const videoContainer = document.getElementById('scannerVideoContainer');
+
+        // Fungsi untuk menghentikan scanner secara instan & mematikan stream kamera
+        function stopScanner() {
+            if (!scannerActive) return;
+            scannerActive = false;
+
+            // 1. Sembunyikan overlay instan (agar UI cepat merespon)
+            scannerOverlay.style.display = 'none';
+            
+            // 2. Hentikan Quagga
+            if (quaggaInitialized) {
+                try {
+                    Quagga.stop();
+                    Quagga.offDetected();
+                } catch (e) { console.warn('Quagga stop error:', e); }
+                quaggaInitialized = false;
+            }
+
+            // 3. Pastikan stream video benar-benar dimatikan (untuk menghilangkan favicon camera)
+            const videoEl = videoContainer.querySelector('video');
+            if (videoEl) {
+                if (videoEl.srcObject) {
+                    // Hentikan semua track kamera
+                    videoEl.srcObject.getTracks().forEach(track => track.stop());
+                    videoEl.srcObject = null;
+                }
+                // Hapus elemen video dari DOM
+                videoEl.remove();
+            }
+
+            // 4. Bersihkan container
+            videoContainer.innerHTML = '';
+            
+            scannerStatus.innerText = 'Scanner dihentikan.';
+            setTimeout(() => {
+                if (!scannerActive) scannerStatus.innerText = '';
+            }, 1000);
         }
 
-        const input = document.getElementById('certNumberInput');
-        if (input) input.value = nomor;
+        function startScanner() {
+            if (scannerActive) return;
 
-        document.getElementById('barcode-reader-results').innerHTML = `Barcode terdeteksi: ${escapeHtmlLocal(nomor)}`;
-        verifyCertificate(nomor);
-      }
+            scannerOverlay.style.display = 'flex';
+            scannerStatus.innerText = 'Mengakses kamera...';
+            scannerActive = true;
 
-      function stopBarcodeScanner() {
-        barcodeScannerActive = false;
+            // Gunakan QuaggaJS
+            try {
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: videoContainer,
+                        constraints: {
+                            width: 640,
+                            height: 480,
+                            facingMode: "environment"
+                        }
+                    },
+                    decoder: {
+                        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_39_reader", "code_93_reader", "codabar_reader", "databar_reader", "qr_code_reader"]
+                    },
+                    locate: true,
+                    numOfWorkers: 2,
+                    frequency: 10
+                }, function(err) {
+                    if (err) {
+                        console.error('Quagga init error:', err);
+                        scannerStatus.innerText = 'Gagal mengakses kamera. Coba input manual.';
+                        stopScanner();
+                        return;
+                    }
+                    Quagga.start();
+                    quaggaInitialized = true;
+                    scannerStatus.innerText = 'Memindai QR...';
+                });
+
+                Quagga.onDetected(function(result) {
+                    if (result && result.codeResult && result.codeResult.code) {
+                        const decodedText = result.codeResult.code;
+                        onQRDetected(decodedText);
+                    }
+                });
+            } catch (e) {
+                scannerStatus.innerText = 'Gagal memulai scanner.';
+                console.error(e);
+                stopScanner();
+            }
+        }
+
+        function onQRDetected(decodedText) {
+            // Hentikan scanner setelah deteksi
+            stopScanner();
+
+            // Cari parameter nomor di QR
+            let nomor = decodedText.trim();
+            if (nomor.startsWith('http')) {
+                try {
+                    const url = new URL(nomor);
+                    const param = url.searchParams.get('nomor');
+                    if (param) nomor = param;
+                } catch (e) {}
+            }
+            if (nomor.startsWith('{') && nomor.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(nomor);
+                    if (parsed.nomor) nomor = parsed.nomor;
+                } catch (e) {}
+            }
+
+            document.getElementById('certNumberInput').value = nomor;
+            scannerStatus.innerText = `QR terdeteksi: ${nomor}`;
+            // Tunggu sebentar lalu verifikasi
+            setTimeout(() => {
+                verifyCertificate(nomor);
+            }, 500);
+        }
+
+        // Event listeners untuk scanner
+        document.getElementById('scanBtn').addEventListener('click', startScanner);
+        closeScannerBtn.addEventListener('click', stopScanner);
+        stopScannerBtn.addEventListener('click', stopScanner); // Tombol Hentikan
         
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-          animationFrameId = null;
-        }
+        scannerOverlay.addEventListener('click', function(e) {
+            if (e.target === scannerOverlay) stopScanner();
+        });
 
-        if (quaggaInitialized) {
-          Quagga.stop();
-          Quagga.offDetected();
-          quaggaInitialized = false;
-        }
+        // ==================== EVENT LISTENERS LAINNYA ====================
+        document.getElementById('verifyBtn').addEventListener('click', function() {
+            const nomor = document.getElementById('certNumberInput').value.trim();
+            verifyCertificate(nomor);
+        });
+        document.getElementById('certNumberInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const nomor = this.value.trim();
+                verifyCertificate(nomor);
+            }
+        });
+        document.getElementById('refreshBtn')?.addEventListener('click', function() {
+            location.reload();
+        });
 
-        if (videoStream) {
-          videoStream.getTracks().forEach(track => track.stop());
-          videoStream = null;
-        }
-
-        if (videoElement) {
-          videoElement.srcObject = null;
-          videoElement.remove();
-          videoElement = null;
-        }
-
-        document.getElementById('barcode-reader').style.display = 'none';
-        document.getElementById('barcode-video-container').innerHTML = '';
-        document.getElementById('barcode-reader-results').innerHTML = '';
-        barcodeDetector = null;
-      }
-
-      // =====================================================
-      //   AMBIL PARAMETER DARI URL
-      // =====================================================
-      function getQueryParam(param) {
+        // Cek parameter URL
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-      }
-
-      // =====================================================
-      //   INISIALISASI
-      // =====================================================
-      const verifyBtn = document.getElementById('verifyByNumberBtn');
-      if (verifyBtn) {
-        verifyBtn.addEventListener('click', function() {
-          const nomor = document.getElementById('certNumberInput').value;
-          verifyCertificate(nomor);
-        });
-      }
-
-      const input = document.getElementById('certNumberInput');
-      if (input) {
-        input.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            const verifyBtn = document.getElementById('verifyByNumberBtn');
-            if (verifyBtn) verifyBtn.click();
-          }
-        });
-      }
-
-      const scanBtn = document.getElementById('scanBarcodeBtn');
-      if (scanBtn) {
-        scanBtn.addEventListener('click', function() {
-          initBarcodeScanner();
-        });
-      }
-
-      const closeBtn = document.getElementById('closeScannerBtn');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-          stopBarcodeScanner();
-        });
-      }
-
-      document.getElementById('refreshBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        this.disabled = true;
-        window.location.reload();
-      });
-
-      const nomorFromUrl = getQueryParam('nomor');
-      if (nomorFromUrl) {
-        const input = document.getElementById('certNumberInput');
-        if (input) input.value = nomorFromUrl;
-        setTimeout(() => {
-          verifyCertificate(nomorFromUrl);
-        }, 100); // 100ms delay untuk memastikan DOM siap
-      }
-
-      window.addEventListener('beforeunload', function() {
-        stopBarcodeScanner();
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
-    } else {
-      checkAccessAndLoad();
-    }
-  })();
+        const nomorUrl = urlParams.get('nomor');
+        if (nomorUrl) {
+            document.getElementById('certNumberInput').value = nomorUrl;
+            setTimeout(() => verifyCertificate(nomorUrl), 300);
+        }
+    })();
 </script>
 </body>
 </html>
