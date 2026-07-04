@@ -687,11 +687,11 @@
         }
         loadPasswordStatus();
 
-        // --- QR CODE SHOW AND DOWNLOAD ---
+        // --- QR CODE SHOW AND DOWNLOAD (UPDATED TO USE verifikasi_qr.html) ---
         window.showQR = function(role, driveId, nama) {
             const baseUrl = window.location.origin + '/bisaa/';
-            // Gunakan halaman verify_signature.html untuk verifikasi tanda tangan
-            const verifyUrl = `${baseUrl}verify_signature.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(driveId)}`;
+            // Gunakan halaman verifikasi_qr.html untuk verifikasi tanda tangan digital
+            const verifyUrl = `${baseUrl}verifikasi_qr.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(driveId)}`;
             
             // Generate QR menggunakan qrcode-generator
             const qr = qrcode(0, 'M');
