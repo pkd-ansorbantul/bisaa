@@ -111,9 +111,7 @@
     .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
 
-    /* ================================================================
-       MODE MOBILE: 1 KOLOM, 100% LAYAR (TANPA CELAH KANAN/KIRI & ATAS/BAWAH)
-       ================================================================ */
+    /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 991px) {
         .sidebar-wrapper { display: none; }
         .bottom-nav { display: flex; }
@@ -129,41 +127,32 @@
             display: flex; 
             flex-direction: column; 
             min-height: 100vh !important; 
-            padding: 0 1rem 90px 1rem !important; /* Padding kiri kanan 1rem agar tidak terlalu mepet layar */
+            padding: 0 1rem 90px 1rem !important;
         }
         
         #dashboardContent { 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
-            justify-content: space-evenly; /* Sebarkan elemen merata ke atas & bawah */
+            justify-content: space-evenly; 
             padding: 10px 0; 
         }
 
         .section-title { margin-top: 0; padding-top: 0; margin-bottom: 0; font-size: 1.3rem; }
-        .top-toolbar { margin-bottom: 0; margin-top: 5px; }
+        .top-toolbar { margin-bottom: 0; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; }
         .alert-info { margin-top: 0 !important; margin-bottom: 0; }
         .row.g-2.fade-in { width: 100%; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
         
-        /* ✅ PERUBAHAN UTAMA DI SINI: 1 KOLOM (col-12) dengan max-width agar rapi */
         .col-12 {
             width: 100%;
-            max-width: 450px; /* Membatasi lebar maksimal agar tidak terlalu lebar */
-            margin: 0 auto;   /* Memusatkan kartu di tengah layar */
+            max-width: 450px; 
+            margin: 0 auto;   
             padding: 0;
         }
-        .stat-card {
-            padding: 0.8rem 1rem;
-            border-radius: 14px;
-            width: 100%;
-            margin: 0 auto;
-        }
+        .stat-card { padding: 0.8rem 1rem; border-radius: 14px; width: 100%; margin: 0 auto; }
         .stat-number { font-size: 1.6rem; }
         .stat-label { font-size: 0.75rem; }
         .stat-card i { font-size: 1.3rem !important; margin-top: 4px !important; }
-        
-        .top-toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
-        .top-toolbar > div { width: 100%; text-align: center; }
     }
   </style>
 </head>
@@ -331,34 +320,96 @@
       }
     }
 
+    // ==================== LOGIKA DASHBOARD UTAMA (CACHE-FIRST) ====================
     async function loadDashboard() {
-      dashboardContent.innerHTML = `
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Memuat...</span>
-          </div>
-        </div>
-      `;
       updateCacheStatus('Memuat...');
 
+      // --- 1. BACA DATA DARI CACHE DAHULU (INSTAN) ---
+      const cachedPeserta = DataCache.getData('peserta');
+      const cachedSesi = DataCache.getData('sesi');
+      const cachedMateri = DataCache.getData('materi');
+      const cachedSkrining = DataCache.getData('skrining');
+      const cachedPretest = DataCache.getData('pretest');
+      const cachedPosttest = DataCache.getData('posttest');
+
+      let totalPeserta = (cachedPeserta && Array.isArray(cachedPeserta)) ? cachedPeserta.length : 0;
+      let totalSesi = (cachedSesi && Array.isArray(cachedSesi)) ? cachedSesi.length : 0;
+      let totalMateri = (cachedMateri && Array.isArray(cachedMateri)) ? cachedMateri.length : 0;
+      let totalSkrining = (cachedSkrining && Array.isArray(cachedSkrining)) ? cachedSkrining.length : 0;
+      let totalPretest = (cachedPretest && Array.isArray(cachedPretest)) ? cachedPretest.length : 0;
+      let totalPosttest = (cachedPosttest && Array.isArray(cachedPosttest)) ? cachedPosttest.length : 0;
+
+      // --- 2. RENDER DASHBOARD SECARA INSTAN DENGAN DATA CACHE ---
+      dashboardContent.innerHTML = `
+        <div class="row g-2 fade-in">
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPeserta}</div>
+              <div class="stat-label">Total Peserta</div>
+              <i class="bi bi-people-fill"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalSesi}</div>
+              <div class="stat-label">Sesi Absen</div>
+              <i class="bi bi-calendar-event"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalMateri}</div>
+              <div class="stat-label">Materi</div>
+              <i class="bi bi-file-earmark-pdf"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalSkrining}</div>
+              <div class="stat-label">Skrining Terisi</div>
+              <i class="bi bi-clipboard-check"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPretest}</div>
+              <div class="stat-label">Pretest Terisi</div>
+              <i class="bi bi-pencil-square"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPosttest}</div>
+              <div class="stat-label">Posttest Terisi</div>
+              <i class="bi bi-trophy"></i>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
+          <i class="bi bi-info-circle"></i> Menampilkan data dari cache. Sedang menyegarkan data terbaru dari server...
+        </div>
+      `;
+
+      // --- 3. BACKGROUND FETCH (TANPA SPINNER, TETAP MUAT) ---
       try {
-        const [peserta, sesi, materi, skrining, pretest, posttest] = await Promise.all([
-          PKD.getPesertaList(),
-          PKD.getSesiAbsen(),
-          PKD.getMateriList(),
-          PKD.getSkriningResponses(),
-          PKD.getPretestResponses(),
-          PKD.getPosttestResponses()
+        const [freshPeserta, freshSesi, freshMateri, freshSkrining, freshPretest, freshPosttest] = await Promise.all([
+          PKD.getPesertaList(null, true),
+          PKD.getSesiAbsen(true),
+          PKD.getMateriList(true),
+          PKD.getSkriningResponses(true),
+          PKD.getPretestResponses(true),
+          PKD.getPosttestResponses(true)
         ]);
 
-        const totalPeserta = (peserta && peserta.length) || 0;
-        const totalSesi = (sesi && sesi.length) || 0;
-        const totalMateri = (materi && materi.length) || 0;
-        const totalSkrining = (skrining && skrining.length) || 0;
-        const totalPretest = (pretest && pretest.length) || 0;
-        const totalPosttest = (posttest && posttest.length) || 0;
+        // Update angka real-time dari API
+        totalPeserta = freshPeserta?.length || 0;
+        totalSesi = freshSesi?.length || 0;
+        totalMateri = freshMateri?.length || 0;
+        totalSkrining = freshSkrining?.length || 0;
+        totalPretest = freshPretest?.length || 0;
+        totalPosttest = freshPosttest?.length || 0;
 
-        // ✅ PERUBAHAN DI BAGIAN HTML: Menggunakan col-12 agar 1 kolom di mobile
+        // Render ulang dengan angka terbaru
         dashboardContent.innerHTML = `
           <div class="row g-2 fade-in">
             <div class="col-12 col-md-4">
@@ -409,19 +460,14 @@
           </div>
         `;
         updateCacheStatus('Live');
+
       } catch (e) {
-        console.warn('Gagal memuat data:', e);
-        dashboardContent.innerHTML = `
-          <div class="alert alert-danger border-0 shadow-sm">
-            <h6><i class="bi bi-exclamation-triangle me-2"></i>Gagal memuat data</h6>
-            <p class="mb-0">${e.message}</p>
-            <button class="btn btn-outline-danger btn-sm mt-2" onclick="location.reload()">Coba Lagi</button>
-          </div>
-        `;
-        updateCacheStatus('Error');
+        console.warn('Gagal refresh data dashboard:', e);
+        updateCacheStatus('Offline');
       }
     }
 
+    // ==================== SIDEBAR TOGGLE & DROPDOWN ====================
     document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
       document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
       const icon = this.querySelector('i');
@@ -437,6 +483,7 @@
       });
     });
 
+    // ==================== LOGOUT ====================
     document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
       e.preventDefault();
       if (PKD.logout) PKD.logout();
@@ -451,6 +498,7 @@
       else window.location.href = '/bisaa/index.html';
     });
 
+    // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
         window.location.href = '/bisaa/login.html';

@@ -1,5 +1,5 @@
 // api.js - Modul Terpadu Final (Compatible with No-CORS & V8)
-// Versi: 3.3.0 - Perbaikan parsing respons dan ketahanan cache
+// Versi: 3.3.1 - Perbaikan Cache: Selalu menyimpan data dari API ke cache
 // =============================================================================
 
 (function (global) {
@@ -301,7 +301,8 @@
     }
     return callApi('getPesertaList', { status: status }, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
-      if (!forceRefresh) saveCached(cacheKey, data);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
+      saveCached(cacheKey, data);
       return data;
     });
   }
@@ -353,6 +354,7 @@
     }
     return callApi('getAlumniList', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -376,9 +378,8 @@
     }
     return callApi('getSesiAbsen', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
-      if (Array.isArray(data) && data.length > 0) {
-        saveCached(cacheKey, data);
-      }
+      // 🟢 PERBAIKAN: Selalu simpan ke cache (baik ada data atau kosong)
+      saveCached(cacheKey, data);
       return data;
     });
   }
@@ -420,6 +421,7 @@
     }
     return callApi('getAbsensiResponses', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -435,6 +437,7 @@
     }
     return callApi('getAttendanceMatrix', {}, 'GET').then(function(res) {
       var data = { peserta: res.peserta || [], sesi: res.sesi || [], hadirSet: new Set(res.hadirSet || []) };
+      // 🟢 PERBAIKAN: Selalu simpan ke cache (meskipun data berbentuk objek)
       saveCached(cacheKey, data);
       return data;
     });
@@ -452,6 +455,7 @@
     }
     return callApi('getSkriningQuestions', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -473,6 +477,7 @@
     }
     return callApi('getSkriningResponses', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -490,6 +495,7 @@
     }
     return callApi('getPretestQuestions', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -526,6 +532,7 @@
     }
     return callApi('getPretestResponses', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -543,6 +550,7 @@
     }
     return callApi('getPosttestQuestions', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -579,6 +587,7 @@
     }
     return callApi('getPosttestResponses', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -596,6 +605,7 @@
     }
     return callApi('getMateriList', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -622,6 +632,7 @@
     }
     return callApi('getInfoList', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -680,6 +691,7 @@
     }
     return callApi('getCertificateTemplates', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -692,6 +704,7 @@
     }
     return callApi('getCertPresets', {}, 'GET').then(function(res) {
       var data = Array.isArray(res) ? res : (res.data || []);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
@@ -732,7 +745,8 @@
     return callApi('getUploadedCertificates', {}, 'GET').then(function(res) {
       // 🛠️ PERBAIKAN PARSING: Handle array langsung atau {data: [...]}
       var data = Array.isArray(res) ? res : (res.data || []);
-      if (!forceRefresh) saveCached(cacheKey, data);
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
+      saveCached(cacheKey, data);
       return data;
     });
   }
@@ -834,6 +848,7 @@
     }
     return callApi('getQuizSettings', {}, 'GET').then(function(res) {
       var data = res.data || {};
+      // 🟢 PERBAIKAN: Selalu simpan ke cache
       saveCached(cacheKey, data);
       return data;
     });
