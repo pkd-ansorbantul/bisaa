@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Admin Dashboard - PKD GP Ansor Bantul</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    /* --- GLOBAL --- */
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
+
+    /* --- LAYOUT UTAMA --- */
+    .container-card { width: 100%; padding: 0; margin: 0; }
+    .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; margin: 0; padding: 0; }
+
+    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
+    .sidebar-wrapper {
+        width: 260px; max-width: 260px;
+        background: #0f172a; color: #f1f5f9;
+        min-height: 100vh; height: 100vh;
+        position: fixed; top: 0; left: 0; z-index: 1000;
+        border-right: 1px solid #1e293b;
+        display: flex; flex-direction: column;
+        transition: width 0.3s ease, max-width 0.3s ease;
+    }
+    .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
+    .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; transition: padding 0.3s ease; }
+    .sidebar-wrapper.minimized .sidebar-brand-area { padding: 1.5rem 0.75rem; display: flex; justify-content: center; }
+    .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease; }
+    .brand-sidebar:hover { opacity: 0.8; }
+    .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
+    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
+    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
+    .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
+
+    .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
+    .sidebar-menu-area::-webkit-scrollbar { display: none; }
+    .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; }
+    .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
+    .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
+    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
+
+    .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
+    .submenu.open { max-height: 500px; }
+    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; }
+    .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
+    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
+    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
+    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
+    .sidebar-wrapper.minimized .submenu .nav-link span { display: none; }
+    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
+    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
+    
+    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
+    .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
+    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
+    .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
+    
+    .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
+    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
+
+    /* --- BOTTOM NAV (MOBILE) --- */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
+    .bottom-nav .nav-item i { font-size: 1.5rem; }
+    .bottom-nav .nav-item.active { color: #2563eb; }
+
+    /* --- CONTENT WRAPPER (DESKTOP) --- */
+    .content-wrapper { 
+        margin-left: 260px; 
+        padding: 1.5rem; 
+        background: #f8fafc; 
+        min-height: 100vh; 
+        width: calc(100% - 260px); 
+        transition: margin-left 0.3s ease, width 0.3s ease; 
+        box-sizing: border-box;
+    }
+    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
+
+    /* --- STAT CARDS --- */
+    .stat-card {
+        background: white; border-radius: 20px; padding: 1.2rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+        text-align: center; transition: transform 0.2s; height: 100%;
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-number { font-size: 2rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
+    .stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card i { margin-top: 10px; font-size: 1.8rem; }
+
+    /* --- TOAST & UTILITY --- */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+
+    /* --- RESPONSIVE MOBILE --- */
+    @media (max-width: 991px) {
+        .sidebar-wrapper { display: none; }
+        .bottom-nav { display: flex; }
+        
+        .container-card, .admin-wrapper, .content-wrapper { 
+            width: 100vw !important; 
+            max-width: 100vw !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+        }
+        
+        .content-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh !important; 
+            padding: 0 1rem 90px 1rem !important;
+        }
+        
+        #dashboardContent { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-evenly; 
+            padding: 10px 0; 
+        }
+
+        .section-title { margin-top: 0; padding-top: 0; margin-bottom: 0; font-size: 1.3rem; }
+        .top-toolbar { margin-bottom: 0; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .alert-info { margin-top: 0 !important; margin-bottom: 0; }
+        .row.g-2.fade-in { width: 100%; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+        
+        .col-12 {
+            width: 100%;
+            max-width: 450px; 
+            margin: 0 auto;   
+            padding: 0;
+        }
+        .stat-card { padding: 0.8rem 1rem; border-radius: 14px; width: 100%; margin: 0 auto; }
+        .stat-number { font-size: 1.6rem; }
+        .stat-label { font-size: 0.75rem; }
+        .stat-card i { font-size: 1.3rem !important; margin-top: 4px !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-card">
+  <div class="admin-wrapper">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <div class="sidebar-wrapper" id="sidebarWrapper">
+      <div class="sidebar-toggle">
+        <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
+          <i class="bi bi-arrow-left-right"></i>
+        </button>
+      </div>
+      <div class="sidebar-brand-area">
+        <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
+          <div>
+            <div class="brand-sidebar-title">PKD GP Ansor</div>
+            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
+          </div>
+        </a>
+      </div>
+      <div class="sidebar-menu-area">
+        <div class="nav flex-column nav-pills">
+          <a class="nav-link active" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+          <div class="nav-link" data-target="akademik"><i class="bi bi-book me-2"></i><span>Akademik</span></div>
+          <div class="submenu" id="submenu-akademik">
+            <a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+          </div>
+          <div class="nav-link" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
+          <div class="submenu" id="submenu-peserta">
+            <a class="nav-link" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+          </div>
+          <div class="nav-link" data-target="absensi"><i class="bi bi-calendar-check me-2"></i><span>Absensi</span></div>
+          <div class="submenu" id="submenu-absensi">
+            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+          </div>
+          <div class="nav-link" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
+          <div class="submenu" id="submenu-informasi">
+            <a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+          </div>
+          <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+          <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+          <div class="sidebar-logout"></div>
+          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
+    <div class="bottom-nav">
+      <a href="/bisaa/admin/dashboard_admin.html" class="nav-item active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
+      <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
+      <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+    </div>
+
+    <!-- ==================== CONTENT ==================== -->
+    <div class="content-wrapper" id="mainContent">
+      <h2 class="section-title"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
+
+      <div class="top-toolbar">
+        <div>
+          <span id="cacheStatus" class="cache-status">Memuat...</span>
+        </div>
+        <div class="text-md-end">
+          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+          </button>
+        </div>
+      </div>
+
+      <div id="dashboardContent">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== MODAL "LAINNYA" (MOBILE) ==================== -->
+<div class="modal fade" id="moreMenuModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div>
+          <div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div>
+          <div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div>
+          <div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
+          <div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
+          <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
+        </div>
+        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0">
+      <i class="bi me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Berhasil</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/bisaa/api.js"></script>
+<script src="/bisaa/dataCache.js"></script>
+
+<script>
+  (function() {
+    'use strict';
+
+    let cacheStatusEl = document.getElementById('cacheStatus');
+    let dashboardContent = document.getElementById('dashboardContent');
+
+    function showToast(message, type = 'success') {
+      const toastEl = document.getElementById('notificationToast');
+      if (!toastEl) return;
+      const toast = new bootstrap.Toast(toastEl);
+      document.getElementById('toastMessage').innerText = message;
+      const icon = document.getElementById('toastIcon');
+      if (type === 'success') {
+        icon.className = 'bi bi-check-circle-fill text-success';
+        document.getElementById('toastTitle').innerText = 'Berhasil';
+      } else {
+        icon.className = 'bi bi-x-circle-fill text-danger';
+        document.getElementById('toastTitle').innerText = 'Gagal';
+      }
+      toast.show();
+    }
+
+    function updateCacheStatus(status) {
+      if (cacheStatusEl) {
+        cacheStatusEl.textContent = status;
+        cacheStatusEl.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+      }
+    }
+
+    // ==================== LOGIKA DASHBOARD UTAMA (CACHE-FIRST) ====================
+    async function loadDashboard() {
+      updateCacheStatus('Memuat...');
+
+      // --- 1. BACA DATA DARI CACHE DAHULU (INSTAN) ---
+      const cachedPeserta = DataCache.getData('peserta');
+      const cachedSesi = DataCache.getData('sesi');
+      const cachedMateri = DataCache.getData('materi');
+      const cachedSkrining = DataCache.getData('skrining');
+      const cachedPretest = DataCache.getData('pretest');
+      const cachedPosttest = DataCache.getData('posttest');
+
+      let totalPeserta = (cachedPeserta && Array.isArray(cachedPeserta)) ? cachedPeserta.length : 0;
+      let totalSesi = (cachedSesi && Array.isArray(cachedSesi)) ? cachedSesi.length : 0;
+      let totalMateri = (cachedMateri && Array.isArray(cachedMateri)) ? cachedMateri.length : 0;
+      let totalSkrining = (cachedSkrining && Array.isArray(cachedSkrining)) ? cachedSkrining.length : 0;
+      let totalPretest = (cachedPretest && Array.isArray(cachedPretest)) ? cachedPretest.length : 0;
+      let totalPosttest = (cachedPosttest && Array.isArray(cachedPosttest)) ? cachedPosttest.length : 0;
+
+      // --- 2. RENDER DASHBOARD SECARA INSTAN DENGAN DATA CACHE ---
+      dashboardContent.innerHTML = `
+        <div class="row g-2 fade-in">
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPeserta}</div>
+              <div class="stat-label">Total Peserta</div>
+              <i class="bi bi-people-fill"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalSesi}</div>
+              <div class="stat-label">Sesi Absen</div>
+              <i class="bi bi-calendar-event"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalMateri}</div>
+              <div class="stat-label">Materi</div>
+              <i class="bi bi-file-earmark-pdf"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalSkrining}</div>
+              <div class="stat-label">Skrining Terisi</div>
+              <i class="bi bi-clipboard-check"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPretest}</div>
+              <div class="stat-label">Pretest Terisi</div>
+              <i class="bi bi-pencil-square"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="stat-card">
+              <div class="stat-number">${totalPosttest}</div>
+              <div class="stat-label">Posttest Terisi</div>
+              <i class="bi bi-trophy"></i>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
+          <i class="bi bi-info-circle"></i> Menampilkan data dari cache. Sedang menyegarkan data terbaru dari server...
+        </div>
+      `;
+
+      // --- 3. BACKGROUND FETCH (TANPA SPINNER, TETAP MUAT) ---
+      try {
+        const [freshPeserta, freshSesi, freshMateri, freshSkrining, freshPretest, freshPosttest] = await Promise.all([
+          PKD.getPesertaList(null, true),
+          PKD.getSesiAbsen(true),
+          PKD.getMateriList(true),
+          PKD.getSkriningResponses(true),
+          PKD.getPretestResponses(true),
+          PKD.getPosttestResponses(true)
+        ]);
+
+        // Update angka real-time dari API
+        totalPeserta = freshPeserta?.length || 0;
+        totalSesi = freshSesi?.length || 0;
+        totalMateri = freshMateri?.length || 0;
+        totalSkrining = freshSkrining?.length || 0;
+        totalPretest = freshPretest?.length || 0;
+        totalPosttest = freshPosttest?.length || 0;
+
+        // Render ulang dengan angka terbaru
+        dashboardContent.innerHTML = `
+          <div class="row g-2 fade-in">
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalPeserta}</div>
+                <div class="stat-label">Total Peserta</div>
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalSesi}</div>
+                <div class="stat-label">Sesi Absen</div>
+                <i class="bi bi-calendar-event"></i>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalMateri}</div>
+                <div class="stat-label">Materi</div>
+                <i class="bi bi-file-earmark-pdf"></i>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalSkrining}</div>
+                <div class="stat-label">Skrining Terisi</div>
+                <i class="bi bi-clipboard-check"></i>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalPretest}</div>
+                <div class="stat-label">Pretest Terisi</div>
+                <i class="bi bi-pencil-square"></i>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="stat-card">
+                <div class="stat-number">${totalPosttest}</div>
+                <div class="stat-label">Posttest Terisi</div>
+                <i class="bi bi-trophy"></i>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
+            <i class="bi bi-info-circle"></i> Selamat datang, Admin! Gunakan menu di samping untuk mengelola data.
+          </div>
+        `;
+        updateCacheStatus('Live');
+
+      } catch (e) {
+        console.warn('Gagal refresh data dashboard:', e);
+        updateCacheStatus('Offline');
+      }
+    }
+
+    // ==================== SIDEBAR TOGGLE & DROPDOWN ====================
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+      const icon = this.querySelector('i');
+      if (icon) icon.classList.toggle('bi-arrow-left-right');
+    });
+
+    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.dataset.target;
+        const submenu = document.getElementById('submenu-' + target);
+        if (submenu) submenu.classList.toggle('open');
+      });
+    });
+
+    // ==================== LOGOUT ====================
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (PKD.logout) PKD.logout();
+      else window.location.href = '/bisaa/index.html';
+    });
+
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+      const modalEl = document.getElementById('moreMenuModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+      if (PKD.logout) PKD.logout();
+      else window.location.href = '/bisaa/index.html';
+    });
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
+        window.location.href = '/bisaa/login.html';
+        return;
+      }
+      loadDashboard();
+      document.getElementById('refreshDataBtn').addEventListener('click', loadDashboard);
+    });
+
+  })();
+</script>
+</body>
+</html>
