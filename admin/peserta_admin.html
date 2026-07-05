@@ -247,13 +247,12 @@
   // --- Utility ---
   function escapeHtml(str) { 
     if (!str) return ''; 
-    return String(str).replace(/[&<>"]/g, function(m) { 
-      if (m === '&') return '&amp;'; 
-      if (m === '<') return '&lt;'; 
-      if (m === '>') return '&gt;'; 
-      if (m === '"') return '&quot;'; 
-      return m; 
-    }); 
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;'); // Menangani tanda petik tunggal
   }
   
   function showToast(message, type) {
@@ -441,6 +440,8 @@
         var utusan = item.utusan || '-'; 
         var status = item.status || 'pending'; 
         var badge = getStatusBadge(status);
+        
+        // PERBAIKAN PENTING: Hapus semua onclick inline, ganti dengan data-id
         html += '<tr><td><input type="checkbox" class="peserta-checkbox" value="' + item.id + '"></td>' +
           '<td>' + globalIndex + '</td>' +
           '<td><strong>' + escapeHtml(nama) + '</strong></td>' +
@@ -449,10 +450,10 @@
           '<td>' + escapeHtml(utusan) + '</td>' +
           '<td><span class="badge ' + badge + '">' + escapeHtml(status) + '</span></td>' +
           '<td class="text-center">' +
-            '<button class="btn btn-sm btn-outline-info" onclick="viewPeserta(\'' + item.id + '\')">👁️</button>' +
-            '<button class="btn btn-sm btn-outline-warning" onclick="editPeserta(\'' + item.id + '\')">✏️</button>' +
-            '<button class="btn btn-sm btn-outline-danger" onclick="deletePeserta(\'' + item.id + '\')">🗑️</button>' +
-            '<button class="btn btn-sm btn-outline-primary" onclick="showTTD(\'' + item.id + '\',\'' + escapeHtml(item.nama_lengkap) + '\')">🖊️ TTD</button>' +
+            '<button class="btn btn-sm btn-outline-info view-btn" data-id="' + item.id + '">👁️</button>' +
+            '<button class="btn btn-sm btn-outline-warning edit-btn" data-id="' + item.id + '">✏️</button>' +
+            '<button class="btn btn-sm btn-outline-danger delete-btn" data-id="' + item.id + '">🗑️</button>' +
+            '<button class="btn btn-sm btn-outline-primary ttd-btn" data-id="' + item.id + '" data-nama="' + escapeHtml(nama) + '">🖊️ TTD</button>' +
           '</td></tr>';
       }
     }
@@ -464,6 +465,9 @@
     container.innerHTML = html;
     container.classList.add('fade-in');
     
+    // Binding event listener ke tombol
+    bindTableButtons();
+
     var selectAll = document.getElementById('selectAllPeserta');
     if(selectAll) {
       selectAll.addEventListener('change', function() {
@@ -476,6 +480,22 @@
     for(var j=0; j<cbs.length; j++) {
       cbs[j].addEventListener('change', updateMoveToAlumniBtn);
     }
+  }
+
+  // --- Binding Tombol Tabel Tanpa Inline Onclick ---
+  function bindTableButtons() {
+    document.querySelectorAll('.view-btn').forEach(function(btn) {
+      btn.onclick = function() { viewPeserta(this.dataset.id); };
+    });
+    document.querySelectorAll('.edit-btn').forEach(function(btn) {
+      btn.onclick = function() { editPeserta(this.dataset.id); };
+    });
+    document.querySelectorAll('.delete-btn').forEach(function(btn) {
+      btn.onclick = function() { deletePeserta(this.dataset.id); };
+    });
+    document.querySelectorAll('.ttd-btn').forEach(function(btn) {
+      btn.onclick = function() { showTTD(this.dataset.id, this.dataset.nama); };
+    });
   }
 
   function updateMoveToAlumniBtn() { 
@@ -675,14 +695,14 @@
 
   // ================= FUNGSI TTD DINAMIS =================
   window.showTTD = async function(pesertaId, namaPeserta) {
-    var modal = new bootstrap.Modal(document.getElementById('ttdModal'));
-    var container = document.getElementById('ttdCardsContainer');
-    var emptyMsg = document.getElementById('ttdEmptyMessage');
-    
-    container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
-    emptyMsg.style.display = 'none';
-
     try {
+      var modal = new bootstrap.Modal(document.getElementById('ttdModal'));
+      var container = document.getElementById('ttdCardsContainer');
+      var emptyMsg = document.getElementById('ttdEmptyMessage');
+      
+      container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
+      emptyMsg.style.display = 'none';
+
       var approvals = STATE.allApprovals;
       if (!approvals || approvals.length === 0) {
         var res = await PKD.getAllDigitalApprovals();
@@ -739,7 +759,8 @@
       modal.show();
 
     } catch (e) {
-      showToast('Error: ' + e.message, 'error');
+      console.error("Error pada showTTD:", e);
+      showToast('Terjadi kesalahan saat memuat TTD: ' + e.message, 'error');
     }
   };
 
@@ -793,7 +814,7 @@
     new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
   }
 
-  window.editPeserta = async function(id) {
+  window.editPeserta = function(id) {
     var item = STATE.pesertaList.find(function(p) { return String(p.id) === String(id); });
     if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
     document.getElementById('editPesertaId').value = id;
@@ -950,10 +971,11 @@
   document.getElementById('refreshDataBtn')?.addEventListener('click', function() { 
     this.innerHTML='<span class="spinner-border"></span>'; 
     this.disabled=true; 
+    var self = this;
     loadPesertaData(true).then(function(){ 
-      this.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; 
-      this.disabled=false; 
-    }.bind(this)); 
+      self.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; 
+      self.disabled=false; 
+    }); 
   });
   
   document.getElementById('clearCacheBtn')?.addEventListener('click', function() { 
