@@ -1,12 +1,12 @@
 // api.js - Modul Terpadu Final (Compatible with No-CORS & V8)
-// Versi: 3.1.0 - Menambahkan getPesertaCredentials, Realtime getLoginMode
+// Versi: 3.3.0 - Perbaikan parsing respons dan ketahanan cache
 // =============================================================================
 
 (function (global) {
   'use strict';
 
   // ======================== KONFIGURASI ========================
-  var SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydrBQUwfKN_smPUuxEPEZ4bv-MmmDow55zs-P4E4W-hP6qdmgR3NtxTeAIcE-If9F0kg/exec';
+  var SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwkGY5SkaiV1GclMKE26Sl5KY9SxhG7JdeJf_uYZFzhRBUcfqt1592kHp_iIjD6ofQGfw/exec';
   var SCRIPT_URL = global.PKD_SCRIPT_URL || SCRIPT_URL_DEFAULT;
 
   // ======================== STATE ========================
@@ -161,7 +161,7 @@
     });
   }
 
-  // ======================== CACHE UTILS ========================
+  // ======================== CACHE UTILS (DIPERBAIKI) ========================
   function getCached(key, maxAge) {
     maxAge = maxAge || 3600000;
     try {
@@ -170,7 +170,10 @@
       if (data && time && (Date.now() - parseInt(time)) < maxAge) {
         return JSON.parse(data);
       }
-    } catch (e) {}
+    } catch (e) {
+      // Jika sessionStorage tidak dapat diakses (misal karena pemblokiran browser)
+      console.warn('getCached: SessionStorage tidak dapat diakses. Melewati cache.', e.message);
+    }
     return null;
   }
 
@@ -178,7 +181,10 @@
     try {
       sessionStorage.setItem(key + '_data', JSON.stringify(data));
       sessionStorage.setItem(key + '_time', Date.now().toString());
-    } catch (e) {}
+    } catch (e) {
+      // Jika sessionStorage tidak dapat diakses, lewati penyimpanan cache
+      console.warn('saveCached: SessionStorage tidak dapat diakses. Cache tidak disimpan.', e.message);
+    }
   }
 
   // ======================== AUTH ========================
@@ -287,15 +293,15 @@
   }
 
   // --- Peserta ---
-  function getPesertaList(status) {
+  function getPesertaList(status, forceRefresh) {
     var cacheKey = 'pesertaList';
-    if (!status) {
+    if (!forceRefresh) {
       var c = getCached(cacheKey);
-      if (c) return c;
+      if (c) return Promise.resolve(c);
     }
     return callApi('getPesertaList', { status: status }, 'GET').then(function(res) {
-      var data = res.data || [];
-      if (!status) saveCached(cacheKey, data);
+      var data = Array.isArray(res) ? res : (res.data || []);
+      if (!forceRefresh) saveCached(cacheKey, data);
       return data;
     });
   }
@@ -326,7 +332,6 @@
   function getPesertaById(id) {
     return callApi('getPesertaById', { id: id }, 'GET');
   }
-  // 🆕 FITUR BARU: Mendapatkan kredensial peserta (Username & Indikasi Password)
   function getPesertaCredentials(id) {
     return callApi('getPesertaCredentials', { id: id }, 'GET');
   }
@@ -347,7 +352,7 @@
       if (c) return c;
     }
     return callApi('getAlumniList', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -370,7 +375,7 @@
       if (c && Array.isArray(c) && c.length > 0) return c;
     }
     return callApi('getSesiAbsen', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       if (Array.isArray(data) && data.length > 0) {
         saveCached(cacheKey, data);
       }
@@ -414,7 +419,7 @@
       if (c) return c;
     }
     return callApi('getAbsensiResponses', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -446,7 +451,7 @@
       if (c) return c;
     }
     return callApi('getSkriningQuestions', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -467,7 +472,7 @@
       if (c) return c;
     }
     return callApi('getSkriningResponses', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -484,7 +489,7 @@
       if (c) return c;
     }
     return callApi('getPretestQuestions', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -520,7 +525,7 @@
       if (c) return c;
     }
     return callApi('getPretestResponses', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -537,7 +542,7 @@
       if (c) return c;
     }
     return callApi('getPosttestQuestions', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -573,7 +578,7 @@
       if (c) return c;
     }
     return callApi('getPosttestResponses', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -590,7 +595,7 @@
       if (c) return c;
     }
     return callApi('getMateriList', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -616,7 +621,7 @@
       if (c) return c;
     }
     return callApi('getInfoList', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -674,7 +679,7 @@
       if (c) return c;
     }
     return callApi('getCertificateTemplates', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -686,7 +691,7 @@
       if (c) return c;
     }
     return callApi('getCertPresets', {}, 'GET').then(function(res) {
-      var data = res.data || [];
+      var data = Array.isArray(res) ? res : (res.data || []);
       saveCached(cacheKey, data);
       return data;
     });
@@ -722,11 +727,12 @@
     var cacheKey = 'uploadedCerts';
     if (!forceRefresh) {
       var c = getCached(cacheKey);
-      if (c) return c;
+      if (c) return Promise.resolve(c);
     }
     return callApi('getUploadedCertificates', {}, 'GET').then(function(res) {
-      var data = res.data || [];
-      saveCached(cacheKey, data);
+      // 🛠️ PERBAIKAN PARSING: Handle array langsung atau {data: [...]}
+      var data = Array.isArray(res) ? res : (res.data || []);
+      if (!forceRefresh) saveCached(cacheKey, data);
       return data;
     });
   }
@@ -760,6 +766,12 @@
   }
   function getAllDigitalApprovals() {
     return callApi('getAllDigitalApprovals', {}, 'GET');
+  }
+  function updateSignPassword(role, newPassword) {
+    return callApi('updateSignPassword', { role: role, newPassword: newPassword }, 'POST');
+  }
+  function getSignPasswords() {
+    return callApi('getSignPasswords', {}, 'GET');
   }
 
   // --- RTL ---
@@ -799,6 +811,20 @@
     return callApi('getRTLAttachments', { taskId: taskId }, 'GET');
   }
 
+  // --- Kader ---
+  function getKaderList() {
+    return callApi('getKaderList', {}, 'GET');
+  }
+  function addKader(p) {
+    return callApi('addKader', p, 'POST');
+  }
+  function updateKader(p) {
+    return callApi('updateKader', p, 'POST');
+  }
+  function deleteKader(p) {
+    return callApi('deleteKader', p, 'POST');
+  }
+
   // --- Pengaturan ---
   function getQuizSettings(forceRefresh) {
     var cacheKey = 'quizSettings';
@@ -813,7 +839,6 @@
     });
   }
   
-  // 🚀 PERBAIKAN UTAMA: Hapus cache 5 menit agar Mode Login Publik realtime.
   function getLoginMode() {
     return callApi('getLoginMode', {}, 'GET');
   }
@@ -902,7 +927,7 @@
     approvePeserta: approvePeserta,
     rejectPeserta: rejectPeserta,
     getPesertaById: getPesertaById,
-    getPesertaCredentials: getPesertaCredentials, // 🆕 Fitur Baru
+    getPesertaCredentials: getPesertaCredentials,
     // Form Settings
     getFormSettings: getFormSettings,
     setFormSettings: setFormSettings,
@@ -972,7 +997,7 @@
     updateCertificateTemplate: updateCertificateTemplate,
     deleteCertificateTemplate: deleteCertificateTemplate,
     generateCertificates: generateCertificates,
-    getUploadedCertificates: getUploadedCertificates,
+    getUploadedCertificates: getUploadedCertificates, // 🛠️ Sudah diperbaiki
     uploadManualCertificate: uploadManualCertificate,
     verifyCertificate: verifyCertificate,
     getNextCertificateNumber: getNextCertificateNumber,
@@ -984,6 +1009,8 @@
     submitDigitalSignature: submitDigitalSignature,
     getDigitalApproval: getDigitalApproval,
     getAllDigitalApprovals: getAllDigitalApprovals,
+    updateSignPassword: updateSignPassword,
+    getSignPasswords: getSignPasswords,
     // RTL
     getRTLTasks: getRTLTasks,
     addRTLTask: addRTLTask,

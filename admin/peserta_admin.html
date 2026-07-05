@@ -11,115 +11,45 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <style>
-    /* --- GLOBAL --- */
+    /* --- GLOBAL & SIDEBAR --- */
     * { font-family: 'Inter', sans-serif; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
-
-    /* --- LAYOUT UTAMA --- */
     .container-card { max-width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
-
-    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
-    .sidebar-wrapper {
-        width: 260px; max-width: 260px;
-        background: #0f172a; color: #f1f5f9;
-        min-height: 100vh; height: 100vh;
-        position: fixed; top: 0; left: 0; z-index: 1000;
-        border-right: 1px solid #1e293b;
-        display: flex; flex-direction: column;
-        transition: width 0.3s ease, max-width 0.3s ease;
-    }
+    .sidebar-wrapper { width: 260px; max-width: 260px; background: #0f172a; color: #f1f5f9; min-height: 100vh; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; border-right: 1px solid #1e293b; display: flex; flex-direction: column; transition: width 0.3s ease, max-width 0.3s ease; }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
-
-    /* --- BRAND AREA --- */
-    .sidebar-brand-area {
-        flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-        border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
-    }
-    .sidebar-wrapper.minimized .sidebar-brand-area {
-        padding: 1.5rem 0.75rem; display: flex; justify-content: center;
-    }
-    .brand-sidebar {
-        display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease;
-    }
+    .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; transition: padding 0.3s ease; }
+    .sidebar-wrapper.minimized .sidebar-brand-area { padding: 1.5rem 0.75rem; display: flex; justify-content: center; }
+    .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease; }
     .brand-sidebar:hover { opacity: 0.8; }
     .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
     .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
     .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
     .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
-    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-
-    /* --- MENU AREA --- */
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
     .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
     .sidebar-menu-area::-webkit-scrollbar { display: none; }
-
-    /* --- NAV PILLS --- */
-    .nav-pills .nav-link {
-        width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
-        color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
-        align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none;
-        text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden;
-    }
+    .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden; }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-    /* --- SUBMENU --- */
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
-    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
-    .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
-    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
-    .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-
-    /* --- LOGOUT --- */
     .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
-    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
-
-    /* --- BOTTOM NAV (MOBILE) --- */
-    .bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
-        z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
     .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
     .bottom-nav .nav-item i { font-size: 1.5rem; }
     .bottom-nav .nav-item.active { color: #2563eb; }
-
-    @media (max-width: 991px) {
-        .sidebar-wrapper { display: none; }
-        .bottom-nav { display: flex; }
-        .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; }
-    }
+    @media (max-width: 991px) { .sidebar-wrapper { display: none; } .bottom-nav { display: flex; } .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; } }
     @media (min-width: 992px) { .bottom-nav { display: none; } }
-
-    /* --- CONTENT WRAPPER --- */
-    .content-wrapper {
-        margin-left: 260px; padding: 1.5rem; background: #f8fafc;
-        min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
-    }
+    .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease; }
     .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
-
-    /* --- UTILITY --- */
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title {
-        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
-    }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
@@ -131,34 +61,61 @@
     .status-badge.pending { background: #fef3c7; color: #d97706; }
     .status-badge.approved { background: #d1fae5; color: #059669; }
     .status-badge.rejected { background: #fee2e2; color: #dc2626; }
-
-    /* --- FORM BUILDER STYLES --- */
-    .field-builder-card {
-        background: #f8fafc; border-radius: 16px; padding: 1rem; margin-bottom: 1rem;
-        border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;
-        transition: all 0.2s;
-    }
+    .status-badge.active { background: #d1fae5; color: #059669; }
+    .field-builder-card { background: #f8fafc; border-radius: 16px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
     .field-builder-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .field-builder-card .field-label { font-weight: 600; margin-bottom: 0; }
     .field-builder-card .field-meta { font-size: 0.85rem; color: #64748b; }
     .field-builder-card .field-actions .btn { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
-
-    /* --- FORM DYNAMIC STYLES (dari peserta.html) --- */
-    .admin-contact { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; }
-    .template-card { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; transition: background 0.2s; }
-    .template-card:hover { background: #f1f5f9; }
-    .template-card .btn { border-radius: 50px; padding: 0.4rem 1.2rem; }
-    .whatsapp-btn { background-color: #25d366; color: white; border: none; }
-    .whatsapp-btn:hover { background-color: #1da851; color: white; }
-    #signatureCanvasAdmin { width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 8px; background: #fff; touch-action: none; }
-    .capture-hint { font-size: 0.8rem; color: #64748b; }
-    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: 99999; display: none; justify-content: center; align-items: center; flex-direction: column; }
-    #qrResult { display: none; text-align: center; margin-top: 20px; padding: 1.5rem; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
-    #qrResult h5 { color: #2563eb; }
-    #qrCodeContainer canvas { border-radius: 12px; border: 1px solid #e2e8f0; padding: 8px; background: white; }
-
-    /* --- KREDENSIAL MODAL --- */
-    .credential-modal-qr { max-width: 200px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; background: white; }
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+    .debug-console { background: #1e1e2f; color: #a5b3ce; padding: 15px; border-radius: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; margin-top: 15px; }
+    .debug-console .log-success { color: #4caf50; }
+    .debug-console .log-error { color: #f44336; }
+    .debug-console .log-info { color: #64b5f6; }
+    .debug-console .log-warn { color: #ff9800; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+    
+    /* --- TTD BOX OPTIMIZED STYLE --- */
+    .ttd-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; height: 100%; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+    .ttd-box:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: #2563eb; }
+    .ttd-box h6 { font-weight: 700; color: #0f172a; margin-top: 8px; }
+    .ttd-box .role-badge { font-size: 0.8rem; padding: 4px 14px; border-radius: 50px; background: #2563eb; color: white; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
+    .ttd-box .no-signature { color: #94a3b8; font-size: 0.85rem; margin-top: 10px; }
+    
+    /* --- QR CONTAINER & IMAGE BORDER (DIPERBAHARUI) --- */
+    .ttd-qr-container { 
+      text-align: center; 
+      margin-bottom: 10px; 
+      min-height: 150px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      width: 100%; 
+      background: #f8fafc; 
+      border-radius: 12px; 
+      padding: 8px; 
+      border: 1px solid #e2e8f0; 
+    }
+    /* CSS Gambar di Modal: Tidak ada padding/border tambahan, karena border sudah dicetak di dalam file PNG */
+    .ttd-qr-container img { 
+      max-width: 130px; 
+      max-height: 130px; 
+      object-fit: contain; 
+      border: none !important; 
+      background: transparent !important; 
+      padding: 0 !important; 
+      box-shadow: none !important; 
+    }
+    .credential-modal-qr { max-width: 200px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white; }
   </style>
 </head>
 <body>
@@ -166,106 +123,31 @@
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- ==================== SIDEBAR ==================== -->
+    <!-- SIDEBAR -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
-      <div class="sidebar-toggle">
-        <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
-          <i class="bi bi-arrow-left-right"></i>
-        </button>
-      </div>
-
-      <div class="sidebar-brand-area">
-        <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-          <div>
-            <div class="brand-sidebar-title">PKD GP Ansor</div>
-            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
-          </div>
-        </a>
-      </div>
-
+      <div class="sidebar-toggle"><button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button></div>
+      <div class="sidebar-brand-area"><a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor"><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a></div>
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
-          <!-- Dashboard -->
-          <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
-            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-          </a>
-
-          <!-- Akademik -->
-          <div class="nav-link" data-target="akademik" title="Akademik">
-            <i class="bi bi-book me-2"></i><span>Akademik</span>
-          </div>
-          <div class="submenu" id="submenu-akademik">
-            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
-            <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
-            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
-          </div>
-
-          <!-- Peserta (AKTIF) -->
-          <div class="nav-link active" data-target="peserta" title="Peserta">
-            <i class="bi bi-people me-2"></i><span>Peserta</span>
-          </div>
-          <div class="submenu open" id="submenu-peserta">
-            <a class="nav-link active" href="/bisaa/admin/peserta_admin.html" title="Peserta">
-              <i class="bi bi-person-badge me-2"></i><span>Peserta</span>
-            </a>
-            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni">
-              <i class="bi bi-award me-2"></i><span>Alumni</span>
-            </a>
-            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader">
-              <i class="bi bi-people-fill me-2"></i><span>Kader</span>
-            </a>
-          </div>
-
-          <!-- Absensi -->
-          <div class="nav-link" data-target="absensi" title="Absensi">
-            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
-          </div>
-          <div class="submenu" id="submenu-absensi">
-            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
-          </div>
-
-          <!-- Informasi -->
-          <div class="nav-link" data-target="informasi" title="Informasi">
-            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
-          </div>
-          <div class="submenu" id="submenu-informasi">
-            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-            <a class="nav-link" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
-          </div>
-
-          <!-- Skrining -->
-          <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
-            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
-          </a>
-
-          <!-- Sertifikat -->
-          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
-            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
-          </a>
-
-          <!-- Tanda Tangan -->
-          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
-            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
-          </a>
-
-          <!-- Pengaturan -->
-          <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
-            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
-          </a>
-
-          <!-- Logout -->
-          <div class="sidebar-logout"></div>
-          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
-            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
-          </a>
+          <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+          <div class="nav-link" data-target="akademik"><i class="bi bi-book me-2"></i><span>Akademik</span></div>
+          <div class="submenu" id="submenu-akademik"><a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a><a class="nav-link" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a><a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a></div>
+          <div class="nav-link active" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
+          <div class="submenu open" id="submenu-peserta"><a class="nav-link active" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a><a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a><a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a></div>
+          <div class="nav-link" data-target="absensi"><i class="bi bi-calendar-check me-2"></i><span>Absensi</span></div>
+          <div class="submenu" id="submenu-absensi"><a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a><a class="nav-link" href="/bisaa/admin/data_absensi_admin.html"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a><a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a></div>
+          <div class="nav-link" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
+          <div class="submenu" id="submenu-informasi"><a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a><a class="nav-link" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a></div>
+          <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+          <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
+          <div class="sidebar-logout"></div><a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
         </div>
       </div>
     </div>
 
-    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
+    <!-- BOTTOM NAV -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item active"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
@@ -274,216 +156,70 @@
       <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
-    <!-- ==================== CONTENT WRAPPER ==================== -->
+    <!-- CONTENT -->
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Manajemen Peserta & Form Builder</h2>
-
-      <!-- TOOLBAR -->
+      
       <div class="row mb-3">
         <div class="col-md-6">
           <button class="btn btn-primary rounded-pill" id="addPesertaBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Peserta</button>
           <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
-          <button class="btn btn-outline-warning rounded-pill ms-2" id="moveToAlumniBtn" disabled>
-            <i class="bi bi-arrow-right-circle me-1"></i> Pindahkan ke Alumni
-          </button>
-          <button class="btn btn-outline-danger rounded-pill ms-2" id="clearCacheBtn">
-            <i class="bi bi-trash me-1"></i> Hapus Cache
-          </button>
+          <button class="btn btn-outline-warning rounded-pill ms-2" id="moveToAlumniBtn" disabled><i class="bi bi-arrow-right-circle me-1"></i> Pindahkan ke Alumni</button>
+          <button class="btn btn-outline-danger rounded-pill ms-2" id="clearCacheBtn"><i class="bi bi-trash me-1"></i> Hapus Cache</button>
           <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+          
+          <!-- 🆕 TOMBOL GENERATE TTD MASSAL -->
+          <button class="btn btn-warning rounded-pill ms-2" id="bulkGenerateTTDBtn">
+            <i class="bi bi-lightning-charge-fill me-1"></i> ⚡ Generate TTD Massal
+          </button>
+
           <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
         </div>
         <div class="col-md-6 text-md-end">
-          <div class="input-group" style="max-width: 300px; display: inline-flex;">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama peserta...">
-          </div>
-          <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterStatus">
-            <option value="">Semua Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Disetujui</option>
-            <option value="rejected">Ditolak</option>
-          </select>
+          <div class="input-group" style="max-width: 300px; display: inline-flex;"><span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span><input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama..."></div>
+          <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterStatus"><option value="">Semua</option><option value="pending">Pending</option><option value="approved">Disetujui</option><option value="active">Aktif</option><option value="alumni">Alumni</option></select>
         </div>
       </div>
 
-      <!-- TABLE PESERTA -->
-      <div id="pesertaTableContainer" class="table-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+      <div id="pesertaTableContainer" class="table-container"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div></div>
+
+      <div id="debugConsole" class="debug-console" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-2"><strong><i class="bi bi-bug me-2"></i>Debug Console</strong><button class="btn btn-sm btn-outline-light" onclick="document.getElementById('debugConsole').style.display='none'">Tutup</button></div>
+        <div id="debugLog"></div>
       </div>
 
-      <!-- ========================================================== -->
-      <!--   BAGIAN: FORM BUILDER (KELOLA FIELD ISIAN)                -->
-      <!-- ========================================================== -->
+      <!-- FORM BUILDER -->
       <div class="mt-5 pt-4 border-top">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4><i class="bi bi-gear me-2"></i>Form Builder - Kelola Field Isian Peserta</h4>
-          <button class="btn btn-primary rounded-pill btn-sm" id="addFieldBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Field Baru</button>
-        </div>
-        <p class="text-muted small">Kelola field yang muncul di form pendaftaran (Peserta & Admin). <strong>Field Core</strong> (Nama, Email, dll.) tidak bisa dihapus, tapi bisa diedit Label, Tipe, dan status Wajibnya.</p>
-        <div id="formBuilderContainer" class="row g-3">
-          <!-- akan diisi oleh JS -->
-          <div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>
-        </div>
-        <div class="mt-3 text-end">
-          <button class="btn btn-success rounded-pill px-4" id="saveFormStructureBtn">
-            <i class="bi bi-save me-1"></i> Simpan Struktur Form
-          </button>
-        </div>
-      </div>
-      <!-- ========================================================== -->
-
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MODAL "LAINNYA" (MOBILE) ==================== -->
-<div class="modal fade" id="moreMenuModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <div class="row g-2">
-          <div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div>
-          <div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div>
-          <div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div>
-          <div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
-          <div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
-          <div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
-          <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
-          <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
-          <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
-          <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-            </button>
-          </div>
-        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3"><h4><i class="bi bi-gear me-2"></i>Form Builder - Kelola Field Isian Peserta</h4><button class="btn btn-primary rounded-pill btn-sm" id="addFieldBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Field Baru</button></div>
+        <p class="text-muted small">Kelola field yang muncul di form pendaftaran. <strong>Field Core</strong> tidak bisa dihapus.</p>
+        <div id="formBuilderContainer" class="row g-3"><div class="col-12 text-center"><div class="spinner-border text-primary"></div></div></div>
+        <div class="mt-3 text-end"><button class="btn btn-success rounded-pill px-4" id="saveFormStructureBtn"><i class="bi bi-save me-1"></i> Simpan Struktur Form</button></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ==================== MODAL FORM (TAMBAH/EDIT PESERTA) - DINAMIS ==================== -->
-<div class="modal fade" id="pesertaFormModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i><span id="formModalTitle">Tambah Peserta</span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
-        <input type="hidden" id="editPesertaId">
-        <div id="dynamicAdminFormContainer"></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="savePesertaBtn">Simpan</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- MODALS -->
+<div class="modal fade" id="moreMenuModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2"><div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div><div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div><div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div><div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div><div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div><div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div><div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div><div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div><div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div><div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div></div><div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></div></div></div></div></div></div>
 
-<!-- ==================== MODAL FIELD EDITOR (TAMBAH/EDIT FIELD CUSTOM) ==================== -->
-<div class="modal fade" id="fieldEditorModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="fieldModalTitle">Tambah Field Baru</span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <input type="hidden" id="editFieldId">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Label Field</label>
-          <input type="text" class="form-control" id="fieldLabel" placeholder="Misal: Nama Ibu Kandung" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Tipe Input</label>
-          <select class="form-select" id="fieldType">
-            <option value="text">Text (Input Teks)</option>
-            <option value="textarea">Textarea (Teks Panjang)</option>
-            <option value="radio">Radio (Pilihan Ganda)</option>
-            <option value="select">Select (Dropdown)</option>
-            <option value="file">File Upload</option>
-          </select>
-        </div>
-        <div class="mb-3" id="fieldOptionsGroup" style="display:none;">
-          <label class="form-label fw-semibold">Opsi (Pisahkan dengan koma)</label>
-          <input type="text" class="form-control" id="fieldOptions" placeholder="Contoh: Ya,Tidak,Lainnya">
-        </div>
-        <div class="mb-3">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="fieldRequired">
-            <label class="form-check-label" for="fieldRequired">Wajib diisi (Required)</label>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveFieldBtn">Simpan Field</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="modal fade" id="pesertaFormModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-person-badge me-2"></i><span id="formModalTitle">Tambah Peserta</span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;"><input type="hidden" id="editPesertaId"><div id="dynamicAdminFormContainer"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="savePesertaBtn">Simpan</button></div></div></div></div>
 
-<!-- ==================== MODAL DETAIL ==================== -->
-<div class="modal fade" id="detailPesertaModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Peserta</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div>
-      </div>
-      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button></div>
-    </div>
-  </div>
-</div>
+<div class="modal fade" id="fieldEditorModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-info text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="fieldModalTitle">Tambah Field Baru</span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><input type="hidden" id="editFieldId"><div class="mb-3"><label class="form-label fw-semibold">Label Field</label><input type="text" class="form-control" id="fieldLabel" required></div><div class="mb-3"><label class="form-label fw-semibold">Tipe Input</label><select class="form-select" id="fieldType"><option value="text">Text</option><option value="textarea">Textarea</option><option value="radio">Radio</option><option value="select">Select</option><option value="file">File</option></select></div><div class="mb-3" id="fieldOptionsGroup" style="display:none;"><label>Opsi (pisahkan koma)</label><input type="text" class="form-control" id="fieldOptions" placeholder="Ya,Tidak"></div><div class="mb-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="fieldRequired"><label>Wajib diisi</label></div></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="saveFieldBtn">Simpan Field</button></div></div></div></div>
 
-<!-- ==================== MODAL HAPUS ==================== -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 text-center">
-        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
-        <p>Apakah Anda yakin ingin menghapus peserta ini?</p>
-        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
-        <input type="hidden" id="deletePesertaId">
-      </div>
-      <div class="modal-footer border-0 justify-content-center">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="modal fade" id="detailPesertaModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-info text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Peserta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div id="detailContent"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button></div></div></div></div>
 
-<!-- ==================== MODAL KREDENSIAL (FITUR BARU) ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-danger text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i><p>Yakin ingin menghapus peserta ini?</p><p class="text-muted small">Tindakan tidak dapat dibatalkan.</p><input type="hidden" id="deletePesertaId"></div><div class="modal-footer border-0 justify-content-center"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button></div></div></div></div>
+
 <div class="modal fade" id="credentialModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-success text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Kredensial Login Peserta</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
+      <div class="modal-header bg-success text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Kredensial Login Peserta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
       <div class="modal-body p-4 text-center">
         <p class="mb-2"><strong>Nama:</strong> <span id="credentialNama"></span></p>
         <div id="credentialQrContainer" class="mb-3"></div>
         <p><strong>Username:</strong> <span id="credentialUsername" class="fw-bold text-primary"></span></p>
         <p><strong>Password:</strong> <span id="credentialPassword" class="fw-bold text-danger"></span></p>
         <p class="small text-muted">* Password dapat diubah oleh peserta melalui halaman Member setelah login.</p>
-        <div class="alert alert-info small mt-2 text-start">
-          <i class="bi bi-info-circle"></i> Scan QR Code untuk absen. Gunakan Username & Password untuk login.
-        </div>
       </div>
       <div class="modal-footer border-0 justify-content-center">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
@@ -493,1218 +229,635 @@
   </div>
 </div>
 
-<!-- ==================== TOAST ==================== -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-    <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="toastIcon"></i>
-      <strong class="me-auto" id="toastTitle">Berhasil</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+<!-- ==================== TTD MODAL DINAMIS ==================== -->
+<div class="modal fade" id="ttdModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="ttdCardsContainer" class="row g-4 d-flex align-items-stretch"></div>
+        <div id="ttdEmptyMessage" class="text-center text-muted py-4" style="display:none;">
+          <i class="bi bi-pencil-square fs-2"></i>
+          <p class="mt-2 mb-0">Belum ada tanda tangan digital untuk peserta ini.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
     </div>
-    <div class="toast-body" id="toastMessage"></div>
   </div>
 </div>
 
-<!-- ==================== SCRIPTS ==================== -->
+<div class="toast-container position-fixed top-0 end-0 p-3"><div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/bisaa/dataCache.js"></script>
 <script src="/bisaa/api.js"></script>
 
 <script>
-  (function() {
-    'use strict';
+  // --- State ---
+  let STATE = { 
+    pesertaList: [], filteredList: [], formStructure: [], searchQuery: '', statusFilter: '', 
+    currentPage: 1, itemsPerPage: 15, sortColumn: null, sortDirection: 'asc',
+    editingFieldId: null, allApprovals: [] // Cache TTD
+  };
 
-    let STATE = {
-      pesertaList: [],
-      filteredList: [],
-      formStructure: [],
-      searchQuery: '',
-      statusFilter: '',
-      isLoading: false,
-      isEditing: false,
-      signaturePad: null,
-      editingFieldId: null
-    };
+  // --- Utility ---
+  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;'; return m; }); }
+  function showToast(message, type = 'success') { const toastEl = document.getElementById('notificationToast'); if (!toastEl) return; const toast = new bootstrap.Toast(toastEl); document.getElementById('toastMessage').innerText = message; const icon = document.getElementById('toastIcon'); if (type === 'success') { icon.className = 'bi bi-check-circle-fill text-success'; document.getElementById('toastTitle').innerText = 'Berhasil'; } else { icon.className = 'bi bi-x-circle-fill text-danger'; document.getElementById('toastTitle').innerText = 'Gagal'; } toast.show(); }
+  function getStatusBadge(status) { if (status === 'approved' || status === 'active') return 'bg-success'; if (status === 'rejected') return 'bg-danger'; if (status === 'alumni') return 'bg-secondary'; return 'bg-warning text-dark'; }
+  function renderSkeleton() { return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>'; }
+  function updateCacheStatus(status) { const el = document.getElementById('cacheStatus'); if (el) { el.textContent = status; el.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); } }
+  function debounce(fn, delay) { let timer; return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); }; }
+  function generateId() { return 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
 
-    // =====================================================
-    //   UTILITY FUNCTIONS
-    // =====================================================
-    window.togglePasswordVisibility = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
-    };
+  // --- Load Data & Cache Management ---
+  async function loadPesertaData(forceRefresh = false) {
+    const container = document.getElementById('pesertaTableContainer');
+    container.innerHTML = renderSkeleton();
 
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
-      });
-    }
-
-    function generateId() {
-      return 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    function getStatusBadge(status) {
-      if (status === 'approved') return 'bg-success';
-      if (status === 'rejected') return 'bg-danger';
-      return 'bg-warning text-dark';
-    }
-
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
-    }
-
-    function renderSkeleton() {
-      return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
-    // =====================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // =====================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('bi-arrow-left-right');
-        icon.classList.toggle('bi-arrow-right-left');
-      }
-    });
-
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
-
-    // =====================================================
-    //   LOGOUT
-    // =====================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
-
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
-
-    // =====================================================
-    //   LOGIN AUTH CHECK
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
-        return;
-      }
-
-      // Load data
-      loadPesertaData();
-      loadFormStructure();
-
-      // Event listeners
-      document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('addFieldBtn')?.addEventListener('click', openAddFieldModal);
-      document.getElementById('saveFormStructureBtn')?.addEventListener('click', saveFormStructure);
-      document.getElementById('saveFieldBtn')?.addEventListener('click', saveField);
-      
-      document.getElementById('clearCacheBtn')?.addEventListener('click', function() {
-        if (confirm('Hapus semua cache lokal? Data akan dimuat ulang dari server.')) {
-          DataCache.clear();
-          localStorage.removeItem('pkd_peserta_data');
-          showToast('Cache lokal dibersihkan. Memuat ulang data...', 'info');
-          loadPesertaData(true);
-          loadFormStructure(true);
-        }
-      });
-
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        Promise.all([loadPesertaData(true), loadFormStructure(true)]).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-      });
-      document.getElementById('savePesertaBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('filterStatus')?.addEventListener('change', handleStatusFilter);
-    });
-
-    // =====================================================
-    //   CACHE HELPERS
-    // =====================================================
-    function loadPesertaFromCache() {
-      const cached = DataCache.getData('peserta');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.pesertaList = cached;
-        return true;
-      }
-      return false;
-    }
-
-    function updatePesertaCache(data) {
-      DataCache.updateData('peserta', data);
-      STATE.pesertaList = data;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    function loadPesertaFromStorage() {
-      try {
-        const stored = localStorage.getItem('pkd_peserta_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.pesertaList) {
-            STATE.pesertaList = parsed.pesertaList;
-          }
-        }
-      } catch (e) {}
-      if (STATE.pesertaList.length === 0) {
-        STATE.pesertaList = [];
-        savePesertaToStorage();
-      }
-    }
-
-    function savePesertaToStorage() {
-      try {
-        localStorage.setItem('pkd_peserta_data', JSON.stringify({
-          pesertaList: STATE.pesertaList
-        }));
-      } catch (e) {}
-    }
-
-    function getPesertaById(id) {
-      return STATE.pesertaList.find(item => item.id === id);
-    }
-
-    // =====================================================
-    //   CRUD OPERATIONS (PESERTA)
-    // =====================================================
-    function addPeserta(data) {
-      const newItem = {
-        id: generateId(),
-        nama_lengkap: data.nama_lengkap || '',
-        email: data.email || '',
-        no_hp: data.no_hp || '',
-        utusan: data.utusan || '',
-        status: data.status || 'pending',
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-        catatan: data.catatan || '',
-        custom_data: data.custom_data || {} 
-      };
-      STATE.pesertaList.unshift(newItem);
-      updatePesertaCache(STATE.pesertaList);
-      savePesertaToStorage();
-      return newItem;
-    }
-
-    function updatePeserta(id, data) {
-      const index = STATE.pesertaList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const existing = STATE.pesertaList[index];
-      const updated = {
-        ...existing,
-        nama_lengkap: data.nama_lengkap !== undefined ? data.nama_lengkap : existing.nama_lengkap,
-        email: data.email !== undefined ? data.email : existing.email,
-        no_hp: data.no_hp !== undefined ? data.no_hp : existing.no_hp,
-        utusan: data.utusan !== undefined ? data.utusan : existing.utusan,
-        status: data.status !== undefined ? data.status : existing.status,
-        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-        catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
-        custom_data: data.custom_data !== undefined ? data.custom_data : existing.custom_data
-      };
-      STATE.pesertaList[index] = updated;
-      updatePesertaCache(STATE.pesertaList);
-      savePesertaToStorage();
-      return updated;
-    }
-
-    function deletePeserta(id) {
-      const index = STATE.pesertaList.findIndex(item => item.id === id);
-      if (index === -1) return false;
-      STATE.pesertaList.splice(index, 1);
-      updatePesertaCache(STATE.pesertaList);
-      savePesertaToStorage();
-      return true;
-    }
-
-    function getFilteredPeserta(query = '', status = '') {
-      let filtered = STATE.pesertaList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item =>
-          (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
-          (item.email && item.email.toLowerCase().includes(q)) ||
-          (item.utusan && item.utusan.toLowerCase().includes(q)) ||
-          (item.no_hp && item.no_hp.toLowerCase().includes(q))
-        );
-      }
-      if (status !== '' && status !== '') {
-        filtered = filtered.filter(item => item.status === status);
-      }
-      return filtered;
-    }
-
-    // =====================================================
-    //   LOAD PESERTA DATA
-    // =====================================================
-    async function loadPesertaData(forceRefresh = false) {
-      const container = document.getElementById('pesertaTableContainer');
-      container.innerHTML = renderSkeleton();
+    try {
+      let dataToRender = null;
 
       if (forceRefresh) {
-        try {
-          const freshData = await PKD.getPesertaList();
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.pesertaList = freshData;
-            updatePesertaCache(freshData);
-            savePesertaToStorage();
-            renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
-            updateCacheStatus('Live');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
+        console.log('[DEBUG] Force refresh, mengambil dari API...');
+        const res = await PKD.callApi('getPesertaList', {}, 'GET');
+        let freshData = res?.data || res;
+        if (Array.isArray(freshData)) dataToRender = freshData;
+        else dataToRender = [];
+
+        if (dataToRender && dataToRender.length > 0) {
+          STATE.pesertaList = dataToRender;
+          try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
+          applyFiltersAndSort();
+          updateCacheStatus('Live');
+          console.log(`[DEBUG] Load ${dataToRender.length} data dari API.`);
+          return;
+        } else {
+          container.innerHTML = `<div class="alert alert-info text-center">📂 Data peserta kosong.</div>`;
+          updateCacheStatus('Empty');
+          return;
         }
       }
 
       const cached = DataCache.getData('peserta');
       if (cached && Array.isArray(cached) && cached.length > 0) {
         STATE.pesertaList = cached;
-        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
+        applyFiltersAndSort();
         updateCacheStatus('Cache');
+        console.log('[DEBUG] Data dari cache.');
+
+        (async () => {
+          try {
+            const bgRes = await PKD.callApi('getPesertaList', {}, 'GET');
+            let bgData = bgRes?.data || bgRes;
+            if (!Array.isArray(bgData)) bgData = [];
+
+            if (bgData.length > 0 && JSON.stringify(bgData) !== JSON.stringify(STATE.pesertaList)) {
+              STATE.pesertaList = bgData;
+              try { DataCache.updateData('peserta', bgData); } catch (e) {}
+              applyFiltersAndSort();
+              updateCacheStatus('Live');
+              console.log('[DEBUG] Background update berhasil.');
+            }
+          } catch (e) { console.warn('Background fetch gagal:', e); }
+        })();
         return;
       }
 
-      loadPesertaFromStorage();
-      if (STATE.pesertaList.length > 0) {
-        renderTable(getFilteredPeserta(STATE.searchQuery, STATE.statusFilter));
-        updateCacheStatus('Storage');
+      console.log('[DEBUG] Mengambil data dari API (no cache)...');
+      const res = await PKD.callApi('getPesertaList', {}, 'GET');
+      let freshData = res?.data || res;
+      if (Array.isArray(freshData)) dataToRender = freshData;
+      else dataToRender = [];
+
+      if (dataToRender && dataToRender.length > 0) {
+        STATE.pesertaList = dataToRender;
+        try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
+        applyFiltersAndSort();
+        updateCacheStatus('Live');
+        console.log(`[DEBUG] Load ${dataToRender.length} data dari API.`);
       } else {
-        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data peserta.</div>`;
+        container.innerHTML = `<div class="alert alert-info text-center">📂 Data peserta kosong.</div>`;
         updateCacheStatus('Empty');
       }
+
+    } catch (e) {
+      console.error('[DEBUG] Error loadPesertaData:', e);
+      container.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+      updateCacheStatus('Error');
     }
+  }
 
-    // =====================================================
-    //   RENDER TABLE (DENGAN CHECKBOX & TOMBOL KREDENSIAL)
-    // =====================================================
-    function renderTable(data) {
-      const container = document.getElementById('pesertaTableContainer');
-      if (!container) return;
-
-      let html = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 40px;"><input type="checkbox" id="selectAllPeserta"></th>
-                <th style="width: 50px;">#</th>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>No HP</th>
-                <th>Utusan</th>
-                <th>Status</th>
-                <th style="width: 200px;">Aksi</th>
-                <th style="width: 120px;">Kredensial</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.length === 0) {
-        html += `
-            <tr>
-              <td colspan="9" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Tidak ada data peserta.
-              </td>
-            </tr>
-        `;
-      } else {
-        data.forEach((item, index) => {
-          const badge = getStatusBadge(item.status);
-          html += `
-            <tr>
-              <td><input type="checkbox" class="peserta-checkbox" value="${item.id}"></td>
-              <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
-              <td>${escapeHtml(item.email || '-')}</td>
-              <td>${escapeHtml(item.no_hp || '-')}</td>
-              <td>${escapeHtml(item.utusan || '-')}</td>
-              <td><span class="badge ${badge} status-badge">${escapeHtml(item.status || 'pending')}</span></td>
-              <td class="text-center">
-                ${item.status === 'pending' ? `
-                  <button class="btn btn-sm btn-success btn-aksi" onclick="approvePeserta('${item.id}')" title="Setujui">
-                    <i class="bi bi-check-lg"></i>
-                  </button>
-                  <button class="btn btn-sm btn-danger btn-aksi" onclick="rejectPeserta('${item.id}')" title="Tolak">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                ` : ''}
-                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewPeserta('${item.id}')" title="Lihat Detail">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editPeserta('${item.id}')" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deletePeserta('${item.id}')" title="Hapus">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-              <td class="text-center">
-                ${item.status === 'approved' ? `
-                  <button class="btn btn-sm btn-outline-primary" onclick="showCredentials('${item.id}')" title="Lihat Kredensial">
-                    <i class="bi bi-key-fill"></i>
-                  </button>
-                ` : '-'}
-              </td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      container.innerHTML = html;
-
-      // Setup checkbox logic
-      document.getElementById('selectAllPeserta')?.addEventListener('change', function() {
-        document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.checked = this.checked);
-        toggleMoveToAlumniBtn();
-      });
-      document.querySelectorAll('.peserta-checkbox').forEach(cb => {
-        cb.addEventListener('change', toggleMoveToAlumniBtn);
+  // --- Filter, Sort, Pagination ---
+  function applyFiltersAndSort() {
+    let filtered = STATE.pesertaList;
+    if (STATE.searchQuery.trim() !== '') {
+      const q = STATE.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item => 
+        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+        (item.email && item.email.toLowerCase().includes(q)) ||
+        (item.no_hp && item.no_hp.toLowerCase().includes(q)) ||
+        (item.utusan && item.utusan.toLowerCase().includes(q))
+      );
+    }
+    if (STATE.statusFilter !== '') {
+      filtered = filtered.filter(item => item.status === STATE.statusFilter);
+    }
+    if (STATE.sortColumn) {
+      filtered.sort((a, b) => {
+        let va = (a[STATE.sortColumn] || '').toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
       });
     }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    renderTable(filtered.slice(start, end), totalItems);
+  }
 
-    // =====================================================
-    //   SELECT ALL / TOGGLE MOVE BUTTON
-    // =====================================================
-    function toggleMoveToAlumniBtn() {
-      const checked = document.querySelectorAll('.peserta-checkbox:checked');
-      document.getElementById('moveToAlumniBtn').disabled = checked.length === 0;
-    }
-
-    // =====================================================
-    //   APPROVE / REJECT (MODIFIED FOR CREDENTIALS)
-    // =====================================================
-    window.approvePeserta = async function(id) {
-      if (!confirm('Setujui peserta ini? QR Code dan akun member akan dibuat.')) return;
-      try {
-        const res = await PKD.approvePeserta(id);
-        if (res.success) {
-          showToast('Peserta disetujui.', 'success');
-          loadPesertaData(true); // Reload table
-          
-          // Jika ada username & password baru, tampilkan modal
-          if (res.username && res.password) {
-            const item = getPesertaById(id);
-            document.getElementById('credentialNama').innerText = item.nama_lengkap || '-';
-            document.getElementById('credentialUsername').innerText = res.username;
-            document.getElementById('credentialPassword').innerText = res.password;
-            // Generate QR
-            const qrContainer = document.getElementById('credentialQrContainer');
-            qrContainer.innerHTML = '';
-            const qr = qrcode(0, 'M');
-            qr.addData(`peserta_id=${id}`);
-            qr.make();
-            const canvas = document.createElement('canvas');
-            const size = qr.getModuleCount() * 8;
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            for (let row = 0; row < qr.getModuleCount(); row++) {
-              for (let col = 0; col < qr.getModuleCount(); col++) {
-                ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-                ctx.fillRect(col * 8, row * 8, 8, 8);
-              }
-            }
-            qrContainer.appendChild(canvas);
-            qrContainer.querySelector('canvas').classList.add('credential-modal-qr');
-            new bootstrap.Modal(document.getElementById('credentialModal')).show();
-          }
-        } else {
-          showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
-        }
-      } catch (e) {
-        showToast('Error: ' + e.message, 'error');
-      }
-    };
-
-    window.rejectPeserta = async function(id) {
-      if (!confirm('Tolak peserta ini?')) return;
-      try {
-        const res = await PKD.rejectPeserta(id);
-        if (res.success) {
-          showToast('Peserta ditolak', 'success');
-          loadPesertaData(true);
-        } else {
-          showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
-        }
-      } catch (e) {
-        showToast('Error: ' + e.message, 'error');
-      }
-    };
-
-    // =====================================================
-    //   SHOW CREDENTIALS
-    // =====================================================
-    window.showCredentials = async function(id) {
-      try {
-        const res = await PKD.getPesertaCredentials(id);
-        if (res.success) {
-          const item = getPesertaById(id);
-          document.getElementById('credentialNama').innerText = item.nama_lengkap || '-';
-          document.getElementById('credentialUsername').innerText = res.username;
-          document.getElementById('credentialPassword').innerText = '(Tersimpan di sistem)';
-          
-          const qrContainer = document.getElementById('credentialQrContainer');
-          qrContainer.innerHTML = '';
-          const qr = qrcode(0, 'M');
-          qr.addData(`peserta_id=${id}`);
-          qr.make();
-          const canvas = document.createElement('canvas');
-          const size = qr.getModuleCount() * 8;
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          for (let row = 0; row < qr.getModuleCount(); row++) {
-            for (let col = 0; col < qr.getModuleCount(); col++) {
-              ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-              ctx.fillRect(col * 8, row * 8, 8, 8);
-            }
-          }
-          qrContainer.appendChild(canvas);
-          qrContainer.querySelector('canvas').classList.add('credential-modal-qr');
-          
-          new bootstrap.Modal(document.getElementById('credentialModal')).show();
-        } else {
-          showToast('Belum ada akun member untuk peserta ini.', 'warning');
-        }
-      } catch (e) {
-        showToast('Gagal mengambil kredensial: ' + e.message, 'error');
-      }
-    };
-
-    // =====================================================
-    //   COPY CREDENTIALS
-    // =====================================================
-    document.getElementById('copyCredentialBtn')?.addEventListener('click', function() {
-      const nama = document.getElementById('credentialNama').innerText;
-      const username = document.getElementById('credentialUsername').innerText;
-      const password = document.getElementById('credentialPassword').innerText;
-      const text = `Nama: ${nama}\nUsername: ${username}\nPassword: ${password}`;
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('Kredensial berhasil disalin!', 'success');
-      }).catch(() => {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('Kredensial berhasil disalin!', 'success');
-      });
+  function renderTable(data, totalItems) {
+    const container = document.getElementById('pesertaTableContainer');
+    if (!container) return;
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr>
+      <th style="width:40px;"><input type="checkbox" id="selectAllPeserta"></th>
+      <th style="width:50px;">#</th>
+      <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
+      <th class="sortable" onclick="sortTable('email')">Email</th>
+      <th class="sortable" onclick="sortTable('no_hp')">No HP</th>
+      <th class="sortable" onclick="sortTable('utusan')">Utusan</th>
+      <th class="sortable" onclick="sortTable('status')">Status</th>
+      <th style="width:200px;">Aksi</th>
+    </tr></thead><tbody>`;
+    if (data.length === 0) html += `<tr><td colspan="8" class="text-center py-5"><i class="bi bi-inbox fs-4"></i>Tidak ada data</td></tr>`;
+    else data.forEach((item, i) => {
+      const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
+      const nama = item.nama_lengkap || '-'; const email = item.email || '-'; const noHp = item.no_hp || '-'; const utusan = item.utusan || '-'; const status = item.status || 'pending'; const badge = getStatusBadge(status);
+      html += `<tr><td><input type="checkbox" class="peserta-checkbox" value="${item.id}"></td><td>${globalIndex}</td><td><strong>${escapeHtml(nama)}</strong></td><td>${escapeHtml(email)}</td><td>${escapeHtml(noHp)}</td><td>${escapeHtml(utusan)}</td><td><span class="badge ${badge}">${escapeHtml(status)}</span></td><td class="text-center">
+        <button class="btn btn-sm btn-outline-info" onclick="viewPeserta('${item.id}')">👁️</button>
+        <button class="btn btn-sm btn-outline-warning" onclick="editPeserta('${item.id}')">✏️</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deletePeserta('${item.id}')">🗑️</button>
+        <button class="btn btn-sm btn-outline-primary" onclick="showTTD('${item.id}','${escapeHtml(item.nama_lengkap)}')">🖊️ TTD</button>
+      </td></tr>`;
     });
-
-    // =====================================================
-    //   MOVE TO ALUMNI
-    // =====================================================
-    document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
-      const checked = document.querySelectorAll('.peserta-checkbox:checked');
-      if (checked.length === 0) return;
-      
-      if (!confirm(`Pindahkan ${checked.length} peserta terpilih ke Alumni?`)) return;
-
-      const ids = Array.from(checked).map(cb => cb.value);
-      const btn = this;
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memindahkan...';
-
-      try {
-        const res = await PKD.alumni.moveMultipleToAlumni(ids);
-        if (res.success) {
-          showToast(`Berhasil memindahkan ${res.moved} peserta ke Alumni.`, 'success');
-          loadPesertaData(true);
-        } else {
-          showToast('Gagal memindahkan: ' + (res.error || 'Unknown error'), 'error');
-        }
-      } catch (e) {
-        showToast('Error: ' + e.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
+    html += `</tbody></table></div>`;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `<div class="pagination-container"><div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div><div class="btn-group">`;
+    for (let i = 1; i <= totalPages; i++) html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    html += `</div></div>`;
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+    document.getElementById('selectAllPeserta')?.addEventListener('change', function() {
+      document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.checked = this.checked);
+      updateMoveToAlumniBtn();
     });
+    document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.addEventListener('change', updateMoveToAlumniBtn));
+  }
 
-    // =====================================================
-    //   EVENT HANDLERS (PESERTA CRUD)
-    // =====================================================
-    function resetForm() {
-      document.getElementById('editPesertaId').value = '';
-      document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
-      STATE.isEditing = false;
-      const container = document.getElementById('dynamicAdminFormContainer');
-      container.innerHTML = '';
-      if (STATE.signaturePad) {
-        STATE.signaturePad.clear();
-      }
-    }
+  function updateMoveToAlumniBtn() { const checked = document.querySelectorAll('.peserta-checkbox:checked'); document.getElementById('moveToAlumniBtn').disabled = checked.length === 0; }
 
-    function buildDynamicForm(data = null) {
-      const container = document.getElementById('dynamicAdminFormContainer');
-      let html = '';
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1; applyFiltersAndSort();
+  };
+  window.goToPage = function(page) { const totalItems = STATE.filteredList.length; const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage)); if (page < 1 || page > totalPages) return; STATE.currentPage = page; applyFiltersAndSort(); };
 
-      html += `
-        <div class="admin-contact">
-          <h6><i class="bi bi-telephone-fill me-2"></i>Konfirmasi Administrasi ke Panitia Lokal</h6>
-          <p class="mb-1">Sebelum mengisi formulir, silakan hubungi panitia untuk memastikan kelengkapan administrasi.</p>
-          <a href="https://wa.me/6283866675521?text=Halo%20Panitia%20PKD%2C%20saya%20ingin%20konfirmasi%20administrasi%20peserta." target="_blank" class="btn btn-success btn-sm rounded-pill mt-2 whatsapp-btn">
-            <i class="bi bi-whatsapp me-1"></i> Hubungi Admin Instruktur (0838-6667-5521)
-          </a>
-          <p class="small text-muted mt-2 mb-0">Nomor kontak sesuai flyer resmi PKD GP Ansor Bantul.</p>
-        </div>
-      `;
-
-      STATE.formStructure.forEach(field => {
-        const val = data ? data[field.id] || '' : '';
-        const isRequired = field.required ? 'required' : '';
-        const labelHtml = `<label class="form-label fw-bold">${escapeHtml(field.label)}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>`;
-        
-        if (field.id === 'foto') {
-          html += `
-            <div class="mb-3">
-              ${labelHtml}
-              <input type="file" class="form-control" name="${field.id}" accept="image/*" id="input_${field.id}" ${isRequired}>
-              <img id="preview_${field.id}" src="#" alt="Preview" style="max-width: 200px; display: none;" class="mt-2 rounded border">
-            </div>
-          `;
-        } else if (field.id === 'surat_rekomendasi') {
-          html += `
-            <div class="mb-3">
-              ${labelHtml}
-              <div class="template-card mb-3">
-                <div class="d-flex flex-wrap align-items-center justify-content-between">
-                  <div>
-                    <h6 class="fw-semibold mb-1"><i class="bi bi-file-earmark-word me-1"></i>Download Template Surat Rekomendasi</h6>
-                    <p class="small text-muted mb-0"><strong>Pilih salah satu template</strong> di lengkapi di cetak, kemudian upload formulir</p>
-                  </div>
-                  <div class="d-flex gap-2 flex-wrap mt-2 mt-sm-0">
-                    <a href="Surat Rekomendasi PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
-                      <i class="bi bi-file-earmark-word me-1"></i> Template PAC
-                    </a>
-                    <a href="Surat Rekomendasi Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
-                      <i class="bi bi-file-earmark-word me-1"></i> Template Masjid
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <input type="file" class="form-control" name="${field.id}" accept=".pdf,image/*" id="input_${field.id}" ${isRequired}>
-              <div id="preview_${field.id}" class="mt-2 small text-muted"></div>
-            </div>
-          `;
-        } else if (field.type === 'textarea') {
-          html += `
-            <div class="mb-3">
-              ${labelHtml}
-              <textarea class="form-control" name="${field.id}" rows="3" placeholder="Masukkan jawaban Anda..." ${isRequired}>${escapeHtml(val)}</textarea>
-            </div>
-          `;
-        } else if (field.type === 'radio') {
-          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-          html += `<div class="mb-3">${labelHtml}<div class="radio-group">`;
-          options.forEach((opt, idx) => {
-            const checked = val === opt ? 'checked' : '';
-            html += `
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt)}" id="${field.id}_${idx}" ${checked} ${isRequired}>
-                <label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt)}</label>
-              </div>
-            `;
-          });
-          html += `</div></div>`;
-        } else if (field.type === 'select') {
-          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-          html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" ${isRequired}>`;
-          html += `<option value="">-- Pilih --</option>`;
-          options.forEach(opt => {
-            const selected = val === opt ? 'selected' : '';
-            html += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
-          });
-          html += `</select></div>`;
-        } else {
-          html += `
-            <div class="mb-3">
-              ${labelHtml}
-              <input type="text" class="form-control" name="${field.id}" placeholder="Masukkan ${escapeHtml(field.label)}" value="${escapeHtml(val)}" ${isRequired}>
-            </div>
-          `;
+  // --- Form Builder ---
+  async function loadFormStructure() {
+    try {
+      const res = await PKD.getFormSettings();
+      let fields = [];
+      if (res.success && res.data) {
+        if (typeof res.data === 'string') { try { fields = JSON.parse(res.data); } catch(e) { fields = []; } }
+        else if (Array.isArray(res.data)) fields = res.data;
+        if (Array.isArray(fields) && fields.length > 0 && typeof fields[0] === 'string') {
+          const coreLabels = { nama_lengkap:'Nama Lengkap', tempat_tgl_lahir:'Tempat & Tanggal Lahir', pekerjaan:'Pekerjaan', pendidikan_terakhir:'Pendidikan Terakhir', alamat:'Alamat', no_hp:'No HP', email:'Email', utusan:'Utusan (PAC)', pengalaman_organisasi:'Pengalaman Organisasi', foto:'Foto', surat_rekomendasi:'Surat Rekomendasi' };
+          fields = fields.map(id => ({ id, label: coreLabels[id] || id, type: (id==='foto'||id==='surat_rekomendasi')?'file':(id==='pengalaman_organisasi'||id==='alamat')?'textarea':'text', options:'', required:true, isCore:true }));
         }
-      });
-
-      html += `
-        <div class="mb-3">
-          <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-          <div class="border rounded p-2" style="background: #fff;"><canvas id="signatureCanvasAdmin"></canvas></div>
-          <div class="mt-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSignatureAdmin"><i class="bi bi-eraser"></i> Hapus</button>
-            <small class="text-muted ms-2">Gambar tanda tangan dengan mouse atau jari (pada layar sentuh).</small>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-
-      document.querySelectorAll('#dynamicAdminFormContainer input[type="file"]').forEach(input => {
-        input.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          const previewId = `preview_${this.name}`;
-          const previewEl = document.getElementById(previewId);
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-              if (this.name === 'foto') {
-                previewEl.src = ev.target.result;
-                previewEl.style.display = 'block';
-              } else {
-                previewEl.innerHTML = `File dipilih: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
-              }
-            }.bind(this);
-            reader.readAsDataURL(file);
-          } else {
-            if (this.name === 'foto') {
-              previewEl.style.display = 'none';
-            } else {
-              previewEl.innerHTML = '';
-            }
-          }
-        });
-      });
-
-      const canvas = document.getElementById('signatureCanvasAdmin');
-      if (canvas) {
-        if (STATE.signaturePad) STATE.signaturePad.clear();
-        STATE.signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)', penColor: 'rgb(0,0,0)' });
-        function resizeCanvas() {
-          const ratio = Math.max(window.devicePixelRatio || 1, 1);
-          canvas.width = canvas.offsetWidth * ratio;
-          canvas.height = canvas.offsetHeight * ratio;
-          canvas.getContext("2d").scale(ratio, ratio);
-          STATE.signaturePad.clear();
-        }
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
-        document.getElementById('clearSignatureAdmin').addEventListener('click', () => STATE.signaturePad.clear());
-      }
-    }
-
-    function openAddModal() {
-      resetForm();
-      buildDynamicForm();
-      new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
-    }
-
-    window.editPeserta = function(id) {
-      const item = getPesertaById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      resetForm();
-      document.getElementById('editPesertaId').value = id;
-      document.getElementById('formModalTitle').innerText = 'Edit Peserta';
-      STATE.isEditing = true;
-      
-      const mergedItem = { ...item, ...(item.custom_data || {}) };
-      buildDynamicForm(mergedItem);
-
-      new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
-    };
-
-    window.viewPeserta = function(id) {
-      const item = getPesertaById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
-      const content = document.getElementById('detailContent');
-      const badge = getStatusBadge(item.status);
-      
-      let customHtml = '';
-      STATE.formStructure.forEach(field => {
-        if (field.type === 'file' || field.id === 'tanda_tangan' || field.id === 'status' || field.id === 'createdAt') return;
-        const val = item[field.id];
-        customHtml += `<div class="list-group-item py-3"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val || '-')}</div>`;
-      });
-
-      let html = `
-        <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama_lengkap || '-')}</div>
-          <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
-          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.no_hp || '-')}</div>
-          <div class="list-group-item py-3"><strong>Utusan:</strong> ${escapeHtml(item.utusan || '-')}</div>
-          <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'pending')}</span></div>
-          <div class="list-group-item py-3"><strong>Tanggal Daftar:</strong> ${formatDate(item.tanggal)}</div>
-          ${customHtml}
-          <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
-        </div>
-      `;
-      content.innerHTML = html;
-      modal.show();
-    };
-
-    window.deletePeserta = function(id) {
-      document.getElementById('deletePesertaId').value = id;
-      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    };
-
-    function executeDelete() {
-      const id = document.getElementById('deletePesertaId').value;
-      if (!id) return;
-      const result = deletePeserta(id);
-      if (result) {
-        showToast('Peserta berhasil dihapus.', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadPesertaData();
-      } else {
-        showToast('Gagal menghapus data.', 'error');
-      }
-    }
-
-    async function saveData() {
-      const id = document.getElementById('editPesertaId').value;
-      const form = document.querySelector('#dynamicAdminFormContainer');
-      if (!form) return;
-
-      const formData = new FormData(form);
-      const data = {
-        action: id ? 'updatePeserta' : 'submitPeserta',
-        id: id || '',
-        custom_data: {}
-      };
-
-      STATE.formStructure.forEach(field => {
-        const val = formData.get(field.id);
-        if (field.type === 'file') {
-          const fileInput = document.getElementById(`input_${field.id}`);
-          if (fileInput && fileInput.files.length > 0) {
-            data[field.id] = fileInput.files[0];
-          }
-        } else {
-          const coreFields = ['nama_lengkap', 'email', 'no_hp', 'utusan', 'status', 'tanggal', 'catatan'];
-          if (coreFields.includes(field.id)) {
-            data[field.id] = val || '';
-          } else {
-            data.custom_data[field.id] = val || '';
-          }
-        }
-      });
-
-      if (STATE.signaturePad && !STATE.signaturePad.isEmpty()) {
-        data.tanda_tangan = STATE.signaturePad.toDataURL('image/jpeg', 0.2);
-      }
-
-      const missing = [];
-      STATE.formStructure.forEach(field => {
-        if (field.required) {
-          const fileInput = document.getElementById(`input_${field.id}`);
-          const isFile = field.type === 'file';
-          let isEmpty = true;
-          if (isFile) {
-            isEmpty = !fileInput || !fileInput.files.length;
-          } else {
-            const val = formData.get(field.id);
-            isEmpty = !val || val.trim() === '';
-          }
-          if (isEmpty) {
-            missing.push(field.label);
-          }
-        }
-      });
-
-      if (missing.length > 0) {
-        showToast('Harap isi: ' + missing.join(', '), 'error');
-        return;
-      }
-
-      const fileFields = STATE.formStructure.filter(f => f.type === 'file');
-      for (let f of fileFields) {
-        if (data[f.id]) {
-          const file = data[f.id];
-          if (file.size > 5 * 1024 * 1024) {
-            showToast('Ukuran ' + f.label + ' maksimal 5 MB.', 'error');
-            return;
-          }
-          data[f.id] = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        }
-      }
-
-      if (data.utusan === 'Lainnya') {
-        data.utusan = 'Lainnya - ' + (data.utusan_luar || '');
-        delete data.utusan_luar;
-      }
-
-      const btn = document.getElementById('savePesertaBtn');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-
-      try {
-        let result;
-        if (id === '') {
-          delete data.id;
-          result = await PKD.submitPeserta(data);
-          if (result.success) {
-            showToast('Peserta berhasil ditambahkan.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
-            loadPesertaData(true);
-          } else {
-            throw new Error(result.error || 'Gagal menambahkan');
-          }
-        } else {
-          result = await PKD.updatePeserta(data);
-          if (result.success) {
-            showToast('Peserta berhasil diperbarui.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
-            loadPesertaData(true);
-          } else {
-            throw new Error(result.error || 'Gagal memperbarui');
-          }
-        }
-      } catch (e) {
-        showToast('Gagal: ' + e.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    }
-
-    function exportData() {
-      const data = STATE.filteredList;
-      if (data.length === 0) {
-        showToast('Tidak ada data untuk diekspor.', 'info');
-        return;
-      }
-      const exportData = data.map(item => ({
-        id: item.id,
-        nama: item.nama_lengkap,
-        email: item.email,
-        hp: item.no_hp,
-        utusan: item.utusan,
-        status: item.status,
-        tanggal: item.tanggal,
-        catatan: item.catatan,
-        ...(item.custom_data || {})
-      }));
-      const json = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(`Berhasil mengekspor ${data.length} data peserta.`, 'success');
-    }
-
-    // =====================================================
-    //   SEARCH & FILTER
-    // =====================================================
-    const debouncedSearch = debounce(function(query) {
-      STATE.searchQuery = query;
-      const filtered = getFilteredPeserta(STATE.searchQuery, STATE.statusFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }, 300);
-
-    function handleSearch(e) { debouncedSearch(e.target.value); }
-
-    function handleStatusFilter(e) {
-      STATE.statusFilter = e.target.value;
-      const filtered = getFilteredPeserta(STATE.searchQuery, STATE.statusFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }
-
-    // =====================================================
-    //   LOAD & SAVE FORM STRUCTURE - DENGAN PERBAIKAN PARSING
-    // =====================================================
-    async function loadFormStructure(forceRefresh = false) {
-      try {
-        const res = await PKD.getFormSettings();
-        let fields = [];
-
-        // ✅ PERBAIKAN: Pastikan data yang diterima benar-benar Array
-        if (res.success && res.data) {
-          // Jika data adalah string JSON, parse terlebih dahulu
-          if (typeof res.data === 'string') {
-            try {
-              fields = JSON.parse(res.data);
-            } catch (e) {
-              fields = [];
-            }
-          } else if (Array.isArray(res.data)) {
-            fields = res.data;
-          } else {
-            fields = [];
-          }
-
-          // Jika data masih berupa array string (versi lama), konversi ke objek dinamis
-          if (Array.isArray(fields) && fields.length > 0 && typeof fields[0] === 'string') {
-            const coreLabels = {
-              nama_lengkap: 'Nama Lengkap',
-              tempat_tgl_lahir: 'Tempat & Tanggal Lahir',
-              pekerjaan: 'Pekerjaan',
-              pendidikan_terakhir: 'Pendidikan Terakhir',
-              alamat: 'Alamat',
-              no_hp: 'No HP',
-              email: 'Email',
-              utusan: 'Utusan (PAC)',
-              pengalaman_organisasi: 'Pengalaman Organisasi',
-              foto: 'Foto',
-              surat_rekomendasi: 'Surat Rekomendasi'
-            };
-            fields = fields.map(id => ({
-              id: id,
-              label: coreLabels[id] || id,
-              type: (id === 'foto' || id === 'surat_rekomendasi') ? 'file' : (id === 'pengalaman_organisasi' || id === 'alamat') ? 'textarea' : 'text',
-              options: '',
-              required: true,
-              isCore: true
-            }));
-          }
-
-          STATE.formStructure = fields;
-          renderFormStructure();
-        } else {
-          showToast('Gagal memuat struktur form', 'error');
-        }
-      } catch (e) {
-        console.warn('Gagal load form structure:', e);
-        // Fallback ke default jika terjadi error fatal
-        STATE.formStructure = [
-          { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true, isCore: true },
-          { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', required: true, isCore: true },
-          { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', required: true, isCore: true },
-          { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', required: true, isCore: true },
-          { id: 'alamat', label: 'Alamat', type: 'textarea', required: true, isCore: true },
-          { id: 'no_hp', label: 'No HP', type: 'text', required: true, isCore: true },
-          { id: 'email', label: 'Email', type: 'text', required: true, isCore: true },
-          { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-          { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', required: true, isCore: true },
-          { id: 'foto', label: 'Foto', type: 'file', required: true, isCore: true },
-          { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', required: true, isCore: true }
-        ];
+        STATE.formStructure = fields;
         renderFormStructure();
       }
+    } catch(e) { console.warn('Gagal load form structure:', e); STATE.formStructure = [ { id:'nama_lengkap', label:'Nama Lengkap', type:'text', required:true, isCore:true } ]; renderFormStructure(); }
+  }
+
+  function renderFormStructure() {
+    const container = document.getElementById('formBuilderContainer');
+    if (!STATE.formStructure || STATE.formStructure.length === 0) { container.innerHTML = '<div class="col-12 text-muted">Belum ada field.</div>'; return; }
+    let html = '';
+    STATE.formStructure.forEach(field => {
+      const isCore = field.isCore === true;
+      html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card"><div><div class="field-label">${escapeHtml(field.label)}</div><div class="field-meta">${isCore ? '<span class="badge bg-secondary">Core</span>' : `<span class="badge bg-info">${field.type}</span>`}${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}</div></div><div class="field-actions"><button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>${!isCore ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteField('${field.id}')"><i class="bi bi-trash"></i></button>` : ''}</div></div></div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  window.editField = function(id) { const field = STATE.formStructure.find(f => f.id===id); if(!field){showToast('Field tidak ditemukan','error');return;} document.getElementById('editFieldId').value=field.id; document.getElementById('fieldLabel').value=field.label||''; document.getElementById('fieldType').value=field.type||'text'; document.getElementById('fieldOptions').value=field.options||''; document.getElementById('fieldRequired').checked=field.required||false; document.getElementById('fieldModalTitle').innerText='Edit Field'; document.getElementById('fieldOptionsGroup').style.display=(field.type==='radio'||field.type==='select')?'block':'none'; STATE.editingFieldId=field.id; new bootstrap.Modal(document.getElementById('fieldEditorModal')).show(); };
+  window.deleteField = function(id) { if(!confirm('Yakin ingin menghapus field ini?')) return; STATE.formStructure = STATE.formStructure.filter(f=>f.id!==id); renderFormStructure(); };
+  document.getElementById('fieldType')?.addEventListener('change', function() { document.getElementById('fieldOptionsGroup').style.display = (this.value==='radio'||this.value==='select')?'block':'none'; });
+  document.getElementById('saveFieldBtn')?.addEventListener('click', function() {
+    const id = document.getElementById('editFieldId').value, label = document.getElementById('fieldLabel').value.trim(), type = document.getElementById('fieldType').value, options = document.getElementById('fieldOptions').value.trim(), required = document.getElementById('fieldRequired').checked;
+    if(!label){showToast('Label wajib diisi.','error');return;}
+    if((type==='radio'||type==='select')&&!options){showToast('Opsi wajib.','error');return;}
+    if(id){ const idx = STATE.formStructure.findIndex(f=>f.id===id); if(idx!==-1){STATE.formStructure[idx].label=label; STATE.formStructure[idx].type=type; STATE.formStructure[idx].options=options; STATE.formStructure[idx].required=required;} }
+    else STATE.formStructure.push({id:generateId(), label, type, options, required, isCore:false});
+    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide(); renderFormStructure(); showToast('Field disimpan','success');
+  });
+  document.getElementById('saveFormStructureBtn')?.addEventListener('click', async function() {
+    const payload = STATE.formStructure.map(f=> ({id:f.id, label:f.label, type:f.type, options:f.options, required:f.required}));
+    const btn = this; const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner-border"></span> Menyimpan...';
+    try { const res=await PKD.setFormSettings(payload); if(res.success){ showToast('Struktur form disimpan','success'); try{DataCache.updateData('formSettings',payload);}catch(e){} } else throw new Error(res.message||'Gagal'); } catch(e){showToast('Gagal: '+e.message,'error');} finally{btn.disabled=false; btn.innerHTML=orig;}
+  });
+  document.getElementById('addFieldBtn')?.addEventListener('click', function() {
+    document.getElementById('editFieldId').value=''; document.getElementById('fieldLabel').value=''; document.getElementById('fieldType').value='text'; document.getElementById('fieldOptions').value=''; document.getElementById('fieldRequired').checked=false; document.getElementById('fieldModalTitle').innerText='Tambah Field Baru'; document.getElementById('fieldOptionsGroup').style.display='none'; STATE.editingFieldId=null; new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+  });
+
+  // ====================================================================
+  //  TOMBOL GENERATE TTD MASSAL
+  // ====================================================================
+  document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
+    if (!confirm('Anda akan membuat TTD massal untuk semua peserta yang sudah disetujui. Lanjutkan?')) return;
+
+    const btn = this;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
+
+    try {
+      const res = await PKD.callApi('bulkGenerateTTD', { role: 'all' }, 'POST');
+      if (res.success) {
+        const msg = res.addedCount > 0 
+          ? `Berhasil menambahkan ${res.addedCount} TTD untuk ${res.totalPeserta} peserta.` 
+          : 'Tidak ada data baru yang ditambahkan. Semua peserta sudah memiliki TTD.';
+        showToast(msg, res.addedCount > 0 ? 'success' : 'info');
+        loadPesertaData(true);
+      } else {
+        showToast('Gagal: ' + (res.message || 'Error'), 'error');
+      }
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = orig;
+      btn.disabled = false;
+    }
+  });
+
+  // ====================================================================
+  //  FUNGSI-FUNGSI UTAMA
+  // ====================================================================
+
+  function renderDynamicForm(editData = null) {
+    const container = document.getElementById('dynamicAdminFormContainer');
+    let html = '';
+    STATE.formStructure.forEach(field => {
+      const value = editData ? (editData[field.id] || '') : '';
+      const isRequired = field.required ? 'required' : '';
+      const requiredStar = field.required ? ' <span class="text-danger">*</span>' : '';
+      html += `<div class="mb-3"><label class="form-label fw-semibold">${escapeHtml(field.label)}${requiredStar}</label>`;
+      if (field.type === 'textarea') {
+        html += `<textarea class="form-control" name="${field.id}" ${isRequired}>${escapeHtml(value)}</textarea>`;
+      } else if (field.type === 'file') {
+        html += `<input type="file" class="form-control" name="${field.id}" accept="image/*,application/pdf" ${isRequired}>`;
+        if (editData && editData[field.id+'_driveId']) {
+          html += `<div class="mt-1 small text-muted">File saat ini: <a href="https://drive.google.com/file/d/${editData[field.id+'_driveId']}/view" target="_blank">Lihat</a></div>`;
+        }
+      } else if (field.type === 'radio') {
+        const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+        html += `<div class="radio-group">`;
+        options.forEach((opt, idx) => {
+          const checked = value === opt ? 'checked' : '';
+          html += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt)}" id="${field.id}_${idx}" ${checked} ${isRequired}><label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt)}</label></div>`;
+        });
+        html += `</div>`;
+      } else if (field.type === 'select') {
+        const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+        html += `<select class="form-select" name="${field.id}" ${isRequired}><option value="">-- Pilih --</option>`;
+        options.forEach(opt => {
+          const selected = value === opt ? 'selected' : '';
+          html += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+        });
+        html += `</select>`;
+      } else {
+        html += `<input type="text" class="form-control" name="${field.id}" value="${escapeHtml(value)}" ${isRequired}>`;
+      }
+      html += `</div>`;
+    });
+    container.innerHTML = html;
+  }
+
+  function openAddModal() {
+    document.getElementById('editPesertaId').value = '';
+    document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
+    renderDynamicForm(null);
+    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  }
+
+  window.editPeserta = async function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+    document.getElementById('editPesertaId').value = id;
+    document.getElementById('formModalTitle').innerText = 'Edit Peserta';
+    renderDynamicForm(item);
+    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  };
+
+  document.getElementById('savePesertaBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('editPesertaId').value;
+    const form = document.getElementById('dynamicAdminFormContainer').querySelectorAll('input, select, textarea');
+    const data = { action: id ? 'updatePeserta' : 'submitPeserta' };
+    if (id) data.id = id;
+
+    const filePromises = [];
+    form.forEach(el => {
+      if (el.type === 'file') {
+        if (el.files.length > 0) {
+          const file = el.files[0];
+          const reader = new FileReader();
+          filePromises.push(new Promise((resolve) => {
+            reader.onload = () => { data[el.name] = reader.result; resolve(); };
+            reader.readAsDataURL(file);
+          }));
+        }
+      } else if (el.type === 'radio') {
+        if (el.checked) data[el.name] = el.value;
+      } else if (el.tagName === 'SELECT') {
+        data[el.name] = el.value;
+      } else {
+        data[el.name] = el.value;
+      }
+    });
+
+    await Promise.all(filePromises);
+
+    const missing = STATE.formStructure.filter(f => f.required && !data[f.id]);
+    if (missing.length > 0) {
+      showToast('Harap isi: ' + missing.map(f => f.label).join(', '), 'error');
+      return;
     }
 
-    function renderFormStructure() {
-      const container = document.getElementById('formBuilderContainer');
-      if (!STATE.formStructure || STATE.formStructure.length === 0) {
-        container.innerHTML = '<div class="col-12 text-muted">Belum ada field yang terdefinisi.</div>';
+    const btn = this;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
+    try {
+      let res;
+      if (id) {
+        res = await PKD.updatePeserta(data);
+      } else {
+        res = await PKD.submitPeserta(data);
+      }
+      if (res.success) {
+        showToast(id ? 'Peserta berhasil diperbarui' : 'Peserta berhasil ditambahkan', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
+        loadPesertaData(true);
+      } else {
+        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+      }
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  window.viewPeserta = function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+    const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
+    const content = document.getElementById('detailContent');
+    let html = `<div class="list-group list-group-flush">`;
+    STATE.formStructure.forEach(field => {
+      const val = item[field.id] || '-';
+      html += `<div class="list-group-item py-2"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val)}</div>`;
+    });
+    html += `<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ${getStatusBadge(item.status)}">${escapeHtml(item.status)}</span></div>`;
+    html += `</div>`;
+    content.innerHTML = html;
+    modal.show();
+  };
+
+  window.deletePeserta = function(id) {
+    document.getElementById('deletePesertaId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  };
+
+  document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('deletePesertaId').value;
+    if (!id) return;
+    const btn = this;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border"></span> Menghapus...';
+    try {
+      const res = await PKD.deletePeserta(id);
+      if (res.success) {
+        showToast('Peserta berhasil dihapus', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+        loadPesertaData(true);
+      } else {
+        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+      }
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  document.getElementById('exportDataBtn')?.addEventListener('click', function() {
+    const data = STATE.filteredList;
+    if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Berhasil mengekspor ${data.length} data`, 'success');
+  });
+
+  document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    if (checked.length === 0) { showToast('Pilih minimal satu peserta', 'info'); return; }
+    if (!confirm(`Pindahkan ${checked.length} peserta terpilih ke alumni?`)) return;
+    const ids = Array.from(checked).map(cb => cb.value);
+    const btn = this;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border"></span> Memindahkan...';
+    try {
+      const res = await PKD.moveMultipleToAlumni(ids);
+      if (res.success) {
+        showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta ke alumni`, 'success');
+        loadPesertaData(true);
+      } else {
+        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+      }
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  // ====================================================================
+  //  🆕 FUNGSI UTAMA: GENERATE QR DENGAN BORDER & PADDING
+  // ====================================================================
+  function generateStyledQRDataUrl(text, containerSize = 180) {
+    const qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+
+    const padding = 12;
+    const borderWidth = 4;
+    const canvasSize = containerSize;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Background putih (untuk padding dalam)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+    // 2. Gambar border luar abu-abu
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+    // 3. Gambar QR di tengah
+    const moduleCount = qr.getModuleCount();
+    const qrAreaSize = canvasSize - (padding * 2) - (borderWidth * 2);
+    const cellSize = qrAreaSize / moduleCount;
+
+    const offsetX = padding + borderWidth;
+    const offsetY = padding + borderWidth;
+
+    for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+            if (qr.isDark(row, col)) {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
+            }
+        }
+    }
+
+    return canvas.toDataURL('image/png');
+  }
+
+  // ====================================================================
+  //  🆕 FUNGSI TTD DINAMIS (DENGAN GENERATE QR YANG SUDAH ADA BORDER)
+  // ====================================================================
+  window.showTTD = async function(pesertaId, namaPeserta) {
+    const modal = new bootstrap.Modal(document.getElementById('ttdModal'));
+    const container = document.getElementById('ttdCardsContainer');
+    const emptyMsg = document.getElementById('ttdEmptyMessage');
+    
+    // Tampilkan loading
+    container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
+    emptyMsg.style.display = 'none';
+
+    try {
+      // 1. Ambil data TTD dari cache memori
+      let approvals = STATE.allApprovals;
+      if (!approvals || approvals.length === 0) {
+        const res = await PKD.getAllDigitalApprovals();
+        approvals = res.success ? res.data : [];
+        STATE.allApprovals = approvals;
+      }
+
+      // 2. Filter berdasarkan nama peserta
+      const namaTarget = namaPeserta.trim().toLowerCase();
+      const filtered = approvals.filter(a => {
+        const peserta = (a.peserta_nama || '').trim().toLowerCase();
+        return peserta === namaTarget;
+      });
+
+      // 3. Jika tidak ada data sama sekali
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        modal.show();
         return;
       }
 
+      // 4. Bangun Kartu HTML secara dinamis
       let html = '';
-      STATE.formStructure.forEach(field => {
-        const isCore = field.isCore === true;
+      filtered.forEach(approval => {
+        const role = approval.role;
+        const roleLabel = role === 'ketua_pc' ? 'Ketua PC' : (role === 'sekretaris' ? 'Sekretaris' : 'Instruktur');
+        const baseUrl = window.location.origin + '/bisaa/';
+        const qrUrl = `${baseUrl}verifikasi_qr.html?role=${role}&driveId=${approval.driveId}&nama=${encodeURIComponent(namaPeserta)}`;
+        
+        // 🟢 GENERATE QR DENGAN KOTAK BORDER & PADDING
+        const qrDataUrl = generateStyledQRDataUrl(qrUrl);
+        const downloadName = `QR_${role}_${namaPeserta}.png`;
+
+        const kegunaan = approval.kegunaan || approval.keterangan || '-';
+
         html += `
-          <div class="col-md-6 col-lg-4">
-            <div class="field-builder-card">
-              <div>
-                <div class="field-label">${escapeHtml(field.label)}</div>
-                <div class="field-meta">
-                  ${isCore ? '<span class="badge bg-secondary">Core</span>' : `<span class="badge bg-info">${field.type}</span>`}
-                  ${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}
-                </div>
+          <div class="col-md-4">
+            <div class="ttd-box">
+              <span class="role-badge">${roleLabel}</span>
+              
+              <div class="ttd-qr-container">
+                <img src="${qrDataUrl}" alt="QR TTD">
               </div>
-              <div class="field-actions">
-                <button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>
-                ${!isCore ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteField('${field.id}')"><i class="bi bi-trash"></i></button>` : ''}
+
+              <h6>${escapeHtml(approval.nama)}</h6>
+              <p class="small text-muted">Kegunaan: ${escapeHtml(kegunaan)}</p>
+
+              <!-- MENU DOWNLOAD QR & BUKA VERIFIKASI -->
+              <div class="mt-2 d-flex flex-column gap-2 w-100">
+                <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Buka Verifikasi</a>
+                <a href="${qrDataUrl}" download="${downloadName}" class="btn btn-sm btn-outline-secondary w-100">
+                  <i class="bi bi-download me-1"></i> Download QR
+                </a>
               </div>
             </div>
           </div>
         `;
       });
+
       container.innerHTML = html;
+      modal.show();
+
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
     }
+  };
 
-    function openAddFieldModal() {
-      document.getElementById('editFieldId').value = '';
-      document.getElementById('fieldLabel').value = '';
-      document.getElementById('fieldType').value = 'text';
-      document.getElementById('fieldOptions').value = '';
-      document.getElementById('fieldRequired').checked = false;
-      document.getElementById('fieldModalTitle').innerText = 'Tambah Field Baru';
-      document.getElementById('fieldOptionsGroup').style.display = 'none';
-      STATE.editingFieldId = null;
-      new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
-    }
+  // --- Events toolbar ---
+  document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() { this.innerHTML='<span class="spinner-border"></span>'; this.disabled=true; loadPesertaData(true).then(()=>{ this.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; this.disabled=false; }); });
+  document.getElementById('clearCacheBtn')?.addEventListener('click', function() { if(confirm('Hapus cache?')) { DataCache.clear(); localStorage.removeItem('pkd_peserta_data'); showToast('Cache dibersihkan','info'); loadPesertaData(true); } });
+  document.getElementById('searchInput')?.addEventListener('input', debounce(function() { STATE.searchQuery=document.getElementById('searchInput').value; STATE.currentPage=1; applyFiltersAndSort(); }, 300));
+  document.getElementById('filterStatus')?.addEventListener('change', function() { STATE.statusFilter=this.value; STATE.currentPage=1; applyFiltersAndSort(); });
 
-    window.editField = function(id) {
-      const field = STATE.formStructure.find(f => f.id === id);
-      if (!field) {
-        showToast('Field tidak ditemukan.', 'error');
-        return;
-      }
-      document.getElementById('editFieldId').value = field.id;
-      document.getElementById('fieldLabel').value = field.label || '';
-      document.getElementById('fieldType').value = field.type || 'text';
-      document.getElementById('fieldOptions').value = field.options || '';
-      document.getElementById('fieldRequired').checked = field.required || false;
-      document.getElementById('fieldModalTitle').innerText = 'Edit Field';
-      document.getElementById('fieldOptionsGroup').style.display = (field.type === 'radio' || field.type === 'select') ? 'block' : 'none';
-      STATE.editingFieldId = field.id;
-      new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
-    };
-
-    window.deleteField = function(id) {
-      if (!confirm('Yakin ingin menghapus field ini?')) return;
-      STATE.formStructure = STATE.formStructure.filter(f => f.id !== id);
-      renderFormStructure();
-    };
-
-    document.getElementById('fieldType').addEventListener('change', function() {
-      document.getElementById('fieldOptionsGroup').style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
-    });
-
-    function saveField() {
-      const id = document.getElementById('editFieldId').value;
-      const label = document.getElementById('fieldLabel').value.trim();
-      const type = document.getElementById('fieldType').value;
-      const options = document.getElementById('fieldOptions').value.trim();
-      const required = document.getElementById('fieldRequired').checked;
-
-      if (!label) {
-        showToast('Label field wajib diisi.', 'error');
-        return;
-      }
-
-      if ((type === 'radio' || type === 'select') && !options) {
-        showToast('Opsi wajib diisi untuk tipe Radio/Select.', 'error');
-        return;
-      }
-
-      if (id) {
-        const idx = STATE.formStructure.findIndex(f => f.id === id);
-        if (idx !== -1) {
-          STATE.formStructure[idx].label = label;
-          STATE.formStructure[idx].type = type;
-          STATE.formStructure[idx].options = options;
-          STATE.formStructure[idx].required = required;
-        }
-      } else {
-        const newField = {
-          id: generateId(),
-          label: label,
-          type: type,
-          options: options,
-          required: required,
-          isCore: false
-        };
-        STATE.formStructure.push(newField);
-      }
-      bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide();
-      renderFormStructure();
-      showToast('Field berhasil disimpan.', 'success');
-    }
-
-    async function saveFormStructure() {
-      const payload = STATE.formStructure.map(f => ({
-        id: f.id,
-        label: f.label,
-        type: f.type,
-        options: f.options,
-        required: f.required
-      }));
-
-      const btn = document.getElementById('saveFormStructureBtn');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-
-      try {
-        const res = await PKD.setFormSettings(payload);
-        if (res.success) {
-          showToast('Struktur form berhasil disimpan.', 'success');
-          DataCache.updateData('formSettings', payload);
-        } else {
-          throw new Error(res.message || 'Gagal menyimpan');
-        }
-      } catch (e) {
-        showToast('Gagal: ' + e.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    }
-
-  })();
+  // --- INIT ---
+  document.addEventListener('DOMContentLoaded', function() {
+    loadPesertaData(false);
+    loadFormStructure();
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() { document.getElementById('sidebarWrapper').classList.toggle('minimized'); });
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { e.preventDefault(); if(PKD.logout) PKD.logout(); else window.location.href='/bisaa/index.html'; });
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { if(PKD.logout) PKD.logout(); else window.location.href='/bisaa/index.html'; });
+  });
 </script>
 </body>
 </html>

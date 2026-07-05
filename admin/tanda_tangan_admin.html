@@ -226,7 +226,7 @@
                             <th>Peserta</th>
                             <th>Waktu</th>
                             <th>Preview TTD</th>
-                            <th>QR Code</th> <!-- BARU -->
+                            <th>QR Sertifikat</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -332,7 +332,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title"><i class="bi bi-qr-code me-2"></i>QR Code Verifikasi Tanda Tangan</h5>
+                <h5 class="modal-title"><i class="bi bi-qr-code me-2"></i>QR Code Verifikasi Sertifikat</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
@@ -484,6 +484,7 @@
         async function loadData() {
             try {
                 const res = await PKD.callApi('getAllDigitalApprovals', {}, 'GET');
+                console.log('Respons getAllDigitalApprovals:', res);
                 if (res.success && Array.isArray(res.data)) {
                     allData = res.data;
                     applyFilters();
@@ -502,7 +503,7 @@
             filteredData = allData.filter(item => {
                 if (role && item.role !== role) return false;
                 if (search) {
-                    const haystack = (item.nama + ' ' + item.kegunaan + ' ' + item.peserta_nama).toLowerCase();
+                    const haystack = (item.nama + ' ' + (item.kegunaan || '') + ' ' + (item.keterangan || '') + ' ' + item.peserta_nama).toLowerCase();
                     if (!haystack.includes(search)) return false;
                 }
                 return true;
@@ -539,17 +540,19 @@
                         `;
                     }
 
+                    const kegunaan = item.kegunaan || item.keterangan || '-';
+
                     html += `<tr>
                         <td><input type="checkbox" class="row-checkbox" data-index="${globalIdx}" ${checked}></td>
                         <td>${globalIdx + 1}</td>
                         <td>${getRoleBadge(item.role)}</td>
                         <td><strong>${escapeHtml(item.nama)}</strong></td>
-                        <td>${escapeHtml(item.kegunaan || '-')}</td>
+                        <td>${escapeHtml(kegunaan)}</td>
                         <td>${escapeHtml(item.peserta_nama || '-')}</td>
                         <td>${formatDate(item.timestamp)}</td>
                         <td>${previewHtml}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info" onclick="showQR('${escapeHtml(item.role)}', '${escapeHtml(item.driveId)}', '${escapeHtml(item.nama)}')">
+                            <button class="btn btn-sm btn-outline-info" onclick="showQR('${escapeHtml(item.role)}', '${escapeHtml(item.driveId)}', '${escapeHtml(item.nama)}', '${escapeHtml(item.peserta_nama)}')">
                                 <i class="bi bi-qr-code"></i>
                             </button>
                         </td>
@@ -687,19 +690,45 @@
         }
         loadPasswordStatus();
 
-        // --- QR CODE SHOW AND DOWNLOAD (UPDATED TO USE verifikasi_qr.html) ---
-        window.showQR = function(role, driveId, nama) {
+        // --- QR CODE SHOW AND DOWNLOAD (PERBAIKAN) ---
+        window.showQR = async function(role, driveId, nama, peserta_nama) {
             const baseUrl = window.location.origin + '/bisaa/';
-            // Gunakan halaman verifikasi_qr.html untuk verifikasi tanda tangan digital
-            const verifyUrl = `${baseUrl}verifikasi_qr.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(driveId)}`;
-            
-            // Generate QR menggunakan qrcode-generator
+            let verifyUrl = '';
+            let displayNomor = '-';
+            let displayNama = peserta_nama || nama || 'Peserta';
+
+            // 1. Cari Nomor Sertifikat berdasarkan Nama Peserta
+            if (peserta_nama) {
+                try {
+                    const certListRes = await PKD.callApi('getUploadedCertificates', {}, 'GET');
+                    if (certListRes.success && Array.isArray(certListRes.data)) {
+                        const found = certListRes.data.find(c => 
+                            c.nama_peserta && c.nama_peserta.toLowerCase() === peserta_nama.toLowerCase()
+                        );
+                        if (found && found.nomor_sertifikat) {
+                            displayNomor = found.nomor_sertifikat;
+                            verifyUrl = `${baseUrl}verifikasi_qr.html?nomor=${encodeURIComponent(found.nomor_sertifikat)}`;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Gagal mencari nomor sertifikat:', e);
+                }
+            }
+
+            // 2. Jika nomor tidak ditemukan, fallback
+            if (!verifyUrl) {
+                verifyUrl = `${baseUrl}verifikasi_qr.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(driveId)}&nama=${encodeURIComponent(peserta_nama || nama)}`;
+                displayNomor = '(Nomor tidak ditemukan)';
+            }
+
+            // 3. Generate QR dengan cara manual
             const qr = qrcode(0, 'M');
             qr.addData(verifyUrl);
             qr.make();
             const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 200;
+            const size = qr.getModuleCount() * 5; // 5px per modul
+            canvas.width = size;
+            canvas.height = size;
             const ctx = canvas.getContext('2d');
             const cellSize = canvas.width / qr.getModuleCount();
             for (let row = 0; row < qr.getModuleCount(); row++) {
@@ -708,25 +737,27 @@
                     ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
                 }
             }
-            
+
+            // 4. Tampilkan Modal
             const container = document.getElementById('qrContainer');
             container.innerHTML = '';
             container.appendChild(canvas);
-            
+
             document.getElementById('qrInfo').innerHTML = `
                 <strong>Role:</strong> ${role} <br>
-                <strong>Nama:</strong> ${nama} <br>
+                <strong>Penanda Tangan:</strong> ${nama} <br>
+                <strong>Peserta:</strong> ${displayNama} <br>
+                <strong>Nomor Sertifikat:</strong> ${displayNomor} <br>
                 <a href="${verifyUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Buka Link Verifikasi</a>
             `;
-            
-            // Download QR
+
             document.getElementById('downloadQrBtn').onclick = function() {
                 const link = document.createElement('a');
-                link.download = `QR_${role}_${nama}.png`;
+                link.download = `QR_${role}_${displayNama}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             };
-            
+
             new bootstrap.Modal(document.getElementById('qrModal')).show();
         };
 
