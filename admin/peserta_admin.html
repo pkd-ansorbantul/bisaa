@@ -91,30 +91,9 @@
     .ttd-box .role-badge { font-size: 0.8rem; padding: 4px 14px; border-radius: 50px; background: #2563eb; color: white; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
     .ttd-box .no-signature { color: #94a3b8; font-size: 0.85rem; margin-top: 10px; }
     
-    /* --- QR CONTAINER & IMAGE BORDER (DIPERBAHARUI) --- */
-    .ttd-qr-container { 
-      text-align: center; 
-      margin-bottom: 10px; 
-      min-height: 150px; 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      width: 100%; 
-      background: #f8fafc; 
-      border-radius: 12px; 
-      padding: 8px; 
-      border: 1px solid #e2e8f0; 
-    }
-    /* CSS Gambar di Modal: Tidak ada padding/border tambahan, karena border sudah dicetak di dalam file PNG */
-    .ttd-qr-container img { 
-      max-width: 130px; 
-      max-height: 130px; 
-      object-fit: contain; 
-      border: none !important; 
-      background: transparent !important; 
-      padding: 0 !important; 
-      box-shadow: none !important; 
-    }
+    /* --- QR CONTAINER & IMAGE BORDER --- */
+    .ttd-qr-container { text-align: center; margin-bottom: 10px; min-height: 150px; display: flex; justify-content: center; align-items: center; width: 100%; background: #f8fafc; border-radius: 12px; padding: 8px; border: 1px solid #e2e8f0; }
+    .ttd-qr-container img { max-width: 130px; max-height: 130px; object-fit: contain; border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
     .credential-modal-qr { max-width: 200px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white; }
   </style>
 </head>
@@ -259,33 +238,83 @@
 
 <script>
   // --- State ---
-  let STATE = { 
+  var STATE = { 
     pesertaList: [], filteredList: [], formStructure: [], searchQuery: '', statusFilter: '', 
     currentPage: 1, itemsPerPage: 15, sortColumn: null, sortDirection: 'asc',
     editingFieldId: null, allApprovals: [] // Cache TTD
   };
 
   // --- Utility ---
-  function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;'; return m; }); }
-  function showToast(message, type = 'success') { const toastEl = document.getElementById('notificationToast'); if (!toastEl) return; const toast = new bootstrap.Toast(toastEl); document.getElementById('toastMessage').innerText = message; const icon = document.getElementById('toastIcon'); if (type === 'success') { icon.className = 'bi bi-check-circle-fill text-success'; document.getElementById('toastTitle').innerText = 'Berhasil'; } else { icon.className = 'bi bi-x-circle-fill text-danger'; document.getElementById('toastTitle').innerText = 'Gagal'; } toast.show(); }
-  function getStatusBadge(status) { if (status === 'approved' || status === 'active') return 'bg-success'; if (status === 'rejected') return 'bg-danger'; if (status === 'alumni') return 'bg-secondary'; return 'bg-warning text-dark'; }
+  function escapeHtml(str) { 
+    if (!str) return ''; 
+    return String(str).replace(/[&<>"]/g, function(m) { 
+      if (m === '&') return '&amp;'; 
+      if (m === '<') return '&lt;'; 
+      if (m === '>') return '&gt;'; 
+      if (m === '"') return '&quot;'; 
+      return m; 
+    }); 
+  }
+  
+  function showToast(message, type) {
+    var toastEl = document.getElementById('notificationToast');
+    if (!toastEl) return;
+    var toast = new bootstrap.Toast(toastEl);
+    document.getElementById('toastMessage').innerText = message;
+    var icon = document.getElementById('toastIcon');
+    if (type === 'success') { 
+      icon.className = 'bi bi-check-circle-fill text-success'; 
+      document.getElementById('toastTitle').innerText = 'Berhasil'; 
+    } else { 
+      icon.className = 'bi bi-x-circle-fill text-danger'; 
+      document.getElementById('toastTitle').innerText = 'Gagal'; 
+    }
+    toast.show();
+  }
+  
+  function getStatusBadge(status) { 
+    if (status === 'approved' || status === 'active') return 'bg-success'; 
+    if (status === 'rejected') return 'bg-danger'; 
+    if (status === 'alumni') return 'bg-secondary'; 
+    return 'bg-warning text-dark'; 
+  }
+  
   function renderSkeleton() { return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>'; }
-  function updateCacheStatus(status) { const el = document.getElementById('cacheStatus'); if (el) { el.textContent = status; el.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); } }
-  function debounce(fn, delay) { let timer; return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); }; }
+  
+  function updateCacheStatus(status) { 
+    var el = document.getElementById('cacheStatus'); 
+    if (el) { 
+      el.textContent = status; 
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); 
+    } 
+  }
+  
+  function debounce(fn, delay) { 
+    var timer; 
+    return function() { 
+      var args = arguments; 
+      var context = this; 
+      clearTimeout(timer); 
+      timer = setTimeout(function() { 
+        fn.apply(context, args); 
+      }, delay); 
+    }; 
+  }
+  
   function generateId() { return 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
 
   // --- Load Data & Cache Management ---
-  async function loadPesertaData(forceRefresh = false) {
-    const container = document.getElementById('pesertaTableContainer');
+  async function loadPesertaData(forceRefresh) {
+    var container = document.getElementById('pesertaTableContainer');
     container.innerHTML = renderSkeleton();
 
     try {
-      let dataToRender = null;
+      var dataToRender = null;
 
       if (forceRefresh) {
         console.log('[DEBUG] Force refresh, mengambil dari API...');
-        const res = await PKD.callApi('getPesertaList', {}, 'GET');
-        let freshData = res?.data || res;
+        var res = await PKD.callApi('getPesertaList', {}, 'GET');
+        var freshData = res?.data || res;
         if (Array.isArray(freshData)) dataToRender = freshData;
         else dataToRender = [];
 
@@ -294,43 +323,44 @@
           try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
           applyFiltersAndSort();
           updateCacheStatus('Live');
-          console.log(`[DEBUG] Load ${dataToRender.length} data dari API.`);
+          console.log('[DEBUG] Load ' + dataToRender.length + ' data dari API.');
           return;
         } else {
-          container.innerHTML = `<div class="alert alert-info text-center">📂 Data peserta kosong.</div>`;
+          container.innerHTML = '<div class="alert alert-info text-center">📂 Data peserta kosong.</div>';
           updateCacheStatus('Empty');
           return;
         }
       }
 
-      const cached = DataCache.getData('peserta');
+      var cached = DataCache.getData('peserta');
       if (cached && Array.isArray(cached) && cached.length > 0) {
         STATE.pesertaList = cached;
         applyFiltersAndSort();
         updateCacheStatus('Cache');
         console.log('[DEBUG] Data dari cache.');
 
-        (async () => {
+        (function() {
           try {
-            const bgRes = await PKD.callApi('getPesertaList', {}, 'GET');
-            let bgData = bgRes?.data || bgRes;
-            if (!Array.isArray(bgData)) bgData = [];
-
-            if (bgData.length > 0 && JSON.stringify(bgData) !== JSON.stringify(STATE.pesertaList)) {
-              STATE.pesertaList = bgData;
-              try { DataCache.updateData('peserta', bgData); } catch (e) {}
-              applyFiltersAndSort();
-              updateCacheStatus('Live');
-              console.log('[DEBUG] Background update berhasil.');
-            }
+            var bgRes = PKD.callApi('getPesertaList', {}, 'GET');
+            bgRes.then(function(res) {
+              var bgData = res?.data || res;
+              if (!Array.isArray(bgData)) bgData = [];
+              if (bgData.length > 0 && JSON.stringify(bgData) !== JSON.stringify(STATE.pesertaList)) {
+                STATE.pesertaList = bgData;
+                try { DataCache.updateData('peserta', bgData); } catch (e) {}
+                applyFiltersAndSort();
+                updateCacheStatus('Live');
+                console.log('[DEBUG] Background update berhasil.');
+              }
+            });
           } catch (e) { console.warn('Background fetch gagal:', e); }
         })();
         return;
       }
 
       console.log('[DEBUG] Mengambil data dari API (no cache)...');
-      const res = await PKD.callApi('getPesertaList', {}, 'GET');
-      let freshData = res?.data || res;
+      var res = await PKD.callApi('getPesertaList', {}, 'GET');
+      var freshData = res?.data || res;
       if (Array.isArray(freshData)) dataToRender = freshData;
       else dataToRender = [];
 
@@ -339,165 +369,254 @@
         try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
         applyFiltersAndSort();
         updateCacheStatus('Live');
-        console.log(`[DEBUG] Load ${dataToRender.length} data dari API.`);
+        console.log('[DEBUG] Load ' + dataToRender.length + ' data dari API.');
       } else {
-        container.innerHTML = `<div class="alert alert-info text-center">📂 Data peserta kosong.</div>`;
+        container.innerHTML = '<div class="alert alert-info text-center">📂 Data peserta kosong.</div>';
         updateCacheStatus('Empty');
       }
 
     } catch (e) {
       console.error('[DEBUG] Error loadPesertaData:', e);
-      container.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+      container.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
       updateCacheStatus('Error');
     }
   }
 
   // --- Filter, Sort, Pagination ---
   function applyFiltersAndSort() {
-    let filtered = STATE.pesertaList;
+    var filtered = STATE.pesertaList;
     if (STATE.searchQuery.trim() !== '') {
-      const q = STATE.searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item => 
-        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+      var q = STATE.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(function(item) { 
+        return (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
         (item.email && item.email.toLowerCase().includes(q)) ||
         (item.no_hp && item.no_hp.toLowerCase().includes(q)) ||
-        (item.utusan && item.utusan.toLowerCase().includes(q))
-      );
+        (item.utusan && item.utusan.toLowerCase().includes(q));
+      });
     }
     if (STATE.statusFilter !== '') {
-      filtered = filtered.filter(item => item.status === STATE.statusFilter);
+      filtered = filtered.filter(function(item) { return item.status === STATE.statusFilter; });
     }
     if (STATE.sortColumn) {
-      filtered.sort((a, b) => {
-        let va = (a[STATE.sortColumn] || '').toLowerCase();
-        let vb = (b[STATE.sortColumn] || '').toLowerCase();
+      filtered.sort(function(a, b) {
+        var va = (a[STATE.sortColumn] || '').toLowerCase();
+        var vb = (b[STATE.sortColumn] || '').toLowerCase();
         if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
         if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
     STATE.filteredList = filtered;
-    const totalItems = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    var totalItems = filtered.length;
+    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
     if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
     if (STATE.currentPage < 1) STATE.currentPage = 1;
-    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    var start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    var end = Math.min(start + STATE.itemsPerPage, totalItems);
     renderTable(filtered.slice(start, end), totalItems);
   }
 
   function renderTable(data, totalItems) {
-    const container = document.getElementById('pesertaTableContainer');
+    var container = document.getElementById('pesertaTableContainer');
     if (!container) return;
-    let html = `<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr>
-      <th style="width:40px;"><input type="checkbox" id="selectAllPeserta"></th>
-      <th style="width:50px;">#</th>
-      <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
-      <th class="sortable" onclick="sortTable('email')">Email</th>
-      <th class="sortable" onclick="sortTable('no_hp')">No HP</th>
-      <th class="sortable" onclick="sortTable('utusan')">Utusan</th>
-      <th class="sortable" onclick="sortTable('status')">Status</th>
-      <th style="width:200px;">Aksi</th>
-    </tr></thead><tbody>`;
-    if (data.length === 0) html += `<tr><td colspan="8" class="text-center py-5"><i class="bi bi-inbox fs-4"></i>Tidak ada data</td></tr>`;
-    else data.forEach((item, i) => {
-      const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
-      const nama = item.nama_lengkap || '-'; const email = item.email || '-'; const noHp = item.no_hp || '-'; const utusan = item.utusan || '-'; const status = item.status || 'pending'; const badge = getStatusBadge(status);
-      html += `<tr><td><input type="checkbox" class="peserta-checkbox" value="${item.id}"></td><td>${globalIndex}</td><td><strong>${escapeHtml(nama)}</strong></td><td>${escapeHtml(email)}</td><td>${escapeHtml(noHp)}</td><td>${escapeHtml(utusan)}</td><td><span class="badge ${badge}">${escapeHtml(status)}</span></td><td class="text-center">
-        <button class="btn btn-sm btn-outline-info" onclick="viewPeserta('${item.id}')">👁️</button>
-        <button class="btn btn-sm btn-outline-warning" onclick="editPeserta('${item.id}')">✏️</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deletePeserta('${item.id}')">🗑️</button>
-        <button class="btn btn-sm btn-outline-primary" onclick="showTTD('${item.id}','${escapeHtml(item.nama_lengkap)}')">🖊️ TTD</button>
-      </td></tr>`;
-    });
-    html += `</tbody></table></div>`;
-    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-    html += `<div class="pagination-container"><div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div><div class="btn-group">`;
-    for (let i = 1; i <= totalPages; i++) html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
-    html += `</div></div>`;
+    var html = '<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr>' +
+      '<th style="width:40px;"><input type="checkbox" id="selectAllPeserta"></th>' +
+      '<th style="width:50px;">#</th>' +
+      '<th class="sortable" onclick="sortTable(\'nama_lengkap\')">Nama</th>' +
+      '<th class="sortable" onclick="sortTable(\'email\')">Email</th>' +
+      '<th class="sortable" onclick="sortTable(\'no_hp\')">No HP</th>' +
+      '<th class="sortable" onclick="sortTable(\'utusan\')">Utusan</th>' +
+      '<th class="sortable" onclick="sortTable(\'status\')">Status</th>' +
+      '<th style="width:200px;">Aksi</th>' +
+      '</tr></thead><tbody>';
+      
+    if (data.length === 0) html += '<tr><td colspan="8" class="text-center py-5"><i class="bi bi-inbox fs-4"></i>Tidak ada data</td></tr>';
+    else {
+      for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
+        var nama = item.nama_lengkap || '-'; 
+        var email = item.email || '-'; 
+        var noHp = item.no_hp || '-'; 
+        var utusan = item.utusan || '-'; 
+        var status = item.status || 'pending'; 
+        var badge = getStatusBadge(status);
+        html += '<tr><td><input type="checkbox" class="peserta-checkbox" value="' + item.id + '"></td>' +
+          '<td>' + globalIndex + '</td>' +
+          '<td><strong>' + escapeHtml(nama) + '</strong></td>' +
+          '<td>' + escapeHtml(email) + '</td>' +
+          '<td>' + escapeHtml(noHp) + '</td>' +
+          '<td>' + escapeHtml(utusan) + '</td>' +
+          '<td><span class="badge ' + badge + '">' + escapeHtml(status) + '</span></td>' +
+          '<td class="text-center">' +
+            '<button class="btn btn-sm btn-outline-info" onclick="viewPeserta(\'' + item.id + '\')">👁️</button>' +
+            '<button class="btn btn-sm btn-outline-warning" onclick="editPeserta(\'' + item.id + '\')">✏️</button>' +
+            '<button class="btn btn-sm btn-outline-danger" onclick="deletePeserta(\'' + item.id + '\')">🗑️</button>' +
+            '<button class="btn btn-sm btn-outline-primary" onclick="showTTD(\'' + item.id + '\',\'' + escapeHtml(item.nama_lengkap) + '\')">🖊️ TTD</button>' +
+          '</td></tr>';
+      }
+    }
+    html += '</tbody></table></div>';
+    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += '<div class="pagination-container"><div class="info">Menampilkan ' + (data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0) + ' - ' + Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems) + ' dari ' + totalItems + ' data</div><div class="btn-group">';
+    for (var i = 1; i <= totalPages; i++) html += '<button class="btn btn-sm ' + (i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+    html += '</div></div>';
     container.innerHTML = html;
     container.classList.add('fade-in');
-    document.getElementById('selectAllPeserta')?.addEventListener('change', function() {
-      document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.checked = this.checked);
-      updateMoveToAlumniBtn();
-    });
-    document.querySelectorAll('.peserta-checkbox').forEach(cb => cb.addEventListener('change', updateMoveToAlumniBtn));
+    
+    var selectAll = document.getElementById('selectAllPeserta');
+    if(selectAll) {
+      selectAll.addEventListener('change', function() {
+        var cbs = document.querySelectorAll('.peserta-checkbox');
+        for(var j=0; j<cbs.length; j++) cbs[j].checked = this.checked;
+        updateMoveToAlumniBtn();
+      });
+    }
+    var cbs = document.querySelectorAll('.peserta-checkbox');
+    for(var j=0; j<cbs.length; j++) {
+      cbs[j].addEventListener('change', updateMoveToAlumniBtn);
+    }
   }
 
-  function updateMoveToAlumniBtn() { const checked = document.querySelectorAll('.peserta-checkbox:checked'); document.getElementById('moveToAlumniBtn').disabled = checked.length === 0; }
+  function updateMoveToAlumniBtn() { 
+    var checked = document.querySelectorAll('.peserta-checkbox:checked'); 
+    document.getElementById('moveToAlumniBtn').disabled = checked.length === 0; 
+  }
 
   window.sortTable = function(col) {
     if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
     else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
-    STATE.currentPage = 1; applyFiltersAndSort();
+    STATE.currentPage = 1; 
+    applyFiltersAndSort();
   };
-  window.goToPage = function(page) { const totalItems = STATE.filteredList.length; const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage)); if (page < 1 || page > totalPages) return; STATE.currentPage = page; applyFiltersAndSort(); };
+  
+  window.goToPage = function(page) { 
+    var totalItems = STATE.filteredList.length; 
+    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage)); 
+    if (page < 1 || page > totalPages) return; 
+    STATE.currentPage = page; 
+    applyFiltersAndSort(); 
+  };
 
   // --- Form Builder ---
   async function loadFormStructure() {
     try {
-      const res = await PKD.getFormSettings();
-      let fields = [];
+      var res = await PKD.getFormSettings();
+      var fields = [];
       if (res.success && res.data) {
         if (typeof res.data === 'string') { try { fields = JSON.parse(res.data); } catch(e) { fields = []; } }
         else if (Array.isArray(res.data)) fields = res.data;
         if (Array.isArray(fields) && fields.length > 0 && typeof fields[0] === 'string') {
-          const coreLabels = { nama_lengkap:'Nama Lengkap', tempat_tgl_lahir:'Tempat & Tanggal Lahir', pekerjaan:'Pekerjaan', pendidikan_terakhir:'Pendidikan Terakhir', alamat:'Alamat', no_hp:'No HP', email:'Email', utusan:'Utusan (PAC)', pengalaman_organisasi:'Pengalaman Organisasi', foto:'Foto', surat_rekomendasi:'Surat Rekomendasi' };
-          fields = fields.map(id => ({ id, label: coreLabels[id] || id, type: (id==='foto'||id==='surat_rekomendasi')?'file':(id==='pengalaman_organisasi'||id==='alamat')?'textarea':'text', options:'', required:true, isCore:true }));
+          var coreLabels = { nama_lengkap:'Nama Lengkap', tempat_tgl_lahir:'Tempat & Tanggal Lahir', pekerjaan:'Pekerjaan', pendidikan_terakhir:'Pendidikan Terakhir', alamat:'Alamat', no_hp:'No HP', email:'Email', utusan:'Utusan (PAC)', pengalaman_organisasi:'Pengalaman Organisasi', foto:'Foto', surat_rekomendasi:'Surat Rekomendasi' };
+          fields = fields.map(function(id) { return { id: id, label: coreLabels[id] || id, type: (id==='foto'||id==='surat_rekomendasi')?'file':(id==='pengalaman_organisasi'||id==='alamat')?'textarea':'text', options:'', required:true, isCore:true }; });
         }
         STATE.formStructure = fields;
         renderFormStructure();
       }
-    } catch(e) { console.warn('Gagal load form structure:', e); STATE.formStructure = [ { id:'nama_lengkap', label:'Nama Lengkap', type:'text', required:true, isCore:true } ]; renderFormStructure(); }
+    } catch(e) { 
+      console.warn('Gagal load form structure:', e); 
+      STATE.formStructure = [ { id:'nama_lengkap', label:'Nama Lengkap', type:'text', required:true, isCore:true } ]; 
+      renderFormStructure(); 
+    }
   }
 
   function renderFormStructure() {
-    const container = document.getElementById('formBuilderContainer');
+    var container = document.getElementById('formBuilderContainer');
     if (!STATE.formStructure || STATE.formStructure.length === 0) { container.innerHTML = '<div class="col-12 text-muted">Belum ada field.</div>'; return; }
-    let html = '';
-    STATE.formStructure.forEach(field => {
-      const isCore = field.isCore === true;
-      html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card"><div><div class="field-label">${escapeHtml(field.label)}</div><div class="field-meta">${isCore ? '<span class="badge bg-secondary">Core</span>' : `<span class="badge bg-info">${field.type}</span>`}${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}</div></div><div class="field-actions"><button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>${!isCore ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteField('${field.id}')"><i class="bi bi-trash"></i></button>` : ''}</div></div></div>`;
-    });
+    var html = '';
+    for(var i=0; i<STATE.formStructure.length; i++) {
+      var field = STATE.formStructure[i];
+      var isCore = field.isCore === true;
+      html += '<div class="col-md-6 col-lg-4"><div class="field-builder-card"><div><div class="field-label">' + escapeHtml(field.label) + '</div><div class="field-meta">' + (isCore ? '<span class="badge bg-secondary">Core</span>' : '<span class="badge bg-info">' + field.type + '</span>') + (field.required ? '<span class="badge bg-danger">Wajib</span>' : '') + '</div></div><div class="field-actions"><button class="btn btn-sm btn-outline-warning" onclick="editField(\'' + field.id + '\')"><i class="bi bi-pencil"></i></button>' + (!isCore ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteField(\'' + field.id + '\')"><i class="bi bi-trash"></i></button>' : '') + '</div></div></div>';
+    }
     container.innerHTML = html;
   }
 
-  window.editField = function(id) { const field = STATE.formStructure.find(f => f.id===id); if(!field){showToast('Field tidak ditemukan','error');return;} document.getElementById('editFieldId').value=field.id; document.getElementById('fieldLabel').value=field.label||''; document.getElementById('fieldType').value=field.type||'text'; document.getElementById('fieldOptions').value=field.options||''; document.getElementById('fieldRequired').checked=field.required||false; document.getElementById('fieldModalTitle').innerText='Edit Field'; document.getElementById('fieldOptionsGroup').style.display=(field.type==='radio'||field.type==='select')?'block':'none'; STATE.editingFieldId=field.id; new bootstrap.Modal(document.getElementById('fieldEditorModal')).show(); };
-  window.deleteField = function(id) { if(!confirm('Yakin ingin menghapus field ini?')) return; STATE.formStructure = STATE.formStructure.filter(f=>f.id!==id); renderFormStructure(); };
-  document.getElementById('fieldType')?.addEventListener('change', function() { document.getElementById('fieldOptionsGroup').style.display = (this.value==='radio'||this.value==='select')?'block':'none'; });
+  window.editField = function(id) { 
+    var field = STATE.formStructure.find(function(f) { return f.id===id; }); 
+    if(!field){showToast('Field tidak ditemukan','error');return;} 
+    document.getElementById('editFieldId').value=field.id; 
+    document.getElementById('fieldLabel').value=field.label||''; 
+    document.getElementById('fieldType').value=field.type||'text'; 
+    document.getElementById('fieldOptions').value=field.options||''; 
+    document.getElementById('fieldRequired').checked=field.required||false; 
+    document.getElementById('fieldModalTitle').innerText='Edit Field'; 
+    document.getElementById('fieldOptionsGroup').style.display=(field.type==='radio'||field.type==='select')?'block':'none'; 
+    STATE.editingFieldId=field.id; 
+    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show(); 
+  };
+  
+  window.deleteField = function(id) { 
+    if(!confirm('Yakin ingin menghapus field ini?')) return; 
+    STATE.formStructure = STATE.formStructure.filter(function(f){return f.id!==id;}); 
+    renderFormStructure(); 
+  };
+  
+  document.getElementById('fieldType')?.addEventListener('change', function() { 
+    document.getElementById('fieldOptionsGroup').style.display = (this.value==='radio'||this.value==='select')?'block':'none'; 
+  });
+  
   document.getElementById('saveFieldBtn')?.addEventListener('click', function() {
-    const id = document.getElementById('editFieldId').value, label = document.getElementById('fieldLabel').value.trim(), type = document.getElementById('fieldType').value, options = document.getElementById('fieldOptions').value.trim(), required = document.getElementById('fieldRequired').checked;
+    var id = document.getElementById('editFieldId').value, 
+        label = document.getElementById('fieldLabel').value.trim(), 
+        type = document.getElementById('fieldType').value, 
+        options = document.getElementById('fieldOptions').value.trim(), 
+        required = document.getElementById('fieldRequired').checked;
     if(!label){showToast('Label wajib diisi.','error');return;}
     if((type==='radio'||type==='select')&&!options){showToast('Opsi wajib.','error');return;}
-    if(id){ const idx = STATE.formStructure.findIndex(f=>f.id===id); if(idx!==-1){STATE.formStructure[idx].label=label; STATE.formStructure[idx].type=type; STATE.formStructure[idx].options=options; STATE.formStructure[idx].required=required;} }
-    else STATE.formStructure.push({id:generateId(), label, type, options, required, isCore:false});
-    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide(); renderFormStructure(); showToast('Field disimpan','success');
+    if(id){ 
+      var idx = STATE.formStructure.findIndex(function(f){return f.id===id;}); 
+      if(idx!==-1){STATE.formStructure[idx].label=label; STATE.formStructure[idx].type=type; STATE.formStructure[idx].options=options; STATE.formStructure[idx].required=required;} 
+    } else { 
+      STATE.formStructure.push({id:generateId(), label:label, type:type, options:options, required:required, isCore:false}); 
+    }
+    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide(); 
+    renderFormStructure(); 
+    showToast('Field disimpan','success');
   });
+  
   document.getElementById('saveFormStructureBtn')?.addEventListener('click', async function() {
-    const payload = STATE.formStructure.map(f=> ({id:f.id, label:f.label, type:f.type, options:f.options, required:f.required}));
-    const btn = this; const orig = btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner-border"></span> Menyimpan...';
-    try { const res=await PKD.setFormSettings(payload); if(res.success){ showToast('Struktur form disimpan','success'); try{DataCache.updateData('formSettings',payload);}catch(e){} } else throw new Error(res.message||'Gagal'); } catch(e){showToast('Gagal: '+e.message,'error');} finally{btn.disabled=false; btn.innerHTML=orig;}
+    var payload = STATE.formStructure.map(function(f){ return {id:f.id, label:f.label, type:f.type, options:f.options, required:f.required}; });
+    var btn = this; 
+    var orig = btn.innerHTML; 
+    btn.disabled=true; 
+    btn.innerHTML='<span class="spinner-border"></span> Menyimpan...';
+    try { 
+      var res = await PKD.setFormSettings(payload); 
+      if(res.success){ 
+        showToast('Struktur form disimpan','success'); 
+        try{DataCache.updateData('formSettings',payload);}catch(e){} 
+      } else throw new Error(res.message||'Gagal'); 
+    } catch(e){showToast('Gagal: '+e.message,'error');} 
+    finally{btn.disabled=false; btn.innerHTML=orig;}
   });
+  
   document.getElementById('addFieldBtn')?.addEventListener('click', function() {
-    document.getElementById('editFieldId').value=''; document.getElementById('fieldLabel').value=''; document.getElementById('fieldType').value='text'; document.getElementById('fieldOptions').value=''; document.getElementById('fieldRequired').checked=false; document.getElementById('fieldModalTitle').innerText='Tambah Field Baru'; document.getElementById('fieldOptionsGroup').style.display='none'; STATE.editingFieldId=null; new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+    document.getElementById('editFieldId').value=''; 
+    document.getElementById('fieldLabel').value=''; 
+    document.getElementById('fieldType').value='text'; 
+    document.getElementById('fieldOptions').value=''; 
+    document.getElementById('fieldRequired').checked=false; 
+    document.getElementById('fieldModalTitle').innerText='Tambah Field Baru'; 
+    document.getElementById('fieldOptionsGroup').style.display='none'; 
+    STATE.editingFieldId=null; 
+    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
   });
 
-  // ====================================================================
-  //  TOMBOL GENERATE TTD MASSAL
-  // ====================================================================
+  // ================= TOMBOL GENERATE TTD MASSAL =================
   document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
     if (!confirm('Anda akan membuat TTD massal untuk semua peserta yang sudah disetujui. Lanjutkan?')) return;
 
-    const btn = this;
-    const orig = btn.innerHTML;
+    var btn = this;
+    var orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
 
     try {
-      const res = await PKD.callApi('bulkGenerateTTD', { role: 'all' }, 'POST');
+      var res = await PKD.callApi('bulkGenerateTTD', { role: 'all' }, 'POST');
       if (res.success) {
-        const msg = res.addedCount > 0 
-          ? `Berhasil menambahkan ${res.addedCount} TTD untuk ${res.totalPeserta} peserta.` 
+        var msg = res.addedCount > 0 
+          ? 'Berhasil menambahkan ' + res.addedCount + ' TTD untuk ' + res.totalPeserta + ' peserta.' 
           : 'Tidak ada data baru yang ditambahkan. Semua peserta sudah memiliki TTD.';
         showToast(msg, res.addedCount > 0 ? 'success' : 'info');
         loadPesertaData(true);
@@ -512,46 +631,158 @@
     }
   });
 
-  // ====================================================================
-  //  FUNGSI-FUNGSI UTAMA
-  // ====================================================================
+  // ================= FUNGSI GENERATE QR =================
+  function generateStyledQRDataUrl(text, containerSize) {
+    var size = containerSize || 180;
+    var qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
 
-  function renderDynamicForm(editData = null) {
-    const container = document.getElementById('dynamicAdminFormContainer');
-    let html = '';
-    STATE.formStructure.forEach(field => {
-      const value = editData ? (editData[field.id] || '') : '';
-      const isRequired = field.required ? 'required' : '';
-      const requiredStar = field.required ? ' <span class="text-danger">*</span>' : '';
-      html += `<div class="mb-3"><label class="form-label fw-semibold">${escapeHtml(field.label)}${requiredStar}</label>`;
+    var padding = 12;
+    var borderWidth = 4;
+    var canvasSize = size;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+    var moduleCount = qr.getModuleCount();
+    var qrAreaSize = canvasSize - (padding * 2) - (borderWidth * 2);
+    var cellSize = qrAreaSize / moduleCount;
+
+    var offsetX = padding + borderWidth;
+    var offsetY = padding + borderWidth;
+
+    for (var row = 0; row < moduleCount; row++) {
+      for (var col = 0; col < moduleCount; col++) {
+        if (qr.isDark(row, col)) {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return canvas.toDataURL('image/png');
+  }
+
+  // ================= FUNGSI TTD DINAMIS =================
+  window.showTTD = async function(pesertaId, namaPeserta) {
+    var modal = new bootstrap.Modal(document.getElementById('ttdModal'));
+    var container = document.getElementById('ttdCardsContainer');
+    var emptyMsg = document.getElementById('ttdEmptyMessage');
+    
+    container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
+    emptyMsg.style.display = 'none';
+
+    try {
+      var approvals = STATE.allApprovals;
+      if (!approvals || approvals.length === 0) {
+        var res = await PKD.getAllDigitalApprovals();
+        approvals = res.success ? res.data : [];
+        STATE.allApprovals = approvals;
+      }
+
+      var namaTarget = namaPeserta.trim().toLowerCase();
+      var filtered = approvals.filter(function(a) {
+        var peserta = (a.peserta_nama || '').trim().toLowerCase();
+        return peserta === namaTarget;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        modal.show();
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < filtered.length; i++) {
+        var approval = filtered[i];
+        var role = approval.role;
+        var roleLabel = role === 'ketua_pc' ? 'Ketua PC' : (role === 'sekretaris' ? 'Sekretaris' : 'Instruktur');
+        var baseUrl = window.location.origin + '/bisaa/';
+        var qrUrl = baseUrl + 'verifikasi_qr.html?role=' + encodeURIComponent(role) + '&driveId=' + encodeURIComponent(approval.driveId) + '&nama=' + encodeURIComponent(namaPeserta);
+        
+        var qrDataUrl = generateStyledQRDataUrl(qrUrl);
+        var downloadName = 'QR_' + role + '_' + namaPeserta + '.png';
+        var kegunaan = approval.kegunaan || approval.keterangan || '-';
+
+        html += `
+          <div class="col-md-4">
+            <div class="ttd-box">
+              <span class="role-badge">${roleLabel}</span>
+              <div class="ttd-qr-container">
+                <img src="${qrDataUrl}" alt="QR TTD">
+              </div>
+              <h6>${escapeHtml(approval.nama)}</h6>
+              <p class="small text-muted">Kegunaan: ${escapeHtml(kegunaan)}</p>
+              <div class="mt-2 d-flex flex-column gap-2 w-100">
+                <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Buka Verifikasi</a>
+                <a href="${qrDataUrl}" download="${downloadName}" class="btn btn-sm btn-outline-secondary w-100">
+                  <i class="bi bi-download me-1"></i> Download QR
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      modal.show();
+
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  };
+
+  // ================= FUNGSI CRUD LAINNYA =================
+  function renderDynamicForm(editData) {
+    var container = document.getElementById('dynamicAdminFormContainer');
+    var html = '';
+    for(var i=0; i<STATE.formStructure.length; i++) {
+      var field = STATE.formStructure[i];
+      var value = editData ? (editData[field.id] || '') : '';
+      var isRequired = field.required ? 'required' : '';
+      var requiredStar = field.required ? ' <span class="text-danger">*</span>' : '';
+      html += '<div class="mb-3"><label class="form-label fw-semibold">' + escapeHtml(field.label) + requiredStar + '</label>';
       if (field.type === 'textarea') {
-        html += `<textarea class="form-control" name="${field.id}" ${isRequired}>${escapeHtml(value)}</textarea>`;
+        html += '<textarea class="form-control" name="' + field.id + '" ' + isRequired + '>' + escapeHtml(value) + '</textarea>';
       } else if (field.type === 'file') {
-        html += `<input type="file" class="form-control" name="${field.id}" accept="image/*,application/pdf" ${isRequired}>`;
+        html += '<input type="file" class="form-control" name="' + field.id + '" accept="image/*,application/pdf" ' + isRequired + '>';
         if (editData && editData[field.id+'_driveId']) {
-          html += `<div class="mt-1 small text-muted">File saat ini: <a href="https://drive.google.com/file/d/${editData[field.id+'_driveId']}/view" target="_blank">Lihat</a></div>`;
+          html += '<div class="mt-1 small text-muted">File saat ini: <a href="https://drive.google.com/file/d/' + editData[field.id+'_driveId'] + '/view" target="_blank">Lihat</a></div>';
         }
       } else if (field.type === 'radio') {
-        const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-        html += `<div class="radio-group">`;
-        options.forEach((opt, idx) => {
-          const checked = value === opt ? 'checked' : '';
-          html += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt)}" id="${field.id}_${idx}" ${checked} ${isRequired}><label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt)}</label></div>`;
-        });
-        html += `</div>`;
+        var options = (field.options || '').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
+        html += '<div class="radio-group">';
+        for(var j=0; j<options.length; j++) {
+          var opt = options[j];
+          var checked = value === opt ? 'checked' : '';
+          html += '<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="' + field.id + '" value="' + escapeHtml(opt) + '" id="' + field.id + '_' + j + '" ' + checked + ' ' + isRequired + '><label class="form-check-label" for="' + field.id + '_' + j + '">' + escapeHtml(opt) + '</label></div>';
+        }
+        html += '</div>';
       } else if (field.type === 'select') {
-        const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-        html += `<select class="form-select" name="${field.id}" ${isRequired}><option value="">-- Pilih --</option>`;
-        options.forEach(opt => {
-          const selected = value === opt ? 'selected' : '';
-          html += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
-        });
-        html += `</select>`;
+        var options = (field.options || '').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
+        html += '<select class="form-select" name="' + field.id + '" ' + isRequired + '><option value="">-- Pilih --</option>';
+        for(var j=0; j<options.length; j++) {
+          var opt = options[j];
+          var selected = value === opt ? 'selected' : '';
+          html += '<option value="' + escapeHtml(opt) + '" ' + selected + '>' + escapeHtml(opt) + '</option>';
+        }
+        html += '</select>';
       } else {
-        html += `<input type="text" class="form-control" name="${field.id}" value="${escapeHtml(value)}" ${isRequired}>`;
+        html += '<input type="text" class="form-control" name="' + field.id + '" value="' + escapeHtml(value) + '" ' + isRequired + '>';
       }
-      html += `</div>`;
-    });
+      html += '</div>';
+    }
     container.innerHTML = html;
   }
 
@@ -563,7 +794,7 @@
   }
 
   window.editPeserta = async function(id) {
-    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    var item = STATE.pesertaList.find(function(p) { return String(p.id) === String(id); });
     if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
     document.getElementById('editPesertaId').value = id;
     document.getElementById('formModalTitle').innerText = 'Edit Peserta';
@@ -572,19 +803,20 @@
   };
 
   document.getElementById('savePesertaBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('editPesertaId').value;
-    const form = document.getElementById('dynamicAdminFormContainer').querySelectorAll('input, select, textarea');
-    const data = { action: id ? 'updatePeserta' : 'submitPeserta' };
+    var id = document.getElementById('editPesertaId').value;
+    var formElements = document.getElementById('dynamicAdminFormContainer').querySelectorAll('input, select, textarea');
+    var data = { action: id ? 'updatePeserta' : 'submitPeserta' };
     if (id) data.id = id;
 
-    const filePromises = [];
-    form.forEach(el => {
+    var filePromises = [];
+    for(var i=0; i<formElements.length; i++) {
+      var el = formElements[i];
       if (el.type === 'file') {
         if (el.files.length > 0) {
-          const file = el.files[0];
-          const reader = new FileReader();
-          filePromises.push(new Promise((resolve) => {
-            reader.onload = () => { data[el.name] = reader.result; resolve(); };
+          var file = el.files[0];
+          var reader = new FileReader();
+          filePromises.push(new Promise(function(resolve) {
+            reader.onload = function() { data[el.name] = reader.result; resolve(); };
             reader.readAsDataURL(file);
           }));
         }
@@ -595,27 +827,24 @@
       } else {
         data[el.name] = el.value;
       }
-    });
+    }
 
     await Promise.all(filePromises);
 
-    const missing = STATE.formStructure.filter(f => f.required && !data[f.id]);
+    var missing = STATE.formStructure.filter(function(f) { return f.required && !data[f.id]; });
     if (missing.length > 0) {
-      showToast('Harap isi: ' + missing.map(f => f.label).join(', '), 'error');
+      showToast('Harap isi: ' + missing.map(function(f){return f.label;}).join(', '), 'error');
       return;
     }
 
-    const btn = this;
-    const orig = btn.innerHTML;
+    var btn = this;
+    var orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
     try {
-      let res;
-      if (id) {
-        res = await PKD.updatePeserta(data);
-      } else {
-        res = await PKD.submitPeserta(data);
-      }
+      var res;
+      if (id) { res = await PKD.updatePeserta(data); } 
+      else { res = await PKD.submitPeserta(data); }
       if (res.success) {
         showToast(id ? 'Peserta berhasil diperbarui' : 'Peserta berhasil ditambahkan', 'success');
         bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
@@ -632,17 +861,18 @@
   });
 
   window.viewPeserta = function(id) {
-    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    var item = STATE.pesertaList.find(function(p) { return String(p.id) === String(id); });
     if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
-    const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
-    const content = document.getElementById('detailContent');
-    let html = `<div class="list-group list-group-flush">`;
-    STATE.formStructure.forEach(field => {
-      const val = item[field.id] || '-';
-      html += `<div class="list-group-item py-2"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(val)}</div>`;
-    });
-    html += `<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ${getStatusBadge(item.status)}">${escapeHtml(item.status)}</span></div>`;
-    html += `</div>`;
+    var modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
+    var content = document.getElementById('detailContent');
+    var html = '<div class="list-group list-group-flush">';
+    for(var i=0; i<STATE.formStructure.length; i++) {
+      var field = STATE.formStructure[i];
+      var val = item[field.id] || '-';
+      html += '<div class="list-group-item py-2"><strong>' + escapeHtml(field.label) + ':</strong> ' + escapeHtml(val) + '</div>';
+    }
+    html += '<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ' + getStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></div>';
+    html += '</div>';
     content.innerHTML = html;
     modal.show();
   };
@@ -653,14 +883,14 @@
   };
 
   document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('deletePesertaId').value;
+    var id = document.getElementById('deletePesertaId').value;
     if (!id) return;
-    const btn = this;
-    const orig = btn.innerHTML;
+    var btn = this;
+    var orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border"></span> Menghapus...';
     try {
-      const res = await PKD.deletePeserta(id);
+      var res = await PKD.deletePeserta(id);
       if (res.success) {
         showToast('Peserta berhasil dihapus', 'success');
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
@@ -677,32 +907,32 @@
   });
 
   document.getElementById('exportDataBtn')?.addEventListener('click', function() {
-    const data = STATE.filteredList;
+    var data = STATE.filteredList;
     if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = 'peserta_export_' + new Date().toISOString().slice(0,10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast(`Berhasil mengekspor ${data.length} data`, 'success');
+    showToast('Berhasil mengekspor ' + data.length + ' data', 'success');
   });
 
   document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
-    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    var checked = document.querySelectorAll('.peserta-checkbox:checked');
     if (checked.length === 0) { showToast('Pilih minimal satu peserta', 'info'); return; }
-    if (!confirm(`Pindahkan ${checked.length} peserta terpilih ke alumni?`)) return;
-    const ids = Array.from(checked).map(cb => cb.value);
-    const btn = this;
-    const orig = btn.innerHTML;
+    if (!confirm('Pindahkan ' + checked.length + ' peserta terpilih ke alumni?')) return;
+    var ids = Array.from(checked).map(function(cb){ return cb.value; });
+    var btn = this;
+    var orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border"></span> Memindahkan...';
     try {
-      const res = await PKD.moveMultipleToAlumni(ids);
+      var res = await PKD.moveMultipleToAlumni(ids);
       if (res.success) {
-        showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta ke alumni`, 'success');
+        showToast('Berhasil memindahkan ' + (res.moved || ids.length) + ' peserta ke alumni', 'success');
         loadPesertaData(true);
       } else {
         showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
@@ -715,148 +945,54 @@
     }
   });
 
-  // ====================================================================
-  //  🆕 FUNGSI UTAMA: GENERATE QR DENGAN BORDER & PADDING
-  // ====================================================================
-  function generateStyledQRDataUrl(text, containerSize = 180) {
-    const qr = qrcode(0, 'M');
-    qr.addData(text);
-    qr.make();
-
-    const padding = 12;
-    const borderWidth = 4;
-    const canvasSize = containerSize;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-    const ctx = canvas.getContext('2d');
-
-    // 1. Background putih (untuk padding dalam)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-    // 2. Gambar border luar abu-abu
-    ctx.strokeStyle = '#d1d5db';
-    ctx.lineWidth = borderWidth;
-    ctx.strokeRect(0, 0, canvasSize, canvasSize);
-
-    // 3. Gambar QR di tengah
-    const moduleCount = qr.getModuleCount();
-    const qrAreaSize = canvasSize - (padding * 2) - (borderWidth * 2);
-    const cellSize = qrAreaSize / moduleCount;
-
-    const offsetX = padding + borderWidth;
-    const offsetY = padding + borderWidth;
-
-    for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-            if (qr.isDark(row, col)) {
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
-            }
-        }
-    }
-
-    return canvas.toDataURL('image/png');
-  }
-
-  // ====================================================================
-  //  🆕 FUNGSI TTD DINAMIS (DENGAN GENERATE QR YANG SUDAH ADA BORDER)
-  // ====================================================================
-  window.showTTD = async function(pesertaId, namaPeserta) {
-    const modal = new bootstrap.Modal(document.getElementById('ttdModal'));
-    const container = document.getElementById('ttdCardsContainer');
-    const emptyMsg = document.getElementById('ttdEmptyMessage');
-    
-    // Tampilkan loading
-    container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
-    emptyMsg.style.display = 'none';
-
-    try {
-      // 1. Ambil data TTD dari cache memori
-      let approvals = STATE.allApprovals;
-      if (!approvals || approvals.length === 0) {
-        const res = await PKD.getAllDigitalApprovals();
-        approvals = res.success ? res.data : [];
-        STATE.allApprovals = approvals;
-      }
-
-      // 2. Filter berdasarkan nama peserta
-      const namaTarget = namaPeserta.trim().toLowerCase();
-      const filtered = approvals.filter(a => {
-        const peserta = (a.peserta_nama || '').trim().toLowerCase();
-        return peserta === namaTarget;
-      });
-
-      // 3. Jika tidak ada data sama sekali
-      if (filtered.length === 0) {
-        container.innerHTML = '';
-        emptyMsg.style.display = 'block';
-        modal.show();
-        return;
-      }
-
-      // 4. Bangun Kartu HTML secara dinamis
-      let html = '';
-      filtered.forEach(approval => {
-        const role = approval.role;
-        const roleLabel = role === 'ketua_pc' ? 'Ketua PC' : (role === 'sekretaris' ? 'Sekretaris' : 'Instruktur');
-        const baseUrl = window.location.origin + '/bisaa/';
-        const qrUrl = `${baseUrl}verifikasi_qr.html?role=${role}&driveId=${approval.driveId}&nama=${encodeURIComponent(namaPeserta)}`;
-        
-        // 🟢 GENERATE QR DENGAN KOTAK BORDER & PADDING
-        const qrDataUrl = generateStyledQRDataUrl(qrUrl);
-        const downloadName = `QR_${role}_${namaPeserta}.png`;
-
-        const kegunaan = approval.kegunaan || approval.keterangan || '-';
-
-        html += `
-          <div class="col-md-4">
-            <div class="ttd-box">
-              <span class="role-badge">${roleLabel}</span>
-              
-              <div class="ttd-qr-container">
-                <img src="${qrDataUrl}" alt="QR TTD">
-              </div>
-
-              <h6>${escapeHtml(approval.nama)}</h6>
-              <p class="small text-muted">Kegunaan: ${escapeHtml(kegunaan)}</p>
-
-              <!-- MENU DOWNLOAD QR & BUKA VERIFIKASI -->
-              <div class="mt-2 d-flex flex-column gap-2 w-100">
-                <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Buka Verifikasi</a>
-                <a href="${qrDataUrl}" download="${downloadName}" class="btn btn-sm btn-outline-secondary w-100">
-                  <i class="bi bi-download me-1"></i> Download QR
-                </a>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-      modal.show();
-
-    } catch (e) {
-      showToast('Error: ' + e.message, 'error');
-    }
-  };
-
   // --- Events toolbar ---
   document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
-  document.getElementById('refreshDataBtn')?.addEventListener('click', function() { this.innerHTML='<span class="spinner-border"></span>'; this.disabled=true; loadPesertaData(true).then(()=>{ this.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; this.disabled=false; }); });
-  document.getElementById('clearCacheBtn')?.addEventListener('click', function() { if(confirm('Hapus cache?')) { DataCache.clear(); localStorage.removeItem('pkd_peserta_data'); showToast('Cache dibersihkan','info'); loadPesertaData(true); } });
-  document.getElementById('searchInput')?.addEventListener('input', debounce(function() { STATE.searchQuery=document.getElementById('searchInput').value; STATE.currentPage=1; applyFiltersAndSort(); }, 300));
-  document.getElementById('filterStatus')?.addEventListener('change', function() { STATE.statusFilter=this.value; STATE.currentPage=1; applyFiltersAndSort(); });
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() { 
+    this.innerHTML='<span class="spinner-border"></span>'; 
+    this.disabled=true; 
+    loadPesertaData(true).then(function(){ 
+      this.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; 
+      this.disabled=false; 
+    }.bind(this)); 
+  });
+  
+  document.getElementById('clearCacheBtn')?.addEventListener('click', function() { 
+    if(confirm('Hapus cache?')) { 
+      DataCache.clear(); 
+      localStorage.removeItem('pkd_peserta_data'); 
+      showToast('Cache dibersihkan','info'); 
+      loadPesertaData(true); 
+    } 
+  });
+  
+  document.getElementById('searchInput')?.addEventListener('input', debounce(function() { 
+    STATE.searchQuery=document.getElementById('searchInput').value; 
+    STATE.currentPage=1; 
+    applyFiltersAndSort(); 
+  }, 300));
+  
+  document.getElementById('filterStatus')?.addEventListener('change', function() { 
+    STATE.statusFilter=this.value; 
+    STATE.currentPage=1; 
+    applyFiltersAndSort(); 
+  });
 
   // --- INIT ---
   document.addEventListener('DOMContentLoaded', function() {
     loadPesertaData(false);
     loadFormStructure();
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() { document.getElementById('sidebarWrapper').classList.toggle('minimized'); });
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { e.preventDefault(); if(PKD.logout) PKD.logout(); else window.location.href='/bisaa/index.html'; });
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { if(PKD.logout) PKD.logout(); else window.location.href='/bisaa/index.html'; });
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() { 
+      document.getElementById('sidebarWrapper').classList.toggle('minimized'); 
+    });
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { 
+      e.preventDefault(); 
+      if(PKD.logout) PKD.logout(); 
+      else window.location.href='/bisaa/index.html'; 
+    });
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { 
+      if(PKD.logout) PKD.logout(); 
+      else window.location.href='/bisaa/index.html'; 
+    });
   });
 </script>
 </body>
