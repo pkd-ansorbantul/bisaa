@@ -498,7 +498,11 @@
       );
     }
     if (status !== '' && status !== '') {
-      filtered = filtered.filter(item => item.status === status);
+      const searchStatus = status.toLowerCase().trim();
+      filtered = filtered.filter(item => {
+        const itemStatus = (item.status || '').toLowerCase().trim();
+        return itemStatus === searchStatus;
+      });
     }
     return filtered;
   }
@@ -540,7 +544,7 @@
               <th class="sortable" onclick="sortTable('no_hp')">No HP</th>
               <th class="sortable" onclick="sortTable('utusan')">Utusan</th>
               <th class="sortable" onclick="sortTable('status')">Status</th>
-              <th style="width:240px;">Aksi</th>
+              <th style="width:280px;">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -555,7 +559,6 @@
         const nama = item.nama_lengkap || '-';
         const email = item.email || '-';
         const noHp = item.no_hp || '-';
-        // KOLOM UTUSAN
         const utusan = item.utusan || '-';
         const status = item.status || 'pending';
         const badge = getStatusBadge(status);
@@ -573,6 +576,7 @@
               <button class="btn btn-sm btn-outline-info view-btn" data-id="${item.id}">👁️</button>
               <button class="btn btn-sm btn-outline-warning edit-btn" data-id="${item.id}">✏️</button>
               <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}">🗑️</button>
+              ${status === 'pending' ? `<button class="btn btn-sm btn-outline-success approve-btn" data-id="${item.id}">✔ ACC</button>` : ''}
               <button class="btn btn-sm btn-outline-primary ttd-btn" data-id="${item.id}" data-nama="${escapeHtml(nama)}">🖊️ TTD</button>
               ${status === 'approved' || status === 'active' ? `
                 <button class="btn btn-sm btn-outline-success cert-btn" data-id="${item.id}">📄 Sertif</button>
@@ -619,6 +623,16 @@
     document.querySelectorAll('.view-btn').forEach(btn => { btn.onclick = function() { viewPeserta(this.dataset.id); }; });
     document.querySelectorAll('.edit-btn').forEach(btn => { btn.onclick = function() { editPeserta(this.dataset.id); }; });
     document.querySelectorAll('.delete-btn').forEach(btn => { btn.onclick = function() { deletePeserta(this.dataset.id); }; });
+    
+    // 🔥 TOMBOL ACC
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+      btn.onclick = function() {
+        if (confirm('Setujui peserta ini? Peserta akan mendapatkan akun login (Username & Password) dan status menjadi Disetujui.')) {
+          approvePeserta(this.dataset.id);
+        }
+      };
+    });
+
     document.querySelectorAll('.ttd-btn').forEach(btn => { btn.onclick = function() { showTTD(this.dataset.id, this.dataset.nama); }; });
     document.querySelectorAll('.cert-btn').forEach(btn => {
       btn.onclick = function() { generateCertificateForOne(this.dataset.id); };
@@ -644,6 +658,35 @@
     const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
     if (page < 1 || page > totalPages) return;
     STATE.currentPage = page; applyFiltersAndSort();
+  };
+
+  // 🔥 FUNGSI GLOBAL APPROVE PESERTA
+  window.approvePeserta = async function(id) {
+    const btn = document.querySelector(`.approve-btn[data-id="${id}"]`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
+    try {
+      const result = await AdminModule.approvePeserta(id);
+      if (result.success) {
+        if (result.username && result.password) {
+          showToast(`✅ Peserta disetujui! Username: ${result.username}, Password: ${result.password}`, 'success');
+        } else {
+          showToast('✅ Peserta berhasil disetujui!', 'success');
+        }
+        await loadPesertaData(true);
+      } else {
+        throw new Error(result.error || 'Gagal menyetujui');
+      }
+    } catch (e) {
+      showToast('❌ Gagal: ' + e.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '✔ ACC';
+      }
+    }
   };
 
   // ==========================================================
