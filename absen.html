@@ -440,8 +440,20 @@
           tandaTangan: window.sigPadAbsen.toDataURL('image/jpeg', 0.2)
         };
 
+        // ==========================================================
+        // 🔥 PERBAIKAN UTAMA: Cegah error null 'Cannot set properties of null'
+        // ==========================================================
         if (isQRMode) {
-          params.qrToken = document.getElementById('qrTokenAbsen').value;
+          const qrTokenInput = document.getElementById('qrTokenAbsen');
+          // Validasi apakah elemen input hidden benar-benar ada di DOM
+          if (qrTokenInput) {
+            params.qrToken = qrTokenInput.value;
+          } else {
+            showToastLocal('QR Token tidak ditemukan. Silakan scan ulang QR.', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+            return;
+          }
         } else {
           const password = document.getElementById('passwordAbsen').value.trim();
           if (!password) {
