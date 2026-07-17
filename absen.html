@@ -213,33 +213,18 @@
     function showToastLocal(message, type) { showToast(message, type); }
 
     // ==========================================================
-    //   🔥 FUNGSI SKELETON (Didefinisikan di awal)
+    //   🔥 FUNGSI SKELETON
     // ==========================================================
     function renderSkeletonAbsen(container) {
       if (!container) return;
-      console.log("🟡 Menampilkan SKELETON...");
       let html = `
         <h4 class="mb-4">📝 Memuat data sesi...</h4>
         <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
-          <div class="mb-4">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3 password-field-wrapper">
-            <div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div>
-            <div class="skeleton-box" style="width: 100%; max-width: 300px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
-          </div>
-          <div class="mt-4">
-            <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
-          </div>
+          <div class="mb-4"><div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div><div class="skeleton-box" style="width: 100%; max-width: 300px; height: 150px; border-radius: 16px; margin: 0 auto;"></div></div>
+          <div class="mt-4"><div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div></div>
         </div>
       `;
       container.innerHTML = html;
@@ -255,9 +240,7 @@
         if (response && response.success === true && Array.isArray(response.data)) {
           return response.data;
         }
-        if (Array.isArray(response)) {
-          return response;
-        }
+        if (Array.isArray(response)) { return response; }
         return [];
       } catch (err) {
         console.warn('Gagal mengambil sesi:', err);
@@ -271,53 +254,51 @@
     function initAbsenSignaturePad() {
       const canvas = document.getElementById('signatureCanvasAbsen');
       if (!canvas) return;
-      if (window.sigPadAbsen) {
-        window.sigPadAbsen.clear();
-        window.sigPadAbsen = null;
-      }
+      if (window.sigPadAbsen) { window.sigPadAbsen.clear(); window.sigPadAbsen = null; }
       window.sigPadAbsen = new SignaturePad(canvas, {
-        backgroundColor: 'white',
-        penColor: '#0f172a',
-        minWidth: 1.5,
-        maxWidth: 3
+        backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3
       });
       window.sigPadAbsen.clear();
 
       document.getElementById('clearAbsenSign')?.addEventListener('click', () => {
-        window.sigPadAbsen.clear();
-        saveAbsenFormState();
+        window.sigPadAbsen.clear(); saveAbsenFormState();
       });
       document.getElementById('undoAbsenSign')?.addEventListener('click', () => {
         const data = window.sigPadAbsen.toData();
         if (data && data.length > 0) {
-          data.pop();
-          window.sigPadAbsen.fromData(data);
-          saveAbsenFormState();
+          data.pop(); window.sigPadAbsen.fromData(data); saveAbsenFormState();
         }
       });
       window.sigPadAbsen.addEventListener('endStroke', saveAbsenFormState);
     }
 
     // ==========================================================
-    //   STATE MANAGEMENT (LocalStorage)
+    //   🔥 PERBAIKAN UTAMA: STATE MANAGEMENT (Lindungi dari Tracking Prevention)
     // ==========================================================
     function saveAbsenFormState() {
-      const nama = document.getElementById('namaAbsen')?.value || '';
-      const sesiId = document.getElementById('pilihSesiAbsen')?.value || '';
-      let signatureData = null;
-      if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
-        signatureData = window.sigPadAbsen.toData();
-      }
-      localStorage.setItem('absenFormState', JSON.stringify({ nama, sesiId, signatureData }));
+      try {
+        const nama = document.getElementById('namaAbsen')?.value || '';
+        const sesiId = document.getElementById('pilihSesiAbsen')?.value || '';
+        let signatureData = null;
+        if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
+          signatureData = window.sigPadAbsen.toData();
+        }
+        localStorage.setItem('absenFormState', JSON.stringify({ nama, sesiId, signatureData }));
+      } catch (e) { console.warn('Storage tidak tersedia.'); }
     }
 
     function restoreAbsenFormState() {
-      const saved = localStorage.getItem('absenFormState');
+      let saved = null;
+      try { saved = localStorage.getItem('absenFormState'); } catch (e) { return; }
       if (!saved) return;
       try {
         const { nama, sesiId, signatureData } = JSON.parse(saved);
-        if (nama) document.getElementById('namaAbsen').value = nama;
-        if (sesiId) document.getElementById('pilihSesiAbsen').value = sesiId;
+        const namaEl = document.getElementById('namaAbsen');
+        if (namaEl && nama) namaEl.value = nama;
+        
+        const sesiEl = document.getElementById('pilihSesiAbsen');
+        if (sesiEl && sesiId) sesiEl.value = sesiId;
+
         if (signatureData && window.sigPadAbsen) {
           window.sigPadAbsen.fromData(signatureData);
         }
@@ -325,7 +306,7 @@
     }
 
     function clearAbsenFormState() {
-      localStorage.removeItem('absenFormState');
+      try { localStorage.removeItem('absenFormState'); } catch (e) {}
     }
 
     // ==========================================================
@@ -336,7 +317,7 @@
       const container = document.getElementById('absenContainer');
 
       if (!sesiList || sesiList.length === 0) {
-        container.innerHTML = '<div class="alert alert-info text-center">Belum ada sesi absen aktif.</div>';
+        container.innerHTML = '<div class="alert alert-info text-center">Belum ada sesi absen tersedia.</div>';
         return;
       }
 
@@ -409,58 +390,78 @@
         <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>
       `;
 
+      // 🔥 Tulis HTML ke DOM terlebih dahulu
       container.innerHTML = html;
       container.classList.add('fade-up');
 
+      // 🔥 Inisialisasi komponen setelah HTML terpasang
       initAbsenSignaturePad();
+
+      // === 🔥 GUARD CLAUSE PALING PENTING UNTUK ERROR NULL ===
+      if (isQRMode) {
+        const selectEl = document.getElementById('pilihSesiAbsen');
+        // Pastikan dropdown benar-benar ada di DOM, barulah set nilainya
+        if (selectEl) {
+          // Jika sesiIdFromUrl valid, set nilainya. Jika tidak ada, set ke index pertama
+          if (sesiIdFromUrl) {
+            selectEl.value = sesiIdFromUrl;
+          } else if (sesiList.length > 0) {
+            selectEl.value = sesiList[0].id;
+          }
+        } else {
+          console.warn("⚠️ Elemen dropdown (#pilihSesiAbsen) tidak ditemukan di DOM saat pengisian QR!");
+        }
+      }
 
       document.getElementById('submitAbsenBtn').addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
-        if (!window.sigPadAbsen || window.sigPadAbsen.isEmpty()) {
+        // Validasi dengan guard clause
+        const pad = window.sigPadAbsen;
+        const namaInput = document.getElementById('namaAbsen');
+        const sesiInput = document.getElementById('pilihSesiAbsen');
+        const pwInput = document.getElementById('passwordAbsen');
+        const qrInput = document.getElementById('qrTokenAbsen');
+
+        if (!pad || pad.isEmpty()) {
           showToastLocal('Tanda tangan wajib!', 'danger');
-          btn.disabled = false;
-          btn.innerHTML = '📋 Kirim Absen';
-          return;
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
-        const nama = document.getElementById('namaAbsen').value.trim();
+        if (!namaInput) {
+          showToastLocal('Elemen nama tidak ditemukan!', 'danger');
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
+        }
+        const nama = namaInput.value.trim();
         if (!nama) {
           showToastLocal('Nama wajib diisi!', 'danger');
-          btn.disabled = false;
-          btn.innerHTML = '📋 Kirim Absen';
-          return;
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
-        const sesiId = document.getElementById('pilihSesiAbsen').value;
+        if (!sesiInput) {
+          showToastLocal('Elemen sesi tidak ditemukan!', 'danger');
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
+        }
+        const sesiId = sesiInput.value;
 
-        let params = {
-          nama: nama,
-          sesiId: sesiId,
-          tandaTangan: window.sigPadAbsen.toDataURL('image/jpeg', 0.2)
-        };
+        let params = { nama, sesiId, tandaTangan: pad.toDataURL('image/jpeg', 0.2) };
 
-        // ==========================================================
-        // 🔥 PERBAIKAN UTAMA: Cegah error null 'Cannot set properties of null'
-        // ==========================================================
         if (isQRMode) {
-          const qrTokenInput = document.getElementById('qrTokenAbsen');
-          // Validasi apakah elemen input hidden benar-benar ada di DOM
-          if (qrTokenInput) {
-            params.qrToken = qrTokenInput.value;
+          if (qrInput) {
+            params.qrToken = qrInput.value;
           } else {
             showToastLocal('QR Token tidak ditemukan. Silakan scan ulang QR.', 'danger');
-            btn.disabled = false;
-            btn.innerHTML = '📋 Kirim Absen';
-            return;
+            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
         } else {
-          const password = document.getElementById('passwordAbsen').value.trim();
+          if (!pwInput) {
+            showToastLocal('Elemen password tidak ditemukan!', 'danger');
+            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
+          }
+          const password = pwInput.value.trim();
           if (!password) {
             showToastLocal('Password sesi wajib diisi!', 'danger');
-            btn.disabled = false;
-            btn.innerHTML = '📋 Kirim Absen';
-            return;
+            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
           params.password = password;
         }
@@ -468,15 +469,20 @@
         try {
           const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, null);
           showToastLocal('✅ Absen berhasil tercatat!', 'success');
-          window.sigPadAbsen.clear();
-          document.getElementById('namaAbsen').value = '';
-          document.getElementById('passwordAbsen').value = '';
+          pad.clear();
+          if (namaInput) namaInput.value = '';
+          if (pwInput) pwInput.value = '';
           clearAbsenFormState();
           if (isQRMode) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (e) {
-          showToastLocal('❌ ' + (e.message || 'Terjadi kesalahan'), 'danger');
+          let errorMsg = e.message || 'Terjadi kesalahan';
+          if (errorMsg.includes('Sudah absen')) {
+            showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya. Absen ganda tidak diizinkan.', 'warning');
+          } else {
+            showToastLocal('❌ ' + errorMsg, 'danger');
+          }
         } finally {
           btn.disabled = false;
           btn.innerHTML = '📋 Kirim Absen';
@@ -484,11 +490,9 @@
       });
 
       if (!isQRMode) {
-        restoreAbsenFormState();
-        document.getElementById('namaAbsen')?.addEventListener('input', saveAbsenFormState);
-        document.getElementById('pilihSesiAbsen')?.addEventListener('change', saveAbsenFormState);
-      } else {
-        document.getElementById('pilihSesiAbsen').value = sesiIdFromUrl;
+        setTimeout(() => restoreAbsenFormState(), 100);
+        if (document.getElementById('namaAbsen')) document.getElementById('namaAbsen').addEventListener('input', saveAbsenFormState);
+        if (document.getElementById('pilihSesiAbsen')) document.getElementById('pilihSesiAbsen').addEventListener('change', saveAbsenFormState);
       }
     }
 
@@ -501,7 +505,7 @@
     };
 
     // ==========================================================
-    //   🔥 LOAD SESI (Menggunakan renderSkeleton yang lebih stabil)
+    //   🔥 LOAD SESI
     // ==========================================================
     async function loadAbsenSesi() {
       const container = document.getElementById('absenContainer');
@@ -512,18 +516,15 @@
 
       if (isQRMode) clearAbsenFormState();
 
-      // 2. Fetch data dari API (dijalankan di background)
       try {
         const freshSesi = await fetchSesiAbsen();
-        
         if (freshSesi && Array.isArray(freshSesi) && freshSesi.length > 0) {
           renderForm(freshSesi, sesiIdFromUrl, tokenFromUrl, isQRMode);
-          console.log('✅ Absen: data sesi dimuat dari API. Total:', freshSesi.length);
+          console.log('✅ Absen: data sesi dimuat dari API.');
         } else {
           container.innerHTML = '<div class="alert alert-info text-center">Belum ada sesi absen tersedia.</div>';
         }
       } catch (e) {
-        console.warn('Gagal fetch sesi:', e);
         container.innerHTML = `<div class="alert alert-danger">Gagal memuat sesi: ${escapeHtmlLocal(e.message)}</div>`;
       }
     }
@@ -543,7 +544,6 @@
     //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
     // ==========================================================
     document.addEventListener('DOMContentLoaded', function() {
-      // Render skeleton secara instan (sinkron) saat DOM siap
       const container = document.getElementById('absenContainer');
       if (container) {
         renderSkeletonAbsen(container);
