@@ -178,6 +178,12 @@
         from { opacity: 0; transform: translateY(-15px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* --- MODAL HASIL SCAN PESERTA --- */
+    #scanResultModal .modal-content { border-radius: 24px; }
+    #scanResultModal .btn-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 10px auto; }
+    #scanResultModal .option-btn { transition: transform 0.2s, box-shadow 0.2s; }
+    #scanResultModal .option-btn:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -269,6 +275,45 @@
   </div>
 </div>
 
+<!-- MODAL HASIL SCAN (OPSI PILIHAN) -->
+<div class="modal fade" id="scanResultModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-person-check-fill me-2"></i>Peserta Ditemukan</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeResultModal()"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div id="scanResultInfo" class="mb-4">
+          <h4 class="fw-bold" id="resultNamaPeserta">-</h4>
+          <p class="text-muted" id="resultStatusPeserta">Status: <span class="badge bg-success">Disetujui</span></p>
+          <hr>
+          <p class="fw-bold mb-3">Apa yang ingin Anda lakukan?</p>
+        </div>
+        <div class="row g-3 justify-content-center">
+          <div class="col-md-5">
+            <button class="btn btn-success btn-lg w-100 option-btn rounded-4 py-4" id="btnAbsenSekarang">
+              <div class="btn-icon bg-success text-white mb-2"><i class="bi bi-check-circle-fill"></i></div>
+              <span class="d-block fw-bold">Absen Sekarang</span>
+              <small class="text-muted">Pilih sesi & catat kehadiran</small>
+            </button>
+          </div>
+          <div class="col-md-5">
+            <button class="btn btn-outline-primary btn-lg w-100 option-btn rounded-4 py-4" id="btnBukaSesi">
+              <div class="btn-icon bg-primary text-white mb-2"><i class="bi bi-calendar-event-fill"></i></div>
+              <span class="d-block fw-bold">Buka Sesi Absen</span>
+              <small class="text-muted">Kelola sesi absensi</small>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="closeResultModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast-container"><div id="notificationToast" class="toast border-0 shadow-lg"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
 
@@ -339,6 +384,7 @@
   let openScannerButton = null;
   let currentScanMode = 'otomatis';
   let manualSessionData = []; // Menyimpan data sesi untuk mode manual
+  let pendingScanData = { pesertaId: null, nama: null }; // Menyimpan data hasil scan untuk modal pilihan
   
   // Scanner library state
   let html5QrCode = null;
@@ -532,7 +578,7 @@
           onQRDetected(decodedText);
         },
         (errorMessage) => {
-          // ignore errors (perbaikan scanning berjalan terus)
+          // ignore errors
         }
       ).then(() => {
         isScannerRunning = true;
@@ -569,7 +615,7 @@
   }
 
   // ==========================================================
-  //   🔥 PERBAIKAN FINAL: ONQR DETECTED DENGAN DROPDOWN MANUAL
+  //   🔥 PERBAIKAN FINAL: ONQR DETECTED (Dengan Modal Pilihan)
   // ==========================================================
   async function onQRDetected(decodedText) {
     stopScanner();
@@ -577,6 +623,7 @@
     const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
     const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
 
+    // Kasus 1: Scan QR untuk Sesi (biasanya untuk peserta umum)
     if (matchSesi) {
       const sesiId = matchSesi[1];
       const tokenMatch = decodedText.match(/token=([^&]+)/);
@@ -585,65 +632,117 @@
       return;
     }
 
+    // Kasus 2: Scan QR Peserta (peserta_id)
     if (matchPeserta) {
       const pesertaId = matchPeserta[1];
-      const res = await AdminModule.getPesertaById(pesertaId);
-      if (!res.success || !res.data) {
-        alert('ID Peserta tidak ditemukan.');
-        return;
+      
+      // 1. Cari data di state lokal
+      let peserta = AdminModule.getPesertaById(pesertaId);
+
+      // 🔥 Jika tidak ditemukan di cache, paksa refresh data dari Server
+      if (!peserta) {
+        console.warn('⚠️ Peserta tidak ditemukan di cache, mencoba sinkronisasi ulang...');
+        await AdminModule.loadAllData(true); // Force refresh
+        peserta = AdminModule.getPesertaById(pesertaId);
+        
+        if (!peserta) {
+          alert('ID Peserta tidak ditemukan setelah sinkronisasi. Pastikan QR benar dan peserta sudah disetujui.');
+          return;
+        }
       }
-      if (res.data.status !== 'approved') {
+
+      // 2. Cek status peserta
+      const statusLower = (peserta.status || '').toLowerCase().trim();
+      if (statusLower !== 'approved' && statusLower !== 'active') {
         alert('Peserta belum disetujui oleh admin. QR tidak aktif.');
         return;
       }
 
-      const namaPeserta = res.data.nama_lengkap;
+      // Simpan data sementara untuk digunakan di modal pilihan
+      pendingScanData.pesertaId = pesertaId;
+      pendingScanData.nama = peserta.nama_lengkap;
 
-      // --- Mode Otomatis ---
-      if (currentScanMode === 'otomatis') {
+      // Tampilkan Modal Hasil Scan
+      document.getElementById('resultNamaPeserta').innerText = peserta.nama_lengkap;
+      document.getElementById('resultStatusPeserta').innerHTML = `<span class="badge bg-success">Disetujui / Aktif</span>`;
+      
+      const resultModal = new bootstrap.Modal(document.getElementById('scanResultModal'));
+      resultModal.show();
+
+      return;
+    }
+
+    // Kasus 3: Format Tidak Dikenali
+    alert('Format QR tidak dikenali. Pastikan QR Peserta atau QR Sesi yang benar.');
+  }
+
+  // ==========================================================
+  //   🔥 EVENT LISTENER UNTUK MODAL HASIL SCAN
+  // ==========================================================
+  window.closeResultModal = function() {
+    const modalEl = document.getElementById('scanResultModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+  };
+
+  document.getElementById('btnAbsenSekarang').addEventListener('click', async function() {
+    const pesertaId = pendingScanData.pesertaId;
+    const namaPeserta = pendingScanData.nama;
+    
+    if (!pesertaId) {
+        alert('Data peserta tidak valid.');
+        return;
+    }
+
+    // Tutup modal pilihan
+    const resultModal = bootstrap.Modal.getInstance(document.getElementById('scanResultModal'));
+    if (resultModal) resultModal.hide();
+
+    // --- Logic Absen (Sama seperti sebelumnya) ---
+    if (currentScanMode === 'otomatis') {
         const allSesi = AdminModule.getSesiList();
         const now = new Date();
         const activeSesi = allSesi.filter(s => {
-          if (!s.waktu_mulai || !s.waktu_selesai) return false;
-          const start = new Date(s.waktu_mulai);
-          const end = new Date(s.waktu_selesai);
-          if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-          return now >= start && now <= end;
+            if (!s.waktu_mulai || !s.waktu_selesai) return false;
+            const start = new Date(s.waktu_mulai);
+            const end = new Date(s.waktu_selesai);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+            return now >= start && now <= end;
         });
 
         if (activeSesi.length === 0) {
-          alert('Tidak ada sesi yang sedang berlangsung saat ini. Silakan pilih mode manual.');
-          return;
+            alert('Tidak ada sesi yang sedang berlangsung saat ini. Silakan pilih mode manual.');
+            return;
         }
 
         let selectedSesi;
         if (activeSesi.length === 1) {
-          selectedSesi = activeSesi[0];
+            selectedSesi = activeSesi[0];
         } else {
-          const options = activeSesi.map(s => `${s.id}: ${s.nama}`).join('\n');
-          const choice = prompt(`Ditemukan ${activeSesi.length} sesi aktif. Pilih ID sesi:\n${options}`, activeSesi[0].id);
-          selectedSesi = activeSesi.find(s => s.id == choice);
-          if (!selectedSesi) {
-            alert('Pilihan tidak valid.');
-            return;
-          }
+            const options = activeSesi.map(s => `${s.id}: ${s.nama}`).join('\n');
+            const choice = prompt(`Ditemukan ${activeSesi.length} sesi aktif. Pilih ID sesi:\n${options}`, activeSesi[0].id);
+            selectedSesi = activeSesi.find(s => s.id == choice);
+            if (!selectedSesi) {
+                alert('Pilihan tidak valid.');
+                return;
+            }
         }
 
         try {
-          const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
-          if (result.success) {
-            alert(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
-          } else {
-            alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
-          }
+            const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
+            if (result.success) {
+                alert(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
+            } else {
+                alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
+            }
         } catch (e) {
-          alert(`Error: ${e.message}`);
+            alert(`Error: ${e.message}`);
         }
         return;
-      }
+    }
 
-      // --- 🔥 Mode Manual (Menggunakan Dropdown yang sudah dipilih) ---
-      if (currentScanMode === 'manual') {
+    // --- 🔥 Mode Manual (Menggunakan Dropdown yang sudah dipilih) ---
+    if (currentScanMode === 'manual') {
         const manualSelect = document.getElementById('manualSessionSelect');
         const selectedSesiId = manualSelect ? manualSelect.value : null;
 
@@ -659,21 +758,27 @@
         }
 
         try {
-          const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
-          if (result.success) {
-            alert(`✅ Absen manual berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
-          } else {
-            alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
-          }
+            const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
+            if (result.success) {
+                alert(`✅ Absen manual berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
+            } else {
+                alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
+            }
         } catch (e) {
-          alert(`Error: ${e.message}`);
+            alert(`Error: ${e.message}`);
         }
         return;
-      }
     }
+  });
 
-    alert('Format QR tidak dikenali. Pastikan QR yang benar.');
-  }
+  document.getElementById('btnBukaSesi').addEventListener('click', function() {
+    // Tutup modal pilihan
+    const resultModal = bootstrap.Modal.getInstance(document.getElementById('scanResultModal'));
+    if (resultModal) resultModal.hide();
+
+    // Redirect ke halaman manajemen sesi
+    window.location.href = '/bisaa/admin/sesi_absen_admin.html';
+  });
 
   // ==========================================================
   //   EVENT LISTENERS SCANNER

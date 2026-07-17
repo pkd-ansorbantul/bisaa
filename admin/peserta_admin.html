@@ -484,7 +484,7 @@
   }
 
   // ==========================================================
-  //   FILTER, SORT, PAGINATION
+  //   FILTER, SORT, PAGINATION (DENGAN PERBAIKAN CASE-INSENSITIVE)
   // ==========================================================
   function getFilteredPeserta(query = '', status = '') {
     let filtered = STATE.pesertaList;
@@ -498,10 +498,10 @@
       );
     }
     if (status !== '' && status !== '') {
-      const searchStatus = status.toLowerCase().trim();
+      const searchStatus = status.toLowerCase().trim(); // Bersihkan input dropdown
       filtered = filtered.filter(item => {
-        const itemStatus = (item.status || '').toLowerCase().trim();
-        return itemStatus === searchStatus;
+        const itemStatus = (item.status || '').toLowerCase().trim(); // Bersihkan data dari database
+        return itemStatus === searchStatus; // Bandingkan keduanya
       });
     }
     return filtered;
@@ -1123,198 +1123,18 @@
   });
 
   // ==========================================================
-  //   SEARCH HANDLER
+  //   🔥 PERBAIKAN: HANDLE FILTER STATUS
   // ==========================================================
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.setAttribute('autocomplete', 'off');
-    searchInput.addEventListener('focus', function() { this.value = ''; STATE.searchQuery = ''; applyFiltersAndSort(); });
-    searchInput.addEventListener('input', debounce(function(e) {
-      STATE.searchQuery = e.target.value; STATE.currentPage = 1; applyFiltersAndSort();
-    }, 300));
-  }
-  function debounce(fn, delay) { let timer; return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); }; }
-
-  // ==========================================================
-  //   FORM BUILDER RENDER & LOGIC "LAINNYA" ADMIN
-  // ==========================================================
-  function renderFormStructure() {
-    const container = document.getElementById('formBuilderContainer');
-    if (!STATE.formStructure || STATE.formStructure.length === 0) {
-      container.innerHTML = '<div class="col-12 text-muted">Belum ada field default.</div>'; return;
-    }
-    let html = '';
-    for (let i = 0; i < STATE.formStructure.length; i++) {
-      const field = STATE.formStructure[i];
-      const isCore = field.isCore === true;
-      html += `
-        <div class="col-md-6 col-lg-4">
-          <div class="field-builder-card">
-            <div>
-              <div class="field-label">${escapeHtml(field.label)}</div>
-              <div class="field-meta">
-                ${isCore ? '<span class="badge bg-secondary">Core</span>' : '<span class="badge bg-info">' + field.type + '</span>'}
-                ${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}
-              </div>
-            </div>
-            <div class="field-actions">
-              <button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>
-              ${!isCore ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteField(\'' + field.id + '\')"><i class="bi bi-trash"></i></button>' : ''}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    container.innerHTML = html;
+  function handleStatusFilter(e) {
+    STATE.statusFilter = e.target.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
   }
 
-  window.editField = function(id) {
-    const field = STATE.formStructure.find(f => f.id === id);
-    if (!field) { showToast('Field tidak ditemukan', 'error'); return; }
-    document.getElementById('editFieldId').value = field.id;
-    document.getElementById('fieldLabel').value = field.label || '';
-    document.getElementById('fieldType').value = field.type || 'text';
-    document.getElementById('fieldOptions').value = field.options || '';
-    document.getElementById('fieldRequired').checked = field.required || false;
-    document.getElementById('fieldModalTitle').innerText = 'Edit Field';
-    document.getElementById('fieldOptionsGroup').style.display = (field.type === 'radio' || field.type === 'select') ? 'block' : 'none';
-    STATE.editingFieldId = field.id;
-    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
-  };
-
-  window.deleteField = function(id) {
-    if (!confirm('Yakin ingin menghapus field ini?')) return;
-    STATE.formStructure = STATE.formStructure.filter(f => f.id !== id);
-    renderFormStructure();
-  };
-
-  document.getElementById('fieldType')?.addEventListener('change', function() {
-    document.getElementById('fieldOptionsGroup').style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
-  });
-
-  document.getElementById('saveFieldBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('editFieldId').value;
-    const label = document.getElementById('fieldLabel').value.trim();
-    const type = document.getElementById('fieldType').value;
-    const options = document.getElementById('fieldOptions').value.trim();
-    const required = document.getElementById('fieldRequired').checked;
-    if (!label) { showToast('Label wajib diisi.', 'error'); return; }
-    if ((type === 'radio' || type === 'select') && !options) { showToast('Opsi wajib.', 'error'); return; }
-    if (id) {
-      const idx = STATE.formStructure.findIndex(f => f.id === id);
-      if (idx !== -1) { STATE.formStructure[idx].label = label; STATE.formStructure[idx].type = type; STATE.formStructure[idx].options = options; STATE.formStructure[idx].required = required; }
-    } else {
-      STATE.formStructure.push({ id: generateId(), label: label, type: type, options: options, required: required, isCore: false });
-    }
-    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide();
-    renderFormStructure();
-    showToast('Menyimpan perubahan ke server...', 'info');
-    const success = await saveFormStructureToServer();
-    if (success) { showToast('✅ Berhasil disimpan. Memverifikasi data dari server...', 'success'); await loadFormStructure(); } 
-    else { showToast('❌ Gagal menyimpan ke server.', 'error'); }
-  });
-
-  async function saveFormStructureToServer() {
-    const payload = STATE.formStructure.map(f => ({ id: f.id, label: f.label, type: f.type, options: f.options, required: f.required }));
-    try {
-      const res = await callApi('setFormSettings', { fields: JSON.stringify(payload) }, 'POST');
-      return res.success;
-    } catch (e) { console.error('Gagal server save:', e); return false; }
-  }
-
-  document.getElementById('saveFormStructureBtn')?.addEventListener('click', async function() {
-    const payload = STATE.formStructure.map(f => ({ id: f.id, label: f.label, type: f.type, options: f.options, required: f.required }));
-    const btn = this; const orig = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
-    try {
-      const res = await callApi('setFormSettings', { fields: JSON.stringify(payload) }, 'POST');
-      if (res.success) { showToast('Struktur form disimpan ke server', 'success'); await loadFormStructure(); } 
-      else throw new Error(res.message || 'Gagal');
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = orig; }
-  });
-
-  document.getElementById('addFieldBtn')?.addEventListener('click', function() {
-    document.getElementById('editFieldId').value = '';
-    document.getElementById('fieldLabel').value = '';
-    document.getElementById('fieldType').value = 'text';
-    document.getElementById('fieldOptions').value = '';
-    document.getElementById('fieldRequired').checked = false;
-    document.getElementById('fieldModalTitle').innerText = 'Tambah Field Baru';
-    document.getElementById('fieldOptionsGroup').style.display = 'none';
-    STATE.editingFieldId = null;
-    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
-  });
-
-  // ==========================================================
-  //   DYNAMIC FORM RENDER (Menampilkan modal tambah/edit peserta)
-  // ==========================================================
-  function renderDynamicForm(data = null) {
-    const container = document.getElementById('dynamicAdminFormContainer');
-    const structure = STATE.formStructure;
-    if (!structure || structure.length === 0) { container.innerHTML = '<div class="alert alert-warning">Belum ada struktur form.</div>'; return; }
-    let html = `<form id="dynamicAdminForm">`;
-    structure.forEach(field => {
-      const val = data ? (data[field.id] || '') : '';
-      const requiredAttr = field.required ? 'required' : '';
-      const labelHtml = `<label class="form-label fw-semibold">${escapeHtml(field.label)} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>`;
-      if (field.type === 'textarea') html += `<div class="mb-3">${labelHtml}<textarea class="form-control" name="${field.id}" ${requiredAttr}>${escapeHtml(val)}</textarea></div>`;
-      else if (field.type === 'radio') {
-        const options = (field.options || '').split(',').filter(s => s.trim());
-        html += `<div class="mb-3">${labelHtml}<div>`;
-        options.forEach((opt, idx) => {
-          const checked = val === opt.trim() ? 'checked' : '';
-          html += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt.trim())}" id="${field.id}_${idx}" ${checked} ${requiredAttr}><label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt.trim())}</label></div>`;
-        });
-        html += `</div></div>`;
-      } else if (field.type === 'select') {
-        const options = (field.options || '').split(',').filter(s => s.trim());
-        html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" id="adminSelect_${field.id}" ${requiredAttr}><option value="">-- Pilih --</option>`;
-        options.forEach(opt => {
-          const selected = val === opt.trim() ? 'selected' : '';
-          html += `<option value="${escapeHtml(opt.trim())}" ${selected}>${escapeHtml(opt.trim())}</option>`;
-        });
-        html += `</select></div>`;
-        
-        // --- FITUR BARU: Jika field adalah 'utusan', tambahkan input "Lainnya" ---
-        if (field.id === 'utusan') {
-          const isLainnya = val && val.trim().startsWith('Lainnya');
-          const nilaiLuar = isLainnya ? val.replace('Lainnya - ', '').replace('Lainnya', '') : '';
-          html += `
-            <div id="utusanLuarContainerAdmin" style="display: ${isLainnya ? 'block' : 'none'}; margin-top: -8px; margin-bottom: 12px;">
-              <label class="form-label text-muted small">Tulis Asal (Lainnya)</label>
-              <input type="text" class="form-control form-control-sm" name="utusan_luar_admin" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas..." value="${escapeHtml(nilaiLuar)}">
-            </div>
-          `;
-        }
-      } else if (field.type === 'file') {
-        html += `<div class="mb-3">${labelHtml}<input type="file" class="form-control" name="${field.id}" ${requiredAttr}></div>`;
-      } else {
-        html += `<div class="mb-3">${labelHtml}<input type="text" class="form-control" name="${field.id}" value="${escapeHtml(val)}" ${requiredAttr}></div>`;
-      }
-    });
-    html += `</form>`;
-    container.innerHTML = html;
-
-    // --- EVENT LISTENER UNTUK DROPDOWN "LAINNYA" ---
-    const utusanSelect = document.getElementById('adminSelect_utusan');
-    if (utusanSelect) {
-      const luarContainer = document.getElementById('utusanLuarContainerAdmin');
-      const luarInput = luarContainer?.querySelector('input');
-      utusanSelect.addEventListener('change', function() {
-        if (this.value === 'Lainnya') {
-          luarContainer.style.display = 'block';
-          if (luarInput) luarInput.focus();
-        } else {
-          luarContainer.style.display = 'none';
-          if (luarInput) luarInput.value = '';
-        }
-      });
-      // Jika sebelumnya sudah terpilih "Lainnya", tampilkan container
-      if (utusanSelect.value === 'Lainnya') {
-        luarContainer.style.display = 'block';
-      }
-    }
+  function handleSearch(e) {
+    STATE.searchQuery = e.target.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
   }
 
   // ==========================================================
@@ -1326,6 +1146,15 @@
     initSidebar();
     loadFormStructure();
     loadPesertaData(true);
+
+    // --- PERBAIKAN: Pasang Event Listener ---
+    document.getElementById('filterStatus')?.addEventListener('change', handleStatusFilter);
+    
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        // Tetap gunakan debounce untuk pencarian
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
+    }
   })();
 
 </script>
