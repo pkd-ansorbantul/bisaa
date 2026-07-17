@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Kabupaten Bantul · Statistik Kader</title>
+  <title>Admin Kader - PKD GP Ansor Bantul</title>
 
   <!-- Favicon & Font Modern -->
   <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Chart.js untuk grafik -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  
+
   <style>
     /* ===== GLOBAL ===== */
     * { font-family: 'Inter', sans-serif; }
@@ -138,6 +138,21 @@
 
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    /* --- Pagination & Sorting --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+    .cache-status.live { background: #dcfce7; color: #16a34a; }
+    .cache-status.offline { background: #fee2e2; color: #dc2626; }
   </style>
 </head>
 <body>
@@ -231,6 +246,11 @@
             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
           </a>
 
+          <!-- RTL & Tugas -->
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
+          </a>
+
           <!-- Pengaturan -->
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
@@ -257,24 +277,41 @@
     <!-- ==================== CONTENT WRAPPER ==================== -->
     <div class="content-wrapper" id="mainContent">
       <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Statistik Kader PKD GP Ansor Bantul</h2>
-      
+
+      <!-- TOOLBAR -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+          <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <div class="input-group" style="max-width: 300px; display: inline-flex;">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama...">
+          </div>
+          <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterUtusan">
+            <option value="">Semua PAC</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Ringkasan statistik dalam kartu -->
       <div class="row g-4 mb-5">
         <div class="col-md-4">
           <div class="stat-card">
-            <div class="stat-number" id="totalKader">-</div>
+            <div class="stat-number" id="totalKader">0</div>
             <div class="stat-label">Total Kader</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="stat-card">
-            <div class="stat-number" id="totalPac">-</div>
+            <div class="stat-number" id="totalPac">0</div>
             <div class="stat-label">Jumlah PAC</div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="stat-card">
-            <div class="stat-number" id="totalPendidikan">-</div>
+            <div class="stat-number" id="totalPendidikan">0</div>
             <div class="stat-label">Jenjang Pendidikan</div>
           </div>
         </div>
@@ -296,25 +333,11 @@
         </div>
       </div>
 
-      <!-- Tabel detail kader -->
+      <!-- Tabel detail kader dengan sorting & pagination -->
       <div class="mt-5">
         <h5 class="fw-bold mb-3"><i class="bi bi-table me-2"></i>Daftar Kader per PAC</h5>
-        <div class="table-kader">
-          <table class="table table-bordered table-hover table-sm">
-            <thead class="table-light">
-              <tr>
-                <th>No</th>
-                <th>Nama Lengkap</th>
-                <th>Utusan (PAC)</th>
-                <th>Pendidikan</th>
-                <th>Pekerjaan</th>
-                <th>Alamat</th>
-              </tr>
-            </thead>
-            <tbody id="kaderTableBody">
-              <tr><td colspan="6" class="text-center text-muted">Memuat data...</td></tr>
-            </tbody>
-          </table>
+        <div id="kaderTableContainer" class="table-container">
+          <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
         </div>
       </div>
     </div>
@@ -364,198 +387,373 @@
 </div>
 
 <!-- ==================== SCRIPTS ==================== -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    // ==========================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // ==========================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-        document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-        const icon = this.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('bi-arrow-left-right');
-            icon.classList.toggle('bi-arrow-right-left');
-        }
-    });
+  // ==========================================================
+  //   STATE & UTILITY
+  // ==========================================================
+  let STATE = {
+    pesertaList: [],
+    filteredList: [],
+    searchQuery: '',
+    utusanFilter: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc'
+  };
 
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = this.dataset.target;
-            const submenu = document.getElementById('submenu-' + target);
-            if (submenu) submenu.classList.toggle('open');
-        });
-    });
-
-    // ==========================================================
-    //   LOGOUT
-    // ==========================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (PKD.logout) PKD.logout();
-        else window.location.href = '/bisaa/index.html';
-    });
-
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-        const modalEl = document.getElementById('moreMenuModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        if (PKD.logout) PKD.logout();
-        else window.location.href = '/bisaa/index.html';
-    });
-
-    // ==========================================================
-    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-    // ==========================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-            window.location.href = '/bisaa/login.html';
-            return;
-        }
-
-        // Load data kader (dashboard statistik)
-        loadKaderData();
-    });
-
-    // ==========================================================
-    //   FUNGSI UTAMA: AMBIL DATA PESERTA DAN HITUNG STATISTIK
-    // ==========================================================
-    async function loadKaderData() {
-        try {
-            // Jika ingin mengubah sumber data, ganti PKD.getPesertaList() dengan PKD.getKaderList()
-            // Sesuai permintaan, kita ambil dari peserta karena kader berasal dari peserta yang aktif
-            const res = await PKD.getPesertaList();
-            if (!res || res.length === 0) {
-                // Data kosong → tampilkan pesan kosong
-                document.getElementById('totalKader').innerText = '0';
-                document.getElementById('totalPac').innerText = '0';
-                document.getElementById('totalPendidikan').innerText = '0';
-                document.getElementById('kaderTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada data kader.</td></tr>';
-                return;
-            }
-            
-            const peserta = res;
-            tampilkanStatistik(peserta);
-        } catch (e) {
-            console.error(e);
-            document.getElementById('totalKader').innerText = '?';
-            document.getElementById('totalPac').innerText = '?';
-            document.getElementById('totalPendidikan').innerText = '?';
-            document.getElementById('kaderTableBody').innerHTML = '<tr><td colspan="6" class="text-danger">Gagal memuat data.</td></tr>';
-        }
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
     }
+  }
 
-    function tampilkanStatistik(peserta) {
-        // Hitung total kader
-        const total = peserta.length;
-        document.getElementById('totalKader').innerText = total;
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
 
-        // Hitung jumlah PAC unik dari kolom utusan
-        const pacMap = new Map(); // utusan -> jumlah
-        const pendidikanMap = new Map(); // pendidikan -> jumlah
-        const tableRows = [];
+  // ==========================================================
+  //   LOAD KADER (langsung dari API via AdminModule)
+  // ==========================================================
+  async function loadKaderData(forceRefresh = false) {
+    const container = document.getElementById('kaderTableContainer');
 
-        peserta.forEach((p, idx) => {
-            const utusan = p.utusan || 'Tidak diketahui';
-            const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
-            
-            // Hitung per utusan
-            pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
-            
-            // Hitung per pendidikan
-            pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
+    // Tampilkan loading
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
 
-            // Siapkan baris tabel
-            tableRows.push(`
+    try {
+      // Pastikan AdminModule sudah dimuat
+      if (!AdminModule.getState().lastSync || forceRefresh) {
+        await AdminModule.loadAllData(forceRefresh);
+      }
+      const freshData = AdminModule.getPesertaList() || [];
+      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+        STATE.pesertaList = freshData;
+        renderUtusanFilter();
+        applyFiltersAndSort();
+        updateCacheStatus('Live');
+      } else {
+        container.innerHTML = `<div class="alert alert-info text-center">Belum ada data kader.</div>`;
+        updateCacheStatus('Empty');
+      }
+    } catch (e) {
+      console.warn('Gagal load kader:', e);
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
+      updateCacheStatus('Error');
+    }
+  }
+
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION
+  // ==========================================================
+  function getFilteredPeserta(query = '', utusan = '') {
+    let filtered = STATE.pesertaList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+        (item.utusan && item.utusan.toLowerCase().includes(q))
+      );
+    }
+    if (utusan !== '' && utusan !== '') {
+      filtered = filtered.filter(item => item.utusan === utusan);
+    }
+    return filtered;
+  }
+
+  function applyFiltersAndSort() {
+    let filtered = getFilteredPeserta(STATE.searchQuery, STATE.utusanFilter);
+    if (STATE.sortColumn) {
+      filtered.sort(function(a, b) {
+        let va = (a[STATE.sortColumn] || '').toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    renderTable(filtered.slice(start, end), totalItems);
+  }
+
+  // ==========================================================
+  //   RENDER TABEL & STATISTIK
+  // ==========================================================
+  function renderTable(data, totalItems) {
+    const container = document.getElementById('kaderTableContainer');
+    if (!container) return;
+
+    // Hitung statistik dari STATE.pesertaList (seluruh data)
+    const fullPeserta = STATE.pesertaList;
+    const total = fullPeserta.length;
+    document.getElementById('totalKader').innerText = total;
+
+    const pacMap = new Map();
+    const pendidikanMap = new Map();
+    fullPeserta.forEach(p => {
+      const utusan = p.utusan || 'Tidak diketahui';
+      const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
+      pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
+      pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
+    });
+    document.getElementById('totalPac').innerText = pacMap.size;
+    document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
+
+    // Update grafik
+    renderChart('chartPac', 'bar', Array.from(pacMap.keys()), Array.from(pacMap.values()), 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
+    renderChart('chartPendidikan', 'pie', Array.from(pendidikanMap.keys()), Array.from(pendidikanMap.values()), 'Pendidikan');
+
+    // Render tabel (data halaman)
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
+                        <th class="sortable" onclick="sortTable('utusan')">Utusan (PAC)</th>
+                        <th class="sortable" onclick="sortTable('pendidikan_terakhir')">Pendidikan</th>
+                        <th class="sortable" onclick="sortTable('pekerjaan')">Pekerjaan</th>
+                        <th class="sortable" onclick="sortTable('alamat')">Alamat</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += `
                 <tr>
-                    <td>${idx + 1}</td>
-                    <td>${escapeHtml(p.nama_lengkap || '')}</td>
-                    <td>${escapeHtml(utusan)}</td>
-                    <td>${escapeHtml(pendidikan)}</td>
-                    <td>${escapeHtml(p.pekerjaan || '')}</td>
-                    <td>${escapeHtml(p.alamat || '')}</td>
+                    <td colspan="6" class="text-center py-3 text-muted">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                        Tidak ada data kader.
+                    </td>
                 </tr>
-            `);
-        });
-
-        // Update tabel
-        document.getElementById('kaderTableBody').innerHTML = tableRows.join('');
-
-        // Update jumlah PAC
-        document.getElementById('totalPac').innerText = pacMap.size;
-
-        // Update jumlah jenis pendidikan (bukan total orang)
-        document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
-
-        // Buat grafik PAC
-        const pacLabels = Array.from(pacMap.keys());
-        const pacData = Array.from(pacMap.values());
-        renderChart('chartPac', 'bar', pacLabels, pacData, 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
-
-        // Buat grafik Pendidikan
-        const pendidikanLabels = Array.from(pendidikanMap.keys());
-        const pendidikanData = Array.from(pendidikanMap.values());
-        renderChart('chartPendidikan', 'pie', pendidikanLabels, pendidikanData, 'Pendidikan');
+      `;
+    } else {
+      data.forEach((item, index) => {
+        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+        html += `
+                    <tr>
+                        <td>${globalIndex}</td>
+                        <td><strong>${escapeHtml(item.nama_lengkap || '')}</strong></td>
+                        <td>${escapeHtml(item.utusan || '-')}</td>
+                        <td>${escapeHtml(item.pendidikan_terakhir || '-')}</td>
+                        <td>${escapeHtml(item.pekerjaan || '-')}</td>
+                        <td>${escapeHtml(item.alamat || '-')}</td>
+                    </tr>
+                `;
+      });
     }
 
-    function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
-        
-        // Hancurkan chart lama jika ada
-        let existingChart = Chart.getChart(canvasId);
-        if (existingChart) {
-            existingChart.destroy();
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+        <div class="pagination-container">
+            <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+            <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `</div></div>`;
+
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
+
+  // ==========================================================
+  //   SORT & PAGINATION HELPERS (diekspos ke global)
+  // ==========================================================
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  };
+
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page;
+    applyFiltersAndSort();
+  };
+
+  // ==========================================================
+  //   RENDER CHART
+  // ==========================================================
+  function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    let existingChart = Chart.getChart(canvasId);
+    if (existingChart) existingChart.destroy();
+
+    const dynamicColors = [];
+    if (type === 'pie') {
+      for (let i = 0; i < labels.length; i++) {
+        dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
+      }
+    }
+
+    new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: data,
+          backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
+          borderColor: type === 'pie' ? 'white' : '#2563eb',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: type === 'pie' ? 'right' : 'top',
+          }
         }
+      }
+    });
+  }
 
-        // Warna default untuk pie
-        const dynamicColors = [];
-        if (type === 'pie') {
-            for (let i = 0; i < labels.length; i++) {
-                dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
-            }
-        }
+  // ==========================================================
+  //   RENDER DROPDOWN FILTER UTUSAN
+  // ==========================================================
+  function renderUtusanFilter() {
+    const select = document.getElementById('filterUtusan');
+    if (!select) return;
+    const utusanSet = new Set();
+    STATE.pesertaList.forEach(item => {
+      if (item.utusan && item.utusan.trim() !== '') {
+        utusanSet.add(item.utusan);
+      }
+    });
+    const utusan = Array.from(utusanSet).sort();
+    select.innerHTML = '<option value="">Semua PAC</option>';
+    utusan.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = u;
+      select.appendChild(opt);
+    });
+  }
 
-        new Chart(ctx, {
-            type: type,
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
-                    borderColor: type === 'pie' ? 'white' : '#2563eb',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: type === 'pie' ? 'right' : 'top',
-                    }
-                }
-            }
-        });
+  // ==========================================================
+  //   EVENT HANDLERS
+  // ==========================================================
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    this.disabled = true;
+    loadKaderData(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Gagal menyegarkan', 'error');
+    });
+  });
+
+  document.getElementById('searchInput')?.addEventListener('input', debounce(function(e) {
+    STATE.searchQuery = e.target.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  }, 300));
+
+  document.getElementById('filterUtusan')?.addEventListener('change', function() {
+    STATE.utusanFilter = this.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  });
+
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
+    }
+  });
+
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
+    });
+  });
+
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   LOGIN AUTH CHECK & INIT
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
     }
 
-    function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+    // Update navbar user
+    updateNavbarMenu();
 
+    // Load data
+    loadKaderData();
   })();
+
 </script>
 </body>
 </html>

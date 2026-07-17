@@ -12,16 +12,17 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+  <!-- 🛠 PERBAIKAN: Library html5-qrcode untuk multi-browser -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
   <style>
     /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; overflow-x: hidden; }
-
-    /* --- LAYOUT UTAMA --- */
     .container-card { width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; margin: 0; padding: 0; }
-
-    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
+    
+    /* --- SIDEBAR --- */
     .sidebar-wrapper {
         width: 260px; max-width: 260px;
         background: #0f172a; color: #f1f5f9;
@@ -32,127 +33,150 @@
         transition: width 0.3s ease, max-width 0.3s ease;
     }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
-    .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; transition: padding 0.3s ease; }
+    .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; }
     .sidebar-wrapper.minimized .sidebar-brand-area { padding: 1.5rem 0.75rem; display: flex; justify-content: center; }
-    .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease; }
+    .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
     .brand-sidebar:hover { opacity: 0.8; }
-    .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
+    .brand-sidebar img { max-height: 45px; width: auto; }
     .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
     .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
     .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
     .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
-
     .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
-    .sidebar-menu-area::-webkit-scrollbar { display: none; }
-    .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; }
+    .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
     .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
     .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
     .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    .sidebar-wrapper.minimized .nav-pills .nav-link span { display: none; }
     .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
     .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
     .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { display: none; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-    
-    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
+    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
-    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
-    .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-    
+    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; }
     .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
-    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
-
+    
     /* --- BOTTOM NAV (MOBILE) --- */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
+    .bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%;
+        background: #ffffff; border-top: 1px solid #e2e8f0;
+        z-index: 1050; display: none; justify-content: space-around;
+        padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .bottom-nav .nav-item {
+        display: flex; flex-direction: column; align-items: center;
+        text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1;
+    }
     .bottom-nav .nav-item i { font-size: 1.5rem; }
     .bottom-nav .nav-item.active { color: #2563eb; }
-
-    /* --- CONTENT WRAPPER (DESKTOP) --- */
-    .content-wrapper { 
-        margin-left: 260px; 
-        padding: 1.5rem; 
-        background: #f8fafc; 
-        min-height: 100vh; 
-        width: calc(100% - 260px); 
-        transition: margin-left 0.3s ease, width 0.3s ease; 
-        box-sizing: border-box;
-    }
-    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
-
-    /* --- STAT CARDS --- */
-    .stat-card {
-        background: white; border-radius: 20px; padding: 1.2rem;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
-        text-align: center; transition: transform 0.2s; height: 100%;
-        display: flex; flex-direction: column; justify-content: center;
-    }
-    .stat-card:hover { transform: translateY(-4px); }
-    .stat-number { font-size: 2rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
-    .stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card i { margin-top: 10px; font-size: 1.8rem; }
-
-    /* --- TOAST & UTILITY --- */
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
-    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
 
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 991px) {
         .sidebar-wrapper { display: none; }
         .bottom-nav { display: flex; }
-        
-        .container-card, .admin-wrapper, .content-wrapper { 
-            width: 100vw !important; 
-            max-width: 100vw !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
+        .container-card, .admin-wrapper {
+            width: 100vw !important; max-width: 100vw !important;
+            margin: 0 !important; padding: 0 !important;
+            display: flex; flex-direction: column; min-height: 100vh;
         }
-        
-        .content-wrapper { 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh !important; 
-            padding: 0 1rem 90px 1rem !important;
+        .content-wrapper {
+            flex: 1; margin-left: 0 !important;
+            padding: 1rem 0.5rem 90px 0.5rem !important;
+            width: 100% !important; min-height: 100vh !important;
         }
-        
-        #dashboardContent { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-evenly; 
-            padding: 10px 0; 
-        }
+        .scan-float-btn { display: none !important; }
+    }
 
-        .section-title { margin-top: 0; padding-top: 0; margin-bottom: 0; font-size: 1.3rem; }
-        .top-toolbar { margin-bottom: 0; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; }
-        .alert-info { margin-top: 0 !important; margin-bottom: 0; }
-        .row.g-2.fade-in { width: 100%; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-        
-        .col-12 {
-            width: 100%;
-            max-width: 450px; 
-            margin: 0 auto;   
-            padding: 0;
-        }
-        .stat-card { padding: 0.8rem 1rem; border-radius: 14px; width: 100%; margin: 0 auto; }
-        .stat-number { font-size: 1.6rem; }
-        .stat-label { font-size: 0.75rem; }
-        .stat-card i { font-size: 1.3rem !important; margin-top: 4px !important; }
+    @media (max-width: 576px) {
+        .stat-card { padding: 0.4rem 0.2rem !important; min-height: auto; border-radius: 12px; }
+        .stat-number { font-size: 1.2rem !important; }
+        .stat-label { font-size: 0.55rem !important; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.3px; }
+        .stat-card i { font-size: 1.2rem !important; margin-top: 2px; }
+        .content-wrapper { padding: 0.5rem 0.3rem 90px 0.3rem !important; }
+        .section-title { font-size: 1.1rem; margin-bottom: 0.5rem; padding-left: 0.5rem; }
+        .top-toolbar { flex-direction: row !important; flex-wrap: wrap; justify-content: space-between !important; align-items: center !important; gap: 4px; width: 100%; }
+        .top-toolbar > div { width: auto !important; }
+        .top-toolbar .cache-status { font-size: 0.6rem; padding: 2px 8px; }
+        .top-toolbar .btn { font-size: 0.7rem; padding: 0.2rem 0.8rem; }
+        .bottom-nav .nav-item { font-size: 0.55rem; }
+        .bottom-nav .nav-item i { font-size: 1.2rem; }
+        .row.g-2.g-sm-3 { margin: 0 !important; }
+        .row.g-2.g-sm-3 > .col-6 { padding: 0.15rem !important; }
+        .alert-info.mt-3.rounded-4 { font-size: 0.7rem; padding: 0.4rem; }
+    }
+
+    /* --- CONTENT --- */
+    .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease; box-sizing: border-box; }
+    .stat-card { background: white; border-radius: 20px; padding: 1.2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: transform 0.2s; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
+    .stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card i { margin-top: 10px; font-size: 1.8rem; }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    /* --- SCAN QR FLOATING BUTTON (DESKTOP) --- */
+    .scan-float-btn {
+        position: fixed; bottom: 30px; right: 15px;
+        z-index: 1050; width: 56px; height: 56px;
+        border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1e4bb3);
+        color: white; border: none; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+        display: none; align-items: center; justify-content: center;
+        font-size: 24px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;
+    }
+    .scan-float-btn:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5); }
+    .scan-float-btn:active { transform: scale(0.95); }
+    .scan-float-btn.show { display: flex; }
+    @media (min-width: 992px) { .scan-float-btn.show { display: flex; } }
+    
+    /* --- SCANNER MODAL --- */
+    #scanQrModal .modal-dialog { margin: 0; width: 100%; height: 100%; max-width: 100%; }
+    #scanQrModal .modal-content { background: #0f172a; border: none; border-radius: 0; height: 100%; }
+    #scanQrModal .modal-header { border: none; background: transparent; padding: 8px 16px; }
+    #scanQrModal .modal-body { display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0; height: calc(100% - 56px); }
+    #scannerVideoContainer { width: 100%; display: flex; justify-content: center; align-items: center; }
+    #scannerVideoContainer video { width: 100%; object-fit: contain; background: #000; }
+    #scanQrModal .scanner-status { color: #ccc; margin-top: 15px; font-size: 1rem; font-weight: 500; z-index: 10; }
+    #scanQrModal .scan-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 10000; }
+    #scanQrModal .scan-stop-btn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; padding: 10px 30px; }
+
+    /* --- AREA DROPDOWN SESI MANUAL --- */
+    #manualSessionContainer {
+        position: absolute;
+        top: 60px;
+        left: 20px;
+        right: 20px;
+        z-index: 10001; /* Di atas video */
+        display: none; /* Default sembunyi */
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(8px);
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        color: white;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    #manualSessionContainer label { color: #e2e8f0; font-weight: 600; margin-bottom: 5px; display: block; }
+    #manualSessionContainer select {
+        width: 100%; padding: 10px; border-radius: 8px;
+        background: #1e293b; color: white; border: 1px solid #475569;
+    }
+    #manualSessionContainer select option { color: white; background: #1e293b; }
+    
+    /* Animasi muncul */
+    #manualSessionContainer.show { display: block; animation: fadeInDown 0.4s ease-out; }
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -160,23 +184,10 @@
 
 <div class="container-card">
   <div class="admin-wrapper">
-
-    <!-- ==================== SIDEBAR ==================== -->
+    <!-- SIDEBAR -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
-      <div class="sidebar-toggle">
-        <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
-          <i class="bi bi-arrow-left-right"></i>
-        </button>
-      </div>
-      <div class="sidebar-brand-area">
-        <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-          <div>
-            <div class="brand-sidebar-title">PKD GP Ansor</div>
-            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
-          </div>
-        </a>
-      </div>
+      <div class="sidebar-toggle"><button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button></div>
+      <div class="sidebar-brand-area"><a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp"><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a></div>
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
           <a class="nav-link active" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
@@ -206,54 +217,39 @@
           <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
           <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
           <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html"><i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span></a>
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
-          <div class="sidebar-logout"></div>
-          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
+          <div class="sidebar-logout"></div><a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
         </div>
       </div>
     </div>
 
-    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
+    <!-- BOTTOM NAV (MOBILE) -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
       <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
       <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+      <a href="#" class="nav-item" id="scanNavBtn"><i class="bi bi-qr-code-scan"></i><span>Scan</span></a>
+      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
-    <!-- ==================== CONTENT ==================== -->
-    <div class="content-wrapper" id="mainContent">
+    <!-- KONTEN -->
+    <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
-
-      <div class="top-toolbar">
-        <div>
-          <span id="cacheStatus" class="cache-status">Memuat...</span>
-        </div>
-        <div class="text-md-end">
-          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
-            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
-          </button>
-        </div>
+      <div class="top-toolbar d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <div><span id="cacheStatus" class="cache-status">Memuat...</span></div>
+        <div><button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button></div>
       </div>
-
-      <div id="dashboardContent">
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Memuat...</span>
-          </div>
-        </div>
-      </div>
+      <div id="dashboardContent"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div></div></div>
     </div>
-
   </div>
 </div>
 
-<!-- ==================== MODAL "LAINNYA" (MOBILE) ==================== -->
+<!-- MODAL LAINNYA -->
 <div class="modal fade" id="moreMenuModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
         <div class="row g-2">
           <div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div>
@@ -273,242 +269,525 @@
   </div>
 </div>
 
-<!-- ==================== TOAST ==================== -->
-<div class="toast-container">
-  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-    <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="toastIcon"></i>
-      <strong class="me-auto" id="toastTitle">Berhasil</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+<!-- TOAST -->
+<div class="toast-container"><div id="notificationToast" class="toast border-0 shadow-lg"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
+
+<!-- ===== SCAN QR FLOATING BUTTON (DESKTOP) ===== -->
+<button class="scan-float-btn" id="scanFloatBtn" title="Scan QR">
+  <i class="bi bi-qr-code-scan"></i>
+</button>
+
+<!-- ===== MODAL SCANNER QR (Dengan Dropdown Manual) ===== -->
+<div class="modal fade" id="scanQrModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="scanQrModalTitle"><i class="bi bi-qr-code-scan me-2"></i>Scan QR</h5>
+        <div class="ms-auto text-center" id="modeSelectionContainer" style="display:block;">
+          <span class="text-white small me-2">Mode:</span>
+          <div class="btn-group btn-group-sm" role="group">
+            <input type="radio" class="btn-check" name="scanMode" id="modeOtomatis" value="otomatis" checked>
+            <label class="btn btn-outline-light" for="modeOtomatis">Otomatis (Sesuai Jadwal)</label>
+            <input type="radio" class="btn-check" name="scanMode" id="modeManual" value="manual">
+            <label class="btn btn-outline-light" for="modeManual">Manual (Semua Sesi)</label>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body position-relative">
+        
+        <!-- 🔥 AREA DROPDOWN SESI (Muncul Saat Mode Manual) -->
+        <div id="manualSessionContainer">
+            <label><i class="bi bi-list-ul me-2"></i>Pilih Sesi Secara Manual:</label>
+            <select id="manualSessionSelect">
+                <option value="">-- Memuat data sesi... --</option>
+            </select>
+            <small class="text-muted d-block mt-1" style="color: #94a3b8 !important;">* Scan QR setelah memilih sesi.</small>
+        </div>
+
+        <div id="scannerVideoContainer"></div>
+        <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
+        <button class="btn btn-danger btn-lg rounded-pill scan-stop-btn" id="scanStopBtn">
+          <i class="bi bi-stop-circle me-2"></i> Hentikan
+        </button>
+      </div>
     </div>
-    <div class="toast-body" id="toastMessage"></div>
   </div>
 </div>
 
-<!-- ==================== SCRIPTS ==================== -->
+<!-- ================= SCRIPTS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/api.js"></script>
-<script src="/bisaa/dataCache.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    getUserRole,
+    showToast,
+    updateNavbarMenu,
+    callApi, 
+    escapeHtml
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    let cacheStatusEl = document.getElementById('cacheStatus');
-    let dashboardContent = document.getElementById('dashboardContent');
+  // ==========================================================
+  //   STATE & UTILITY
+  // ==========================================================
+  let cacheStatusEl = document.getElementById('cacheStatus');
+  let dashboardContent = document.getElementById('dashboardContent');
+  let openScannerButton = null;
+  let currentScanMode = 'otomatis';
+  let manualSessionData = []; // Menyimpan data sesi untuk mode manual
+  
+  // Scanner library state
+  let html5QrCode = null;
+  let isScannerRunning = false;
 
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
+  function updateCacheStatus(status) {
+    if (cacheStatusEl) { 
+      cacheStatusEl.textContent = status; 
+      cacheStatusEl.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); 
     }
+  }
 
-    function updateCacheStatus(status) {
-      if (cacheStatusEl) {
-        cacheStatusEl.textContent = status;
-        cacheStatusEl.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    // ==================== LOGIKA DASHBOARD UTAMA (CACHE-FIRST) ====================
-    async function loadDashboard() {
-      updateCacheStatus('Memuat...');
-
-      // --- 1. BACA DATA DARI CACHE DAHULU (INSTAN) ---
-      const cachedPeserta = DataCache.getData('peserta');
-      const cachedSesi = DataCache.getData('sesi');
-      const cachedMateri = DataCache.getData('materi');
-      const cachedSkrining = DataCache.getData('skrining');
-      const cachedPretest = DataCache.getData('pretest');
-      const cachedPosttest = DataCache.getData('posttest');
-
-      let totalPeserta = (cachedPeserta && Array.isArray(cachedPeserta)) ? cachedPeserta.length : 0;
-      let totalSesi = (cachedSesi && Array.isArray(cachedSesi)) ? cachedSesi.length : 0;
-      let totalMateri = (cachedMateri && Array.isArray(cachedMateri)) ? cachedMateri.length : 0;
-      let totalSkrining = (cachedSkrining && Array.isArray(cachedSkrining)) ? cachedSkrining.length : 0;
-      let totalPretest = (cachedPretest && Array.isArray(cachedPretest)) ? cachedPretest.length : 0;
-      let totalPosttest = (cachedPosttest && Array.isArray(cachedPosttest)) ? cachedPosttest.length : 0;
-
-      // --- 2. RENDER DASHBOARD SECARA INSTAN DENGAN DATA CACHE ---
-      dashboardContent.innerHTML = `
-        <div class="row g-2 fade-in">
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalPeserta}</div>
-              <div class="stat-label">Total Peserta</div>
-              <i class="bi bi-people-fill"></i>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalSesi}</div>
-              <div class="stat-label">Sesi Absen</div>
-              <i class="bi bi-calendar-event"></i>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalMateri}</div>
-              <div class="stat-label">Materi</div>
-              <i class="bi bi-file-earmark-pdf"></i>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalSkrining}</div>
-              <div class="stat-label">Skrining Terisi</div>
-              <i class="bi bi-clipboard-check"></i>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalPretest}</div>
-              <div class="stat-label">Pretest Terisi</div>
-              <i class="bi bi-pencil-square"></i>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="stat-card">
-              <div class="stat-number">${totalPosttest}</div>
-              <div class="stat-label">Posttest Terisi</div>
-              <i class="bi bi-trophy"></i>
-            </div>
+  // ==========================================================
+  //   RENDER DASHBOARD
+  // ==========================================================
+  function renderDashboardUI() {
+    const stats = AdminModule.getStats();
+    dashboardContent.innerHTML = `
+      <div class="row g-2 g-sm-3 fade-in">
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalPeserta}</div>
+            <div class="stat-label">Total Peserta</div>
+            <i class="bi bi-people-fill"></i>
           </div>
         </div>
-        <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
-          <i class="bi bi-info-circle"></i> Menampilkan data dari cache. Sedang menyegarkan data terbaru dari server...
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalSesi}</div>
+            <div class="stat-label">Sesi Absen</div>
+            <i class="bi bi-calendar-event"></i>
+          </div>
         </div>
-      `;
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalMateri}</div>
+            <div class="stat-label">Materi</div>
+            <i class="bi bi-file-earmark-pdf"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalSkrining}</div>
+            <div class="stat-label">Skrining Terisi</div>
+            <i class="bi bi-clipboard-check"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalPretest}</div>
+            <div class="stat-label">Pretest Terisi</div>
+            <i class="bi bi-pencil-square"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="stat-card">
+            <div class="stat-number">${stats.totalPosttest}</div>
+            <div class="stat-label">Posttest Terisi</div>
+            <i class="bi bi-trophy"></i>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
+        <i class="bi bi-info-circle"></i> Data langsung dari sumber cloud, diperbarui secara otomatis.
+        ${stats.lastSync ? `<br><small>Terakhir sinkronisasi: ${stats.lastSync}</small>` : ''}
+      </div>
+    `;
+  }
 
-      // --- 3. BACKGROUND FETCH (TANPA SPINNER, TETAP MUAT) ---
+  // ==========================================================
+  //   BACKGROUND SYNC
+  // ==========================================================
+  async function syncDashboardData(forceRefresh = false) {
+    renderDashboardUI();
+    updateCacheStatus('Local');
+    if (forceRefresh) {
       try {
-        const [freshPeserta, freshSesi, freshMateri, freshSkrining, freshPretest, freshPosttest] = await Promise.all([
-          PKD.getPesertaList(null, true),
-          PKD.getSesiAbsen(true),
-          PKD.getMateriList(true),
-          PKD.getSkriningResponses(true),
-          PKD.getPretestResponses(true),
-          PKD.getPosttestResponses(true)
-        ]);
-
-        // Update angka real-time dari API
-        totalPeserta = freshPeserta?.length || 0;
-        totalSesi = freshSesi?.length || 0;
-        totalMateri = freshMateri?.length || 0;
-        totalSkrining = freshSkrining?.length || 0;
-        totalPretest = freshPretest?.length || 0;
-        totalPosttest = freshPosttest?.length || 0;
-
-        // Render ulang dengan angka terbaru
-        dashboardContent.innerHTML = `
-          <div class="row g-2 fade-in">
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalPeserta}</div>
-                <div class="stat-label">Total Peserta</div>
-                <i class="bi bi-people-fill"></i>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalSesi}</div>
-                <div class="stat-label">Sesi Absen</div>
-                <i class="bi bi-calendar-event"></i>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalMateri}</div>
-                <div class="stat-label">Materi</div>
-                <i class="bi bi-file-earmark-pdf"></i>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalSkrining}</div>
-                <div class="stat-label">Skrining Terisi</div>
-                <i class="bi bi-clipboard-check"></i>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalPretest}</div>
-                <div class="stat-label">Pretest Terisi</div>
-                <i class="bi bi-pencil-square"></i>
-              </div>
-            </div>
-            <div class="col-12 col-md-4">
-              <div class="stat-card">
-                <div class="stat-number">${totalPosttest}</div>
-                <div class="stat-label">Posttest Terisi</div>
-                <i class="bi bi-trophy"></i>
-              </div>
-            </div>
-          </div>
-          <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
-            <i class="bi bi-info-circle"></i> Selamat datang, Admin! Gunakan menu di samping untuk mengelola data.
-          </div>
-        `;
+        await AdminModule.loadAllData(true);
+        renderDashboardUI();
         updateCacheStatus('Live');
-
       } catch (e) {
-        console.warn('Gagal refresh data dashboard:', e);
         updateCacheStatus('Offline');
+        showToast('Gagal menyegarkan data dari server.', 'error');
       }
+      return;
     }
+    try {
+      await AdminModule.loadAllData(false);
+      renderDashboardUI();
+      updateCacheStatus('Live');
+    } catch (e) {
+      updateCacheStatus('Offline');
+    }
+  }
 
-    // ==================== SIDEBAR TOGGLE & DROPDOWN ====================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) icon.classList.toggle('bi-arrow-left-right');
-    });
+  // ==========================================================
+  //   🛠 PERBAIKAN: LOAD DATA SESI UNTUK DROPDOWN MANUAL
+  // ==========================================================
+  async function loadManualSesiDropdown() {
+    const container = document.getElementById('manualSessionContainer');
+    const select = document.getElementById('manualSessionSelect');
+    
+    if (!select) return;
 
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
+    // Tampilkan loading
+    select.innerHTML = '<option value="">Memuat data sesi...</option>';
+    
+    try {
+      const sesiRes = await callApi('getSesiAbsen', {}, 'GET');
+      let allSesi = [];
+      if (sesiRes && sesiRes.success && Array.isArray(sesiRes.data)) {
+        allSesi = sesiRes.data;
+      } else if (Array.isArray(sesiRes)) {
+        allSesi = sesiRes;
+      }
 
-    // ==================== LOGOUT ====================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
+      manualSessionData = allSesi;
 
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
-
-    // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
+      if (!allSesi || allSesi.length === 0) {
+        select.innerHTML = '<option value="">Tidak ada sesi tersedia</option>';
         return;
       }
-      loadDashboard();
-      document.getElementById('refreshDataBtn').addEventListener('click', loadDashboard);
+
+      // Render dropdown
+      let optionsHtml = '<option value="">-- Pilih Sesi --</option>';
+      allSesi.forEach(s => {
+        const isOpen = String(s.submission_open).toLowerCase() === 'true';
+        const statusLabel = isOpen ? '🟢 Aktif' : '🔴 Tutup';
+        optionsHtml += `<option value="${s.id}">${escapeHtml(s.nama)} (${statusLabel})</option>`;
+      });
+      select.innerHTML = optionsHtml;
+      
+    } catch (err) {
+      console.error('Gagal load sesi dropdown:', err);
+      select.innerHTML = '<option value="">Gagal memuat data</option>';
+    }
+  }
+
+  // ==========================================================
+  //   SCAN QR LOGIC (Menggunakan html5-qrcode)
+  // ==========================================================
+  function initScanMode() {
+    const modeOtomatis = document.getElementById('modeOtomatis');
+    const modeManual = document.getElementById('modeManual');
+    const containerManual = document.getElementById('manualSessionContainer');
+
+    // Event listener untuk Mode Otomatis
+    modeOtomatis.addEventListener('change', function() {
+        if (this.checked) {
+            currentScanMode = 'otomatis';
+            containerManual.classList.remove('show');
+            containerManual.style.display = 'none';
+        }
     });
 
+    // Event listener untuk Mode Manual
+    modeManual.addEventListener('change', function() {
+        if (this.checked) {
+            currentScanMode = 'manual';
+            containerManual.style.display = 'block';
+            // Animasi sedikit delay agar smooth
+            setTimeout(() => containerManual.classList.add('show'), 10);
+            // Muat data dropdown
+            loadManualSesiDropdown();
+        }
+    });
+  }
+
+  function startScanner() {
+    const statusEl = document.getElementById('scannerStatus');
+    const readerDiv = document.getElementById('scannerVideoContainer');
+    
+    if (isScannerRunning) {
+      stopScanner();
+      return;
+    }
+
+    const isDesktop = window.innerWidth >= 992;
+    let qrboxSize = isDesktop ? 400 : 250; 
+
+    statusEl.innerText = 'Mengakses kamera...';
+
+    try {
+      html5QrCode = new Html5Qrcode("scannerVideoContainer");
+      const config = { fps: 30, qrbox: { width: qrboxSize, height: qrboxSize }, aspectRatio: 1.0 };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+          onQRDetected(decodedText);
+        },
+        (errorMessage) => {
+          // ignore errors (perbaikan scanning berjalan terus)
+        }
+      ).then(() => {
+        isScannerRunning = true;
+        statusEl.innerText = 'Memindai QR...';
+      }).catch((err) => {
+        statusEl.innerText = 'Gagal mengakses kamera: ' + err.message;
+        showToast('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
+      });
+
+    } catch (err) {
+      statusEl.innerText = 'Error: ' + err.message;
+      showToast('Terjadi kesalahan saat memuat scanner.', 'error');
+    }
+  }
+
+  function stopScanner() {
+    if (html5QrCode && isScannerRunning) {
+      try {
+        html5QrCode.stop().then(() => {
+          html5QrCode.clear();
+          isScannerRunning = false;
+          document.getElementById('scannerVideoContainer').innerHTML = '';
+          document.getElementById('scannerStatus').innerText = '';
+        });
+      } catch (e) {
+        console.warn('Stop scanner error:', e);
+        isScannerRunning = false;
+      }
+    } else {
+      document.getElementById('scannerVideoContainer').innerHTML = '';
+      document.getElementById('scannerStatus').innerText = '';
+      isScannerRunning = false;
+    }
+  }
+
+  // ==========================================================
+  //   🔥 PERBAIKAN FINAL: ONQR DETECTED DENGAN DROPDOWN MANUAL
+  // ==========================================================
+  async function onQRDetected(decodedText) {
+    stopScanner();
+
+    const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
+    const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
+
+    if (matchSesi) {
+      const sesiId = matchSesi[1];
+      const tokenMatch = decodedText.match(/token=([^&]+)/);
+      const token = tokenMatch ? tokenMatch[1] : '';
+      window.location.href = `/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(token)}`;
+      return;
+    }
+
+    if (matchPeserta) {
+      const pesertaId = matchPeserta[1];
+      const res = await AdminModule.getPesertaById(pesertaId);
+      if (!res.success || !res.data) {
+        alert('ID Peserta tidak ditemukan.');
+        return;
+      }
+      if (res.data.status !== 'approved') {
+        alert('Peserta belum disetujui oleh admin. QR tidak aktif.');
+        return;
+      }
+
+      const namaPeserta = res.data.nama_lengkap;
+
+      // --- Mode Otomatis ---
+      if (currentScanMode === 'otomatis') {
+        const allSesi = AdminModule.getSesiList();
+        const now = new Date();
+        const activeSesi = allSesi.filter(s => {
+          if (!s.waktu_mulai || !s.waktu_selesai) return false;
+          const start = new Date(s.waktu_mulai);
+          const end = new Date(s.waktu_selesai);
+          if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+          return now >= start && now <= end;
+        });
+
+        if (activeSesi.length === 0) {
+          alert('Tidak ada sesi yang sedang berlangsung saat ini. Silakan pilih mode manual.');
+          return;
+        }
+
+        let selectedSesi;
+        if (activeSesi.length === 1) {
+          selectedSesi = activeSesi[0];
+        } else {
+          const options = activeSesi.map(s => `${s.id}: ${s.nama}`).join('\n');
+          const choice = prompt(`Ditemukan ${activeSesi.length} sesi aktif. Pilih ID sesi:\n${options}`, activeSesi[0].id);
+          selectedSesi = activeSesi.find(s => s.id == choice);
+          if (!selectedSesi) {
+            alert('Pilihan tidak valid.');
+            return;
+          }
+        }
+
+        try {
+          const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
+          if (result.success) {
+            alert(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
+          } else {
+            alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
+          }
+        } catch (e) {
+          alert(`Error: ${e.message}`);
+        }
+        return;
+      }
+
+      // --- 🔥 Mode Manual (Menggunakan Dropdown yang sudah dipilih) ---
+      if (currentScanMode === 'manual') {
+        const manualSelect = document.getElementById('manualSessionSelect');
+        const selectedSesiId = manualSelect ? manualSelect.value : null;
+
+        if (!selectedSesiId) {
+            alert('Anda belum memilih sesi. Silakan pilih sesi dari dropdown di atas terlebih dahulu.');
+            return;
+        }
+
+        const selectedSesi = manualSessionData.find(s => s.id == selectedSesiId);
+        if (!selectedSesi) {
+            alert('Sesi yang dipilih tidak valid.');
+            return;
+        }
+
+        try {
+          const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
+          if (result.success) {
+            alert(`✅ Absen manual berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
+          } else {
+            alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
+          }
+        } catch (e) {
+          alert(`Error: ${e.message}`);
+        }
+        return;
+      }
+    }
+
+    alert('Format QR tidak dikenali. Pastikan QR yang benar.');
+  }
+
+  // ==========================================================
+  //   EVENT LISTENERS SCANNER
+  // ==========================================================
+  const scanFloatBtn = document.getElementById('scanFloatBtn');
+  if (scanFloatBtn) {
+    scanFloatBtn.classList.add('show');
+    scanFloatBtn.addEventListener('click', function() {
+      openScanner();
+    });
+  }
+
+  const scanNavBtn = document.getElementById('scanNavBtn');
+  if (scanNavBtn) {
+    scanNavBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openScanner();
+    });
+  }
+
+  function openScanner() {
+    openScannerButton = document.activeElement;
+    const modal = new bootstrap.Modal(document.getElementById('scanQrModal'));
+    modal.show();
+    initScanMode(); // Pastikan listener mode terpasang
+    startScanner();
+    
+    // Jika mode manual sudah dipilih sebelumnya, pastikan dropdown terisi
+    if (currentScanMode === 'manual') {
+        loadManualSesiDropdown();
+        document.getElementById('manualSessionContainer').style.display = 'block';
+        setTimeout(() => document.getElementById('manualSessionContainer').classList.add('show'), 10);
+    }
+  }
+
+  document.getElementById('scanStopBtn')?.addEventListener('click', function() {
+    stopScanner();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('scanQrModal'));
+    if (modal) modal.hide();
+  });
+
+  document.getElementById('scanQrModal')?.addEventListener('hidden.bs.modal', function() {
+    stopScanner();
+    document.getElementById('manualSessionContainer').classList.remove('show');
+    document.getElementById('manualSessionContainer').style.display = 'none';
+    if (openScannerButton && typeof openScannerButton.focus === 'function') {
+      openScannerButton.focus();
+    } else {
+      document.body.focus();
+    }
+    openScannerButton = null;
+  });
+
+  // ==========================================================
+  //   SIDEBAR & LOGOUT
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
+    }
+  });
+
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
+    });
+  });
+
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    const modalEl = document.getElementById('moreMenuModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   INISIALISASI
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
+    }
+    updateNavbarMenu();
+    renderDashboardUI();
+    syncDashboardData(false);
+    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      this.disabled = true;
+      syncDashboardData(true).then(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Data berhasil disegarkan dari server', 'success');
+      }).catch(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Gagal menyegarkan data', 'error');
+      });
+    });
   })();
+
 </script>
 </body>
 </html>

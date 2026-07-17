@@ -109,14 +109,14 @@
         }
         @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-        /* --- CONTENT WRAPPER --- */
+        /* ===== CONTENT WRAPPER ===== */
         .content-wrapper {
             margin-left: 260px; padding: 1.5rem; background: #f8fafc;
             min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
         }
         .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
-        /* --- UTILITY --- */
+        /* ===== UTILITY ===== */
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .section-title {
@@ -144,6 +144,17 @@
         .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
         .cache-status.live { background: #dcfce7; color: #16a34a; }
         .cache-status.offline { background: #fee2e2; color: #dc2626; }
+
+        /* --- Pagination & Sorting --- */
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+        .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+        .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+        .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+        th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+        th.sortable:hover { background-color: #f1f5f9; }
+        th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+        th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+        th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
     </style>
 </head>
 <body>
@@ -236,6 +247,11 @@
                         <!-- Tanda Tangan -->
                         <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
                             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+                        </a>
+
+                        <!-- RTL & Tugas -->
+                        <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+                            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
                         </a>
 
                         <!-- Pengaturan -->
@@ -456,614 +472,601 @@
 
 
     <!-- ========================================================== -->
-    <!--   SCRIPTS                                                   -->
+    <!--   SCRIPTS (PATH BARU)                                       -->
     <!-- ========================================================== -->
+    <!-- Library Eksternal (tetap sebagai script biasa) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
     </script>
-    <script src="/bisaa/dataCache.js">
-    </script>
-    <script src="/bisaa/api.js">
-    </script>
 
-    <script>
-        (function() {
-            'use strict';
+    <!-- Modul ES Khusus Halaman Ini -->
+    <script type="module">
+        // ==========================================================
+        //   IMPOR DARI CORE API DAN MODUL ADMIN
+        // ==========================================================
+        import {
+            callApi,
+            showToast,
+            escapeHtml,
+            getUserRole,
+            updateNavbarMenu
+        } from '../js/core/api.js';
+        import { AdminModule } from '../js/modules/admin.js';
 
-            // ==========================================================
-            //   TOGGLE PASSWORD VISIBILITY (jika ada)
-            // ==========================================================
-            window.togglePasswordVisibility = function(id) {
-                const el = document.getElementById(id);
-                if (el) el.type = el.type === 'password' ? 'text' : 'password';
-            };
+        // ==========================================================
+        //   TOGGLE PASSWORD VISIBILITY (jika ada)
+        // ==========================================================
+        window.togglePasswordVisibility = function(id) {
+            const el = document.getElementById(id);
+            if (el) el.type = el.type === 'password' ? 'text' : 'password';
+        };
 
-            // ==========================================================
-            //   MAIN STATE
-            // ==========================================================
-            let STATE = {
-                informasiList: [],
-                filteredList: [],
-                searchQuery: '',
-                jenisFilter: '',
-                statusFilter: '',
-                usulanList: [],
-                isEditing: false
-            };
-
-            function escapeHtml(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    if (m === '"') return '&quot;';
-                    return m;
-                });
+        // ==========================================================
+        //   SIDEBAR TOGGLE & SUBMENU
+        // ==========================================================
+        document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+            document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('bi-arrow-left-right');
+                icon.classList.toggle('bi-arrow-right-left');
             }
+        });
 
-            function showToast(message, type) {
-                const toastEl = document.getElementById('notificationToast');
-                if (!toastEl) return;
-                const toast = new bootstrap.Toast(toastEl);
-                document.getElementById('toastMessage').innerText = message;
-                const icon = document.getElementById('toastIcon');
-                if (type === 'success') {
-                    icon.className = 'bi bi-check-circle-fill text-success';
-                    document.getElementById('toastTitle').innerText = 'Berhasil';
-                } else if (type === 'error') {
-                    icon.className = 'bi bi-x-circle-fill text-danger';
-                    document.getElementById('toastTitle').innerText = 'Gagal';
-                } else {
-                    icon.className = 'bi bi-info-circle-fill text-primary';
-                    document.getElementById('toastTitle').innerText = 'Info';
-                }
-                toast.show();
-            }
-
-            function formatDate(dateStr) {
-                if (!dateStr) return '-';
-                const d = new Date(dateStr + 'T00:00:00');
-                return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            }
-
-            function getStatusBadge(status) {
-                return status === 'selesai' ? 'bg-success' : 'bg-primary';
-            }
-
-            function debounce(fn, delay) {
-                let timer;
-                return function(...args) {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => fn.apply(this, args), delay);
-                };
-            }
-
-            // ==========================================================
-            //   SIDEBAR TOGGLE & SUBMENU
-            // ==========================================================
-            document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-                document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-arrow-left-right');
-                    icon.classList.toggle('bi-arrow-right-left');
-                }
-            });
-
-            document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = this.dataset.target;
-                    const submenu = document.getElementById('submenu-' + target);
-                    if (submenu) submenu.classList.toggle('open');
-                });
-            });
-
-            // ==========================================================
-            //   LOGOUT
-            // ==========================================================
-            document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+        document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+            link.addEventListener('click', function(e) {
                 e.preventDefault();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
+                const target = this.dataset.target;
+                const submenu = document.getElementById('submenu-' + target);
+                if (submenu) submenu.classList.toggle('open');
             });
+        });
 
-            document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
+        // ==========================================================
+        //   LOGOUT
+        // ==========================================================
+        document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof logout !== 'undefined') logout();
+            else window.location.href = '/bisaa/index.html';
+        });
 
-            // ==========================================================
-            //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-            // ==========================================================
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-                    window.location.href = '/bisaa/login.html';
-                    return;
-                }
+        document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+            if (typeof logout !== 'undefined') logout();
+            else window.location.href = '/bisaa/index.html';
+        });
 
-                // Load data
-                loadInfoList();
-                loadUsulanList();
+        // ==========================================================
+        //   MAIN STATE
+        // ==========================================================
+        let STATE = {
+            informasiList: [],
+            filteredList: [],
+            searchQuery: '',
+            jenisFilter: '',
+            statusFilter: '',
+            usulanList: [],
+            currentPage: 1,
+            itemsPerPage: 15,
+            sortColumn: null,
+            sortDirection: 'asc',
+            isEditing: false
+        };
 
-                // Event listeners
-                document.getElementById('exportDataBtn').addEventListener('click', exportData);
-                document.getElementById('refreshDataBtn').addEventListener('click', function() {
-                    loadInfoList(true);
-                    loadUsulanList();
-                });
-                document.getElementById('refreshUsulanBtn').addEventListener('click', loadUsulanList);
-                document.getElementById('cancelEditBtn').addEventListener('click', function() {
-                    document.getElementById('infoForm').reset();
-                    document.getElementById('editId').value = '';
-                    document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
-                    STATE.isEditing = false;
-                    document.getElementById('formMessage').innerHTML = '';
-                });
-                document.getElementById('infoForm').addEventListener('submit', submitInfoForm);
-                document.getElementById('searchInput').addEventListener('input', function(e) {
-                    debouncedSearch(e.target.value);
-                });
-                document.getElementById('filterJenis').addEventListener('change', function() {
-                    STATE.jenisFilter = this.value;
-                    renderInfoTable(STATE.informasiList);
-                });
-                document.getElementById('filterStatus').addEventListener('change', function() {
-                    STATE.statusFilter = this.value;
-                    renderInfoTable(STATE.informasiList);
-                });
-                document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-                    const id = document.getElementById('deleteInformasiId').value;
-                    if (id) {
-                        deleteInfo(id);
-                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                    }
-                });
+        // ==========================================================
+        //   UTILITY
+        // ==========================================================
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
 
-                // Expose functions to global
-                window.editInfo = editInfo;
-                window.confirmDelete = confirmDelete;
-                window.toggleStatus = toggleStatus;
-                window.approveUsulan = approveUsulan;
-                window.rejectUsulan = rejectUsulan;
-            });
+        function getStatusBadge(status) {
+            return status === 'selesai' ? 'bg-success' : 'bg-primary';
+        }
 
-            // ==========================================================
-            //   CACHE HELPERS
-            // ==========================================================
-            function loadDataFromCache() {
-                const cached = DataCache.getData('info');
-                if (cached && Array.isArray(cached)) {
-                    STATE.informasiList = cached;
-                    return true;
-                }
-                return false;
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        function updateCacheStatus(status) {
+            const el = document.getElementById('cacheStatus');
+            if (el) {
+                el.textContent = status;
+                el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
             }
+        }
 
-            function updateCache(data) {
-                DataCache.updateData('info', data);
-                STATE.informasiList = data;
-            }
+        // ==========================================================
+        //   LOAD INFORMASI LIST (langsung dari API via AdminModule)
+        // ==========================================================
+        async function loadInfoList(forceRefresh = false) {
+            const container = document.getElementById('informasiTableContainer');
+            container.innerHTML =
+                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
 
-            function updateCacheStatus(status) {
-                const el = document.getElementById('cacheStatus');
-                if (el) {
-                    el.textContent = status;
-                    el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+            try {
+                // Gunakan AdminModule jika sudah dimuat, atau callApi langsung
+                if (!AdminModule.getState().lastSync || forceRefresh) {
+                    await AdminModule.loadAllData(forceRefresh);
                 }
-            }
-
-            function loadDataFromStorage() {
-                try {
-                    const stored = localStorage.getItem('pkd_info_data');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed && parsed.informasiList) {
-                            STATE.informasiList = parsed.informasiList;
-                        }
-                    }
-                } catch (e) {}
-                if (STATE.informasiList.length === 0) {
-                    STATE.informasiList = [];
-                    saveDataToStorage();
-                }
-            }
-
-            function saveDataToStorage() {
-                try {
-                    localStorage.setItem('pkd_info_data', JSON.stringify({ informasiList: STATE.informasiList }));
-                } catch (e) {}
-            }
-
-            function getInfoById(id) {
-                return STATE.informasiList.find(item => item.id == id);
-            }
-
-            // ==========================================================
-            //   LOAD INFORMASI LIST
-            // ==========================================================
-            async function loadInfoList(force) {
-                const container = document.getElementById('informasiTableContainer');
-                container.innerHTML =
-                    '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
-
-                try {
-                    if (!force && loadDataFromCache()) {
-                        renderInfoTable(STATE.informasiList);
-                        updateCacheStatus('Cache');
-                        return;
-                    }
-
-                    const res = await PKD.getInfoList(true);
-                    if (res && res.data) {
-                        STATE.informasiList = res.data;
-                        updateCache(STATE.informasiList);
-                        saveDataToStorage();
-                        renderInfoTable(STATE.informasiList);
-                        updateCacheStatus('Live');
-                    } else {
-                        throw new Error('Data tidak valid');
-                    }
-                } catch (e) {
-                    console.warn('Gagal load info:', e);
-                    loadDataFromStorage();
-                    renderInfoTable(STATE.informasiList);
-                    updateCacheStatus('Offline');
-                    showToast('Gagal memuat data: ' + e.message, 'error');
-                }
-            }
-
-            // ==========================================================
-            //   RENDER TABLE INFORMASI
-            // ==========================================================
-            function renderInfoTable(data) {
-                const container = document.getElementById('informasiTableContainer');
-                if (!container) return;
-
-                let filtered = data;
-                if (STATE.searchQuery) {
-                    const q = STATE.searchQuery.toLowerCase();
-                    filtered = filtered.filter(item =>
-                        (item.judul && item.judul.toLowerCase().includes(q)) ||
-                        (item.deskripsi && item.deskripsi.toLowerCase().includes(q))
-                    );
-                }
-                if (STATE.jenisFilter) {
-                    filtered = filtered.filter(item => item.jenis === STATE.jenisFilter);
-                }
-                if (STATE.statusFilter) {
-                    filtered = filtered.filter(item => item.status === STATE.statusFilter);
-                }
-                STATE.filteredList = filtered;
-
-                let html = `
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width:50px;">#</th>
-                                <th>Jenis</th>
-                                <th>Judul</th>
-                                <th>Deskripsi</th>
-                                <th>Tanggal & Lokasi</th>
-                                <th>Gambar</th>
-                                <th>Urutan</th>
-                                <th>Status</th>
-                                <th style="width:180px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                if (filtered.length === 0) {
-                    html +=
-                        `<tr><td colspan="9" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-4 d-block mb-2"></i>Tidak ada data.</td></tr>`;
+                const freshData = AdminModule.getInformasiList() || [];
+                if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+                    STATE.informasiList = freshData;
+                    applyFiltersAndSort();
+                    updateCacheStatus('Live');
                 } else {
-                    const sorted = [...filtered].sort((a, b) => (a.urutan || 0) - (b.urutan || 0) || new Date(a.tanggal_mulai) - new Date(b.tanggal_mulai));
-                    sorted.forEach((item, idx) => {
-                        const isFlyer = item.jenis === 'flyer';
-                        let tanggal = item.tanggal_mulai ? formatDate(item.tanggal_mulai) : '';
-                        if (item.tanggal_akhir) tanggal += ' - ' + formatDate(item.tanggal_akhir);
-                        let lokasi = item.lokasi ?
-                            `<br><small class="text-muted"><i class="bi bi-geo-alt"></i> ${escapeHtml(item.lokasi)}</small>` : '';
-                        let preview = isFlyer && item.url ?
-                            `<img src="https://lh3.googleusercontent.com/d/${item.url}=w100" class="info-thumb" onclick="window.open('https://lh3.googleusercontent.com/d/${item.url}')">` :
-                            '-';
-                        const statusClass = getStatusBadge(item.status);
-                        const statusLabel = item.status === 'selesai' ? '✅ Selesai' : '🔄 Aktif';
-                        html += `
-                            <tr>
-                                <td>${idx + 1}</td>
-                                <td><span class="badge ${isFlyer ? 'bg-info' : 'bg-primary'}">${isFlyer ? 'Flyer' : 'Timeline'}</span></td>
-                                <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
-                                <td><small>${escapeHtml(item.deskripsi || '-')}</small></td>
-                                <td>${tanggal || '-'} ${lokasi}</td>
-                                <td>${preview}</td>
-                                <td>${item.urutan || ''}</td>
-                                <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editInfo('${item.id}')"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-${item.status === 'selesai' ? 'warning' : 'success'} btn-aksi" onclick="toggleStatus('${item.id}')">${item.status === 'selesai' ? 'Aktifkan' : 'Selesai'}</button>
-                                    <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+                    container.innerHTML = '<div class="alert alert-info text-center">Belum ada informasi.</div>';
+                    updateCacheStatus('Empty');
                 }
-                html += `</tbody></table>`;
-                container.innerHTML = html;
+            } catch (e) {
+                console.warn('Gagal load info:', e);
+                container.innerHTML = '<div class="alert alert-danger text-center">Gagal memuat data.</div>';
+                updateCacheStatus('Error');
             }
+        }
 
-            // ==========================================================
-            //   CRUD OPERATIONS
-            // ==========================================================
-            async function saveInfo(data) {
-                const btn = document.getElementById('saveBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-                try {
-                    let params = {
-                        action: data.id ? 'updateInfo' : 'addInfo',
-                        judul: data.judul,
-                        deskripsi: data.deskripsi || '',
-                        urutan: data.urutan || 0,
-                        tanggal_mulai: data.tanggal_mulai,
-                        tanggal_akhir: data.tanggal_akhir || '',
-                        lokasi: data.lokasi || '',
-                        jenis: data.fileData ? 'flyer' : 'timeline'
-                    };
-                    if (data.id) params.id = data.id;
-                    if (data.fileData) {
-                        params.fileData = data.fileData;
-                        params.fileName = data.fileName;
-                    }
-                    const res = await PKD.callApi(params.action, params);
-                    if (res && res.success) {
-                        showToast(data.id ? 'Informasi diperbarui' : 'Informasi ditambahkan', 'success');
-                        document.getElementById('infoForm').reset();
-                        document.getElementById('editId').value = '';
-                        document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
-                        STATE.isEditing = false;
-                        loadInfoList(true);
-                    } else {
-                        throw new Error(res.error || 'Gagal menyimpan');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan';
+        // ==========================================================
+        //   LOAD USULAN LIST (via AdminModule)
+        // ==========================================================
+        async function loadUsulanList() {
+            try {
+                // Pastikan AdminModule sudah dimuat
+                if (!AdminModule.getState().lastSync) {
+                    await AdminModule.loadAllData();
                 }
+                const usulanData = AdminModule.getUsulanList() || [];
+                STATE.usulanList = usulanData.filter(u => u.status === 'pending');
+                renderUsulanTable();
+            } catch (e) {
+                console.warn('Gagal load usulan:', e);
+                document.getElementById('usulanTableContainer').innerHTML =
+                    '<div class="text-center py-4 text-muted">Gagal memuat usulan.</div>';
             }
+        }
 
-            async function deleteInfo(id) {
-                try {
-                    const res = await PKD.callApi('deleteInfo', { id });
-                    if (res && res.success) {
-                        showToast('Informasi dihapus', 'success');
-                        loadInfoList(true);
-                    } else {
-                        throw new Error(res.error || 'Gagal menghapus');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                }
+        // ==========================================================
+        //   FILTER, SORT, PAGINATION
+        // ==========================================================
+        function getFilteredInfo(data) {
+            let filtered = data;
+            if (STATE.searchQuery) {
+                const q = STATE.searchQuery.toLowerCase();
+                filtered = filtered.filter(item =>
+                    (item.judul && item.judul.toLowerCase().includes(q)) ||
+                    (item.deskripsi && item.deskripsi.toLowerCase().includes(q))
+                );
             }
-
-            async function toggleStatus(id) {
-                try {
-                    const res = await PKD.callApi('toggleInfoStatus', { id });
-                    if (res && res.success) {
-                        showToast('Status berhasil diubah', 'success');
-                        loadInfoList(true);
-                    } else {
-                        throw new Error(res.error || 'Gagal mengubah status');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                }
+            if (STATE.jenisFilter) {
+                filtered = filtered.filter(item => item.jenis === STATE.jenisFilter);
             }
-
-            // ==========================================================
-            //   USULAN PAC
-            // ==========================================================
-            async function loadUsulanList() {
-                try {
-                    const res = await PKD.callApi('getUsulanList');
-                    if (res && res.data) {
-                        STATE.usulanList = res.data.filter(u => u.status === 'pending');
-                        renderUsulanTable();
-                    } else {
-                        throw new Error('Data usulan tidak valid');
-                    }
-                } catch (e) {
-                    console.warn('Gagal load usulan:', e);
-                    document.getElementById('usulanTableContainer').innerHTML =
-                        '<div class="text-center py-4 text-muted">Gagal memuat usulan.</div>';
-                }
+            if (STATE.statusFilter) {
+                filtered = filtered.filter(item => item.status === STATE.statusFilter);
             }
+            return filtered;
+        }
 
-            async function approveUsulan(id) {
-                try {
-                    const res = await PKD.callApi('updateUsulanStatus', { id, status: 'approved' });
-                    if (res && res.success) {
-                        showToast('Usulan disetujui dan dipublikasikan', 'success');
-                        loadUsulanList();
-                        loadInfoList(true);
-                    } else {
-                        throw new Error(res.error || 'Gagal menyetujui');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                }
+        function applyFiltersAndSort() {
+            let filtered = getFilteredInfo(STATE.informasiList);
+            if (STATE.sortColumn) {
+                filtered.sort(function(a, b) {
+                    let va = (a[STATE.sortColumn] || '').toString().toLowerCase();
+                    let vb = (b[STATE.sortColumn] || '').toString().toLowerCase();
+                    if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+                    if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
             }
+            STATE.filteredList = filtered;
+            const totalItems = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+            if (STATE.currentPage < 1) STATE.currentPage = 1;
+            const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+            const end = Math.min(start + STATE.itemsPerPage, totalItems);
+            renderInfoTable(filtered.slice(start, end), totalItems);
+        }
 
-            async function rejectUsulan(id) {
-                try {
-                    const res = await PKD.callApi('updateUsulanStatus', { id, status: 'rejected' });
-                    if (res && res.success) {
-                        showToast('Usulan ditolak', 'success');
-                        loadUsulanList();
-                    } else {
-                        throw new Error(res.error || 'Gagal menolak');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                }
-            }
+        function renderInfoTable(data, totalItems) {
+            const container = document.getElementById('informasiTableContainer');
+            if (!container) return;
 
-            function renderUsulanTable() {
-                const container = document.getElementById('usulanTableContainer');
-                if (STATE.usulanList.length === 0) {
-                    container.innerHTML = '<div class="text-center py-4 text-muted">Tidak ada usulan pending.</div>';
-                    return;
-                }
-                let html = `
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nama</th>
-                                <th>Usulan (PAC)</th>
-                                <th>Tanggal</th>
-                                <th>Lokasi</th>
-                                <th>No HP</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-                STATE.usulanList.forEach(u => {
-                    let tgl = u.tanggal_mulai ? formatDate(u.tanggal_mulai) : '';
-                    if (u.tanggal_akhir) tgl += ' - ' + formatDate(u.tanggal_akhir);
+            let html = `
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th class="sortable" onclick="sortTable('jenis')">Jenis</th>
+                            <th class="sortable" onclick="sortTable('judul')">Judul</th>
+                            <th class="sortable" onclick="sortTable('deskripsi')">Deskripsi</th>
+                            <th class="sortable" onclick="sortTable('tanggal_mulai')">Tanggal & Lokasi</th>
+                            <th>Gambar</th>
+                            <th class="sortable" onclick="sortTable('urutan')">Urutan</th>
+                            <th class="sortable" onclick="sortTable('status')">Status</th>
+                            <th style="width:180px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (data.length === 0) {
+                html +=
+                    `<tr><td colspan="9" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-4 d-block mb-2"></i>Tidak ada data.</td></tr>`;
+            } else {
+                const sorted = data; // Already sorted and paginated
+                sorted.forEach((item, idx) => {
+                    const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + idx + 1;
+                    const isFlyer = item.jenis === 'flyer';
+                    let tanggal = item.tanggal_mulai ? formatDate(item.tanggal_mulai) : '';
+                    if (item.tanggal_akhir) tanggal += ' - ' + formatDate(item.tanggal_akhir);
+                    let lokasi = item.lokasi ?
+                        `<br><small class="text-muted"><i class="bi bi-geo-alt"></i> ${escapeHtml(item.lokasi)}</small>` : '';
+                    let preview = isFlyer && item.url ?
+                        `<img src="https://lh3.googleusercontent.com/d/${item.url}=w100" class="info-thumb" onclick="window.open('https://lh3.googleusercontent.com/d/${item.url}')">` :
+                        '-';
+                    const statusClass = getStatusBadge(item.status);
+                    const statusLabel = item.status === 'selesai' ? '✅ Selesai' : '🔄 Aktif';
                     html += `
                         <tr>
-                            <td>${escapeHtml(u.nama)}</td>
-                            <td>${escapeHtml(u.usulan)}</td>
-                            <td>${tgl}</td>
-                            <td>${escapeHtml(u.lokasi)}</td>
-                            <td>${escapeHtml(u.no_hp)}</td>
+                            <td>${globalIndex}</td>
+                            <td><span class="badge ${isFlyer ? 'bg-info' : 'bg-primary'}">${isFlyer ? 'Flyer' : 'Timeline'}</span></td>
+                            <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
+                            <td><small>${escapeHtml(item.deskripsi || '-')}</small></td>
+                            <td>${tanggal || '-'} ${lokasi}</td>
+                            <td>${preview}</td>
+                            <td>${item.urutan || ''}</td>
+                            <td><span class="badge ${statusClass}">${statusLabel}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-success me-1" onclick="approveUsulan('${u.id}')">ACC</button>
-                                <button class="btn btn-sm btn-danger" onclick="rejectUsulan('${u.id}')">Tolak</button>
+                                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editInfo('${item.id}')"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-${item.status === 'selesai' ? 'warning' : 'success'} btn-aksi" onclick="toggleStatus('${item.id}')">${item.status === 'selesai' ? 'Aktifkan' : 'Selesai'}</button>
+                                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>
                     `;
                 });
-                html += `</tbody></table>`;
-                container.innerHTML = html;
+            }
+            html += `</tbody></table>`;
+
+            // Pagination
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            html += `
+                <div class="pagination-container">
+                    <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+                    <div class="btn-group">
+            `;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            html += `</div></div>`;
+
+            container.innerHTML = html;
+            container.classList.add('fade-in');
+        }
+
+        // ==========================================================
+        //   SORT & PAGINATION HELPERS (diekspos ke global)
+        // ==========================================================
+        window.sortTable = function(col) {
+            if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+            else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+            STATE.currentPage = 1;
+            applyFiltersAndSort();
+        };
+
+        window.goToPage = function(page) {
+            const totalItems = STATE.filteredList.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            if (page < 1 || page > totalPages) return;
+            STATE.currentPage = page;
+            applyFiltersAndSort();
+        };
+
+        // ==========================================================
+        //   CRUD OPERATIONS (via AdminModule/callApi)
+        // ==========================================================
+        async function saveInfo(data) {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+            try {
+                let params = {
+                    action: data.id ? 'updateInfo' : 'addInfo',
+                    judul: data.judul,
+                    deskripsi: data.deskripsi || '',
+                    urutan: data.urutan || 0,
+                    tanggal_mulai: data.tanggal_mulai,
+                    tanggal_akhir: data.tanggal_akhir || '',
+                    lokasi: data.lokasi || '',
+                    jenis: data.fileData ? 'flyer' : 'timeline'
+                };
+                if (data.id) params.id = data.id;
+                if (data.fileData) {
+                    params.fileData = data.fileData;
+                    params.fileName = data.fileName;
+                }
+                const res = await callApi(params.action, params);
+                if (res && res.success) {
+                    showToast(data.id ? 'Informasi diperbarui' : 'Informasi ditambahkan', 'success');
+                    document.getElementById('infoForm').reset();
+                    document.getElementById('editId').value = '';
+                    document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
+                    STATE.isEditing = false;
+                    loadInfoList(true);
+                } else {
+                    throw new Error(res.error || 'Gagal menyimpan');
+                }
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan';
+            }
+        }
+
+        async function deleteInfo(id) {
+            try {
+                const res = await callApi('deleteInfo', { id });
+                if (res && res.success) {
+                    showToast('Informasi dihapus', 'success');
+                    loadInfoList(true);
+                } else {
+                    throw new Error(res.error || 'Gagal menghapus');
+                }
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        async function toggleStatus(id) {
+            try {
+                const res = await callApi('toggleInfoStatus', { id });
+                if (res && res.success) {
+                    showToast('Status berhasil diubah', 'success');
+                    loadInfoList(true);
+                } else {
+                    throw new Error(res.error || 'Gagal mengubah status');
+                }
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        // ==========================================================
+        //   USULAN PAC
+        // ==========================================================
+        function renderUsulanTable() {
+            const container = document.getElementById('usulanTableContainer');
+            if (STATE.usulanList.length === 0) {
+                container.innerHTML = '<div class="text-center py-4 text-muted">Tidak ada usulan pending.</div>';
+                return;
+            }
+            let html = `
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama</th>
+                            <th>Usulan (PAC)</th>
+                            <th>Tanggal</th>
+                            <th>Lokasi</th>
+                            <th>No HP</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            STATE.usulanList.forEach(u => {
+                let tgl = u.tanggal_mulai ? formatDate(u.tanggal_mulai) : '';
+                if (u.tanggal_akhir) tgl += ' - ' + formatDate(u.tanggal_akhir);
+                html += `
+                    <tr>
+                        <td>${escapeHtml(u.nama)}</td>
+                        <td>${escapeHtml(u.usulan)}</td>
+                        <td>${tgl}</td>
+                        <td>${escapeHtml(u.lokasi)}</td>
+                        <td>${escapeHtml(u.no_hp)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success me-1" onclick="approveUsulan('${u.id}')">ACC</button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectUsulan('${u.id}')">Tolak</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        async function approveUsulan(id) {
+            try {
+                const res = await callApi('updateUsulanStatus', { id, status: 'approved' });
+                if (res && res.success) {
+                    showToast('Usulan disetujui dan dipublikasikan', 'success');
+                    loadUsulanList();
+                    loadInfoList(true);
+                } else {
+                    throw new Error(res.error || 'Gagal menyetujui');
+                }
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        async function rejectUsulan(id) {
+            try {
+                const res = await callApi('updateUsulanStatus', { id, status: 'rejected' });
+                if (res && res.success) {
+                    showToast('Usulan ditolak', 'success');
+                    loadUsulanList();
+                } else {
+                    throw new Error(res.error || 'Gagal menolak');
+                }
+            } catch (e) {
+                showToast('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        // ==========================================================
+        //   EXPORT
+        // ==========================================================
+        function exportData() {
+            const data = STATE.filteredList;
+            if (data.length === 0) {
+                showToast('Tidak ada data untuk diekspor.', 'info');
+                return;
+            }
+            const exportData = data.map(item => ({
+                id: item.id,
+                jenis: item.jenis,
+                judul: item.judul,
+                deskripsi: item.deskripsi,
+                url: item.url,
+                urutan: item.urutan,
+                tanggal_mulai: item.tanggal_mulai,
+                tanggal_akhir: item.tanggal_akhir,
+                lokasi: item.lokasi,
+                status: item.status,
+                createdAt: item.createdAt
+            }));
+            const json = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `info_export_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
+        }
+
+        // ==========================================================
+        //   EVENT HANDLERS (FORM & FUNGSI GLOBAL)
+        // ==========================================================
+        function editInfo(id) {
+            const item = STATE.informasiList.find(i => String(i.id) === String(id));
+            if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
+            document.getElementById('editId').value = id;
+            document.getElementById('judulItem').value = item.judul || '';
+            document.getElementById('deskripsiItem').value = item.deskripsi || '';
+            document.getElementById('urutanItem').value = item.urutan || 0;
+            document.getElementById('tanggalMulaiItem').value = item.tanggal_mulai || '';
+            document.getElementById('tanggalAkhirItem').value = item.tanggal_akhir || '';
+            document.getElementById('lokasiItem').value = item.lokasi || '';
+            document.getElementById('fileItem').value = '';
+            document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Jadwal / Flyer';
+            STATE.isEditing = true;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function confirmDelete(id) {
+            document.getElementById('deleteInformasiId').value = id;
+            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+        }
+
+        // Ekspos fungsi global untuk onclick HTML
+        window.editInfo = editInfo;
+        window.confirmDelete = confirmDelete;
+        window.toggleStatus = toggleStatus;
+        window.approveUsulan = approveUsulan;
+        window.rejectUsulan = rejectUsulan;
+
+        async function submitInfoForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const judul = document.getElementById('judulItem').value.trim();
+            const deskripsi = document.getElementById('deskripsiItem').value.trim();
+            const urutan = parseInt(document.getElementById('urutanItem').value) || 0;
+            const tanggalMulai = document.getElementById('tanggalMulaiItem').value;
+            const tanggalAkhir = document.getElementById('tanggalAkhirItem').value;
+            const lokasi = document.getElementById('lokasiItem').value.trim();
+            const fileInput = document.getElementById('fileItem');
+
+            if (!judul || !tanggalMulai) {
+                document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Judul dan tanggal mulai wajib diisi.</div>';
+                return;
             }
 
-            // ==========================================================
-            //   EXPORT
-            // ==========================================================
-            function exportData() {
-                const data = STATE.filteredList;
-                if (data.length === 0) {
-                    showToast('Tidak ada data untuk diekspor.', 'info');
+            let fileData = null, fileName = null;
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Ukuran file maksimal 2 MB.</div>';
                     return;
                 }
-                const exportData = data.map(item => ({
-                    id: item.id,
-                    jenis: item.jenis,
-                    judul: item.judul,
-                    deskripsi: item.deskripsi,
-                    url: item.url,
-                    urutan: item.urutan,
-                    tanggal_mulai: item.tanggal_mulai,
-                    tanggal_akhir: item.tanggal_akhir,
-                    lokasi: item.lokasi,
-                    status: item.status,
-                    createdAt: item.createdAt
-                }));
-                const json = JSON.stringify(exportData, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `info_export_${new Date().toISOString().slice(0,10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
+                const reader = new FileReader();
+                fileData = await new Promise(resolve => {
+                    reader.onload = e => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+                fileName = file.name;
             }
 
-            // ==========================================================
-            //   EVENT HANDLERS (FORM & FUNGSI GLOBAL)
-            // ==========================================================
-            function editInfo(id) {
-                const item = getInfoById(id);
-                if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
-                document.getElementById('editId').value = id;
-                document.getElementById('judulItem').value = item.judul || '';
-                document.getElementById('deskripsiItem').value = item.deskripsi || '';
-                document.getElementById('urutanItem').value = item.urutan || 0;
-                document.getElementById('tanggalMulaiItem').value = item.tanggal_mulai || '';
-                document.getElementById('tanggalAkhirItem').value = item.tanggal_akhir || '';
-                document.getElementById('lokasiItem').value = item.lokasi || '';
-                document.getElementById('fileItem').value = '';
-                document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Edit Jadwal / Flyer';
-                STATE.isEditing = true;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            const data = { id, judul, deskripsi, urutan, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, lokasi,
+                fileData, fileName };
+            await saveInfo(data);
+            document.getElementById('formMessage').innerHTML = '';
+        }
+
+        const debouncedSearch = debounce(function(query) {
+            STATE.searchQuery = query;
+            STATE.currentPage = 1;
+            applyFiltersAndSort();
+        }, 300);
+
+        // ==========================================================
+        //   INIT
+        // ==========================================================
+        (function boot() {
+            if (getUserRole() !== 'admin') {
+                window.location.href = '/bisaa/login.html';
+                return;
             }
 
-            function confirmDelete(id) {
-                document.getElementById('deleteInformasiId').value = id;
-                new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-            }
+            // Update navbar user
+            updateNavbarMenu();
 
-            function toggleStatus(id) {
-                toggleStatus(id);
-            }
+            // Load data
+            loadInfoList();
+            loadUsulanList();
 
-            function approveUsulan(id) {
-                approveUsulan(id);
-            }
-
-            function rejectUsulan(id) {
-                rejectUsulan(id);
-            }
-
-            async function submitInfoForm(e) {
-                e.preventDefault();
-                const id = document.getElementById('editId').value;
-                const judul = document.getElementById('judulItem').value.trim();
-                const deskripsi = document.getElementById('deskripsiItem').value.trim();
-                const urutan = parseInt(document.getElementById('urutanItem').value) || 0;
-                const tanggalMulai = document.getElementById('tanggalMulaiItem').value;
-                const tanggalAkhir = document.getElementById('tanggalAkhirItem').value;
-                const lokasi = document.getElementById('lokasiItem').value.trim();
-                const fileInput = document.getElementById('fileItem');
-
-                if (!judul || !tanggalMulai) {
-                    document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Judul dan tanggal mulai wajib diisi.</div>';
-                    return;
-                }
-
-                let fileData = null, fileName = null;
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    if (file.size > 2 * 1024 * 1024) {
-                        document.getElementById('formMessage').innerHTML = '<div class="alert alert-danger">Ukuran file maksimal 2 MB.</div>';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    fileData = await new Promise(resolve => {
-                        reader.onload = e => resolve(e.target.result);
-                        reader.readAsDataURL(file);
-                    });
-                    fileName = file.name;
-                }
-
-                const data = { id, judul, deskripsi, urutan, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, lokasi,
-                    fileData, fileName };
-                await saveInfo(data);
+            // Event listeners
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+            document.getElementById('refreshDataBtn').addEventListener('click', function() {
+                loadInfoList(true);
+                loadUsulanList();
+            });
+            document.getElementById('refreshUsulanBtn').addEventListener('click', loadUsulanList);
+            document.getElementById('cancelEditBtn').addEventListener('click', function() {
+                document.getElementById('infoForm').reset();
+                document.getElementById('editId').value = '';
+                document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Jadwal / Flyer';
+                STATE.isEditing = false;
                 document.getElementById('formMessage').innerHTML = '';
-            }
-
-            const debouncedSearch = debounce(function(query) {
-                STATE.searchQuery = query;
-                renderInfoTable(STATE.informasiList);
-            }, 300);
+            });
+            document.getElementById('infoForm').addEventListener('submit', submitInfoForm);
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                debouncedSearch(e.target.value);
+            });
+            document.getElementById('filterJenis').addEventListener('change', function() {
+                STATE.jenisFilter = this.value;
+                applyFiltersAndSort();
+            });
+            document.getElementById('filterStatus').addEventListener('change', function() {
+                STATE.statusFilter = this.value;
+                applyFiltersAndSort();
+            });
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                const id = document.getElementById('deleteInformasiId').value;
+                if (id) {
+                    deleteInfo(id);
+                    bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                }
+            });
 
         })();
+
     </script>
 </body>
 </html>

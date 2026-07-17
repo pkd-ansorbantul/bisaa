@@ -4,24 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
     <title>Admin Aset Digital - PKD GP Ansor Bantul</title>
-
-    <!-- Favicon & Font -->
     <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
-        /* ===== GLOBAL ===== */
+        /* --- Global & Sidebar --- */
         * { font-family: 'Inter', sans-serif; }
         body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
-
-        /* ===== LAYOUT UTAMA ===== */
         .container-card { max-width: 100%; padding: 0; margin: 0; }
         .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
-
-        /* ===== SIDEBAR STYLES (UNIVERSAL) ===== */
         .sidebar-wrapper {
             width: 260px; max-width: 260px;
             background: #0f172a; color: #f1f5f9;
@@ -32,8 +25,6 @@
             transition: width 0.3s ease, max-width 0.3s ease;
         }
         .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
-
-        /* --- BRAND AREA --- */
         .sidebar-brand-area {
             flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
             border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
@@ -51,12 +42,8 @@
         .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
         .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
         .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-
-        /* --- MENU AREA --- */
         .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
         .sidebar-menu-area::-webkit-scrollbar { display: none; }
-
-        /* --- NAV PILLS --- */
         .nav-pills .nav-link {
             width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
             color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
@@ -70,30 +57,19 @@
         .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
         .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
         .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-        /* --- SUBMENU --- */
         .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
         .submenu.open { max-height: 500px; }
         .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
         .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
         .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-        .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-        .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-        .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-        .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-        .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-        /* --- SIDEBAR TOGGLE --- */
         .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
         .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
         .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
         .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-
-        /* --- LOGOUT --- */
         .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
         .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
 
-        /* --- BOTTOM NAV (MOBILE) --- */
+        /* --- Bottom Nav Mobile --- */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
             z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
@@ -109,60 +85,68 @@
         }
         @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-        /* ===== CONTENT WRAPPER ===== */
+        /* --- Content Wrapper --- */
         .content-wrapper {
             margin-left: 260px; padding: 1.5rem; background: #f8fafc;
             min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
         }
         .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
-        /* ===== UTILITY ===== */
+        /* --- Utilities & UI --- */
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .section-title {
-            font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
-        }
+        .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-        .loading-spinner {
-            display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
-        }
+        .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .cache-status {
-            font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
-        }
+        .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
         .cache-status.live { background: #dcfce7; color: #16a34a; }
         .cache-status.offline { background: #fee2e2; color: #dc2626; }
 
-        /* ===== ASSET SPECIFIC ===== */
-        .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .btn-aksi { min-width: 80px; }
-        .asset-thumb { max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
+        /* --- Asset Grid & Card --- */
+        .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+        .asset-card { background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; transition: transform 0.2s; }
+        .asset-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .asset-card img { width: 100%; height: 160px; object-fit: cover; }
+        .asset-card .card-body { padding: 1rem; }
+        .asset-card .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-card .card-text { font-size: 0.8rem; color: #64748b; }
+        .btn-share { border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .btn-share:hover { transform: scale(1.05); }
+        .folder-sidebar { background: white; border-radius: 16px; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+        .folder-item { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 0.25rem; }
+        .folder-item:hover { background: #f1f5f9; }
+        .folder-item.active { background: #dbeafe; font-weight: 600; }
+        .folder-item i { margin-right: 0.5rem; }
+        .breadcrumb { background: transparent; padding: 0; margin-bottom: 1rem; }
         .upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 2rem; text-align: center; background: #f8fafc; transition: all 0.2s; }
         .upload-area:hover { border-color: #2563eb; background: #eff6ff; }
-        .share-dropdown .dropdown-toggle { padding: 0.2rem 0.6rem; }
+        .asset-thumb { max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .file-preview { max-height: 150px; object-fit: contain; border-radius: 8px; }
+        .preview-modal .modal-dialog { max-width: 90vw; }
+        .preview-modal .modal-body { background: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 60vh; position: relative; }
+        .preview-modal iframe { width: 100%; height: 80vh; border: none; }
+        .preview-modal img { max-width: 100%; max-height: 80vh; object-fit: contain; }
+        #errorContainer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; max-width: 500px; padding: 2rem; z-index: 10; display: none; }
+        @media (max-width: 576px) {
+            .asset-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .preview-modal .modal-dialog { max-width: 100vw; margin: 10px; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ========================================================== -->
-    <!--   CONTAINER UTAMA                                           -->
-    <!-- ========================================================== -->
     <div class="container-fluid p-0">
         <div class="admin-wrapper">
 
-            <!-- ======================== -->
-            <!--   SIDEBAR UNIVERSAL     -->
-            <!-- ======================== -->
+            <!-- ==================== SIDEBAR ==================== -->
             <div class="sidebar-wrapper" id="sidebarWrapper">
                 <div class="sidebar-toggle">
-                    <button id="toggleSidebarBtn" title="Minimize / Maximize Sidebar">
-                        <i class="bi bi-arrow-left-right"></i>
-                    </button>
+                    <button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button>
                 </div>
-
                 <div class="sidebar-brand-area">
-                    <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
+                    <a class="brand-sidebar" href="/bisaa/index.html">
                         <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" />
                         <div>
                             <div class="brand-sidebar-title">PKD GP Ansor</div>
@@ -170,130 +154,83 @@
                         </div>
                     </a>
                 </div>
-
-                <!-- Menu -->
                 <div class="sidebar-menu-area">
-                    <div class="nav flex-column nav-pills" id="sidebarMenu">
-                        <!-- Dashboard -->
-                        <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-                        </a>
-
-                        <!-- Akademik -->
-                        <div class="nav-link" data-target="akademik" title="Akademik">
-                            <i class="bi bi-book me-2"></i><span>Akademik</span>
-                        </div>
+                    <div class="nav flex-column nav-pills">
+                        <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+                        <div class="nav-link" data-target="akademik"><i class="bi bi-book me-2"></i><span>Akademik</span></div>
                         <div class="submenu" id="submenu-akademik">
-                            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
-                            <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
-                            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+                            <a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+                            <a class="nav-link" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+                            <a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
                         </div>
-
-                        <!-- Peserta -->
-                        <div class="nav-link" data-target="peserta" title="Peserta">
-                            <i class="bi bi-people me-2"></i><span>Peserta</span>
-                        </div>
+                        <div class="nav-link" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
                         <div class="submenu" id="submenu-peserta">
-                            <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
-                            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
-                            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+                            <a class="nav-link" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+                            <a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+                            <a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
                         </div>
-
-                        <!-- Absensi -->
-                        <div class="nav-link" data-target="absensi" title="Absensi">
-                            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
-                        </div>
-                        <div class="submenu" id="submenu-absensi">
-                            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-                            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-                            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
-                        </div>
-
-                        <!-- Informasi (AKTIF) -->
-                        <div class="nav-link active" data-target="informasi" title="Informasi">
-                            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
-                        </div>
+                        <div class="nav-link active" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
                         <div class="submenu open" id="submenu-informasi">
-                            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-                            <a class="nav-link active" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+                            <a class="nav-link active" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+                            <a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
                         </div>
-
-                        <!-- Skrining -->
-                        <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
-                            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
-                        </a>
-
-                        <!-- Sertifikat -->
-                        <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
-                            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
-                        </a>
-
-                        <!-- Tanda Tangan -->
-                        <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
-                            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
-                        </a>
-
-                        <!-- RTL & Tugas -->
-                        <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
-                            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
-                        </a>
-
-                        <!-- Pengaturan -->
-                        <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
-                            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
-                        </a>
-
-                        <!-- Logout -->
+                        <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+                        <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+                        <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+                        <a class="nav-link" href="/bisaa/admin/rtl_admin.html"><i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span></a>
+                        <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
                         <div class="sidebar-logout"></div>
-                        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
-                            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
-                        </a>
+                        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
                     </div>
                 </div>
             </div>
-            <!-- END SIDEBAR -->
 
-            <!-- ======================== -->
-            <!--   BOTTOM NAV (MOBILE)   -->
-            <!-- ======================== -->
+            <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
             <div class="bottom-nav">
                 <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
                 <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
                 <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
                 <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-                <a href="/bisaa/admin/rtl_admin.html" class="nav-item"><i class="bi bi-file-earmark-text"></i><span>RTL</span></a>
                 <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
             </div>
-            <!-- END BOTTOM NAV -->
 
-            <!-- ======================== -->
-            <!--   CONTENT WRAPPER        -->
-            <!-- ======================== -->
+            <!-- ==================== CONTENT WRAPPER ==================== -->
             <div class="content-wrapper">
                 <h2 class="section-title"><i class="bi bi-image me-2"></i>Manajemen Aset Digital</h2>
-
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <button class="btn btn-primary rounded-pill" id="uploadAssetBtn"><i class="bi bi-cloud-upload me-1"></i> Upload Aset</button>
+                        <button class="btn btn-outline-primary rounded-pill ms-2" id="addFolderBtn"><i class="bi bi-folder-plus me-1"></i> Folder Baru</button>
                         <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
                         <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
                     </div>
                 </div>
-
-                <div id="assetContainer" class="table-container">
-                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="folder-sidebar">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-folder-fill me-2"></i>Folder</h6>
+                            <div id="folderList"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb" id="breadcrumb">
+                                <li class="breadcrumb-item active">Semua Aset</li>
+                            </ol>
+                        </nav>
+                        <div id="assetContainer">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary"></div>
+                                <p class="mt-2 text-muted">Memuat aset...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- END CONTENT WRAPPER -->
-
         </div>
     </div>
-    <!-- END CONTAINER -->
 
-
-    <!-- ========================================================== -->
-    <!--   MODAL "LAINNYA" (MOBILE)                                  -->
-    <!-- ========================================================== -->
+    <!-- ==================== MODAL LAINNYA (MOBILE) ==================== -->
     <div class="modal fade" id="moreMenuModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -316,9 +253,7 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-12">
-                            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-                                <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-                            </button>
+                            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button>
                         </div>
                     </div>
                 </div>
@@ -326,38 +261,36 @@
         </div>
     </div>
 
-
-    <!-- ========================================================== -->
-    <!--   MODAL UPLOAD                                              -->
-    <!-- ========================================================== -->
+    <!-- ==================== MODAL UPLOAD ASET ==================== -->
     <div class="modal fade" id="uploadAssetModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i>Upload Aset Digital</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3"><label class="form-label fw-semibold">Judul</label><input type="text" class="form-control" id="assetJudul" required /></div>
                     <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea class="form-control" id="assetDeskripsi" rows="2"></textarea></div>
-                    <div class="mb-3"><label class="form-label fw-semibold">Jenis</label>
-                        <select class="form-select" id="assetJenis">
-                            <option value="gambar">Gambar</option>
-                            <option value="sertifikat">Sertifikat</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 upload-area" id="uploadDropZone">
+                    <div class="mb-3"><label class="form-label fw-semibold">Folder Tujuan</label><select class="form-select" id="assetFolder"><option value="">Root (Tanpa Folder)</option></select></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Jenis</label><select class="form-select" id="assetJenis"><option value="gambar">Gambar</option><option value="video">Video</option><option value="sertifikat">Sertifikat</option><option value="dokumen">Dokumen</option></select></div>
+                    <div class="mb-3 upload-area">
                         <i class="bi bi-cloud-upload fs-1 text-muted"></i>
                         <p class="mb-1"><strong>Klik atau drag & drop file di sini</strong></p>
-                        <p class="text-muted small">Format: JPG, PNG, WEBP, GIF, PDF (Max 5MB)</p>
-                        <input type="file" class="form-control" id="assetFile" accept="image/*,application/pdf" required style="max-width:300px;margin:0 auto;" />
+                        <p class="text-muted small">Format: JPG, PNG, WEBP, GIF, MP4, WEBM, PDF (Max 45MB)</p>
+                        <input type="file" class="form-control" id="assetFile" accept="image/*,video/*,application/pdf" required style="max-width:300px;margin:0 auto;" />
                     </div>
                     <div id="filePreview" class="mt-2 text-center" style="display:none;">
                         <img id="previewImage" src="#" class="img-thumbnail" style="max-height:150px;" />
                         <p id="fileNameDisplay" class="small text-muted mt-1"></p>
                     </div>
+                    <div id="uploadProgressContainer" class="mt-3" style="display:none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="uploadProgressBar" style="width:0%"></div>
+                        </div>
+                        <div class="small text-muted mt-1 text-center" id="uploadProgressText">0%</div>
+                    </div>
                 </div>
-                <div class="modal-footer border-0">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
                     <button type="button" class="btn btn-primary rounded-pill px-4" id="submitUploadBtn">Upload</button>
                 </div>
@@ -365,23 +298,38 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL FOLDER BARU ==================== -->
+    <div class="modal fade" id="folderModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Buat Folder Baru</h5>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3"><label class="form-label fw-semibold">Nama Folder</label><input type="text" class="form-control" id="folderNama" required /></div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Folder Induk (opsional)</label><select class="form-select" id="folderParent"><option value="">Root (Tanpa Folder)</option></select></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success rounded-pill px-4" id="saveFolderBtn">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- ========================================================== -->
-    <!--   MODAL HAPUS                                               -->
-    <!-- ========================================================== -->
+    <!-- ==================== MODAL KONFIRMASI HAPUS ==================== -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
                     <p>Apakah Anda yakin ingin menghapus aset ini?</p>
                     <input type="hidden" id="deleteAssetId" />
                 </div>
-                <div class="modal-footer border-0 justify-content-center">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
                     <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
                 </div>
@@ -389,10 +337,42 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL PREVIEW ASET (ROBUST) ==================== -->
+    <div class="modal fade preview-modal" id="previewAssetModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="background:#1e1e2f;border-radius:20px;">
+                <div class="modal-header bg-dark text-white border-0 rounded-top-4">
+                    <h5 class="modal-title" id="previewAssetTitle"><i class="bi bi-eye me-2"></i>Pratinjau Aset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" style="min-height:70vh;background:#0f172a;border-radius:0 0 20px 20px;position:relative;">
+                    <div id="previewAssetSpinner" class="position-absolute top-50 start-50 translate-middle">
+                        <div class="spinner-border text-light"></div>
+                    </div>
+                    <div id="errorContainer">
+                        <div class="text-center text-white">
+                            <i class="bi bi-exclamation-triangle text-warning fs-1 mb-3"></i>
+                            <h4 id="errorTitle">File Tidak Ditemukan</h4>
+                            <p id="errorMessage" class="text-light">Maaf, file ini tidak dapat ditemukan di Google Drive.<br>Kemungkinan ID file rusak atau telah dihapus.<br><span class="text-warning small">Silakan hapus aset ini dan upload ulang.</span></p>
+                            <div class="mt-3">
+                                <a id="errorDriveLink" href="#" target="_blank" class="btn btn-primary rounded-pill px-4"><i class="bi bi-google me-2"></i> Buka Google Drive</a>
+                                <button type="button" class="btn btn-secondary rounded-pill px-4 ms-2" data-bs-dismiss="modal">Tutup</button>
+                            </div>
+                        </div>
+                    </div>
+                    <iframe id="previewAssetIframe" style="width:100%;height:80vh;border:none;display:none;"></iframe>
+                    <img id="previewAssetImage" style="max-width:90%;max-height:80vh;object-fit:contain;display:none;border-radius:8px;" />
+                </div>
+                <div class="modal-footer border-0 bg-dark rounded-bottom-4">
+                    <button class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreenPreview()"><i class="bi bi-fullscreen"></i></button>
+                    <button class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                    <a id="previewAssetDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4"><i class="bi bi-download me-1"></i>Unduh</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- ========================================================== -->
-    <!--   TOAST                                                     -->
-    <!-- ========================================================== -->
+    <!-- ==================== TOAST ==================== -->
     <div class="toast-container">
         <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
             <div class="toast-header bg-white border-0">
@@ -404,436 +384,416 @@
         </div>
     </div>
 
+    <!-- ==================== SCRIPTS (ES Module) ==================== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- ========================================================== -->
-    <!--   SCRIPTS                                                   -->
-    <!-- ========================================================== -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
-    <script src="/bisaa/dataCache.js">
-    </script>
-    <script src="/bisaa/api.js">
-    </script>
+    <script type="module">
+        import { callApi, showToast, escapeHtml, getUserRole, updateNavbarMenu } from '../js/core/api.js';
 
-    <script>
-        (function() {
-            'use strict';
+        let assetList = [], folderList = [], currentFolderId = '';
 
-            let assetList = [];
+        function formatDate(d) { if (!d) return '-'; try { const date = new Date(d); if (isNaN(date.getTime())) return '-'; return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return '-'; } }
+        function getDriveThumb(driveId) { return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : ''; }
+        function getDriveViewUrl(driveId) { return driveId ? `https://drive.google.com/file/d/${driveId}/view` : '#'; }
+        function getDriveDownloadUrl(driveId) { return driveId ? `https://drive.google.com/uc?export=download&id=${driveId}` : '#'; }
+        function updateCacheStatus(status) { const el = document.getElementById('cacheStatus'); if (el) { el.textContent = status; el.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); } }
 
-            // ==========================================================
-            //   TOGGLE PASSWORD VISIBILITY
-            // ==========================================================
-            window.togglePasswordVisibility = function(id) {
-                const el = document.getElementById(id);
-                if (el) el.type = el.type === 'password' ? 'text' : 'password';
-            };
-
-            // ==========================================================
-            //   UTILITY
-            // ==========================================================
-            function escapeHtml(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    if (m === '"') return '&quot;';
-                    return m;
-                });
-            }
-
-            function showToast(message, type) {
-                const toastEl = document.getElementById('notificationToast');
-                if (!toastEl) return;
-                const toast = new bootstrap.Toast(toastEl);
-                document.getElementById('toastMessage').innerText = message;
-                const icon = document.getElementById('toastIcon');
-                if (type === 'success') {
-                    icon.className = 'bi bi-check-circle-fill text-success';
-                    document.getElementById('toastTitle').innerText = 'Berhasil';
-                } else if (type === 'error') {
-                    icon.className = 'bi bi-x-circle-fill text-danger';
-                    document.getElementById('toastTitle').innerText = 'Gagal';
-                } else {
-                    icon.className = 'bi bi-info-circle-fill text-primary';
-                    document.getElementById('toastTitle').innerText = 'Info';
-                }
-                toast.show();
-            }
-
-            function formatDate(d) {
-                if (!d) return '-';
-                const date = new Date(d);
-                return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-            }
-
-            function getDriveThumb(driveId) {
-                return driveId ? `https://lh3.googleusercontent.com/d/${driveId}=w200` : '';
-            }
-
-            function getDriveViewUrl(driveId) {
-                return driveId ? `https://drive.google.com/file/d/${driveId}/view` : '#';
-            }
-
-            function updateCacheStatus(status) {
-                const el = document.getElementById('cacheStatus');
-                if (el) {
-                    el.textContent = status;
-                    el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-                }
-            }
-
-            // ==========================================================
-            //   SIDEBAR TOGGLE & SUBMENU
-            // ==========================================================
-            document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-                document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-arrow-left-right');
-                    icon.classList.toggle('bi-arrow-right-left');
-                }
-            });
-
-            document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = this.dataset.target;
-                    const submenu = document.getElementById('submenu-' + target);
-                    if (submenu) submenu.classList.toggle('open');
-                });
-            });
-
-            // ==========================================================
-            //   LOGOUT
-            // ==========================================================
-            document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
-
-            document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-                const modalEl = document.getElementById('moreMenuModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) modal.hide();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
-
-            // ==========================================================
-            //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-            // ==========================================================
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-                    window.location.href = '/bisaa/login.html';
-                    return;
-                }
-
-                // Inisialisasi
-                if (PKD.getUserRole() === 'admin') {
-                    loadAssets(false);
-                }
-
-                // Event listeners
-                document.getElementById('uploadAssetBtn').addEventListener('click', function() {
-                    document.getElementById('assetJudul').value = '';
-                    document.getElementById('assetDeskripsi').value = '';
-                    document.getElementById('assetJenis').value = 'gambar';
-                    document.getElementById('assetFile').value = '';
-                    document.getElementById('filePreview').style.display = 'none';
-                    document.getElementById('previewImage').src = '#';
-                    new bootstrap.Modal(document.getElementById('uploadAssetModal')).show();
-                });
-
-                document.getElementById('assetFile').addEventListener('change', function() {
-                    const file = this.files[0];
-                    const previewContainer = document.getElementById('filePreview');
-                    const previewImage = document.getElementById('previewImage');
-                    const fileNameDisplay = document.getElementById('fileNameDisplay');
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            previewImage.src = e.target.result;
-                            previewContainer.style.display = 'block';
-                            fileNameDisplay.textContent = file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        previewContainer.style.display = 'none';
-                        previewImage.src = '#';
-                    }
-                });
-
-                document.getElementById('submitUploadBtn').addEventListener('click', async function() {
-                    const judul = document.getElementById('assetJudul').value.trim();
-                    const deskripsi = document.getElementById('assetDeskripsi').value.trim();
-                    const jenis = document.getElementById('assetJenis').value;
-                    const fileInput = document.getElementById('assetFile');
-                    if (!judul || !fileInput.files.length) {
-                        showToast('Judul dan file wajib diisi', 'error');
-                        return;
-                    }
-                    const file = fileInput.files[0];
-                    if (file.size > 5 * 1024 * 1024) {
-                        showToast('Maksimal 5MB', 'error');
-                        return;
-                    }
-                    const btn = this;
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengupload...';
-                    try {
-                        const reader = new FileReader();
-                        const base64 = await new Promise((resolve, reject) => {
-                            reader.onload = e => resolve(e.target.result);
-                            reader.onerror = reject;
-                            reader.readAsDataURL(file);
-                        });
-                        await PKD.callApi('addAsset', {
-                            judul: judul,
-                            deskripsi: deskripsi,
-                            jenis: jenis,
-                            fileData: base64,
-                            fileName: file.name,
-                            uploadBy: 'admin'
-                        }, 'POST');
-                        showToast('Aset berhasil diupload', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
-                        loadAssets(true);
-                    } catch (e) {
-                        showToast('Gagal: ' + e.message, 'error');
-                    } finally {
-                        btn.disabled = false;
-                        btn.innerHTML = 'Upload';
-                    }
-                });
-
-                document.getElementById('refreshDataBtn').addEventListener('click', function() {
-                    loadAssets(true);
-                });
-
-                document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
-                    const id = document.getElementById('deleteAssetId').value;
-                    if (!id) return;
-                    this.disabled = true;
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                    try {
-                        await PKD.callApi('deleteAsset', { id }, 'POST');
-                        showToast('Aset berhasil dihapus', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                        loadAssets(true);
-                    } catch (e) {
-                        showToast('Gagal: ' + e.message, 'error');
-                    } finally {
-                        this.disabled = false;
-                        this.innerHTML = 'Hapus';
-                    }
-                });
-            });
-
-            // ==========================================================
-            //   CACHE HELPERS
-            // ==========================================================
-            function loadDataFromCache() {
-                const cached = DataCache.getData('asset');
-                if (cached && Array.isArray(cached) && cached.length > 0) {
-                    assetList = cached;
-                    return true;
-                }
-                return false;
-            }
-
-            function loadDataFromStorage() {
+        // ==========================================================
+        // 🔥 MEKANISME ROBUST: UPLOAD DENGAN RETRY & TIMEOUT
+        // ==========================================================
+        async function uploadWithRetry(params, retries = 3) {
+            for (let i = 0; i < retries; i++) {
                 try {
-                    const stored = localStorage.getItem('pkd_asset_data');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed && parsed.assetList) {
-                            assetList = parsed.assetList;
-                        }
-                    }
-                } catch (e) {}
-                if (assetList.length === 0) {
-                    assetList = [];
-                    saveDataToStorage();
-                }
-            }
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 detik timeout
 
-            function saveDataToStorage() {
-                try {
-                    localStorage.setItem('pkd_asset_data', JSON.stringify({ assetList: assetList }));
-                } catch (e) {}
-            }
-
-            function updateCache(data) {
-                DataCache.updateData('asset', data);
-                assetList = data;
-            }
-
-            // ==========================================================
-            //   LOAD ASSETS
-            // ==========================================================
-            async function loadAssets(forceRefresh) {
-                const container = document.getElementById('assetContainer');
-                container.innerHTML =
-                    '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat aset...</p></div>';
-
-                try {
-                    // 1. Coba DataCache dulu
-                    if (!forceRefresh) {
-                        const cached = DataCache.getData('asset');
-                        if (cached && Array.isArray(cached) && cached.length > 0) {
-                            assetList = cached;
-                            renderAssets(container);
-                            updateCacheStatus('Cache');
-                            return;
-                        }
-                    }
-
-                    // 2. Coba localStorage
-                    loadDataFromStorage();
-                    if (assetList.length > 0) {
-                        renderAssets(container);
-                        updateCacheStatus('Storage');
-                        return;
-                    }
-
-                    // 3. Ambil dari API
-                    const res = await PKD.callApi('getAssetList', {}, 'GET');
-                    assetList = res?.data || [];
-                    updateCache(assetList);
-                    saveDataToStorage();
-                    renderAssets(container);
-                    updateCacheStatus('Live');
-
+                    const result = await callApi('addAsset', params, 'POST');
+                    clearTimeout(timeoutId);
+                    return result;
                 } catch (e) {
-                    console.warn('Gagal load aset:', e);
-                    if (assetList.length === 0) {
-                        container.innerHTML =
-                            '<div class="alert alert-danger">Gagal memuat data.</div>';
-                        updateCacheStatus('Error');
-                    }
+                    console.warn(`Upload gagal pada percobaan ke-${i+1}:`, e.message);
+                    if (i === retries - 1) throw new Error(`Gagal upload setelah ${retries} percobaan: ${e.message}`);
+                    await new Promise(r => setTimeout(r, 2000 * Math.pow(2, i)));
                 }
             }
+        }
 
-            // ==========================================================
-            //   RENDER ASSETS
-            // ==========================================================
-            function renderAssets(container) {
-                if (!assetList || assetList.length === 0) {
-                    container.innerHTML = `
-                        <div class="alert alert-info text-center">
-                            <i class="bi bi-image fs-4 d-block mb-2"></i>
-                            Belum ada aset digital. Klik "Upload Aset" untuk menambahkan.
+        // ==========================================================
+        // 🔥 MEKANISME ROBUST: PREVIEW DENGAN FALLBACK CERDAS
+        // ==========================================================
+        window.previewAsset = function(judul, driveId, userType) {
+            const modal = new bootstrap.Modal(document.getElementById('previewAssetModal'));
+            const titleEl = document.getElementById('previewAssetTitle');
+            const iframe = document.getElementById('previewAssetIframe');
+            const img = document.getElementById('previewAssetImage');
+            const spinner = document.getElementById('previewAssetSpinner');
+            const downloadBtn = document.getElementById('previewAssetDownloadBtn');
+            const errorContainer = document.getElementById('errorContainer');
+
+            iframe.src = ''; iframe.style.display = 'none';
+            img.src = ''; img.style.display = 'none';
+            spinner.style.display = 'flex';
+            errorContainer.style.display = 'none';
+            titleEl.textContent = 'Pratinjau: ' + judul;
+
+            const hasValidId = driveId && typeof driveId === 'string' && driveId.trim() !== '' && driveId !== 'video' && driveId !== 'undefined' && driveId !== 'null';
+
+            if (!hasValidId) {
+                spinner.style.display = 'none';
+                downloadBtn.style.display = 'none';
+                errorContainer.style.display = 'block';
+                document.getElementById('errorTitle').innerText = 'ID File Tidak Valid';
+                document.getElementById('errorMessage').innerHTML = `Maaf, file "<strong>${judul}</strong>" memiliki ID yang tidak valid.<br>Silakan cari file secara manual di Google Drive Anda.`;
+                document.getElementById('errorDriveLink').href = 'https://drive.google.com';
+                modal.show(); return;
+            }
+
+            downloadBtn.href = getDriveDownloadUrl(driveId);
+            downloadBtn.style.display = 'inline-block';
+
+            let fallbackTimeout = setTimeout(() => {
+                if (spinner.style.display !== 'none') {
+                    spinner.style.display = 'none';
+                    iframe.style.display = 'none';
+                    img.style.display = 'none';
+                    errorContainer.style.display = 'block';
+                    document.getElementById('errorTitle').innerText = 'Waktu Load Habis';
+                    document.getElementById('errorMessage').innerHTML = `File "${judul}" tidak dapat dimuat dalam waktu yang ditentukan.<br>Silakan unduh langsung melalui tombol di bawah.`;
+                    document.getElementById('errorDriveLink').href = downloadBtn.href;
+                }
+            }, 15000);
+
+            const handleSuccess = () => {
+                clearTimeout(fallbackTimeout);
+                spinner.style.display = 'none';
+                errorContainer.style.display = 'none';
+            };
+
+            const handleFail = () => {
+                clearTimeout(fallbackTimeout);
+                spinner.style.display = 'none';
+                iframe.style.display = 'none';
+                img.style.display = 'none';
+                errorContainer.style.display = 'block';
+                document.getElementById('errorTitle').innerText = 'Gagal Memuat File';
+                document.getElementById('errorMessage').innerHTML = `File "${judul}" tidak dapat ditampilkan secara online.<br>Kemungkinan file telah dihapus atau akses dibatasi.<br>Silakan unduh file melalui tombol di bawah.`;
+                document.getElementById('errorDriveLink').href = downloadBtn.href;
+            };
+
+            try {
+                if (userType === 'pdf' || userType === 'video') {
+                    iframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
+                    iframe.style.display = 'block';
+                    iframe.onload = handleSuccess;
+                    iframe.onerror = handleFail;
+                } else {
+                    img.src = `https://lh3.googleusercontent.com/d/${driveId}=w1200`;
+                    img.style.display = 'block';
+                    img.onload = handleSuccess;
+                    img.onerror = handleFail;
+                }
+            } catch (e) {
+                handleFail();
+            }
+
+            modal.show();
+        };
+
+        window.toggleFullscreenPreview = function() { const el = document.getElementById('previewAssetIframe'); if (!el) return; if (!document.fullscreenElement) { el.requestFullscreen().catch(() => {}); } else { document.exitFullscreen(); } };
+
+        document.getElementById('previewAssetModal')?.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('previewAssetIframe').src = '';
+            document.getElementById('previewAssetImage').src = '';
+            document.getElementById('errorContainer').style.display = 'none';
+        });
+
+        // ==========================================================
+        // LOAD DATA & RENDER (dengan fallback cache)
+        // ==========================================================
+        async function loadAllData(forceRefresh = false) {
+            try {
+                const container = document.getElementById('assetContainer');
+                container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat aset...</p></div>';
+                
+                if (forceRefresh) { localStorage.removeItem('pkd_cache_asset_list'); }
+
+                const [assetsRes, foldersRes] = await Promise.all([
+                    callApi('getAssetList', {}, 'GET'),
+                    callApi('getFolders', {}, 'GET')
+                ]);
+                const freshAssets = assetsRes?.data || [];
+                const freshFolders = foldersRes?.data || [];
+
+                if (freshAssets.length > 0) { localStorage.setItem('pkd_cache_asset_list', JSON.stringify(freshAssets)); }
+
+                assetList = freshAssets;
+                folderList = freshFolders;
+                render();
+                updateCacheStatus('Live');
+            } catch (e) {
+                console.warn('Gagal load assets/folders:', e);
+                const fallback = localStorage.getItem('pkd_cache_asset_list');
+                if (fallback) {
+                    try {
+                        assetList = JSON.parse(fallback);
+                        render();
+                        updateCacheStatus('Offline (Cache)');
+                        showToast('Data diambil dari cache lokal (koneksi server bermasalah).', 'warning');
+                        return;
+                    } catch (e2) {}
+                }
+                updateCacheStatus('Offline');
+                showToast('Gagal memuat data dari server.', 'error');
+            }
+        }
+
+        function render() { renderFolderList(); renderBreadcrumb(); renderAssets(); }
+        function renderFolderList() {
+            const container = document.getElementById('folderList');
+            let html = `<div class="folder-item ${currentFolderId === '' ? 'active' : ''}" data-folder-id="" onclick="navigateFolder('')"><i class="bi bi-folder-fill"></i> Root</div>`;
+            folderList.forEach(f => { html += `<div class="folder-item ${currentFolderId == f.id ? 'active' : ''}" data-folder-id="${f.id}" onclick="navigateFolder('${f.id}')"><i class="bi bi-folder-fill"></i> ${escapeHtml(f.nama)}</div>`; });
+            container.innerHTML = html;
+        }
+        function renderBreadcrumb() {
+            const container = document.getElementById('breadcrumb');
+            if (currentFolderId === '') container.innerHTML = `<li class="breadcrumb-item active">Semua Aset</li>`;
+            else { const folder = folderList.find(f => f.id == currentFolderId); container.innerHTML = folder ? `<li class="breadcrumb-item"><a href="#" onclick="navigateFolder('')">Semua Aset</a></li><li class="breadcrumb-item active">${escapeHtml(folder.nama)}</li>` : `<li class="breadcrumb-item active">Semua Aset</li>`; }
+        }
+
+        function renderAssets() {
+            const container = document.getElementById('assetContainer');
+            const filtered = assetList.filter(item => (item.folderId || '') == currentFolderId);
+            if (filtered.length === 0) { container.innerHTML = `<div class="alert alert-info text-center"><i class="bi bi-image fs-4 d-block mb-2"></i>Belum ada aset di folder ini.</div>`; return; }
+
+            let html = '<div class="asset-grid">';
+            filtered.forEach(item => {
+                const imgUrl = getDriveThumb(item.driveId);
+                const isPdf = item.jenis === 'sertifikat' || (item.jenis === 'dokumen' && item.driveId && item.driveId.match(/\.pdf$/i));
+                const isVideo = item.jenis === 'video';
+                const hasValidId = !!(item.driveId && typeof item.driveId === 'string' && item.driveId.trim() !== '' && item.driveId !== 'video' && item.driveId !== 'undefined' && item.driveId !== 'null');
+                
+                let previewHtml = '';
+
+                if (hasValidId) {
+                    if (isPdf) {
+                        previewHtml = `<a href="javascript:void(0)" onclick="previewAsset('${escapeHtml(item.judul)}', '${escapeHtml(item.driveId)}', 'pdf')"><i class="bi bi-file-earmark-pdf fs-2 text-danger"></i></a>`;
+                    } else if (isVideo) {
+                        previewHtml = `<a href="javascript:void(0)" onclick="previewAsset('${escapeHtml(item.judul)}', '${escapeHtml(item.driveId)}', 'video')">
+                            <div style="position:relative; width:100%; height:160px; background:#eef2ff; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                                <img src="${imgUrl || 'https://via.placeholder.com/300x160?text=Video'}" class="w-100 h-100" style="object-fit:cover;" onerror="this.style.display='none'" loading="lazy"/>
+                                <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3); pointer-events:none;">
+                                    <i class="bi bi-play-circle-fill fs-1 text-white" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></i>
+                                </div>
+                            </div>
+                        </a>`;
+                    } else {
+                        previewHtml = `<a href="javascript:void(0)" onclick="previewAsset('${escapeHtml(item.judul)}', '${escapeHtml(item.driveId)}', 'image')"><div style="position:relative; width:100%; height:160px; background:#f1f5f9; overflow:hidden;"><img src="${imgUrl}" class="w-100 h-100" style="object-fit:cover;" onerror="this.style.display='none'" loading="lazy"/></div></a>`;
+                    }
+                } else if (isVideo) {
+                    previewHtml = `<a href="javascript:void(0)" onclick="previewAsset('${escapeHtml(item.judul)}', '${escapeHtml(item.driveId)}', 'video')">
+                        <div style="position:relative; width:100%; height:160px; background:#eef2ff; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px dashed #94a3b8;">
+                            <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.1); pointer-events:none;">
+                                <i class="bi bi-play-circle-fill fs-1 text-secondary"></i>
+                            </div>
                         </div>
-                    `;
+                    </a>`;
+                } else {
+                    previewHtml = `<div class="bg-light text-center py-5"><i class="bi bi-file-earmark fs-2"></i></div>`;
+                }
+
+                html += `<div class="asset-card">${previewHtml}<div class="card-body"><div class="card-title" title="${escapeHtml(item.judul || '')}">${escapeHtml(item.judul || '')}</div><div class="card-text">${escapeHtml(item.deskripsi || '')}</div><div class="d-flex justify-content-between align-items-center mt-2"><span class="text-muted small">${formatDate(item.timestamp)}</span><div><button class="btn btn-sm btn-outline-primary btn-share" onclick="shareAsset('${item.driveId}')"><i class="bi bi-share"></i></button><button class="btn btn-sm btn-success btn-share" onclick="shareViaWhatsApp('${item.driveId}', '${escapeHtml(item.judul)}')"><i class="bi bi-whatsapp"></i></button><button class="btn btn-sm btn-outline-danger btn-share" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button></div></div></div></div>`;
+            });
+            html += '</div>'; container.innerHTML = html;
+        }
+
+        window.navigateFolder = function(folderId) { currentFolderId = folderId; render(); };
+        window.shareAsset = function(driveId) { if (!driveId || driveId.trim() === '') { showToast('Tidak ada file untuk dibagikan.', 'error'); return; } const url = getDriveViewUrl(driveId); if (navigator.clipboard) { navigator.clipboard.writeText(url).then(() => { showToast('Link berhasil disalin!', 'success'); }).catch(() => { fallbackCopy(url); }); } else { fallbackCopy(url); } };
+        window.shareViaWhatsApp = function(driveId, judul) { if (!driveId) return; const url = getDriveViewUrl(driveId); window.open(`https://wa.me/?text=${encodeURIComponent(`Halo, saya ingin berbagi file aset digital PKD GP Ansor.\n\nJudul: ${judul}\nLink: ${url}`)}`, '_blank'); };
+        function fallbackCopy(text) { const input = document.createElement('input'); input.value = text; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove(); showToast('Link berhasil disalin!', 'success'); }
+
+        // ==========================================================
+        // 🔥 PERBAIKAN UTAMA: UPLOAD BINARY VIA FORMDATA (TANPA BASE64)
+        // + MENGHILANGKAN URL.createObjectURL UNTUK HINDARI ERROR blob:
+        // ==========================================================
+        function resetUploadForm() {
+            document.getElementById('assetJudul').value = '';
+            document.getElementById('assetDeskripsi').value = '';
+            document.getElementById('assetJenis').value = 'gambar';
+            document.getElementById('assetFile').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('previewImage').src = '#';
+            document.getElementById('uploadProgressContainer').style.display = 'none';
+            document.getElementById('uploadProgressBar').style.width = '0%';
+            document.getElementById('uploadProgressText').innerText = '0%';
+            const folderSelect = document.getElementById('assetFolder');
+            folderSelect.innerHTML = '<option value="">Root (Tanpa Folder)</option>';
+            folderList.forEach(f => { folderSelect.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; });
+            if (currentFolderId !== '') folderSelect.value = currentFolderId;
+        }
+
+        const uploadAssetBtn = document.getElementById('uploadAssetBtn');
+        if (uploadAssetBtn) {
+            uploadAssetBtn.addEventListener('click', function() { resetUploadForm(); new bootstrap.Modal(document.getElementById('uploadAssetModal')).show(); });
+        }
+
+        const assetFile = document.getElementById('assetFile');
+        if (assetFile) {
+            assetFile.addEventListener('change', async function() {
+                const file = this.files[0];
+                const previewContainer = document.getElementById('filePreview');
+                const previewImage = document.getElementById('previewImage');
+                const fileNameDisplay = document.getElementById('fileNameDisplay');
+                if (file) {
+                    // 🔥 Batas 45 MB (file asli, bukan base64)
+                    if (file.size > 45 * 1024 * 1024) {
+                        showToast('Maaf, ukuran file maksimal yang diizinkan adalah 45 MB. Silakan kompres video Anda.', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    if (!file.type.startsWith('image/') && !file.type.startsWith('video/') && file.type !== 'application/pdf') {
+                        showToast('Jenis file tidak didukung. Gunakan gambar, video, atau PDF.', 'error');
+                        this.value = '';
+                        return;
+                    }
+
+                    // 🔥 PERBAIKAN: Hapus URL.createObjectURL untuk video, gunakan placeholder
+                    if (file.type.startsWith('video/')) {
+                        previewImage.src = 'https://via.placeholder.com/300x160?text=Video';
+                    } else {
+                        const reader = new FileReader();
+                        reader.onload = function(e) { previewImage.src = e.target.result; };
+                        reader.readAsDataURL(file);
+                    }
+                    previewContainer.style.display = 'block';
+                    fileNameDisplay.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+                } else {
+                    previewContainer.style.display = 'none';
+                    previewImage.src = '#';
+                }
+            });
+        }
+
+        const submitUploadBtn = document.getElementById('submitUploadBtn');
+        if (submitUploadBtn) {
+            submitUploadBtn.addEventListener('click', async function() {
+                const judul = document.getElementById('assetJudul').value.trim();
+                const deskripsi = document.getElementById('assetDeskripsi').value.trim();
+                const jenis = document.getElementById('assetJenis').value;
+                const folderId = document.getElementById('assetFolder').value;
+                const fileInput = document.getElementById('assetFile');
+
+                if (!judul || !fileInput.files.length) {
+                    showToast('Judul dan file wajib diisi', 'error');
+                    return;
+                }
+                const file = fileInput.files[0];
+
+                if (file.size > 45 * 1024 * 1024) {
+                    showToast('Maaf, ukuran file maksimal yang diizinkan adalah 45 MB.', 'error');
                     return;
                 }
 
-                let html = `
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Judul</th>
-                                    <th>Deskripsi</th>
-                                    <th>Jenis</th>
-                                    <th>Pratinjau / File</th>
-                                    <th>Upload</th>
-                                    <th class="text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border"></span> Mengupload...';
+                const progressContainer = document.getElementById('uploadProgressContainer');
+                const progressBar = document.getElementById('uploadProgressBar');
+                const progressText = document.getElementById('uploadProgressText');
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.innerText = '0%';
 
-                assetList.forEach((item, idx) => {
-                    const thumb = getDriveThumb(item.driveId);
-                    const viewUrl = getDriveViewUrl(item.driveId);
-                    const isPdf = item.jenis === 'sertifikat' || (item.jenis === 'sertifikat' && item.driveId);
-                    // Tampilkan pratinjau: untuk gambar gunakan thumb, untuk pdf gunakan ikon
-                    let previewHtml = '-';
-                    if (item.driveId) {
-                        if (isPdf) {
-                            previewHtml = `<a href="${viewUrl}" target="_blank"><i class="bi bi-file-earmark-pdf fs-2 text-danger"></i></a>`;
-                        } else {
-                            previewHtml = `<img src="${thumb}" class="asset-thumb" />`;
-                        }
-                    }
-                    html += `
-                        <tr>
-                            <td>${idx + 1}</td>
-                            <td><strong>${escapeHtml(item.judul || '')}</strong></td>
-                            <td>${escapeHtml(item.deskripsi || '-')}</td>
-                            <td><span class="badge ${isPdf ? 'bg-danger' : 'bg-info'}">${escapeHtml(item.jenis || 'gambar')}</span></td>
-                            <td>${previewHtml}</td>
-                            <td>${formatDate(item.timestamp)}</td>
-                            <td class="text-center">
-                                <div class="btn-group share-dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-share"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="${viewUrl}" target="_blank"><i class="bi bi-box-arrow-up-right me-2"></i> Buka</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="https://wa.me/?text=${encodeURIComponent('Lihat aset ini: ' + viewUrl)}" target="_blank"><i class="bi bi-whatsapp me-2 text-success"></i> WhatsApp</a></li>
-                                        <li><a class="dropdown-item" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(viewUrl)}" target="_blank"><i class="bi bi-facebook me-2 text-primary"></i> Facebook</a></li>
-                                        <li><a class="dropdown-item" href="https://twitter.com/intent/tweet?url=${encodeURIComponent(viewUrl)}&text=${encodeURIComponent(item.judul || 'Aset PKD')}" target="_blank"><i class="bi bi-twitter me-2 text-info"></i> Twitter</a></li>
-                                        <li><a class="dropdown-item" href="mailto:?subject=${encodeURIComponent(item.judul || 'Aset PKD')}&body=${encodeURIComponent('Lihat aset ini: ' + viewUrl)}"><i class="bi bi-envelope me-2 text-secondary"></i> Email</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><button class="dropdown-item" onclick="copyLink('${viewUrl}')"><i class="bi bi-files me-2"></i> Salin Link</button></li>
-                                    </ul>
-                                </div>
-                                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('${item.id}')"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                });
+                let progress = 0;
+                const interval = setInterval(() => { progress += 5; if (progress > 90) clearInterval(interval); progressBar.style.width = progress + '%'; progressText.innerText = progress + '%'; }, 200);
 
-                html += `</tbody></table></div>`;
-                container.innerHTML = html;
-                container.classList.add('fade-in');
-            }
-
-            // ==========================================================
-            //   COPY LINK
-            // ==========================================================
-            window.copyLink = function(url) {
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(url).then(() => {
-                        showToast('Link berhasil disalin!', 'success');
-                    }).catch(() => {
-                        // fallback
-                        const input = document.createElement('input');
-                        input.value = url;
-                        document.body.appendChild(input);
-                        input.select();
-                        document.execCommand('copy');
-                        input.remove();
-                        showToast('Link berhasil disalin!', 'success');
+                try {
+                    // 🔥 KIRIM FILE SEBAGAI BLOB VIA FormData
+                    const result = await uploadWithRetry({
+                        action: 'addAsset',
+                        judul: judul,
+                        deskripsi: deskripsi,
+                        jenis: jenis,
+                        folderId: folderId,
+                        fileName: file.name,
+                        file: file  // ini akan dikirim sebagai blob di FormData
                     });
-                } else {
-                    // fallback
-                    const input = document.createElement('input');
-                    input.value = url;
-                    document.body.appendChild(input);
-                    input.select();
-                    document.execCommand('copy');
-                    input.remove();
-                    showToast('Link berhasil disalin!', 'success');
+
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    progressText.innerText = '100%';
+                    showToast('Aset berhasil diupload', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
+                    loadAllData(true);
+                } catch (e) {
+                    clearInterval(interval);
+                    showToast('Gagal: ' + e.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Upload';
+                    setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
                 }
-            };
+            });
+        }
 
-            // ==========================================================
-            //   CONFIRM DELETE
-            // ==========================================================
-            window.confirmDelete = function(id) {
-                document.getElementById('deleteAssetId').value = id;
-                new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-            };
+        // ==========================================================
+        // SISANYA: FOLDER, DELETE, REFRESH, SIDEBAR (AMAN DARI NULL)
+        // ==========================================================
+        const addFolderBtn = document.getElementById('addFolderBtn');
+        if (addFolderBtn) {
+            addFolderBtn.addEventListener('click', function() {
+                const folderParent = document.getElementById('folderParent');
+                if (folderParent) { folderParent.innerHTML = '<option value="">Root</option>'; folderList.forEach(f => { folderParent.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; }); }
+                document.getElementById('folderNama').value = '';
+                new bootstrap.Modal(document.getElementById('folderModal')).show();
+            });
+        }
 
-        })();
+        const saveFolderBtn = document.getElementById('saveFolderBtn');
+        if (saveFolderBtn) {
+            saveFolderBtn.addEventListener('click', async function() {
+                const nama = document.getElementById('folderNama').value.trim();
+                const parentId = document.getElementById('folderParent')?.value;
+                if (!nama) { showToast('Nama folder wajib diisi.', 'error'); return; }
+                const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
+                try { await callApi('addFolder', { nama, parentId }, 'POST'); showToast('Folder berhasil dibuat.', 'success'); bootstrap.Modal.getInstance(document.getElementById('folderModal')).hide(); loadAllData(true); } catch (e) { showToast('Gagal: ' + e.message, 'error'); } finally { btn.disabled = false; btn.innerHTML = 'Simpan'; }
+            });
+        }
+
+        window.confirmDelete = function(id) { document.getElementById('deleteAssetId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); };
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async function() { const id = document.getElementById('deleteAssetId').value; if (!id) return; this.disabled = true; this.innerHTML = '<span class="spinner-border"></span>'; try { await callApi('deleteAsset', { id }, 'POST'); showToast('Aset berhasil dihapus', 'success'); bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); loadAllData(true); } catch (e) { showToast('Gagal: ' + e.message, 'error'); } finally { this.disabled = false; this.innerHTML = 'Hapus'; } });
+        }
+
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
+        if (refreshDataBtn) {
+            refreshDataBtn.addEventListener('click', function() {
+                const btn = this; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...'; btn.disabled = true;
+                localStorage.removeItem('pkd_cache_asset_list');
+                loadAllData(true).then(() => { btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; btn.disabled = false; showToast('Data berhasil disegarkan dari server!', 'success'); }).catch(() => { btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; btn.disabled = false; showToast('Gagal menyegarkan data.', 'error'); });
+            });
+        }
+
+        const toggleBtn = document.getElementById('toggleSidebarBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() { document.getElementById('sidebarWrapper')?.classList.toggle('minimized'); const icon = this.querySelector('i'); if (icon) icon.classList.toggle('bi-arrow-left-right') && icon.classList.toggle('bi-arrow-right-left'); });
+        }
+
+        document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+            link.addEventListener('click', function(e) { e.preventDefault(); const target = this.dataset.target; const submenu = document.getElementById('submenu-' + target); if (submenu) submenu.classList.toggle('open'); });
+        });
+
+        const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+        if (sidebarLogoutBtn) {
+            sidebarLogoutBtn.addEventListener('click', function(e) { e.preventDefault(); if (typeof logout !== 'undefined') logout(); else window.location.href = '/bisaa/index.html'; });
+        }
+
+        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', function() { if (typeof logout !== 'undefined') logout(); else window.location.href = '/bisaa/index.html'; });
+        }
+
+        (function boot() { if (getUserRole() !== 'admin') { window.location.href = '/bisaa/login.html'; return; } updateNavbarMenu(); loadAllData(false); })();
     </script>
 </body>
 </html>

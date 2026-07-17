@@ -8,8 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js">
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
   <style>
     /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; }
@@ -120,18 +120,39 @@
     .section-title {
         font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
     }
-    .cache-status {
-        font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block;
-    }
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .loading-spinner {
-        display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
-    }
+    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     .btn-aksi { min-width: 80px; }
     .qr-canvas { display: block; margin: 0 auto; max-width: 256px; max-height: 256px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: white; }
+
+    /* --- Pagination & Sorting --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    @media (max-width: 576px) {
+      .content-wrapper { padding: 0.5rem 0.3rem 90px 0.3rem !important; }
+      .section-title { font-size: 1.1rem; margin-bottom: 0.5rem; padding-left: 0.5rem; }
+      .row.mb-3 > div { padding-left: 0.25rem !important; padding-right: 0.25rem !important; }
+      .btn { font-size: 0.7rem !important; padding: 0.2rem 0.6rem !important; }
+      .table-container { padding: 0.5rem !important; border-radius: 12px !important; }
+      .table th, .table td { font-size: 0.65rem !important; padding: 0.3rem !important; white-space: nowrap; }
+      .modal-body { padding: 1rem !important; }
+      .pagination-container { flex-direction: column; align-items: stretch; gap: 5px; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -189,9 +210,15 @@
             <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
           </div>
           <div class="submenu open" id="submenu-absensi">
-            <a class="nav-link active" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link active" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen">
+              <i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span>
+            </a>
+            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi">
+              <i class="bi bi-table me-2"></i><span>Data Absensi</span>
+            </a>
+            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi">
+              <i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span>
+            </a>
           </div>
 
           <!-- Informasi -->
@@ -216,6 +243,11 @@
           <!-- Tanda Tangan -->
           <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+          </a>
+
+          <!-- RTL & Tugas -->
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
           </a>
 
           <!-- Pengaturan -->
@@ -245,21 +277,24 @@
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-calendar-event me-2"></i>Manajemen Sesi Absen</h2>
 
+      <!-- TOOLBAR -->
       <div class="row mb-3">
         <div class="col-md-6">
           <button class="btn btn-primary rounded-pill" id="addSesiAbsenBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Sesi Absen</button>
           <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
           <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
-          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
+          <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
         </div>
         <div class="col-md-6 text-md-end">
           <div class="input-group" style="max-width: 300px; display: inline-flex;">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama sesi...">
+            <!-- PERBAIKAN PALING PENTING: AUTOFILL OFF -->
+            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama sesi..." autocomplete="off">
           </div>
         </div>
       </div>
 
+      <!-- TABLE -->
       <div id="sesiAbsenTableContainer" class="table-container">
         <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
       </div>
@@ -285,13 +320,7 @@
           <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
           <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
         </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-            </button>
-          </div>
-        </div>
+        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
       </div>
     </div>
   </div>
@@ -308,18 +337,31 @@
       <div class="modal-body p-4">
         <input type="hidden" id="editSesiAbsenId">
         <div class="mb-3"><label class="form-label fw-semibold">Nama Sesi</label><input type="text" class="form-control" id="sesiNama" placeholder="Contoh: Sesi 1 - Pengenalan" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Tanggal</label><input type="date" class="form-control" id="sesiTanggal" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Waktu</label><input type="time" class="form-control" id="sesiWaktu" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Kuota</label><input type="number" class="form-control" id="sesiKuota" placeholder="Jumlah maksimal peserta" min="1" required></div>
+        
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Waktu Mulai <span class="text-danger">*</span></label>
+            <input type="datetime-local" class="form-control" id="sesiWaktuMulai" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Waktu Selesai <span class="text-danger">*</span></label>
+            <input type="datetime-local" class="form-control" id="sesiWaktuSelesai" required>
+          </div>
+        </div>
+
         <div class="mb-3"><label class="form-label fw-semibold">🔐 Password Sesi</label>
           <div class="input-group">
             <input type="password" class="form-control" id="sesiPassword" placeholder="Kosongkan jika tidak ingin mengubah">
-            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('sesiPassword')"><i class="bi bi-eye"></i></button>
+            <button class="btn btn-outline-secondary" type="button" onclick="window.togglePassword('sesiPassword')"><i class="bi bi-eye"></i></button>
           </div>
           <div class="form-text text-muted">Isi hanya jika ingin menambah/mengubah password.</div>
         </div>
-        <div class="mb-3"><label class="form-label fw-semibold">Keterangan</label><textarea class="form-control" id="sesiNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea></div>
-        <div class="mb-3 form-check"><input type="checkbox" class="form-check-input" id="sesiAktif" checked><label class="form-check-label" for="sesiAktif">Aktif</label></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Aktif untuk Absen?</label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="sesiAktif" checked>
+            <label class="form-check-label" for="sesiAktif">Ya</label>
+          </div>
+        </div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
@@ -337,12 +379,8 @@
         <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Sesi Absen</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4">
-        <div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-      </div>
+      <div class="modal-body p-4"><div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div></div>
+      <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button></div>
     </div>
   </div>
 </div>
@@ -420,697 +458,741 @@
 
 <!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    let sesiAbsenList = [];
-    let filteredList = [];
-    let searchQuery = '';
+  // ==========================================================
+  //   STATE
+  // ==========================================================
+  let STATE = {
+    sesiList: [],
+    filteredList: [],
+    searchQuery: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc'
+  };
 
-    // =====================================================
-    //   UTILITY FUNCTIONS
-    // =====================================================
-    window.togglePassword = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  // ==========================================================
+  //   UTILITY
+  // ==========================================================
+  window.togglePassword = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
+
+  function formatDateTime(dateStr) {
+    if (!dateStr || dateStr === 'Belum dijadwalkan' || dateStr === '') return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  function generateQrToken() {
+    return 'qr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : (status === 'Offline' ? 'offline' : ''));
+    }
+  }
+
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
     };
+  }
 
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
     }
+  });
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
-      });
-    }
-
-    function generateId() {
-      return 'sa' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    function generateQrToken() {
-      return 'qr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
-
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
-    }
-
-    // =====================================================
-    //   STORAGE
-    // =====================================================
-    function saveToStorage(data) {
-      try {
-        localStorage.setItem('pkd_sesi_absen_data', JSON.stringify(data));
-      } catch (e) {}
-    }
-
-    function loadFromStorage() {
-      try {
-        const stored = localStorage.getItem('pkd_sesi_absen_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            return parsed;
-          }
-        }
-      } catch (e) {}
-      return null;
-    }
-
-    // =====================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // =====================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('bi-arrow-left-right');
-        icon.classList.toggle('bi-arrow-right-left');
-      }
-    });
-
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
-
-    // =====================================================
-    //   LOGOUT
-    // =====================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
       e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
     });
+  });
 
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
 
-    // =====================================================
-    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
-        return;
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    const modalEl = document.getElementById('moreMenuModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   LOAD SESI ABSEN (FIX: RESET SEARCH QUERY)
+  // ==========================================================
+  async function loadSesiAbsen(forceRefresh = false) {
+    const container = document.getElementById('sesiAbsenTableContainer');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+    try {
+      if (!AdminModule.getState().lastSync || forceRefresh) {
+        await AdminModule.loadAllData(forceRefresh);
       }
+      let freshData = AdminModule.getSesiList() || [];
 
-      // Load data dari localStorage dulu
-      const stored = loadFromStorage();
-      if (stored && stored.length > 0) {
-        sesiAbsenList = stored;
-        renderTable(getFilteredSesiAbsen(searchQuery));
-        updateCacheStatus('LocalStorage');
-      } else {
-        renderTable([]);
+      // --- PERBAIKAN 1: Jika data dari API kosong, jangan hapus data yang ada di layar ---
+      if (freshData.length === 0 && STATE.sesiList.length > 0) {
+        console.warn('⚠️ Server mengembalikan data kosong. Mempertahankan data yang ada saat ini.');
+        updateCacheStatus('Offline');
+        // Jangan update STATE, langsung render ulang apa yang ada
+        applyFiltersAndSort();
+        return;
+      } else if (freshData.length === 0) {
+        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data sesi absen.</div>`;
         updateCacheStatus('Empty');
+        STATE.sesiList = [];
+        return;
       }
 
-      // Ambil data dari API di background
-      fetchRawAPIData();
+      // --- PERBAIKAN 2: Konversi status Buka/Tutup yang benar ---
+      const cleanedData = freshData.map(item => {
+        let isOpen = false;
+        const rawSubmission = item.submission_open;
+        const rawAktif = item.aktif;
 
-      // Event listeners
-      document.getElementById('addSesiAbsenBtn')?.addEventListener('click', openAddModal);
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        fetchRawAPIData(true).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-        });
-      });
-      document.getElementById('saveSesiAbsenBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
-        if (window.__qrSesiCanvas) {
-          const link = document.createElement('a');
-          link.download = `QR_Sesi_${Date.now()}.png`;
-          link.href = window.__qrSesiCanvas.toDataURL('image/png');
-          link.click();
-        } else {
-          showToast('Tidak ada QR yang tersedia', 'warning');
+        if (rawSubmission !== undefined && rawSubmission !== null) {
+          if (typeof rawSubmission === 'boolean') isOpen = rawSubmission;
+          else if (typeof rawSubmission === 'string') isOpen = rawSubmission.trim().toLowerCase() === 'true';
         }
+        if (!isOpen && rawAktif !== undefined && rawAktif !== null) {
+          let isAktif = false;
+          if (typeof rawAktif === 'boolean') isAktif = rawAktif;
+          else if (typeof rawAktif === 'string') isAktif = rawAktif.trim().toLowerCase() === 'true';
+          if (isAktif) isOpen = true;
+        }
+        return { ...item, submission_open: isOpen };
       });
+
+      STATE.sesiList = cleanedData;
+      updateCacheStatus('Live');
+
+      // --- PERBAIKAN 3: Kosongkan paksa input pencarian saat data baru dimuat ---
+      document.getElementById('searchInput').value = '';
+      STATE.searchQuery = '';
+
+      applyFiltersAndSort();
+
+    } catch (e) {
+      console.error('❌ [ERROR] Gagal load sesi:', e);
+      if (STATE.sesiList.length > 0) {
+        applyFiltersAndSort();
+        updateCacheStatus('Error');
+        showToast('Error: ' + e.message + '. Menampilkan data lama.', 'error');
+      } else {
+        container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+  }
+
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION (PERBAIKAN LOGIKA FILTER)
+  // ==========================================================
+  function getFilteredSesi(query = '') {
+    let filtered = STATE.sesiList;
+    
+    // --- PERBAIKAN PALING PENTING: Jangan filter jika string kosong ---
+    if (query && query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item => (item.nama && item.nama.toLowerCase().includes(q)));
+    }
+    return filtered;
+  }
+
+  function applyFiltersAndSort() {
+    let filtered = getFilteredSesi(STATE.searchQuery);
+    if (STATE.sortColumn) {
+      filtered.sort(function(a, b) {
+        let va = (a[STATE.sortColumn] || '').toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    renderTable(filtered.slice(start, end), totalItems);
+  }
+
+  // ==========================================================
+  //   RENDER TABLE
+  // ==========================================================
+  function renderTable(data, totalItems) {
+    const container = document.getElementById('sesiAbsenTableContainer');
+    if (!container) return;
+
+    console.log(`📊 Render Tabel: Menampilkan ${data.length} baris dari total ${totalItems} data.`);
+
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th class="sortable" onclick="sortTable('nama')">Nama Sesi</th>
+              <th class="sortable" onclick="sortTable('waktu_mulai')">Waktu Mulai</th>
+              <th class="sortable" onclick="sortTable('waktu_selesai')">Waktu Selesai</th>
+              <th class="sortable" onclick="sortTable('submission_open')">Status</th>
+              <th style="width: 180px;">QR Sesi</th>
+              <th style="width: 280px;" class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += `
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              Tidak ada data sesi absen.
+            </td>
+          </tr>
+      `;
+    } else {
+      data.forEach((item, index) => {
+        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+        const isOpen = item.submission_open === true;
+        const status = isOpen ? 'Buka' : 'Tutup';
+        const statusBadge = isOpen ? 'bg-success' : 'bg-danger';
+
+        html += `
+          <tr>
+            <td>${globalIndex}</td>
+            <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
+            <td>${escapeHtml(formatDateTime(item.waktu_mulai))}</td>
+            <td>${escapeHtml(formatDateTime(item.waktu_selesai))}</td>
+            <td><span class="badge ${statusBadge}">${status}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-dark" onclick="generateQRSesi('${item.id}')" title="QR">
+                <i class="bi bi-qr-code"></i> QR
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="regenerateQRSesi('${item.id}')" title="Regenerate">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSesiAbsen('${item.id}')" title="Lihat Detail">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSesiAbsen('${item.id}')" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-success btn-aksi" onclick="viewAttendance('${item.id}')" title="Daftar Hadir">
+                <i class="bi bi-people"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-${isOpen ? 'warning' : 'success'} btn-aksi" onclick="toggleSesi('${item.id}')" title="Toggle Status">
+                ${isOpen ? 'Tutup' : 'Buka'}
+              </button>
+              <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSesiAbsen('${item.id}')" title="Hapus">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+      <div class="pagination-container">
+        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+        <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `</div></div>`;
+
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
+
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  };
+
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page;
+    applyFiltersAndSort();
+  };
+
+  // ==========================================================
+  //   QR GENERATION
+  // ==========================================================
+  window.generateQRSesi = function(sesiId) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+    if (!item) {
+      showToast('Data tidak ditemukan', 'error');
+      return;
+    }
+
+    if (!item.qrToken) {
+      item.qrToken = generateQrToken();
+      AdminModule.regenerateQRSesi(sesiId).then(res => {
+        if (res.success) {
+          item.qrToken = res.qrToken;
+          applyFiltersAndSort(); // Update lokal tanpa refresh
+          showToast('Token QR diperbarui', 'success');
+        }
+      }).catch(e => showToast('Gagal generate token: ' + e.message, 'error'));
+    }
+
+    try {
+      const absenUrl = `${window.location.origin}/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(item.qrToken)}`;
+      const qr = qrcode(0, 'M');
+      qr.addData(absenUrl);
+      qr.make();
+
+      const canvas = document.createElement('canvas');
+      const size = qr.getModuleCount() * 8;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      for (let row = 0; row < qr.getModuleCount(); row++) {
+        for (let col = 0; col < qr.getModuleCount(); col++) {
+          ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+          ctx.fillRect(col * 8, row * 8, 8, 8);
+        }
+      }
+
+      const container = document.getElementById('qrSesiCanvasContainer');
+      container.innerHTML = '';
+      container.appendChild(canvas);
+      canvas.classList.add('qr-canvas');
+
+      document.getElementById('qrSesiDataText').innerHTML = `
+        <strong>Sesi:</strong> ${escapeHtml(item.nama)}<br>
+        <strong>ID Sesi:</strong> ${sesiId}<br>
+        <span class="text-success">Token tersemat dalam QR (tanpa password)</span>
+      `;
+
+      window.__qrSesiCanvas = canvas;
+      new bootstrap.Modal(document.getElementById('qrSesiModal')).show();
+    } catch (e) {
+      showToast('Gagal generate QR: ' + e.message, 'danger');
+    }
+  };
+
+  window.regenerateQRSesi = function(sesiId) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+    if (!item) {
+      showToast('Data tidak ditemukan', 'error');
+      return;
+    }
+
+    if (!confirm(`Regenerate QR untuk sesi "${item.nama}"? QR lama akan tidak berlaku.`)) return;
+
+    AdminModule.regenerateQRSesi(sesiId).then(res => {
+      if (res.success) {
+        item.qrToken = res.qrToken;
+        applyFiltersAndSort(); // Update lokal
+        showToast('QR berhasil diregenerasi', 'success');
+      } else {
+        showToast('Gagal: ' + (res.message || 'Server error'), 'error');
+      }
+    }).catch(err => {
+      showToast('Gagal: ' + err.message, 'error');
+    });
+  };
+
+  // ==========================================================
+  //   VIEW ATTENDANCE
+  // ==========================================================
+  window.viewAttendance = async function(sesiId) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+    if (!item) {
+      showToast('Data tidak ditemukan', 'error');
+      return;
+    }
+
+    try {
+      const res = await callApi('getAttendanceBySesi', { sesiId }, 'GET');
+      const attendees = res.success ? res.data : [];
+
+      let detail = `<h6>Daftar Hadir Sesi: ${escapeHtml(item.nama)}</h6>`;
+      if (attendees.length === 0) {
+        detail += '<p>Belum ada peserta yang hadir.</p>';
+      } else {
+        detail += '<ul class="list-group">';
+        attendees.forEach(a => {
+          detail += `<li class="list-group-item">${escapeHtml(a.nama)} - ${escapeHtml(a.timestamp)}</li>`;
+        });
+        detail += '</ul>';
+      }
+      document.getElementById('attendanceModalLabel').innerHTML = 'Kehadiran';
+      document.getElementById('attendanceModalBody').innerHTML = detail;
+      new bootstrap.Modal(document.getElementById('attendanceModal')).show();
+    } catch (e) {
+      showToast('Gagal memuat data kehadiran: ' + e.message, 'error');
+    }
+  };
+
+  // ==========================================================
+  //   TOGGLE SESI STATUS
+  // ==========================================================
+  window.toggleSesi = function(sesiId) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+    if (!item) {
+      showToast('Data tidak ditemukan', 'error');
+      return;
+    }
+
+    const newState = !item.submission_open;
+    if (!confirm(`Ubah status sesi "${item.nama}" menjadi ${newState ? 'Buka' : 'Tutup'}?`)) return;
+
+    AdminModule.toggleAttendanceSession(sesiId, newState).then(res => {
+      if (res.success) {
+        item.submission_open = newState;
+        applyFiltersAndSort(); // Update lokal
+        showToast(`Sesi ${newState ? 'dibuka' : 'ditutup'} untuk absen.`, 'success');
+      } else {
+        showToast('Gagal mengubah status: ' + (res.message || 'Server error'), 'error');
+      }
+    }).catch(err => {
+      showToast('Gagal: ' + err.message, 'error');
+    });
+  };
+
+  // ==========================================================
+  //   CRUD HANDLERS (Optimistic UI, TIDAK REFRESH TOTAL)
+  // ==========================================================
+  function resetForm() {
+    document.getElementById('editSesiAbsenId').value = '';
+    document.getElementById('sesiNama').value = '';
+    document.getElementById('sesiWaktuMulai').value = '';
+    document.getElementById('sesiWaktuSelesai').value = '';
+    document.getElementById('sesiPassword').value = '';
+    document.getElementById('sesiAktif').checked = true;
+    document.getElementById('formModalTitle').innerText = 'Tambah Sesi Absen';
+  }
+
+  function openAddModal() {
+    resetForm();
+    new bootstrap.Modal(document.getElementById('sesiAbsenFormModal')).show();
+  }
+
+  window.editSesiAbsen = function(id) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    document.getElementById('editSesiAbsenId').value = id;
+    document.getElementById('sesiNama').value = item.nama || '';
+    
+    let formatLocal = (dateStr) => {
+      if (!dateStr) return '';
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().slice(0, 16);
+        }
+      } catch(e){}
+      return '';
+    };
+    
+    document.getElementById('sesiWaktuMulai').value = formatLocal(item.waktu_mulai);
+    document.getElementById('sesiWaktuSelesai').value = formatLocal(item.waktu_selesai);
+    document.getElementById('sesiPassword').value = '';
+    document.getElementById('sesiAktif').checked = item.submission_open === true;
+    document.getElementById('formModalTitle').innerText = 'Edit Sesi Absen';
+    new bootstrap.Modal(document.getElementById('sesiAbsenFormModal')).show();
+  };
+
+  window.viewSesiAbsen = function(id) {
+    const item = STATE.sesiList.find(i => String(i.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('detailSesiAbsenModal'));
+    const content = document.getElementById('detailContent');
+
+    let html = `
+      <div class="list-group list-group-flush">
+        <div class="list-group-item py-3"><strong>Nama Sesi:</strong> ${escapeHtml(item.nama || '-')}</div>
+        <div class="list-group-item py-3"><strong>Waktu Mulai:</strong> ${formatDateTime(item.waktu_mulai)}</div>
+        <div class="list-group-item py-3"><strong>Waktu Selesai:</strong> ${formatDateTime(item.waktu_selesai)}</div>
+        <div class="list-group-item py-3"><strong>Status:</strong> ${item.submission_open ? '✅ Buka' : '❌ Tutup'}</div>
+        <div class="list-group-item py-3"><strong>Password:</strong> ${item.password ? '🔒 Terproteksi' : '🔓 Tanpa password'}</div>
+        <div class="list-group-item py-3"><strong>Token QR:</strong> ${item.qrToken ? escapeHtml(item.qrToken) : 'Belum ada'}</div>
+      </div>
+    `;
+    content.innerHTML = html;
+    modal.show();
+  };
+
+  window.deleteSesiAbsen = function(id) {
+    document.getElementById('deleteSesiAbsenId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  };
+
+  function executeDelete() {
+    const id = document.getElementById('deleteSesiAbsenId').value;
+    if (!id) return;
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+    btn.disabled = true;
+
+    AdminModule.deleteSesiAbsen(id).then(res => {
+      if (res.success) {
+        STATE.sesiList = STATE.sesiList.filter(i => String(i.id) !== String(id));
+        applyFiltersAndSort(); // Update lokal
+        showToast('Sesi absen berhasil dihapus.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+      } else {
+        showToast('Gagal: ' + (res.message || 'Server error'), 'error');
+      }
+    }).catch(err => {
+      showToast('Gagal: ' + err.message, 'error');
+    }).finally(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    });
+  }
+
+  // ==========================================================
+  //   FUNGSI SIMPAN (Optimistic UI)
+  // ==========================================================
+  function saveData() {
+    const id = document.getElementById('editSesiAbsenId').value;
+    const nama = document.getElementById('sesiNama').value.trim();
+    const waktuMulai = document.getElementById('sesiWaktuMulai').value;
+    const waktuSelesai = document.getElementById('sesiWaktuSelesai').value;
+    const password = document.getElementById('sesiPassword').value;
+    const aktif = document.getElementById('sesiAktif').checked;
+
+    if (!nama || !waktuMulai || !waktuSelesai) {
+      showToast('Nama sesi, waktu mulai, dan waktu selesai wajib diisi.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('saveSesiAbsenBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    btn.disabled = true;
+
+    if (id === '') {
+      AdminModule.addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password).then(res => {
+        if (res.success) {
+          // Tambahkan secara manual ke state lokal (Optimistic)
+          const newItem = { 
+            id: res.id, 
+            nama, 
+            waktu_mulai: waktuMulai, 
+            waktu_selesai: waktuSelesai, 
+            submission_open: aktif, 
+            qrToken: res.qrToken || generateQrToken()
+          };
+          STATE.sesiList.unshift(newItem);
+          applyFiltersAndSort();
+          bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
+          showToast('Sesi absen berhasil ditambahkan!', 'success');
+        } else {
+          showToast('Gagal: ' + (res.message || 'Server error'), 'error');
+        }
+      }).catch(err => {
+        showToast('Gagal: ' + err.message, 'error');
+      }).finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+    } else {
+      AdminModule.updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password).then(res => {
+        if (res.success) {
+          // Update secara manual di state lokal
+          const index = STATE.sesiList.findIndex(i => String(i.id) === String(id));
+          if (index !== -1) {
+            STATE.sesiList[index].nama = nama;
+            STATE.sesiList[index].waktu_mulai = waktuMulai;
+            STATE.sesiList[index].waktu_selesai = waktuSelesai;
+            STATE.sesiList[index].submission_open = aktif;
+          }
+          applyFiltersAndSort();
+          bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
+          showToast('Sesi absen berhasil diperbarui!', 'success');
+        } else {
+          showToast('Gagal: ' + (res.message || 'Server error'), 'error');
+        }
+      }).catch(err => {
+        showToast('Gagal: ' + err.message, 'error');
+      }).finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+    }
+  }
+
+  function exportData() {
+    const data = STATE.filteredList;
+    if (data.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
+    }
+
+    const exportData = data.map(item => ({
+      id: item.id,
+      nama: item.nama,
+      waktu_mulai: item.waktu_mulai,
+      waktu_selesai: item.waktu_selesai,
+      aktif: item.submission_open,
+      qrToken: item.qrToken
+    }));
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sesi_absen_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast(`Berhasil mengekspor ${data.length} data sesi absen.`, 'success');
+  }
+
+  // ==========================================================
+  //   SEARCH HANDLER (Anti Autofill & Debug)
+  // ==========================================================
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    // Matikan autofill browser
+    searchInput.setAttribute('autocomplete', 'off');
+    
+    // Kosongkan paksa input setiap kali halaman dimuat
+    setTimeout(() => {
+      searchInput.value = '';
+      STATE.searchQuery = '';
+      console.log('✅ Input pencarian dipaksa kosong.');
+    }, 100);
+
+    // Jika pengguna mengklik input, hapus semua isinya untuk mengalahkan ekstensi autofill
+    searchInput.addEventListener('focus', function() {
+      this.value = '';
+      STATE.searchQuery = '';
+      applyFiltersAndSort();
     });
 
-    // =====================================================
-    //   FETCH RAW API (LOGIKA UTAMA YANG DIPERBAIKI)
-    // =====================================================
-    async function fetchRawAPIData(forceRefresh = false) {
-      console.log('🔄 Mencoba mengambil data dari API...');
-      try {
-        const result = await PKD.callApi('getSesiAbsen', {}, 'GET');
-        console.log('📦 Respons mentah dari API:', result);
-
-        let rawData = result.data || result;
-        if (!Array.isArray(rawData)) {
-          if (result.sesiAbsenList && Array.isArray(result.sesiAbsenList)) {
-            rawData = result.sesiAbsenList;
-          } else {
-            throw new Error('Format data tidak dikenali: ' + JSON.stringify(result));
-          }
-        }
-
-        console.log('✅ Data berhasil diekstraksi:', rawData);
-
-        // JIKA DATA BERHASIL DIDAPATKAN
-        if (rawData.length > 0) {
-          sesiAbsenList = rawData;
-          saveToStorage(sesiAbsenList);
-          
-          // ★ PERBAIKAN PENTING: RESET FILTER PENCARIAN SAAT DATA BARU MASUK ★
-          document.getElementById('searchInput').value = '';
-          searchQuery = '';
-          
-          renderTable(getFilteredSesiAbsen(searchQuery));
-          updateCacheStatus('Live');
-          if (forceRefresh) {
-            showToast('Data berhasil disegarkan (' + rawData.length + ' sesi)', 'success');
-          }
-        } else {
-          // Data dari API kosong, jangan timpa data lokal
-          console.warn('⚠️ API mengembalikan array kosong. Mempertahankan data lokal.');
-          if (forceRefresh) {
-            showToast('Data dari server kosong, menampilkan data lokal', 'info');
-          }
-          if (sesiAbsenList.length === 0) {
-            renderTable([]);
-            updateCacheStatus('Empty');
-          }
-        }
-      } catch (e) {
-        console.error('❌ Gagal mengambil data:', e);
-        if (forceRefresh) {
-          showToast('Gagal mengambil data: ' + e.message, 'error');
-        }
-        if (sesiAbsenList.length > 0) {
-          renderTable(getFilteredSesiAbsen(searchQuery));
-          updateCacheStatus('Offline');
-        } else {
-          renderTable([]);
-          updateCacheStatus('Error');
-        }
+    searchInput.addEventListener('input', debounce(function(e) {
+      STATE.searchQuery = e.target.value;
+      STATE.currentPage = 1;
+      if (STATE.sesiList.length > 0) {
+        applyFiltersAndSort();
       }
+    }, 300));
+  }
+
+  // ==========================================================
+  //   EVENT LISTENERS
+  // ==========================================================
+  document.getElementById('addSesiAbsenBtn')?.addEventListener('click', openAddModal);
+  document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    this.disabled = true;
+    // Refresh tetap menggunakan logika backup di dalamnya
+    loadSesiAbsen(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Gagal menyegarkan', 'error');
+    });
+  });
+  document.getElementById('saveSesiAbsenBtn')?.addEventListener('click', saveData);
+  document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
+  document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
+    if (window.__qrSesiCanvas) {
+      const link = document.createElement('a');
+      link.download = `QR_Sesi_${Date.now()}.png`;
+      link.href = window.__qrSesiCanvas.toDataURL('image/png');
+      link.click();
+    } else {
+      showToast('Tidak ada QR yang tersedia', 'warning');
+    }
+  });
+
+  // ==========================================================
+  //   LOGIN AUTH CHECK & INIT
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
     }
 
-    // =====================================================
-    //   RENDER TABLE
-    // =====================================================
-    function renderTable(data) {
-      const container = document.getElementById('sesiAbsenTableContainer');
-      if (!container) return;
-
-      let html = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 50px;">#</th>
-                <th>Nama Sesi</th>
-                <th>Tanggal</th>
-                <th>Waktu</th>
-                <th>Kuota</th>
-                <th>Aktif</th>
-                <th style="width: 180px;">QR Sesi</th>
-                <th style="width: 280px;" class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.length === 0) {
-        html += `
-            <tr>
-              <td colspan="8" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Tidak ada data sesi absen.
-              </td>
-            </tr>
-        `;
-      } else {
-        data.forEach((item, index) => {
-          html += `
-            <tr>
-              <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
-              <td>${formatDate(item.tanggal)}</td>
-              <td>${item.waktu || '-'}</td>
-              <td><span class="badge bg-info">${item.kuota !== undefined ? item.kuota : '-'}</span></td>
-              <td>${item.aktif ? '✅' : '❌'}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-dark" onclick="generateQRSesi('${item.id}')" title="QR">
-                  <i class="bi bi-qr-code"></i> QR
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="regenerateQRSesi('${item.id}')" title="Regenerate">
-                  <i class="bi bi-arrow-repeat"></i>
-                </button>
-              </td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSesiAbsen('${item.id}')" title="Lihat Detail">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSesiAbsen('${item.id}')" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success btn-aksi" onclick="viewAttendance('${item.id}')" title="Daftar Hadir">
-                  <i class="bi bi-people"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSesiAbsen('${item.id}')" title="Hapus">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // =====================================================
-    //   FILTER
-    // =====================================================
-    function getFilteredSesiAbsen(query) {
-      let filtered = sesiAbsenList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item => (item.nama && item.nama.toLowerCase().includes(q)));
-      }
-      return filtered;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    // =====================================================
-    //   QR GENERATION
-    // =====================================================
-    window.generateQRSesi = function(sesiId) {
-      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
-      if (!item) {
-        showToast('Data tidak ditemukan', 'error');
-        return;
-      }
-
-      if (!item.qrToken) {
-        item.qrToken = generateQrToken();
-        saveToStorage(sesiAbsenList);
-      }
-
-      try {
-        const absenUrl = `${window.location.origin}/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(item.qrToken)}`;
-        const qr = qrcode(0, 'M');
-        qr.addData(absenUrl);
-        qr.make();
-
-        const canvas = document.createElement('canvas');
-        const size = qr.getModuleCount() * 8;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        for (let row = 0; row < qr.getModuleCount(); row++) {
-          for (let col = 0; col < qr.getModuleCount(); col++) {
-            ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-            ctx.fillRect(col * 8, row * 8, 8, 8);
-          }
-        }
-
-        const container = document.getElementById('qrSesiCanvasContainer');
-        container.innerHTML = '';
-        container.appendChild(canvas);
-        canvas.classList.add('qr-canvas');
-
-        document.getElementById('qrSesiDataText').innerHTML = `
-          <strong>Sesi:</strong> ${escapeHtml(item.nama)}<br>
-          <strong>ID Sesi:</strong> ${sesiId}<br>
-          <span class="text-success">Token tersemat dalam QR (tanpa password)</span>
-        `;
-
-        window.__qrSesiCanvas = canvas;
-        new bootstrap.Modal(document.getElementById('qrSesiModal')).show();
-      } catch (e) {
-        showToast('Gagal generate QR: ' + e.message, 'danger');
-      }
-    };
-
-    // =====================================================
-    //   REGENERATE QR
-    // =====================================================
-    window.regenerateQRSesi = function(sesiId) {
-      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
-      if (!item) {
-        showToast('Data tidak ditemukan', 'error');
-        return;
-      }
-
-      if (!confirm(`Regenerate QR untuk sesi "${item.nama}"? QR lama akan tidak berlaku.`)) return;
-
-      const btn = event.target;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-      btn.disabled = true;
-
-      PKD.regenerateQRSesi(sesiId).then(res => {
-        if (res.success) {
-          item.qrToken = generateQrToken();
-          saveToStorage(sesiAbsenList);
-          showToast('QR berhasil diregenerasi', 'success');
-          renderTable(getFilteredSesiAbsen(searchQuery));
-        } else {
-          showToast('Gagal: ' + (res.message || 'Server error'), 'error');
-        }
-      }).catch(err => {
-        showToast('Gagal: ' + err.message, 'error');
-      }).finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      });
-    };
-
-    // =====================================================
-    //   VIEW ATTENDANCE
-    // =====================================================
-    window.viewAttendance = async function(sesiId) {
-      const item = sesiAbsenList.find(i => String(i.id) === String(sesiId));
-      if (!item) {
-        showToast('Data tidak ditemukan', 'error');
-        return;
-      }
-
-      try {
-        let attendees = [];
-        if (typeof PKD !== 'undefined' && typeof PKD.getAttendanceBySesi === 'function') {
-          const res = await PKD.getAttendanceBySesi(sesiId);
-          if (res.success) {
-            attendees = res.data || [];
-          }
-        }
-
-        let detail = `<h6>Daftar Hadir Sesi: ${escapeHtml(item.nama)}</h6>`;
-        if (attendees.length === 0) {
-          detail += '<p>Belum ada peserta yang hadir.</p>';
-        } else {
-          detail += '<ul class="list-group">';
-          attendees.forEach(a => {
-            detail += `<li class="list-group-item">${escapeHtml(a.nama)} - ${escapeHtml(a.timestamp)}</li>`;
-          });
-          detail += '</ul>';
-        }
-        document.getElementById('attendanceModalLabel').innerHTML = 'Kehadiran';
-        document.getElementById('attendanceModalBody').innerHTML = detail;
-        new bootstrap.Modal(document.getElementById('attendanceModal')).show();
-      } catch (e) {
-        showToast('Gagal memuat data kehadiran: ' + e.message, 'error');
-      }
-    };
-
-    // =====================================================
-    //   CRUD HANDLERS
-    // =====================================================
-    function resetForm() {
-      document.getElementById('editSesiAbsenId').value = '';
-      document.getElementById('sesiNama').value = '';
-      document.getElementById('sesiTanggal').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('sesiWaktu').value = '08:00';
-      document.getElementById('sesiKuota').value = '';
-      document.getElementById('sesiPassword').value = '';
-      document.getElementById('sesiNote').value = '';
-      document.getElementById('sesiAktif').checked = true;
-      document.getElementById('formModalTitle').innerText = 'Tambah Sesi Absen';
-    }
-
-    function openAddModal() {
-      resetForm();
-      new bootstrap.Modal(document.getElementById('sesiAbsenFormModal')).show();
-    }
-
-    window.editSesiAbsen = function(id) {
-      const item = sesiAbsenList.find(i => String(i.id) === String(id));
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      document.getElementById('editSesiAbsenId').value = id;
-      document.getElementById('sesiNama').value = item.nama || '';
-      document.getElementById('sesiTanggal').value = item.tanggal || '';
-      document.getElementById('sesiWaktu').value = item.waktu || '08:00';
-      document.getElementById('sesiKuota').value = item.kuota !== undefined ? item.kuota : '';
-      document.getElementById('sesiPassword').value = '';
-      document.getElementById('sesiNote').value = item.catatan || '';
-      document.getElementById('sesiAktif').checked = item.aktif !== undefined ? item.aktif : true;
-      document.getElementById('formModalTitle').innerText = 'Edit Sesi Absen';
-      new bootstrap.Modal(document.getElementById('sesiAbsenFormModal')).show();
-    };
-
-    window.viewSesiAbsen = function(id) {
-      const item = sesiAbsenList.find(i => String(i.id) === String(id));
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('detailSesiAbsenModal'));
-      const content = document.getElementById('detailContent');
-
-      let html = `
-        <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama Sesi:</strong> ${escapeHtml(item.nama || '-')}</div>
-          <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
-          <div class="list-group-item py-3"><strong>Waktu:</strong> ${item.waktu || '-'}</div>
-          <div class="list-group-item py-3"><strong>Kuota:</strong> <span class="badge bg-info">${item.kuota !== undefined ? item.kuota : '-'}</span></div>
-          <div class="list-group-item py-3"><strong>Status:</strong> ${item.aktif ? '✅ Aktif' : '❌ Tidak Aktif'}</div>
-          <div class="list-group-item py-3"><strong>Password:</strong> ${item.password ? '🔒 Terproteksi' : '🔓 Tanpa password'}</div>
-          <div class="list-group-item py-3"><strong>Token QR:</strong> ${item.qrToken ? escapeHtml(item.qrToken) : 'Belum ada'}</div>
-          <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
-        </div>
-      `;
-      content.innerHTML = html;
-
-      modal.show();
-    };
-
-    window.deleteSesiAbsen = function(id) {
-      document.getElementById('deleteSesiAbsenId').value = id;
-      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    };
-
-    function executeDelete() {
-      const id = document.getElementById('deleteSesiAbsenId').value;
-      if (!id) return;
-
-      const btn = document.getElementById('confirmDeleteBtn');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
-      btn.disabled = true;
-
-      PKD.deleteSesiAbsen(id).then(res => {
-        if (res.success) {
-          sesiAbsenList = sesiAbsenList.filter(i => String(i.id) !== String(id));
-          saveToStorage(sesiAbsenList);
-          showToast('Sesi absen berhasil dihapus.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-          renderTable(getFilteredSesiAbsen(searchQuery));
-        } else {
-          showToast('Gagal: ' + (res.message || 'Server error'), 'error');
-        }
-      }).catch(err => {
-        showToast('Gagal: ' + err.message, 'error');
-      }).finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      });
-    }
-
-    function saveData() {
-      const id = document.getElementById('editSesiAbsenId').value;
-      const nama = document.getElementById('sesiNama').value.trim();
-      const tanggal = document.getElementById('sesiTanggal').value;
-      const waktu = document.getElementById('sesiWaktu').value;
-      const kuota = document.getElementById('sesiKuota').value;
-      const password = document.getElementById('sesiPassword').value;
-      const catatan = document.getElementById('sesiNote').value.trim();
-      const aktif = document.getElementById('sesiAktif').checked;
-
-      if (!nama || !tanggal || !waktu || kuota === '') {
-        showToast('Nama sesi, tanggal, waktu, dan kuota wajib diisi.', 'error');
-        return;
-      }
-
-      const kuotaNum = parseInt(kuota);
-      if (isNaN(kuotaNum) || kuotaNum < 1) {
-        showToast('Kuota harus berupa angka minimal 1.', 'error');
-        return;
-      }
-
-      const data = {
-        nama: nama,
-        tanggal: tanggal,
-        waktu: waktu,
-        kuota: kuotaNum,
-        catatan: catatan,
-        aktif: aktif,
-        password: password
-      };
-
-      const btn = document.getElementById('saveSesiAbsenBtn');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-      btn.disabled = true;
-
-      if (id === '') {
-        PKD.addSesiAbsen(nama, waktu, aktif, password).then(res => {
-          if (res.success) {
-            const newItem = {
-              id: generateId(),
-              nama: nama,
-              tanggal: tanggal,
-              waktu: waktu,
-              kuota: kuotaNum,
-              catatan: catatan,
-              aktif: aktif,
-              password: password,
-              qrToken: generateQrToken()
-            };
-            sesiAbsenList.unshift(newItem);
-            saveToStorage(sesiAbsenList);
-            showToast('Sesi absen berhasil ditambahkan.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
-            renderTable(getFilteredSesiAbsen(searchQuery));
-          } else {
-            showToast('Gagal: ' + (res.message || 'Server error'), 'error');
-          }
-        }).catch(err => {
-          showToast('Gagal: ' + err.message, 'error');
-        }).finally(() => {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        });
-      } else {
-        PKD.updateSesiAbsen(id, nama, waktu, aktif, password).then(res => {
-          if (res.success) {
-            const index = sesiAbsenList.findIndex(i => String(i.id) === String(id));
-            if (index !== -1) {
-              sesiAbsenList[index] = { ...sesiAbsenList[index], ...data };
-              saveToStorage(sesiAbsenList);
-            }
-            showToast('Sesi absen berhasil diperbarui.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('sesiAbsenFormModal')).hide();
-            renderTable(getFilteredSesiAbsen(searchQuery));
-          } else {
-            showToast('Gagal: ' + (res.message || 'Server error'), 'error');
-          }
-        }).catch(err => {
-          showToast('Gagal: ' + err.message, 'error');
-        }).finally(() => {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        });
-      }
-    }
-
-    function exportData() {
-      const data = filteredList;
-      if (data.length === 0) {
-        showToast('Tidak ada data untuk diekspor.', 'info');
-        return;
-      }
-
-      const exportData = data.map(item => ({
-        id: item.id,
-        nama: item.nama,
-        tanggal: item.tanggal,
-        waktu: item.waktu,
-        kuota: item.kuota,
-        catatan: item.catatan,
-        aktif: item.aktif,
-        password: item.password,
-        qrToken: item.qrToken
-      }));
-
-      const json = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sesi_absen_export_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      showToast(`Berhasil mengekspor ${data.length} data sesi absen.`, 'success');
-    }
-
-    // =====================================================
-    //   SEARCH HANDLER
-    // =====================================================
-    const debouncedSearch = debounce(function(query) {
-      searchQuery = query;
-      const filtered = getFilteredSesiAbsen(searchQuery);
-      filteredList = filtered;
-      renderTable(filtered);
-    }, 300);
-
-    function handleSearch(e) {
-      debouncedSearch(e.target.value);
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
+    updateNavbarMenu();
+    loadSesiAbsen();
   })();
+
 </script>
 </body>
 </html>

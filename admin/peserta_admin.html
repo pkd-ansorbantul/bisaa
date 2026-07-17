@@ -10,46 +10,89 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
   <style>
     /* --- GLOBAL & SIDEBAR --- */
     * { font-family: 'Inter', sans-serif; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
     .container-card { max-width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
-    .sidebar-wrapper { width: 260px; max-width: 260px; background: #0f172a; color: #f1f5f9; min-height: 100vh; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; border-right: 1px solid #1e293b; display: flex; flex-direction: column; transition: width 0.3s ease, max-width 0.3s ease; }
+    .sidebar-wrapper {
+      width: 260px; max-width: 260px;
+      background: #0f172a; color: #f1f5f9;
+      min-height: 100vh; height: 100vh;
+      position: fixed; top: 0; left: 0; z-index: 1000;
+      border-right: 1px solid #1e293b;
+      display: flex; flex-direction: column;
+      transition: width 0.3s ease, max-width 0.3s ease;
+    }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
-    .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; transition: padding 0.3s ease; }
+    .sidebar-brand-area {
+      flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+      border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
+    }
     .sidebar-wrapper.minimized .sidebar-brand-area { padding: 1.5rem 0.75rem; display: flex; justify-content: center; }
-    .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease; }
+    .brand-sidebar {
+      display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease;
+    }
     .brand-sidebar:hover { opacity: 0.8; }
     .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
     .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
     .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
     .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
-    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { display: none; }
+    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+
+    /* --- USER ROLE DI SIDEBAR --- */
+    .sidebar-user-area { padding: 0.5rem 1.5rem 1rem 1.5rem; border-bottom: 1px solid #1e293b; }
+    .sidebar-wrapper.minimized .sidebar-user-area { display: none; }
+    .sidebar-user-area .role-badge { background: #2563eb; color: white; padding: 6px 14px; border-radius: 50px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+    .sidebar-user-area .username { display: block; margin-top: 4px; font-weight: 400; color: #94a3b8; font-size: 0.85rem; }
+
+    /* --- MENU AREA --- */
     .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
     .sidebar-menu-area::-webkit-scrollbar { display: none; }
-    .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden; }
+    .nav-pills .nav-link {
+      width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
+      color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
+      align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none;
+      text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden;
+    }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
+    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
+    .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
+    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
     .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
+      z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
     .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
     .bottom-nav .nav-item i { font-size: 1.5rem; }
     .bottom-nav .nav-item.active { color: #2563eb; }
-    @media (max-width: 991px) { .sidebar-wrapper { display: none; } .bottom-nav { display: flex; } .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; } }
+
+    @media (max-width: 991px) {
+      .sidebar-wrapper { display: none; }
+      .bottom-nav { display: flex; }
+      .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; }
+    }
     @media (min-width: 992px) { .bottom-nav { display: none; } }
-    .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease; }
-    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
+
+    .content-wrapper {
+      margin-left: 260px; padding: 1.5rem; background: #f8fafc;
+      min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
+    }
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .section-title {
+      font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
+    }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
@@ -66,7 +109,6 @@
     .field-builder-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .field-builder-card .field-label { font-weight: 600; margin-bottom: 0; }
     .field-builder-card .field-meta { font-size: 0.85rem; color: #64748b; }
-    .field-builder-card .field-actions .btn { padding: 0.1rem 0.5rem; font-size: 0.8rem; }
     .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
     .pagination-container .info { font-size: 0.9rem; color: #64748b; }
     .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
@@ -76,25 +118,24 @@
     th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
     th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
     th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
-    .debug-console { background: #1e1e2f; color: #a5b3ce; padding: 15px; border-radius: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; margin-top: 15px; }
-    .debug-console .log-success { color: #4caf50; }
-    .debug-console .log-error { color: #f44336; }
-    .debug-console .log-info { color: #64b5f6; }
-    .debug-console .log-warn { color: #ff9800; }
+    .credential-modal-qr { max-width: 200px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white; }
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-    
-    /* --- TTD BOX OPTIMIZED STYLE --- */
+
+    /* --- TTD BOX STYLE --- */
     .ttd-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; height: 100%; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
     .ttd-box:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: #2563eb; }
     .ttd-box h6 { font-weight: 700; color: #0f172a; margin-top: 8px; }
     .ttd-box .role-badge { font-size: 0.8rem; padding: 4px 14px; border-radius: 50px; background: #2563eb; color: white; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
     .ttd-box .no-signature { color: #94a3b8; font-size: 0.85rem; margin-top: 10px; }
-    
-    /* --- QR CONTAINER & IMAGE BORDER --- */
     .ttd-qr-container { text-align: center; margin-bottom: 10px; min-height: 150px; display: flex; justify-content: center; align-items: center; width: 100%; background: #f8fafc; border-radius: 12px; padding: 8px; border: 1px solid #e2e8f0; }
     .ttd-qr-container img { max-width: 130px; max-height: 130px; object-fit: contain; border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
-    .credential-modal-qr { max-width: 200px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white; }
+
+    /* RTL status badge */
+    .rtl-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
+    .rtl-status.ready { background: #d1fae5; color: #059669; }
+    .rtl-status.notready { background: #fee2e2; color: #dc2626; }
+    .rtl-status.partial { background: #fef3c7; color: #d97706; }
   </style>
 </head>
 <body>
@@ -105,7 +146,17 @@
     <!-- SIDEBAR -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle"><button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button></div>
-      <div class="sidebar-brand-area"><a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor"><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a></div>
+      
+      <div class="sidebar-brand-area">
+        <a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor"><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a>
+      </div>
+
+      <!-- Role Area -->
+      <div class="sidebar-user-area">
+        <span class="role-badge"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>
+        <span class="username" id="sidebarUsername">Administrator</span>
+      </div>
+
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
           <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
@@ -120,6 +171,7 @@
           <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
           <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
           <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html"><i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span></a>
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
           <div class="sidebar-logout"></div><a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
         </div>
@@ -144,28 +196,18 @@
           <button class="btn btn-primary rounded-pill" id="addPesertaBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Peserta</button>
           <button class="btn btn-outline-success rounded-pill ms-2" id="exportDataBtn"><i class="bi bi-download me-1"></i> Ekspor</button>
           <button class="btn btn-outline-warning rounded-pill ms-2" id="moveToAlumniBtn" disabled><i class="bi bi-arrow-right-circle me-1"></i> Pindahkan ke Alumni</button>
-          <button class="btn btn-outline-danger rounded-pill ms-2" id="clearCacheBtn"><i class="bi bi-trash me-1"></i> Hapus Cache</button>
           <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
-          
-          <!-- 🆕 TOMBOL GENERATE TTD MASSAL -->
-          <button class="btn btn-warning rounded-pill ms-2" id="bulkGenerateTTDBtn">
-            <i class="bi bi-lightning-charge-fill me-1"></i> ⚡ Generate TTD Massal
-          </button>
-
-          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
+          <button class="btn btn-warning rounded-pill ms-2" id="bulkGenerateTTDBtn"><i class="bi bi-lightning-charge-fill me-1"></i> ⚡ Generate TTD Massal</button>
+          <button class="btn btn-success rounded-pill ms-2" id="generateCertificateBtn"><i class="bi bi-file-earmark-pdf me-1"></i> Buat Sertifikat</button>
+          <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
         </div>
         <div class="col-md-6 text-md-end">
-          <div class="input-group" style="max-width: 300px; display: inline-flex;"><span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span><input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama..."></div>
+          <div class="input-group" style="max-width: 300px; display: inline-flex;"><span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span><input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama atau utusan..." autocomplete="off"></div>
           <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterStatus"><option value="">Semua</option><option value="pending">Pending</option><option value="approved">Disetujui</option><option value="active">Aktif</option><option value="alumni">Alumni</option></select>
         </div>
       </div>
 
       <div id="pesertaTableContainer" class="table-container"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div></div>
-
-      <div id="debugConsole" class="debug-console" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-2"><strong><i class="bi bi-bug me-2"></i>Debug Console</strong><button class="btn btn-sm btn-outline-light" onclick="document.getElementById('debugConsole').style.display='none'">Tutup</button></div>
-        <div id="debugLog"></div>
-      </div>
 
       <!-- FORM BUILDER -->
       <div class="mt-5 pt-4 border-top">
@@ -208,12 +250,12 @@
   </div>
 </div>
 
-<!-- ==================== TTD MODAL DINAMIS ==================== -->
+<!-- TTD MODAL DINAMIS -->
 <div class="modal fade" id="ttdModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital</h5>
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital (QR)</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
@@ -230,592 +272,653 @@
   </div>
 </div>
 
+<!-- Modal Generate Sertifikat -->
+<div class="modal fade" id="generateCertModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-pdf me-2"></i>Buat Sertifikat untuk Peserta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Pilih Template Sertifikat</label>
+          <select class="form-select" id="certTemplateSelect">
+            <option value="">-- Pilih Template --</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Peserta yang akan dibuatkan sertifikat</label>
+          <div id="selectedParticipantsList" class="small text-muted"></div>
+        </div>
+        <div class="alert alert-info small" id="generateStatusMsg">
+          <i class="bi bi-info-circle"></i> Pastikan peserta sudah disetujui, semua RTL selesai, dan TTD Digital terdaftar.
+        </div>
+        <div id="generateProgress" style="display:none;">
+          <div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div></div>
+          <p class="small text-muted mt-1" id="generateProgressText">Memproses...</p>
+        </div>
+        <div id="generateResultArea" class="mt-3"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-success rounded-pill px-4" id="generateCertSubmit"><i class="bi bi-file-earmark-pdf me-1"></i> Generate Sertifikat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container position-fixed top-0 end-0 p-3"><div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
 
+<!-- ================= SCRIPTS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  // --- State ---
-  var STATE = { 
-    pesertaList: [], filteredList: [], formStructure: [], searchQuery: '', statusFilter: '', 
-    currentPage: 1, itemsPerPage: 15, sortColumn: null, sortDirection: 'asc',
-    editingFieldId: null, allApprovals: [] // Cache TTD
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    getUserData,
+    updateNavbarMenu,
+    logout
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
+
+  // ==========================================================
+  //   STATE & UTILITY
+  // ==========================================================
+  let STATE = {
+    pesertaList: [],
+    filteredList: [],
+    formStructure: [],
+    rtlData: [],
+    approvalsData: [],
+    searchQuery: '',
+    statusFilter: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc',
+    editingFieldId: null
   };
 
-  // --- Utility ---
-  function escapeHtml(str) { 
-    if (!str) return ''; 
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;'); // Menangani tanda petik tunggal
-  }
-  
-  function showToast(message, type) {
-    var toastEl = document.getElementById('notificationToast');
-    if (!toastEl) return;
-    var toast = new bootstrap.Toast(toastEl);
-    document.getElementById('toastMessage').innerText = message;
-    var icon = document.getElementById('toastIcon');
-    if (type === 'success') { 
-      icon.className = 'bi bi-check-circle-fill text-success'; 
-      document.getElementById('toastTitle').innerText = 'Berhasil'; 
-    } else { 
-      icon.className = 'bi bi-x-circle-fill text-danger'; 
-      document.getElementById('toastTitle').innerText = 'Gagal'; 
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
     }
-    toast.show();
   }
-  
-  function getStatusBadge(status) { 
-    if (status === 'approved' || status === 'active') return 'bg-success'; 
-    if (status === 'rejected') return 'bg-danger'; 
-    if (status === 'alumni') return 'bg-secondary'; 
-    return 'bg-warning text-dark'; 
+
+  function getStatusBadge(status) {
+    if (status === 'approved' || status === 'active') return 'bg-success';
+    if (status === 'rejected') return 'bg-danger';
+    if (status === 'alumni') return 'bg-secondary';
+    return 'bg-warning text-dark';
   }
-  
-  function renderSkeleton() { return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>'; }
-  
-  function updateCacheStatus(status) { 
-    var el = document.getElementById('cacheStatus'); 
-    if (el) { 
-      el.textContent = status; 
-      el.className = 'cache-status ' + (status === 'Live' ? 'live' : ''); 
-    } 
-  }
-  
-  function debounce(fn, delay) { 
-    var timer; 
-    return function() { 
-      var args = arguments; 
-      var context = this; 
-      clearTimeout(timer); 
-      timer = setTimeout(function() { 
-        fn.apply(context, args); 
-      }, delay); 
-    }; 
-  }
-  
+
   function generateId() { return 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
 
-  // --- Load Data & Cache Management ---
-  async function loadPesertaData(forceRefresh) {
-    var container = document.getElementById('pesertaTableContainer');
-    container.innerHTML = renderSkeleton();
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ==========================================================
+  //   SIDEBAR LOGIC
+  // ==========================================================
+  function initSidebar() {
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    const sidebar = document.getElementById('sidebarWrapper');
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('minimized');
+        const icon = this.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('bi-arrow-left-right');
+          icon.classList.toggle('bi-arrow-right-left');
+        }
+      });
+    }
+    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.dataset.target;
+        const submenu = document.getElementById('submenu-' + target);
+        if (submenu) submenu.classList.toggle('open');
+      });
+    });
+    const userData = getUserData();
+    const sidebarUser = document.getElementById('sidebarUsername');
+    if (sidebarUser && userData && userData.nama) {
+      sidebarUser.innerText = userData.nama;
+    }
+  }
+
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { e.preventDefault(); logout(); });
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { logout(); });
+
+  // ==========================================================
+  //   LOAD DATA (REALTIME FORCE REFRESH)
+  // ==========================================================
+  async function loadPesertaData(forceRefresh = true) {
+    const container = document.getElementById('pesertaTableContainer');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data dari spreadsheet...</p></div>';
 
     try {
-      var dataToRender = null;
-
-      if (forceRefresh) {
-        console.log('[DEBUG] Force refresh, mengambil dari API...');
-        var res = await PKD.callApi('getPesertaList', {}, 'GET');
-        var freshData = res?.data || res;
-        if (Array.isArray(freshData)) dataToRender = freshData;
-        else dataToRender = [];
-
-        if (dataToRender && dataToRender.length > 0) {
-          STATE.pesertaList = dataToRender;
-          try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
-          applyFiltersAndSort();
-          updateCacheStatus('Live');
-          console.log('[DEBUG] Load ' + dataToRender.length + ' data dari API.');
-          return;
-        } else {
-          container.innerHTML = '<div class="alert alert-info text-center">📂 Data peserta kosong.</div>';
-          updateCacheStatus('Empty');
-          return;
-        }
+      if (!AdminModule.getState().lastSync || forceRefresh) {
+        await AdminModule.loadAllData(forceRefresh);
       }
+      
+      const freshData = AdminModule.getPesertaList() || [];
+      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+        STATE.pesertaList = freshData;
+        
+        const rtlRes = await callApi('getRTLTasks', {}, 'GET');
+        STATE.rtlData = rtlRes.data || [];
+        const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+        STATE.approvalsData = approvalRes.data || [];
 
-      var cached = DataCache.getData('peserta');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.pesertaList = cached;
-        applyFiltersAndSort();
-        updateCacheStatus('Cache');
-        console.log('[DEBUG] Data dari cache.');
-
-        (function() {
-          try {
-            var bgRes = PKD.callApi('getPesertaList', {}, 'GET');
-            bgRes.then(function(res) {
-              var bgData = res?.data || res;
-              if (!Array.isArray(bgData)) bgData = [];
-              if (bgData.length > 0 && JSON.stringify(bgData) !== JSON.stringify(STATE.pesertaList)) {
-                STATE.pesertaList = bgData;
-                try { DataCache.updateData('peserta', bgData); } catch (e) {}
-                applyFiltersAndSort();
-                updateCacheStatus('Live');
-                console.log('[DEBUG] Background update berhasil.');
-              }
-            });
-          } catch (e) { console.warn('Background fetch gagal:', e); }
-        })();
-        return;
-      }
-
-      console.log('[DEBUG] Mengambil data dari API (no cache)...');
-      var res = await PKD.callApi('getPesertaList', {}, 'GET');
-      var freshData = res?.data || res;
-      if (Array.isArray(freshData)) dataToRender = freshData;
-      else dataToRender = [];
-
-      if (dataToRender && dataToRender.length > 0) {
-        STATE.pesertaList = dataToRender;
-        try { DataCache.updateData('peserta', dataToRender); } catch (e) {}
         applyFiltersAndSort();
         updateCacheStatus('Live');
-        console.log('[DEBUG] Load ' + dataToRender.length + ' data dari API.');
       } else {
-        container.innerHTML = '<div class="alert alert-info text-center">📂 Data peserta kosong.</div>';
+        container.innerHTML = `<div class="alert alert-info text-center">Belum ada data peserta.<br><small>Pastikan data di Google Spreadsheet sudah terisi.</small></div>`;
         updateCacheStatus('Empty');
       }
-
     } catch (e) {
-      console.error('[DEBUG] Error loadPesertaData:', e);
-      container.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+      console.error('[Peserta Admin] Gagal load data:', e);
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data dari server.<br><small>Error: ${escapeHtml(e.message)}</small></div>`;
       updateCacheStatus('Error');
     }
   }
 
-  // --- Filter, Sort, Pagination ---
-  function applyFiltersAndSort() {
-    var filtered = STATE.pesertaList;
-    if (STATE.searchQuery.trim() !== '') {
-      var q = STATE.searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(function(item) { 
-        return (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+  async function loadFormStructure() {
+    try {
+      let configData = null;
+      const apiRes = await callApi('getFormSettings', {}, 'GET');
+      if (apiRes && apiRes.success) {
+        let raw = apiRes.data;
+        if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch (e) { raw = null; } }
+        if (Array.isArray(raw) && raw.length > 0 && Array.isArray(raw[0])) {
+          const correctConfig = raw.find(config => {
+            if (!Array.isArray(config)) return false;
+            const suratField = config.find(f => f.id === 'surat_rekomendasi');
+            return suratField && suratField.required === false;
+          });
+          configData = correctConfig || raw[0];
+        } else if (Array.isArray(raw) && raw.length > 0) {
+          configData = raw;
+        }
+      }
+      if (configData && Array.isArray(configData) && configData.length > 0) {
+          STATE.formStructure = configData;
+      } else {
+          STATE.formStructure = getDefaultFormFieldsLocal();
+      }
+      renderFormStructure();
+    } catch (e) {
+      STATE.formStructure = getDefaultFormFieldsLocal();
+      renderFormStructure();
+    }
+  }
+
+  function getDefaultFormFieldsLocal() {
+    return [
+      { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
+      { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', options: '', required: true, isCore: true },
+      { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', options: '', required: true, isCore: true },
+      { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', options: '', required: true, isCore: true },
+      { id: 'alamat', label: 'Alamat', type: 'textarea', options: '', required: true, isCore: true },
+      { id: 'no_hp', label: 'No HP', type: 'text', options: '', required: true, isCore: true },
+      { id: 'email', label: 'Email', type: 'text', options: '', required: true, isCore: true },
+      { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
+      { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
+      { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
+      { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: true, isCore: true }
+    ];
+  }
+
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION
+  // ==========================================================
+  function getFilteredPeserta(query = '', status = '') {
+    let filtered = STATE.pesertaList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
         (item.email && item.email.toLowerCase().includes(q)) ||
         (item.no_hp && item.no_hp.toLowerCase().includes(q)) ||
-        (item.utusan && item.utusan.toLowerCase().includes(q));
-      });
+        (item.utusan && item.utusan.toLowerCase().includes(q))
+      );
     }
-    if (STATE.statusFilter !== '') {
-      filtered = filtered.filter(function(item) { return item.status === STATE.statusFilter; });
+    if (status !== '' && status !== '') {
+      filtered = filtered.filter(item => item.status === status);
     }
+    return filtered;
+  }
+
+  function applyFiltersAndSort() {
+    let filtered = getFilteredPeserta(STATE.searchQuery, STATE.statusFilter);
     if (STATE.sortColumn) {
       filtered.sort(function(a, b) {
-        var va = (a[STATE.sortColumn] || '').toLowerCase();
-        var vb = (b[STATE.sortColumn] || '').toLowerCase();
+        let va = (a[STATE.sortColumn] || '').toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toLowerCase();
         if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
         if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
     STATE.filteredList = filtered;
-    var totalItems = filtered.length;
-    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
     if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
     if (STATE.currentPage < 1) STATE.currentPage = 1;
-    var start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-    var end = Math.min(start + STATE.itemsPerPage, totalItems);
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
     renderTable(filtered.slice(start, end), totalItems);
   }
 
   function renderTable(data, totalItems) {
-    var container = document.getElementById('pesertaTableContainer');
+    const container = document.getElementById('pesertaTableContainer');
     if (!container) return;
-    var html = '<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr>' +
-      '<th style="width:40px;"><input type="checkbox" id="selectAllPeserta"></th>' +
-      '<th style="width:50px;">#</th>' +
-      '<th class="sortable" onclick="sortTable(\'nama_lengkap\')">Nama</th>' +
-      '<th class="sortable" onclick="sortTable(\'email\')">Email</th>' +
-      '<th class="sortable" onclick="sortTable(\'no_hp\')">No HP</th>' +
-      '<th class="sortable" onclick="sortTable(\'utusan\')">Utusan</th>' +
-      '<th class="sortable" onclick="sortTable(\'status\')">Status</th>' +
-      '<th style="width:200px;">Aksi</th>' +
-      '</tr></thead><tbody>';
-      
-    if (data.length === 0) html += '<tr><td colspan="8" class="text-center py-5"><i class="bi bi-inbox fs-4"></i>Tidak ada data</td></tr>';
-    else {
-      for (var i = 0; i < data.length; i++) {
-        var item = data[i];
-        var globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
-        var nama = item.nama_lengkap || '-'; 
-        var email = item.email || '-'; 
-        var noHp = item.no_hp || '-'; 
-        var utusan = item.utusan || '-'; 
-        var status = item.status || 'pending'; 
-        var badge = getStatusBadge(status);
-        
-        // PERBAIKAN PENTING: Hapus semua onclick inline, ganti dengan data-id
-        html += '<tr><td><input type="checkbox" class="peserta-checkbox" value="' + item.id + '"></td>' +
-          '<td>' + globalIndex + '</td>' +
-          '<td><strong>' + escapeHtml(nama) + '</strong></td>' +
-          '<td>' + escapeHtml(email) + '</td>' +
-          '<td>' + escapeHtml(noHp) + '</td>' +
-          '<td>' + escapeHtml(utusan) + '</td>' +
-          '<td><span class="badge ' + badge + '">' + escapeHtml(status) + '</span></td>' +
-          '<td class="text-center">' +
-            '<button class="btn btn-sm btn-outline-info view-btn" data-id="' + item.id + '">👁️</button>' +
-            '<button class="btn btn-sm btn-outline-warning edit-btn" data-id="' + item.id + '">✏️</button>' +
-            '<button class="btn btn-sm btn-outline-danger delete-btn" data-id="' + item.id + '">🗑️</button>' +
-            '<button class="btn btn-sm btn-outline-primary ttd-btn" data-id="' + item.id + '" data-nama="' + escapeHtml(nama) + '">🖊️ TTD</button>' +
-          '</td></tr>';
+
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:40px;"><input type="checkbox" id="selectAllPeserta"></th>
+              <th style="width:50px;">#</th>
+              <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
+              <th class="sortable" onclick="sortTable('email')">Email</th>
+              <th class="sortable" onclick="sortTable('no_hp')">No HP</th>
+              <th class="sortable" onclick="sortTable('utusan')">Utusan</th>
+              <th class="sortable" onclick="sortTable('status')">Status</th>
+              <th style="width:240px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += '<tr><td colspan="8" class="text-center py-5"><i class="bi bi-inbox fs-4"></i> Tidak ada data</td></tr>';
+    } else {
+      for (let i = 0; i < data.length; i++) {
+        const item = data[i];
+        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
+        const nama = item.nama_lengkap || '-';
+        const email = item.email || '-';
+        const noHp = item.no_hp || '-';
+        // KOLOM UTUSAN
+        const utusan = item.utusan || '-';
+        const status = item.status || 'pending';
+        const badge = getStatusBadge(status);
+
+        html += `
+          <tr>
+            <td><input type="checkbox" class="peserta-checkbox" value="${item.id}"></td>
+            <td>${globalIndex}</td>
+            <td><strong>${escapeHtml(nama)}</strong></td>
+            <td>${escapeHtml(email)}</td>
+            <td>${escapeHtml(noHp)}</td>
+            <td>${escapeHtml(utusan)}</td>
+            <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-info view-btn" data-id="${item.id}">👁️</button>
+              <button class="btn btn-sm btn-outline-warning edit-btn" data-id="${item.id}">✏️</button>
+              <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.id}">🗑️</button>
+              <button class="btn btn-sm btn-outline-primary ttd-btn" data-id="${item.id}" data-nama="${escapeHtml(nama)}">🖊️ TTD</button>
+              ${status === 'approved' || status === 'active' ? `
+                <button class="btn btn-sm btn-outline-success cert-btn" data-id="${item.id}">📄 Sertif</button>
+                <button class="btn btn-sm btn-outline-secondary rtl-acc-btn" data-id="${item.id}" data-nama="${escapeHtml(nama)}">✔ ACC RTL</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
       }
     }
     html += '</tbody></table></div>';
-    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-    html += '<div class="pagination-container"><div class="info">Menampilkan ' + (data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0) + ' - ' + Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems) + ' dari ' + totalItems + ' data</div><div class="btn-group">';
-    for (var i = 1; i <= totalPages; i++) html += '<button class="btn btn-sm ' + (i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+      <div class="pagination-container">
+        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+        <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
     html += '</div></div>';
+
     container.innerHTML = html;
     container.classList.add('fade-in');
-    
-    // Binding event listener ke tombol
+
     bindTableButtons();
 
-    var selectAll = document.getElementById('selectAllPeserta');
-    if(selectAll) {
+    const selectAll = document.getElementById('selectAllPeserta');
+    if (selectAll) {
       selectAll.addEventListener('change', function() {
-        var cbs = document.querySelectorAll('.peserta-checkbox');
-        for(var j=0; j<cbs.length; j++) cbs[j].checked = this.checked;
+        const cbs = document.querySelectorAll('.peserta-checkbox');
+        for (let j = 0; j < cbs.length; j++) cbs[j].checked = this.checked;
         updateMoveToAlumniBtn();
       });
     }
-    var cbs = document.querySelectorAll('.peserta-checkbox');
-    for(var j=0; j<cbs.length; j++) {
+    const cbs = document.querySelectorAll('.peserta-checkbox');
+    for (let j = 0; j < cbs.length; j++) {
       cbs[j].addEventListener('change', updateMoveToAlumniBtn);
     }
   }
 
-  // --- Binding Tombol Tabel Tanpa Inline Onclick ---
   function bindTableButtons() {
-    document.querySelectorAll('.view-btn').forEach(function(btn) {
-      btn.onclick = function() { viewPeserta(this.dataset.id); };
+    document.querySelectorAll('.view-btn').forEach(btn => { btn.onclick = function() { viewPeserta(this.dataset.id); }; });
+    document.querySelectorAll('.edit-btn').forEach(btn => { btn.onclick = function() { editPeserta(this.dataset.id); }; });
+    document.querySelectorAll('.delete-btn').forEach(btn => { btn.onclick = function() { deletePeserta(this.dataset.id); }; });
+    document.querySelectorAll('.ttd-btn').forEach(btn => { btn.onclick = function() { showTTD(this.dataset.id, this.dataset.nama); }; });
+    document.querySelectorAll('.cert-btn').forEach(btn => {
+      btn.onclick = function() { generateCertificateForOne(this.dataset.id); };
     });
-    document.querySelectorAll('.edit-btn').forEach(function(btn) {
-      btn.onclick = function() { editPeserta(this.dataset.id); };
-    });
-    document.querySelectorAll('.delete-btn').forEach(function(btn) {
-      btn.onclick = function() { deletePeserta(this.dataset.id); };
-    });
-    document.querySelectorAll('.ttd-btn').forEach(function(btn) {
-      btn.onclick = function() { showTTD(this.dataset.id, this.dataset.nama); };
+    document.querySelectorAll('.rtl-acc-btn').forEach(btn => {
+      btn.onclick = function() { approveRTLForParticipant(this.dataset.id, this.dataset.nama); };
     });
   }
 
-  function updateMoveToAlumniBtn() { 
-    var checked = document.querySelectorAll('.peserta-checkbox:checked'); 
-    document.getElementById('moveToAlumniBtn').disabled = checked.length === 0; 
+  function updateMoveToAlumniBtn() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    document.getElementById('moveToAlumniBtn').disabled = checked.length === 0;
   }
 
   window.sortTable = function(col) {
     if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
     else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
-    STATE.currentPage = 1; 
-    applyFiltersAndSort();
-  };
-  
-  window.goToPage = function(page) { 
-    var totalItems = STATE.filteredList.length; 
-    var totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage)); 
-    if (page < 1 || page > totalPages) return; 
-    STATE.currentPage = page; 
-    applyFiltersAndSort(); 
+    STATE.currentPage = 1; applyFiltersAndSort();
   };
 
-  // --- Form Builder ---
-  async function loadFormStructure() {
-    try {
-      var res = await PKD.getFormSettings();
-      var fields = [];
-      if (res.success && res.data) {
-        if (typeof res.data === 'string') { try { fields = JSON.parse(res.data); } catch(e) { fields = []; } }
-        else if (Array.isArray(res.data)) fields = res.data;
-        if (Array.isArray(fields) && fields.length > 0 && typeof fields[0] === 'string') {
-          var coreLabels = { nama_lengkap:'Nama Lengkap', tempat_tgl_lahir:'Tempat & Tanggal Lahir', pekerjaan:'Pekerjaan', pendidikan_terakhir:'Pendidikan Terakhir', alamat:'Alamat', no_hp:'No HP', email:'Email', utusan:'Utusan (PAC)', pengalaman_organisasi:'Pengalaman Organisasi', foto:'Foto', surat_rekomendasi:'Surat Rekomendasi' };
-          fields = fields.map(function(id) { return { id: id, label: coreLabels[id] || id, type: (id==='foto'||id==='surat_rekomendasi')?'file':(id==='pengalaman_organisasi'||id==='alamat')?'textarea':'text', options:'', required:true, isCore:true }; });
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page; applyFiltersAndSort();
+  };
+
+  // ==========================================================
+  //   GENERATE CERTIFICATE (LIVE SYNC VALIDATION)
+  // ==========================================================
+
+  function isParticipantEligible(participant, approvalsList) {
+    if (participant.status !== 'approved' && participant.status !== 'active') {
+        return { eligible: false, reason: 'Status belum disetujui/aktif.' };
+    }
+    const tasks = STATE.rtlData.filter(t => t.pesertaId == participant.id);
+    if (tasks.length > 0) {
+        const allDone = tasks.every(t => t.status === 'selesai');
+        if (!allDone) {
+            return { eligible: false, reason: 'Belum semua tugas RTL selesai.' };
         }
-        STATE.formStructure = fields;
-        renderFormStructure();
-      }
-    } catch(e) { 
-      console.warn('Gagal load form structure:', e); 
-      STATE.formStructure = [ { id:'nama_lengkap', label:'Nama Lengkap', type:'text', required:true, isCore:true } ]; 
-      renderFormStructure(); 
     }
+    const name = participant.nama_lengkap;
+    const hasKetua = approvalsList.some(a => a.peserta_nama === name && a.role === 'ketua_pc');
+    const hasSekretaris = approvalsList.some(a => a.peserta_nama === name && a.role === 'sekretaris');
+    const hasInstruktur = approvalsList.some(a => a.peserta_nama === name && a.role === 'instruktur');
+
+    if (!hasKetua || !hasSekretaris || !hasInstruktur) {
+        return { eligible: false, reason: `Tanda tangan digital belum lengkap (Butuh: Ketua PC, Sekretaris, Instruktur)` };
+    }
+    return { eligible: true };
   }
 
-  function renderFormStructure() {
-    var container = document.getElementById('formBuilderContainer');
-    if (!STATE.formStructure || STATE.formStructure.length === 0) { container.innerHTML = '<div class="col-12 text-muted">Belum ada field.</div>'; return; }
-    var html = '';
-    for(var i=0; i<STATE.formStructure.length; i++) {
-      var field = STATE.formStructure[i];
-      var isCore = field.isCore === true;
-      html += '<div class="col-md-6 col-lg-4"><div class="field-builder-card"><div><div class="field-label">' + escapeHtml(field.label) + '</div><div class="field-meta">' + (isCore ? '<span class="badge bg-secondary">Core</span>' : '<span class="badge bg-info">' + field.type + '</span>') + (field.required ? '<span class="badge bg-danger">Wajib</span>' : '') + '</div></div><div class="field-actions"><button class="btn btn-sm btn-outline-warning" onclick="editField(\'' + field.id + '\')"><i class="bi bi-pencil"></i></button>' + (!isCore ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteField(\'' + field.id + '\')"><i class="bi bi-trash"></i></button>' : '') + '</div></div></div>';
-    }
-    container.innerHTML = html;
-  }
+  async function openGenerateModal(ids) {
+    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+    STATE.approvalsData = approvalRes.data || [];
+    
+    const templatesRes = await callApi('getCertificateTemplates', {}, 'GET');
+    const templates = templatesRes.data || [];
+    const templateSelect = document.getElementById('certTemplateSelect');
+    templateSelect.innerHTML = '<option value="">-- Pilih Template --</option>' +
+      templates.map(t => `<option value="${t.id}">${escapeHtml(t.nama_template)}</option>`).join('');
 
-  window.editField = function(id) { 
-    var field = STATE.formStructure.find(function(f) { return f.id===id; }); 
-    if(!field){showToast('Field tidak ditemukan','error');return;} 
-    document.getElementById('editFieldId').value=field.id; 
-    document.getElementById('fieldLabel').value=field.label||''; 
-    document.getElementById('fieldType').value=field.type||'text'; 
-    document.getElementById('fieldOptions').value=field.options||''; 
-    document.getElementById('fieldRequired').checked=field.required||false; 
-    document.getElementById('fieldModalTitle').innerText='Edit Field'; 
-    document.getElementById('fieldOptionsGroup').style.display=(field.type==='radio'||field.type==='select')?'block':'none'; 
-    STATE.editingFieldId=field.id; 
-    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show(); 
-  };
-  
-  window.deleteField = function(id) { 
-    if(!confirm('Yakin ingin menghapus field ini?')) return; 
-    STATE.formStructure = STATE.formStructure.filter(function(f){return f.id!==id;}); 
-    renderFormStructure(); 
-  };
-  
-  document.getElementById('fieldType')?.addEventListener('change', function() { 
-    document.getElementById('fieldOptionsGroup').style.display = (this.value==='radio'||this.value==='select')?'block':'none'; 
-  });
-  
-  document.getElementById('saveFieldBtn')?.addEventListener('click', function() {
-    var id = document.getElementById('editFieldId').value, 
-        label = document.getElementById('fieldLabel').value.trim(), 
-        type = document.getElementById('fieldType').value, 
-        options = document.getElementById('fieldOptions').value.trim(), 
-        required = document.getElementById('fieldRequired').checked;
-    if(!label){showToast('Label wajib diisi.','error');return;}
-    if((type==='radio'||type==='select')&&!options){showToast('Opsi wajib.','error');return;}
-    if(id){ 
-      var idx = STATE.formStructure.findIndex(function(f){return f.id===id;}); 
-      if(idx!==-1){STATE.formStructure[idx].label=label; STATE.formStructure[idx].type=type; STATE.formStructure[idx].options=options; STATE.formStructure[idx].required=required;} 
-    } else { 
-      STATE.formStructure.push({id:generateId(), label:label, type:type, options:options, required:required, isCore:false}); 
-    }
-    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide(); 
-    renderFormStructure(); 
-    showToast('Field disimpan','success');
-  });
-  
-  document.getElementById('saveFormStructureBtn')?.addEventListener('click', async function() {
-    var payload = STATE.formStructure.map(function(f){ return {id:f.id, label:f.label, type:f.type, options:f.options, required:f.required}; });
-    var btn = this; 
-    var orig = btn.innerHTML; 
-    btn.disabled=true; 
-    btn.innerHTML='<span class="spinner-border"></span> Menyimpan...';
-    try { 
-      var res = await PKD.setFormSettings(payload); 
-      if(res.success){ 
-        showToast('Struktur form disimpan','success'); 
-        try{DataCache.updateData('formSettings',payload);}catch(e){} 
-      } else throw new Error(res.message||'Gagal'); 
-    } catch(e){showToast('Gagal: '+e.message,'error');} 
-    finally{btn.disabled=false; btn.innerHTML=orig;}
-  });
-  
-  document.getElementById('addFieldBtn')?.addEventListener('click', function() {
-    document.getElementById('editFieldId').value=''; 
-    document.getElementById('fieldLabel').value=''; 
-    document.getElementById('fieldType').value='text'; 
-    document.getElementById('fieldOptions').value=''; 
-    document.getElementById('fieldRequired').checked=false; 
-    document.getElementById('fieldModalTitle').innerText='Tambah Field Baru'; 
-    document.getElementById('fieldOptionsGroup').style.display='none'; 
-    STATE.editingFieldId=null; 
-    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
-  });
-
-  // ================= TOMBOL GENERATE TTD MASSAL =================
-  document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
-    if (!confirm('Anda akan membuat TTD massal untuk semua peserta yang sudah disetujui. Lanjutkan?')) return;
-
-    var btn = this;
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
-
-    try {
-      var res = await PKD.callApi('bulkGenerateTTD', { role: 'all' }, 'POST');
-      if (res.success) {
-        var msg = res.addedCount > 0 
-          ? 'Berhasil menambahkan ' + res.addedCount + ' TTD untuk ' + res.totalPeserta + ' peserta.' 
-          : 'Tidak ada data baru yang ditambahkan. Semua peserta sudah memiliki TTD.';
-        showToast(msg, res.addedCount > 0 ? 'success' : 'info');
-        loadPesertaData(true);
-      } else {
-        showToast('Gagal: ' + (res.message || 'Error'), 'error');
-      }
-    } catch (e) {
-      showToast('Error: ' + e.message, 'error');
-    } finally {
-      btn.innerHTML = orig;
-      btn.disabled = false;
-    }
-  });
-
-  // ================= FUNGSI GENERATE QR =================
-  function generateStyledQRDataUrl(text, containerSize) {
-    var size = containerSize || 180;
-    var qr = qrcode(0, 'M');
-    qr.addData(text);
-    qr.make();
-
-    var padding = 12;
-    var borderWidth = 4;
-    var canvasSize = size;
-
-    var canvas = document.createElement('canvas');
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-    var ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-    ctx.strokeStyle = '#d1d5db';
-    ctx.lineWidth = borderWidth;
-    ctx.strokeRect(0, 0, canvasSize, canvasSize);
-
-    var moduleCount = qr.getModuleCount();
-    var qrAreaSize = canvasSize - (padding * 2) - (borderWidth * 2);
-    var cellSize = qrAreaSize / moduleCount;
-
-    var offsetX = padding + borderWidth;
-    var offsetY = padding + borderWidth;
-
-    for (var row = 0; row < moduleCount; row++) {
-      for (var col = 0; col < moduleCount; col++) {
-        if (qr.isDark(row, col)) {
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
+    const selectedParticipants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+    let listHtml = '';
+    let allValid = true;
+    
+    selectedParticipants.forEach(p => {
+        const result = isParticipantEligible(p, STATE.approvalsData);
+        if (result.eligible) {
+            listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)}</span>`;
+        } else {
+            listHtml += `<span class="text-danger d-block mb-1" title="${result.reason}">❌ ${escapeHtml(p.nama_lengkap)} <small class="text-muted fw-normal">(${result.reason})</small></span>`;
+            allValid = false;
         }
+    });
+    document.getElementById('selectedParticipantsList').innerHTML = listHtml;
+
+    if (allValid) {
+        document.getElementById('generateStatusMsg').innerHTML = '<i class="bi bi-check-circle text-success"></i> Semua peserta memenuhi syarat.';
+        document.getElementById('generateCertSubmit').disabled = false;
+    } else {
+        document.getElementById('generateStatusMsg').innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> Ada peserta yang belum memenuhi syarat (lihat detail merah).';
+        document.getElementById('generateCertSubmit').disabled = true;
+    }
+
+    document.getElementById('generateProgress').style.display = 'none';
+    document.getElementById('generateResultArea').innerHTML = '';
+    document.getElementById('generateCertSubmit').dataset.ids = JSON.stringify(ids);
+    new bootstrap.Modal(document.getElementById('generateCertModal')).show();
+  }
+
+  document.getElementById('generateCertificateBtn').addEventListener('click', function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    const ids = Array.from(checked).map(cb => cb.value);
+    if (ids.length === 0) { showToast('Pilih minimal satu peserta untuk dibuatkan sertifikat.', 'info'); return; }
+    openGenerateModal(ids);
+  });
+
+  async function generateCertificateForOne(id) {
+    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+    STATE.approvalsData = approvalRes.data || [];
+    const participant = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!participant) return;
+    
+    const result = isParticipantEligible(participant, STATE.approvalsData);
+    if (!result.eligible) { showToast('Peserta belum memenuhi syarat: ' + result.reason, 'warning'); return; }
+    
+    openGenerateModal([id]);
+  }
+
+  document.getElementById('generateCertSubmit').addEventListener('click', async function() {
+    const ids = JSON.parse(this.dataset.ids);
+    const templateId = document.getElementById('certTemplateSelect').value;
+    if (!templateId) { showToast('Pilih template terlebih dahulu.', 'warning'); return; }
+
+    const participants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+    const validParticipants = participants.filter(p => isParticipantEligible(p, STATE.approvalsData).eligible);
+    if (validParticipants.length === 0) { showToast('Tidak ada peserta yang memenuhi syarat.', 'warning'); return; }
+
+    const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
+    document.getElementById('generateProgress').style.display = 'block';
+    document.getElementById('generateResultArea').innerHTML = '';
+
+    let results = [], errors = [];
+    for (let i = 0; i < validParticipants.length; i++) {
+      const p = validParticipants[i];
+      document.getElementById('generateProgressText').innerText = `Memproses ${i+1}/${validParticipants.length}: ${p.nama_lengkap}`;
+      document.querySelector('#generateProgress .progress-bar').style.width = ((i+1)/validParticipants.length * 100) + '%';
+
+      try {
+        const result = await callApi('generateCertificateForParticipant', { templateId: templateId, pesertaId: p.id }, 'POST');
+        if (result.success) {
+          results.push({ nama: p.nama_lengkap, nomor: result.nomorSertifikat, url: result.pdfUrl });
+        } else {
+          errors.push({ nama: p.nama_lengkap, error: result.error || 'Gagal' });
+        }
+      } catch (err) {
+        errors.push({ nama: p.nama_lengkap, error: err.message });
       }
     }
 
-    return canvas.toDataURL('image/png');
-  }
+    document.getElementById('generateProgress').style.display = 'none';
+    btn.disabled = false; btn.innerHTML = 'Generate Sertifikat';
 
-  // ================= FUNGSI TTD DINAMIS =================
-  window.showTTD = async function(pesertaId, namaPeserta) {
-    try {
-      var modal = new bootstrap.Modal(document.getElementById('ttdModal'));
-      var container = document.getElementById('ttdCardsContainer');
-      var emptyMsg = document.getElementById('ttdEmptyMessage');
-      
-      container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary"></div></div>';
-      emptyMsg.style.display = 'none';
-
-      var approvals = STATE.allApprovals;
-      if (!approvals || approvals.length === 0) {
-        var res = await PKD.getAllDigitalApprovals();
-        approvals = res.success ? res.data : [];
-        STATE.allApprovals = approvals;
-      }
-
-      var namaTarget = namaPeserta.trim().toLowerCase();
-      var filtered = approvals.filter(function(a) {
-        var peserta = (a.peserta_nama || '').trim().toLowerCase();
-        return peserta === namaTarget;
+    let html = '';
+    if (results.length > 0) {
+      html += `<div class="alert alert-success">Berhasil: ${results.length} sertifikat.</div>
+      <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
+      results.forEach(r => {
+        html += `<tr><td>${escapeHtml(r.nama)}</td><td>${escapeHtml(r.nomor)}</td><td><a href="${escapeHtml(r.url)}" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-download"></i> Unduh</a></td></tr>`;
       });
+      html += `</tbody></table></div>`;
+    }
+    if (errors.length > 0) {
+      html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul>`;
+      errors.forEach(e => html += `<li>${escapeHtml(e.nama)}: ${escapeHtml(e.error)}</li>`);
+      html += `</ul></div>`;
+    }
+    document.getElementById('generateResultArea').innerHTML = html;
+    showToast(`Selesai: ${results.length} berhasil, ${errors.length} gagal.`, 'info');
+  });
+
+  // ==========================================================
+  //   NEW FEATURE: ACC RTL LANGSUNG DARI TABEL PESERTA
+  // ==========================================================
+  async function approveRTLForParticipant(id, nama) {
+    if (!confirm(`Setujui semua tugas RTL untuk peserta "${nama}"?`)) return;
+    try {
+      const res = await callApi('approveAllRTL', { pesertaId: id }, 'POST');
+      if (res.success) {
+        const tasks = STATE.rtlData.filter(t => t.pesertaId == id);
+        tasks.forEach(t => t.status = 'selesai');
+        showToast(`✅ Semua tugas RTL untuk ${nama} telah disetujui.`, 'success');
+        applyFiltersAndSort();
+      } else {
+        showToast('Gagal menyetujui RTL: ' + (res.message || 'Server error'), 'error');
+      }
+    } catch (err) {
+      showToast('Gagal: ' + err.message, 'error');
+    }
+  }
+
+  // ==========================================================
+  //   SHOW TTD (DENGAN QR CODE BORDER PUTIH & DOWNLOAD)
+  // ==========================================================
+  window.showTTD = async function(id, nama) {
+    try {
+      const approvalsRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+      let approvals = approvalsRes.success ? approvalsRes.data || [] : [];
+      
+      const filtered = approvals.filter(a => 
+        a.peserta_nama && a.peserta_nama.toLowerCase().trim() === nama.toLowerCase().trim()
+      );
+
+      const container = document.getElementById('ttdCardsContainer');
+      const emptyMsg = document.getElementById('ttdEmptyMessage');
 
       if (filtered.length === 0) {
         container.innerHTML = '';
         emptyMsg.style.display = 'block';
-        modal.show();
-        return;
-      }
+      } else {
+        emptyMsg.style.display = 'none';
+        let html = '';
+        filtered.forEach(a => {
+          let roleLabel = 'Instruktur';
+          if (a.role === 'ketua_pc') roleLabel = 'Ketua PC';
+          else if (a.role === 'sekretaris') roleLabel = 'Sekretaris';
 
-      var html = '';
-      for (var i = 0; i < filtered.length; i++) {
-        var approval = filtered[i];
-        var role = approval.role;
-        var roleLabel = role === 'ketua_pc' ? 'Ketua PC' : (role === 'sekretaris' ? 'Sekretaris' : 'Instruktur');
-        var baseUrl = window.location.origin + '/bisaa/';
-        var qrUrl = baseUrl + 'verifikasi_qr.html?role=' + encodeURIComponent(role) + '&driveId=' + encodeURIComponent(approval.driveId) + '&nama=' + encodeURIComponent(namaPeserta);
-        
-        var qrDataUrl = generateStyledQRDataUrl(qrUrl);
-        var downloadName = 'QR_' + role + '_' + namaPeserta + '.png';
-        var kegunaan = approval.kegunaan || approval.keterangan || '-';
+          const baseUrl = window.location.origin;
+          const verifyUrl = `${baseUrl}/bisaa/verifikasi_qr.html?role=${encodeURIComponent(a.role)}&driveId=${encodeURIComponent(a.driveId)}&nama=${encodeURIComponent(nama)}&peserta_id=${encodeURIComponent(id)}`;
+          
+          const qr = qrcode(0, 'M');
+          qr.addData(verifyUrl);
+          qr.make();
 
-        html += `
-          <div class="col-md-4">
-            <div class="ttd-box">
-              <span class="role-badge">${roleLabel}</span>
-              <div class="ttd-qr-container">
-                <img src="${qrDataUrl}" alt="QR TTD">
-              </div>
-              <h6>${escapeHtml(approval.nama)}</h6>
-              <p class="small text-muted">Kegunaan: ${escapeHtml(kegunaan)}</p>
-              <div class="mt-2 d-flex flex-column gap-2 w-100">
-                <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary w-100">Buka Verifikasi</a>
-                <a href="${qrDataUrl}" download="${downloadName}" class="btn btn-sm btn-outline-secondary w-100">
-                  <i class="bi bi-download me-1"></i> Download QR
-                </a>
+          const padding = 12;
+          const borderWidth = 4;
+          const canvasSize = 200;
+          const canvas = document.createElement('canvas');
+          canvas.width = canvasSize;
+          canvas.height = canvasSize;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+          ctx.strokeStyle = '#d1d5db';
+          ctx.lineWidth = borderWidth;
+          ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+          const moduleCount = qr.getModuleCount();
+          const qrAreaSize = canvasSize - (padding * 2) - (borderWidth * 2);
+          const cellSize = qrAreaSize / moduleCount;
+
+          const offsetX = padding + borderWidth;
+          const offsetY = padding + borderWidth;
+
+          for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+              if (qr.isDark(row, col)) {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize);
+              }
+            }
+          }
+          const qrDataUrl = canvas.toDataURL('image/png');
+
+          html += `
+            <div class="col-md-6">
+              <div class="ttd-box">
+                <span class="role-badge">${roleLabel}</span>
+                <div class="ttd-qr-container">
+                  <img src="${qrDataUrl}" alt="QR TTD ${escapeHtml(a.nama)}">
+                </div>
+                <h6>${escapeHtml(a.nama)}</h6>
+                <p class="small text-muted">${escapeHtml(a.kegunaan || 'Verifikasi Sertifikat')}</p>
+                <div class="d-flex gap-2 justify-content-center mt-2 flex-wrap">
+                  <a href="${qrDataUrl}" download="QR_TTD_${escapeHtml(a.nama)}.png" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-download"></i> Download QR
+                  </a>
+                  <a href="${verifyUrl}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye"></i> Verifikasi
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        });
+        container.innerHTML = html;
       }
 
-      container.innerHTML = html;
-      modal.show();
+      new bootstrap.Modal(document.getElementById('ttdModal')).show();
 
     } catch (e) {
-      console.error("Error pada showTTD:", e);
-      showToast('Terjadi kesalahan saat memuat TTD: ' + e.message, 'error');
+      showToast('Gagal memuat data TTD: ' + e.message, 'error');
     }
   };
 
-  // ================= FUNGSI CRUD LAINNYA =================
-  function renderDynamicForm(editData) {
-    var container = document.getElementById('dynamicAdminFormContainer');
-    var html = '';
-    for(var i=0; i<STATE.formStructure.length; i++) {
-      var field = STATE.formStructure[i];
-      var value = editData ? (editData[field.id] || '') : '';
-      var isRequired = field.required ? 'required' : '';
-      var requiredStar = field.required ? ' <span class="text-danger">*</span>' : '';
-      html += '<div class="mb-3"><label class="form-label fw-semibold">' + escapeHtml(field.label) + requiredStar + '</label>';
-      if (field.type === 'textarea') {
-        html += '<textarea class="form-control" name="' + field.id + '" ' + isRequired + '>' + escapeHtml(value) + '</textarea>';
-      } else if (field.type === 'file') {
-        html += '<input type="file" class="form-control" name="' + field.id + '" accept="image/*,application/pdf" ' + isRequired + '>';
-        if (editData && editData[field.id+'_driveId']) {
-          html += '<div class="mt-1 small text-muted">File saat ini: <a href="https://drive.google.com/file/d/' + editData[field.id+'_driveId'] + '/view" target="_blank">Lihat</a></div>';
-        }
-      } else if (field.type === 'radio') {
-        var options = (field.options || '').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
-        html += '<div class="radio-group">';
-        for(var j=0; j<options.length; j++) {
-          var opt = options[j];
-          var checked = value === opt ? 'checked' : '';
-          html += '<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="' + field.id + '" value="' + escapeHtml(opt) + '" id="' + field.id + '_' + j + '" ' + checked + ' ' + isRequired + '><label class="form-check-label" for="' + field.id + '_' + j + '">' + escapeHtml(opt) + '</label></div>';
-        }
-        html += '</div>';
-      } else if (field.type === 'select') {
-        var options = (field.options || '').split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
-        html += '<select class="form-select" name="' + field.id + '" ' + isRequired + '><option value="">-- Pilih --</option>';
-        for(var j=0; j<options.length; j++) {
-          var opt = options[j];
-          var selected = value === opt ? 'selected' : '';
-          html += '<option value="' + escapeHtml(opt) + '" ' + selected + '>' + escapeHtml(opt) + '</option>';
-        }
-        html += '</select>';
-      } else {
-        html += '<input type="text" class="form-control" name="' + field.id + '" value="' + escapeHtml(value) + '" ' + isRequired + '>';
-      }
-      html += '</div>';
+  // ==========================================================
+  //   VIEW, EDIT, DELETE PESERTA
+  // ==========================================================
+  window.viewPeserta = function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+    const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
+    const content = document.getElementById('detailContent');
+    let html = '<div class="list-group list-group-flush">';
+    for (let i = 0; i < STATE.formStructure.length; i++) {
+      const field = STATE.formStructure[i];
+      const val = item[field.id] || '-';
+      html += '<div class="list-group-item py-2"><strong>' + escapeHtml(field.label) + ':</strong> ' + escapeHtml(val) + '</div>';
     }
-    container.innerHTML = html;
-  }
-
-  function openAddModal() {
-    document.getElementById('editPesertaId').value = '';
-    document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
-    renderDynamicForm(null);
-    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
-  }
+    html += '<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ' + getStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></div>';
+    html += '</div>';
+    content.innerHTML = html; modal.show();
+  };
 
   window.editPeserta = function(id) {
-    var item = STATE.pesertaList.find(function(p) { return String(p.id) === String(id); });
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
     if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
     document.getElementById('editPesertaId').value = id;
     document.getElementById('formModalTitle').innerText = 'Edit Peserta';
@@ -823,199 +926,365 @@
     new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
   };
 
+  window.deletePeserta = function(id) { document.getElementById('deletePesertaId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); };
+
+  // ==========================================================
+  //   CRUD & EXPORT
+  // ==========================================================
+  document.getElementById('addPesertaBtn')?.addEventListener('click', function() {
+    document.getElementById('editPesertaId').value = '';
+    document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
+    renderDynamicForm();
+    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  });
+
   document.getElementById('savePesertaBtn')?.addEventListener('click', async function() {
-    var id = document.getElementById('editPesertaId').value;
-    var formElements = document.getElementById('dynamicAdminFormContainer').querySelectorAll('input, select, textarea');
-    var data = { action: id ? 'updatePeserta' : 'submitPeserta' };
-    if (id) data.id = id;
+    const id = document.getElementById('editPesertaId').value;
+    const form = document.getElementById('dynamicAdminFormContainer').querySelector('form');
+    if (!form) { showToast('Form tidak ditemukan', 'error'); return; }
 
-    var filePromises = [];
-    for(var i=0; i<formElements.length; i++) {
-      var el = formElements[i];
-      if (el.type === 'file') {
-        if (el.files.length > 0) {
-          var file = el.files[0];
-          var reader = new FileReader();
-          filePromises.push(new Promise(function(resolve) {
-            reader.onload = function() { data[el.name] = reader.result; resolve(); };
-            reader.readAsDataURL(file);
-          }));
-        }
-      } else if (el.type === 'radio') {
-        if (el.checked) data[el.name] = el.value;
-      } else if (el.tagName === 'SELECT') {
-        data[el.name] = el.value;
-      } else {
-        data[el.name] = el.value;
-      }
+    const formData = new FormData(form);
+    const data = { id: id };
+    STATE.formStructure.forEach(field => {
+      const val = formData.get(field.id);
+      data[field.id] = val || '';
+    });
+
+    // --- PERBAIKAN: Menangani logika "Lainnya" pada Utusan ---
+    if (data.utusan === 'Lainnya') {
+        const utusanLuar = document.getElementById('utusanLuarContainerAdmin')?.querySelector('input')?.value?.trim() || '';
+        data.utusan = utusanLuar ? 'Lainnya - ' + utusanLuar : 'Lainnya (tidak diisi)';
     }
 
-    await Promise.all(filePromises);
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
-    var missing = STATE.formStructure.filter(function(f) { return f.required && !data[f.id]; });
-    if (missing.length > 0) {
-      showToast('Harap isi: ' + missing.map(function(f){return f.label;}).join(', '), 'error');
-      return;
-    }
-
-    var btn = this;
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
     try {
-      var res;
-      if (id) { res = await PKD.updatePeserta(data); } 
-      else { res = await PKD.submitPeserta(data); }
-      if (res.success) {
-        showToast(id ? 'Peserta berhasil diperbarui' : 'Peserta berhasil ditambahkan', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
-        loadPesertaData(true);
+      let result;
+      if (id) {
+        result = await AdminModule.updatePeserta(data);
       } else {
-        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+        result = await AdminModule.addPeserta(data);
+      }
+      if (result.success) {
+        showToast(id ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide();
+        await loadPesertaData(true);
+      } else {
+        throw new Error(result.error || 'Gagal menyimpan');
       }
     } catch (e) {
-      showToast('Error: ' + e.message, 'error');
+      showToast('Gagal: ' + e.message, 'error');
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = orig;
+      btn.disabled = false; btn.innerHTML = originalText;
     }
   });
 
-  window.viewPeserta = function(id) {
-    var item = STATE.pesertaList.find(function(p) { return String(p.id) === String(id); });
-    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
-    var modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
-    var content = document.getElementById('detailContent');
-    var html = '<div class="list-group list-group-flush">';
-    for(var i=0; i<STATE.formStructure.length; i++) {
-      var field = STATE.formStructure[i];
-      var val = item[field.id] || '-';
-      html += '<div class="list-group-item py-2"><strong>' + escapeHtml(field.label) + ':</strong> ' + escapeHtml(val) + '</div>';
-    }
-    html += '<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ' + getStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></div>';
-    html += '</div>';
-    content.innerHTML = html;
-    modal.show();
-  };
-
-  window.deletePeserta = function(id) {
-    document.getElementById('deletePesertaId').value = id;
-    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-  };
-
   document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
-    var id = document.getElementById('deletePesertaId').value;
+    const id = document.getElementById('deletePesertaId').value;
     if (!id) return;
-    var btn = this;
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border"></span> Menghapus...';
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     try {
-      var res = await PKD.deletePeserta(id);
-      if (res.success) {
+      const result = await AdminModule.deletePeserta(id);
+      if (result.success) {
         showToast('Peserta berhasil dihapus', 'success');
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadPesertaData(true);
+        await loadPesertaData(true);
       } else {
-        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+        throw new Error(result.error || 'Gagal');
       }
     } catch (e) {
-      showToast('Error: ' + e.message, 'error');
+      showToast('Gagal: ' + e.message, 'error');
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = orig;
+      btn.disabled = false; btn.innerHTML = originalText;
     }
   });
 
   document.getElementById('exportDataBtn')?.addEventListener('click', function() {
-    var data = STATE.filteredList;
-    if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
-    var json = JSON.stringify(data, null, 2);
-    var blob = new Blob([json], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'peserta_export_' + new Date().toISOString().slice(0,10) + '.json';
-    a.click();
+    const data = STATE.filteredList;
+    if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
+    const exportData = data.map(item => ({
+      id: item.id, nama: item.nama_lengkap, email: item.email, hp: item.no_hp, utusan: item.utusan, status: item.status
+    }));
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`; a.click();
     URL.revokeObjectURL(url);
-    showToast('Berhasil mengekspor ' + data.length + ' data', 'success');
+    showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
   });
 
-  document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
-    var checked = document.querySelectorAll('.peserta-checkbox:checked');
-    if (checked.length === 0) { showToast('Pilih minimal satu peserta', 'info'); return; }
-    if (!confirm('Pindahkan ' + checked.length + ' peserta terpilih ke alumni?')) return;
-    var ids = Array.from(checked).map(function(cb){ return cb.value; });
-    var btn = this;
-    var orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border"></span> Memindahkan...';
+  // ==========================================================
+  //   BULK GENERATE TTD & MOVE TO ALUMNI
+  // ==========================================================
+  document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    const ids = Array.from(checked).map(cb => cb.value);
+    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'warning'); return; }
+    if (!confirm(`Generate TTD digital untuk ${ids.length} peserta?`)) return;
     try {
-      var res = await PKD.moveMultipleToAlumni(ids);
+      const res = await callApi('bulkGenerateTTD', { ids: JSON.stringify(ids) }, 'POST');
       if (res.success) {
-        showToast('Berhasil memindahkan ' + (res.moved || ids.length) + ' peserta ke alumni', 'success');
-        loadPesertaData(true);
+        showToast(`Berhasil generate TTD untuk ${res.addedCount || ids.length} peserta!`, 'success');
+        await loadPesertaData(true);
       } else {
-        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+        throw new Error(res.message || 'Gagal generate TTD');
       }
     } catch (e) {
-      showToast('Error: ' + e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = orig;
+      showToast('Gagal: ' + e.message, 'error');
     }
   });
 
-  // --- Events toolbar ---
-  document.getElementById('addPesertaBtn')?.addEventListener('click', openAddModal);
-  document.getElementById('refreshDataBtn')?.addEventListener('click', function() { 
-    this.innerHTML='<span class="spinner-border"></span>'; 
-    this.disabled=true; 
-    var self = this;
-    loadPesertaData(true).then(function(){ 
-      self.innerHTML='<i class="bi bi-arrow-clockwise"></i>'; 
-      self.disabled=false; 
-    }); 
-  });
-  
-  document.getElementById('clearCacheBtn')?.addEventListener('click', function() { 
-    if(confirm('Hapus cache?')) { 
-      DataCache.clear(); 
-      localStorage.removeItem('pkd_peserta_data'); 
-      showToast('Cache dibersihkan','info'); 
-      loadPesertaData(true); 
-    } 
-  });
-  
-  document.getElementById('searchInput')?.addEventListener('input', debounce(function() { 
-    STATE.searchQuery=document.getElementById('searchInput').value; 
-    STATE.currentPage=1; 
-    applyFiltersAndSort(); 
-  }, 300));
-  
-  document.getElementById('filterStatus')?.addEventListener('change', function() { 
-    STATE.statusFilter=this.value; 
-    STATE.currentPage=1; 
-    applyFiltersAndSort(); 
+  document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    const ids = Array.from(checked)
+      .map(cb => cb.value.trim())
+      .filter(id => id !== '');
+      
+    if (ids.length === 0) {
+      showToast('Pilih minimal satu peserta.', 'warning');
+      return;
+    }
+    if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?`)) return;
+    try {
+      const res = await AdminModule.moveMultipleToAlumni(ids);
+      if (res.success) {
+        showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta.`, 'success');
+        await loadPesertaData(true);
+      } else {
+        throw new Error(res.error || 'Gagal memindahkan');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    }
   });
 
-  // --- INIT ---
-  document.addEventListener('DOMContentLoaded', function() {
-    loadPesertaData(false);
-    loadFormStructure();
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() { 
-      document.getElementById('sidebarWrapper').classList.toggle('minimized'); 
-    });
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { 
-      e.preventDefault(); 
-      if(PKD.logout) PKD.logout(); 
-      else window.location.href='/bisaa/index.html'; 
-    });
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { 
-      if(PKD.logout) PKD.logout(); 
-      else window.location.href='/bisaa/index.html'; 
+  // ==========================================================
+  //   REFRESH DATA
+  // ==========================================================
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    this.disabled = true;
+    loadPesertaData(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Gagal menyegarkan', 'error');
     });
   });
+
+  // ==========================================================
+  //   SEARCH HANDLER
+  // ==========================================================
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.setAttribute('autocomplete', 'off');
+    searchInput.addEventListener('focus', function() { this.value = ''; STATE.searchQuery = ''; applyFiltersAndSort(); });
+    searchInput.addEventListener('input', debounce(function(e) {
+      STATE.searchQuery = e.target.value; STATE.currentPage = 1; applyFiltersAndSort();
+    }, 300));
+  }
+  function debounce(fn, delay) { let timer; return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); }; }
+
+  // ==========================================================
+  //   FORM BUILDER RENDER & LOGIC "LAINNYA" ADMIN
+  // ==========================================================
+  function renderFormStructure() {
+    const container = document.getElementById('formBuilderContainer');
+    if (!STATE.formStructure || STATE.formStructure.length === 0) {
+      container.innerHTML = '<div class="col-12 text-muted">Belum ada field default.</div>'; return;
+    }
+    let html = '';
+    for (let i = 0; i < STATE.formStructure.length; i++) {
+      const field = STATE.formStructure[i];
+      const isCore = field.isCore === true;
+      html += `
+        <div class="col-md-6 col-lg-4">
+          <div class="field-builder-card">
+            <div>
+              <div class="field-label">${escapeHtml(field.label)}</div>
+              <div class="field-meta">
+                ${isCore ? '<span class="badge bg-secondary">Core</span>' : '<span class="badge bg-info">' + field.type + '</span>'}
+                ${field.required ? '<span class="badge bg-danger">Wajib</span>' : ''}
+              </div>
+            </div>
+            <div class="field-actions">
+              <button class="btn btn-sm btn-outline-warning" onclick="editField('${field.id}')"><i class="bi bi-pencil"></i></button>
+              ${!isCore ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteField(\'' + field.id + '\')"><i class="bi bi-trash"></i></button>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  window.editField = function(id) {
+    const field = STATE.formStructure.find(f => f.id === id);
+    if (!field) { showToast('Field tidak ditemukan', 'error'); return; }
+    document.getElementById('editFieldId').value = field.id;
+    document.getElementById('fieldLabel').value = field.label || '';
+    document.getElementById('fieldType').value = field.type || 'text';
+    document.getElementById('fieldOptions').value = field.options || '';
+    document.getElementById('fieldRequired').checked = field.required || false;
+    document.getElementById('fieldModalTitle').innerText = 'Edit Field';
+    document.getElementById('fieldOptionsGroup').style.display = (field.type === 'radio' || field.type === 'select') ? 'block' : 'none';
+    STATE.editingFieldId = field.id;
+    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+  };
+
+  window.deleteField = function(id) {
+    if (!confirm('Yakin ingin menghapus field ini?')) return;
+    STATE.formStructure = STATE.formStructure.filter(f => f.id !== id);
+    renderFormStructure();
+  };
+
+  document.getElementById('fieldType')?.addEventListener('change', function() {
+    document.getElementById('fieldOptionsGroup').style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
+  });
+
+  document.getElementById('saveFieldBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('editFieldId').value;
+    const label = document.getElementById('fieldLabel').value.trim();
+    const type = document.getElementById('fieldType').value;
+    const options = document.getElementById('fieldOptions').value.trim();
+    const required = document.getElementById('fieldRequired').checked;
+    if (!label) { showToast('Label wajib diisi.', 'error'); return; }
+    if ((type === 'radio' || type === 'select') && !options) { showToast('Opsi wajib.', 'error'); return; }
+    if (id) {
+      const idx = STATE.formStructure.findIndex(f => f.id === id);
+      if (idx !== -1) { STATE.formStructure[idx].label = label; STATE.formStructure[idx].type = type; STATE.formStructure[idx].options = options; STATE.formStructure[idx].required = required; }
+    } else {
+      STATE.formStructure.push({ id: generateId(), label: label, type: type, options: options, required: required, isCore: false });
+    }
+    bootstrap.Modal.getInstance(document.getElementById('fieldEditorModal')).hide();
+    renderFormStructure();
+    showToast('Menyimpan perubahan ke server...', 'info');
+    const success = await saveFormStructureToServer();
+    if (success) { showToast('✅ Berhasil disimpan. Memverifikasi data dari server...', 'success'); await loadFormStructure(); } 
+    else { showToast('❌ Gagal menyimpan ke server.', 'error'); }
+  });
+
+  async function saveFormStructureToServer() {
+    const payload = STATE.formStructure.map(f => ({ id: f.id, label: f.label, type: f.type, options: f.options, required: f.required }));
+    try {
+      const res = await callApi('setFormSettings', { fields: JSON.stringify(payload) }, 'POST');
+      return res.success;
+    } catch (e) { console.error('Gagal server save:', e); return false; }
+  }
+
+  document.getElementById('saveFormStructureBtn')?.addEventListener('click', async function() {
+    const payload = STATE.formStructure.map(f => ({ id: f.id, label: f.label, type: f.type, options: f.options, required: f.required }));
+    const btn = this; const orig = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
+    try {
+      const res = await callApi('setFormSettings', { fields: JSON.stringify(payload) }, 'POST');
+      if (res.success) { showToast('Struktur form disimpan ke server', 'success'); await loadFormStructure(); } 
+      else throw new Error(res.message || 'Gagal');
+    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = orig; }
+  });
+
+  document.getElementById('addFieldBtn')?.addEventListener('click', function() {
+    document.getElementById('editFieldId').value = '';
+    document.getElementById('fieldLabel').value = '';
+    document.getElementById('fieldType').value = 'text';
+    document.getElementById('fieldOptions').value = '';
+    document.getElementById('fieldRequired').checked = false;
+    document.getElementById('fieldModalTitle').innerText = 'Tambah Field Baru';
+    document.getElementById('fieldOptionsGroup').style.display = 'none';
+    STATE.editingFieldId = null;
+    new bootstrap.Modal(document.getElementById('fieldEditorModal')).show();
+  });
+
+  // ==========================================================
+  //   DYNAMIC FORM RENDER (Menampilkan modal tambah/edit peserta)
+  // ==========================================================
+  function renderDynamicForm(data = null) {
+    const container = document.getElementById('dynamicAdminFormContainer');
+    const structure = STATE.formStructure;
+    if (!structure || structure.length === 0) { container.innerHTML = '<div class="alert alert-warning">Belum ada struktur form.</div>'; return; }
+    let html = `<form id="dynamicAdminForm">`;
+    structure.forEach(field => {
+      const val = data ? (data[field.id] || '') : '';
+      const requiredAttr = field.required ? 'required' : '';
+      const labelHtml = `<label class="form-label fw-semibold">${escapeHtml(field.label)} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>`;
+      if (field.type === 'textarea') html += `<div class="mb-3">${labelHtml}<textarea class="form-control" name="${field.id}" ${requiredAttr}>${escapeHtml(val)}</textarea></div>`;
+      else if (field.type === 'radio') {
+        const options = (field.options || '').split(',').filter(s => s.trim());
+        html += `<div class="mb-3">${labelHtml}<div>`;
+        options.forEach((opt, idx) => {
+          const checked = val === opt.trim() ? 'checked' : '';
+          html += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt.trim())}" id="${field.id}_${idx}" ${checked} ${requiredAttr}><label class="form-check-label" for="${field.id}_${idx}">${escapeHtml(opt.trim())}</label></div>`;
+        });
+        html += `</div></div>`;
+      } else if (field.type === 'select') {
+        const options = (field.options || '').split(',').filter(s => s.trim());
+        html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" id="adminSelect_${field.id}" ${requiredAttr}><option value="">-- Pilih --</option>`;
+        options.forEach(opt => {
+          const selected = val === opt.trim() ? 'selected' : '';
+          html += `<option value="${escapeHtml(opt.trim())}" ${selected}>${escapeHtml(opt.trim())}</option>`;
+        });
+        html += `</select></div>`;
+        
+        // --- FITUR BARU: Jika field adalah 'utusan', tambahkan input "Lainnya" ---
+        if (field.id === 'utusan') {
+          const isLainnya = val && val.trim().startsWith('Lainnya');
+          const nilaiLuar = isLainnya ? val.replace('Lainnya - ', '').replace('Lainnya', '') : '';
+          html += `
+            <div id="utusanLuarContainerAdmin" style="display: ${isLainnya ? 'block' : 'none'}; margin-top: -8px; margin-bottom: 12px;">
+              <label class="form-label text-muted small">Tulis Asal (Lainnya)</label>
+              <input type="text" class="form-control form-control-sm" name="utusan_luar_admin" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas..." value="${escapeHtml(nilaiLuar)}">
+            </div>
+          `;
+        }
+      } else if (field.type === 'file') {
+        html += `<div class="mb-3">${labelHtml}<input type="file" class="form-control" name="${field.id}" ${requiredAttr}></div>`;
+      } else {
+        html += `<div class="mb-3">${labelHtml}<input type="text" class="form-control" name="${field.id}" value="${escapeHtml(val)}" ${requiredAttr}></div>`;
+      }
+    });
+    html += `</form>`;
+    container.innerHTML = html;
+
+    // --- EVENT LISTENER UNTUK DROPDOWN "LAINNYA" ---
+    const utusanSelect = document.getElementById('adminSelect_utusan');
+    if (utusanSelect) {
+      const luarContainer = document.getElementById('utusanLuarContainerAdmin');
+      const luarInput = luarContainer?.querySelector('input');
+      utusanSelect.addEventListener('change', function() {
+        if (this.value === 'Lainnya') {
+          luarContainer.style.display = 'block';
+          if (luarInput) luarInput.focus();
+        } else {
+          luarContainer.style.display = 'none';
+          if (luarInput) luarInput.value = '';
+        }
+      });
+      // Jika sebelumnya sudah terpilih "Lainnya", tampilkan container
+      if (utusanSelect.value === 'Lainnya') {
+        luarContainer.style.display = 'block';
+      }
+    }
+  }
+
+  // ==========================================================
+  //   BOOT
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') { window.location.href = '/bisaa/login.html'; return; }
+    updateNavbarMenu();
+    initSidebar();
+    loadFormStructure();
+    loadPesertaData(true);
+  })();
+
 </script>
 </body>
 </html>

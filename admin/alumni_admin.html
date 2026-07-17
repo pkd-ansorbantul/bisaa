@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Admin Alumni - PKD GP Ansor Bantul</title>
+
+  <!-- Favicon & Font -->
   <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -106,30 +109,52 @@
     }
     @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-    /* --- CONTENT WRAPPER --- */
+    /* ===== CONTENT WRAPPER ===== */
     .content-wrapper {
         margin-left: 260px; padding: 1.5rem; background: #f8fafc;
         min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
     }
     .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
-    /* --- UTILITY --- */
+    /* ===== UTILITY ===== */
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
-    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
-    .cache-status.live { background: #dcfce7; color: #16a34a; }
-    .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
+    .section-title {
+        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
+    }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+    .loading-spinner {
+        display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+    .table-container {
+        background: white; border-radius: 20px; padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+    }
     .btn-aksi { min-width: 80px; }
     .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 50px; }
     .status-badge.alumni { background: #bae6fd; color: #0369a1; }
+
+    /* --- Pagination & Sorting --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+    .cache-status.live { background: #dcfce7; color: #16a34a; }
+    .cache-status.offline { background: #fee2e2; color: #dc2626; }
   </style>
 </head>
 <body>
 
+<!-- ==================== CONTAINER UTAMA ==================== -->
 <div class="container container-card">
   <div class="admin-wrapper">
 
@@ -218,6 +243,11 @@
             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
           </a>
 
+          <!-- RTL & Tugas -->
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
+          </a>
+
           <!-- Pengaturan -->
           <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
             <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
@@ -238,8 +268,7 @@
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
       <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
       <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-      <a href="/bisaa/admin/alumni_admin.html" class="nav-item active"><i class="bi bi-award"></i><span>Alumni</span></a>
-      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
     <!-- ==================== CONTENT WRAPPER ==================== -->
@@ -333,422 +362,438 @@
 </div>
 
 <!-- ==================== SCRIPTS ==================== -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    let STATE = {
-      alumniList: [],
-      filteredList: [],
-      searchQuery: '',
-      angkatanFilter: '',
-      isLoading: false
+  // ==========================================================
+  //   STATE
+  // ==========================================================
+  let STATE = {
+    alumniList: [],
+    filteredList: [],
+    searchQuery: '',
+    angkatanFilter: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc',
+    sertifikatList: [] // tambahan untuk menyimpan data sertifikat
+  };
+
+  // ==========================================================
+  //   UTILITY FUNCTIONS
+  // ==========================================================
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
     };
+  }
 
-    // =====================================================
-    //   UTILITY FUNCTIONS
-    // =====================================================
-    window.togglePasswordVisibility = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
-    };
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
     }
+  }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
-      });
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
     }
+  });
 
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
-    }
-
-    function renderSkeleton() {
-      return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
-    // =====================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // =====================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('bi-arrow-left-right');
-        icon.classList.toggle('bi-arrow-right-left');
-      }
-    });
-
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
-
-    // =====================================================
-    //   LOGOUT
-    // =====================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
       e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
     });
+  });
 
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
 
-    // =====================================================
-    //   LOGIN AUTH CHECK
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
-        return;
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    const modalEl = document.getElementById('moreMenuModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   LOAD ALUMNI DAN SERTIFIKAT (menggunakan AdminModule)
+  // ==========================================================
+  async function loadAlumniData(forceRefresh = false) {
+    const container = document.getElementById('alumniTableContainer');
+
+    // Tampilkan loading
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+    try {
+      // Pastikan AdminModule sudah dimuat (mengambil data alumni & sertifikat)
+      if (!AdminModule.getState().lastSync || forceRefresh) {
+        await AdminModule.loadAllData(forceRefresh);
       }
 
-      // Load data
-      loadData();
+      // Ambil data alumni dan sertifikat dari AdminModule
+      const alumniData = AdminModule.getAlumniList() || [];
+      const sertifikatList = AdminModule.getSertifikatList() || [];
 
-      // Event listeners
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        loadData(true).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-      });
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('filterAngkatan')?.addEventListener('change', handleAngkatanFilter);
-    });
+      // Simpan sertifikat ke STATE untuk akses di render
+      STATE.sertifikatList = sertifikatList;
 
-    // =====================================================
-    //   CACHE HELPERS (DATA REAL)
-    // =====================================================
-    function loadDataFromCache() {
-      const cached = DataCache.getData('alumni');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.alumniList = cached;
-        return true;
-      }
-      return false;
-    }
-
-    function updateCache(data) {
-      DataCache.updateData('alumni', data);
-      STATE.alumniList = data;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    function getAlumniById(id) {
-      return STATE.alumniList.find(item => item.id === id);
-    }
-
-    function getFilteredAlumni(query = '', angkatan = '') {
-      let filtered = STATE.alumniList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item =>
-          (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
-          (item.email && item.email.toLowerCase().includes(q)) ||
-          (item.asal && item.asal.toLowerCase().includes(q)) ||
-          (item.no_hp && item.no_hp.toLowerCase().includes(q))
-        );
-      }
-      if (angkatan !== '' && angkatan !== '') {
-        filtered = filtered.filter(item => item.angkatan === angkatan);
-      }
-      return filtered;
-    }
-
-    // =====================================================
-    //   LOAD DATA (ROBUST - TANPA DUMMY)
-    // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('alumniTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Jika forceRefresh, ambil dari API
-      if (forceRefresh) {
-        try {
-          const freshData = await PKD.alumni.getList(true);
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.alumniList = freshData;
-            updateCache(freshData);
-            renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-            updateCacheStatus('Live');
-            renderAngkatanFilter();
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-        }
-      }
-
-      // 2. Coba DataCache
-      const cached = DataCache.getData('alumni');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.alumniList = cached;
-        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-        updateCacheStatus('Cache');
-        renderAngkatanFilter();
-        return;
-      }
-
-      // 3. Jika semua gagal, tampilkan pesan kosong
-      container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data alumni.</div>`;
-      updateCacheStatus('Empty');
-    }
-
-    // =====================================================
-    //   RENDER ANGKATAN FILTER (ROBUST - handle undefined angkatan)
-    // =====================================================
-    function renderAngkatanFilter() {
-      const select = document.getElementById('filterAngkatan');
-      if (!select) return;
-
-      const angkatanSet = new Set();
-      STATE.alumniList.forEach(item => {
-        // Hanya tambahkan ke set jika angkatan benar-benar ada dan tidak kosong
-        if (item.angkatan && item.angkatan.trim() !== '') {
-          angkatanSet.add(item.angkatan);
-        }
-      });
-
-      const angkatan = Array.from(angkatanSet).sort();
-      select.innerHTML = '<option value="">Semua Angkatan</option>';
-      angkatan.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = a;
-        opt.textContent = a;
-        select.appendChild(opt);
-      });
-    }
-
-    // =====================================================
-    //   RENDER TABLE
-    // =====================================================
-    function renderTable(data) {
-      const container = document.getElementById('alumniTableContainer');
-      if (!container) return;
-
-      let html = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 50px;">#</th>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>No HP</th>
-                <th>Asal</th>
-                <th>Angkatan</th>
-                <th>Status</th>
-                <th style="width: 200px;" class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.length === 0) {
-        html += `
-            <tr>
-              <td colspan="8" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Tidak ada data alumni.
-              </td>
-            </tr>
-        `;
+      if (alumniData && Array.isArray(alumniData) && alumniData.length > 0) {
+        STATE.alumniList = alumniData;
+        applyFiltersAndSort();
+        updateCacheStatus('Live');
       } else {
-        data.forEach((item, index) => {
-          // Handle jika angkatan kosong
-          const angkatanDisplay = item.angkatan && item.angkatan.trim() !== '' ? item.angkatan : '-';
-          html += `
+        container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data alumni.</div>`;
+        updateCacheStatus('Empty');
+      }
+    } catch (e) {
+      console.warn('Gagal load alumni:', e);
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
+      updateCacheStatus('Error');
+    }
+  }
+
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION
+  // ==========================================================
+  function getFilteredAlumni(query = '', angkatan = '') {
+    let filtered = STATE.alumniList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+        (item.email && item.email.toLowerCase().includes(q)) ||
+        (item.no_hp && item.no_hp.toLowerCase().includes(q))
+      );
+    }
+    if (angkatan !== '' && angkatan !== '') {
+      // Filter berdasarkan tahun alumni_at
+      filtered = filtered.filter(item => {
+        const year = item.alumni_at ? new Date(item.alumni_at).getFullYear().toString() : '';
+        return year === angkatan;
+      });
+    }
+    return filtered;
+  }
+
+  function applyFiltersAndSort() {
+    let filtered = getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter);
+    if (STATE.sortColumn) {
+      filtered.sort(function(a, b) {
+        var va = (a[STATE.sortColumn] || '').toString().toLowerCase();
+        var vb = (b[STATE.sortColumn] || '').toString().toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    renderTable(filtered.slice(start, end), totalItems);
+  }
+
+  function renderTable(data, totalItems) {
+    const container = document.getElementById('alumniTableContainer');
+    if (!container) return;
+
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
             <tr>
-              <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
-              <td>${escapeHtml(item.email || '-')}</td>
-              <td>${escapeHtml(item.no_hp || '-')}</td>
-              <td>${escapeHtml(item.asal || '-')}</td>
-              <td><span class="badge bg-primary">${escapeHtml(angkatanDisplay)}</span></td>
-              <td><span class="badge bg-info status-badge alumni">Alumni</span></td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAlumni('${item.id}')" title="Lihat Detail">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editAlumni('${item.id}')" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteAlumni('${item.id}')" title="Hapus">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
+              <th style="width: 50px;">#</th>
+              <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
+              <th class="sortable" onclick="sortTable('email')">Email</th>
+              <th class="sortable" onclick="sortTable('no_hp')">No HP</th>
+              <th class="sortable" onclick="sortTable('alumni_at')">Tanggal Alumni</th>
+              <th>Sertifikat</th>
+              <th style="width: 200px;" class="text-center">Aksi</th>
             </tr>
-          `;
-        });
-      }
+          </thead>
+          <tbody>
+    `;
 
+    if (data.length === 0) {
       html += `
-            </tbody>
-          </table>
-        </div>
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              Tidak ada data alumni.
+            </td>
+          </tr>
       `;
-
-      container.innerHTML = html;
+    } else {
+      data.forEach((item, index) => {
+        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+        // Cari sertifikat berdasarkan nama peserta (case insensitive)
+        const cert = STATE.sertifikatList.find(c =>
+          c.nama_peserta && c.nama_peserta.toLowerCase().trim() === (item.nama_lengkap || '').toLowerCase().trim()
+        );
+        let certHtml = '-';
+        if (cert) {
+          const verifyUrl = `/bisaa/verifikasi.html?nomor=${encodeURIComponent(cert.nomor_sertifikat)}`;
+          certHtml = `
+            <a href="${verifyUrl}" target="_blank" class="badge bg-success text-decoration-none">
+              ${escapeHtml(cert.nomor_sertifikat)}
+            </a>
+            ${cert.pdf_url ? `<br><a href="${escapeHtml(cert.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-primary mt-1"><i class="bi bi-file-pdf"></i> PDF</a>` : ''}
+          `;
+        }
+        html += `
+          <tr>
+            <td>${globalIndex}</td>
+            <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
+            <td>${escapeHtml(item.email || '-')}</td>
+            <td>${escapeHtml(item.no_hp || '-')}</td>
+            <td>${formatDate(item.alumni_at)}</td>
+            <td>${certHtml}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAlumni('${item.id}')" title="Lihat Detail">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editAlumni('${item.id}')" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteAlumni('${item.id}')" title="Hapus">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
     }
 
-    // =====================================================
-    //   CRUD OPERATIONS (Menggunakan API atau Local State)
-    // =====================================================
-    window.viewAlumni = function(id) {
-      const item = getAlumniById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      const modal = new bootstrap.Modal(document.getElementById('detailAlumniModal'));
-      const content = document.getElementById('detailContent');
-      let html = `
-        <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama_lengkap || '-')}</div>
-          <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
-          <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.no_hp || '-')}</div>
-          <div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div>
-          <div class="list-group-item py-3"><strong>Angkatan:</strong> <span class="badge bg-primary">${escapeHtml(item.angkatan || '-')}</span></div>
-          <div class="list-group-item py-3"><strong>Pekerjaan:</strong> ${escapeHtml(item.pekerjaan || '-')}</div>
-          <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
-          <div class="list-group-item py-3"><strong>Tanggal Alumni:</strong> ${formatDate(item.alumni_at)}</div>
-        </div>
-      `;
-      content.innerHTML = html;
-      modal.show();
-    };
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
 
-    window.editAlumni = function(id) {
-      // Karena belum ada API update alumni di backend, fallback ke lokal
-      const item = getAlumniById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      showToast('Fitur edit alumni sedang dalam pengembangan (perubahan hanya lokal).', 'info');
-    };
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+      <div class="pagination-container">
+        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+        <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `</div></div>`;
 
-    window.deleteAlumni = function(id) {
-      // Karena belum ada API delete alumni di backend, hapus dari cache lokal
-      if (!confirm('Apakah Anda yakin ingin menghapus alumni ini (Hanya dari tampilan lokal)?')) return;
-      const index = STATE.alumniList.findIndex(item => item.id === id);
-      if (index !== -1) {
-        STATE.alumniList.splice(index, 1);
-        renderTable(getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter));
-        showToast('Data alumni dihapus dari tampilan.', 'success');
-      }
-    };
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
 
-    function exportData() {
-      const data = STATE.filteredList;
-      if (data.length === 0) {
-        showToast('Tidak ada data untuk diekspor.', 'info');
-        return;
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  };
+
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page;
+    applyFiltersAndSort();
+  };
+
+  // ==========================================================
+  //   RENDER ANGKATAN FILTER
+  // ==========================================================
+  function renderAngkatanFilter() {
+    const select = document.getElementById('filterAngkatan');
+    if (!select) return;
+
+    const angkatanSet = new Set();
+    STATE.alumniList.forEach(item => {
+      if (item.alumni_at) {
+        const year = new Date(item.alumni_at).getFullYear().toString();
+        angkatanSet.add(year);
       }
-      const exportData = data.map(item => ({
-        id: item.id,
-        nama: item.nama_lengkap,
-        email: item.email,
-        hp: item.no_hp,
-        asal: item.asal,
-        angkatan: item.angkatan,
-        pekerjaan: item.pekerjaan,
-        catatan: item.catatan,
-        alumni_at: item.alumni_at
-      }));
-      const json = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `alumni_export_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(`Berhasil mengekspor ${data.length} data alumni.`, 'success');
+    });
+
+    const angkatan = Array.from(angkatanSet).sort();
+    select.innerHTML = '<option value="">Semua Angkatan</option>';
+    angkatan.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a;
+      opt.textContent = a;
+      select.appendChild(opt);
+    });
+  }
+
+  // ==========================================================
+  //   CRUD OPERATIONS
+  // ==========================================================
+  window.viewAlumni = function(id) {
+    const item = STATE.alumniList.find(p => String(p.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    // Cari sertifikat untuk ditampilkan di detail
+    const cert = STATE.sertifikatList.find(c =>
+      c.nama_peserta && c.nama_peserta.toLowerCase().trim() === (item.nama_lengkap || '').toLowerCase().trim()
+    );
+    const modal = new bootstrap.Modal(document.getElementById('detailAlumniModal'));
+    const content = document.getElementById('detailContent');
+    let certHtml = cert ? `
+      <div class="list-group-item py-3"><strong>Nomor Sertifikat:</strong> 
+        <a href="/bisaa/verifikasi.html?nomor=${encodeURIComponent(cert.nomor_sertifikat)}" target="_blank" class="badge bg-success">
+          ${escapeHtml(cert.nomor_sertifikat)}
+        </a>
+      </div>
+      <div class="list-group-item py-3"><strong>PDF:</strong> 
+        ${cert.pdf_url ? `<a href="${escapeHtml(cert.pdf_url)}" target="_blank">Unduh</a>` : 'Belum ada PDF'}
+      </div>
+    ` : '<div class="list-group-item py-3"><strong>Sertifikat:</strong> Belum ada</div>';
+
+    let html = `
+      <div class="list-group list-group-flush">
+        <div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama_lengkap || '-')}</div>
+        <div class="list-group-item py-3"><strong>Email:</strong> ${escapeHtml(item.email || '-')}</div>
+        <div class="list-group-item py-3"><strong>No HP:</strong> ${escapeHtml(item.no_hp || '-')}</div>
+        <div class="list-group-item py-3"><strong>Tanggal Alumni:</strong> ${formatDate(item.alumni_at)}</div>
+        ${certHtml}
+      </div>
+    `;
+    content.innerHTML = html;
+    modal.show();
+  };
+
+  window.editAlumni = function(id) {
+    showToast('Fitur edit alumni sedang dalam pengembangan (perubahan hanya lokal).', 'info');
+  };
+
+  window.deleteAlumni = function(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus alumni ini (Hanya dari tampilan lokal)?')) return;
+    STATE.alumniList = STATE.alumniList.filter(p => String(p.id) !== String(id));
+    applyFiltersAndSort();
+    showToast('Data alumni dihapus dari tampilan.', 'success');
+  };
+
+  function exportData() {
+    const data = STATE.filteredList;
+    if (data.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
+    }
+    const exportData = data.map(item => ({
+      id: item.id,
+      nama: item.nama_lengkap,
+      email: item.email,
+      hp: item.no_hp,
+      alumni_at: item.alumni_at
+    }));
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alumni_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Berhasil mengekspor ${data.length} data alumni.`, 'success');
+  }
+
+  // ==========================================================
+  //   SEARCH & FILTER HANDLERS
+  // ==========================================================
+  const debouncedSearch = debounce(function(query) {
+    STATE.searchQuery = query;
+    applyFiltersAndSort();
+  }, 300);
+
+  function handleSearch(e) { debouncedSearch(e.target.value); }
+
+  function handleAngkatanFilter(e) {
+    STATE.angkatanFilter = e.target.value;
+    applyFiltersAndSort();
+  }
+
+  // ==========================================================
+  //   LOGIN AUTH CHECK & INIT
+  // ==========================================================
+  (function boot() {
+    // Cek role admin
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
     }
 
-    // =====================================================
-    //   SEARCH & FILTER HANDLERS
-    // =====================================================
-    const debouncedSearch = debounce(function(query) {
-      STATE.searchQuery = query;
-      const filtered = getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }, 300);
+    // Update navbar user
+    updateNavbarMenu();
 
-    function handleSearch(e) { debouncedSearch(e.target.value); }
+    // Load data
+    loadAlumniData();
 
-    function handleAngkatanFilter(e) {
-      STATE.angkatanFilter = e.target.value;
-      const filtered = getFilteredAlumni(STATE.searchQuery, STATE.angkatanFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }
-
+    // Event listeners
+    document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      this.disabled = true;
+      loadAlumniData(true).then(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Data berhasil disegarkan', 'success');
+      }).catch(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Gagal menyegarkan', 'error');
+      });
+    });
+    document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+    document.getElementById('filterAngkatan')?.addEventListener('change', handleAngkatanFilter);
   })();
+
 </script>
 </body>
 </html>

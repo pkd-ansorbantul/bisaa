@@ -140,6 +140,17 @@
         }
         .cache-status.live { background: #dcfce7; color: #16a34a; }
         .cache-status.offline { background: #fee2e2; color: #dc2626; }
+
+        /* --- Pagination & Sorting --- */
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+        .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+        .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+        .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+        th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+        th.sortable:hover { background-color: #f1f5f9; }
+        th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+        th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+        th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
     </style>
 </head>
 <body>
@@ -205,9 +216,15 @@
                             <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
                         </div>
                         <div class="submenu open" id="submenu-absensi">
-                            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-                            <a class="nav-link active" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-                            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+                            <a class="nav-link active" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi">
+                                <i class="bi bi-table me-2"></i><span>Data Absensi</span>
+                            </a>
+                            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen">
+                                <i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span>
+                            </a>
+                            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi">
+                                <i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span>
+                            </a>
                         </div>
 
                         <!-- Informasi -->
@@ -232,6 +249,11 @@
                         <!-- Tanda Tangan -->
                         <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
                             <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+                        </a>
+
+                        <!-- RTL & Tugas -->
+                        <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+                            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
                         </a>
 
                         <!-- Pengaturan -->
@@ -462,110 +484,56 @@
 
 
     <!-- ========================================================== -->
-    <!--   SCRIPTS                                                  -->
+    <!--   SCRIPTS (PATH BARU)                                       -->
     <!-- ========================================================== -->
+    <!-- Library Eksternal (tetap sebagai script biasa) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
     </script>
-    <script src="/bisaa/dataCache.js">
-    </script>
-    <script src="/bisaa/api.js">
-    </script>
 
-    <script>
-        (function() {
-            'use strict';
+    <!-- Modul ES Khusus Halaman Ini -->
+    <script type="module">
+        // ==========================================================
+        //   IMPOR DARI CORE API DAN MODUL ADMIN
+        // ==========================================================
+        import {
+            callApi,
+            showToast,
+            escapeHtml,
+            getUserRole,
+            updateNavbarMenu
+        } from '../js/core/api.js';
+        import { AdminModule } from '../js/modules/admin.js';
 
-            // ==========================================================
-            //   TOGGLE PASSWORD VISIBILITY
-            // ==========================================================
-            window.togglePasswordVisibility = function(id) {
-                const el = document.getElementById(id);
-                if (el) el.type = el.type === 'password' ? 'text' : 'password';
-            };
+        // ==========================================================
+        //   TOGGLE PASSWORD VISIBILITY (diekspos ke global)
+        // ==========================================================
+        window.togglePasswordVisibility = function(id) {
+            const el = document.getElementById(id);
+            if (el) el.type = el.type === 'password' ? 'text' : 'password';
+        };
 
-            // ==========================================================
-            //   MAIN STATE
-            // ==========================================================
-            let STATE = {
-                absensiList: [],
-                pesertaList: [],
-                sesiList: [],
-                filteredList: [],
-                searchQuery: '',
-                statusFilter: '',
-                isEditing: false
-            };
-
-            // ==========================================================
-            //   UTILITY
-            // ==========================================================
-            function escapeHtml(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    if (m === '"') return '&quot;';
-                    return m;
+        // ==========================================================
+        //   SIDEBAR TOGGLE & DROPDOWN
+        // ==========================================================
+        function initSidebarToggle() {
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const sidebar = document.getElementById('sidebarWrapper');
+            if (toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('minimized');
+                    const icon = this.querySelector('i');
+                    if (sidebar.classList.contains('minimized')) {
+                        icon.classList.remove('bi-arrow-left-right');
+                        icon.classList.add('bi-arrow-right-left');
+                    } else {
+                        icon.classList.remove('bi-arrow-right-left');
+                        icon.classList.add('bi-arrow-left-right');
+                    }
                 });
             }
+        }
 
-            function showToast(message, type) {
-                const toastEl = document.getElementById('notificationToast');
-                if (!toastEl) return;
-                const toast = new bootstrap.Toast(toastEl);
-                document.getElementById('toastMessage').innerText = message;
-                const icon = document.getElementById('toastIcon');
-                if (type === 'success') {
-                    icon.className = 'bi bi-check-circle-fill text-success';
-                    document.getElementById('toastTitle').innerText = 'Berhasil';
-                } else if (type === 'error') {
-                    icon.className = 'bi bi-x-circle-fill text-danger';
-                    document.getElementById('toastTitle').innerText = 'Gagal';
-                } else {
-                    icon.className = 'bi bi-info-circle-fill text-primary';
-                    document.getElementById('toastTitle').innerText = 'Info';
-                }
-                toast.show();
-            }
-
-            function formatDate(dateStr) {
-                if (!dateStr) return '-';
-                const d = new Date(dateStr + 'T00:00:00');
-                return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            }
-
-            function getStatusBadge(status) {
-                if (status === 'Hadir') return 'bg-success';
-                if (status === 'Izin') return 'bg-warning text-dark';
-                if (status === 'Sakit') return 'bg-info';
-                return 'bg-danger';
-            }
-
-            function generateId() {
-                return 'a' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-            }
-
-            function debounce(fn, delay) {
-                let timer;
-                return function(...args) {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => fn.apply(this, args), delay);
-                };
-            }
-
-            // ==========================================================
-            //   SIDEBAR TOGGLE & SUBMENU
-            // ==========================================================
-            document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-                document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-arrow-left-right');
-                    icon.classList.toggle('bi-arrow-right-left');
-                }
-            });
-
+        function initSidebarDropdowns() {
             document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -574,504 +542,563 @@
                     if (submenu) submenu.classList.toggle('open');
                 });
             });
+        }
 
-            // ==========================================================
-            //   LOGOUT
-            // ==========================================================
-            document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
+        // ==========================================================
+        //   MAIN STATE
+        // ==========================================================
+        let STATE = {
+            absensiList: [],
+            pesertaList: [],
+            sesiList: [],
+            filteredList: [],
+            searchQuery: '',
+            statusFilter: '',
+            currentPage: 1,
+            itemsPerPage: 15,
+            sortColumn: null,
+            sortDirection: 'asc',
+            isEditing: false
+        };
 
-            document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
+        // ==========================================================
+        //   UTILITY
+        // ==========================================================
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
 
-            // ==========================================================
-            //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-            // ==========================================================
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-                    window.location.href = '/bisaa/login.html';
-                    return;
-                }
-
-                // Load data dari cache terlebih dahulu
-                loadPesertaFromCache();
-                loadSesiFromCache();
-                loadData();
-
-                // Event listeners
-                document.getElementById('addAbsensiBtn').addEventListener('click', openAddModal);
-                document.getElementById('exportDataBtn').addEventListener('click', exportData);
-                document.getElementById('refreshDataBtn').addEventListener('click', function() {
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-                    this.disabled = true;
-                    loadData(true).then(() => {
-                        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-                        this.disabled = false;
-                        showToast('Data berhasil disegarkan', 'success');
-                    }).catch(() => {
-                        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-                        this.disabled = false;
-                        showToast('Gagal menyegarkan', 'error');
-                    });
-                });
-                document.getElementById('saveAbsensiBtn').addEventListener('click', saveData);
-                document.getElementById('confirmDeleteBtn').addEventListener('click', executeDelete);
-                document.getElementById('searchInput').addEventListener('input', handleSearch);
-                document.getElementById('filterStatus').addEventListener('change', handleStatusFilter);
-
-                // Expose fungsi global
-                window.viewAbsensi = openDetailModal;
-                window.editAbsensi = openEditModal;
-                window.deleteAbsensi = confirmDelete;
-            });
-
-            // ==========================================================
-            //   CACHE HELPERS
-            // ==========================================================
-            function loadDataFromCache() {
-                const cached = DataCache.getData('absensi');
-                if (cached && Array.isArray(cached)) {
-                    STATE.absensiList = cached;
-                    return true;
-                }
-                return false;
-            }
-
-            function loadPesertaFromCache() {
-                const cached = DataCache.getData('peserta');
-                if (cached && Array.isArray(cached)) {
-                    STATE.pesertaList = cached;
-                    return true;
-                }
-                return false;
-            }
-
-            function loadSesiFromCache() {
-                const cached = DataCache.getData('sesi');
-                if (cached && Array.isArray(cached)) {
-                    STATE.sesiList = cached;
-                    return true;
-                }
-                return false;
-            }
-
-            function updateCache(data) {
-                DataCache.updateData('absensi', data);
-                STATE.absensiList = data;
-            }
-
-            function updateCacheStatus(status) {
-                const el = document.getElementById('cacheStatus');
-                if (el) {
-                    el.textContent = status;
-                    el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-                }
-            }
-
-            function loadDataFromStorage() {
-                try {
-                    const stored = localStorage.getItem('pkd_absensi_data');
-                    if (stored) {
-                        const parsed = JSON.parse(stored);
-                        if (parsed && parsed.absensiList) {
-                            STATE.absensiList = parsed.absensiList;
-                        }
+        function formatDateTimeRange(startStr, endStr) {
+            if (!startStr) return '-';
+            try {
+                const start = new Date(startStr);
+                if (isNaN(start.getTime())) return startStr;
+                const dateStr = start.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const startTime = start.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                let endTime = '';
+                if (endStr) {
+                    const end = new Date(endStr);
+                    if (!isNaN(end.getTime())) {
+                        endTime = ' - ' + end.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     }
-                } catch (e) {}
-                if (STATE.absensiList.length === 0) {
-                    STATE.absensiList = [];
-                    saveDataToStorage();
                 }
+                return `${dateStr} ${startTime}${endTime}`;
+            } catch (e) {
+                return startStr;
+            }
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'Hadir') return 'bg-success';
+            if (status === 'Izin') return 'bg-warning text-dark';
+            if (status === 'Sakit') return 'bg-info';
+            return 'bg-danger';
+        }
+
+        function generateId() {
+            return 'a' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        }
+
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        function updateCacheStatus(status) {
+            const el = document.getElementById('cacheStatus');
+            if (el) {
+                el.textContent = status;
+                el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+            }
+        }
+
+        // ==========================================================
+        //   RENDER DROPDOWNS
+        // ==========================================================
+        function renderDropdowns() {
+            // Peserta dropdown - ambil dari AdminModule
+            const pesertaSelect = document.getElementById('absensiPeserta');
+            if (pesertaSelect) {
+                pesertaSelect.innerHTML = '<option value="">-- Pilih Peserta --</option>';
+                // Gunakan AdminModule untuk mendapatkan peserta
+                const pesertaList = AdminModule.getPesertaList('approved') || [];
+                pesertaList.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = `${escapeHtml(item.nama_lengkap || item.nama || '')} (${escapeHtml(item.utusan || '-')})`;
+                    pesertaSelect.appendChild(opt);
+                });
             }
 
-            function saveDataToStorage() {
-                try {
-                    localStorage.setItem('pkd_absensi_data', JSON.stringify({ absensiList: STATE.absensiList }));
-                } catch (e) {}
+            // Sesi dropdown - ambil dari AdminModule
+            const sesiSelect = document.getElementById('absensiSesi');
+            if (sesiSelect) {
+                sesiSelect.innerHTML = '<option value="">-- Pilih Sesi --</option>';
+                const sesiList = AdminModule.getSesiList() || [];
+                sesiList.forEach(item => {
+                    // Tampilkan nama sesi beserta rentang waktu
+                    const timeRange = formatDateTimeRange(item.waktu_mulai, item.waktu_selesai);
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = `${escapeHtml(item.nama || '')} - ${timeRange}`;
+                    sesiSelect.appendChild(opt);
+                });
             }
+        }
 
-            function getAbsensiById(id) {
-                return STATE.absensiList.find(item => item.id === id);
-            }
+        // ==========================================================
+        //   LOAD DATA (langsung dari API via AdminModule)
+        // ==========================================================
+        async function loadData(forceRefresh = false) {
+            const container = document.getElementById('absensiTableContainer');
 
-            // ==========================================================
-            //   CRUD OPERATIONS
-            // ==========================================================
-            function addAbsensi(data) {
-                const newItem = {
-                    id: generateId(),
-                    id_peserta: data.id_peserta || '',
-                    id_sesi: data.id_sesi || '',
-                    nama_peserta: data.nama_peserta || '',
-                    nama_sesi: data.nama_sesi || '',
-                    tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-                    status: data.status || 'Hadir',
-                    catatan: data.catatan || '',
-                    pesertaId: data.pesertaId || ''
-                };
-                STATE.absensiList.unshift(newItem);
-                updateCache(STATE.absensiList);
-                saveDataToStorage();
-                return newItem;
-            }
+            // Tampilkan loading
+            container.innerHTML =
+                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
 
-            function updateAbsensi(id, data) {
-                const index = STATE.absensiList.findIndex(item => item.id === id);
-                if (index === -1) return null;
-                const existing = STATE.absensiList[index];
-                const updated = {
-                    ...existing,
-                    id_peserta: data.id_peserta !== undefined ? data.id_peserta : existing.id_peserta,
-                    id_sesi: data.id_sesi !== undefined ? data.id_sesi : existing.id_sesi,
-                    nama_peserta: data.nama_peserta !== undefined ? data.nama_peserta : existing.nama_peserta,
-                    nama_sesi: data.nama_sesi !== undefined ? data.nama_sesi : existing.nama_sesi,
-                    tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-                    status: data.status !== undefined ? data.status : existing.status,
-                    catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
-                    pesertaId: data.pesertaId !== undefined ? data.pesertaId : existing.pesertaId
-                };
-                STATE.absensiList[index] = updated;
-                updateCache(STATE.absensiList);
-                saveDataToStorage();
-                return updated;
-            }
-
-            function deleteAbsensi(id) {
-                const index = STATE.absensiList.findIndex(item => item.id === id);
-                if (index === -1) return false;
-                STATE.absensiList.splice(index, 1);
-                updateCache(STATE.absensiList);
-                saveDataToStorage();
-                return true;
-            }
-
-            function getFilteredAbsensi(query, status) {
-                let filtered = STATE.absensiList;
-                if (query.trim() !== '') {
-                    const q = query.toLowerCase().trim();
-                    filtered = filtered.filter(item =>
-                        (item.nama_peserta && item.nama_peserta.toLowerCase().includes(q)) ||
-                        (item.nama_sesi && item.nama_sesi.toLowerCase().includes(q))
-                    );
+            try {
+                // Jika state admin belum dimuat, load dulu
+                if (!AdminModule.getState().lastSync || forceRefresh) {
+                    await AdminModule.loadAllData(forceRefresh);
                 }
-                if (status && status !== '') {
-                    filtered = filtered.filter(item => item.status === status);
-                }
-                return filtered;
+
+                // Ambil data absensi dari AdminModule
+                const absensiData = AdminModule.getAbsensiList() || [];
+                const pesertaData = AdminModule.getPesertaList() || [];
+                const sesiData = AdminModule.getSesiList() || [];
+
+                STATE.absensiList = absensiData;
+                STATE.pesertaList = pesertaData;
+                STATE.sesiList = sesiData;
+
+                renderDropdowns();
+                applyFiltersAndSort();
+                updateCacheStatus('Live');
+            } catch (e) {
+                console.warn('Gagal load data:', e);
+                container.innerHTML = '<div class="alert alert-danger text-center">Gagal memuat data.</div>';
+                updateCacheStatus('Error');
             }
+        }
 
-            // ==========================================================
-            //   RENDER TABLE
-            // ==========================================================
-            function renderTable(data) {
-                const container = document.getElementById('absensiTableContainer');
-                if (!container) return;
+        // ==========================================================
+        //   FILTER, SORT, PAGINATION
+        // ==========================================================
+        function getFilteredAbsensi(query, status) {
+            let filtered = STATE.absensiList;
+            if (query.trim() !== '') {
+                const q = query.toLowerCase().trim();
+                filtered = filtered.filter(item =>
+                    (item.nama_peserta && item.nama_peserta.toLowerCase().includes(q)) ||
+                    (item.nama_sesi && item.nama_sesi.toLowerCase().includes(q))
+                );
+            }
+            if (status && status !== '') {
+                filtered = filtered.filter(item => item.status === status);
+            }
+            return filtered;
+        }
 
-                let html = `
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width:50px;">#</th>
-                                    <th>Peserta</th>
-                                    <th>Sesi</th>
-                                    <th>Tanggal</th>
-                                    <th>Status</th>
-                                    <th>ID Peserta</th>
-                                    <th style="width:200px;" class="text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+        function applyFiltersAndSort() {
+            let filtered = getFilteredAbsensi(STATE.searchQuery, STATE.statusFilter);
+            if (STATE.sortColumn) {
+                filtered.sort(function(a, b) {
+                    let va = (a[STATE.sortColumn] || '').toLowerCase();
+                    let vb = (b[STATE.sortColumn] || '').toLowerCase();
+                    if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+                    if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            STATE.filteredList = filtered;
+            const totalItems = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+            if (STATE.currentPage < 1) STATE.currentPage = 1;
+            const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+            const end = Math.min(start + STATE.itemsPerPage, totalItems);
+            renderTable(filtered.slice(start, end), totalItems);
+        }
+
+        function renderTable(data, totalItems) {
+            const container = document.getElementById('absensiTableContainer');
+            if (!container) return;
+
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th class="sortable" onclick="sortTable('nama_peserta')">Peserta</th>
+                                <th class="sortable" onclick="sortTable('nama_sesi')">Sesi</th>
+                                <th class="sortable" onclick="sortTable('tanggal')">Tanggal</th>
+                                <th class="sortable" onclick="sortTable('status')">Status</th>
+                                <th>Keterangan</th>
+                                <th style="width:200px;" class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (data.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                            Tidak ada data absensi.
+                        </td>
+                    </tr>
                 `;
+            } else {
+                data.forEach((item, index) => {
+                    const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+                    const badge = getStatusBadge(item.status);
 
-                if (data.length === 0) {
+                    // Ambil data sesi untuk menampilkan rentang waktu
+                    const sesi = STATE.sesiList.find(s => String(s.id) === String(item.id_sesi));
+                    let sesiDisplay = escapeHtml(item.nama_sesi || '-');
+                    if (sesi) {
+                        const timeRange = formatDateTimeRange(sesi.waktu_mulai, sesi.waktu_selesai);
+                        sesiDisplay += `<br><small class="text-muted">${timeRange}</small>`;
+                    }
+
                     html += `
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                Tidak ada data absensi.
+                            <td>${globalIndex}</td>
+                            <td><strong>${escapeHtml(item.nama_peserta || '-')}</strong></td>
+                            <td>${sesiDisplay}</td>
+                            <td>${formatDate(item.tanggal)}</td>
+                            <td><span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></td>
+                            <td>${escapeHtml(item.catatan || '-')}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAbsensi('${item.id}')" title="Lihat Detail">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editAbsensi('${item.id}')" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteAbsensi('${item.id}')" title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     `;
+                });
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            html += `
+                <div class="pagination-container">
+                    <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+                    <div class="btn-group">
+            `;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            html += `</div></div>`;
+
+            container.innerHTML = html;
+            container.classList.add('fade-in');
+        }
+
+        window.sortTable = function(col) {
+            if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+            else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+            STATE.currentPage = 1;
+            applyFiltersAndSort();
+        };
+
+        window.goToPage = function(page) {
+            const totalItems = STATE.filteredList.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+            if (page < 1 || page > totalPages) return;
+            STATE.currentPage = page;
+            applyFiltersAndSort();
+        };
+
+        // ==========================================================
+        //   CRUD OPERATIONS (Local state, with API sync via AdminModule)
+        // ==========================================================
+        function addAbsensi(data) {
+            const newItem = {
+                id: generateId(),
+                id_peserta: data.id_peserta || '',
+                id_sesi: data.id_sesi || '',
+                nama_peserta: data.nama_peserta || '',
+                nama_sesi: data.nama_sesi || '',
+                tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
+                status: data.status || 'Hadir',
+                catatan: data.catatan || '',
+                pesertaId: data.pesertaId || ''
+            };
+            STATE.absensiList.unshift(newItem);
+            return newItem;
+        }
+
+        function updateAbsensi(id, data) {
+            const index = STATE.absensiList.findIndex(item => item.id === id);
+            if (index === -1) return null;
+            const existing = STATE.absensiList[index];
+            const updated = {
+                ...existing,
+                id_peserta: data.id_peserta !== undefined ? data.id_peserta : existing.id_peserta,
+                id_sesi: data.id_sesi !== undefined ? data.id_sesi : existing.id_sesi,
+                nama_peserta: data.nama_peserta !== undefined ? data.nama_peserta : existing.nama_peserta,
+                nama_sesi: data.nama_sesi !== undefined ? data.nama_sesi : existing.nama_sesi,
+                tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
+                status: data.status !== undefined ? data.status : existing.status,
+                catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
+                pesertaId: data.pesertaId !== undefined ? data.pesertaId : existing.pesertaId
+            };
+            STATE.absensiList[index] = updated;
+            return updated;
+        }
+
+        function deleteAbsensi(id) {
+            const index = STATE.absensiList.findIndex(item => item.id === id);
+            if (index === -1) return false;
+            STATE.absensiList.splice(index, 1);
+            return true;
+        }
+
+        // ==========================================================
+        //   EVENT HANDLERS
+        // ==========================================================
+        function resetForm() {
+            document.getElementById('editAbsensiId').value = '';
+            document.getElementById('absensiPeserta').value = '';
+            document.getElementById('absensiSesi').value = '';
+            document.getElementById('absensiTanggal').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('absensiStatus').value = 'Hadir';
+            document.getElementById('absensiNote').value = '';
+            document.getElementById('formModalTitle').innerText = 'Tambah Absensi';
+            STATE.isEditing = false;
+            renderDropdowns();
+        }
+
+        function openAddModal() {
+            resetForm();
+            new bootstrap.Modal(document.getElementById('absensiFormModal')).show();
+        }
+
+        function openEditModal(id) {
+            const item = getAbsensiById(id);
+            if (!item) {
+                showToast('Data tidak ditemukan.', 'error');
+                return;
+            }
+            renderDropdowns();
+            document.getElementById('editAbsensiId').value = id;
+            document.getElementById('absensiPeserta').value = item.id_peserta || '';
+            document.getElementById('absensiSesi').value = item.id_sesi || '';
+            document.getElementById('absensiTanggal').value = item.tanggal || '';
+            document.getElementById('absensiStatus').value = item.status || 'Hadir';
+            document.getElementById('absensiNote').value = item.catatan || '';
+            document.getElementById('formModalTitle').innerText = 'Edit Absensi';
+            STATE.isEditing = true;
+            new bootstrap.Modal(document.getElementById('absensiFormModal')).show();
+        }
+
+        function openDetailModal(id) {
+            const item = getAbsensiById(id);
+            if (!item) {
+                showToast('Data tidak ditemukan.', 'error');
+                return;
+            }
+            const modal = new bootstrap.Modal(document.getElementById('detailAbsensiModal'));
+            const content = document.getElementById('detailContent');
+            const badge = getStatusBadge(item.status);
+
+            // Ambil data sesi untuk rentang waktu
+            const sesi = STATE.sesiList.find(s => String(s.id) === String(item.id_sesi));
+            let sesiRange = '-';
+            if (sesi) {
+                sesiRange = formatDateTimeRange(sesi.waktu_mulai, sesi.waktu_selesai);
+            }
+
+            let html = `
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item py-3"><strong>Peserta:</strong> ${escapeHtml(item.nama_peserta || '-')}</div>
+                    <div class="list-group-item py-3"><strong>Sesi:</strong> ${escapeHtml(item.nama_sesi || '-')} <br><small class="text-muted">${sesiRange}</small></div>
+                    <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
+                    <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></div>
+                    <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
+                </div>
+            `;
+            content.innerHTML = html;
+            modal.show();
+        }
+
+        function confirmDelete(id) {
+            document.getElementById('deleteAbsensiId').value = id;
+            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+        }
+
+        function executeDelete() {
+            const id = document.getElementById('deleteAbsensiId').value;
+            if (!id) return;
+            const result = deleteAbsensi(id);
+            if (result) {
+                showToast('Data absensi berhasil dihapus.', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                applyFiltersAndSort();
+            } else {
+                showToast('Gagal menghapus data.', 'error');
+            }
+        }
+
+        function saveData() {
+            const id = document.getElementById('editAbsensiId').value;
+            const id_peserta = document.getElementById('absensiPeserta').value;
+            const id_sesi = document.getElementById('absensiSesi').value;
+            const tanggal = document.getElementById('absensiTanggal').value;
+            const status = document.getElementById('absensiStatus').value;
+            const catatan = document.getElementById('absensiNote').value.trim();
+
+            if (!id_peserta || !id_sesi || !tanggal) {
+                showToast('Peserta, sesi, dan tanggal wajib diisi.', 'error');
+                return;
+            }
+
+            const peserta = STATE.pesertaList.find(p => p.id === id_peserta);
+            const sesi = STATE.sesiList.find(s => s.id === id_sesi);
+
+            const data = {
+                id_peserta: id_peserta,
+                id_sesi: id_sesi,
+                nama_peserta: peserta ? (peserta.nama_lengkap || peserta.nama) : 'Unknown',
+                nama_sesi: sesi ? sesi.nama : 'Unknown',
+                tanggal: tanggal,
+                status: status,
+                catatan: catatan,
+                pesertaId: peserta ? peserta.id : ''
+            };
+
+            if (id === '') {
+                const newItem = addAbsensi(data);
+                if (newItem) {
+                    showToast('Data absensi berhasil ditambahkan.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('absensiFormModal')).hide();
+                    applyFiltersAndSort();
                 } else {
-                    data.forEach((item, index) => {
-                        const badge = getStatusBadge(item.status);
-                        html += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td><strong>${escapeHtml(item.nama_peserta || '-')}</strong></td>
-                                <td>${escapeHtml(item.nama_sesi || '-')}</td>
-                                <td>${formatDate(item.tanggal)}</td>
-                                <td><span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></td>
-                                <td><code>${escapeHtml(item.pesertaId || '-')}</code></td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAbsensi('${item.id}')" title="Lihat Detail">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editAbsensi('${item.id}')" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteAbsensi('${item.id}')" title="Hapus">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
+                    showToast('Gagal menambahkan data.', 'error');
                 }
-
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-                container.innerHTML = html;
-                container.classList.add('fade-in');
-            }
-
-            // ==========================================================
-            //   RENDER DROPDOWNS
-            // ==========================================================
-            function renderDropdowns() {
-                // Peserta dropdown
-                const pesertaSelect = document.getElementById('absensiPeserta');
-                if (pesertaSelect) {
-                    pesertaSelect.innerHTML = '<option value="">-- Pilih Peserta --</option>';
-                    STATE.pesertaList.forEach(item => {
-                        const opt = document.createElement('option');
-                        opt.value = item.id;
-                        opt.textContent = `${item.nama} (${item.asal || '-'})`;
-                        pesertaSelect.appendChild(opt);
-                    });
-                }
-
-                // Sesi dropdown
-                const sesiSelect = document.getElementById('absensiSesi');
-                if (sesiSelect) {
-                    sesiSelect.innerHTML = '<option value="">-- Pilih Sesi --</option>';
-                    STATE.sesiList.forEach(item => {
-                        const opt = document.createElement('option');
-                        opt.value = item.id;
-                        opt.textContent = `${item.nama} - ${item.tanggal}`;
-                        sesiSelect.appendChild(opt);
-                    });
-                }
-            }
-
-            // ==========================================================
-            //   LOAD DATA UTAMA
-            // ==========================================================
-            async function loadData(forceRefresh) {
-                const container = document.getElementById('absensiTableContainer');
-                container.innerHTML =
-                    '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
-
-                try {
-                    // 1. Coba DataCache dulu
-                    const cached = DataCache.getData('absensi');
-                    if (cached && Array.isArray(cached) && cached.length > 0) {
-                        STATE.absensiList = cached;
-                        renderTable(getFilteredAbsensi(STATE.searchQuery, STATE.statusFilter));
-                        updateCacheStatus('Cache');
-                        return;
-                    }
-
-                    // 2. Coba localStorage
-                    loadDataFromStorage();
-                    if (STATE.absensiList.length > 0) {
-                        renderTable(getFilteredAbsensi(STATE.searchQuery, STATE.statusFilter));
-                        updateCacheStatus('Storage');
-                    } else {
-                        container.innerHTML =
-                            '<div class="alert alert-info text-center">Tidak ada data absensi.</div>';
-                        updateCacheStatus('Empty');
-                    }
-                } catch (e) {
-                    console.warn('Gagal load data:', e);
-                    container.innerHTML =
-                        '<div class="alert alert-danger">Gagal memuat data.</div>';
-                    updateCacheStatus('Error');
-                }
-            }
-
-            // ==========================================================
-            //   EVENT HANDLERS
-            // ==========================================================
-            function resetForm() {
-                document.getElementById('editAbsensiId').value = '';
-                document.getElementById('absensiPeserta').value = '';
-                document.getElementById('absensiSesi').value = '';
-                document.getElementById('absensiTanggal').value = new Date().toISOString().slice(0, 10);
-                document.getElementById('absensiStatus').value = 'Hadir';
-                document.getElementById('absensiNote').value = '';
-                document.getElementById('formModalTitle').innerText = 'Tambah Absensi';
-                STATE.isEditing = false;
-            }
-
-            function openAddModal() {
-                resetForm();
-                renderDropdowns();
-                new bootstrap.Modal(document.getElementById('absensiFormModal')).show();
-            }
-
-            function openEditModal(id) {
-                const item = getAbsensiById(id);
-                if (!item) {
-                    showToast('Data tidak ditemukan.', 'error');
-                    return;
-                }
-                renderDropdowns();
-                document.getElementById('editAbsensiId').value = id;
-                document.getElementById('absensiPeserta').value = item.id_peserta || '';
-                document.getElementById('absensiSesi').value = item.id_sesi || '';
-                document.getElementById('absensiTanggal').value = item.tanggal || '';
-                document.getElementById('absensiStatus').value = item.status || 'Hadir';
-                document.getElementById('absensiNote').value = item.catatan || '';
-                document.getElementById('formModalTitle').innerText = 'Edit Absensi';
-                STATE.isEditing = true;
-                new bootstrap.Modal(document.getElementById('absensiFormModal')).show();
-            }
-
-            function openDetailModal(id) {
-                const item = getAbsensiById(id);
-                if (!item) {
-                    showToast('Data tidak ditemukan.', 'error');
-                    return;
-                }
-                const modal = new bootstrap.Modal(document.getElementById('detailAbsensiModal'));
-                const content = document.getElementById('detailContent');
-                const badge = getStatusBadge(item.status);
-                let html = `
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item py-3"><strong>Peserta:</strong> ${escapeHtml(item.nama_peserta || '-')}</div>
-                        <div class="list-group-item py-3"><strong>Sesi:</strong> ${escapeHtml(item.nama_sesi || '-')}</div>
-                        <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
-                        <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></div>
-                        <div class="list-group-item py-3"><strong>ID Peserta:</strong> <code>${escapeHtml(item.pesertaId || '-')}</code></div>
-                        <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
-                    </div>
-                `;
-                content.innerHTML = html;
-                modal.show();
-            }
-
-            function confirmDelete(id) {
-                document.getElementById('deleteAbsensiId').value = id;
-                new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-            }
-
-            function executeDelete() {
-                const id = document.getElementById('deleteAbsensiId').value;
-                if (!id) return;
-                const result = deleteAbsensi(id);
-                if (result) {
-                    showToast('Data absensi berhasil dihapus.', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-                    loadData();
+            } else {
+                const updated = updateAbsensi(id, data);
+                if (updated) {
+                    showToast('Data absensi berhasil diperbarui.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('absensiFormModal')).hide();
+                    applyFiltersAndSort();
                 } else {
-                    showToast('Gagal menghapus data.', 'error');
+                    showToast('Gagal memperbarui data.', 'error');
                 }
             }
+        }
 
-            function saveData() {
-                const id = document.getElementById('editAbsensiId').value;
-                const id_peserta = document.getElementById('absensiPeserta').value;
-                const id_sesi = document.getElementById('absensiSesi').value;
-                const tanggal = document.getElementById('absensiTanggal').value;
-                const status = document.getElementById('absensiStatus').value;
-                const catatan = document.getElementById('absensiNote').value.trim();
+        function exportData() {
+            const data = STATE.filteredList;
+            if (data.length === 0) {
+                showToast('Tidak ada data untuk diekspor.', 'info');
+                return;
+            }
+            const exportData = data.map(item => ({
+                id: item.id,
+                peserta: item.nama_peserta,
+                sesi: item.nama_sesi,
+                tanggal: item.tanggal,
+                status: item.status,
+                catatan: item.catatan,
+                pesertaId: item.pesertaId
+            }));
+            const json = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `absensi_export_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Berhasil mengekspor ${data.length} data absensi.`, 'success');
+        }
 
-                if (!id_peserta || !id_sesi || !tanggal) {
-                    showToast('Peserta, sesi, dan tanggal wajib diisi.', 'error');
-                    return;
-                }
+        // ==========================================================
+        //   SEARCH & FILTER
+        // ==========================================================
+        const debouncedSearch = debounce(function(query) {
+            STATE.searchQuery = query;
+            STATE.currentPage = 1;
+            applyFiltersAndSort();
+        }, 300);
 
-                const peserta = STATE.pesertaList.find(p => p.id === id_peserta);
-                const sesi = STATE.sesiList.find(s => s.id === id_sesi);
+        function handleSearch(e) { debouncedSearch(e.target.value); }
 
-                const data = {
-                    id_peserta: id_peserta,
-                    id_sesi: id_sesi,
-                    nama_peserta: peserta ? peserta.nama : 'Unknown',
-                    nama_sesi: sesi ? sesi.nama : 'Unknown',
-                    tanggal: tanggal,
-                    status: status,
-                    catatan: catatan,
-                    pesertaId: peserta ? peserta.id : '' // tambahkan pesertaId
-                };
+        function handleStatusFilter(e) {
+            STATE.statusFilter = e.target.value;
+            STATE.currentPage = 1;
+            applyFiltersAndSort();
+        }
 
-                if (id === '') {
-                    const newItem = addAbsensi(data);
-                    if (newItem) {
-                        showToast('Data absensi berhasil ditambahkan.', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('absensiFormModal')).hide();
-                        loadData();
-                    } else {
-                        showToast('Gagal menambahkan data.', 'error');
-                    }
-                } else {
-                    const updated = updateAbsensi(id, data);
-                    if (updated) {
-                        showToast('Data absensi berhasil diperbarui.', 'success');
-                        bootstrap.Modal.getInstance(document.getElementById('absensiFormModal')).hide();
-                        loadData();
-                    } else {
-                        showToast('Gagal memperbarui data.', 'error');
-                    }
-                }
+        function getAbsensiById(id) {
+            return STATE.absensiList.find(item => item.id === id);
+        }
+
+        // ==========================================================
+        //   LOGIN AUTH CHECK & INIT
+        // ==========================================================
+        (function boot() {
+            if (getUserRole() !== 'admin') {
+                window.location.href = '/bisaa/login.html';
+                return;
             }
 
-            function exportData() {
-                const data = STATE.filteredList;
-                if (data.length === 0) {
-                    showToast('Tidak ada data untuk diekspor.', 'info');
-                    return;
-                }
-                const exportData = data.map(item => ({
-                    id: item.id,
-                    peserta: item.nama_peserta,
-                    sesi: item.nama_sesi,
-                    tanggal: item.tanggal,
-                    status: item.status,
-                    catatan: item.catatan,
-                    pesertaId: item.pesertaId
-                }));
-                const json = JSON.stringify(exportData, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `absensi_export_${new Date().toISOString().slice(0,10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast(`Berhasil mengekspor ${data.length} data absensi.`, 'success');
-            }
+            initSidebarToggle();
+            initSidebarDropdowns();
 
-            // ==========================================================
-            //   SEARCH & FILTER
-            // ==========================================================
-            const debouncedSearch = debounce(function(query) {
-                STATE.searchQuery = query;
-                const filtered = getFilteredAbsensi(STATE.searchQuery, STATE.statusFilter);
-                STATE.filteredList = filtered;
-                renderTable(filtered);
-            }, 300);
+            // Update navbar user
+            updateNavbarMenu();
 
-            function handleSearch(e) { debouncedSearch(e.target.value); }
+            // Load data
+            loadData();
 
-            function handleStatusFilter(e) {
-                STATE.statusFilter = e.target.value;
-                const filtered = getFilteredAbsensi(STATE.searchQuery, STATE.statusFilter);
-                STATE.filteredList = filtered;
-                renderTable(filtered);
-            }
+            // Event listeners
+            document.getElementById('addAbsensiBtn').addEventListener('click', openAddModal);
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+            document.getElementById('refreshDataBtn').addEventListener('click', function() {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+                this.disabled = true;
+                loadData(true).then(() => {
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+                    this.disabled = false;
+                    showToast('Data berhasil disegarkan', 'success');
+                }).catch(() => {
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+                    this.disabled = false;
+                    showToast('Gagal menyegarkan', 'error');
+                });
+            });
+            document.getElementById('saveAbsensiBtn').addEventListener('click', saveData);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', executeDelete);
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            document.getElementById('filterStatus').addEventListener('change', handleStatusFilter);
 
+            // Expose fungsi global
+            window.viewAbsensi = openDetailModal;
+            window.editAbsensi = openEditModal;
+            window.deleteAbsensi = confirmDelete;
         })();
+
     </script>
 </body>
 </html>

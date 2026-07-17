@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <style>
     /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; }
@@ -115,14 +116,22 @@
     /* --- UTILITY --- */
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .section-title {
+        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
+    }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
     .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-    .btn-aksi { min-width: 80px; }
+
+    /* --- PREVIEW MODAL --- */
+    .modal-xl .modal-body { background: #f1f5f9; }
+    .modal-xl iframe { width: 100%; height: 80vh; border: none; }
+
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
   </style>
 </head>
 <body>
@@ -130,7 +139,7 @@
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- ==================== SIDEBAR UNIVERSAL ==================== -->
+    <!-- ==================== SIDEBAR ==================== -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle">
         <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
@@ -234,7 +243,7 @@
       </div>
     </div>
 
-    <!-- ==================== BOTTOM NAV (MOBILE) UNIVERSAL ==================== -->
+    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
@@ -248,6 +257,7 @@
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-file-earmark-pdf me-2"></i>Manajemen Materi</h2>
 
+      <!-- TOOLBAR -->
       <div class="row mb-3">
         <div class="col-md-6">
           <button class="btn btn-primary rounded-pill" id="addMateriBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Materi</button>
@@ -271,6 +281,7 @@
         </div>
       </div>
 
+      <!-- TABLE -->
       <div id="materiTableContainer" class="table-container">
         <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
       </div>
@@ -296,13 +307,7 @@
           <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
           <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
         </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-            </button>
-          </div>
-        </div>
+        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
       </div>
     </div>
   </div>
@@ -369,6 +374,35 @@
   </div>
 </div>
 
+<!-- ==================== MODAL PREVIEW ==================== -->
+<div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="background: #1e1e2f; border-radius: 20px;">
+      <div class="modal-header bg-dark text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="previewMateriLabel">
+          <i class="bi bi-file-earmark-play me-2"></i><span id="previewMateriJudul">Pratinjau Materi</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background: #0f172a; border-radius: 0 0 20px 20px; position: relative;">
+        <div id="previewMateriSpinner" class="position-absolute top-50 start-50 translate-middle">
+          <div class="spinner-border text-light" role="status"><span class="visually-hidden">Memuat...</span></div>
+        </div>
+        <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen onload="document.getElementById('previewMateriSpinner').style.display='none';"></iframe>
+      </div>
+      <div class="modal-footer border-0 bg-dark rounded-bottom-4">
+        <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
+          <i class="bi bi-fullscreen"></i> Fullscreen (F5)
+        </button>
+        <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4">
+          <i class="bi bi-download me-1"></i>Unduh
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== MODAL HAPUS ==================== -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -404,612 +438,588 @@
 </div>
 
 <!-- ==================== SCRIPTS ==================== -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    let STATE = {
-      materiList: [],
-      filteredList: [],
-      searchQuery: '',
-      kategoriFilter: '',
-      isLoading: false,
-      isEditing: false,
-      isBackgroundUpdate: false
+  // ==========================================================
+  //   STATE
+  // ==========================================================
+  let STATE = {
+    materiList: [],
+    filteredList: [],
+    searchQuery: '',
+    kategoriFilter: '',
+    isLoading: false
+  };
+
+  // ==========================================================
+  //   UTILITY FUNCTIONS
+  // ==========================================================
+  window.togglePasswordVisibility = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function generateId() {
+    return 'm' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  }
+
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+    }
+  }
+
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
     };
+  }
 
-    // =====================================================
-    //   UTILITY FUNCTIONS
-    // =====================================================
-    window.togglePasswordVisibility = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
-    };
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
     }
+  });
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
-      });
-    }
-
-    function generateId() {
-      return 'm' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
-      } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
-      }
-      toast.show();
-    }
-
-    function renderSkeleton() {
-      return '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-    }
-
-    function debounce(fn, delay) {
-      let timer;
-      return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
-
-    // =====================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // =====================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('bi-arrow-left-right');
-        icon.classList.toggle('bi-arrow-right-left');
-      }
-    });
-
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
-
-    // =====================================================
-    //   LOGOUT
-    // =====================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
       e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
     });
+  });
 
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
 
-    // =====================================================
-    //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
-        return;
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   LOAD MATERI (langsung dari API via AdminModule)
+  // ==========================================================
+  async function loadMateri(forceRefresh = false) {
+    const container = document.getElementById('materiTableContainer');
+
+    // Tampilkan loading
+    container.innerHTML = `
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Memuat data...</p>
+      </div>
+    `;
+
+    try {
+      // Pastikan AdminModule sudah dimuat
+      if (!AdminModule.getState().lastSync || forceRefresh) {
+        await AdminModule.loadAllData(forceRefresh);
       }
-
-      // Load data
-      loadData();
-
-      // Event listeners
-      document.getElementById('addMateriBtn')?.addEventListener('click', openAddModal);
-      document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-      document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        this.disabled = true;
-        loadData(true).then(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        }).catch(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-      });
-      document.getElementById('saveMateriBtn')?.addEventListener('click', saveData);
-      document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-      document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-      document.getElementById('filterKategori')?.addEventListener('change', handleKategoriFilter);
-    });
-
-    // =====================================================
-    //   CACHE HELPERS
-    // =====================================================
-    function loadDataFromCache() {
-      const cached = DataCache.getData('materi');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.materiList = cached;
-        return true;
-      }
-      return false;
-    }
-
-    function updateCache(data) {
-      DataCache.updateData('materi', data);
-      STATE.materiList = data;
-    }
-
-    function updateCacheStatus(status) {
-      const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
-    }
-
-    function loadDataFromStorage() {
-      try {
-        const stored = localStorage.getItem('pkd_materi_data');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.materiList) {
-            STATE.materiList = parsed.materiList;
-          }
-        }
-      } catch (e) {}
-    }
-
-    function saveDataToStorage() {
-      try {
-        localStorage.setItem('pkd_materi_data', JSON.stringify({
-          materiList: STATE.materiList
-        }));
-      } catch (e) {}
-    }
-
-    function getMateriById(id) {
-      return STATE.materiList.find(item => item.id === id);
-    }
-
-    // =====================================================
-    //   CRUD OPERATIONS
-    // =====================================================
-    function addMateri(data) {
-      const newItem = {
-        id: generateId(),
-        judul: data.judul || '',
-        deskripsi: data.deskripsi || '',
-        fileId: data.fileId || '',
-        tipe: data.tipe || '',
-        kategori: data.kategori || 'Umum',
-        tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
-        timestamp: data.timestamp || new Date().toISOString(),
-        uploadBy: data.uploadBy || 'admin'
-      };
-      STATE.materiList.unshift(newItem);
-      updateCache(STATE.materiList);
-      saveDataToStorage();
-      return newItem;
-    }
-
-    function updateMateri(id, data) {
-      const index = STATE.materiList.findIndex(item => item.id === id);
-      if (index === -1) return null;
-      const existing = STATE.materiList[index];
-      const updated = {
-        ...existing,
-        judul: data.judul !== undefined ? data.judul : existing.judul,
-        deskripsi: data.deskripsi !== undefined ? data.deskripsi : existing.deskripsi,
-        fileId: data.fileId !== undefined ? data.fileId : existing.fileId,
-        tipe: data.tipe !== undefined ? data.tipe : existing.tipe,
-        kategori: data.kategori !== undefined ? data.kategori : existing.kategori,
-        tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
-        timestamp: data.timestamp || existing.timestamp,
-        uploadBy: data.uploadBy || existing.uploadBy
-      };
-      STATE.materiList[index] = updated;
-      updateCache(STATE.materiList);
-      saveDataToStorage();
-      return updated;
-    }
-
-    function deleteMateri(id) {
-      const index = STATE.materiList.findIndex(item => item.id === id);
-      if (index === -1) return false;
-      STATE.materiList.splice(index, 1);
-      updateCache(STATE.materiList);
-      saveDataToStorage();
-      return true;
-    }
-
-    function getFilteredMateri(query = '', kategori = '') {
-      let filtered = STATE.materiList;
-      if (query.trim() !== '') {
-        const q = query.toLowerCase().trim();
-        filtered = filtered.filter(item =>
-          (item.judul && item.judul.toLowerCase().includes(q)) ||
-          (item.kategori && item.kategori.toLowerCase().includes(q)) ||
-          (item.deskripsi && item.deskripsi.toLowerCase().includes(q))
-        );
-      }
-      if (kategori !== '' && kategori !== '') {
-        filtered = filtered.filter(item => item.kategori === kategori);
-      }
-      return filtered;
-    }
-
-    // =====================================================
-    //   RENDER TABLE
-    // =====================================================
-    function renderTable(data) {
-      const container = document.getElementById('materiTableContainer');
-      if (!container) return;
-
-      let html = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 50px;">#</th>
-                <th>Judul Materi</th>
-                <th>Kategori</th>
-                <th>Tanggal</th>
-                <th style="width: 200px;" class="text-center">File</th>
-                <th style="width: 250px;" class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.length === 0) {
-        html += `
-            <tr>
-              <td colspan="6" class="text-center py-5 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                Tidak ada data materi.
-              </td>
-            </tr>
-        `;
-      } else {
-        data.forEach((item, index) => {
-          const fileUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/view` : '#';
-          const fileIcon = item.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
-                            item.tipe === 'ppt' || item.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' :
-                            item.tipe === 'doc' || item.tipe === 'docx' ? 'bi-file-word-fill text-primary' :
-                            'bi-file-earmark-fill text-secondary';
-          html += `
-            <tr>
-              <td>${index + 1}</td>
-              <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
-              <td><span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></td>
-              <td>${formatDate(item.tanggal)}</td>
-              <td class="text-center">
-                ${item.fileId ? `<a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-info"><i class="${fileIcon}"></i> Unduh</a>` : '-'}
-              </td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewMateri('${item.id}')" title="Lihat Detail">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editMateri('${item.id}')" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteMateri('${item.id}')" title="Hapus">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    // =====================================================
-    //   LOAD DATA (ROBUST - TANPA DUMMY)
-    // =====================================================
-    async function loadData(forceRefresh = false) {
-      const container = document.getElementById('materiTableContainer');
-      container.innerHTML = renderSkeleton();
-
-      // 1. Jika forceRefresh (tombol Segarkan), ambil langsung dari API dan JANGAN fallback ke cache jika gagal/kosong
-      if (forceRefresh) {
-        try {
-          const freshData = await PKD.getMateriList(true);
-          if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-            STATE.materiList = freshData;
-            updateCache(freshData);
-            saveDataToStorage();
-            renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-            updateCacheStatus('Live');
-            return;
-          } else {
-            // API mengembalikan array kosong: kosongkan data lokal dan tampilkan kosong
-            STATE.materiList = [];
-            updateCache([]);
-            saveDataToStorage();
-            renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-            updateCacheStatus('Empty');
-            return;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat data dari API:', e);
-          container.innerHTML = `<div class="alert alert-danger">Gagal memuat data dari server.</div>`;
-          updateCacheStatus('Error');
-          return; // Berhenti, jangan lanjut ke cache
-        }
-      }
-
-      // 2. Jika bukan refresh paksa, coba DataCache
-      const cached = DataCache.getData('materi');
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        STATE.materiList = cached;
+      const freshData = AdminModule.getMateriList() || [];
+      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+        STATE.materiList = freshData;
         renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-        updateCacheStatus('Cache');
-        return;
-      }
-
-      // 3. Coba localStorage
-      loadDataFromStorage();
-      if (STATE.materiList.length > 0) {
-        renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-        updateCacheStatus('Storage');
+        updateCacheStatus('Live');
       } else {
         container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data materi.</div>`;
         updateCacheStatus('Empty');
       }
+    } catch (e) {
+      console.warn('Gagal load materi:', e);
+      container.innerHTML = `<div class="alert alert-danger">Gagal memuat data.</div>`;
+      updateCacheStatus('Error');
     }
+  }
 
-    // =====================================================
-    //   EVENT HANDLERS
-    // =====================================================
-    function resetForm() {
-      document.getElementById('editMateriId').value = '';
-      document.getElementById('materiJudul').value = '';
-      document.getElementById('materiDeskripsi').value = '';
-      document.getElementById('materiFile').value = '';
-      document.getElementById('filePreview').innerHTML = '';
-      document.getElementById('materiKategori').value = 'Umum';
-      document.getElementById('materiTanggal').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('formModalTitle').innerText = 'Tambah Materi';
-      STATE.isEditing = false;
+  // ==========================================================
+  //   FILTER, SORT
+  // ==========================================================
+  function getFilteredMateri(query = '', kategori = '') {
+    let filtered = STATE.materiList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.judul && item.judul.toLowerCase().includes(q)) ||
+        (item.kategori && item.kategori.toLowerCase().includes(q)) ||
+        (item.deskripsi && item.deskripsi.toLowerCase().includes(q))
+      );
     }
-
-    function openAddModal() {
-      resetForm();
-      new bootstrap.Modal(document.getElementById('materiFormModal')).show();
+    if (kategori !== '' && kategori !== '') {
+      filtered = filtered.filter(item => item.kategori === kategori);
     }
+    return filtered;
+  }
 
-    window.editMateri = function(id) {
-      const item = getMateriById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      document.getElementById('editMateriId').value = id;
-      document.getElementById('materiJudul').value = item.judul || '';
-      document.getElementById('materiDeskripsi').value = item.deskripsi || '';
-      document.getElementById('materiFile').value = '';
-      document.getElementById('filePreview').innerHTML = item.fileId ? `File saat ini: <a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank">Lihat</a>` : '';
-      document.getElementById('materiKategori').value = item.kategori || 'Umum';
-      document.getElementById('materiTanggal').value = item.tanggal || '';
-      document.getElementById('formModalTitle').innerText = 'Edit Materi';
-      STATE.isEditing = true;
-      new bootstrap.Modal(document.getElementById('materiFormModal')).show();
-    };
+  function renderTable(data) {
+    const container = document.getElementById('materiTableContainer');
+    if (!container) return;
 
-    window.viewMateri = function(id) {
-      const item = getMateriById(id);
-      if (!item) {
-        showToast('Data tidak ditemukan.', 'error');
-        return;
-      }
-      const modal = new bootstrap.Modal(document.getElementById('detailMateriModal'));
-      const content = document.getElementById('detailContent');
-      let fileHtml = '-';
-      if (item.fileId) {
-        fileHtml = `<a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i> Unduh</a>`;
-      }
-      let html = `
-        <div class="list-group list-group-flush">
-          <div class="list-group-item py-3"><strong>Judul:</strong> ${escapeHtml(item.judul || '-')}</div>
-          <div class="list-group-item py-3"><strong>Kategori:</strong> <span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></div>
-          <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
-          <div class="list-group-item py-3"><strong>Deskripsi:</strong> ${escapeHtml(item.deskripsi || '-')}</div>
-          <div class="list-group-item py-3"><strong>File:</strong> ${fileHtml}</div>
-        </div>
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Judul Materi</th>
+              <th>Kategori</th>
+              <th>Tanggal</th>
+              <th style="width: 200px;" class="text-center">File</th>
+              <th style="width: 250px;" class="text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += `
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              Tidak ada data materi.
+            </td>
+          </tr>
       `;
-      content.innerHTML = html;
-      modal.show();
-    };
+    } else {
+      data.forEach((item, index) => {
+        const fileUrl = item.fileId ? `https://drive.google.com/file/d/${item.fileId}/view` : '#';
+        const fileIcon = item.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
+                          item.tipe === 'ppt' || item.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' :
+                          item.tipe === 'doc' || item.tipe === 'docx' ? 'bi-file-word-fill text-primary' :
+                          'bi-file-earmark-fill text-secondary';
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td><strong>${escapeHtml(item.judul || '-')}</strong></td>
+            <td><span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></td>
+            <td>${formatDate(item.tanggal)}</td>
+            <td class="text-center">
+              ${item.fileId ? `
+                <button class="btn btn-sm btn-outline-primary" onclick="previewMateri('${escapeHtml(item.judul)}', '${escapeHtml(item.fileId)}')">
+                  <i class="bi bi-eye"></i> Tayangkan
+                </button>
+                <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-download"></i>
+                </a>
+              ` : '-'}
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewMateri('${item.id}')" title="Lihat Detail">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editMateri('${item.id}')" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteMateri('${item.id}')" title="Hapus">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
 
-    window.deleteMateri = function(id) {
-      document.getElementById('deleteMateriId').value = id;
-      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
-    };
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
 
-    function executeDelete() {
-      const id = document.getElementById('deleteMateriId').value;
-      if (!id) return;
-      const result = deleteMateri(id);
-      if (result) {
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
+
+  // ==========================================================
+  //   PREVIEW MATERI (Modal) - diekspos ke global
+  // ==========================================================
+  window.previewMateri = function(judul, fileId) {
+    const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+    const downloadUrl = `https://drive.google.com/file/d/${fileId}/view`;
+    document.getElementById('previewMateriJudul').innerText = judul;
+    document.getElementById('previewMateriIframe').src = previewUrl;
+    document.getElementById('previewMateriDownloadBtn').href = downloadUrl;
+    document.getElementById('previewMateriSpinner').style.display = 'flex';
+    new bootstrap.Modal(document.getElementById('previewMateriModal')).show();
+  };
+
+  window.toggleFullscreen = function() {
+    const iframe = document.getElementById('previewMateriIframe');
+    if (!iframe) return;
+    if (!document.fullscreenElement) {
+      iframe.requestFullscreen().then(() => {
+        const header = document.querySelector('#previewMateriModal .modal-header');
+        const footer = document.querySelector('#previewMateriModal .modal-footer');
+        if (header) header.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+      }).catch(err => console.warn('Gagal fullscreen:', err));
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
+    document.getElementById('previewMateriIframe').src = '';
+    document.getElementById('previewMateriSpinner').style.display = 'flex';
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+  });
+
+  // ==========================================================
+  //   CRUD OPERATIONS
+  // ==========================================================
+  function resetForm() {
+    document.getElementById('editMateriId').value = '';
+    document.getElementById('materiJudul').value = '';
+    document.getElementById('materiDeskripsi').value = '';
+    document.getElementById('materiFile').value = '';
+    document.getElementById('filePreview').innerHTML = '';
+    document.getElementById('materiKategori').value = 'Umum';
+    document.getElementById('materiTanggal').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('formModalTitle').innerText = 'Tambah Materi';
+  }
+
+  function openAddModal() {
+    resetForm();
+    new bootstrap.Modal(document.getElementById('materiFormModal')).show();
+  }
+
+  window.editMateri = function(id) {
+    const item = STATE.materiList.find(i => String(i.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    document.getElementById('editMateriId').value = id;
+    document.getElementById('materiJudul').value = item.judul || '';
+    document.getElementById('materiDeskripsi').value = item.deskripsi || '';
+    document.getElementById('materiFile').value = '';
+    document.getElementById('filePreview').innerHTML = item.fileId ? `File saat ini: <a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank">Lihat</a>` : '';
+    document.getElementById('materiKategori').value = item.kategori || 'Umum';
+    document.getElementById('materiTanggal').value = item.tanggal || '';
+    document.getElementById('formModalTitle').innerText = 'Edit Materi';
+    new bootstrap.Modal(document.getElementById('materiFormModal')).show();
+  };
+
+  window.viewMateri = function(id) {
+    const item = STATE.materiList.find(i => String(i.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('detailMateriModal'));
+    const content = document.getElementById('detailContent');
+    let fileHtml = '-';
+    if (item.fileId) {
+      fileHtml = `<a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i> Unduh</a>`;
+    }
+    let html = `
+      <div class="list-group list-group-flush">
+        <div class="list-group-item py-3"><strong>Judul:</strong> ${escapeHtml(item.judul || '-')}</div>
+        <div class="list-group-item py-3"><strong>Kategori:</strong> <span class="badge bg-primary">${escapeHtml(item.kategori || 'Umum')}</span></div>
+        <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
+        <div class="list-group-item py-3"><strong>Deskripsi:</strong> ${escapeHtml(item.deskripsi || '-')}</div>
+        <div class="list-group-item py-3"><strong>File:</strong> ${fileHtml}</div>
+      </div>
+    `;
+    content.innerHTML = html;
+    modal.show();
+  };
+
+  window.deleteMateri = function(id) {
+    document.getElementById('deleteMateriId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  };
+
+  function executeDelete() {
+    const id = document.getElementById('deleteMateriId').value;
+    if (!id) return;
+    const item = STATE.materiList.find(i => String(i.id) === String(id));
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+    btn.disabled = true;
+
+    // Gunakan AdminModule untuk menghapus (optimistic update)
+    AdminModule.deleteMateri(id, item.fileId).then(res => {
+      if (res.success) {
+        STATE.materiList = STATE.materiList.filter(i => i.id !== id);
         showToast('Materi berhasil dihapus.', 'success');
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        loadData();
+        renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
       } else {
-        showToast('Gagal menghapus data.', 'error');
+        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
       }
+    }).catch(e => {
+      showToast('Error: ' + e.message, 'error');
+    }).finally(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    });
+  }
+
+  function saveData() {
+    const id = document.getElementById('editMateriId').value;
+    const judul = document.getElementById('materiJudul').value.trim();
+    const deskripsi = document.getElementById('materiDeskripsi').value.trim();
+    const fileInput = document.getElementById('materiFile');
+    const kategori = document.getElementById('materiKategori').value;
+    const tanggal = document.getElementById('materiTanggal').value;
+
+    if (!judul || !tanggal) {
+      showToast('Judul dan tanggal wajib diisi.', 'error');
+      return;
     }
 
-    function saveData() {
-      const id = document.getElementById('editMateriId').value;
-      const judul = document.getElementById('materiJudul').value.trim();
-      const deskripsi = document.getElementById('materiDeskripsi').value.trim();
-      const fileInput = document.getElementById('materiFile');
-      const kategori = document.getElementById('materiKategori').value;
-      const tanggal = document.getElementById('materiTanggal').value;
+    if (!id && (!fileInput || !fileInput.files.length)) {
+      showToast('File wajib diunggah.', 'error');
+      return;
+    }
 
-      if (!judul || !tanggal) {
-        showToast('Judul dan tanggal wajib diisi.', 'error');
-        return;
-      }
+    const btn = document.getElementById('saveMateriBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
-      if (!fileInput || !fileInput.files.length) {
-        showToast('File wajib diunggah.', 'error');
-        return;
-      }
-
-      const file = fileInput.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Ukuran file maksimal 5 MB.', 'error');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const base64 = e.target.result;
-        const fileName = file.name;
-        const fileExt = fileName.split('.').pop().toLowerCase();
-
-        try {
-          if (id) {
-            // Update existing: upload file baru dan simpan fileId
-            const res = await PKD.addMateri(judul, deskripsi, base64, fileName, 'admin');
+    if (id) {
+      // Update existing: need to handle file upload if new file, else keep existing
+      if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Ukuran file maksimal 5 MB.', 'error');
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const base64 = e.target.result;
+          const fileName = file.name;
+          try {
+            // Gunakan AdminModule untuk menambahkan materi
+            const res = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
             if (res.success) {
-              // Update data lokal dengan fileId baru
-              const updated = updateMateri(id, {
+              const updated = {
+                id: id,
                 judul: judul,
                 deskripsi: deskripsi,
                 fileId: res.fileId,
-                tipe: fileExt,
+                tipe: fileName.split('.').pop().toLowerCase(),
                 kategori: kategori,
                 tanggal: tanggal,
-                uploadBy: 'admin',
-                timestamp: new Date().toISOString()
-              });
-              if (updated) {
+                timestamp: new Date().toISOString(),
+                uploadBy: 'admin'
+              };
+              const index = STATE.materiList.findIndex(i => i.id === id);
+              if (index !== -1) {
+                STATE.materiList[index] = updated;
                 showToast('Materi berhasil diperbarui.', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-                loadData();
+                renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
               } else {
                 showToast('Gagal memperbarui data lokal.', 'error');
               }
             } else {
               showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
             }
+          } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          }
+        };
+        reader.readAsDataURL(file);
+        return;
+      } else {
+        // Update without new file
+        const index = STATE.materiList.findIndex(i => i.id === id);
+        if (index !== -1) {
+          const updated = { ...STATE.materiList[index] };
+          updated.judul = judul;
+          updated.deskripsi = deskripsi;
+          updated.kategori = kategori;
+          updated.tanggal = tanggal;
+          STATE.materiList[index] = updated;
+          showToast('Materi berhasil diperbarui.', 'success');
+          bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+          renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
+        } else {
+          showToast('Data tidak ditemukan.', 'error');
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+      }
+    } else {
+      // Add new with file
+      const file = fileInput.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Ukuran file maksimal 5 MB.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result;
+        const fileName = file.name;
+        try {
+          const res = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
+          if (res.success) {
+            const newItem = {
+              id: generateId(),
+              judul: judul,
+              deskripsi: deskripsi,
+              fileId: res.fileId,
+              tipe: fileName.split('.').pop().toLowerCase(),
+              kategori: kategori,
+              tanggal: tanggal,
+              timestamp: new Date().toISOString(),
+              uploadBy: 'admin'
+            };
+            STATE.materiList.unshift(newItem);
+            showToast('Materi berhasil ditambahkan.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+            renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
           } else {
-            // Add new with file
-            const res = await PKD.addMateri(judul, deskripsi, base64, fileName, 'admin');
-            if (res.success) {
-              const newItem = addMateri({
-                judul: judul,
-                deskripsi: deskripsi,
-                fileId: res.fileId,
-                tipe: fileExt,
-                kategori: kategori,
-                tanggal: tanggal,
-                timestamp: new Date().toISOString(),
-                uploadBy: 'admin'
-              });
-              if (newItem) {
-                showToast('Materi berhasil ditambahkan.', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-                loadData();
-              } else {
-                showToast('Gagal menambahkan data lokal.', 'error');
-              }
-            } else {
-              showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
-            }
+            showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
           }
         } catch (e) {
           showToast('Error: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
         }
       };
       reader.readAsDataURL(file);
     }
+  }
 
-    function exportData() {
-      const data = STATE.filteredList;
-      if (data.length === 0) {
-        showToast('Tidak ada data untuk diekspor.', 'info');
-        return;
-      }
-      const exportData = data.map(item => ({
-        id: item.id,
-        judul: item.judul,
-        deskripsi: item.deskripsi,
-        fileId: item.fileId,
-        tipe: item.tipe,
-        kategori: item.kategori,
-        tanggal: item.tanggal
-      }));
-      const json = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `materi_export_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(`Berhasil mengekspor ${data.length} data materi.`, 'success');
+  function exportData() {
+    const data = STATE.filteredList;
+    if (data.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
+    }
+    const exportData = data.map(item => ({
+      id: item.id,
+      judul: item.judul,
+      deskripsi: item.deskripsi,
+      fileId: item.fileId,
+      tipe: item.tipe,
+      kategori: item.kategori,
+      tanggal: item.tanggal
+    }));
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `materi_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Berhasil mengekspor ${data.length} data materi.`, 'success');
+  }
+
+  // ==========================================================
+  //   SEARCH & FILTER HANDLERS
+  // ==========================================================
+  const debouncedSearch = debounce(function(query) {
+    STATE.searchQuery = query;
+    const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
+    STATE.filteredList = filtered;
+    renderTable(filtered);
+  }, 300);
+
+  function handleSearch(e) { debouncedSearch(e.target.value); }
+
+  function handleKategoriFilter(e) {
+    STATE.kategoriFilter = e.target.value;
+    const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
+    STATE.filteredList = filtered;
+    renderTable(filtered);
+  }
+
+  // ==========================================================
+  //   LOGIN AUTH CHECK & INIT
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
     }
 
-    // =====================================================
-    //   SEARCH & FILTER HANDLERS
-    // =====================================================
-    const debouncedSearch = debounce(function(query) {
-      STATE.searchQuery = query;
-      const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }, 300);
+    // Update navbar user
+    updateNavbarMenu();
 
-    function handleSearch(e) { debouncedSearch(e.target.value); }
+    // Load data
+    loadMateri();
 
-    function handleKategoriFilter(e) {
-      STATE.kategoriFilter = e.target.value;
-      const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
-      STATE.filteredList = filtered;
-      renderTable(filtered);
-    }
-
+    // Event listeners
+    document.getElementById('addMateriBtn')?.addEventListener('click', openAddModal);
+    document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      this.disabled = true;
+      loadMateri(true).then(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Data berhasil disegarkan', 'success');
+      }).catch(() => {
+        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        this.disabled = false;
+        showToast('Gagal menyegarkan', 'error');
+      });
+    });
+    document.getElementById('saveMateriBtn')?.addEventListener('click', saveData);
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
+    document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+    document.getElementById('filterKategori')?.addEventListener('change', handleKategoriFilter);
   })();
+
 </script>
 </body>
 </html>

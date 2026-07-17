@@ -1,258 +1,128 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Admin Post-test - PKD GP Ansor Bantul</title>
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Admin Post-test - PKD GP Ansor Bantul</title>
+    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <style>
-    /* --- GLOBAL --- */
-    * { font-family: 'Inter', sans-serif; }
-    body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
-
-    /* --- LAYOUT UTAMA --- */
-    .container-card { max-width: 100%; padding: 0; margin: 0; }
-    .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
-
-    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
-    .sidebar-wrapper {
-        width: 260px; max-width: 260px;
-        background: #0f172a; color: #f1f5f9;
-        min-height: 100vh; height: 100vh;
-        position: fixed; top: 0; left: 0; z-index: 1000;
-        border-right: 1px solid #1e293b;
-        display: flex; flex-direction: column;
-        transition: width 0.3s ease, max-width 0.3s ease;
-    }
-    .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
-
-    /* --- BRAND AREA --- */
-    .sidebar-brand-area {
-        flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
-        border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
-    }
-    .sidebar-wrapper.minimized .sidebar-brand-area {
-        padding: 1.5rem 0.75rem; display: flex; justify-content: center;
-    }
-    .brand-sidebar {
-        display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease;
-    }
-    .brand-sidebar:hover { opacity: 0.8; }
-    .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
-    .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
-    .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
-    .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
-    .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-
-    /* --- MENU AREA --- */
-    .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
-    .sidebar-menu-area::-webkit-scrollbar { display: none; }
-
-    /* --- NAV PILLS --- */
-    .nav-pills .nav-link {
-        width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
-        color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
-        align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none;
-        text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden;
-    }
-    .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
-    .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-    /* --- SUBMENU --- */
-    .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
-    .submenu.open { max-height: 500px; }
-    .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
-    .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
-    .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
-    .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
-    .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
-    .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
-    .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-
-    /* --- LOGOUT --- */
-    .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
-    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
-
-    /* --- BOTTOM NAV (MOBILE) --- */
-    .bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0;
-        z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
-    .bottom-nav .nav-item i { font-size: 1.5rem; }
-    .bottom-nav .nav-item.active { color: #2563eb; }
-
-    @media (max-width: 991px) {
-        .sidebar-wrapper { display: none; }
-        .bottom-nav { display: flex; }
-        .content-wrapper { margin-left: 0 !important; padding: 1rem; padding-bottom: 80px; width: 100%; }
-    }
-    @media (min-width: 992px) { .bottom-nav { display: none; } }
-
-    /* --- CONTENT WRAPPER --- */
-    .content-wrapper {
-        margin-left: 260px; padding: 1.5rem; background: #f8fafc;
-        min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
-    }
-    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
-
-    /* --- UTILITY & TABEL --- */
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .section-title {
-        font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
-    }
-    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
-    .cache-status.live { background: #dcfce7; color: #16a34a; }
-    .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-
-    /* --- MODAL OPSI JAWABAN --- */
-    .option-btn {
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        background: white;
-        transition: all 0.2s;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        display: inline-block;
-    }
-    .option-btn:hover { background: #f8f9fa; }
-    .option-btn.correct {
-        border-color: #198754;
-        background: #d1e7dd;
-        color: #0f5132;
-        font-weight: 600;
-    }
-    .option-btn .badge { margin-left: 0.5rem; }
-  </style>
+    <style>
+        /* --- GLOBAL --- */
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
+        .container-card { max-width: 100%; padding: 0; margin: 0; }
+        .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
+        .sidebar-wrapper { width: 260px; max-width: 260px; background: #0f172a; color: #f1f5f9; min-height: 100vh; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; border-right: 1px solid #1e293b; display: flex; flex-direction: column; transition: width 0.3s ease, max-width 0.3s ease; }
+        .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
+        .sidebar-brand-area { flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem; border-bottom: 1px solid #1e293b; transition: padding 0.3s ease; }
+        .sidebar-wrapper.minimized .sidebar-brand-area { padding: 1.5rem 0.75rem; display: flex; justify-content: center; }
+        .brand-sidebar { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; transition: gap 0.3s ease; }
+        .brand-sidebar:hover { opacity: 0.8; }
+        .brand-sidebar img { max-height: 45px; width: auto; transition: max-height 0.3s ease; }
+        .brand-sidebar-title { font-size: 1.2rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; }
+        .brand-sidebar-sub { font-size: 0.85rem; color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; }
+        .sidebar-wrapper.minimized .brand-sidebar { justify-content: center; gap: 0; }
+        .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
+        .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+        .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
+        .sidebar-menu-area::-webkit-scrollbar { display: none; }
+        .nav-pills .nav-link { width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem; color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; border: none; text-align: left; box-shadow: none; white-space: nowrap; overflow: hidden; }
+        .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
+        .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
+        .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
+        .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
+        .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+        .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
+        .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
+        .submenu.open { max-height: 500px; }
+        .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
+        .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
+        .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
+        .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
+        .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
+        .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
+        .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
+        .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
+        .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 1050; display: none; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94a3b8; font-size: 0.7rem; gap: 2px; flex: 1; transition: all 0.2s; }
+        .bottom-nav .nav-item i { font-size: 1.5rem; }
+        .bottom-nav .nav-item.active { color: #2563eb; }
+        @media (max-width: 991px) { .sidebar-wrapper { display: none; } .bottom-nav { display: flex; } .container-card, .admin-wrapper { width: 100vw !important; max-width: 100vw !important; margin: 0 !important; padding: 0 !important; display: flex; flex-direction: column; min-height: 100vh; } .content-wrapper { flex: 1 !important; margin-left: 0 !important; padding: 1rem 0.5rem 90px 0.5rem !important; width: 100% !important; min-height: 100vh !important; } }
+        @media (max-width: 576px) { .content-wrapper { padding: 0.5rem 0.3rem 90px 0.3rem !important; } .section-title { font-size: 1.1rem; margin-bottom: 0.5rem; padding-left: 0.5rem; } .row.mb-3 > div { padding-left: 0.25rem !important; padding-right: 0.25rem !important; } .btn { font-size: 0.7rem !important; padding: 0.2rem 0.6rem !important; } .table-container { padding: 0.5rem !important; border-radius: 12px !important; } .table th, .table td { font-size: 0.65rem !important; padding: 0.3rem !important; white-space: nowrap; } .modal-body { padding: 1rem !important; } .nav-tabs .nav-link { font-size: 0.75rem; padding: 0.3rem 0.6rem; } }
+        .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease; }
+        .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+        .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+        .cache-status.live { background: #dcfce7; color: #16a34a; }
+        .cache-status.offline { background: #fee2e2; color: #dc2626; }
+        .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .option-btn { cursor: pointer; padding: 0.5rem 1rem; border: 2px solid #dee2e6; border-radius: 8px; background: white; transition: all 0.2s; margin-right: 0.5rem; margin-bottom: 0.5rem; display: inline-block; }
+        .option-btn:hover { background: #f8f9fa; }
+        .option-btn.correct { border-color: #198754; background: #d1e7dd; color: #0f5132; font-weight: 600; }
+        .option-btn .badge { margin-left: 0.5rem; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+    </style>
 </head>
 <body>
 
 <div class="container container-card">
   <div class="admin-wrapper">
 
-    <!-- ==================== SIDEBAR ==================== -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
-      <div class="sidebar-toggle">
-        <button id="toggleSidebarBtn" title="Minimize/Maximize Sidebar">
-          <i class="bi bi-arrow-left-right"></i>
-        </button>
-      </div>
-
+      <div class="sidebar-toggle"><button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button></div>
       <div class="sidebar-brand-area">
         <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
           <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-          <div>
-            <div class="brand-sidebar-title">PKD GP Ansor</div>
-            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
-          </div>
+          <div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div>
         </a>
       </div>
-
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
-          <!-- Dashboard -->
-          <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
-            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-          </a>
-
-          <!-- Akademik -->
-          <div class="nav-link active" data-target="akademik" title="Akademik">
-            <i class="bi bi-book me-2"></i><span>Akademik</span>
-          </div>
+          <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
+          <div class="nav-link active" data-target="akademik"><i class="bi bi-book me-2"></i><span>Akademik</span></div>
           <div class="submenu open" id="submenu-akademik">
-            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test">
-              <i class="bi bi-pencil-square me-2"></i><span>Pre-test</span>
-            </a>
-            <a class="nav-link active" href="/bisaa/admin/posttest_admin.html" title="Post-test">
-              <i class="bi bi-trophy me-2"></i><span>Post-test</span>
-            </a>
-            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi">
-              <i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span>
-            </a>
+            <a class="nav-link active" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
           </div>
-
-          <!-- Peserta -->
-          <div class="nav-link" data-target="peserta" title="Peserta">
-            <i class="bi bi-people me-2"></i><span>Peserta</span>
-          </div>
+          <div class="nav-link" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
           <div class="submenu" id="submenu-peserta">
-            <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
-            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
-            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+            <a class="nav-link" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
           </div>
-
-          <!-- Absensi -->
-          <div class="nav-link" data-target="absensi" title="Absensi">
-            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
-          </div>
+          <div class="nav-link" data-target="absensi"><i class="bi bi-calendar-check me-2"></i><span>Absensi</span></div>
           <div class="submenu" id="submenu-absensi">
-            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
           </div>
-
-          <!-- Informasi -->
-          <div class="nav-link" data-target="informasi" title="Informasi">
-            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
-          </div>
+          <div class="nav-link" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
           <div class="submenu" id="submenu-informasi">
-            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-            <a class="nav-link" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+            <a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
           </div>
-
-          <!-- Skrining -->
-          <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
-            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
-          </a>
-
-          <!-- Sertifikat -->
-          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
-            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
-          </a>
-
-          <!-- Tanda Tangan -->
-          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
-            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
-          </a>
-
-          <!-- Pengaturan -->
-          <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
-            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
-          </a>
-
-          <!-- Logout -->
+          <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
+          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html"><i class="bi bi-patch-check me-2"></i><span>Sertifikat</span></a>
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span></a>
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html"><i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span></a>
+          <a class="nav-link" href="/bisaa/admin/pengaturan_admin.html"><i class="bi bi-gear me-2"></i><span>Pengaturan</span></a>
           <div class="sidebar-logout"></div>
-          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
-            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
-          </a>
+          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></a>
         </div>
       </div>
     </div>
 
-    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
     <div class="bottom-nav">
       <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
       <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
@@ -261,11 +131,9 @@
       <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
-    <!-- ==================== CONTENT WRAPPER ==================== -->
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-trophy me-2"></i>Manajemen Post-test</h2>
 
-      <!-- TABS -->
       <ul class="nav nav-tabs mb-3" id="posttestTab" role="tablist">
         <li class="nav-item">
           <button class="nav-link active" id="soal-tab" data-bs-toggle="tab" data-bs-target="#soal" type="button">
@@ -280,17 +148,32 @@
       </ul>
 
       <div class="tab-content" id="posttestTabContent">
-        <!-- TAB SOAL -->
         <div class="tab-pane fade show active" id="soal" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div><span class="text-muted small">Total Soal: </span><span class="badge bg-primary" id="totalSoalBadge">0</span></div>
+            <div>
+              <button class="btn btn-outline-secondary btn-sm" id="refreshSoalBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+              <button class="btn btn-success btn-sm ms-2" id="addSoalBtn">➕ Tambah Soal</button>
+            </div>
+          </div>
           <div id="soalContainer">
-            <div class="text-center py-5"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat soal...</p></div>
+            <div class="text-center py-3 text-muted">Memuat soal...</div>
           </div>
         </div>
 
-        <!-- TAB DATA -->
         <div class="tab-pane fade" id="data" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div><span class="text-muted small">Total Data: </span><span class="badge bg-primary" id="totalDataBadge">0</span></div>
+            <div>
+              <button class="btn btn-outline-secondary btn-sm" id="refreshDataBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+              <button class="btn btn-success btn-sm ms-2" id="exportCSVBtn">📥 Ekspor CSV</button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <input type="text" class="form-control" id="filterDataInput" placeholder="🔍 Cari nama peserta...">
+          </div>
           <div id="dataContainer">
-            <div class="text-center py-5"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat data posttest...</p></div>
+            <div class="text-center py-3 text-muted">Memuat data posttest...</div>
           </div>
         </div>
       </div>
@@ -298,7 +181,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL "LAINNYA" (MOBILE) ==================== -->
 <div class="modal fade" id="moreMenuModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -316,19 +198,12 @@
           <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
           <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
         </div>
-        <div class="row mt-3">
-          <div class="col-12">
-            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-            </button>
-          </div>
-        </div>
+        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ==================== MODAL SOAL (TAMBAH/EDIT) ==================== -->
 <div class="modal fade" id="posttestModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
@@ -378,7 +253,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL DETAIL JAWABAN ==================== -->
 <div class="modal fade" id="detailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content border-0 shadow-lg">
@@ -387,7 +261,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4" id="detailModalBody">
-        <div class="text-center"><div class="loading-spinner"></div></div>
+        <div class="text-center"><div class="spinner-border text-primary"></div></div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
@@ -396,620 +270,362 @@
   </div>
 </div>
 
-<!-- ==================== TOAST ==================== -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-    <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="toastIcon"></i>
-      <strong class="me-auto" id="toastTitle">Berhasil</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-    </div>
-    <div class="toast-body" id="toastMessage"></div>
-  </div>
-</div>
+<div class="toast-container"><div id="notificationToast" class="toast border-0 shadow-lg"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
 
-<!-- ==================== SCRIPTS ==================== -->
+<!-- ================= SCRIPTS ================= -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
 
-<script>
-  (function() {
-    'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-    window.togglePasswordVisibility = function(id) {
-      const el = document.getElementById(id);
-      if (el) el.type = el.type === 'password' ? 'text' : 'password';
-    };
+  // ==========================================================
+  //   PENGAMAN AKSES
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
+    }
+    // Update navbar user
+    updateNavbarMenu();
+    // Load data
+    loadQuestionsInstan();
+    loadResponsesInstan();
+  })();
 
-    let questions = [];
-    let responses = [];
-    let selectedAnswerIndex = 0; // for the modal
+  // ==========================================================
+  //   UTILITY
+  // ==========================================================
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
 
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      if (!toastEl) return;
-      const toast = new bootstrap.Toast(toastEl);
-      document.getElementById('toastMessage').innerText = message;
-      const icon = document.getElementById('toastIcon');
-      if (type === 'success') {
-        icon.className = 'bi bi-check-circle-fill text-success';
-        document.getElementById('toastTitle').innerText = 'Berhasil';
+  // ==========================================================
+  //   SIDEBAR TOGGLE & LOGOUT
+  // ==========================================================
+  document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+    document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+    const icon = this.querySelector('i');
+    if (icon) { icon.classList.toggle('bi-arrow-left-right'); icon.classList.toggle('bi-arrow-right-left'); }
+  });
+
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
+
+  // ==========================================================
+  //   STATE
+  // ==========================================================
+  let questions = [];
+  let responses = [];
+  let selectedAnswerIndex = 0;
+
+  // ==========================================================
+  //   LOAD SOAL (via AdminModule)
+  // ==========================================================
+  async function loadQuestionsInstan() {
+    const container = document.getElementById('soalContainer');
+    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div> Memuat soal...</div>';
+
+    try {
+      // Pastikan AdminModule sudah dimuat
+      if (!AdminModule.getState().lastSync) {
+        await AdminModule.loadAllData();
+      }
+      // Gunakan AdminModule.getState() atau callApi langsung
+      // Namun AdminModule tidak memiliki getPosttestQuestions secara langsung,
+      // kita bisa gunakan callApi atau AdminModule.getState() jika data sudah ada.
+      // Lebih aman menggunakan callApi.
+      const fresh = await callApi('getPosttestQuestions', {}, 'GET');
+      const dataArray = fresh?.data || fresh;
+
+      if (dataArray && Array.isArray(dataArray) && dataArray.length > 0) {
+        questions = dataArray;
+        renderSoal(container);
+        document.getElementById('totalSoalBadge').textContent = questions.length;
       } else {
-        icon.className = 'bi bi-x-circle-fill text-danger';
-        document.getElementById('toastTitle').innerText = 'Gagal';
+        container.innerHTML = '<div class="alert alert-info text-center">Belum ada soal posttest.</div>';
       }
-      toast.show();
+    } catch (e) {
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat soal: ${e.message}</div>`;
     }
+  }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        return m;
+  function renderSoal(container) {
+    let html = `<div class="table-responsive"><table class="table table-bordered table-sm table-hover"><thead class="table-light"><tr><th>ID</th><th>Teks</th><th>Opsi</th><th>Jawaban</th><th>Urutan</th><th>Timer</th><th>Aksi</th></tr></thead><tbody>`;
+    questions.sort((a, b) => (a.urutan || 0) - (b.urutan || 0)).forEach(q => {
+      const opsiStr = Array.isArray(q.opsi) ? q.opsi.join(', ') : q.opsi;
+      html += `<tr><td>${q.id}</td><td>${escapeHtml(q.teks)}</td><td>${escapeHtml(opsiStr)}</td><td>${q.jawaban}</td><td>${q.urutan || '-'}</td><td>${q.timer_enabled ? '⏱️ '+q.timer_duration+'s' : '⛔'}</td><td><button class="btn btn-sm btn-warning edit-soal" data-id="${q.id}">✏️</button><button class="btn btn-sm btn-danger delete-soal" data-id="${q.id}">🗑️</button></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+
+    container.querySelectorAll('.edit-soal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const q = questions.find(s => s.id == this.dataset.id);
+        if (q) showPosttestModal(q);
       });
-    }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('id-ID', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+    });
+    container.querySelectorAll('.delete-soal').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        if (!confirm('Hapus soal ini?')) return;
+        try {
+          await callApi('deletePosttestQuestion', { id: this.dataset.id }, 'POST');
+          showToast('Soal dihapus', 'success');
+          loadQuestionsInstan();
+        } catch (e) {
+          showToast('Gagal: ' + e.message, 'error');
+        }
       });
-    }
+    });
+    document.getElementById('refreshSoalBtn')?.addEventListener('click', loadQuestionsInstan);
+    document.getElementById('addSoalBtn')?.addEventListener('click', () => showPosttestModal());
+  }
 
-    // =====================================================
-    //   SIDEBAR TOGGLE & SUBMENU
-    // =====================================================
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-      const icon = this.querySelector('i');
-      if (icon) {
-        icon.classList.toggle('bi-arrow-left-right');
-        icon.classList.toggle('bi-arrow-right-left');
+  // ==========================================================
+  //   LOAD DATA RESPONS (via callApi)
+  // ==========================================================
+  async function loadResponsesInstan() {
+    const container = document.getElementById('dataContainer');
+    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div> Memuat data posttest...</div>';
+
+    try {
+      const fresh = await callApi('getPosttestResponses', {}, 'GET');
+      const dataArray = fresh?.data || fresh;
+
+      if (dataArray && Array.isArray(dataArray) && dataArray.length > 0) {
+        responses = dataArray;
+        renderData(container);
+        document.getElementById('totalDataBadge').textContent = responses.length;
+      } else {
+        container.innerHTML = '<div class="alert alert-info text-center">Belum ada data posttest.</div>';
       }
-    });
+    } catch (e) {
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data: ${e.message}</div>`;
+    }
+  }
 
-    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = this.dataset.target;
-        const submenu = document.getElementById('submenu-' + target);
-        if (submenu) submenu.classList.toggle('open');
-      });
-    });
-
-    // =====================================================
-    //   LOGOUT
-    // =====================================================
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-      e.preventDefault();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
-
-    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-      const modalEl = document.getElementById('moreMenuModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-      if (PKD.logout) PKD.logout();
-      else window.location.href = '/bisaa/index.html';
-    });
-
-    // =====================================================
-    //   LOGIN AUTH CHECK
-    // =====================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-        window.location.href = '/bisaa/login.html';
-        return;
-      }
-
-      // Load data
-      loadQuestions(true); // force refresh to get latest from API
-      loadResponses(true);
-
-      // Tab switching
-      document.getElementById('soal-tab')?.addEventListener('shown.bs.tab', function() {
-        loadQuestions(false);
-      });
-      document.getElementById('data-tab')?.addEventListener('shown.bs.tab', function() {
-        loadResponses(false);
-      });
-    });
-
-    // =====================================================
-    //   LOAD DATA SOAL (ROBUST - PRIORITAS API)
-    // =====================================================
-    async function loadQuestions(forceRefresh = false) {
-      const container = document.getElementById('soalContainer');
-      if (!container) return;
-
-      // Tampilkan spinner
-      container.innerHTML = `<div class="text-center py-5"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat soal posttest...</p></div>`;
-
+  function renderData(container) {
+    let html = `<div class="table-responsive" style="max-height:500px;overflow-y:auto;"><table class="table table-bordered table-sm table-striped"><thead class="table-light"><tr><th>Waktu</th><th>Nama</th><th>No HP</th><th>Skor</th><th>Jawaban</th><th>Detail</th></tr></thead><tbody>`;
+    responses.forEach(row => {
+      let ringkasan = '';
       try {
-        let freshQuestions = null;
-        if (forceRefresh) {
-          freshQuestions = await PKD.getPosttestQuestions(true);
-        } else {
-          // Coba cache dulu
-          const cached = DataCache.getData('posttestQuestions');
-          if (cached && Array.isArray(cached) && cached.length > 0) {
-            questions = cached;
-            renderSoal(container);
-            // Background refresh
-            setTimeout(async () => {
-              try {
-                const bgQuestions = await PKD.getPosttestQuestions(true);
-                if (bgQuestions && Array.isArray(bgQuestions) && bgQuestions.length > 0) {
-                  if (JSON.stringify(bgQuestions) !== JSON.stringify(questions)) {
-                    questions = bgQuestions;
-                    DataCache.updateData('posttestQuestions', bgQuestions);
-                    renderSoal(container);
-                  }
-                }
-              } catch (e) {
-                console.warn('Background refresh posttest questions failed:', e);
-              }
-            }, 1000);
-            return;
-          }
-          freshQuestions = await PKD.getPosttestQuestions(true);
+        const jawaban = JSON.parse(row.answers || '[]');
+        const benar = jawaban.filter(a => a.correct).length;
+        ringkasan = `${benar}/${jawaban.length}`;
+      } catch { ringkasan = 'Error'; }
+      html += `<tr class="data-row"><td>${formatDate(row.timestamp)}</td><td class="nama">${escapeHtml(row.nama || '')}</td><td>${escapeHtml(row.nohp || '')}</td><td>${row.score || 0}</td><td>${ringkasan}</td><td><button class="btn btn-sm btn-outline-info btn-detail" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+
+    container.querySelectorAll('.btn-detail').forEach(btn => {
+      btn.addEventListener('click', function() {
+        try {
+          const row = JSON.parse(decodeURIComponent(this.dataset.row));
+          showDetail(row);
+        } catch (e) {
+          showToast('Gagal menampilkan detail', 'error');
         }
-
-        if (freshQuestions && Array.isArray(freshQuestions) && freshQuestions.length > 0) {
-          questions = freshQuestions;
-          DataCache.updateData('posttestQuestions', freshQuestions);
-          localStorage.setItem('pkd_posttest_questions_data', JSON.stringify(freshQuestions));
-          renderSoal(container);
-          console.log(`Loaded ${questions.length} posttest questions from API`);
-          return;
-        }
-
-        // API kosong, coba cache
-        const cached = DataCache.getData('posttestQuestions');
-        if (cached && Array.isArray(cached) && cached.length > 0) {
-          questions = cached;
-          renderSoal(container);
-          console.warn('API returned empty, using cached questions');
-          return;
-        }
-
-        // Semua gagal, tampilkan pesan kosong
-        container.innerHTML = `
-          <div class="alert alert-warning border-0 shadow-sm">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            Belum ada soal posttest. Silakan tambahkan soal.
-          </div>
-          <button class="btn btn-primary mt-2" id="addPosttestBtn">➕ Tambah Soal</button>
-        `;
-        document.getElementById('addPosttestBtn')?.addEventListener('click', () => showPosttestModal());
-
-      } catch (e) {
-        console.error('Gagal memuat soal posttest:', e);
-        const cached = DataCache.getData('posttestQuestions');
-        if (cached && Array.isArray(cached) && cached.length > 0) {
-          questions = cached;
-          renderSoal(container);
-          showToast('Gagal memuat dari API, menggunakan data cache', 'warning');
-        } else {
-          container.innerHTML = `
-            <div class="alert alert-danger border-0 shadow-sm">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              Gagal memuat soal: ${e.message}
-            </div>
-            <button class="btn btn-primary mt-2" onclick="loadQuestions(true)">Coba Lagi</button>
-          `;
-        }
-      }
-    }
-
-    // =====================================================
-    //   RENDER SOAL
-    // =====================================================
-    function renderSoal(container) {
-      if (!questions || questions.length === 0) {
-        container.innerHTML = `
-          <div class="alert alert-warning border-0 shadow-sm">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            Belum ada soal posttest. Silakan tambahkan soal.
-          </div>
-          <button class="btn btn-primary mt-2" id="addPosttestBtn">➕ Tambah Soal</button>
-        `;
-        document.getElementById('addPosttestBtn')?.addEventListener('click', () => showPosttestModal());
-        return;
-      }
-
-      let html = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div><span class="text-muted small">Total Soal: </span><span class="badge bg-primary">${questions.length}</span></div>
-          <div>
-            <button class="btn btn-outline-secondary btn-sm" id="refreshSoalBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
-            <button class="btn btn-success btn-sm ms-2" id="addPosttestBtn">➕ Tambah Soal</button>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-bordered table-sm table-hover">
-            <thead class="table-light">
-              <tr><th>ID</th><th>Teks</th><th>Opsi</th><th>Jawaban</th><th>Urutan</th><th>Timer</th><th>Aksi</th></tr>
-            </thead>
-            <tbody>
-      `;
-
-      questions.sort((a, b) => (a.urutan || 0) - (b.urutan || 0)).forEach(q => {
-        const opsiStr = Array.isArray(q.opsi) ? q.opsi.join(', ') : q.opsi;
-        html += `
-          <tr>
-            <td>${q.id}</td>
-            <td>${escapeHtml(q.teks)}</td>
-            <td>${escapeHtml(opsiStr)}</td>
-            <td>${q.jawaban}</td>
-            <td>${q.urutan || '-'}</td>
-            <td>${q.timer_enabled ? '⏱️ '+q.timer_duration+'s' : '⛔'}</td>
-            <td>
-              <button class="btn btn-sm btn-warning edit-posttest" data-id="${q.id}">✏️</button>
-              <button class="btn btn-sm btn-danger delete-posttest" data-id="${q.id}">🗑️</button>
-            </td>
-          </tr>
-        `;
       });
-
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-      container.classList.add('fade-in');
-
-      document.getElementById('refreshSoalBtn')?.addEventListener('click', () => loadQuestions(true));
-      document.getElementById('addPosttestBtn')?.addEventListener('click', () => showPosttestModal());
-      document.querySelectorAll('.edit-posttest').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const q = questions.find(s => s.id == this.dataset.id);
-          if (q) showPosttestModal(q);
-        });
+    });
+    document.getElementById('refreshDataBtn')?.addEventListener('click', loadResponsesInstan);
+    document.getElementById('exportCSVBtn')?.addEventListener('click', exportCSV);
+    document.getElementById('filterDataInput')?.addEventListener('input', function() {
+      const keyword = this.value.toLowerCase();
+      document.querySelectorAll('#dataContainer .data-row').forEach(row => {
+        const nama = row.querySelector('.nama')?.innerText.toLowerCase() || '';
+        row.style.display = nama.includes(keyword) ? '' : 'none';
       });
-      document.querySelectorAll('.delete-posttest').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          if (!confirm('Hapus soal ini?')) return;
-          try {
-            await PKD.deletePosttestQuestion(this.dataset.id);
-            showToast('Soal dihapus', 'success');
-            loadQuestions(true);
-          } catch (e) {
-            showToast('Gagal: ' + e.message, 'error');
-          }
-        });
-      });
-    }
+    });
+  }
 
-    // =====================================================
-    //   MODAL SOAL DENGAN OPSI KLIK
-    // =====================================================
-    function showPosttestModal(soal = null) {
-      const isEdit = !!soal;
-      document.getElementById('posttestModalLabel').innerText = isEdit ? 'Edit Soal Posttest' : 'Tambah Soal Posttest';
-      document.getElementById('posttestId').value = isEdit ? soal.id : '';
-      document.getElementById('posttestTeks').value = isEdit ? (soal.teks || '') : '';
-      document.getElementById('posttestOpsi').value = isEdit ? (Array.isArray(soal.opsi) ? soal.opsi.join(',') : soal.opsi || '') : '';
-      document.getElementById('posttestUrutan').value = isEdit ? (soal.urutan || '') : '';
-      document.getElementById('posttestTimerEnabled').checked = isEdit ? (soal.timer_enabled || false) : false;
-      document.getElementById('posttestTimerDuration').value = isEdit ? (soal.timer_duration || 30) : 30;
-      document.getElementById('posttestTimerDurationGroup').style.display = document.getElementById('posttestTimerEnabled').checked ? 'block' : 'none';
+  // ==========================================================
+  //   CRUD OPERATIONS (MODAL SOAL)
+  // ==========================================================
+  function showPosttestModal(soal = null) {
+    const isEdit = !!soal;
 
-      // Handle jawaban: jika edit, set selectedAnswerIndex
-      if (isEdit && soal.jawaban !== undefined) {
-        selectedAnswerIndex = soal.jawaban;
-      } else {
-        selectedAnswerIndex = 0;
-      }
-      document.getElementById('posttestJawaban').value = selectedAnswerIndex;
+    const labelEl = document.getElementById('posttestModalLabel');
+    if (labelEl) labelEl.innerText = isEdit ? 'Edit Soal Posttest' : 'Tambah Soal Posttest';
 
-      // Generate opsi buttons
-      renderOptionButtons(document.getElementById('posttestOpsi').value, selectedAnswerIndex);
+    const idEl = document.getElementById('posttestId');
+    if (idEl) idEl.value = isEdit ? soal.id : '';
 
-      document.getElementById('posttestTimerEnabled').onchange = function() {
-        document.getElementById('posttestTimerDurationGroup').style.display = this.checked ? 'block' : 'none';
+    const teksEl = document.getElementById('posttestTeks');
+    if (teksEl) teksEl.value = isEdit ? (soal.teks || '') : '';
+
+    const opsiEl = document.getElementById('posttestOpsi');
+    if (opsiEl) opsiEl.value = isEdit ? (Array.isArray(soal.opsi) ? soal.opsi.join(',') : soal.opsi || '') : '';
+
+    const urutanEl = document.getElementById('posttestUrutan');
+    if (urutanEl) urutanEl.value = isEdit ? (soal.urutan || '') : '';
+
+    const timerEnabledEl = document.getElementById('posttestTimerEnabled');
+    if (timerEnabledEl) timerEnabledEl.checked = isEdit ? (soal.timer_enabled || false) : false;
+
+    const timerDurationEl = document.getElementById('posttestTimerDuration');
+    if (timerDurationEl) timerDurationEl.value = isEdit ? (soal.timer_duration || 30) : 30;
+
+    const timerGroupEl = document.getElementById('posttestTimerDurationGroup');
+    if (timerGroupEl) timerGroupEl.style.display = timerEnabledEl && timerEnabledEl.checked ? 'block' : 'none';
+
+    selectedAnswerIndex = (isEdit && soal.jawaban !== undefined) ? soal.jawaban : 0;
+    const jawabanEl = document.getElementById('posttestJawaban');
+    if (jawabanEl) jawabanEl.value = selectedAnswerIndex;
+
+    // Render opsi jawaban
+    const opsiValue = opsiEl ? opsiEl.value : '';
+    renderOptionButtons(opsiValue, selectedAnswerIndex);
+
+    // Event listener untuk timer toggle
+    if (timerEnabledEl) {
+      timerEnabledEl.onchange = function() {
+        if (timerGroupEl) timerGroupEl.style.display = this.checked ? 'block' : 'none';
       };
+    }
 
-      // Ketika opsi berubah, regenerasi tombol
-      document.getElementById('posttestOpsi').addEventListener('input', function() {
+    // Event listener untuk input opsi
+    if (opsiEl) {
+      opsiEl.oninput = function() {
         renderOptionButtons(this.value, selectedAnswerIndex);
-      });
+      };
+    }
 
-      const modal = new bootstrap.Modal(document.getElementById('posttestModal'));
-      modal.show();
+    // Tampilkan modal
+    const modal = new bootstrap.Modal(document.getElementById('posttestModal'));
+    modal.show();
 
-      document.getElementById('simpanPosttestBtn').onclick = async function() {
-        const id = document.getElementById('posttestId').value;
-        const teks = document.getElementById('posttestTeks').value.trim();
-        const opsi = document.getElementById('posttestOpsi').value.trim();
-        const jawaban = parseInt(document.getElementById('posttestJawaban').value) || 0;
-        const urutan = document.getElementById('posttestUrutan').value ? parseInt(document.getElementById('posttestUrutan').value) : null;
-        const timerEnabled = document.getElementById('posttestTimerEnabled').checked;
-        const timerDuration = parseInt(document.getElementById('posttestTimerDuration').value) || 30;
+    // Event listener tombol simpan
+    const simpanBtn = document.getElementById('simpanPosttestBtn');
+    if (simpanBtn) {
+      simpanBtn.onclick = async function() {
+        const id = idEl ? idEl.value : '';
+        const teks = teksEl ? teksEl.value.trim() : '';
+        const opsi = opsiEl ? opsiEl.value.trim() : '';
+        const jawaban = parseInt(jawabanEl ? jawabanEl.value : 0) || 0;
+        const urutan = urutanEl ? parseInt(urutanEl.value) : null;
+        const timerEnabled = timerEnabledEl ? timerEnabledEl.checked : false;
+        const timerDuration = timerDurationEl ? parseInt(timerDurationEl.value) : 30;
 
-        if (!teks || !opsi) {
-          showToast('Teks soal dan opsi wajib diisi!', 'error');
-          return;
-        }
-
+        if (!teks || !opsi) { showToast('Teks soal dan opsi wajib diisi!', 'error'); return; }
         try {
           if (id) {
-            await PKD.updatePosttestQuestion(id, teks, opsi, jawaban, urutan, timerEnabled, timerDuration);
+            await callApi('updatePosttestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled: timerEnabled, timer_duration: timerDuration }, 'POST');
             showToast('Soal diperbarui', 'success');
           } else {
-            await PKD.addPosttestQuestion(teks, opsi, jawaban, urutan, timerEnabled, timerDuration);
+            await callApi('addPosttestQuestion', { teks, opsi, jawaban, urutan, timer_enabled: timerEnabled, timer_duration: timerDuration }, 'POST');
             showToast('Soal ditambahkan', 'success');
           }
           modal.hide();
-          loadQuestions(true);
+          loadQuestionsInstan();
         } catch (e) {
           showToast('Gagal: ' + e.message, 'error');
         }
       };
     }
+  }
 
-    // =====================================================
-    //   RENDER OPSI TOMBOL
-    // =====================================================
-    function renderOptionButtons(opsiString, selectedIndex) {
-      const container = document.getElementById('posttestOptionsContainer');
-      if (!opsiString || opsiString.trim() === '') {
-        container.innerHTML = '<span class="text-muted">Masukkan opsi terlebih dahulu.</span>';
-        return;
-      }
-      const options = opsiString.split(',').map(s => s.trim()).filter(s => s !== '');
-      if (options.length === 0) {
-        container.innerHTML = '<span class="text-muted">Opsi tidak valid.</span>';
-        return;
-      }
-      let html = '';
-      options.forEach((opt, idx) => {
-        const isCorrect = (idx === selectedIndex);
-        html += `<div class="option-btn ${isCorrect ? 'correct' : ''}" data-index="${idx}" onclick="selectOption(this)">${escapeHtml(opt)} ${isCorrect ? '<span class="badge bg-success">✓</span>' : ''}</div>`;
-      });
-      container.innerHTML = html;
+  function renderOptionButtons(opsiString, selectedIndex) {
+    const container = document.getElementById('posttestOptionsContainer');
+    if (!container) return;
+    if (!opsiString || opsiString.trim() === '') {
+      container.innerHTML = '<span class="text-muted">Masukkan opsi terlebih dahulu.</span>';
+      return;
     }
+    const options = opsiString.split(',').map(s => s.trim()).filter(s => s !== '');
+    let html = '';
+    options.forEach((opt, idx) => {
+      const isCorrect = (idx === selectedIndex);
+      html += `<div class="option-btn ${isCorrect ? 'correct' : ''}" data-index="${idx}" onclick="window.selectOption(this)">${escapeHtml(opt)} ${isCorrect ? '<span class="badge bg-success">✓</span>' : ''}</div>`;
+    });
+    container.innerHTML = html;
+  }
 
-    // Fungsi global untuk menangani klik opsi
-    window.selectOption = function(el) {
-      // Hapus class correct dari semua
-      document.querySelectorAll('#posttestOptionsContainer .option-btn').forEach(btn => {
-        btn.classList.remove('correct');
-        btn.innerHTML = btn.innerHTML.replace(' <span class="badge bg-success">✓</span>', '');
-      });
-      // Tambahkan ke yang diklik
-      el.classList.add('correct');
-      el.innerHTML += ' <span class="badge bg-success">✓</span>';
-      // Simpan indeks
-      selectedAnswerIndex = parseInt(el.dataset.index);
-      document.getElementById('posttestJawaban').value = selectedAnswerIndex;
-    };
+  window.selectOption = function(el) {
+    document.querySelectorAll('#posttestOptionsContainer .option-btn').forEach(btn => {
+      btn.classList.remove('correct');
+      btn.innerHTML = btn.innerHTML.replace(' <span class="badge bg-success">✓</span>', '');
+    });
+    el.classList.add('correct');
+    el.innerHTML += ' <span class="badge bg-success">✓</span>';
+    selectedAnswerIndex = parseInt(el.dataset.index);
+    const jawabanEl = document.getElementById('posttestJawaban');
+    if (jawabanEl) jawabanEl.value = selectedAnswerIndex;
+  };
 
-    // =====================================================
-    //   LOAD DATA RESPONS (ROBUST - PRIORITAS API)
-    // =====================================================
-    async function loadResponses(forceRefresh = false) {
-      const container = document.getElementById('dataContainer');
-      if (!container) return;
-
-      container.innerHTML = `<div class="text-center py-5"><div class="loading-spinner"></div><p class="mt-2 text-muted">Memuat data posttest...</p></div>`;
-
+  function showDetail(row) {
+    let detail = '<h6>Detail Jawaban Posttest</h6>';
+    if (row.answers) {
       try {
-        let freshResponses = null;
-        if (forceRefresh) {
-          freshResponses = await PKD.getPosttestResponses(true);
-        } else {
-          // Coba cache
-          const cached = DataCache.getData('posttestResponses');
-          if (cached && Array.isArray(cached) && cached.length > 0) {
-            responses = cached;
-            renderData(container);
-            // Background refresh
-            setTimeout(async () => {
-              try {
-                const bgResponses = await PKD.getPosttestResponses(true);
-                if (bgResponses && Array.isArray(bgResponses) && bgResponses.length > 0) {
-                  if (JSON.stringify(bgResponses) !== JSON.stringify(responses)) {
-                    responses = bgResponses;
-                    DataCache.updateData('posttestResponses', bgResponses);
-                    renderData(container);
-                  }
-                }
-              } catch (e) {
-                console.warn('Background refresh responses failed:', e);
-              }
-            }, 1000);
-            return;
-          }
-          freshResponses = await PKD.getPosttestResponses(true);
-        }
-
-        if (freshResponses && Array.isArray(freshResponses) && freshResponses.length > 0) {
-          responses = freshResponses;
-          DataCache.updateData('posttestResponses', freshResponses);
-          localStorage.setItem('pkd_posttest_responses_data', JSON.stringify(freshResponses));
-          renderData(container);
-          return;
-        }
-
-        // API kosong, coba cache
-        const cached = DataCache.getData('posttestResponses');
-        if (cached && Array.isArray(cached) && cached.length > 0) {
-          responses = cached;
-          renderData(container);
-          console.warn('API returned empty, using cached responses');
-          return;
-        }
-
-        container.innerHTML = `
-          <div class="alert alert-info border-0 shadow-sm">
-            <i class="bi bi-inbox me-2"></i>
-            Belum ada data posttest.
-          </div>
-        `;
-      } catch (e) {
-        console.error('Gagal memuat data posttest:', e);
-        const cached = DataCache.getData('posttestResponses');
-        if (cached && Array.isArray(cached) && cached.length > 0) {
-          responses = cached;
-          renderData(container);
-          showToast('Gagal memuat dari API, menggunakan data cache', 'warning');
-        } else {
-          container.innerHTML = `
-            <div class="alert alert-danger border-0 shadow-sm">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              Gagal memuat data: ${e.message}
-            </div>
-          `;
-        }
-      }
-    }
-
-    // =====================================================
-    //   RENDER DATA
-    // =====================================================
-    function renderData(container) {
-      if (!responses || responses.length === 0) {
-        container.innerHTML = `
-          <div class="alert alert-info border-0 shadow-sm">
-            <i class="bi bi-inbox me-2"></i>
-            Belum ada data posttest.
-          </div>
-        `;
-        return;
-      }
-
-      let html = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="filter-input w-25">
-            <input type="text" class="form-control" id="filterPosttest" placeholder="🔍 Cari nama...">
-          </div>
-          <button class="btn btn-success btn-sm" id="exportPosttestCSV">📥 Ekspor CSV</button>
-        </div>
-        <div class="table-responsive" style="max-height:500px;overflow-y:auto;">
-          <table class="table table-bordered table-sm table-striped">
-            <thead class="table-light">
-              <tr><th>Waktu</th><th>Nama</th><th>No HP</th><th>Skor</th><th>Jawaban</th><th>Detail</th></tr>
-            </thead>
-            <tbody id="posttestDataBody">
-      `;
-
-      responses.forEach(row => {
-        let ringkasan = '';
-        try {
-          const jawaban = JSON.parse(row.answers || '[]');
-          const benar = jawaban.filter(a => a.correct).length;
-          ringkasan = `${benar}/${jawaban.length}`;
-        } catch { ringkasan = 'Error'; }
-
-        html += `
-          <tr class="data-row">
-            <td>${formatDate(row.timestamp)}</td>
-            <td class="nama">${escapeHtml(row.nama || '')}</td>
-            <td>${escapeHtml(row.nohp || '')}</td>
-            <td>${row.score || 0}</td>
-            <td>${ringkasan}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-info btn-detail" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-      container.classList.add('fade-in');
-
-      // Filter nama
-      document.getElementById('filterPosttest')?.addEventListener('input', function() {
-        const kw = this.value.toLowerCase();
-        document.querySelectorAll('#posttestDataBody .data-row').forEach(r => {
-          const n = r.querySelector('.nama')?.innerText.toLowerCase() || '';
-          r.style.display = n.includes(kw) ? '' : 'none';
+        const answers = JSON.parse(row.answers);
+        detail += `<table class="table table-sm table-bordered"><thead><tr><th>No</th><th>Soal ID</th><th>Pilihan</th><th>Benar?</th></tr></thead><tbody>`;
+        answers.forEach((a, idx) => {
+          detail += `<tr><td>${idx+1}</td><td>${a.qid || '-'}</td><td>${a.selected !== undefined ? a.selected : 'Tidak menjawab'}</td><td>${a.correct ? '✅' : '❌'}</td></tr>`;
         });
-      });
+        detail += `</tbody></table>`;
+      } catch { detail += '<p>Data tidak valid.</p>'; }
+    } else { detail += '<p>Tidak ada data jawaban.</p>'; }
+    document.getElementById('detailModalBody').innerHTML = detail;
+    new bootstrap.Modal(document.getElementById('detailModal')).show();
+  }
 
-      // Ekspor CSV
-      document.getElementById('exportPosttestCSV')?.addEventListener('click', () => exportCSV(responses));
-
-      // Detail
-      document.querySelectorAll('.btn-detail').forEach(btn => {
-        btn.addEventListener('click', function() {
-          try {
-            const row = JSON.parse(decodeURIComponent(this.dataset.row));
-            showDetail(row);
-          } catch (e) {
-            showToast('Gagal menampilkan detail', 'error');
-          }
-        });
-      });
+  function exportCSV() {
+    if (!responses || responses.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
     }
+    const headers = ['Timestamp', 'Nama', 'No HP', 'Skor', 'Jawaban (Soal ID - Pilihan - Benar?)'];
+    const rows = responses.map(r => {
+      let js = '';
+      try {
+        const ans = JSON.parse(r.answers);
+        js = ans.map(a => `${a.qid}:${a.selected}${a.correct ? '(✓)' : '✗'}`).join('; ');
+      } catch { js = 'Error'; }
+      return [r.timestamp, r.nama, r.nohp, r.score, js];
+    });
+    const csvContent = [headers, ...rows].map(e => e.map(c => `"${c}"`).join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'posttest_data.csv';
+    link.click();
+    showToast('Data berhasil diekspor', 'success');
+  }
 
-    // =====================================================
-    //   EXPORT CSV
-    // =====================================================
-    function exportCSV(responses) {
-      const headers = ['Timestamp', 'Nama', 'No HP', 'Skor', 'Jawaban (Soal ID - Pilihan - Benar?)'];
-      const rows = responses.map(r => {
-        let js = '';
-        try {
-          const ans = JSON.parse(r.answers);
-          js = ans.map(a => `${a.qid}:${a.selected}${a.correct ? '(✓)' : '✗'}`).join('; ');
-        } catch { js = 'Error'; }
-        return [r.timestamp, r.nama, r.nohp, r.score, js];
-      });
-      const csvContent = [headers, ...rows].map(e => e.map(c => `"${c}"`).join(',')).join('\n');
-      const bom = '\uFEFF';
-      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'posttest_data.csv';
-      link.click();
-      URL.revokeObjectURL(link.href);
-      showToast('Data berhasil diekspor', 'success');
-    }
+  // ==========================================================
+  //   SUBMENU DROPDOWN SIDEBAR
+  // ==========================================================
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
+    });
+  });
 
-    // =====================================================
-    //   SHOW DETAIL
-    // =====================================================
-    function showDetail(row) {
-      let detail = '<h6>Detail Jawaban Posttest</h6>';
-      if (row.answers) {
-        try {
-          const answers = JSON.parse(row.answers);
-          detail += `
-            <table class="table table-sm table-bordered">
-              <thead>
-                <tr><th>No</th><th>Soal ID</th><th>Pilihan</th><th>Benar?</th></tr>
-              </thead>
-              <tbody>
-          `;
-          answers.forEach((a, idx) => {
-            detail += `
-              <tr>
-                <td>${idx + 1}</td>
-                <td>${a.qid || '-'}</td>
-                <td>${a.selected !== undefined ? a.selected : 'Tidak menjawab'}</td>
-                <td>${a.correct ? '✅' : '❌'}</td>
-              </tr>
-            `;
-          });
-          detail += `</tbody></table>`;
-        } catch {
-          detail += '<p>Data tidak valid.</p>';
-        }
-      } else {
-        detail += '<p>Tidak ada data jawaban.</p>';
-      }
-      document.getElementById('detailModalBody').innerHTML = detail;
-      new bootstrap.Modal(document.getElementById('detailModal')).show();
-    }
-
-  })();
 </script>
 </body>
 </html>

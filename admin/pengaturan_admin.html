@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>Admin Pengaturan - PKD GP Ansor Bantul</title>
+    <title>Pengaturan Admin - PKD GP Ansor Bantul</title>
 
     <!-- Favicon & Font -->
     <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
@@ -12,16 +12,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
+    <!-- Sidebar & Admin CSS (Universal) -->
     <style>
-        /* ===== GLOBAL ===== */
+        /* ===== GLOBAL & SIDEBAR ADMIN ===== */
         * { font-family: 'Inter', sans-serif; }
         body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
-
-        /* ===== LAYOUT UTAMA ===== */
         .container-card { max-width: 100%; padding: 0; margin: 0; }
         .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
 
-        /* ===== SIDEBAR STYLES (UNIVERSAL) ===== */
+        /* --- SIDEBAR --- */
         .sidebar-wrapper {
             width: 260px; max-width: 260px;
             background: #0f172a; color: #f1f5f9;
@@ -33,7 +32,6 @@
         }
         .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
 
-        /* --- BRAND AREA --- */
         .sidebar-brand-area {
             flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
             border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
@@ -52,11 +50,9 @@
         .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
         .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
 
-        /* --- MENU AREA --- */
         .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
         .sidebar-menu-area::-webkit-scrollbar { display: none; }
 
-        /* --- NAV PILLS --- */
         .nav-pills .nav-link {
             width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
             color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
@@ -71,25 +67,17 @@
         .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
         .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
 
-        /* --- SUBMENU --- */
         .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
         .submenu.open { max-height: 500px; }
         .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
         .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
         .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-        .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-        .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-        .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-        .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-        .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
 
-        /* --- SIDEBAR TOGGLE --- */
         .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
         .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
         .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
         .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
 
-        /* --- LOGOUT --- */
         .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
         .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
 
@@ -109,35 +97,37 @@
         }
         @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-        /* ===== CONTENT WRAPPER ===== */
+        /* --- CONTENT WRAPPER --- */
         .content-wrapper {
             margin-left: 260px; padding: 1.5rem; background: #f8fafc;
             min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
         }
         .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
-        /* ===== UTILITY ===== */
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* ===== PREMIUM SETTINGS STYLE ===== */
         .section-title {
             font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem;
         }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-        .loading-spinner {
-            display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ===== SETTINGS CARDS ===== */
         .settings-card {
-            background: white; border-radius: 20px; padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.04);
             margin-bottom: 1.5rem;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .settings-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.2);
         }
         .settings-card .card-title {
             font-weight: 600; margin-bottom: 1rem;
-            border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            padding-bottom: 0.75rem;
         }
         .settings-card .card-title i { margin-right: 8px; }
 
@@ -152,8 +142,8 @@
         }
         .login-mode-status.on { background: #dcfce7; color: #16a34a; border-left: 4px solid #16a34a; }
         .login-mode-status.off { background: #fee2e2; color: #dc2626; border-left: 4px solid #dc2626; }
-        
-        /* ===== VISIBILITAS TOGGLE STYLE ===== */
+
+        /* --- VISIBILITAS TOGGLE --- */
         .form-switch .form-check-input {
             width: 3em;
             height: 1.5em;
@@ -168,844 +158,779 @@
             margin-left: 0.5rem;
             cursor: pointer;
         }
+
+        /* --- TOAST --- */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 576px) {
+            .settings-card { padding: 1rem; }
+            .section-title { font-size: 1.3rem; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ========================================================== -->
-    <!--   CONTAINER UTAMA                                           -->
-    <!-- ========================================================== -->
-    <div class="container-fluid p-0">
-        <div class="admin-wrapper">
+<div class="container container-card">
+  <div class="admin-wrapper">
 
-            <!-- ======================== -->
-            <!--   SIDEBAR                -->
-            <!-- ======================== -->
-            <div class="sidebar-wrapper" id="sidebarWrapper">
-                <!-- Toggle -->
-                <div class="sidebar-toggle">
-                    <button id="toggleSidebarBtn" title="Minimize / Maximize Sidebar">
-                        <i class="bi bi-arrow-left-right"></i>
-                    </button>
-                </div>
+    <!-- ==================== SIDEBAR ==================== -->
+    <div class="sidebar-wrapper" id="sidebarWrapper">
+      <div class="sidebar-toggle">
+        <button id="toggleSidebarBtn" title="Minimize / Maximize Sidebar">
+          <i class="bi bi-arrow-left-right"></i>
+        </button>
+      </div>
 
-                <!-- Brand -->
-                <div class="sidebar-brand-area">
-                    <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
-                        <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" />
-                        <div>
-                            <div class="brand-sidebar-title">PKD GP Ansor</div>
-                            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
-                        </div>
-                    </a>
-                </div>
+      <div class="sidebar-brand-area">
+        <a class="brand-sidebar" href="/bisaa/index.html" title="Beranda">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" />
+          <div>
+            <div class="brand-sidebar-title">PKD GP Ansor</div>
+            <span class="brand-sidebar-sub">Kabupaten Bantul</span>
+          </div>
+        </a>
+      </div>
 
-                <!-- Menu -->
-                <div class="sidebar-menu-area">
-                    <div class="nav flex-column nav-pills" id="sidebarMenu">
-                        <!-- Dashboard -->
-                        <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
-                            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
-                        </a>
+      <div class="sidebar-menu-area">
+        <div class="nav flex-column nav-pills" id="sidebarMenu">
+          <!-- Dashboard -->
+          <a class="nav-link" href="/bisaa/admin/dashboard_admin.html" title="Dashboard">
+            <i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span>
+          </a>
 
-                        <!-- Akademik -->
-                        <div class="nav-link" data-target="akademik" title="Akademik">
-                            <i class="bi bi-book me-2"></i><span>Akademik</span>
-                        </div>
-                        <div class="submenu" id="submenu-akademik">
-                            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
-                            <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
-                            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
-                        </div>
+          <!-- Akademik -->
+          <div class="nav-link" data-target="akademik" title="Akademik">
+            <i class="bi bi-book me-2"></i><span>Akademik</span>
+          </div>
+          <div class="submenu" id="submenu-akademik">
+            <a class="nav-link" href="/bisaa/admin/pretest_admin.html" title="Pre-test"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/posttest_admin.html" title="Post-test"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a>
+            <a class="nav-link" href="/bisaa/admin/materi_admin.html" title="Materi"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a>
+          </div>
 
-                        <!-- Peserta -->
-                        <div class="nav-link" data-target="peserta" title="Peserta">
-                            <i class="bi bi-people me-2"></i><span>Peserta</span>
-                        </div>
-                        <div class="submenu" id="submenu-peserta">
-                            <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
-                            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
-                            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
-                        </div>
+          <!-- Peserta -->
+          <div class="nav-link" data-target="peserta" title="Peserta">
+            <i class="bi bi-people me-2"></i><span>Peserta</span>
+          </div>
+          <div class="submenu" id="submenu-peserta">
+            <a class="nav-link" href="/bisaa/admin/peserta_admin.html" title="Peserta"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a>
+            <a class="nav-link" href="/bisaa/admin/alumni_admin.html" title="Alumni"><i class="bi bi-award me-2"></i><span>Alumni</span></a>
+            <a class="nav-link" href="/bisaa/admin/kader_admin.html" title="Kader"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a>
+          </div>
 
-                        <!-- Absensi -->
-                        <div class="nav-link" data-target="absensi" title="Absensi">
-                            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
-                        </div>
-                        <div class="submenu" id="submenu-absensi">
-                            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
-                            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
-                            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
-                        </div>
+          <!-- Absensi -->
+          <div class="nav-link" data-target="absensi" title="Absensi">
+            <i class="bi bi-calendar-check me-2"></i><span>Absensi</span>
+          </div>
+          <div class="submenu" id="submenu-absensi">
+            <a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html" title="Sesi Absen"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a>
+            <a class="nav-link" href="/bisaa/admin/data_absensi_admin.html" title="Data Absensi"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a>
+            <a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html" title="Rekap Absensi"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a>
+          </div>
 
-                        <!-- Informasi -->
-                        <div class="nav-link" data-target="informasi" title="Informasi">
-                            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
-                        </div>
-                        <div class="submenu" id="submenu-informasi">
-                            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
-                            <a class="nav-link" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
-                        </div>
+          <!-- Informasi -->
+          <div class="nav-link" data-target="informasi" title="Informasi">
+            <i class="bi bi-info-circle me-2"></i><span>Informasi</span>
+          </div>
+          <div class="submenu" id="submenu-informasi">
+            <a class="nav-link" href="/bisaa/admin/informasi_admin.html" title="Informasi"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a>
+            <a class="nav-link" href="/bisaa/admin/asset_admin.html" title="Aset Digital"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a>
+          </div>
 
-                        <!-- Skrining -->
-                        <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
-                            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
-                        </a>
+          <!-- Skrining -->
+          <a class="nav-link" href="/bisaa/admin/skrining_admin.html" title="Skrining">
+            <i class="bi bi-clipboard-check me-2"></i><span>Skrining</span>
+          </a>
 
-                        <!-- Sertifikat -->
-                        <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
-                            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
-                        </a>
+          <!-- Sertifikat -->
+          <a class="nav-link" href="/bisaa/admin/sertifikat_admin.html" title="Sertifikat">
+            <i class="bi bi-patch-check me-2"></i><span>Sertifikat</span>
+          </a>
 
-                        <!-- Tanda Tangan -->
-                        <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
-                            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
-                        </a>
+          <!-- Tanda Tangan -->
+          <a class="nav-link" href="/bisaa/admin/tanda_tangan_admin.html" title="Tanda Tangan">
+            <i class="bi bi-pencil-square me-2"></i><span>Tanda Tangan</span>
+          </a>
 
-                        <!-- Pengaturan (AKTIF) -->
-                        <a class="nav-link active" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
-                            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
-                        </a>
+          <!-- RTL & Tugas -->
+          <a class="nav-link" href="/bisaa/admin/rtl_admin.html" title="RTL & Tugas">
+            <i class="bi bi-file-earmark-text me-2"></i><span>RTL & Tugas</span>
+          </a>
 
-                        <div class="sidebar-logout"></div>
-                        <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
-                            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <!-- END SIDEBAR -->
+          <!-- Pengaturan (AKTIF) -->
+          <a class="nav-link active" href="/bisaa/admin/pengaturan_admin.html" title="Pengaturan">
+            <i class="bi bi-gear me-2"></i><span>Pengaturan</span>
+          </a>
 
-
-            <!-- ======================== -->
-            <!--   BOTTOM NAV (MOBILE)    -->
-            <!-- ======================== -->
-            <div class="bottom-nav">
-                <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
-                <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
-                <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
-                <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
-                <a href="/bisaa/admin/tanda_tangan_admin.html" class="nav-item"><i class="bi bi-pencil-square"></i><span>TTD</span></a>
-                <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal">
-                    <i class="bi bi-grid"></i><span>Lainnya</span>
-                </a>
-            </div>
-
-
-            <!-- ======================== -->
-            <!--   CONTENT WRAPPER        -->
-            <!-- ======================== -->
-            <div class="content-wrapper" id="mainContent">
-                <h2 class="section-title"><i class="bi bi-gear me-2"></i>Pengaturan Sistem</h2>
-
-                <div class="row mb-3">
-                    <div class="col-md-12 text-end">
-                        <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache
-                        </button>
-                        <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
-                    </div>
-                </div>
-
-                <!-- Section: Pengaturan Umum -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-globe2"></i> Pengaturan Umum</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Nama Aplikasi</label>
-                            <input type="text" class="form-control" id="appName" placeholder="Nama aplikasi" value="PKD GP Ansor Kabupaten Bantul" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Deskripsi Singkat</label>
-                            <input type="text" class="form-control" id="appDescription" placeholder="Deskripsi aplikasi" value="Platform Pelatihan Kader Dasar GP Ansor" />
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Logo Aplikasi</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Preview" class="logo-preview" id="logoPreview" />
-                                <div>
-                                    <input type="file" class="form-control" id="logoUpload" accept="image/png,image/jpeg,image/webp" />
-                                    <small class="text-muted">Format: PNG, JPG, WEBP (Max 2MB)</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12 text-end">
-                            <button class="btn btn-primary rounded-pill px-4" id="saveGeneralSettings"><i class="bi bi-save me-1"></i> Simpan Pengaturan</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Mode Login Publik -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-shield-lock"></i> Mode Login Publik</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="loginModeToggle" />
-                                <label class="form-check-label" for="loginModeToggle">
-                                    <strong>Wajib Login</strong> – Jika aktif, semua halaman publik (skrining, pretest, posttest, materi) hanya bisa diakses setelah login.
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <button class="btn btn-primary rounded-pill px-4" id="saveLoginModeBtn">
-                                <i class="bi bi-save me-1"></i> Simpan
-                            </button>
-                        </div>
-                    </div>
-                    <div id="loginModeStatus" class="login-mode-status"></div>
-                </div>
-
-                <!-- ========================================================== -->
-                <!--   BAGIAN: VISIBILITAS MENU PER HALAMAN                 -->
-                <!-- ========================================================== -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-eye-fill"></i> Visibilitas Menu Publik</div>
-                    <p class="text-muted small mb-3">
-                        Aktifkan atau nonaktifkan akses menu tertentu tanpa harus login (Guest). 
-                        <br>Jika tombol <strong>ON</strong>, menu dapat diakses publik tanpa login. Jika <strong>OFF</strong>, menu hanya bisa diakses setelah login.
-                    </p>
-                    <div class="row g-3" id="menuVisibilityContainer">
-                        <!-- Akan diisi oleh JavaScript -->
-                        <div class="col-12 text-center">
-                            <div class="spinner-border text-primary"></div>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-end">
-                        <button class="btn btn-primary rounded-pill px-4" id="saveVisibilityBtn">
-                            <i class="bi bi-save me-1"></i> Simpan Pengaturan Menu
-                        </button>
-                    </div>
-                </div>
-                <!-- ========================================================== -->
-
-                <!-- Section: Akun Admin -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-shield-lock"></i> Keamanan Akun Admin</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Username Saat Ini</label>
-                            <input type="text" class="form-control" id="currentUsername" disabled placeholder="Tidak dapat diubah" value="admin" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Password Baru</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="newPassword" placeholder="Kosongkan jika tidak ingin mengubah" />
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('newPassword')"><i class="bi bi-eye"></i></button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Konfirmasi Password Baru</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password baru" />
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmPassword')"><i class="bi bi-eye"></i></button>
-                            </div>
-                        </div>
-                        <div class="col-md-12 text-end">
-                            <button class="btn btn-warning rounded-pill px-4" id="changePasswordBtn"><i class="bi bi-key me-1"></i> Ubah Password</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Backup & Data -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-database"></i> Backup & Pengelolaan Data</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <p class="mb-1 text-muted">Backup semua data aplikasi (peserta, materi, absensi, dll.) ke file JSON.</p>
-                            <button class="btn btn-outline-secondary rounded-pill" id="backupDataBtn"><i class="bi bi-cloud-arrow-down me-1"></i> Backup Data</button>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1 text-muted">Hapus semua data aplikasi. Tindakan ini tidak dapat dibatalkan.</p>
-                            <button class="btn btn-outline-danger rounded-pill" id="resetDataBtn"><i class="bi bi-trash me-1"></i> Reset Data</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section: Informasi Sistem -->
-                <div class="settings-card">
-                    <div class="card-title"><i class="bi bi-info-circle"></i> Informasi Sistem</div>
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Versi Aplikasi:</strong> v2.0.0</p>
-                            <p class="mb-1"><strong>Platform:</strong> PKD GP Ansor Kabupaten Bantul</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Total Data:</strong> <span id="totalDataInfo">Memuat...</span></p>
-                            <p class="mb-1"><strong>Terakhir Update:</strong> <span id="lastUpdateInfo">-</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- END CONTENT WRAPPER -->
-
+          <div class="sidebar-logout"></div>
+          <a class="nav-link text-danger" href="#" id="sidebarLogoutBtn" title="Logout">
+            <i class="bi bi-box-arrow-right me-2"></i><span>Logout</span>
+          </a>
         </div>
-    </div>
-    <!-- END CONTAINER -->
-
-
-    <!-- ========================================================== -->
-    <!--   MODAL "LAINNYA" (MOBILE)                                  -->
-    <!-- ========================================================== -->
-    <div class="modal fade" id="moreMenuModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-2">
-                        <div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
-                        <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100 active">Pengaturan</a></div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
-                                <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-
-    <!-- ========================================================== -->
-    <!--   MODAL KONFIRMASI RESET DATA                              -->
-    <!-- ========================================================== -->
-    <div class="modal fade" id="resetConfirmModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-danger text-white border-0 rounded-top-4">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Konfirmasi Reset Data</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
-                    <p class="fw-bold">Anda akan menghapus <u>semua data</u> aplikasi!</p>
-                    <p class="text-muted small">Tindakan ini tidak dapat dibatalkan. Data yang dihapus meliputi peserta, materi, sesi absen, data absensi, sertifikat, skrining, pretest, posttest, alumni, kader, dan informasi.</p>
-                    <div class="form-check d-flex justify-content-center">
-                        <input class="form-check-input" type="checkbox" id="confirmResetCheck" />
-                        <label class="form-check-label ms-2" for="confirmResetCheck">Ya, saya yakin ingin menghapus semua data.</label>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmResetBtn" disabled>Reset Data</button>
-                </div>
-            </div>
-        </div>
+    <!-- ==================== BOTTOM NAV (MOBILE) ==================== -->
+    <div class="bottom-nav">
+      <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
+      <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
+      <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+      <a href="/bisaa/admin/tanda_tangan_admin.html" class="nav-item"><i class="bi bi-pencil-square"></i><span>TTD</span></a>
+      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal">
+        <i class="bi bi-grid"></i><span>Lainnya</span>
+      </a>
     </div>
 
+    <!-- ==================== CONTENT WRAPPER ==================== -->
+    <div class="content-wrapper" id="mainContent">
+      <h2 class="section-title"><i class="bi bi-gear me-2"></i>Pengaturan Sistem</h2>
 
-    <!-- ========================================================== -->
-    <!--   TOAST                                                     -->
-    <!-- ========================================================== -->
-    <div class="toast-container">
-        <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-            <div class="toast-header bg-white border-0">
-                <i class="bi me-2" id="toastIcon"></i>
-                <strong class="me-auto" id="toastTitle">Berhasil</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="toastMessage"></div>
+      <div class="row mb-3">
+        <div class="col-md-12 text-end">
+          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache
+          </button>
+          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
         </div>
+      </div>
+
+      <!-- Section: Pengaturan Umum -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-globe2"></i> Pengaturan Umum</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nama Aplikasi</label>
+            <input type="text" class="form-control" id="appName" placeholder="Nama aplikasi" value="PKD GP Ansor Kabupaten Bantul" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Deskripsi Singkat</label>
+            <input type="text" class="form-control" id="appDescription" placeholder="Deskripsi aplikasi" value="Platform Pelatihan Kader Dasar GP Ansor" />
+          </div>
+          <div class="col-md-12">
+            <label class="form-label fw-semibold">Logo Aplikasi</label>
+            <div class="d-flex align-items-center gap-3">
+              <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Preview" class="logo-preview" id="logoPreview" />
+              <div>
+                <input type="file" class="form-control" id="logoUpload" accept="image/png,image/jpeg,image/webp" />
+                <small class="text-muted">Format: PNG, JPG, WEBP (Max 2MB)</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-12 text-end">
+            <button class="btn btn-primary rounded-pill px-4" id="saveGeneralSettings"><i class="bi bi-save me-1"></i> Simpan Pengaturan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Mode Login Publik -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-shield-lock"></i> Mode Login Publik</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="loginModeToggle" />
+              <label class="form-check-label" for="loginModeToggle">
+                <strong>Wajib Login</strong> – Jika aktif, semua halaman publik (skrining, pretest, posttest, materi) hanya bisa diakses setelah login.
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6 text-end">
+            <button class="btn btn-primary rounded-pill px-4" id="saveLoginModeBtn">
+              <i class="bi bi-save me-1"></i> Simpan
+            </button>
+          </div>
+        </div>
+        <div id="loginModeStatus" class="login-mode-status"></div>
+      </div>
+
+      <!-- ========================================================== -->
+      <!--   BAGIAN: VISIBILITAS MENU PER HALAMAN                 -->
+      <!-- ========================================================== -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-eye-fill"></i> Visibilitas Menu Publik</div>
+        <p class="text-muted small mb-3">
+          Aktifkan atau nonaktifkan akses menu tertentu tanpa harus login (Guest).
+          <br>Jika tombol <strong>ON</strong>, menu dapat diakses publik tanpa login. Jika <strong>OFF</strong>, menu hanya bisa diakses setelah login.
+        </p>
+        <div class="row g-3" id="menuVisibilityContainer">
+          <!-- Akan diisi oleh JavaScript -->
+          <div class="col-12 text-center">
+            <div class="spinner-border text-primary"></div>
+          </div>
+        </div>
+        <div class="mt-3 text-end">
+          <button class="btn btn-primary rounded-pill px-4" id="saveVisibilityBtn">
+            <i class="bi bi-save me-1"></i> Simpan Pengaturan Menu
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Akun Admin -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-shield-lock"></i> Keamanan Akun Admin</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Username Saat Ini</label>
+            <input type="text" class="form-control" id="currentUsername" disabled placeholder="Tidak dapat diubah" value="admin" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Password Baru</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="newPassword" placeholder="Kosongkan jika tidak ingin mengubah" />
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('newPassword')"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Konfirmasi Password Baru</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password baru" />
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmPassword')"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="col-md-12 text-end">
+            <button class="btn btn-warning rounded-pill px-4" id="changePasswordBtn"><i class="bi bi-key me-1"></i> Ubah Password</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Backup & Data -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-database"></i> Backup & Pengelolaan Data</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p class="mb-1 text-muted">Backup semua data aplikasi (peserta, materi, absensi, dll.) ke file JSON.</p>
+            <button class="btn btn-outline-secondary rounded-pill" id="backupDataBtn"><i class="bi bi-cloud-arrow-down me-1"></i> Backup Data</button>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1 text-muted">Hapus semua data aplikasi. Tindakan ini tidak dapat dibatalkan.</p>
+            <button class="btn btn-outline-danger rounded-pill" id="resetDataBtn"><i class="bi bi-trash me-1"></i> Reset Data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Informasi Sistem -->
+      <div class="settings-card">
+        <div class="card-title"><i class="bi bi-info-circle"></i> Informasi Sistem</div>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Versi Aplikasi:</strong> v2.0.0</p>
+            <p class="mb-1"><strong>Platform:</strong> PKD GP Ansor Kabupaten Bantul</p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Total Data:</strong> <span id="totalDataInfo">Memuat...</span></p>
+            <p class="mb-1"><strong>Terakhir Update:</strong> <span id="lastUpdateInfo">-</span></p>
+          </div>
+        </div>
+      </div>
     </div>
+    <!-- END CONTENT WRAPPER -->
 
+  </div>
+</div>
 
-    <!-- ========================================================== -->
-    <!--   SCRIPTS                                                  -->
-    <!-- ========================================================== -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
-    <script src="/bisaa/dataCache.js">
-    </script>
-    <script src="/bisaa/api.js">
-    </script>
+<!-- ==================== MODAL "LAINNYA" (MOBILE) ==================== -->
+<div class="modal fade" id="moreMenuModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div>
+          <div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div>
+          <div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div>
+          <div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div>
+          <div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div>
+          <div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
+          <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100 active">Pengaturan</a></div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-12">
+            <button class="btn btn-outline-danger w-100" id="mobileLogoutBtn">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        (function() {
-            'use strict';
+<!-- ==================== MODAL KONFIRMASI RESET DATA ==================== -->
+<div class="modal fade" id="resetConfirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Konfirmasi Reset Data</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i>
+        <p class="fw-bold">Anda akan menghapus <u>semua data</u> aplikasi!</p>
+        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan. Data yang dihapus meliputi peserta, materi, sesi absen, data absensi, sertifikat, skrining, pretest, posttest, alumni, kader, dan informasi.</p>
+        <div class="form-check d-flex justify-content-center">
+          <input class="form-check-input" type="checkbox" id="confirmResetCheck" />
+          <label class="form-check-label ms-2" for="confirmResetCheck">Ya, saya yakin ingin menghapus semua data.</label>
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmResetBtn" disabled>Reset Data</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-            // ==========================================================
-            //   TOGGLE PASSWORD VISIBILITY (global)
-            // ==========================================================
-            window.togglePasswordVisibility = function(id) {
-                const el = document.getElementById(id);
-                if (el) el.type = el.type === 'password' ? 'text' : 'password';
-            };
+<!-- ==================== TOAST ==================== -->
+<div class="toast-container">
+  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-header bg-white border-0">
+      <i class="bi me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Berhasil</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+  </div>
+</div>
 
-            // ==========================================================
-            //   SIDEBAR TOGGLE & SUBMENU
-            // ==========================================================
-            document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
-                document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-arrow-left-right');
-                    icon.classList.toggle('bi-arrow-right-left');
-                }
-            });
+<!-- ==================== SCRIPTS ==================== -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-            document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = this.dataset.target;
-                    const submenu = document.getElementById('submenu-' + target);
-                    if (submenu) submenu.classList.toggle('open');
-                });
-            });
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API DAN MODUL ADMIN
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    getUserRole,
+    updateNavbarMenu,
+    getPublicVisibility,
+    setPublicVisibility,
+    setLoginMode,
+    getLoginMode
+  } from '../js/core/api.js';
+  import { AdminModule } from '../js/modules/admin.js';
 
-            // ==========================================================
-            //   LOGOUT
-            // ==========================================================
-            document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
+  // ==========================================================
+  //   TOGGLE PASSWORD VISIBILITY (diekspos ke global)
+  // ==========================================================
+  window.togglePasswordVisibility = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  };
 
-            document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-                const modalEl = document.getElementById('moreMenuModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) modal.hide();
-                if (PKD.logout) PKD.logout();
-                else window.location.href = '/bisaa/index.html';
-            });
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
+  // ==========================================================
+  function initSidebar() {
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
+      document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
+      const icon = this.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('bi-arrow-left-right');
+        icon.classList.toggle('bi-arrow-right-left');
+      }
+    });
 
-            // ==========================================================
-            //   UTILITY
-            // ==========================================================
-            function escapeHtml(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    if (m === '"') return '&quot;';
-                    return m;
-                });
-            }
+    document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.dataset.target;
+        const submenu = document.getElementById('submenu-' + target);
+        if (submenu) submenu.classList.toggle('open');
+      });
+    });
+  }
 
-            function showToast(message, type) {
-                const toastEl = document.getElementById('notificationToast');
-                if (!toastEl) return;
-                const toast = new bootstrap.Toast(toastEl);
-                document.getElementById('toastMessage').innerText = message;
-                const icon = document.getElementById('toastIcon');
-                if (type === 'success') {
-                    icon.className = 'bi bi-check-circle-fill text-success';
-                    document.getElementById('toastTitle').innerText = 'Berhasil';
-                } else if (type === 'error') {
-                    icon.className = 'bi bi-x-circle-fill text-danger';
-                    document.getElementById('toastTitle').innerText = 'Gagal';
-                } else {
-                    icon.className = 'bi bi-info-circle-fill text-primary';
-                    document.getElementById('toastTitle').innerText = 'Info';
-                }
-                toast.show();
-            }
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
 
-            function updateCacheStatus(status) {
-                const el = document.getElementById('cacheStatus');
-                if (el) {
-                    el.textContent = status;
-                    el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-                }
-            }
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+    const modalEl = document.getElementById('moreMenuModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    if (typeof logout !== 'undefined') logout();
+    else window.location.href = '/bisaa/index.html';
+  });
 
-            function loadSystemInfo() {
-                const allData = DataCache.getAllData();
-                if (!allData) {
-                    document.getElementById('totalDataInfo').textContent = '0 entri';
-                    document.getElementById('lastUpdateInfo').textContent = '-';
-                    return;
-                }
+  // ==========================================================
+  //   UTILITY
+  // ==========================================================
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
+    }
+  }
 
-                let total = 0;
-                for (const key in allData) {
-                    if (Array.isArray(allData[key])) {
-                        total += allData[key].length;
-                    }
-                }
+  function loadSystemInfo() {
+    // Menggunakan AdminModule yang sudah memuat data
+    const stats = AdminModule.getStats();
+    let total = 0;
+    if (stats) {
+      total = stats.totalPeserta + stats.totalSesi + stats.totalMateri + stats.totalSkrining + stats.totalPretest + stats.totalPosttest + stats.totalAlumni + stats.totalKader + stats.totalAbsensi + stats.totalSertifikat;
+    }
+    document.getElementById('totalDataInfo').textContent = total + ' entri';
+    document.getElementById('lastUpdateInfo').textContent = stats.lastSync ? new Date(stats.lastSync).toLocaleString('id-ID', {
+      dateStyle: 'full',
+      timeStyle: 'short'
+    }) : '-';
+  }
 
-                document.getElementById('totalDataInfo').textContent = total + ' entri';
-                document.getElementById('lastUpdateInfo').textContent = new Date().toLocaleString('id-ID', {
-                    dateStyle: 'full',
-                    timeStyle: 'short'
-                });
-            }
+  // ==========================================================
+  //   BACKGROUND UPDATE (refresh data dari API)
+  // ==========================================================
+  async function backgroundUpdate() {
+    let updating = false;
+    if (updating) return;
+    updating = true;
+    updateCacheStatus('Updating...');
 
-            // ==========================================================
-            //   BACKGROUND UPDATE
-            // ==========================================================
-            async function backgroundUpdate() {
-                let updating = false;
-                if (updating) return;
-                updating = true;
-                updateCacheStatus('Updating...');
+    try {
+      await AdminModule.loadAllData(false);
+      loadSystemInfo();
+      updateCacheStatus('Live');
+    } catch (e) {
+      console.warn('Background update gagal:', e);
+      updateCacheStatus('Offline');
+    } finally {
+      updating = false;
+    }
+  }
 
-                try {
-                    if (typeof PKD === 'undefined') {
-                        console.warn('PKD API tidak tersedia, skip background update');
-                        updateCacheStatus('API Unavailable');
-                        updating = false;
-                        return;
-                    }
+  // ==========================================================
+  //   MANUAL REFRESH
+  // ==========================================================
+  async function manualRefresh() {
+    const btn = document.getElementById('refreshDataBtn');
+    if (btn) {
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      btn.disabled = true;
+    }
 
-                    // Refresh semua data dari API
-                    const allData = await Promise.all([
-                        PKD.getPesertaList ? PKD.getPesertaList() : [],
-                        PKD.getSesiAbsen ? PKD.getSesiAbsen() : [],
-                        PKD.getMateriList ? PKD.getMateriList() : [],
-                        PKD.getSkriningResponses ? PKD.getSkriningResponses() : [],
-                        PKD.getPretestResponses ? PKD.getPretestResponses() : [],
-                        PKD.getPosttestResponses ? PKD.getPosttestResponses() : [],
-                        PKD.getAlumniList ? PKD.getAlumniList() : [],
-                        PKD.getKaderList ? PKD.getKaderList() : [],
-                        PKD.getInformasiList ? PKD.getInformasiList() : [],
-                        PKD.getDataAbsensiList ? PKD.getDataAbsensiList() : [],
-                        PKD.getSertifikatList ? PKD.getSertifikatList() : []
-                    ]);
+    try {
+      await AdminModule.loadAllData(true);
+      loadSystemInfo();
+      showToast('Data berhasil diperbarui', 'success');
+      updateCacheStatus('Live');
+    } catch (e) {
+      showToast('Gagal memperbarui: ' + e.message, 'error');
+      updateCacheStatus('Error');
+    } finally {
+      if (btn) {
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache';
+        btn.disabled = false;
+      }
+    }
+  }
 
-                    DataCache.setAllData({
-                        peserta: allData[0],
-                        sesi: allData[1],
-                        materi: allData[2],
-                        skrining: allData[3],
-                        pretest: allData[4],
-                        posttest: allData[5],
-                        alumni: allData[6],
-                        kader: allData[7],
-                        informasi: allData[8],
-                        absensi: allData[9],
-                        sertifikat: allData[10]
-                    });
+  // ==========================================================
+  //   LOAD & SIMPAN VISIBILITAS MENU PER HALAMAN
+  // ==========================================================
+  async function loadVisibilitySettings() {
+    const container = document.getElementById('menuVisibilityContainer');
 
-                    loadSystemInfo();
-                    updateCacheStatus('Live');
-                } catch (e) {
-                    console.warn('Background update gagal:', e);
-                    updateCacheStatus('Offline');
-                } finally {
-                    updating = false;
-                }
-            }
+    try {
+      const res = await getPublicVisibility();
+      if (res.success && res.data) {
+        const visibility = res.data;
+        const menuLabels = {
+          pretest: 'Pre-test',
+          posttest: 'Post-test',
+          absen: 'Absen Digital',
+          skrining: 'Skrining',
+          peserta: 'Peserta',
+          materi: 'Materi',
+          informasi: 'Informasi',
+          asset: 'Aset Digital',
+          verifikasi: 'Verifikasi Sertifikat',
+          kader: 'Kader'
+        };
 
-            // ==========================================================
-            //   MANUAL REFRESH
-            // ==========================================================
-            async function manualRefresh() {
-                const btn = document.getElementById('refreshDataBtn');
-                if (btn) {
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-                    btn.disabled = true;
-                }
+        let html = '';
+        for (const [key, label] of Object.entries(menuLabels)) {
+          const isEnabled = visibility[key] !== false;
+          html += `
+              <div class="col-md-6 col-lg-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input visibility-toggle" type="checkbox" id="vis_${key}" data-key="${key}" ${isEnabled ? 'checked' : ''}>
+                  <label class="form-check-label fw-semibold" for="vis_${key}">${label}</label>
+                </div>
+              </div>
+            `;
+        }
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<div class="col-12 text-danger">Gagal memuat data visibilitas.</div>';
+      }
+    } catch (e) {
+      console.warn('Gagal load visibility:', e);
+      container.innerHTML = `<div class="col-12 text-danger">Error: ${escapeHtml(e.message)}</div>`;
+    }
+  }
 
-                try {
-                    if (typeof PKD === 'undefined') {
-                        showToast('API tidak tersedia', 'error');
-                        return;
-                    }
+  document.getElementById('saveVisibilityBtn')?.addEventListener('click', async function() {
+    const toggles = document.querySelectorAll('.visibility-toggle');
+    const data = {};
+    toggles.forEach(t => {
+      data[t.dataset.key] = t.checked;
+    });
 
-                    await backgroundUpdate();
-                    showToast('Data berhasil diperbarui', 'success');
-                } catch (e) {
-                    showToast('Gagal memperbarui: ' + e.message, 'error');
-                    updateCacheStatus('Error');
-                } finally {
-                    if (btn) {
-                        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache';
-                        btn.disabled = false;
-                    }
-                }
-            }
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    btn.disabled = true;
 
-            // ==========================================================
-            //   LOAD & SIMPAN VISIBILITAS MENU PER HALAMAN
-            // ==========================================================
-            async function loadVisibilitySettings() {
-                const container = document.getElementById('menuVisibilityContainer');
-                
-                try {
-                    const res = await PKD.getPublicVisibility();
-                    if (res.success && res.data) {
-                        const visibility = res.data;
-                        // Daftar menu default
-                        const menuLabels = {
-                            pretest: 'Pre-test',
-                            posttest: 'Post-test',
-                            absen: 'Absen Digital',
-                            skrining: 'Skrining',
-                            peserta: 'Peserta',
-                            materi: 'Materi',
-                            informasi: 'Informasi',
-                            asset: 'Aset Digital',
-                            verifikasi: 'Verifikasi Sertifikat',
-                            kader: 'Kader'
-                        };
-                        
-                        let html = '';
-                        for (const [key, label] of Object.entries(menuLabels)) {
-                            // Default to true if not explicitly set to false
-                            const isEnabled = visibility[key] !== false;
-                            html += `
-                                <div class="col-md-6 col-lg-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input visibility-toggle" type="checkbox" id="vis_${key}" data-key="${key}" ${isEnabled ? 'checked' : ''}>
-                                        <label class="form-check-label fw-semibold" for="vis_${key}">${label}</label>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        container.innerHTML = html;
-                    } else {
-                        container.innerHTML = '<div class="col-12 text-danger">Gagal memuat data visibilitas.</div>';
-                    }
-                } catch (e) {
-                    console.warn('Gagal load visibility:', e);
-                    container.innerHTML = `<div class="col-12 text-danger">Error: ${escapeHtml(e.message)}</div>`;
-                }
-            }
+    try {
+      const res = await setPublicVisibility(data);
+      if (res.success) {
+        showToast('Pengaturan visibilitas menu berhasil disimpan.', 'success');
+        // Refresh data
+        await AdminModule.loadAllData(true);
+      } else {
+        showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'error');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
 
-            document.getElementById('saveVisibilityBtn')?.addEventListener('click', async function() {
-                const toggles = document.querySelectorAll('.visibility-toggle');
-                const data = {};
-                toggles.forEach(t => {
-                    data[t.dataset.key] = t.checked;
-                });
+  // ==========================================================
+  //   PENGATURAN UMUM
+  // ==========================================================
+  function loadGeneralSettings() {
+    try {
+      const settings = localStorage.getItem('pkd_app_settings');
+      if (settings) {
+        const parsed = JSON.parse(settings);
+        if (parsed.appName) document.getElementById('appName').value = parsed.appName;
+        if (parsed.appDesc) document.getElementById('appDescription').value = parsed.appDesc;
+      }
+    } catch (e) {}
+  }
 
-                const btn = this;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-                btn.disabled = true;
+  document.getElementById('saveGeneralSettings').addEventListener('click', function() {
+    const appName = document.getElementById('appName').value.trim();
+    const appDesc = document.getElementById('appDescription').value.trim();
+    const logoFile = document.getElementById('logoUpload').files[0];
 
-                try {
-                    const res = await PKD.setPublicVisibility(data);
-                    if (res.success) {
-                        showToast('Pengaturan visibilitas menu berhasil disimpan.', 'success');
-                        // Clear cache so changes take effect immediately on public pages
-                        DataCache.clear(); 
-                    } else {
-                        showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'error');
-                    }
-                } catch (e) {
-                    showToast('Gagal: ' + e.message, 'error');
-                } finally {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            });
+    if (!appName) {
+      showToast('Nama aplikasi tidak boleh kosong.', 'error');
+      return;
+    }
 
-            // ==========================================================
-            //   LOGIN AUTH CHECK (DIPINDAHKAN KE DOMContentLoaded)
-            // ==========================================================
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof PKD !== 'undefined' && PKD.getUserRole() !== 'admin') {
-                    window.location.href = '/bisaa/login.html';
-                    return;
-                }
+    try {
+      const settings = { appName, appDesc };
 
-                loadGeneralSettings();
-                loadSystemInfo();
-                loadLoginMode();
-                loadVisibilitySettings(); // Muat pengaturan visibilitas
+      if (logoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('logoPreview').src = e.target.result;
+          showToast('Pengaturan umum berhasil disimpan (logo diperbarui).', 'success');
+        };
+        reader.readAsDataURL(logoFile);
+      } else {
+        showToast('Pengaturan umum berhasil disimpan.', 'success');
+      }
 
-                // Background update setelah 1 detik
-                setTimeout(() => {
-                    backgroundUpdate();
-                }, 1000);
+      localStorage.setItem('pkd_app_settings', JSON.stringify(settings));
+    } catch (e) {
+      showToast('Gagal menyimpan pengaturan: ' + e.message, 'error');
+    }
+  });
 
-                // Event listeners
-                document.getElementById('refreshDataBtn').addEventListener('click', manualRefresh);
+  // ==========================================================
+  //   LOGIN MODE
+  // ==========================================================
+  async function loadLoginMode() {
+    try {
+      const res = await getLoginMode();
+      const enabled = res.success ? res.enabled : false;
+      document.getElementById('loginModeToggle').checked = enabled;
+      updateLoginModeStatus(enabled);
+    } catch (e) {
+      console.warn('Gagal load login mode:', e);
+      document.getElementById('loginModeStatus').innerHTML = 'Gagal memuat status login.';
+    }
+  }
 
-                document.getElementById('saveGeneralSettings').addEventListener('click', function() {
-                    const appName = document.getElementById('appName').value.trim();
-                    const appDesc = document.getElementById('appDescription').value.trim();
-                    const logoFile = document.getElementById('logoUpload').files[0];
+  function updateLoginModeStatus(enabled) {
+    const statusEl = document.getElementById('loginModeStatus');
+    if (enabled) {
+      statusEl.className = 'login-mode-status on';
+      statusEl.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Mode Wajib Login AKTIF – Semua halaman publik memerlukan login.';
+    } else {
+      statusEl.className = 'login-mode-status off';
+      statusEl.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Mode Guest AKTIF – Semua halaman publik dapat diakses tanpa login.';
+    }
+  }
 
-                    if (!appName) {
-                        showToast('Nama aplikasi tidak boleh kosong.', 'error');
-                        return;
-                    }
+  document.getElementById('saveLoginModeBtn').addEventListener('click', async function() {
+    const enabled = document.getElementById('loginModeToggle').checked;
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    btn.disabled = true;
 
-                    try {
-                        const settings = { appName, appDesc };
+    try {
+      const res = await setLoginMode(enabled);
+      if (res.success) {
+        // Refresh data
+        await AdminModule.loadAllData(true);
+        const freshRes = await getLoginMode();
+        if (freshRes.success) {
+          document.getElementById('loginModeToggle').checked = freshRes.enabled;
+          updateLoginModeStatus(freshRes.enabled);
+          showToast(`Mode login berhasil diubah menjadi ${freshRes.enabled ? 'Wajib Login' : 'Guest'}`, 'success');
+        }
+      } else {
+        throw new Error(res.message || 'Gagal menyimpan');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
 
-                        if (logoFile) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                document.getElementById('logoPreview').src = e.target.result;
-                                showToast('Pengaturan umum berhasil disimpan (logo diperbarui).', 'success');
-                            };
-                            reader.readAsDataURL(logoFile);
-                        } else {
-                            showToast('Pengaturan umum berhasil disimpan.', 'success');
-                        }
+  // ==========================================================
+  //   CHANGE PASSWORD
+  // ==========================================================
+  document.getElementById('changePasswordBtn').addEventListener('click', function() {
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
 
-                        localStorage.setItem('pkd_app_settings', JSON.stringify(settings));
-                    } catch (e) {
-                        showToast('Gagal menyimpan pengaturan: ' + e.message, 'error');
-                    }
-                });
+    if (!newPass && !confirmPass) {
+      showToast('Masukkan password baru untuk mengubah.', 'info');
+      return;
+    }
 
-                document.getElementById('saveLoginModeBtn').addEventListener('click', async function() {
-                    const enabled = document.getElementById('loginModeToggle').checked;
-                    const btn = this;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-                    btn.disabled = true;
+    if (newPass !== confirmPass) {
+      showToast('Konfirmasi password tidak cocok.', 'error');
+      return;
+    }
 
-                    try {
-                        const res = await PKD.setLoginMode(enabled);
-                        if (res.success) {
-                            // Bersihkan cache sessionStorage dan DataCache agar langsung realtime
-                            sessionStorage.removeItem('loginMode_data');
-                            sessionStorage.removeItem('loginMode_time');
-                            DataCache.removeData('loginMode');
-                            
-                            // Reload ulang status dari server
-                            const freshRes = await PKD.getLoginMode();
-                            if(freshRes.success) {
-                                document.getElementById('loginModeToggle').checked = freshRes.enabled;
-                                updateLoginModeStatus(freshRes.enabled);
-                                showToast(`Mode login berhasil diubah menjadi ${freshRes.enabled ? 'Wajib Login' : 'Guest'}`, 'success');
-                            }
-                        } else {
-                            throw new Error(res.message || 'Gagal menyimpan');
-                        }
-                    } catch (e) {
-                        showToast('Gagal: ' + e.message, 'error');
-                    } finally {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }
-                });
+    if (newPass.length < 6) {
+      showToast('Password minimal 6 karakter.', 'error');
+      return;
+    }
 
-                document.getElementById('changePasswordBtn').addEventListener('click', function() {
-                    const newPass = document.getElementById('newPassword').value;
-                    const confirmPass = document.getElementById('confirmPassword').value;
+    try {
+      localStorage.setItem('pkd_admin_password', newPass);
+      showToast('Password berhasil diubah.', 'success');
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    } catch (e) {
+      showToast('Gagal mengubah password: ' + e.message, 'error');
+    }
+  });
 
-                    if (!newPass && !confirmPass) {
-                        showToast('Masukkan password baru untuk mengubah.', 'info');
-                        return;
-                    }
+  // ==========================================================
+  //   BACKUP & RESET
+  // ==========================================================
+  document.getElementById('backupDataBtn').addEventListener('click', function() {
+    // Ambil data dari AdminModule
+    const state = AdminModule.getState();
+    if (!state || Object.keys(state).length === 0) {
+      showToast('Tidak ada data untuk dibackup.', 'info');
+      return;
+    }
 
-                    if (newPass !== confirmPass) {
-                        showToast('Konfirmasi password tidak cocok.', 'error');
-                        return;
-                    }
+    // Siapkan data untuk ekspor (tanpa fungsi-fungsi)
+    const exportData = {
+      data: state,
+      exportedAt: new Date().toISOString()
+    };
 
-                    if (newPass.length < 6) {
-                        showToast('Password minimal 6 karakter.', 'error');
-                        return;
-                    }
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_pkd_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
 
-                    try {
-                        localStorage.setItem('pkd_admin_password', newPass);
-                        showToast('Password berhasil diubah.', 'success');
-                        document.getElementById('newPassword').value = '';
-                        document.getElementById('confirmPassword').value = '';
-                    } catch (e) {
-                        showToast('Gagal mengubah password: ' + e.message, 'error');
-                    }
-                });
+    showToast('Backup data berhasil diunduh.', 'success');
+  });
 
-                document.getElementById('backupDataBtn').addEventListener('click', function() {
-                    const allData = DataCache.getAllData();
-                    if (!allData) {
-                        showToast('Tidak ada data untuk dibackup.', 'info');
-                        return;
-                    }
+  document.getElementById('resetDataBtn').addEventListener('click', function() {
+    document.getElementById('confirmResetCheck').checked = false;
+    document.getElementById('confirmResetBtn').disabled = true;
+    new bootstrap.Modal(document.getElementById('resetConfirmModal')).show();
+  });
 
-                    const exportData = {
-                        data: allData,
-                        meta: DataCache.getMeta(),
-                        exportedAt: new Date().toISOString()
-                    };
+  document.getElementById('confirmResetCheck').addEventListener('change', function() {
+    document.getElementById('confirmResetBtn').disabled = !this.checked;
+  });
 
-                    const json = JSON.stringify(exportData, null, 2);
-                    const blob = new Blob([json], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `backup_pkd_${new Date().toISOString().slice(0,10)}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+  document.getElementById('confirmResetBtn').addEventListener('click', function() {
+    // Hapus state di AdminModule
+    AdminModule.clearState();
+    showToast('Semua data berhasil dihapus.', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('resetConfirmModal')).hide();
+    setTimeout(() => window.location.reload(), 1500);
+  });
 
-                    showToast('Backup data berhasil diunduh.', 'success');
-                });
+  // ==========================================================
+  //   INIT
+  // ==========================================================
+  function initSettingsPage() {
+    initSidebar();
+    loadGeneralSettings();
+    loadSystemInfo();
+    loadLoginMode();
+    loadVisibilitySettings();
 
-                document.getElementById('resetDataBtn').addEventListener('click', function() {
-                    document.getElementById('confirmResetCheck').checked = false;
-                    document.getElementById('confirmResetBtn').disabled = true;
-                    new bootstrap.Modal(document.getElementById('resetConfirmModal')).show();
-                });
+    // Background update setelah 1 detik
+    setTimeout(() => {
+      backgroundUpdate();
+    }, 1000);
 
-                document.getElementById('confirmResetCheck').addEventListener('change', function() {
-                    document.getElementById('confirmResetBtn').disabled = !this.checked;
-                });
+    // Event listeners
+    document.getElementById('refreshDataBtn').addEventListener('click', manualRefresh);
+  }
 
-                document.getElementById('confirmResetBtn').addEventListener('click', function() {
-                    DataCache.clear();
-                    showToast('Semua data berhasil dihapus.', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('resetConfirmModal')).hide();
-                    setTimeout(() => window.location.reload(), 1500);
-                });
-            });
+  // ==========================================================
+  //   PENGAMAN AKSES & BOOT
+  // ==========================================================
+  (function boot() {
+    // Cek role admin
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
+    }
 
-            // ==========================================================
-            //   PENGATURAN UMUM
-            // ==========================================================
-            function loadGeneralSettings() {
-                try {
-                    const settings = localStorage.getItem('pkd_app_settings');
-                    if (settings) {
-                        const parsed = JSON.parse(settings);
-                        if (parsed.appName) document.getElementById('appName').value = parsed.appName;
-                        if (parsed.appDesc) document.getElementById('appDescription').value = parsed.appDesc;
-                    }
-                } catch (e) {}
-            }
+    // Update navbar user
+    updateNavbarMenu();
 
-            // ==========================================================
-            //   LOGIN MODE
-            // ==========================================================
-            async function loadLoginMode() {
-                try {
-                    // Memanggil API langsung tanpa cache (realtime)
-                    const res = await PKD.getLoginMode();
-                    const enabled = res.success ? res.enabled : false;
-                    document.getElementById('loginModeToggle').checked = enabled;
-                    updateLoginModeStatus(enabled);
-                } catch (e) {
-                    console.warn('Gagal load login mode:', e);
-                    document.getElementById('loginModeStatus').innerHTML = 'Gagal memuat status login.';
-                }
-            }
+    // Inisialisasi halaman
+    initSettingsPage();
+  })();
 
-            function updateLoginModeStatus(enabled) {
-                const statusEl = document.getElementById('loginModeStatus');
-                if (enabled) {
-                    statusEl.className = 'login-mode-status on';
-                    statusEl.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Mode Wajib Login AKTIF – Semua halaman publik memerlukan login.';
-                } else {
-                    statusEl.className = 'login-mode-status off';
-                    statusEl.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Mode Guest AKTIF – Semua halaman publik dapat diakses tanpa login.';
-                }
-            }
-
-        })();
-    </script>
+</script>
 </body>
 </html>
