@@ -468,6 +468,16 @@
 
         try {
           const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, null);
+          
+          // 🔥 PERBAIKAN: Jika API mengembalikan needSignature, minta tanda tangan
+          if (result.needSignature) {
+            showToastLocal('Silakan isi tanda tangan terlebih dahulu.', 'warning');
+            // Fokuskan ke area tanda tangan
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+            return;
+          }
+
           showToastLocal('✅ Absen berhasil tercatat!', 'success');
           pad.clear();
           if (namaInput) namaInput.value = '';
