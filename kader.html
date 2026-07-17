@@ -3,287 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Kabupaten Bantul · Statistik Kader</title>
-
-  <!-- Favicon & Font Modern -->
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <title>PKD GP Ansor Kabupaten Bantul · Data Kader per PAC</title>
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Chart.js untuk grafik -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  
   <style>
-    /* ===== GAYA ASLI TETAP ===== */
-    .navbar-brand {
-      line-height: 1.2;
-    }
-    .brand-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #0a3d62;
-    }
-    .brand-sub {
-      font-size: 0.9rem;
-      font-weight: 400;
-      color: #6c757d;
-      display: block;
-      margin-top: 2px;
-      letter-spacing: 0.5px;
-    }
-    .navbar-brand img {
-      height: 45px;
-      width: auto;
-      margin-right: 12px;
-      transition: transform 0.3s ease;
-      will-change: transform;
-    }
-    .navbar-brand img:hover {
-      transform: scale(1.05);
-    }
-    .nav-link.active {
-      font-weight: 600;
-      color: #0a3d62 !important;
-    }
-    .nav-link {
-      color: #495057 !important;
-      margin: 0 4px;
-    }
-    .nav-link:hover {
-      color: #0a3d62 !important;
-    }
-    @media (max-width: 991px) {
-      .navbar-brand img {
-        height: 40px;
-      }
-      .brand-title {
-        font-size: 1.2rem;
-      }
-    }
-    * { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-    body {
-      background: #f8fafc;
-      color: #0f172a;
-      line-height: 1.6;
-    }
+    /* ===== GLOBAL ===== */
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ===== NAVBAR ELEGAN (HEADER MINIMALIS) ===== */
     .navbar {
-      background: rgba(255,255,255,0.8) !important;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(203,213,225,0.3);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
     }
-    .navbar-brand {
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: #0f172a !important;
+    .navbar .container {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
     }
-    .nav-link {
-      font-weight: 500;
-      border-radius: 9999px;
-      padding: 0.5rem 1.2rem;
-      margin: 0 0.2rem;
-      color: #334155 !important;
-      transition: all 0.15s;
-    }
-    .nav-link:hover {
-      background: rgba(37,99,235,0.06);
-      color: #2563eb !important;
-    }
-    .nav-link.active {
-      background: #2563eb !important;
-      color: white !important;
-      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
-    }
-    .nav-link i { margin-right: 6px; }
-
-    .container-card {
-      max-width: 1200px;
-      background: white;
-      border-radius: 32px;
-      padding: 2rem 2rem;
-      margin: 30px auto;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-      border: 1px solid rgba(226,232,240,0.6);
-      transition: box-shadow 0.2s;
-    }
-    .container-card:hover { box-shadow: 0 15px 30px -8px rgba(0,0,0,0.08); }
-    .section-title {
-      font-weight: 650;
-      font-size: 1.75rem;
-      margin-bottom: 1.8rem;
-      color: #0f172a;
-      border-left: 6px solid #2563eb;
-      padding-left: 1.2rem;
-      letter-spacing: -0.01em;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 24px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-      border: 1px solid #e2e8f0;
+    .navbar-brand img { 
+      height: 40px; 
+      width: auto; 
+      margin-right: 14px; 
       transition: transform 0.2s;
-      text-align: center;
     }
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    .navbar-brand img:hover { transform: scale(1.05); }
+    .brand-title { 
+      font-size: 1.3rem; 
+      font-weight: 700; 
+      color: #0a3d62; 
+      line-height: 1.2; 
+      letter-spacing: -0.02em;
     }
-    .stat-number {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #2563eb;
-      line-height: 1.2;
+    .brand-sub { 
+      font-size: 0.8rem; 
+      color: #64748b; 
+      display: block; 
+      margin-top: 0px; 
+      letter-spacing: 0.02em;
     }
-    .stat-label {
-      font-size: 1rem;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    .footer-modern {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: 3rem;
-      text-align: center;
-      padding: 1.5rem 0;
-      border-top: 1px solid #e2e8f0;
-      background: white;
-    }
+    /* ===== NAV LINK ===== */
+    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; margin: 0 0.15rem; color: #334155 !important; transition: all 0.2s; }
+    .nav-link:hover { background: rgba(37,99,235,0.08); color: #2563eb !important; }
+    .nav-link.active { background: #2563eb !important; color: #fff !important; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
 
-    .chart-container {
-      position: relative;
-      height: 300px;
-      width: 100%;
-      margin-top: 20px;
+    /* ===== KONTEN ===== */
+    .container-card { max-width: 1200px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); flex: 1; }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
+    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+    .cache-status.live { background: #dcfce7; color: #16a34a; }
+    .cache-status.offline { background: #fee2e2; color: #dc2626; }
+    .stat-badge { display: inline-block; padding: 0.35rem 1rem; border-radius: 50px; background: #2563eb; color: white; font-weight: 600; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    @media (max-width: 576px) { 
+      .container-card { padding: 1rem; } 
+      .brand-title { font-size: 1.1rem; }
+      .brand-sub { font-size: 0.7rem; }
     }
-
-    .table-kader {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    /* Refresh button style */
-    .refresh-btn {
-        border-radius: 50%;
-        width: 44px;
-        height: 44px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: none;
-        background: white;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-    }
-    .refresh-btn:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
 
-<!-- ==================== NAVBAR MODERN ==================== -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+<!-- NAVBAR (ELEGAN) -->
+<nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
-      <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2">
+    <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
+      <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
       <span>
         <span class="brand-title">PKD GP Ansor</span>
         <span class="brand-sub">Kabupaten Bantul</span>
       </span>
     </a>
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-      aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarMain">
       <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="index.html"><i class="bi bi-house-door"></i>Beranda</a></li>
-        <li class="nav-item"><a class="nav-link" href="pretest.html"><i class="bi bi-pencil-square"></i>Pre-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="posttest.html"><i class="bi bi-trophy"></i>Post-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="absen.html"><i class="bi bi-qr-code"></i>Absen</a></li>
-        <li class="nav-item"><a class="nav-link" href="skrining.html"><i class="bi bi-clipboard-check"></i>Skrining</a></li>
-        <li class="nav-item"><a class="nav-link" href="peserta.html"><i class="bi bi-person-badge"></i>Peserta</a></li>
-        <li class="nav-item"><a class="nav-link" href="materi.html"><i class="bi bi-file-earmark-pdf"></i>Materi</a></li>
-        <li class="nav-item"><a class="nav-link active" href="kader.html"><i class="bi bi-people-fill"></i>Kader</a></li>
-        <li class="nav-item"><a class="nav-link" href="about.html"><i class="bi bi-info-circle"></i>Tentang</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/index.html"><i class="bi bi-house-door"></i>Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/pretest.html"><i class="bi bi-pencil-square"></i>Pre-test</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/posttest.html"><i class="bi bi-trophy"></i>Post-test</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/absen.html"><i class="bi bi-qr-code"></i>Absen</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/skrining.html"><i class="bi bi-clipboard-check"></i>Skrining</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/peserta.html"><i class="bi bi-person-badge"></i>Peserta</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/materi.html"><i class="bi bi-file-earmark-pdf"></i>Materi</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/informasi.html"><i class="bi bi-info-circle"></i>Informasi</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/bisaa/kader.html"><i class="bi bi-people-fill"></i>Kader</a></li>
+        <li class="nav-item"><a class="nav-link" href="/bisaa/about.html"><i class="bi bi-info-circle"></i>Tentang</a></li>
       </ul>
       <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
     </div>
   </div>
 </nav>
 
-<!-- ==================== KONTEN UTAMA ==================== -->
+<!-- KONTEN -->
 <div id="contentArea">
   <section class="container container-card">
-    <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Statistik Kader PKD GP Ansor Bantul</h2>
+    <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Data Kader per PAC</h2>
     
-    <!-- Ringkasan statistik dalam kartu -->
-    <div class="row g-4 mb-5">
-      <div class="col-md-4">
-        <div class="stat-card">
-          <div class="stat-number" id="totalKader">-</div>
-          <div class="stat-label">Total Kader</div>
+    <!-- Filter & Pencarian -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="input-group" style="max-width:300px; display:inline-flex;">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama...">
         </div>
+        <select class="form-select d-inline-block ms-2" style="width:auto; display:inline-block !important;" id="filterUtusan">
+          <option value="">Semua PAC</option>
+        </select>
       </div>
-      <div class="col-md-4">
-        <div class="stat-card">
-          <div class="stat-number" id="totalPac">-</div>
-          <div class="stat-label">Jumlah PAC</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="stat-card">
-          <div class="stat-number" id="totalPendidikan">-</div>
-          <div class="stat-label">Jenjang Pendidikan</div>
-        </div>
+      <div class="col-md-6 text-end">
+        <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+        <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
       </div>
     </div>
 
-    <!-- Grafik dan tabel sebaran -->
-    <div class="row g-4">
-      <div class="col-lg-6">
-        <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Sebaran per Utusan (PAC)</h5>
-        <div class="chart-container">
-          <canvas id="chartPac"></canvas>
-        </div>
-      </div>
-      <div class="col-lg-6">
-        <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Sebaran Pendidikan Terakhir</h5>
-        <div class="chart-container">
-          <canvas id="chartPendidikan"></canvas>
-        </div>
-      </div>
-    </div>
+    <!-- Total Kader per PAC terpilih -->
+    <div id="totalBadgeContainer" class="text-center mb-3"></div>
 
-    <!-- Tabel detail kader -->
-    <div class="mt-5">
-      <h5 class="fw-bold mb-3"><i class="bi bi-table me-2"></i>Daftar Kader per PAC</h5>
-      <div class="table-kader">
-        <table class="table table-bordered table-hover table-sm">
-          <thead class="table-light">
-            <tr>
-              <th>No</th>
-              <th>Nama Lengkap</th>
-              <th>Utusan (PAC)</th>
-              <th>Pendidikan</th>
-              <th>Pekerjaan</th>
-              <th>Alamat</th>
-            </tr>
-          </thead>
-          <tbody id="kaderTableBody">
-            <tr><td colspan="6" class="text-center text-muted">Memuat data...</td></tr>
-          </tbody>
-        </table>
+    <!-- Tabel Kader -->
+    <div class="table-container">
+      <div id="kaderTableContainer">
+        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- ==================== FOOTER ==================== -->
+<!-- FOOTER -->
 <footer class="footer-modern container">
   <div class="d-flex justify-content-center align-items-center gap-2">
     <i class="bi bi-c-circle"></i>
@@ -291,338 +157,286 @@
   </div>
 </footer>
 
-<!-- ==================== MODAL LOGIN ADMIN (opsional, untuk kompatibilitas) ==================== -->
-<div class="modal fade" id="adminLoginModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Login Admin</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Username</label>
-          <input type="text" id="adminUsername" class="form-control rounded-3" placeholder="Masukkan username" autocomplete="off">
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Password</label>
-          <div class="input-group">
-            <input type="password" id="adminPassword" class="form-control rounded-start-3" placeholder="Masukkan password" autocomplete="off">
-            <button class="btn btn-outline-secondary rounded-end-3" type="button" onclick="togglePasswordVisibility('adminPassword')">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-        </div>
-        <div id="adminLoginError" class="text-danger mt-2 small" style="display: none;"></div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="adminLoginSubmit">Login</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== TOAST NOTIFICATION ==================== -->
-<div class="toast-container">
-  <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
-    <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="toastIcon"></i>
-      <strong class="me-auto" id="toastTitle">Berhasil</strong>
-      <small>baru saja</small>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body" id="toastMessage"></div>
-  </div>
-</div>
-
-<!-- ==================== BOOTSTRAP JS ==================== -->
+<!-- ================= SCRIPTS ================= -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ==================== SCRIPT UTAMA ==================== -->
-<script>
-  (function() {
-    'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+  // ==========================================================
+  //   IMPOR DARI CORE API (ES Modules)
+  // ==========================================================
+  import {
+    callApi,
+    showToast,
+    escapeHtml,
+    guardPublicAccess,
+    updateNavbarMenu
+  } from './js/core/api.js';
 
-    // =====================================================
-    //   FUNGSI BANTU
-    // =====================================================
-    function escapeHtml(unsafe) {
-      if (!unsafe) return '';
-      return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  // ==========================================================
+  //   STATE & UTILITY
+  // ==========================================================
+  let STATE = {
+    pesertaList: [],
+    filteredList: [],
+    searchQuery: '',
+    utusanFilter: '',
+    currentPage: 1,
+    itemsPerPage: 20,
+    sortColumn: null,
+    sortDirection: 'asc'
+  };
+
+  function updateCacheStatus(status) {
+    const el = document.getElementById('cacheStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
     }
+  }
 
-    window.togglePasswordVisibility = function(inputId) {
-      const input = document.getElementById(inputId);
-      input.type = input.type === 'password' ? 'text' : 'password';
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
     };
+  }
 
-    function showToast(message, type = 'success') {
-      const toastEl = document.getElementById('notificationToast');
-      const toastMessage = document.getElementById('toastMessage');
-      const toastIcon = document.getElementById('toastIcon');
-      const toastTitle = document.getElementById('toastTitle');
+  // ==========================================================
+  //   LOAD DATA (langsung dari API)
+  // ==========================================================
+  async function loadKaderData(forceRefresh = false) {
+    const container = document.getElementById('kaderTableContainer');
 
-      toastMessage.innerText = message;
+    // Tampilkan loading
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
 
-      if (type === 'success') {
-        toastEl.classList.add('border-success');
-        toastEl.classList.remove('border-danger');
-        toastIcon.className = 'bi bi-check-circle-fill me-2 text-success';
-        toastTitle.innerText = 'Berhasil';
-        toastTitle.style.color = '#28a745';
+    try {
+      const res = await callApi('getPesertaList', {}, 'GET');
+      const freshData = res?.data || res;
+      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+        STATE.pesertaList = freshData;
+        renderUtusanFilter();
+        applyFiltersAndSort();
+        updateCacheStatus('Live');
       } else {
-        toastEl.classList.add('border-danger');
-        toastEl.classList.remove('border-success');
-        toastIcon.className = 'bi bi-x-circle-fill me-2 text-danger';
-        toastTitle.innerText = 'Gagal';
-        toastTitle.style.color = '#dc3545';
+        container.innerHTML = `<div class="alert alert-info text-center">Belum ada data kader.</div>`;
+        updateCacheStatus('Empty');
       }
-
-      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-      toast.show();
+    } catch (e) {
+      console.warn('Gagal load kader:', e);
+      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
+      updateCacheStatus('Error');
     }
+  }
 
-    // =====================================================
-    //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
-    // =====================================================
-    async function checkAccessAndLoad() {
-      try {
-        if (typeof PKD === 'undefined') {
-          console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
-          await new Promise(resolve => setTimeout(resolve, 300));
-          if (typeof PKD === 'undefined') {
-            console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
-            initMain();
-            return;
-          }
-        }
-
-        // ✅ JALANKAN SECARA PARALEL
-        const [visRes, loginRes] = await Promise.all([
-            PKD.getPublicVisibility().catch(() => null),
-            PKD.getLoginMode().catch(() => null)
-        ]);
-
-        let requireLogin = true;
-        if (visRes && visRes.success && visRes.data) {
-          requireLogin = visRes.data.kader !== false;
-        } else if (loginRes && loginRes.success) {
-          requireLogin = loginRes.enabled;
-        }
-
-        if (requireLogin) {
-          const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-          if (!auth) {
-            window.location.href = '/bisaa/login.html?return=kader.html';
-            return;
-          }
-        }
-
-        initMain();
-
-      } catch (e) {
-        console.error('Error di checkAccess:', e);
-        initMain();
-      }
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION
+  // ==========================================================
+  function getFilteredPeserta(query = '', utusan = '') {
+    let filtered = STATE.pesertaList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+        (item.utusan && item.utusan.toLowerCase().includes(q))
+      );
     }
-
-    // =====================================================
-    //   LOAD DATA KADER (CACHE-FIRST + FETCH INSTAN)
-    // =====================================================
-    async function loadKaderData(forceRefresh = false) {
-      const container = document.getElementById('kaderTableBody');
-
-      // 1. Cek cache dulu
-      let cachedPeserta = null;
-      if (!forceRefresh) {
-        cachedPeserta = DataCache.getData('peserta');
-        if (cachedPeserta && Array.isArray(cachedPeserta) && cachedPeserta.length > 0) {
-          tampilkanStatistik(cachedPeserta);
-          console.log('✅ Kader: data peserta dari cache, ditampilkan instan.');
-        }
-      }
-
-      // Jika tidak ada cache (atau cache kosong), tampilkan spinner di tabel
-      if (!cachedPeserta || cachedPeserta.length === 0) {
-        document.getElementById('totalKader').innerText = '-';
-        document.getElementById('totalPac').innerText = '-';
-        document.getElementById('totalPendidikan').innerText = '-';
-        container.innerHTML = '<tr><td colspan="6" class="text-center text-muted"><div class="spinner-border text-primary"></div><p class="mt-2">Memuat data...</p></td></tr>';
-      }
-
-      // 2. Background fetch instan (tanpa setTimeout)
-      try {
-        const freshPeserta = await PKD.getPesertaList();
-        if (freshPeserta && freshPeserta.length > 0) {
-          // Hanya update UI jika datanya berbeda dengan cache
-          if (JSON.stringify(freshPeserta) !== JSON.stringify(cachedPeserta)) {
-            DataCache.updateData('peserta', freshPeserta);
-            tampilkanStatistik(freshPeserta);
-            console.log('✅ Kader: data peserta diperbarui dari API.');
-          }
-        } else if (!cachedPeserta || cachedPeserta.length === 0) {
-          // Data kosong → tampilkan pesan kosong
-          document.getElementById('totalKader').innerText = '0';
-          document.getElementById('totalPac').innerText = '0';
-          document.getElementById('totalPendidikan').innerText = '0';
-          container.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada data kader.</td></tr>';
-        }
-      } catch (e) {
-        console.error('Gagal fetch data kader:', e);
-        // Jika cache awal kosong, tampilkan error
-        if (!cachedPeserta || cachedPeserta.length === 0) {
-          document.getElementById('totalKader').innerText = '?';
-          document.getElementById('totalPac').innerText = '?';
-          document.getElementById('totalPendidikan').innerText = '?';
-          container.innerHTML = '<tr><td colspan="6" class="text-danger">Gagal memuat data.</td></tr>';
-        }
-      }
+    if (utusan !== '' && utusan !== '') {
+      filtered = filtered.filter(item => item.utusan === utusan);
     }
+    return filtered;
+  }
 
-    // =====================================================
-    //   FUNGSI RENDER STATISTIK
-    // =====================================================
-    function tampilkanStatistik(peserta) {
-      // Hitung total kader
-      const total = peserta.length;
-      document.getElementById('totalKader').innerText = total;
-
-      // Hitung jumlah PAC unik dari kolom utusan
-      const pacMap = new Map(); // utusan -> jumlah
-      const pendidikanMap = new Map(); // pendidikan -> jumlah
-      const tableRows = [];
-
-      peserta.forEach((p, idx) => {
-        const utusan = p.utusan || 'Tidak diketahui';
-        const pendidikan = p.pendidikan_terakhir || 'Tidak diketahui';
-        
-        // Hitung per utusan
-        pacMap.set(utusan, (pacMap.get(utusan) || 0) + 1);
-        
-        // Hitung per pendidikan
-        pendidikanMap.set(pendidikan, (pendidikanMap.get(pendidikan) || 0) + 1);
-
-        // Siapkan baris tabel
-        tableRows.push(`
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${escapeHtml(p.nama_lengkap || '')}</td>
-            <td>${escapeHtml(utusan)}</td>
-            <td>${escapeHtml(pendidikan)}</td>
-            <td>${escapeHtml(p.pekerjaan || '')}</td>
-            <td>${escapeHtml(p.alamat || '')}</td>
-          </tr>
-        `);
-      });
-
-      // Update tabel
-      document.getElementById('kaderTableBody').innerHTML = tableRows.join('');
-
-      // Update jumlah PAC
-      document.getElementById('totalPac').innerText = pacMap.size;
-
-      // Update jumlah jenis pendidikan (bukan total orang)
-      document.getElementById('totalPendidikan').innerText = pendidikanMap.size;
-
-      // Buat grafik PAC
-      const pacLabels = Array.from(pacMap.keys());
-      const pacData = Array.from(pacMap.values());
-      renderChart('chartPac', 'bar', pacLabels, pacData, 'Jumlah Kader', 'rgba(37, 99, 235, 0.7)');
-
-      // Buat grafik Pendidikan
-      const pendidikanLabels = Array.from(pendidikanMap.keys());
-      const pendidikanData = Array.from(pendidikanMap.values());
-      renderChart('chartPendidikan', 'pie', pendidikanLabels, pendidikanData, 'Pendidikan');
-    }
-
-    // =====================================================
-    //   RENDER CHART
-    // =====================================================
-    function renderChart(canvasId, type, labels, data, label, backgroundColor = null) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      
-      // Hancurkan chart lama jika ada
-      let existingChart = Chart.getChart(canvasId);
-      if (existingChart) {
-        existingChart.destroy();
-      }
-
-      // Warna default untuk pie
-      const dynamicColors = [];
-      if (type === 'pie') {
-        for (let i = 0; i < labels.length; i++) {
-          dynamicColors.push(`hsl(${(i * 360) / labels.length}, 70%, 60%)`);
-        }
-      }
-
-      new Chart(ctx, {
-        type: type,
-        data: {
-          labels: labels,
-          datasets: [{
-            label: label,
-            data: data,
-            backgroundColor: type === 'pie' ? dynamicColors : backgroundColor,
-            borderColor: type === 'pie' ? 'white' : '#2563eb',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: type === 'pie' ? 'right' : 'top',
-            }
-          }
-        }
+  function applyFiltersAndSort() {
+    let filtered = getFilteredPeserta(STATE.searchQuery, STATE.utusanFilter);
+    if (STATE.sortColumn) {
+      filtered.sort(function(a, b) {
+        let va = (a[STATE.sortColumn] || '').toString().toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toString().toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
       });
     }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    
+    // Render tabel dan badge total
+    renderTable(filtered.slice(start, end), totalItems);
+    renderTotalBadge(totalItems);
+  }
 
-    // =====================================================
-    //   INISIALISASI HALAMAN
-    // =====================================================
-    function initMain() {
-      // Muat data dengan cache-first
-      loadKaderData();
-
-      // Event listener tombol refresh
-      const refreshBtn = document.getElementById('refreshBtn');
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-          this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-          this.disabled = true;
-          loadKaderData(true).then(() => {
-            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-            this.disabled = false;
-          }).catch(() => {
-            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-            this.disabled = false;
-          });
-        });
-      }
-
-      // Tutup navbar otomatis saat klik di luar
-      document.addEventListener('click', function(event) {
-        const navbar = document.getElementById('navbarMain');
-        const toggler = document.querySelector('.navbar-toggler');
-        if (!navbar || !toggler) return;
-        const isClickInside = navbar.contains(event.target) || toggler.contains(event.target);
-        if (!isClickInside && navbar.classList.contains('show')) {
-          const bsCollapse = bootstrap.Collapse.getInstance(navbar);
-          if (bsCollapse) bsCollapse.hide();
-        }
-      });
-    }
-
-    // Jalankan pengecekan akses saat halaman siap
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
+  // ==========================================================
+  //   RENDER TOTAL BADGE
+  // ==========================================================
+  function renderTotalBadge(total) {
+    const container = document.getElementById('totalBadgeContainer');
+    const selectedPAC = STATE.utusanFilter;
+    if (selectedPAC) {
+      container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Kader PAC ${escapeHtml(selectedPAC)} : ${total} orang</span>`;
     } else {
-      checkAccessAndLoad();
+      container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Total Kader : ${total} orang</span>`;
     }
+  }
+
+  // ==========================================================
+  //   RENDER TABEL
+  // ==========================================================
+  function renderTable(data, totalItems) {
+    const container = document.getElementById('kaderTableContainer');
+    if (!container) return;
+
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px;">#</th>
+              <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
+              <th class="sortable" onclick="sortTable('utusan')">PAC</th>
+              <th class="sortable" onclick="sortTable('pendidikan_terakhir')">Pendidikan</th>
+              <th class="sortable" onclick="sortTable('pekerjaan')">Pekerjaan</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (data.length === 0) {
+      html += `
+        <tr>
+          <td colspan="5" class="text-center py-3 text-muted">
+            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+            Tidak ada data kader untuk PAC ini.
+          </td>
+        </tr>
+      `;
+    } else {
+      data.forEach((item, index) => {
+        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+        html += `
+          <tr>
+            <td>${globalIndex}</td>
+            <td><strong>${escapeHtml(item.nama_lengkap || '')}</strong></td>
+            <td>${escapeHtml(item.utusan || '-')}</td>
+            <td>${escapeHtml(item.pendidikan_terakhir || '-')}</td>
+            <td>${escapeHtml(item.pekerjaan || '-')}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+        </tbody>
+      </table>
+    </div>
+    `;
+
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+      <div class="pagination-container">
+        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+        <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `</div></div>`;
+
+    container.innerHTML = html;
+    container.classList.add('fade-in');
+  }
+
+  // ==========================================================
+  //   SORT & PAGINATION HELPERS (Diekspos ke global)
+  // ==========================================================
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  };
+
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page;
+    applyFiltersAndSort();
+  };
+
+  // ==========================================================
+  //   RENDER DROPDOWN FILTER UTUSAN
+  // ==========================================================
+  function renderUtusanFilter() {
+    const select = document.getElementById('filterUtusan');
+    if (!select) return;
+    const utusanSet = new Set();
+    STATE.pesertaList.forEach(item => {
+      if (item.utusan && item.utusan.trim() !== '') {
+        utusanSet.add(item.utusan);
+      }
+    });
+    const utusan = Array.from(utusanSet).sort();
+    select.innerHTML = '<option value="">Semua PAC</option>';
+    utusan.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = u;
+      select.appendChild(opt);
+    });
+  }
+
+  // ==========================================================
+  //   EVENT HANDLERS
+  // ==========================================================
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    this.disabled = true;
+    loadKaderData(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Gagal menyegarkan', 'error');
+    });
+  });
+
+  document.getElementById('searchInput')?.addEventListener('input', debounce(function(e) {
+    STATE.searchQuery = e.target.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  }, 300));
+
+  document.getElementById('filterUtusan')?.addEventListener('change', function() {
+    STATE.utusanFilter = this.value;
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  });
+
+  // ==========================================================
+  //   🛡️ GUARD PUBLIC ACCESS & BOOT
+  // ==========================================================
+  (async function boot() {
+    const canAccess = await guardPublicAccess();
+    if (!canAccess) return;
+
+    // Update navbar user
+    updateNavbarMenu();
+
+    // Load data pertama
+    loadKaderData();
   })();
+
 </script>
 </body>
 </html>

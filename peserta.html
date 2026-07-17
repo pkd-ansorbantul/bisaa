@@ -3,118 +3,314 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>PKD GP Ansor Kabupaten Bantul · Data Peserta</title>
+    <title>Form Data Peserta · PKD GP Ansor Bantul</title>
 
     <!-- Favicon & Font Modern -->
-    <link rel="icon" type="image/png" href="LOGO ANSOR.webp" />
+    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <!-- Font Amiri untuk Kaligrafi Arab -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
     <!-- Bootstrap 5 + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <!-- Signature Pad -->
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
     <style>
-        * { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-        body { background: #f8fafc; color: #0f172a; }
-        .navbar { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203, 213, 225, 0.3); }
-        .navbar-brand img { max-height: 45px; margin-right: 12px; }
-        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; margin-top: 2px; }
-        .container-card { max-width: 1000px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border: 1px solid rgba(226, 232, 240, 0.6); }
-        .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
-        .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: 3rem; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); border-radius: 16px; }
-        #signatureCanvas { width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 8px; background: #fff; touch-action: none; }
-        .admin-contact { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; }
-        .template-card { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; transition: background 0.2s; }
-        .template-card:hover { background: #f1f5f9; }
-        .template-card .btn { border-radius: 50px; padding: 0.4rem 1.2rem; }
-        .whatsapp-btn { background-color: #25d366; color: white; border: none; }
-        .whatsapp-btn:hover { background-color: #1da851; color: white; }
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); z-index: 99999; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .capture-hint { font-size: 0.8rem; color: #64748b; }
-        @media (max-width: 576px) { .capture-hint { display: block; margin-top: 4px; } }
-
-        /* QR Result */
-        #qrResult { display: none; text-align: center; margin-top: 20px; padding: 1.5rem; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
-        #qrResult h5 { color: #2563eb; }
-        #qrCodeContainer canvas { border-radius: 12px; border: 1px solid #e2e8f0; padding: 8px; background: white; }
-
-        /* Refresh button style */
-        .refresh-btn {
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
         }
+        body {
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
+        .header-minimal {
+            background: rgba(255, 255, 255, 0.72) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1030;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .header-minimal .container {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        .btn-back {
+            background: rgba(37, 99, 235, 0.08);
+            color: #2563eb;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-back:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        .brand-logo-mini { 
+            height: 40px; 
+            width: auto; 
+            margin-right: 14px; 
+            transition: transform 0.2s;
+        }
+        .brand-logo-mini:hover { transform: scale(1.05); }
+        .brand-title-mini { 
+            font-weight: 700; 
+            color: #0a3d62; 
+            font-size: 1.3rem; 
+            line-height: 1.2; 
+            letter-spacing: -0.02em;
+        }
+        .brand-sub-mini { 
+            font-size: 0.8rem; 
+            color: #64748b; 
+            display: block; 
+            margin-top: 0px; 
+            letter-spacing: 0.02em;
+        }
+
+        #navbarUserMenu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-menu-area .dropdown-toggle { 
+            border-radius: 50px; 
+            padding: 0.3rem 1rem; 
+            font-size: 0.9rem; 
+        }
+        .user-menu-area .btn-outline-primary { 
+            border-radius: 50px; 
+            padding: 0.3rem 1.2rem; 
+            font-size: 0.9rem; 
+        }
+
+        /* --- GLASS CARD --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.2);
+        }
+
+        /* ==========================================================
+           SKELETON LOADING (BARU - SAMA SEPERTI HALAMAN LAIN)
+           ========================================================== */
+        .skeleton-box {
+            background: #e2e8f0;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* --- SIGNATURE AREA (UX NATURAL SEPERTI TANGAN SENDIRI) --- */
+        .signature-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .signature-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            background: #fafbfc;
+            padding: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: crosshair;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .signature-area:hover {
+            border-color: #94a3b8;
+        }
+        .signature-area:focus-within {
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        .signature-area canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 4 / 2;
+            max-width: 100%;
+            background: white;
+            display: block;
+            border-radius: 12px;
+            margin: 0 auto;
+            touch-action: none !important;
+            min-height: 160px;
+            cursor: crosshair;
+            -webkit-touch-callout: none;
+        }
+        
+        /* --- Teks Petunjuk (Placeholder) pada Tanda Tangan --- */
+        .signature-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #94a3b8;
+            font-size: 0.9rem;
+            pointer-events: none;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            font-weight: 400;
+            background: rgba(255,255,255,0.6);
+            padding: 4px 14px;
+            border-radius: 50px;
+            backdrop-filter: blur(2px);
+        }
+        .signature-area.drawing .signature-hint {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- FORM CUSTOM --- */
+        .admin-contact {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .template-card {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 1.25rem;
+            transition: background 0.2s;
+        }
+        .template-card:hover {
+            background: #f1f5f9;
+        }
+        .template-card .btn {
+            border-radius: 50px;
+            padding: 0.4rem 1.2rem;
+        }
+        .whatsapp-btn {
+            background-color: #25d366;
+            color: white;
+            border: none;
+        }
+        .whatsapp-btn:hover {
+            background-color: #1da851;
+            color: white;
+        }
+
+        /* --- ANIMASI --- */
+        .fade-up {
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- FOOTER --- */
+        .footer-modern {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: auto;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        /* --- RESPONSIF --- */
         @media (max-width: 576px) {
-            .refresh-btn { width: 40px; height: 40px; }
+            .glass-card {
+                border-radius: 16px;
+                padding: 1rem !important;
+            }
+            .header-minimal .container {
+                padding: 0 0.5rem;
+            }
+            .btn-back {
+                font-size: 0.8rem;
+                padding: 0.2rem 0.8rem;
+            }
+            .brand-title-mini {
+                display: none;
+            }
+            .brand-sub-mini {
+                display: none;
+            }
+            .user-menu-area .dropdown-toggle {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.8rem;
+            }
+            .signature-area canvas {
+                min-height: 140px;
+            }
         }
-
-        /* CSS Kamera Overlay */
-        #cameraModal .modal-dialog { margin: 0; width: 100%; height: 100%; max-width: 100%; }
-        #cameraModal .modal-content { background: #0f172a; border: none; border-radius: 0; height: 100%; }
-        #cameraModal .modal-header { border: none; background: transparent; padding: 8px 16px; }
-        #cameraModal .modal-body { display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0; height: calc(100% - 56px); }
-        #cameraVideo { width: 100%; max-height: 85vh; object-fit: contain; background: #000; }
-        .camera-controls { position: absolute; bottom: 30px; z-index: 10; }
-        .camera-controls .btn { width: 60px; height: 60px; border-radius: 50%; background: white; color: #0f172a; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        .camera-controls .btn:hover { background: #f1f5f9; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="index.html">
-                <img src="LOGO ANSOR.webp" alt="GP Ansor" class="me-2" />
-                <span>
-                    <span class="brand-title">PKD GP Ansor</span>
-                    <span class="brand-sub">Kabupaten Bantul</span>
-                </span>
-            </a>
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <button class="btn btn-outline-secondary refresh-btn" id="refreshBtn" title="Segarkan Data">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
-                <a href="index.html" class="btn btn-outline-primary rounded-pill px-4">
-                    <i class="bi bi-arrow-left"></i> Kembali
+    <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
+    <header class="header-minimal sticky-top shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center gap-2">
+                <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
+                    <i class="bi bi-arrow-left me-1"></i> Kembali
+                </a>
+                <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+                    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+                    <div>
+                        <div class="brand-title-mini">PKD GP Ansor</div>
+                        <span class="brand-sub-mini">Kabupaten Bantul</span>
+                    </div>
                 </a>
             </div>
+            <!-- Area User Role (diisi oleh api.js) -->
+            <div id="navbarUserMenu" class="user-menu-area"></div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Konten utama -->
-    <div id="contentArea">
-        <section id="pesertaSection" class="container container-card">
+    <!-- ================= KONTEN UTAMA ================= -->
+    <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 1000px;">
+        <div class="glass-card p-4 fade-up">
             <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Form Data Peserta PKD</h2>
-            <div id="pesertaFormContainer">Memuat form...</div>
-        </section>
+            <div id="pesertaFormContainer">
+                <!-- Akan diisi oleh JS (Skeleton atau Form Asli) -->
+            </div>
+        </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer-modern container">
-        <div class="d-flex justify-content-center align-items-center gap-2">
-            <i class="bi bi-c-circle"></i>
-            <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
-        </div>
-    </footer>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3 fw-bold">Mengirim data, harap tunggu...</p>
-    </div>
-
-    <!-- ==================== MODAL KAMERA ==================== -->
+    <!-- ================= MODAL KAMERA ================= -->
     <div class="modal fade" id="cameraModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
@@ -132,92 +328,53 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
-    <script src="api.js"></script>
-    <script src="dataCache.js"></script>
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer-modern container">
+        <div class="d-flex justify-content-center align-items-center gap-2">
+            <i class="bi bi-c-circle"></i>
+            <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+        </div>
+    </footer>
 
-    <script>
-        // =====================================================
-        //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
-        // =====================================================
-        async function checkAccessAndLoad() {
-            try {
-                // Pastikan PKD sudah didefinisikan
-                if (typeof PKD === 'undefined') {
-                    console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    if (typeof PKD === 'undefined') {
-                        console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
-                        loadPesertaForm();
-                        return;
-                    }
-                }
+    <!-- ================= SCRIPTS ================= -->
+    <!-- Library Eksternal (tetap sebagai script biasa) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-                // ✅ JALANKAN SECARA PARALEL
-                const [visRes, loginRes] = await Promise.all([
-                    PKD.getPublicVisibility().catch(() => null),
-                    PKD.getLoginMode().catch(() => null)
-                ]);
+    <!-- Modul ES Khusus Halaman Ini -->
+    <script type="module">
+        // ==========================================================
+        //   IMPOR DARI CORE API (ES Modules)
+        // ==========================================================
+        import {
+            guardPublicAccess,
+            callApi,
+            showToast,
+            escapeHtml,
+            submitPeserta,
+            updateNavbarMenu
+        } from './js/core/api.js';
 
-                let requireLogin = true;
-                if (visRes && visRes.success && visRes.data) {
-                    requireLogin = visRes.data.peserta !== false; // default: true (harus login)
-                } else if (loginRes && loginRes.success) {
-                    requireLogin = loginRes.enabled;
-                }
+        // ==========================================================
+        //   STATE & VARIABLES
+        // ==========================================================
+        let formStructure = [];
+        let cameraStream = null;
+        let cameraActive = false;
+        let currentCameraTarget = '';
 
-                if (requireLogin) {
-                    const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-                    if (!auth) {
-                        window.location.href = '/bisaa/login.html?return=peserta.html';
-                        return;
-                    }
-                }
+        // ==========================================================
+        //   UTILITY
+        // ==========================================================
+        function escapeHtmlLocal(unsafe) { return escapeHtml(unsafe); }
+        function showToastLocal(message, type) { showToast(message, type); }
 
-                loadPesertaForm();
-
-                // Event listener tombol refresh
-                document.getElementById('refreshBtn')?.addEventListener('click', function() {
-                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                    this.disabled = true;
-                    loadPesertaForm(true).then(() => {
-                        this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                        this.disabled = false;
-                    }).catch(() => {
-                        this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                        this.disabled = false;
-                    });
-                });
-
-            } catch (e) {
-                console.error('Error di checkAccess:', e);
-                // Fallback: tetap load jika terjadi error
-                loadPesertaForm();
-            }
-        }
-
-        // =====================================================
-        //   FUNGSI UTAMA PESERTA
-        // =====================================================
-        function escapeHtmlLocal(unsafe) { return PKD.escapeHtml(unsafe); }
-        function showToastLocal(message, type = 'success') { PKD.showToast(message, type); }
-
-        let signaturePad;
-        let formStructure = []; // Menyimpan struktur field dinamis
-
-        // =====================
-        //   STATE & SIGNATURE
-        // =====================
         function savePesertaFormState() {
             const form = document.getElementById('formPesertaDinamis');
             if (!form) return;
             const formData = new FormData(form);
             const data = {};
             formData.forEach((v, k) => data[k] = v);
-            try {
-                localStorage.setItem('pesertaFormState', JSON.stringify(data));
-            } catch (e) {}
+            try { localStorage.setItem('pesertaFormState', JSON.stringify(data)); } catch (e) {}
         }
 
         function restorePesertaFormState() {
@@ -238,10 +395,82 @@
             localStorage.removeItem('pesertaFormState');
         }
 
-        // =====================
-        //   GENERATE & DOWNLOAD QR
-        // =====================
-        function generateQR(id) {
+        // ==========================================================
+        //   🔥 RENDER SKELETON PESERTA (BARU)
+        // ==========================================================
+        function renderSkeletonPeserta(container) {
+            console.log("🟡 Menampilkan SKELETON Peserta...");
+            let html = `
+                <h4 class="mb-4">📝 Memuat formulir peserta...</h4>
+                <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+                    <!-- WA Box -->
+                    <div class="admin-contact mb-4">
+                        <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
+                    </div>
+
+                    <!-- Form Fields -->
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+                    </div>
+                    
+                    <!-- Signature Area -->
+                    <div class="mb-3">
+                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+                        <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-4">
+                        <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+            container.classList.add('fade-up');
+        }
+
+        // ==========================================================
+        //   GENERATE & DOWNLOAD QR (Diekspos ke global)
+        // ==========================================================
+        window.generateQR = function(id) {
             const container = document.getElementById('qrCodeContainer');
             container.innerHTML = '';
             const qr = qrcode(0, 'M');
@@ -259,95 +488,96 @@
                 }
             }
             container.appendChild(canvas);
-        }
+        };
 
-        function downloadQR() {
+        window.downloadQR = function() {
             const canvas = document.querySelector('#qrCodeContainer canvas');
             if (!canvas) return;
             const link = document.createElement('a');
             link.download = `QR_Peserta_${document.getElementById('pesertaIdDisplay').textContent}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
+        };
+
+        // ==========================================================
+        //   FUNGSI DEFAULT FORM (JIKA API GAGAL/TIDAK VALID)
+        // ==========================================================
+        function getDefaultFormFields() {
+            return [
+                { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true, isCore: true },
+                { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', required: true, isCore: true },
+                { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', required: true, isCore: true },
+                { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', required: true, isCore: true },
+                { id: 'alamat', label: 'Alamat', type: 'textarea', required: true, isCore: true },
+                { id: 'no_hp', label: 'No HP', type: 'text', required: true, isCore: true },
+                { id: 'email', label: 'Email', type: 'text', required: true, isCore: true },
+                { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
+                { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', required: true, isCore: true },
+                { id: 'foto', label: 'Foto', type: 'file', required: true, isCore: true },
+                { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', required: false, isCore: true }
+            ];
         }
 
-        // =====================
-        //   LOAD PESERTA FORM (CACHE-FIRST + BACKGROUND FETCH INSTAN)
-        // =====================
-        async function loadPesertaForm(forceRefresh = false) {
+        // ==========================================================
+        //   LOAD PESERTA FORM
+        // ==========================================================
+        async function loadPesertaForm() {
             const container = document.getElementById('pesertaFormContainer');
 
-            // 1. Cek cache untuk form structure
-            let cachedStructure = null;
-            if (!forceRefresh) {
-                try {
-                    const cached = DataCache.getData('formSettings');
-                    if (cached && Array.isArray(cached)) {
-                        cachedStructure = cached;
-                        formStructure = cachedStructure;
-                        buildForm(container);
-                        console.log('✅ Peserta: form structure dari cache, ditampilkan instan.');
-                    }
-                } catch (e) {}
-            }
-
-            // Jika cache kosong, tampilkan spinner
-            if (!cachedStructure || cachedStructure.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary"></div>
-                        <p class="mt-2 text-muted">Memuat form peserta...</p>
-                    </div>
-                `;
-            }
-
-            // 2. Background fetch instan (tanpa setTimeout)
             try {
-                const settingsRes = await PKD.getFormSettings();
-                if (settingsRes.success) {
-                    const freshStructure = settingsRes.data || [];
-                    // Jika ada perubahan pada struktur form, update cache dan re-render
-                    if (JSON.stringify(freshStructure) !== JSON.stringify(cachedStructure)) {
-                        formStructure = freshStructure;
-                        DataCache.updateData('formSettings', freshStructure);
-                        buildForm(container);
-                        console.log('✅ Peserta: form structure diperbarui dari API.');
+                console.log('[DEBUG] Memuat data form dari API...');
+                let rawData = null;
+                const settingsRes = await callApi('getFormSettings', {}, 'GET');
+
+                if (settingsRes && settingsRes.success) {
+                    let data = settingsRes.data;
+                    console.log('[DEBUG] Data API diterima:', data);
+
+                    if (typeof data === 'string') {
+                        try { data = JSON.parse(data); } catch (e) { data = null; }
+                    }
+
+                    if (data && Array.isArray(data) && data.length > 0 && Array.isArray(data[0])) {
+                        const correctConfig = data.find(config => {
+                            if (!Array.isArray(config)) return false;
+                            const suratField = config.find(f => f.id === 'surat_rekomendasi');
+                            return suratField && suratField.required === false;
+                        });
+                        rawData = correctConfig || data[0];
+                    } else if (data && Array.isArray(data)) {
+                        rawData = data;
                     }
                 }
-            } catch (e) {
-                console.warn('Gagal fetch form settings:', e);
-                // Jika cache awal kosong dan API error, fallback ke struktur default
-                if (!cachedStructure || cachedStructure.length === 0) {
-                    formStructure = [
-                        { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true, isCore: true },
-                        { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', required: true, isCore: true },
-                        { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', required: true, isCore: true },
-                        { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', required: true, isCore: true },
-                        { id: 'alamat', label: 'Alamat', type: 'textarea', required: true, isCore: true },
-                        { id: 'no_hp', label: 'No HP', type: 'text', required: true, isCore: true },
-                        { id: 'email', label: 'Email', type: 'text', required: true, isCore: true },
-                        { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-                        { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', required: true, isCore: true },
-                        { id: 'foto', label: 'Foto', type: 'file', required: true, isCore: true },
-                        { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', required: true, isCore: true }
-                    ];
-                    DataCache.updateData('formSettings', formStructure);
-                    buildForm(container);
+
+                if (rawData && Array.isArray(rawData) && rawData.length > 0) {
+                    formStructure = rawData;
+                    console.log('✅ Form structure dimuat dari API.');
+                } else {
+                    console.warn('⚠️ Data API tidak valid, menggunakan form default.');
+                    formStructure = getDefaultFormFields();
                 }
+                buildForm(container);
+
+            } catch (e) {
+                console.error('❌ Error memuat form, fallback default:', e);
+                container.innerHTML = `<div class="alert alert-danger text-center py-5">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Gagal memuat form dari server.<br>
+                    <small>Silakan refresh halaman. Jika tetap error, hubungi Admin.</small>
+                    <br><button class="btn btn-outline-danger mt-3" onclick="window.location.reload()">Refresh Halaman</button>
+                </div>`;
             }
         }
 
-        // =====================
+        // ==========================================================
         //   BUILD FORM
-        // =====================
+        // ==========================================================
         function buildForm(container) {
-            // Helper untuk required field dan penanda bintang (*)
-            function getRequiredAttr(field) {
-                return field.required ? 'required' : '';
+            if (!Array.isArray(formStructure)) {
+                formStructure = getDefaultFormFields();
             }
 
-            function getRequiredAsterisk(field) {
-                return field.required ? ' <span class="text-danger">*</span>' : '';
-            }
+            function getRequiredAttr(field) { return field.required ? 'required' : ''; }
+            function getRequiredAsterisk(field) { return field.required ? ' <span class="text-danger">*</span>' : ''; }
 
             let html = `
                 <div class="admin-contact">
@@ -358,13 +588,10 @@
                     </a>
                     <p class="small text-muted mt-2 mb-0">Nomor kontak sesuai flyer resmi PKD GP Ansor Bantul.</p>
                 </div>
-
                 <form id="formPesertaDinamis">
             `;
 
-            // Loop melalui formStructure untuk membangun form dinamis
             formStructure.forEach(field => {
-                const isRequired = field.required;
                 const labelHtml = `<label class="form-label fw-bold">${escapeHtmlLocal(field.label)}${getRequiredAsterisk(field)}</label>`;
 
                 if (field.id === 'foto') {
@@ -392,10 +619,10 @@
                                         <p class="small text-muted mb-0"><strong>Pilih salah satu template</strong> lengkapi, cetak, lalu scan/upload.</p>
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap mt-2 mt-sm-0">
-                                        <a href="Surat Rekomendasi PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                                        <a href="/bisaa/Surat Rekomendasi PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
                                             <i class="bi bi-file-earmark-word me-1"></i> Template PAC
                                         </a>
-                                        <a href="Surat Rekomendasi Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                                        <a href="/bisaa/Surat Rekomendasi Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
                                             <i class="bi bi-file-earmark-word me-1"></i> Template Masjid
                                         </a>
                                     </div>
@@ -439,7 +666,6 @@
                     });
                     html += `</select></div>`;
                 } else {
-                    // Default text input
                     html += `
                         <div class="mb-3">
                             ${labelHtml}
@@ -449,21 +675,27 @@
                 }
             });
 
-            // Signature Pad (selalu ditambahkan di akhir, tapi bisa juga dijadikan dynamic field jika diatur di backend)
-            // Untuk saat ini tetap ditambahkan manual sebagai field tambahan yang tidak bisa dihapus
+            // ==========================================================
+            //   BAGIAN TANDA TANGAN
+            // ==========================================================
             html += `
                     <div class="mb-3">
                         <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-                        <div class="border rounded p-2" style="background: #fff;"><canvas id="signatureCanvas"></canvas></div>
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSignature"><i class="bi bi-eraser"></i> Hapus</button>
-                            <small class="text-muted ms-2">Gambar tanda tangan dengan mouse atau jari (pada layar sentuh).</small>
+                        <div class="signature-wrapper">
+                            <div class="signature-area" id="signatureAreaContainer">
+                                <canvas id="signatureCanvas"></canvas>
+                                <div class="signature-hint"><i class="bi bi-pencil me-2"></i>Tanda tangan di sini</div>
+                            </div>
+                            <div class="mt-2 d-flex gap-2 flex-wrap align-items-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature"><i class="bi bi-eraser me-1"></i> Hapus Semua</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="undoSignature"><i class="bi bi-arrow-counterclockwise me-1"></i> Undo</button>
+                                <small class="text-muted ms-1">Gunakan mouse atau jari. Garis tebal/tipis mengikuti kecepatan.</small>
+                            </div>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">📤 Kirim Data Peserta</button>
                 </form>
 
-                <!-- QR Result -->
                 <div id="qrResult">
                     <h5><i class="bi bi-qr-code"></i> ID Peserta Anda</h5>
                     <p class="text-muted">Simpan QR Code ini. Panitia akan memindainya saat absen setiap sesi.</p>
@@ -477,9 +709,8 @@
             `;
 
             container.innerHTML = html;
-            container.classList.add('fade-in');
+            container.classList.add('fade-up');
 
-            // Setup preview foto & surat rekomendasi
             document.querySelectorAll('#formPesertaDinamis input[type="file"]').forEach(input => {
                 input.addEventListener('change', function(e) {
                     const file = e.target.files[0];
@@ -506,24 +737,63 @@
                 });
             });
 
-            // Signature pad
             const canvas = document.getElementById('signatureCanvas');
+            const containerSignature = document.getElementById('signatureAreaContainer');
             if (canvas) {
-                signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)', penColor: 'rgb(0,0,0)' });
+                if (window.sigPad) { window.sigPad.clear(); window.sigPad = null; }
+                
+                window.sigPad = new SignaturePad(canvas, { 
+                    backgroundColor: 'rgb(255,255,255)', 
+                    penColor: 'rgb(0,0,0)', 
+                    minWidth: 0.5,
+                    maxWidth: 3.5,
+                    velocityFilterWeight: 0.7,
+                    throttle: 16
+                });
 
                 function resizeCanvas() {
                     const ratio = Math.max(window.devicePixelRatio || 1, 1);
                     canvas.width = canvas.offsetWidth * ratio;
                     canvas.height = canvas.offsetHeight * ratio;
                     canvas.getContext("2d").scale(ratio, ratio);
-                    signaturePad.clear();
+                    if (window.sigPad) window.sigPad.clear();
                 }
                 window.addEventListener("resize", resizeCanvas);
                 resizeCanvas();
-                document.getElementById('clearSignature').addEventListener('click', () => signaturePad.clear());
+
+                window.sigPad.addEventListener('beginStroke', () => {
+                    containerSignature.classList.add('drawing');
+                });
+                window.sigPad.addEventListener('endStroke', () => {
+                    if (window.sigPad.isEmpty()) {
+                        containerSignature.classList.remove('drawing');
+                    }
+                    savePesertaFormState();
+                });
+
+                document.getElementById('clearSignature').addEventListener('click', () => {
+                    if (window.sigPad) window.sigPad.clear();
+                    containerSignature.classList.remove('drawing');
+                    savePesertaFormState();
+                });
+
+                document.getElementById('undoSignature').addEventListener('click', () => {
+                    if (window.sigPad) {
+                        const data = window.sigPad.toData();
+                        if (data && data.length > 0) {
+                            data.pop();
+                            window.sigPad.fromData(data);
+                            if (window.sigPad.isEmpty()) {
+                                containerSignature.classList.remove('drawing');
+                            }
+                            savePesertaFormState();
+                        }
+                    }
+                });
+
+                window.sigPad.addEventListener('endStroke', savePesertaFormState);
             }
 
-            // Handle dropdown Lainnya
             const utusanSelect = document.querySelector('select[name="utusan"]');
             const luarContainer = document.createElement('div');
             luarContainer.id = 'utusanLuarContainer';
@@ -540,34 +810,27 @@
                 });
             }
 
-            // Auto-save fields
             document.querySelectorAll('#formPesertaDinamis input:not([type="file"]), #formPesertaDinamis textarea, #formPesertaDinamis select')
-            .forEach(el => {
-                el.addEventListener('input', savePesertaFormState);
-                el.addEventListener('change', savePesertaFormState);
-            });
+                .forEach(el => {
+                    el.addEventListener('input', savePesertaFormState);
+                    el.addEventListener('change', savePesertaFormState);
+                });
 
             restorePesertaFormState();
 
             document.getElementById('formPesertaDinamis').addEventListener('submit', submitPesertaForm);
         }
 
-        // =====================================================
-        //   FUNGSI KAMERA (WEBCAM) UNTUK SCAN DOKUMEN/FOTO
-        // =====================================================
-        let cameraStream = null;
-        let cameraActive = false;
-        let currentCameraTarget = '';
-
+        // ==========================================================
+        //   KAMERA (Webcam)
+        // ==========================================================
         window.openCamera = async function(targetId) {
             if (cameraActive) return;
             currentCameraTarget = targetId;
             const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
             const video = document.getElementById('cameraVideo');
             const title = document.getElementById('cameraModalTitle');
-
             title.innerText = targetId === 'foto' ? 'Ambil Foto Diri' : 'Ambil Foto / Scan Surat Rekomendasi';
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 cameraStream = stream;
@@ -587,23 +850,14 @@
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
-
-            // Konversi ke blob/base64
             canvas.toBlob(function(blob) {
                 if (!blob) return;
-                // Buat file dari blob
                 const file = new File([blob], `capture_${currentCameraTarget}_${Date.now()}.jpg`, { type: 'image/jpeg' });
                 const input = document.getElementById(`input_${currentCameraTarget}`);
-                
-                // Masukkan file ke input
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 input.files = dataTransfer.files;
-
-                // Trigger event change agar preview terupdate
                 input.dispatchEvent(new Event('change'));
-
-                // Tutup modal
                 bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
                 closeCamera();
             }, 'image/jpeg', 0.8);
@@ -623,16 +877,16 @@
             closeCamera();
         });
 
-        // =====================================================
-        //   SUBMIT PESERTA FORM
-        // =====================================================
+        // ==========================================================
+        //   SUBMIT FORM
+        // ==========================================================
         async function submitPesertaForm(e) {
             e.preventDefault();
             const form = document.getElementById('formPesertaDinamis');
             const formData = new FormData(form);
             const data = { action: 'submitPeserta', custom_data: {} };
+            const overlay = document.getElementById('loadingOverlay');
 
-            // Validasi field required berdasarkan formStructure
             const missingFields = [];
             formStructure.forEach(field => {
                 if (field.required) {
@@ -656,7 +910,6 @@
                 return;
             }
 
-            // Ambil semua file (foto & surat rekomendasi)
             const fotoFile = formData.get('foto');
             if (fotoFile && fotoFile.size > 5 * 1024 * 1024) {
                 showToastLocal('Ukuran foto maksimal 5 MB', 'danger');
@@ -668,14 +921,14 @@
                 return;
             }
 
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select').forEach(el => el.disabled = true);
+            overlay.style.display = 'flex';
+            document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
+                .forEach(el => el.disabled = true);
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
             try {
-                // Proses file (foto & surat rekomendasi)
                 if (fotoFile && fotoFile.size > 0) {
                     data.foto = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
@@ -693,15 +946,14 @@
                     });
                 }
 
-                if (signaturePad && !signaturePad.isEmpty()) {
-                    data.tanda_tangan = signaturePad.toDataURL('image/jpeg', 0.2);
+                if (window.sigPad && !window.sigPad.isEmpty()) {
+                    data.tanda_tangan = window.sigPad.toDataURL('image/jpeg', 0.2);
                 }
 
-                // Kumpulkan data standard dan custom
                 formStructure.forEach(field => {
                     const val = formData.get(field.id);
-                    if (field.type === 'file') return; // skip file (sudah dihandle)
-                    const coreFields = ['nama_lengkap', 'tempat_tgl_lahir', 'pekerjaan', 'pendidikan_terakhir', 'alamat', 'no_hp', 'email', 'utusan', 'pengalaman_organisasi', 'status', 'tanggal', 'catatan'];
+                    if (field.type === 'file') return;
+                    const coreFields = ['nama_lengkap','tempat_tgl_lahir','pekerjaan','pendidikan_terakhir','alamat','no_hp','email','utusan','pengalaman_organisasi','status','tanggal','catatan'];
                     if (coreFields.includes(field.id)) {
                         data[field.id] = val || '';
                     } else {
@@ -709,15 +961,13 @@
                     }
                 });
 
-                // Handle "Lainnya" pada field utusan
                 if (data.utusan === 'Lainnya') {
                     const luarValue = data.utusan_luar ? data.utusan_luar.trim() : '';
                     data.utusan = luarValue ? 'Lainnya - ' + luarValue : 'Lainnya (tidak diisi)';
                 }
                 delete data.utusan_luar;
 
-                // Kirim melalui PKD.submitPeserta
-                const result = await PKD.submitPeserta(data);
+                const result = await submitPeserta(data);
                 if (!result.success) throw new Error(result.error || 'Gagal mengirim');
 
                 showToastLocal('✅ Data peserta berhasil dikirim!', 'success');
@@ -730,32 +980,45 @@
                     <i class="bi bi-info-circle me-1"></i> Data Anda sedang diverifikasi oleh admin. 
                     QR Code ini akan aktif setelah disetujui. Silakan cek kembali nanti.
                 `;
-
                 form.reset();
                 document.querySelectorAll('#formPesertaDinamis img[id^="preview_"]').forEach(el => el.style.display = 'none');
                 document.querySelectorAll('#formPesertaDinamis div[id^="preview_"]').forEach(el => el.innerHTML = '');
-                signaturePad.clear();
+                if (window.sigPad) window.sigPad.clear();
                 clearPesertaFormState();
                 const utusanLuar = document.getElementById('utusanLuarContainer');
                 if (utusanLuar) utusanLuar.style.display = 'none';
             } catch (err) {
                 showToastLocal('❌ Gagal mengirim: ' + err.message, 'danger');
             } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select').forEach(el => el.disabled = false);
+                overlay.style.display = 'none';
+                document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
+                    .forEach(el => el.disabled = false);
                 btn.disabled = false;
                 btn.innerHTML = '📤 Kirim Data Peserta';
             }
         }
 
-        // =====================================================
-        //   EKSEKUSI UTAMA
-        // =====================================================
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
-        } else {
-            checkAccessAndLoad();
-        }
+        // ==========================================================
+        //   🛡️ GUARD PUBLIC ACCESS & BOOT
+        // ==========================================================
+        (async function boot() {
+            const canAccess = await guardPublicAccess();
+            if (!canAccess) return;
+            updateNavbarMenu();
+            await loadPesertaForm();
+        })();
+
+        // ==========================================================
+        //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
+        // ==========================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Render skeleton secara instan (sinkron) saat DOM siap
+            const container = document.getElementById('pesertaFormContainer');
+            if (container) {
+                renderSkeletonPeserta(container);
+            }
+        });
+
     </script>
 </body>
 </html>

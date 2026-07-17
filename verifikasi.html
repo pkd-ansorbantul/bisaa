@@ -16,6 +16,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <style>
+        /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
+        .header-minimal {
+            background: rgba(255, 255, 255, 0.72) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1030;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .header-minimal .container {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
+        .brand-logo-mini:hover { transform: scale(1.05); }
+        .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+        .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
+
+        #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+        .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+        .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+        /* --- KONTEN UTAMA --- */
         * { font-family: 'Inter', sans-serif; }
         body {
             background: #f8fafc;
@@ -24,14 +49,6 @@
             display: flex;
             flex-direction: column;
         }
-        .navbar {
-            background: rgba(255,255,255,0.8) !important;
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(203,213,225,0.3);
-        }
-        .navbar-brand img { height: 40px; margin-right: 12px; }
-        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
         .container-card {
             max-width: 700px;
             background: white;
@@ -53,7 +70,7 @@
         }
         .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
         
-        /* ===== STYLE KARTU HASIL ===== */
+        /* --- KARTU HASIL --- */
         .result-card {
             margin-top: 20px;
             border-radius: 16px;
@@ -72,7 +89,7 @@
         .btn-scan { border-radius: 8px !important; margin-left: 8px; }
         @media (max-width: 576px) { .container-card { padding: 1.5rem; } }
 
-        /* ===== LOADING SPINNER ===== */
+        /* --- LOADING SPINNER --- */
         .loading-state {
             text-align: center;
             padding: 20px 10px;
@@ -83,7 +100,7 @@
             color: #2563eb;
         }
 
-        /* ===== QR SCANNER STYLES ===== */
+        /* --- QR SCANNER STYLES --- */
         #scannerOverlay {
             position: fixed;
             top: 0;
@@ -103,9 +120,7 @@
             border-radius: 16px;
             background: #000;
         }
-        #scannerOverlay .drawingBuffer {
-            display: none;
-        }
+        #scannerOverlay .drawingBuffer { display: none; }
         .scanner-close {
             position: absolute;
             top: 20px;
@@ -120,10 +135,7 @@
             cursor: pointer;
             z-index: 10000;
         }
-        .scanner-close:hover {
-            background: rgba(255,255,255,0.4);
-        }
-        /* Tombol Hentikan Scanner */
+        .scanner-close:hover { background: rgba(255,255,255,0.4); }
         .scanner-stop {
             position: absolute;
             bottom: 40px;
@@ -143,19 +155,27 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand navbar-light bg-white sticky-top shadow-sm">
-    <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
-            <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-            <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
-        </a>
-        <div class="ms-auto d-flex align-items-center gap-2">
-            <button class="btn btn-outline-secondary btn-sm refresh-btn" id="refreshBtn" title="Segarkan"><i class="bi bi-arrow-clockwise"></i></button>
-            <a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-house-door me-1"></i> Beranda</a>
+<!-- ================= HEADER ELEGAN ================= -->
+<header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i> Kembali
+            </a>
+            <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+                <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+                <div>
+                    <div class="brand-title-mini">PKD GP Ansor</div>
+                    <span class="brand-sub-mini">Kabupaten Bantul</span>
+                </div>
+            </a>
         </div>
+        <!-- Area User Role (diisi oleh api.js) -->
+        <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
-</nav>
+</header>
 
+<!-- ================= KONTEN UTAMA ================= -->
 <div class="container container-card">
     <h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Keaslian Sertifikat</h2>
 
@@ -169,9 +189,9 @@
     </div>
     <div class="form-text text-muted small mt-1">Atau klik ikon <i class="bi bi-qr-code"></i> untuk memindai QR pada sertifikat.</div>
 
-    <!-- ==================== KARTU HASIL DENGAN LOADING ==================== -->
+    <!-- ================= KARTU HASIL DENGAN LOADING ================= -->
     <div id="resultContainer" class="result-card">
-        <!-- Bagian untuk Loading -->
+        <!-- Bagian Loading -->
         <div id="loadingIndicator" class="loading-state">
             <div class="spinner-border" role="status">
                 <span class="visually-hidden">Memverifikasi...</span>
@@ -179,7 +199,7 @@
             <p class="mt-2 text-muted">Sedang memverifikasi nomor sertifikat, harap tunggu...</p>
         </div>
 
-        <!-- Bagian untuk Hasil Verifikasi -->
+        <!-- Bagian Hasil Verifikasi -->
         <div id="resultContent" style="display: none;">
             <div class="badge-valid"><i class="bi bi-check-circle-fill me-1"></i> Sertifikat VALID</div>
             <hr class="my-3">
@@ -194,316 +214,323 @@
     </div>
 </div>
 
-<footer class="footer-modern">
+<!-- ================= FOOTER ================= -->
+<footer class="footer-modern container">
     <div class="container"><i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</div>
 </footer>
 
-<!-- ==================== QR SCANNER OVERLAY ==================== -->
+<!-- ================= QR SCANNER OVERLAY ================= -->
 <div id="scannerOverlay">
     <button class="scanner-close" id="closeScanner"><i class="bi bi-x-lg"></i></button>
     <div id="scannerVideoContainer"></div>
     <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
-    <!-- Tombol Hentikan Scanner -->
     <button class="btn btn-danger btn-lg rounded-pill scanner-stop" id="stopScannerBtn">
         <i class="bi bi-stop-circle me-2"></i> Hentikan
     </button>
 </div>
 
+<!-- ================= SCRIPTS ================= -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/api.js"></script>
-<script src="/bisaa/dataCache.js"></script>
 
-<script>
-    (function() {
-        'use strict';
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+    // ==========================================================
+    //   IMPOR DARI CORE API (ES Modules)
+    // ==========================================================
+    import {
+        callApi,
+        showToast,
+        escapeHtml,
+        guardPublicAccess,
+        updateNavbarMenu,
+        getAllDigitalApprovals,
+        verifyCertificate
+    } from './js/core/api.js';
 
-        // ==================== FUNGSI UTAMA VERIFIKASI ====================
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                if (m === '"') return '&quot;';
-                return m;
-            });
+    // ==========================================================
+    //   FUNGSI UTAMA VERIFIKASI
+    // ==========================================================
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    }
+
+    async function verifyCertificateHandler(nomor) {
+        if (!nomor) {
+            showToast("Masukkan nomor sertifikat terlebih dahulu.", 'warning');
+            return;
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return dateStr;
-            return d.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        }
+        const container = document.getElementById('resultContainer');
+        const loading = document.getElementById('loadingIndicator');
+        const content = document.getElementById('resultContent');
+        const contentRow = content.querySelector('.result-row');
 
-        async function verifyCertificate(nomor) {
-            if (!nomor) {
-                alert("Masukkan nomor sertifikat terlebih dahulu.");
-                return;
-            }
+        // Tampilkan loading
+        container.style.display = 'block';
+        loading.style.display = 'block';
+        content.style.display = 'none';
+        container.className = 'result-card';
 
-            const container = document.getElementById('resultContainer');
-            const loading = document.getElementById('loadingIndicator');
-            const content = document.getElementById('resultContent');
-            const contentRow = content.querySelector('.result-row');
+        try {
+            const certRes = await verifyCertificate(nomor);
+            
+            loading.style.display = 'none';
+            content.style.display = 'block';
 
-            // Tampilkan loading
-            container.style.display = 'block';
-            loading.style.display = 'block';
-            content.style.display = 'none';
-            container.className = 'result-card';
-
-            try {
-                const certRes = await PKD.verifyCertificate(nomor);
-                
-                loading.style.display = 'none';
-                content.style.display = 'block';
-
-                if (!certRes.success || !certRes.data) {
-                    container.className = 'result-card bg-danger-subtle border-danger';
-                    contentRow.innerHTML = `
-                        <div class="text-danger text-center w-100">
-                            <i class="bi bi-exclamation-circle-fill fs-2"></i>
-                            <h5 class="mt-2">Sertifikat TIDAK DITEMUKAN</h5>
-                            <p class="small">Nomor sertifikat "${escapeHtml(nomor)}" tidak terdaftar di database kami.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const data = certRes.data;
-                const tanggalTerbit = formatDate(data.createdAt);
-
-                // Ambil data persetujuan digital
-                let approvalsHtml = '';
-                try {
-                    const approvalsRes = await PKD.getAllDigitalApprovals();
-                    if (approvalsRes.success && approvalsRes.data) {
-                        const filtered = approvalsRes.data.filter(a => 
-                            a.peserta_nama && a.peserta_nama.toLowerCase() === data.nama_peserta.toLowerCase()
-                        );
-                        if (filtered.length > 0) {
-                            approvalsHtml = filtered.map(a => {
-                                let roleLabel = 'Instruktur';
-                                if (a.role === 'ketua_pc') roleLabel = 'Ketua PC';
-                                else if (a.role === 'sekretaris') roleLabel = 'Sekretaris';
-                                return `<div class="mt-1"><span class="badge bg-light text-dark">${roleLabel}: ${escapeHtml(a.nama)}</span></div>`;
-                            }).join('');
-                        } else {
-                            approvalsHtml = `<div class="text-muted small">Belum ada data persetujuan digital.</div>`;
-                        }
-                    }
-                } catch (e) { console.warn('Gagal ambil approvals', e); }
-
-                container.className = 'result-card';
-
-                contentRow.innerHTML = `
-                    <div class="result-item">
-                        <strong>Nama:</strong>
-                        <span>${escapeHtml(data.nama_peserta)}</span>
-                    </div>
-                    <div class="result-item">
-                        <strong>Lokasi PKD:</strong>
-                        <span>${escapeHtml(data.lokasi || 'Kabupaten Bantul')}</span>
-                    </div>
-                    <div class="result-item">
-                        <strong>Nomor Sertifikat:</strong>
-                        <span>${escapeHtml(data.nomor_sertifikat)}</span>
-                    </div>
-                    <div class="result-item">
-                        <strong>Tanggal Terbit:</strong>
-                        <span class="text-muted">${tanggalTerbit}</span>
-                    </div>
-                    ${approvalsHtml ? `<div class="w-100 mt-2"><hr class="my-2"><strong class="small">Persetujuan Digital:</strong> ${approvalsHtml}</div>` : ''}
-                `;
-
-                if (data.pdf_url) {
-                    contentRow.innerHTML += `
-                        <div class="w-100 mt-2">
-                            <a href="${escapeHtml(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                <i class="bi bi-file-pdf me-1"></i> Lihat PDF
-                            </a>
-                        </div>
-                    `;
-                }
-
-            } catch (err) {
-                loading.style.display = 'none';
-                content.style.display = 'block';
+            if (!certRes.success || !certRes.data) {
                 container.className = 'result-card bg-danger-subtle border-danger';
                 contentRow.innerHTML = `
                     <div class="text-danger text-center w-100">
                         <i class="bi bi-exclamation-circle-fill fs-2"></i>
-                        <h5 class="mt-2">Terjadi Kesalahan</h5>
-                        <p class="small">${escapeHtml(err.message)}</p>
+                        <h5 class="mt-2">Sertifikat TIDAK DITEMUKAN</h5>
+                        <p class="small">Nomor sertifikat "${escapeHtml(nomor)}" tidak terdaftar di database kami.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = certRes.data;
+            const tanggalTerbit = formatDate(data.createdAt);
+
+            // Ambil data persetujuan digital
+            let approvalsHtml = '';
+            try {
+                const approvalsRes = await getAllDigitalApprovals();
+                if (approvalsRes.success && approvalsRes.data) {
+                    const filtered = approvalsRes.data.filter(a => 
+                        a.peserta_nama && a.peserta_nama.toLowerCase() === data.nama_peserta.toLowerCase()
+                    );
+                    if (filtered.length > 0) {
+                        approvalsHtml = filtered.map(a => {
+                            let roleLabel = 'Instruktur';
+                            if (a.role === 'ketua_pc') roleLabel = 'Ketua PC';
+                            else if (a.role === 'sekretaris') roleLabel = 'Sekretaris';
+                            return `<div class="mt-1"><span class="badge bg-light text-dark">${roleLabel}: ${escapeHtml(a.nama)}</span></div>`;
+                        }).join('');
+                    } else {
+                        approvalsHtml = `<div class="text-muted small">Belum ada data persetujuan digital.</div>`;
+                    }
+                }
+            } catch (e) { console.warn('Gagal ambil approvals', e); }
+
+            container.className = 'result-card';
+
+            contentRow.innerHTML = `
+                <div class="result-item">
+                    <strong>Nama:</strong>
+                    <span>${escapeHtml(data.nama_peserta)}</span>
+                </div>
+                <div class="result-item">
+                    <strong>Lokasi PKD:</strong>
+                    <span>${escapeHtml(data.lokasi || 'Kabupaten Bantul')}</span>
+                </div>
+                <div class="result-item">
+                    <strong>Nomor Sertifikat:</strong>
+                    <span>${escapeHtml(data.nomor_sertifikat)}</span>
+                </div>
+                <div class="result-item">
+                    <strong>Tanggal Terbit:</strong>
+                    <span class="text-muted">${tanggalTerbit}</span>
+                </div>
+                ${approvalsHtml ? `<div class="w-100 mt-2"><hr class="my-2"><strong class="small">Persetujuan Digital:</strong> ${approvalsHtml}</div>` : ''}
+            `;
+
+            if (data.pdf_url) {
+                contentRow.innerHTML += `
+                    <div class="w-100 mt-2">
+                        <a href="${escapeHtml(data.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                            <i class="bi bi-file-pdf me-1"></i> Lihat PDF
+                        </a>
                     </div>
                 `;
             }
+
+        } catch (err) {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            container.className = 'result-card bg-danger-subtle border-danger';
+            contentRow.innerHTML = `
+                <div class="text-danger text-center w-100">
+                    <i class="bi bi-exclamation-circle-fill fs-2"></i>
+                    <h5 class="mt-2">Terjadi Kesalahan</h5>
+                    <p class="small">${escapeHtml(err.message)}</p>
+                </div>
+            `;
         }
+    }
 
-        // ==================== SCANNER QR CODE ====================
-        let scannerActive = false;
-        let quaggaInitialized = false;
+    // ==========================================================
+    //   SCANNER QR CODE
+    // ==========================================================
+    let scannerActive = false;
+    let quaggaInitialized = false;
 
-        const scannerOverlay = document.getElementById('scannerOverlay');
-        const closeScannerBtn = document.getElementById('closeScanner');
-        const stopScannerBtn = document.getElementById('stopScannerBtn');
-        const scannerStatus = document.getElementById('scannerStatus');
-        const videoContainer = document.getElementById('scannerVideoContainer');
+    const scannerOverlay = document.getElementById('scannerOverlay');
+    const closeScannerBtn = document.getElementById('closeScanner');
+    const stopScannerBtn = document.getElementById('stopScannerBtn');
+    const scannerStatus = document.getElementById('scannerStatus');
+    const videoContainer = document.getElementById('scannerVideoContainer');
 
-        // Fungsi untuk menghentikan scanner secara instan & mematikan stream kamera
-        function stopScanner() {
-            if (!scannerActive) return;
-            scannerActive = false;
+    function stopScanner() {
+        if (!scannerActive) return;
+        scannerActive = false;
 
-            // 1. Sembunyikan overlay instan (agar UI cepat merespon)
-            scannerOverlay.style.display = 'none';
-            
-            // 2. Hentikan Quagga
-            if (quaggaInitialized) {
-                try {
-                    Quagga.stop();
-                    Quagga.offDetected();
-                } catch (e) { console.warn('Quagga stop error:', e); }
-                quaggaInitialized = false;
-            }
-
-            // 3. Pastikan stream video benar-benar dimatikan (untuk menghilangkan favicon camera)
-            const videoEl = videoContainer.querySelector('video');
-            if (videoEl) {
-                if (videoEl.srcObject) {
-                    // Hentikan semua track kamera
-                    videoEl.srcObject.getTracks().forEach(track => track.stop());
-                    videoEl.srcObject = null;
-                }
-                // Hapus elemen video dari DOM
-                videoEl.remove();
-            }
-
-            // 4. Bersihkan container
-            videoContainer.innerHTML = '';
-            
-            scannerStatus.innerText = 'Scanner dihentikan.';
-            setTimeout(() => {
-                if (!scannerActive) scannerStatus.innerText = '';
-            }, 1000);
-        }
-
-        function startScanner() {
-            if (scannerActive) return;
-
-            scannerOverlay.style.display = 'flex';
-            scannerStatus.innerText = 'Mengakses kamera...';
-            scannerActive = true;
-
-            // Gunakan QuaggaJS
-            try {
-                Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: videoContainer,
-                        constraints: {
-                            width: 640,
-                            height: 480,
-                            facingMode: "environment"
-                        }
-                    },
-                    decoder: {
-                        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_39_reader", "code_93_reader", "codabar_reader", "databar_reader", "qr_code_reader"]
-                    },
-                    locate: true,
-                    numOfWorkers: 2,
-                    frequency: 10
-                }, function(err) {
-                    if (err) {
-                        console.error('Quagga init error:', err);
-                        scannerStatus.innerText = 'Gagal mengakses kamera. Coba input manual.';
-                        stopScanner();
-                        return;
-                    }
-                    Quagga.start();
-                    quaggaInitialized = true;
-                    scannerStatus.innerText = 'Memindai QR...';
-                });
-
-                Quagga.onDetected(function(result) {
-                    if (result && result.codeResult && result.codeResult.code) {
-                        const decodedText = result.codeResult.code;
-                        onQRDetected(decodedText);
-                    }
-                });
-            } catch (e) {
-                scannerStatus.innerText = 'Gagal memulai scanner.';
-                console.error(e);
-                stopScanner();
-            }
-        }
-
-        function onQRDetected(decodedText) {
-            // Hentikan scanner setelah deteksi
-            stopScanner();
-
-            // Cari parameter nomor di QR
-            let nomor = decodedText.trim();
-            if (nomor.startsWith('http')) {
-                try {
-                    const url = new URL(nomor);
-                    const param = url.searchParams.get('nomor');
-                    if (param) nomor = param;
-                } catch (e) {}
-            }
-            if (nomor.startsWith('{') && nomor.endsWith('}')) {
-                try {
-                    const parsed = JSON.parse(nomor);
-                    if (parsed.nomor) nomor = parsed.nomor;
-                } catch (e) {}
-            }
-
-            document.getElementById('certNumberInput').value = nomor;
-            scannerStatus.innerText = `QR terdeteksi: ${nomor}`;
-            // Tunggu sebentar lalu verifikasi
-            setTimeout(() => {
-                verifyCertificate(nomor);
-            }, 500);
-        }
-
-        // Event listeners untuk scanner
-        document.getElementById('scanBtn').addEventListener('click', startScanner);
-        closeScannerBtn.addEventListener('click', stopScanner);
-        stopScannerBtn.addEventListener('click', stopScanner); // Tombol Hentikan
+        scannerOverlay.style.display = 'none';
         
-        scannerOverlay.addEventListener('click', function(e) {
-            if (e.target === scannerOverlay) stopScanner();
-        });
+        if (quaggaInitialized) {
+            try {
+                Quagga.stop();
+                Quagga.offDetected();
+            } catch (e) { console.warn('Quagga stop error:', e); }
+            quaggaInitialized = false;
+        }
 
-        // ==================== EVENT LISTENERS LAINNYA ====================
-        document.getElementById('verifyBtn').addEventListener('click', function() {
-            const nomor = document.getElementById('certNumberInput').value.trim();
-            verifyCertificate(nomor);
-        });
-        document.getElementById('certNumberInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const nomor = this.value.trim();
-                verifyCertificate(nomor);
+        const videoEl = videoContainer.querySelector('video');
+        if (videoEl) {
+            if (videoEl.srcObject) {
+                videoEl.srcObject.getTracks().forEach(track => track.stop());
+                videoEl.srcObject = null;
             }
-        });
-        document.getElementById('refreshBtn')?.addEventListener('click', function() {
-            location.reload();
-        });
+            videoEl.remove();
+        }
 
-        // Cek parameter URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const nomorUrl = urlParams.get('nomor');
+        videoContainer.innerHTML = '';
+        scannerStatus.innerText = 'Scanner dihentikan.';
+        setTimeout(() => {
+            if (!scannerActive) scannerStatus.innerText = '';
+        }, 1000);
+    }
+
+    function startScanner() {
+        if (scannerActive) return;
+
+        scannerOverlay.style.display = 'flex';
+        scannerStatus.innerText = 'Mengakses kamera...';
+        scannerActive = true;
+
+        try {
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: videoContainer,
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment"
+                    }
+                },
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_39_reader", "code_93_reader", "codabar_reader", "databar_reader", "qr_code_reader"]
+                },
+                locate: true,
+                numOfWorkers: 2,
+                frequency: 10
+            }, function(err) {
+                if (err) {
+                    console.error('Quagga init error:', err);
+                    scannerStatus.innerText = 'Gagal mengakses kamera. Coba input manual.';
+                    stopScanner();
+                    return;
+                }
+                Quagga.start();
+                quaggaInitialized = true;
+                scannerStatus.innerText = 'Memindai QR...';
+            });
+
+            Quagga.onDetected(function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    const decodedText = result.codeResult.code;
+                    onQRDetected(decodedText);
+                }
+            });
+        } catch (e) {
+            scannerStatus.innerText = 'Gagal memulai scanner.';
+            console.error(e);
+            stopScanner();
+        }
+    }
+
+    function onQRDetected(decodedText) {
+        stopScanner();
+
+        let nomor = decodedText.trim();
+        if (nomor.startsWith('http')) {
+            try {
+                const url = new URL(nomor);
+                const param = url.searchParams.get('nomor');
+                if (param) nomor = param;
+            } catch (e) {}
+        }
+        if (nomor.startsWith('{') && nomor.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(nomor);
+                if (parsed.nomor) nomor = parsed.nomor;
+            } catch (e) {}
+        }
+
+        document.getElementById('certNumberInput').value = nomor;
+        scannerStatus.innerText = `QR terdeteksi: ${nomor}`;
+        setTimeout(() => {
+            verifyCertificateHandler(nomor);
+        }, 500);
+    }
+
+    // Event listeners untuk scanner
+    document.getElementById('scanBtn').addEventListener('click', startScanner);
+    closeScannerBtn.addEventListener('click', stopScanner);
+    stopScannerBtn.addEventListener('click', stopScanner);
+    
+    scannerOverlay.addEventListener('click', function(e) {
+        if (e.target === scannerOverlay) stopScanner();
+    });
+
+    // ==========================================================
+    //   EVENT LISTENERS LAINNYA
+    // ==========================================================
+    document.getElementById('verifyBtn').addEventListener('click', function() {
+        const nomor = document.getElementById('certNumberInput').value.trim();
+        verifyCertificateHandler(nomor);
+    });
+    document.getElementById('certNumberInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const nomor = this.value.trim();
+            verifyCertificateHandler(nomor);
+        }
+    });
+
+    // Cek parameter URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const nomorUrl = urlParams.get('nomor');
+    if (nomorUrl) {
+        document.getElementById('certNumberInput').value = nomorUrl;
+        setTimeout(() => verifyCertificateHandler(nomorUrl), 300);
+    }
+
+    // ==========================================================
+    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    // ==========================================================
+    (async function boot() {
+        const canAccess = await guardPublicAccess();
+        if (!canAccess) return;
+
+        // Update navbar user
+        updateNavbarMenu();
+
+        // Jika ada parameter nomor di URL, langsung verifikasi
         if (nomorUrl) {
-            document.getElementById('certNumberInput').value = nomorUrl;
-            setTimeout(() => verifyCertificate(nomorUrl), 300);
+            // Sudah dilakukan di atas
         }
     })();
+
 </script>
 </body>
 </html>

@@ -8,145 +8,288 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>* { font-family: 'Inter', sans-serif; } body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; } .navbar { background: rgba(255,255,255,0.8) !important; backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); } .navbar-brand img { height: 40px; margin-right: 12px; } .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; } .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; } .container-card { max-width: 700px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); } .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; } .status-badge { font-size: 1.2rem; padding: 10px 20px; border-radius: 50px; display: inline-block; } .footer-modern { font-size: 0.85rem; color: #64748b; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; margin-top: auto; } .approval-card { border: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 20px; margin-top: 20px; background: #ffffff; } .approval-card .approval-icon { font-size: 3rem; color: #28a745; } .detail-item { border-bottom: 1px solid #f1f5f9; padding: 0.5rem 0; } .detail-item:last-child { border-bottom: none; } .selamat { font-size: 1.2rem; font-weight: 600; color: #16a34a; } @media (max-width: 576px) { .container-card { padding: 1.5rem; } }</style>
+    <style>
+        /* --- HEADER MINIMALIS --- */
+        .header-minimal {
+            background: rgba(255, 255, 255, 0.72) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1030;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
+        .brand-logo-mini:hover { transform: scale(1.05); }
+        .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+        .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
+
+        #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+        .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+        .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+        /* --- KONTEN --- */
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+        .container-card { max-width: 700px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
+        .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
+        .status-badge { font-size: 1.2rem; padding: 10px 20px; border-radius: 50px; display: inline-block; }
+        .footer-modern { font-size: 0.85rem; color: #64748b; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; margin-top: auto; }
+        .approval-card { border: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 20px; margin-top: 20px; background: #ffffff; }
+        .approval-card .approval-icon { font-size: 3rem; color: #28a745; }
+        .detail-item { border-bottom: 1px solid #f1f5f9; padding: 0.5rem 0; }
+        .detail-item:last-child { border-bottom: none; }
+        .selamat { font-size: 1.2rem; font-weight: 600; color: #16a34a; }
+        @media (max-width: 576px) { .container-card { padding: 1.5rem; } }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand navbar-light bg-white sticky-top shadow-sm"><div class="container"><a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor"><span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span></a><div class="ms-auto"><a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-house-door me-1"></i> Beranda</a></div></div></nav>
-<div class="container container-card"><h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Sertifikat</h2><div id="result" class="text-center"></div><div class="text-center mt-3"><a href="/bisaa/index.html" class="btn btn-outline-secondary rounded-pill px-5"><i class="bi bi-arrow-left me-1"></i> Kembali</a></div></div>
-<footer class="footer-modern"><div class="container"><i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</div></footer>
+
+<!-- ================= HEADER ELEGAN ================= -->
+<header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center">
+                <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+                <div>
+                    <div class="brand-title-mini">PKD GP Ansor</div>
+                    <span class="brand-sub-mini">Kabupaten Bantul</span>
+                </div>
+            </a>
+        </div>
+        <div id="navbarUserMenu" class="user-menu-area"></div>
+    </div>
+</header>
+
+<!-- ================= KONTEN UTAMA ================= -->
+<div class="container container-card">
+    <h2 class="section-title"><i class="bi bi-shield-check me-2"></i>Verifikasi Sertifikat</h2>
+    <div id="result" class="text-center"></div>
+    <div class="text-center mt-3">
+        <a href="/bisaa/index.html" class="btn btn-outline-secondary rounded-pill px-5"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
+    </div>
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer-modern container">
+    <div class="container"><i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</div>
+</footer>
+
+<!-- ================= SCRIPTS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/bisaa/api.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script>
-    (function() {
-        'use strict';
-        function getQueryParam(param) { const urlParams = new URLSearchParams(window.location.search); return urlParams.get(param); }
-        function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;'; return m; }); }
-        function formatDate(dateStr) { if (!dateStr) return '-'; const d = new Date(dateStr); if (isNaN(d.getTime())) return '-'; return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); }
-        function getRoleLabel(role) { const labels = { 'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul', 'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul', 'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul' }; return labels[role] || role; }
 
-        async function verifyApproval() {
-            const nomor = getQueryParam('nomor');
-            const role = getQueryParam('role');
-            const driveId = getQueryParam('driveId');
-            const nama = getQueryParam('nama');
-            const container = document.getElementById('result');
+<!-- Modul ES Khusus Halaman Ini -->
+<script type="module">
+    // ==========================================================
+    //   IMPOR DARI CORE API (ES Modules)
+    // ==========================================================
+    import {
+        callApi,
+        getAllDigitalApprovals,
+        verifyCertificate,
+        getPKDLokasi,
+        escapeHtml,
+        updateNavbarMenu
+    } from './js/core/api.js';
 
-            let approvalsToDisplay = [];
-            let pesertaNama = nama || '';
-            let certData = null;
+    // ==========================================================
+    //   FUNGSI BANTU
+    // ==========================================================
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
 
-            if (!nomor && !role) {
-                container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Parameter tidak lengkap. Silakan scan QR yang benar.</div>`;
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function getRoleLabel(role) {
+        const labels = {
+            'ketua_pc': 'Ketua PC GP Ansor Kabupaten Bantul',
+            'sekretaris': 'Sekretaris PC GP Ansor Kabupaten Bantul',
+            'instruktur': 'Instruktur PKD GP Ansor Kabupaten Bantul'
+        };
+        return labels[role] || role;
+    }
+
+    // ==========================================================
+    //   VERIFIKASI UTAMA (DIPERBAIKI!)
+    // ==========================================================
+    async function verifyApproval() {
+        const nomor = getQueryParam('nomor');
+        const role = getQueryParam('role');
+        const driveId = getQueryParam('driveId');
+        const namaTtd = getQueryParam('nama'); // nama penanda tangan (diabaikan)
+        const pesertaId = getQueryParam('peserta_id');
+        const container = document.getElementById('result');
+
+        let approvalsToDisplay = [];
+        let pesertaNama = '';
+        let certData = null;
+
+        if (!nomor && !role) {
+            container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Parameter tidak lengkap. Silakan scan QR yang benar.</div>`;
+            return;
+        }
+
+        try {
+            // 1. Dapatkan nama peserta dari ID (jika ada)
+            if (pesertaId) {
+                const pesertaRes = await callApi('getPesertaById', { id: pesertaId }, 'GET');
+                if (pesertaRes.success && pesertaRes.data && pesertaRes.data.nama_lengkap) {
+                    pesertaNama = pesertaRes.data.nama_lengkap;
+                }
+            }
+
+            // 2. Ambil semua approvals dari sheet DigitalApprovals
+            const approvalsRes = await getAllDigitalApprovals();
+            let approvals = approvalsRes.success ? approvalsRes.data || [] : [];
+
+            // 3. Kasus 1: Verifikasi berdasarkan nomor sertifikat
+            if (nomor) {
+                const certRes = await verifyCertificate(nomor);
+                if (certRes.success && certRes.data) {
+                    certData = certRes.data;
+                    if (!pesertaNama) pesertaNama = certData.nama_peserta;
+                }
+                approvalsToDisplay = approvals.filter(a => 
+                    a.peserta_nama && 
+                    a.peserta_nama.toLowerCase() === (pesertaNama || '').toLowerCase()
+                );
+            } 
+            // 4. Kasus 2: Verifikasi berdasarkan QR dari TTD (role, driveId, peserta_id)
+            else if (role) {
+                // PRIORITAS UTAMA: Jika kita punya nama peserta, gunakan untuk mencari approval
+                if (pesertaNama) {
+                    approvalsToDisplay = approvals.filter(a => 
+                        a.role === role && 
+                        a.peserta_nama && 
+                        a.peserta_nama.toLowerCase().trim() === pesertaNama.toLowerCase().trim()
+                    );
+                }
+                // FALLBACK: Jika tidak ditemukan (atau tidak ada nama peserta), gunakan driveId
+                if (approvalsToDisplay.length === 0) {
+                    const byDrive = approvals.find(a => a.role === role && a.driveId === driveId);
+                    if (byDrive) approvalsToDisplay = [byDrive];
+                }
+            }
+
+            // 5. Jika masih tidak ada approval, tampilkan pesan
+            if (approvalsToDisplay.length === 0) {
+                if (role) {
+                    const roleLabels = { 'ketua_pc': 'Ketua PC', 'sekretaris': 'Sekretaris', 'instruktur': 'Instruktur' };
+                    container.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Persetujuan untuk <strong>${roleLabels[role] || role}</strong> tidak ditemukan atau QR tidak valid.<br><a href="/bisaa/sign_${role}.html" class="alert-link">Kembali ke halaman tanda tangan</a></div>`;
+                } else {
+                    container.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor <strong>${escapeHtml(nomor)}</strong> tidak ditemukan.</div>`;
+                }
                 return;
             }
 
-            try {
-                const approvalsRes = await PKD.getAllDigitalApprovals();
-                let approvals = approvalsRes.success ? approvalsRes.data || [] : [];
-
-                if (nomor) {
-                    const certRes = await PKD.verifyCertificate(nomor);
-                    if (certRes.success && certRes.data) {
-                        certData = certRes.data;
-                        pesertaNama = certData.nama_peserta;
+            // 6. Cari data sertifikat dari sheet SertifikatGenerated
+            let lokasiPKD = 'Kabupaten Bantul';
+            if (pesertaNama || pesertaId) {
+                try {
+                    const rawResponse = await callApi('getUploadedCertificates', {}, 'GET');
+                    let certList = [];
+                    if (Array.isArray(rawResponse)) {
+                        certList = rawResponse;
+                    } else if (rawResponse && typeof rawResponse === 'object' && Array.isArray(rawResponse.data)) {
+                        certList = rawResponse.data;
                     }
-                    approvalsToDisplay = approvals.filter(a => a.peserta_nama && a.peserta_nama.toLowerCase() === (pesertaNama || '').toLowerCase());
-                } else if (role) {
-                    let singleApproval = approvals.find(a => a.role === role && a.driveId === driveId);
-                    if (!singleApproval) singleApproval = approvals.find(a => a.role === role && a.nama && a.nama.trim().toLowerCase() === (nama || '').trim().toLowerCase());
-                    approvalsToDisplay = singleApproval ? [singleApproval] : [];
-                    pesertaNama = nama || '';
 
-                    // 🟢 AMBIL DATA MENTAH DARI API UNTUK DEBUGGING
-                    if (pesertaNama) {
-                        try {
-                            console.log('[DEBUG] Mencari sertifikat untuk nama:', `"${pesertaNama}"`);
-                            
-                            // GUNAKAN CALLAPI LANGSUNG UNTUK MELEWATI CACHE DI API.JS
-                            const rawResponse = await PKD.callApi('getUploadedCertificates', {}, 'GET');
-                            console.log('[DEBUG] RESPONS MENTAH DARI SERVER:', rawResponse);
-
-                            // Coba parsing manual
-                            let certList = [];
-                            if (Array.isArray(rawResponse)) {
-                                certList = rawResponse;
-                            } else if (rawResponse && typeof rawResponse === 'object' && Array.isArray(rawResponse.data)) {
-                                certList = rawResponse.data;
-                            } else {
-                                console.warn('[DEBUG] Format respons tidak dikenali:', typeof rawResponse);
+                    let foundItem = null;
+                    // Cari berdasarkan ID peserta terlebih dahulu
+                    if (pesertaId) {
+                        const normalizeId = (id) => String(id || '').trim();
+                        const pId = normalizeId(pesertaId);
+                        for (let i = 0; i < certList.length; i++) {
+                            const c = certList[i];
+                            const cId = normalizeId(c.peserta_id);
+                            if (cId === pId) {
+                                foundItem = c;
+                                break;
                             }
-
-                            console.log('[DEBUG] Data akhir yang akan diproses (Total item):', certList.length);
-
-                            const normalizeName = (name) => (name || '').trim().toLowerCase().replace(/\s+/g, ' ');
-                            const pName = normalizeName(pesertaNama);
-
-                            let foundItem = null;
-                            for(let i=0; i<certList.length; i++) {
-                                const c = certList[i];
-                                const cName = normalizeName(c.nama_peserta);
-                                if(cName === pName) {
-                                    console.log(`✅ COCOK! Item ke-${i+1}: "${c.nama_peserta}"`);
-                                    foundItem = c;
-                                    break;
-                                }
+                        }
+                    }
+                    // Jika tidak ketemu, cari berdasarkan nama
+                    if (!foundItem && pesertaNama) {
+                        const normalizeName = (name) => (name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+                        const pName = normalizeName(pesertaNama);
+                        for (let i = 0; i < certList.length; i++) {
+                            const c = certList[i];
+                            const cName = normalizeName(c.nama_peserta);
+                            if (cName === pName) {
+                                foundItem = c;
+                                break;
                             }
-                            if (foundItem) certData = foundItem;
-                            else console.warn('❌ Sertifikat TIDAK ditemukan untuk nama:', pesertaNama);
-                        } catch (e) { console.warn('[DEBUG] Gagal mencari data sertifikat:', e); }
+                        }
                     }
-                }
 
-                let lokasiPKD = 'Kabupaten Bantul';
-                if (certData && certData.lokasi && certData.lokasi !== 'Kabupaten Bantul') {
-                    lokasiPKD = certData.lokasi;
-                } else {
-                    try {
-                        const lokasiRes = await PKD.callApi('getPKDLokasi', {}, 'GET');
-                        if (lokasiRes.success && lokasiRes.data) lokasiPKD = lokasiRes.data;
-                    } catch (e) {}
-                }
-
-                if (approvalsToDisplay.length === 0) {
-                    if (role) {
-                        const roleLabels = { 'ketua_pc': 'Ketua PC', 'sekretaris': 'Sekretaris', 'instruktur': 'Instruktur' };
-                        container.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Persetujuan untuk <strong>${roleLabels[role] || role}</strong> tidak ditemukan atau QR tidak valid.<br><a href="/bisaa/sign_${role}.html" class="alert-link">Kembali ke halaman tanda tangan</a></div>`;
-                    } else {
-                        container.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>Sertifikat dengan nomor <strong>${escapeHtml(nomor)}</strong> tidak ditemukan.</div>`;
+                    if (foundItem) {
+                        certData = foundItem;
+                        if (certData.lokasi && certData.lokasi !== 'Kabupaten Bantul') {
+                            lokasiPKD = certData.lokasi;
+                        }
                     }
-                    return;
+                } catch (e) {
+                    console.warn('Gagal mencari data sertifikat:', e);
                 }
-
-                let html = `
-                    <div class="approval-card">
-                        <div class="approval-icon"><i class="bi bi-check-circle-fill"></i></div>
-                        <div class="mt-3"><span class="status-badge bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>✅ SAH & DISETUJUI</span></div>
-                        <div class="mt-4 text-start">
-                            <div class="detail-item"><strong>Nomor Sertifikat</strong><br><span class="fw-bold">${certData ? escapeHtml(certData.nomor_sertifikat) : '-'}</span> ${!certData ? `<br><small class="text-warning">* Data sertifikat tidak ditemukan di Database (Pastikan sudah di-Generate Admin)</small>` : ''}</div>
-                            <div class="detail-item"><strong>Nama Peserta</strong><br><span class="fw-bold">${escapeHtml(pesertaNama || '-')}</span></div>
-                            <div class="detail-item"><strong>Lokasi PKD</strong><br><span class="text-muted">${escapeHtml(lokasiPKD)}</span></div>
-                            <div class="detail-item"><strong>Tanggal Penerbitan</strong><br><span class="text-muted">${certData ? formatDate(certData.createdAt) : '-'}</span> ${!certData ? `<br><small class="text-warning">* Menunggu penerbitan Admin</small>` : ''}</div>
-                        </div>
-                        <hr>
-                        <div class="selamat">🎉 Selamat bergabung! 🎉</div>
-                        <p class="mt-2">Dinyatakan <strong>LULUS</strong> dalam Pelatihan Kaderisasi Dasar (PKD) Pimpinan Cabang Gerakan Pemuda Ansor Kabupaten Bantul.<br>Atas kelulusan ini, Anda resmi menjadi bagian dari keluarga besar GP Ansor.</p>
-                        <hr>
-                        <h6 class="fw-bold mt-3"><i class="bi bi-pencil-square me-2"></i>Persetujuan Digital</h6>
-                        <p class="small text-muted">Dokumen ini telah disetujui secara digital oleh:</p>
-                `;
-                approvalsToDisplay.forEach(a => {
-                    html += `<div class="detail-item"><strong>${getRoleLabel(a.role)}</strong><br><span class="fw-bold">${escapeHtml(a.nama)}</span>${a.kegunaan ? `<br><span class="text-muted small">${escapeHtml(a.kegunaan)}</span>` : ''}</div>`;
-                });
-                html += `<div class="text-center mt-3">${certData && certData.pdf_url ? `<a href="${escapeHtml(certData.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success">Lihat Sertifikat PDF</a>` : ''}</div></div>`;
-                container.innerHTML = html;
-
-            } catch (err) {
-                container.innerHTML = `<div class="alert alert-danger">Gagal memuat data: ${escapeHtml(err.message)}</div>`;
             }
+
+            // Jika lokasi masih default, ambil dari pengaturan
+            if (lokasiPKD === 'Kabupaten Bantul') {
+                try {
+                    const lokasiRes = await getPKDLokasi();
+                    if (lokasiRes.success && lokasiRes.data) lokasiPKD = lokasiRes.data;
+                } catch (e) {}
+            }
+
+            // 7. Render hasil
+            let html = `
+                <div class="approval-card">
+                    <div class="approval-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="mt-3"><span class="status-badge bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i>✅ SAH & DISETUJUI</span></div>
+                    <div class="mt-4 text-start">
+                        <div class="detail-item"><strong>Nomor Sertifikat</strong><br><span class="fw-bold">${certData ? escapeHtml(certData.nomor_sertifikat) : '-'}</span> ${!certData ? `<br><small class="text-warning">* Data sertifikat tidak ditemukan di Database (Pastikan sudah di-Generate Admin)</small>` : ''}</div>
+                        <div class="detail-item"><strong>Nama Peserta</strong><br><span class="fw-bold">${escapeHtml(pesertaNama || '-')}</span></div>
+                        <div class="detail-item"><strong>Lokasi PKD</strong><br><span class="text-muted">${escapeHtml(lokasiPKD)}</span></div>
+                        <div class="detail-item"><strong>Tanggal Penerbitan</strong><br><span class="text-muted">${certData ? formatDate(certData.createdAt) : '-'}</span> ${!certData ? `<br><small class="text-warning">* Menunggu penerbitan Admin</small>` : ''}</div>
+                    </div>
+                    <hr>
+                    <div class="selamat">🎉 Selamat bergabung! 🎉</div>
+                    <p class="mt-2">Dinyatakan <strong>LULUS</strong> dalam Pelatihan Kaderisasi Dasar (PKD) Pimpinan Cabang Gerakan Pemuda Ansor Kabupaten Bantul.<br>Atas kelulusan ini, Anda resmi menjadi bagian dari keluarga besar GP Ansor.</p>
+                    <hr>
+                    <h6 class="fw-bold mt-3"><i class="bi bi-pencil-square me-2"></i>Persetujuan Digital</h6>
+                    <p class="small text-muted">Dokumen ini telah disetujui secara digital oleh:</p>
+            `;
+            approvalsToDisplay.forEach(a => {
+                html += `<div class="detail-item"><strong>${getRoleLabel(a.role)}</strong><br><span class="fw-bold">${escapeHtml(a.nama)}</span>${a.kegunaan ? `<br><span class="text-muted small">${escapeHtml(a.kegunaan)}</span>` : ''}</div>`;
+            });
+            html += `<div class="text-center mt-3">${certData && certData.pdf_url ? `<a href="${escapeHtml(certData.pdf_url)}" target="_blank" class="btn btn-sm btn-outline-success">Lihat Sertifikat PDF</a>` : ''}</div></div>`;
+            container.innerHTML = html;
+
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Gagal memuat data: ${escapeHtml(err.message)}</div>`;
         }
-        document.addEventListener('DOMContentLoaded', verifyApproval);
+    }
+
+    // ==========================================================
+    //   BOOT APP
+    // ==========================================================
+    (function boot() {
+        // Update navbar user menu
+        updateNavbarMenu();
+
+        // Jalankan verifikasi
+        verifyApproval();
     })();
+
 </script>
 </body>
 </html>

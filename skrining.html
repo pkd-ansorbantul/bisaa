@@ -1,802 +1,859 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Skrining PKD - GP Ansor Bantul</title>
-    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #f8fafc; color: #0f172a; min-height: 100vh; }
-        .navbar { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(203,213,225,0.3); }
-        .navbar-brand img { max-height: 40px; margin-right: 12px; }
-        .brand-title { font-size: 1.35rem; font-weight: 700; color: #0a3d62; }
-        .brand-sub { font-size: 0.9rem; color: #6c757d; display: block; }
-        .container-card {
-            max-width: 1000px;
-            background: white;
-            border-radius: 32px;
-            padding: 2rem;
-            margin: 30px auto;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-            border: 1px solid rgba(226,232,240,0.6);
-        }
-        .section-title {
-            font-weight: 650;
-            font-size: 1.75rem;
-            border-left: 6px solid #2563eb;
-            padding-left: 1.2rem;
-            margin-bottom: 1.8rem;
-        }
-        .signature-area { border: 2px dashed #cbd5e1; border-radius: 20px; background: white; padding: 12px; }
-        canvas { width: 100%; height: auto; max-width: 300px; max-height: 150px; background: white; display: block; border-radius: 12px; margin: 0 auto; }
-        .signature-buttons { display: flex; gap: 12px; margin-top: 12px; justify-content: center; }
-        .btn-signature { border-radius: 9999px; padding: 0.4rem 1.6rem; font-size: 0.9rem; }
-        .footer-modern {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-top: 3rem;
-            text-align: center;
-            padding: 1.5rem 0;
-            border-top: 1px solid #e2e8f0;
-            background: white;
-        }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .form-section { margin-bottom: 1.5rem; }
-        .form-section .form-label { font-weight: 600; color: #1e293b; }
-        .form-section .form-control, .form-section .form-select {
-            border-radius: 12px;
-            border: 1.5px solid #e2e8f0;
-            padding: 0.6rem 1rem;
-        }
-        .form-section .form-control:focus, .form-section .form-select:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-        }
-        .preview-table th { width: 35%; background: #f8fafc; }
-        .preview-table td { background: white; }
-        .preview-signature { border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; max-width: 200px; }
-        .question-number {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            background: #2563eb;
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 28px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-right: 8px;
-        }
-        .radio-group .form-check { margin-right: 1.5rem; }
-        .radio-group .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
-        .cache-status {
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: #f1f5f9;
-            display: inline-block;
-        }
-        .cache-status.live { background: #dcfce7; color: #16a34a; }
-        .cache-status.offline { background: #fee2e2; color: #dc2626; }
-        .refresh-btn {
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        @media (max-width: 576px) {
-            .container-card { padding: 1rem; }
-            .refresh-btn { width: 40px; height: 40px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Skrining PKD · GP Ansor Bantul</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Signature Pad -->
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+  <style>
+    /* ===== GLOBAL RESET ===== */
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* --- HEADER MINIMALIS ELEGAN --- */
+    .header-minimal {
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+      padding-top: 0 !important; padding-bottom: 0 !important;
+    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .btn-back {
+      background: rgba(37, 99, 235, 0.08); color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-back:hover { background: #2563eb; color: white; transform: translateX(-3px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
+    .brand-logo-mini:hover { transform: scale(1.05); }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* --- GLASS CARD --- */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      padding: 1.5rem;
+      position: relative;
+      overflow: visible !important;
+    }
+    .glass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.2); }
+
+    /* --- SKELETON --- */
+    .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+    /* --- MODE SWITCH --- */
+    .mode-switch-wrapper { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+    .mode-switch-btn {
+      background: #f1f5f9; border-radius: 9999px; padding: 4px; display: inline-flex; position: relative;
+    }
+    .mode-switch-btn .btn-option {
+      border-radius: 9999px; padding: 0.5rem 1.5rem; font-weight: 500; transition: all 0.2s;
+      cursor: pointer; border: none; background: transparent; color: #64748b;
+    }
+    .mode-switch-btn .btn-option.active { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); color: #2563eb; }
+    .mode-switch-btn .btn-option:hover:not(.active) { background: rgba(255,255,255,0.5); }
+
+    /* --- SIGNATURE AREA --- */
+    .signature-area {
+      border: 2px dashed #cbd5e1; border-radius: 20px; background: white; padding: 12px;
+      transition: border-color 0.2s;
+    }
+    .signature-area:hover { border-color: #2563eb; }
+    .signature-area canvas {
+      width: 100%; height: auto; max-width: 300px; max-height: 150px;
+      background: white; display: block; border-radius: 12px; margin: 0 auto; touch-action: none;
+    }
+
+    /* --- WIZARD INDICATOR (BISA DIKLIK!) --- */
+    .wizard-indicator { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .wizard-indicator .dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #e2e8f0; transition: all 0.3s ease;
+      cursor: pointer; border: none; padding: 0;
+    }
+    .wizard-indicator .dot:hover { transform: scale(1.15); }
+    .wizard-indicator .dot.active { background: #2563eb; transform: scale(1.3); }
+    .wizard-indicator .dot.completed { background: #22c55e; }
+
+    .question-number {
+      display: inline-block; width: 28px; height: 28px; background: #2563eb; color: white;
+      border-radius: 50%; text-align: center; line-height: 28px; font-size: 0.8rem; font-weight: 600;
+      margin-right: 8px;
+    }
+    .radio-group .form-check { margin-right: 1.5rem; }
+    .radio-group .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
+
+    /* --- FOOTER --- */
+    .footer-modern {
+      font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center;
+      padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 576px) {
+      .glass-card { border-radius: 16px; padding: 1rem !important; }
+      .header-minimal .container { padding: 0 0.5rem; }
+      .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
+      .brand-title-mini { display: none; } .brand-sub-mini { display: none; }
+      .signature-area canvas { max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-white sticky-top shadow-sm">
-    <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
-            <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="me-2">
-            <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
+  <!-- ================= HEADER ================= -->
+  <header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
+        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <div><div class="brand-title-mini">PKD GP Ansor</div><span class="brand-sub-mini">Kabupaten Bantul</span></div>
         </a>
-        <div class="ms-auto d-flex align-items-center gap-2">
-            <button class="btn btn-outline-secondary refresh-btn" id="refreshBtn" title="Segarkan Data">
-                <i class="bi bi-arrow-clockwise"></i>
-            </button>
-            <a href="/bisaa/index.html" class="btn btn-outline-primary rounded-pill px-4">
-                <i class="bi bi-arrow-left"></i> Kembali
-            </a>
+      </div>
+      <div id="navbarUserMenu" class="user-menu-area"></div>
+    </div>
+  </header>
+
+  <!-- ================= KONTEN ================= -->
+  <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 1000px;">
+    <div class="glass-card p-4 fade-up">
+      <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Form Skrining PKD</h2>
+      
+      <div class="mode-switch-wrapper">
+        <div class="mode-switch-btn">
+          <button class="btn-option active" id="modeWizardBtn" data-mode="wizard"><i class="bi bi-arrow-right-circle me-1"></i> Bertahap</button>
+          <button class="btn-option" id="modeAllBtn" data-mode="all"><i class="bi bi-list-ul me-1"></i> Tampil Semua</button>
         </div>
-    </div>
-</nav>
+      </div>
 
-<!-- Konten utama -->
-<div id="contentArea" class="container container-card">
-    <h2 class="section-title"><i class="bi bi-clipboard-check me-2"></i>Form Skrining PKD</h2>
-    <div id="skriningFormContainer">
-        <!-- Akan diisi oleh JavaScript -->
+      <div id="skriningFormContainer" style="position: relative; width: 100%; min-height: 350px; overflow: visible !important;">
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Footer -->
-<footer class="footer-modern container">
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
-        <i class="bi bi-c-circle"></i>
-        <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+      <i class="bi bi-c-circle"></i>
+      <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
     </div>
-</footer>
+  </footer>
 
-<!-- Modal preview skrining -->
-<div class="modal fade" id="previewSkriningModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-                <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Preview Data Skrining</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4" id="previewSkriningBody">
-                <div class="text-center"><div class="spinner-border text-primary"></div></div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-success rounded-pill px-4" id="previewKirimBtn">📤 Kirim Skrining</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Toast notifikasi -->
-<div class="toast-container">
+  <!-- ================= TOAST ================= -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
     <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-        <div class="toast-header bg-white border-0">
-            <i class="bi me-2" id="toastIcon"></i>
-            <strong class="me-auto" id="toastTitle">Berhasil</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body" id="toastMessage"></div>
+      <div class="toast-header bg-white border-0">
+        <i class="bi me-2" id="toastIcon"></i>
+        <strong class="me-auto" id="toastTitle">Berhasil</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body" id="toastMessage"></div>
     </div>
-</div>
+  </div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-<script src="/bisaa/dataCache.js"></script>
-<script src="/bisaa/api.js"></script>
+  <!-- ================= MODAL PREVIEW & KONFIRMASI ================= -->
+  <div class="modal fade" id="previewModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title" id="previewModalTitle"><i class="bi bi-eye me-2"></i>Preview & Konfirmasi Data Skrining</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
+          <p class="text-muted mb-3">Berikut adalah total semua jawaban Anda. Periksa kembali sebelum mengirim.</p>
+          <div id="summaryContent" class="row g-2"></div>
+        </div>
+        <div class="modal-footer border-0 justify-content-between">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="modalEditBtn"><i class="bi bi-pencil me-1"></i> Kembali (Edit)</button>
+          <button type="button" class="btn btn-success rounded-pill px-4" id="modalFinalSubmitBtn"><i class="bi bi-check-circle-fill me-1"></i> Ya, Kirim Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script>
-    (function() {
-        'use strict';
+  <!-- ================= SCRIPTS ================= -->
+  <!-- Library Eksternal (tetap sebagai script biasa) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        // =====================================================
-        //   STATE & CONFIG
-        // =====================================================
-        let questions = [];
-        let sigPad = null;
-        let isSubmitting = false;
-        let isRefreshing = false;
-        let isInitialLoad = true;
-        const FORM_STATE_KEY = 'skriningFormState';
+  <!-- Modul ES Khusus Halaman Ini -->
+  <script type="module">
+    // ==========================================================
+    //   IMPOR DARI CORE API (ES Modules)
+    // ==========================================================
+    import {
+      guardPublicAccess,
+      getSkriningQuestions,
+      submitSkrining,
+      showToast,
+      updateNavbarMenu
+    } from './js/core/api.js';
 
-        // =====================================================
-        //   UTILITY FUNCTIONS
-        // =====================================================
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                if (m === '"') return '&quot;';
-                return m;
-            });
-        }
+    // ==========================================================
+    //   STATE & VARIABLES
+    // ==========================================================
+    let questions = [],
+        sigPad = null,
+        isSubmitting = false,
+        currentStep = 0,
+        currentMode = 'wizard';
+    const FORM_STATE_KEY = 'skriningFormState';
 
-        function showToast(message, type = 'success') {
-            const toastEl = document.getElementById('notificationToast');
-            if (!toastEl) return;
-            const toast = new bootstrap.Toast(toastEl);
-            document.getElementById('toastMessage').innerText = message;
-            const icon = document.getElementById('toastIcon');
-            if (type === 'success') {
-                icon.className = 'bi bi-check-circle-fill text-success';
-                document.getElementById('toastTitle').innerText = 'Berhasil';
-            } else if (type === 'error') {
-                icon.className = 'bi bi-x-circle-fill text-danger';
-                document.getElementById('toastTitle').innerText = 'Gagal';
+    // ==========================================================
+    //   UTILITY
+    // ==========================================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"]/g, m => {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        return m;
+      });
+    }
+
+    function showToastLocal(message, type = 'success') { showToast(message, type); }
+
+    function generateFieldName(teks) {
+      return teks.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '_').substring(0, 50);
+    }
+
+    function isLongText(teks) {
+      const keywords = ['alamat', 'pengetahuan', 'alasan', 'catatan', 'deskripsi', 'riwayat'];
+      return keywords.some(k => teks.toLowerCase().includes(k));
+    }
+
+    function getPlaceholder(teks) {
+      const lower = teks.toLowerCase();
+      if (lower.includes('nama lengkap')) return 'Contoh: Ulinnuha atau Ahmad Fauzi';
+      if (lower.includes('alamat')) return 'Contoh: Jl. Imogiri Timur KM 10, Bantul, D.I.Yogyakarta';
+      if (lower.includes('info rekrutmen') || lower.includes('info')) return 'Contoh: Instagram / WhatsApp / Teman / Website resmi';
+      if (lower.includes('pengetahuan tentang ansor')) return 'Contoh: Sudah cukup paham / Baru tahu dari teman / Belum tahu sama sekali';
+      if (lower.includes('riwayat penyakit')) return 'Contoh: Tidak ada / Asma ringan / Hipertensi (jika ada)';
+      if (lower.includes('alasan tertarik') || lower.includes('alasan')) return 'Contoh: Ingin menjadi kader yang bermanfaat bagi masyarakat & NU';
+      if (lower.includes('catatan')) return 'Contoh: Saya siap mengikuti seluruh rangkaian acara PKD.';
+      return isLongText(teks) ? 'Tuliskan jawaban Anda secara lengkap...' : 'Masukkan jawaban Anda...';
+    }
+
+    function saveFormState() {
+      const form = document.getElementById('formSkriningDinamis');
+      if (!form) return;
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((v, k) => data[k] = v);
+      data.currentMode = currentMode;
+      data.currentStep = currentStep;
+      if (sigPad && !sigPad.isEmpty()) data.signatureData = sigPad.toData();
+      try { localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function restoreFormState() {
+      const saved = localStorage.getItem(FORM_STATE_KEY);
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        const form = document.getElementById('formSkriningDinamis');
+        if (!form) return;
+        if (data.currentMode) currentMode = data.currentMode;
+        if (data.currentStep !== undefined) currentStep = data.currentStep;
+        document.getElementById('modeWizardBtn').classList.toggle('active', currentMode === 'wizard');
+        document.getElementById('modeAllBtn').classList.toggle('active', currentMode === 'all');
+        Object.keys(data).forEach(key => {
+          if (key === 'signatureData' || key === 'currentMode' || key === 'currentStep') return;
+          const field = form.querySelector(`[name="${key}"]`);
+          if (field) {
+            if (field.type === 'radio' || field.type === 'checkbox') {
+              field.checked = (field.value === data[key]);
             } else {
-                icon.className = 'bi bi-info-circle-fill text-primary';
-                document.getElementById('toastTitle').innerText = 'Info';
+              field.value = data[key];
             }
-            toast.show();
+          }
+        });
+        if (data.signatureData && sigPad) sigPad.fromData(data.signatureData);
+      } catch (e) {}
+    }
+
+    function clearFormState() { localStorage.removeItem(FORM_STATE_KEY); }
+
+    // ==========================================================
+    //   🔥 RENDER SKELETON (Didefinisikan di awal)
+    // ==========================================================
+    function renderSkeletonForm(container) {
+      if (!container) return;
+      console.log("🟡 Menampilkan SKELETON Skrining...");
+      let html = `
+        <h4 class="mb-4">📝 Memuat data skrining...</h4>
+        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+          <div class="mb-3"><div class="skeleton-box" style="height:16px;width:120px;margin-bottom:6px;"></div><div class="skeleton-box" style="height:40px;width:100%;border-radius:8px;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height:16px;width:120px;margin-bottom:6px;"></div><div class="skeleton-box" style="height:40px;width:100%;border-radius:8px;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height:16px;width:120px;margin-bottom:6px;"></div><div class="skeleton-box" style="height:80px;width:100%;border-radius:8px;"></div></div>
+          <div class="text-center mt-4"><div class="skeleton-box" style="height:48px;width:200px;border-radius:50px;"></div></div>
+        </div>
+      `;
+      container.innerHTML = html;
+      container.classList.add('fade-up');
+    }
+
+    // ==========================================================
+    //   RENDER FORM
+    // ==========================================================
+    function renderForm() {
+      const container = document.getElementById('skriningFormContainer');
+      if (!questions || questions.length === 0) {
+        container.innerHTML = `<div class="alert alert-warning border-0 shadow-sm glass-card"><i class="bi bi-exclamation-triangle me-2"></i>Belum ada pertanyaan skrining.</div>`;
+        return;
+      }
+      const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+      if (currentMode === 'wizard') {
+        renderFormWizardAllAtOnce(container, sorted);
+      } else {
+        renderFormAll(container, sorted);
+      }
+    }
+
+    // ==========================================================
+    //   🔥 METODE UTAMA: WIZARD
+    // ==========================================================
+    function renderFormWizardAllAtOnce(container, sorted) {
+      let indicatorHtml = `<div class="wizard-indicator" id="wizardIndicatorContainer">`;
+      const totalSteps = sorted.length + 1;
+      for (let i = 0; i < totalSteps; i++) {
+        const cls = i === currentStep ? 'active' : (i < currentStep ? 'completed' : '');
+        indicatorHtml += `<button type="button" class="dot ${cls}" data-step-index="${i}"></button>`;
+      }
+      indicatorHtml += `</div>`;
+
+      const stepsArray = [];
+      let idx = 0;
+      sorted.forEach(q => {
+        const fieldName = generateFieldName(q.teks);
+        const displayStyle = idx === 0 ? 'block' : 'none';
+        let stepHtml = `<div id="step-${idx}" style="display: ${displayStyle}; width: 100%; position: relative; min-height: 150px; margin-top: 15px;">`;
+        stepHtml += `<div class="form-section">`;
+        stepHtml += `<label class="form-label"><span class="question-number">${idx + 1}</span>${escapeHtml(q.teks)}${q.jenis !== 'radio' ? ' <span class="text-danger">*</span>' : ''}</label>`;
+
+        if (q.jenis === 'radio') {
+          const options = (q.opsi || '').split(',').filter(s => s.trim() !== '');
+          stepHtml += `<div class="radio-group">`;
+          options.forEach((opt, i) => {
+            stepHtml += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${fieldName}" value="${opt.trim()}" id="${fieldName}_${i}" ${i === 0 ? 'checked' : ''}><label class="form-check-label" for="${fieldName}_${i}">${opt.trim()}</label></div>`;
+          });
+          stepHtml += `</div>`;
+        } else {
+          const placeholder = getPlaceholder(q.teks);
+          if (isLongText(q.teks)) {
+            stepHtml += `<textarea class="form-control" name="${fieldName}" rows="3" placeholder="${escapeHtml(placeholder)}" required></textarea>`;
+          } else {
+            stepHtml += `<input type="text" class="form-control" name="${fieldName}" placeholder="${escapeHtml(placeholder)}" required>`;
+          }
         }
 
-        function generateFieldName(teks) {
-            return teks.toLowerCase()
-                .replace(/[^a-z0-9\s]/g, '')
-                .replace(/\s+/g, '_')
-                .substring(0, 50);
+        stepHtml += `<div class="mt-3 d-flex justify-content-between align-items-center">`;
+        if (idx > 0) {
+          stepHtml += `<button type="button" class="btn btn-outline-secondary btn-sm rounded-pill prev-step" data-step="${idx}"><i class="bi bi-arrow-left me-1"></i> Sebelumnya</button>`;
+        } else {
+          stepHtml += `<div></div>`;
+        }
+        if (idx < sorted.length - 1) {
+          stepHtml += `<button type="button" class="btn btn-primary btn-sm rounded-pill next-step" data-step="${idx}">Selanjutnya <i class="bi bi-arrow-right ms-1"></i></button>`;
+        } else {
+          stepHtml += `<button type="button" class="btn btn-primary btn-sm rounded-pill next-step" data-step="${idx}">Selanjutnya <i class="bi bi-arrow-right ms-1"></i></button>`;
+        }
+        stepHtml += `</div>`;
+        stepHtml += `</div>`;
+        stepHtml += `</div>`;
+        stepsArray.push(stepHtml);
+        idx++;
+      });
+
+      const sigDisplay = idx === currentStep ? 'block' : 'none';
+      let sigHtml = `<div id="step-${idx}" style="display: ${sigDisplay}; width: 100%; position: relative; min-height: 150px; margin-top: 15px;">`;
+      sigHtml += `
+        <div class="form-section">
+          <label class="form-label fw-bold"><span class="question-number">${idx + 1}</span>✍️ Tanda Tangan Assessor</label>
+          <div class="signature-area"><canvas id="signatureCanvasSkrining" width="300" height="150"></canvas></div>
+          <div class="signature-buttons mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSkriningSign"><i class="bi bi-eraser me-1"></i> Hapus</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="undoSkriningSign"><i class="bi bi-arrow-counterclockwise me-1"></i> Undo</button>
+          </div>
+        </div>
+        <div class="mt-3 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill prev-step" data-step="${idx}"><i class="bi bi-arrow-left me-1"></i> Sebelumnya</button>
+          <button type="button" class="btn btn-outline-primary btn-lg rounded-pill px-5" id="previewAnswersBtn"><i class="bi bi-eye me-1"></i> Preview Semua Jawaban</button>
+          <button type="submit" class="btn btn-success btn-lg rounded-pill px-5">📤 Kirim Skrining</button>
+        </div>
+      `;
+      sigHtml += `</div>`;
+      stepsArray.push(sigHtml);
+
+      const formHtml = `${indicatorHtml}<form id="formSkriningDinamis" novalidate>${stepsArray.join('')}</form>`;
+      container.innerHTML = formHtml;
+      container.classList.add('fade-up');
+
+      initSignaturePad();
+      handleWizardNavigation();
+      handlePreviewButton();
+      handleSubmit();
+
+      setTimeout(() => restoreFormState(), 100);
+    }
+
+    function renderFormAll(container, sorted) {
+      let questionsHtml = '';
+      let stepIndex = 0;
+      sorted.forEach(q => {
+        const fieldName = generateFieldName(q.teks);
+        const placeholder = getPlaceholder(q.teks);
+        questionsHtml += `<div class="form-section mb-4 pb-3 border-bottom border-light">`;
+        questionsHtml += `<label class="form-label"><span class="question-number">${stepIndex + 1}</span>${escapeHtml(q.teks)}${q.jenis !== 'radio' ? ' <span class="text-danger">*</span>' : ''}</label>`;
+        if (q.jenis === 'radio') {
+          const options = (q.opsi || '').split(',').filter(s => s.trim() !== '');
+          questionsHtml += `<div class="radio-group">`;
+          options.forEach((opt, idx) => {
+            questionsHtml += `<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="${fieldName}" value="${opt.trim()}" id="${fieldName}_${idx}" ${idx === 0 ? 'checked' : ''}><label class="form-check-label" for="${fieldName}_${idx}">${opt.trim()}</label></div>`;
+          });
+          questionsHtml += `</div>`;
+        } else {
+          if (isLongText(q.teks)) {
+            questionsHtml += `<textarea class="form-control" name="${fieldName}" rows="3" placeholder="${escapeHtml(placeholder)}" required></textarea>`;
+          } else {
+            questionsHtml += `<input type="text" class="form-control" name="${fieldName}" placeholder="${escapeHtml(placeholder)}" required>`;
+          }
+        }
+        questionsHtml += `</div>`;
+        stepIndex++;
+      });
+      const formHtml = `
+        <form id="formSkriningDinamis" novalidate>
+          ${questionsHtml}
+          <div class="form-section mt-4">
+            <label class="form-label fw-bold">✍️ Tanda Tangan Assessor</label>
+            <div class="signature-area"><canvas id="signatureCanvasSkrining" width="300" height="150"></canvas></div>
+            <div class="signature-buttons mt-2 d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSkriningSign"><i class="bi bi-eraser me-1"></i> Hapus</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="undoSkriningSign"><i class="bi bi-arrow-counterclockwise me-1"></i> Undo</button>
+            </div>
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+              <button type="button" class="btn btn-outline-primary btn-lg rounded-pill px-5" id="previewAnswersBtn"><i class="bi bi-eye me-1"></i> Preview Semua Jawaban</button>
+              <button type="submit" class="btn btn-success btn-lg rounded-pill px-5">📤 Kirim Skrining</button>
+            </div>
+          </div>
+        </form>
+      `;
+      container.innerHTML = formHtml;
+      container.classList.add('fade-up');
+      initSignaturePad();
+      handlePreviewButton();
+      handleSubmit();
+      setTimeout(() => restoreFormState(), 50);
+    }
+
+    function initSignaturePad() {
+      const canvas = document.getElementById('signatureCanvasSkrining');
+      if (canvas) {
+        if (sigPad) { sigPad.clear(); sigPad = null; }
+        sigPad = new SignaturePad(canvas, { backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3 });
+        sigPad.clear();
+        document.getElementById('clearSkriningSign')?.addEventListener('click', () => { sigPad.clear(); saveFormState(); });
+        document.getElementById('undoSkriningSign')?.addEventListener('click', () => {
+          const data = sigPad.toData();
+          if (data && data.length > 0) { data.pop(); sigPad.fromData(data); saveFormState(); }
+        });
+        sigPad.addEventListener('endStroke', saveFormState);
+      }
+    }
+
+    // ==========================================================
+    //   NAVIGASI
+    // ==========================================================
+    function handleWizardNavigation() {
+      document.querySelectorAll('.wizard-indicator .dot').forEach(dot => {
+        dot.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetStep = parseInt(this.dataset.stepIndex);
+          jumpToStep(targetStep);
+        });
+      });
+
+      document.querySelectorAll('.next-step').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const current = parseInt(this.dataset.step);
+          const currentStepDiv = document.getElementById('step-' + current);
+          if (!currentStepDiv) return;
+
+          function isVisible(el) {
+            return el.getClientRects().length > 0 && window.getComputedStyle(el).display !== 'none' && el.offsetWidth > 0 && el.offsetHeight > 0;
+          }
+
+          const inputs = Array.from(currentStepDiv.querySelectorAll('input[required], textarea[required], select[required]')).filter(el => isVisible(el));
+
+          let valid = true;
+          let firstEmptyInput = null;
+          inputs.forEach(inp => { inp.style.borderColor = ''; });
+
+          inputs.forEach(inp => {
+            let isEmpty = false;
+            if (inp.type === 'radio') {
+              const name = inp.name;
+              const checked = currentStepDiv.querySelector(`input[name="${name}"]:checked`);
+              if (!checked) isEmpty = true;
+            } else if (inp.tagName === 'SELECT') {
+              if (!inp.value || inp.value === '') isEmpty = true;
+            } else {
+              if (!inp.value.trim()) isEmpty = true;
+            }
+            if (isEmpty) {
+              valid = false;
+              if (!firstEmptyInput) firstEmptyInput = inp;
+            }
+          });
+
+          if (!valid) {
+            if (firstEmptyInput) {
+              firstEmptyInput.style.borderColor = '#dc3545';
+              firstEmptyInput.focus();
+              setTimeout(() => { firstEmptyInput.style.borderColor = ''; }, 3000);
+            }
+            showToastLocal('Harap isi semua field wajib pada langkah ini!', 'warning');
+            return;
+          }
+
+          jumpToStep(current + 1);
+        });
+      });
+
+      document.querySelectorAll('.prev-step').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const current = parseInt(this.dataset.step);
+          if (current > 0) jumpToStep(current - 1);
+        });
+      });
+    }
+
+    function jumpToStep(targetStep) {
+      const totalSteps = document.querySelectorAll('[id^="step-"]').length;
+      if (targetStep < 0 || targetStep >= totalSteps) return;
+
+      currentStep = targetStep;
+      saveFormState();
+
+      document.querySelectorAll('[id^="step-"]').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+      });
+
+      const targetEl = document.getElementById('step-' + targetStep);
+      if (targetEl) {
+        targetEl.style.display = 'block';
+        targetEl.classList.add('active');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      document.querySelectorAll('.wizard-indicator .dot').forEach(dot => {
+        const idx = parseInt(dot.dataset.stepIndex);
+        dot.classList.remove('active', 'completed');
+        if (idx === targetStep) dot.classList.add('active');
+        else if (idx < targetStep) dot.classList.add('completed');
+      });
+
+      console.log(`✅ Pindah ke langkah ${targetStep}`);
+    }
+
+    // ==========================================================
+    //   PREVIEW & SUBMIT
+    // ==========================================================
+    function extractCurrentFormData() {
+      const form = document.getElementById('formSkriningDinamis');
+      const formData = new FormData(form);
+      const answers = {};
+      formData.forEach((v, k) => answers[k] = v);
+
+      const signatureDataURL = sigPad ? sigPad.toDataURL('image/jpeg', 0.3) : null;
+      const params = { signature: signatureDataURL };
+      const fixedFields = ['nama', 'alamat', 'info', 'pengetahuan', 'qunut', 'penyakit', 'pernah', 'alasan', 'catatan'];
+      const dataJson = {};
+      const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
+
+      sorted.forEach(q => {
+        const fieldName = generateFieldName(q.teks);
+        const value = answers[fieldName] || '';
+        let isFixed = false;
+        const lowerTeks = q.teks.toLowerCase();
+        for (const f of fixedFields) {
+          if (lowerTeks.includes(f)) { params[f] = value; isFixed = true; break; }
+        }
+        if (!isFixed) dataJson[fieldName] = value;
+      });
+      params.dataJson = JSON.stringify(dataJson);
+
+      return { params, sorted, answers };
+    }
+
+    function handlePreviewButton() {
+      document.getElementById('previewAnswersBtn')?.addEventListener('click', function() {
+        if (!sigPad || sigPad.isEmpty()) {
+          showToastLocal('Mohon isi tanda tangan terlebih dahulu sebelum preview.', 'warning');
+          return;
+        }
+        const data = extractCurrentFormData();
+        showSummaryModal(data.params, data.sorted, data.answers, true);
+      });
+    }
+
+    function handleSubmit() {
+      document.getElementById('formSkriningDinamis')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (isSubmitting) return;
+        const data = extractCurrentFormData();
+        const { params, sorted, answers } = data;
+
+        function isVisible(el) {
+          return el.getClientRects().length > 0 && window.getComputedStyle(el).display !== 'none';
         }
 
-        function isLongText(teks) {
-            const keywords = ['alamat', 'pengetahuan', 'alasan', 'catatan', 'deskripsi', 'riwayat'];
-            return keywords.some(k => teks.toLowerCase().includes(k));
-        }
-
-        function saveFormState() {
-            const form = document.getElementById('formSkriningDinamis');
-            if (!form) return;
-            const formData = new FormData(form);
-            const data = {};
-            formData.forEach((v, k) => data[k] = v);
-            if (sigPad && !sigPad.isEmpty()) {
-                data.signatureData = sigPad.toData();
-            }
-            try {
-                localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data));
-            } catch (e) {}
-        }
-
-        function restoreFormState() {
-            const saved = localStorage.getItem(FORM_STATE_KEY);
-            if (!saved) return;
-            try {
-                const data = JSON.parse(saved);
-                const form = document.getElementById('formSkriningDinamis');
-                if (!form) return;
-                Object.keys(data).forEach(key => {
-                    if (key === 'signatureData') return;
-                    const field = form.querySelector(`[name="${key}"]`);
-                    if (field) {
-                        if (field.type === 'radio' || field.type === 'checkbox') {
-                            field.checked = (field.value === data[key]);
-                        } else {
-                            field.value = data[key];
-                        }
-                    }
-                });
-                if (data.signatureData && sigPad) {
-                    sigPad.fromData(data.signatureData);
-                }
-            } catch (e) {}
-        }
-
-        function clearFormState() {
-            localStorage.removeItem(FORM_STATE_KEY);
-        }
-
-        function getDefaultQuestions() {
-            return [
-                { id: 1, teks: 'Nama Lengkap', jenis: 'text', opsi: '', urutan: 1 },
-                { id: 2, teks: 'Alamat', jenis: 'text', opsi: '', urutan: 2 },
-                { id: 3, teks: 'Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)', jenis: 'text', opsi: '', urutan: 3 },
-                { id: 4, teks: 'Pengetahuan tentang Ansor', jenis: 'text', opsi: '', urutan: 4 },
-                { id: 5, teks: 'Doa Qunut?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 5 },
-                { id: 6, teks: 'Riwayat penyakit', jenis: 'text', opsi: '', urutan: 6 },
-                { id: 7, teks: 'Pernah rekrutmen PKD / diklatsar?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 7 },
-                { id: 8, teks: 'Alasan tertarik mengikuti PKD', jenis: 'text', opsi: '', urutan: 8 },
-                { id: 9, teks: 'Catatan (opsional)', jenis: 'text', opsi: '', urutan: 9 }
-            ];
-        }
-
-        // =====================================================
-        //   LOGIKA VISIBILITAS PER MENU (OPTIMASI PARALEL)
-        // =====================================================
-        async function checkAccessAndLoad() {
-            try {
-                if (typeof PKD === 'undefined') {
-                    console.warn('PKD belum didefinisikan, tunggu inisialisasi...');
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    if (typeof PKD === 'undefined') {
-                        console.error('PKD masih undefined, melanjutkan dengan asumsi publik.');
-                        init();
-                        return;
-                    }
-                }
-
-                // ✅ JALANKAN SECARA PARALEL
-                const [visRes, loginRes] = await Promise.all([
-                    PKD.getPublicVisibility().catch(() => null),
-                    PKD.getLoginMode().catch(() => null)
-                ]);
-
-                let requireLogin = true;
-                if (visRes && visRes.success && visRes.data) {
-                    requireLogin = visRes.data.skrining !== false; // default: true (harus login)
-                } else if (loginRes && loginRes.success) {
-                    requireLogin = loginRes.enabled;
-                }
-
-                if (requireLogin) {
-                    const auth = localStorage.getItem('pkd_auth') || sessionStorage.getItem('pkd_auth');
-                    if (!auth) {
-                        window.location.href = '/bisaa/login.html?return=skrining.html';
-                        return;
-                    }
-                }
-
-                init();
-
-            } catch (e) {
-                console.error('Error di checkAccess:', e);
-                init();
-            }
-        }
-
-        // =====================================================
-        //   DATA LOADING (Cache-First + Background Fetch Instan)
-        // =====================================================
-        async function loadSkriningQuestions(forceRefresh = false) {
-            const container = document.getElementById('skriningFormContainer');
-
-            // 1. Cek cache dulu (sinkron)
-            if (!forceRefresh) {
-                const cached = DataCache.getData('skriningQuestions');
-                if (cached && Array.isArray(cached) && cached.length > 0) {
-                    questions = cached;
-                    renderForm(false);
-                    const statusEl = document.getElementById('dataStatus');
-                    if (statusEl) {
-                        statusEl.textContent = '✅ Siap';
-                        statusEl.className = 'badge bg-success text-white';
-                    }
-                    if (isInitialLoad) isInitialLoad = false;
-                    console.log('✅ Skrining: data pertanyaan dari cache, ditampilkan instan.');
-                    return;
-                }
-            }
-
-            // 2. Jika cache kosong, tampilkan spinner
-            if (!questions || questions.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center my-4">
-                        <div class="spinner-border text-primary"></div>
-                        <p class="mt-2 text-muted">Memuat data skrining...</p>
-                    </div>
-                `;
-            }
-
-            // 3. Ambil dari API
-            try {
-                const fresh = await PKD.getSkriningQuestions(true);
-                if (fresh && Array.isArray(fresh.data)) {
-                    const freshQuestions = fresh.data;
-                    questions = freshQuestions;
-                    DataCache.updateData('skriningQuestions', questions);
-                    renderForm(false);
-                    const statusEl = document.getElementById('dataStatus');
-                    if (statusEl) {
-                        statusEl.textContent = '✅ Siap';
-                        statusEl.className = 'badge bg-success text-white';
-                    }
-                } else {
-                    // API kosong, coba fallback ke cache atau default
-                    const cached = DataCache.getData('skriningQuestions');
-                    if (cached && Array.isArray(cached) && cached.length > 0) {
-                        questions = cached;
-                        renderForm(false);
-                        const statusEl = document.getElementById('dataStatus');
-                        if (statusEl) {
-                            statusEl.textContent = '⚠️ Cache (API kosong)';
-                            statusEl.className = 'badge bg-warning text-dark';
-                        }
-                    } else if (!questions || questions.length === 0) {
-                        questions = getDefaultQuestions();
-                        DataCache.updateData('skriningQuestions', questions);
-                        renderForm(false);
-                        const statusEl = document.getElementById('dataStatus');
-                        if (statusEl) {
-                            statusEl.textContent = '⚠️ Default';
-                            statusEl.className = 'badge bg-warning text-dark';
-                        }
-                    }
-                }
-                isInitialLoad = false;
-            } catch (e) {
-                console.warn('Gagal fetch questions:', e);
-                // Fallback ke cache atau default
-                const cached = DataCache.getData('skriningQuestions');
-                if (cached && Array.isArray(cached) && cached.length > 0) {
-                    questions = cached;
-                    renderForm(false);
-                    const statusEl = document.getElementById('dataStatus');
-                    if (statusEl) {
-                        statusEl.textContent = '❌ Offline (cache)';
-                        statusEl.className = 'badge bg-danger text-white';
-                    }
-                } else if (!questions || questions.length === 0) {
-                    questions = getDefaultQuestions();
-                    DataCache.updateData('skriningQuestions', questions);
-                    renderForm(false);
-                    const statusEl = document.getElementById('dataStatus');
-                    if (statusEl) {
-                        statusEl.textContent = '❌ Offline (default)';
-                        statusEl.className = 'badge bg-danger text-white';
-                    }
-                }
-                isInitialLoad = false;
-            }
-        }
-
-        // =====================================================
-        //   RENDER FORM
-        // =====================================================
-        function renderForm(showSpinner = false) {
-            const container = document.getElementById('skriningFormContainer');
-            if (!questions || questions.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-warning border-0 shadow-sm">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Belum ada pertanyaan skrining. Silakan hubungi administrator.
-                    </div>
-                `;
-                return;
-            }
-
-            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
-
-            let html = '';
-            if (showSpinner) {
-                html = `
-                    <div class="text-center my-4">
-                        <div class="spinner-border text-primary"></div>
-                        <p class="mt-2 text-muted">Memuat data skrining...</p>
-                    </div>
-                `;
-                container.innerHTML = html;
-                return;
-            }
-
-            html = `
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <span class="text-muted small">Data: </span>
-                        <span id="dataStatus" class="badge bg-light text-dark">⏳ Memuat...</span>
-                    </div>
-                    <button class="btn btn-sm btn-outline-secondary" id="inlineRefreshBtn" title="Segarkan">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
-                    </button>
-                </div>
-                <form id="formSkriningDinamis" novalidate>
-            `;
-
-            let questionNumber = 1;
-            sorted.forEach(q => {
-                const fieldName = generateFieldName(q.teks);
-                html += `<div class="form-section">`;
-                html += `<label class="form-label">`;
-                html += `<span class="question-number">${questionNumber}</span>`;
-                html += `${escapeHtml(q.teks)}`;
-                if (q.jenis !== 'radio') {
-                    html += ` <span class="text-danger">*</span>`;
-                }
-                html += `</label>`;
-
-                if (q.jenis === 'radio') {
-                    const options = (q.opsi || '').split(',').filter(s => s.trim() !== '');
-                    html += `<div class="radio-group">`;
-                    options.forEach((opt, idx) => {
-                        html += `
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="${fieldName}" value="${opt.trim()}" id="${fieldName}_${idx}" ${idx === 0 ? 'checked' : ''}>
-                                <label class="form-check-label" for="${fieldName}_${idx}">${opt.trim()}</label>
-                            </div>
-                        `;
-                    });
-                    html += `</div>`;
-                } else {
-                    if (isLongText(q.teks)) {
-                        html += `<textarea class="form-control" name="${fieldName}" rows="3" placeholder="Masukkan jawaban Anda..." required></textarea>`;
-                    } else {
-                        html += `<input type="text" class="form-control" name="${fieldName}" placeholder="Masukkan jawaban Anda..." required>`;
-                    }
-                }
-
-                html += `</div>`;
-                questionNumber++;
-            });
-
-            // Signature pad
-            html += `
-                <div class="form-section">
-                    <label class="form-label fw-bold">
-                        <span class="question-number">${questionNumber}</span>
-                        ✍️ Tanda Tangan Assessor
-                    </label>
-                    <div class="signature-area">
-                        <canvas id="signatureCanvasSkrining" width="300" height="150"></canvas>
-                    </div>
-                    <div class="signature-buttons">
-                        <button type="button" class="btn btn-outline-secondary btn-signature" id="clearSkriningSign">
-                            <i class="bi bi-eraser me-1"></i> Hapus
-                        </button>
-                        <button type="button" class="btn btn-outline-primary btn-signature" id="undoSkriningSign">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Undo
-                        </button>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill mt-3">
-                    <i class="bi bi-send me-2"></i> Kirim Skrining
-                </button>
-            `;
-
-            html += `</form>`;
-
-            container.innerHTML = html;
-            container.classList.add('fade-in');
-
-            // Inisialisasi signature pad
-            const canvas = document.getElementById('signatureCanvasSkrining');
-            if (canvas) {
-                sigPad = new SignaturePad(canvas, {
-                    backgroundColor: 'white',
-                    penColor: '#0f172a',
-                    minWidth: 1.5,
-                    maxWidth: 3
-                });
-                sigPad.clear();
-
-                document.getElementById('clearSkriningSign')?.addEventListener('click', () => {
-                    sigPad.clear();
-                    saveFormState();
-                });
-
-                document.getElementById('undoSkriningSign')?.addEventListener('click', () => {
-                    const data = sigPad.toData();
-                    if (data && data.length > 0) {
-                        data.pop();
-                        sigPad.fromData(data);
-                        saveFormState();
-                    }
-                });
-
-                sigPad.addEventListener('endStroke', saveFormState);
-            }
-
-            // Auto-save
-            document.querySelectorAll('#formSkriningDinamis input, #formSkriningDinamis textarea, #formSkriningDinamis select').forEach(el => {
-                el.addEventListener('input', saveFormState);
-                el.addEventListener('change', saveFormState);
-            });
-
-            // Restore saved state after render
-            setTimeout(() => {
-                restoreFormState();
-            }, 100);
-
-            // Submit handler
-            document.getElementById('formSkriningDinamis').addEventListener('submit', handleSubmit);
-
-            // Inline refresh
-            document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-                this.disabled = true;
-                const statusEl = document.getElementById('dataStatus');
-                if (statusEl) {
-                    statusEl.textContent = '🔄 Memuat...';
-                    statusEl.className = 'badge bg-light text-dark';
-                }
-                loadSkriningQuestions(true).then(() => {
-                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-                    this.disabled = false;
-                    if (statusEl) {
-                        statusEl.textContent = '✅ Siap';
-                        statusEl.className = 'badge bg-success text-white';
-                    }
-                    showToast('Data diperbarui', 'success');
-                }).catch(() => {
-                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-                    this.disabled = false;
-                    if (statusEl) {
-                        statusEl.textContent = '❌ Gagal';
-                        statusEl.className = 'badge bg-danger text-white';
-                    }
-                    showToast('Gagal memperbarui', 'error');
-                });
-            });
-        }
-
-        // =====================================================
-        //   HANDLE SUBMIT
-        // =====================================================
-        async function handleSubmit(e) {
-            e.preventDefault();
-            if (isSubmitting) return;
-
-            if (!sigPad || sigPad.isEmpty()) {
-                showToast('Tanda tangan assessor wajib diisi!', 'error');
-                return;
-            }
-
-            const form = document.getElementById('formSkriningDinamis');
-            const formData = new FormData(form);
-            const answers = {};
-            formData.forEach((v, k) => answers[k] = v);
-
-            // Validasi
-            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
-            let missing = [];
-            sorted.forEach(q => {
-                if (q.jenis !== 'radio') {
-                    const fieldName = generateFieldName(q.teks);
-                    if (!answers[fieldName] || answers[fieldName].trim() === '') {
-                        missing.push(q.teks);
-                    }
-                }
-            });
-            if (missing.length > 0) {
-                showToast(`Harap isi: ${missing.join(', ')}`, 'error');
-                return;
-            }
-
-            const signatureDataURL = sigPad.toDataURL('image/jpeg', 0.3);
-
-            // Preview
-            const modalBody = document.getElementById('previewSkriningBody');
-            let previewHtml = `
-                <div class="table-responsive">
-                    <table class="table table-bordered preview-table">
-                        <tbody>
-            `;
-            sorted.forEach(q => {
-                const fieldName = generateFieldName(q.teks);
-                const value = answers[fieldName] || '';
-                previewHtml += `
-                    <tr>
-                        <th style="width: 40%;">${escapeHtml(q.teks)}</th>
-                        <td>${escapeHtml(value)}</td>
-                    </tr>
-                `;
-            });
-            previewHtml += `
-                        <tr>
-                            <th>Tanda Tangan Assessor</th>
-                            <td><img src="${signatureDataURL}" class="preview-signature" alt="Tanda Tangan"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-            modalBody.innerHTML = previewHtml;
-
-            window.__skriningPreviewData = {
-                answers: answers,
-                signatureDataURL: signatureDataURL
-            };
-
-            new bootstrap.Modal(document.getElementById('previewSkriningModal')).show();
-        }
-
-        // =====================================================
-        //   SUBMIT SKRINING
-        // =====================================================
-        document.getElementById('previewKirimBtn')?.addEventListener('click', async function() {
-            if (!window.__skriningPreviewData || isSubmitting) return;
-            isSubmitting = true;
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
-
-            const { answers, signatureDataURL } = window.__skriningPreviewData;
-            const params = { signature: signatureDataURL };
-            const fixedFields = ['nama', 'alamat', 'info', 'pengetahuan', 'qunut', 'penyakit', 'pernah', 'alasan', 'catatan'];
-            const dataJson = {};
-
-            const sorted = [...questions].sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
-            sorted.forEach(q => {
-                const fieldName = generateFieldName(q.teks);
-                const value = answers[fieldName] || '';
-                let isFixed = false;
-                const lowerTeks = q.teks.toLowerCase();
-                for (const f of fixedFields) {
-                    if (lowerTeks.includes(f)) {
-                        params[f] = value;
-                        isFixed = true;
-                        break;
-                    }
-                }
-                if (!isFixed) {
-                    dataJson[fieldName] = value;
-                }
-            });
-            params.dataJson = JSON.stringify(dataJson);
-
-            try {
-                const result = await PKD.submitSkrining(params);
-                if (result && result.success) {
-                    showToast('✅ Skrining berhasil dikirim!', 'success');
-                    document.getElementById('formSkriningDinamis')?.reset();
-                    if (sigPad) sigPad.clear();
-                    clearFormState();
-                    bootstrap.Modal.getInstance(document.getElementById('previewSkriningModal')).hide();
-                } else {
-                    showToast('❌ Gagal mengirim: ' + (result.message || 'Unknown error'), 'error');
-                }
-            } catch (e) {
-                showToast('❌ Gagal mengirim: ' + e.message, 'error');
-                console.error('Submit error:', e);
-            } finally {
-                isSubmitting = false;
-                btn.disabled = false;
-                btn.innerHTML = '📤 Kirim Skrining';
-            }
+        const form = document.getElementById('formSkriningDinamis');
+        const inputs = Array.from(form.querySelectorAll('input[required], textarea[required], select[required]')).filter(el => isVisible(el));
+        let valid = true;
+        let firstEmptyInput = null;
+        inputs.forEach(inp => {
+          inp.style.borderColor = '';
+          let isEmpty = false;
+          if (inp.type === 'radio') {
+            const name = inp.name;
+            const checked = form.querySelector(`input[name="${name}"]:checked`);
+            if (!checked) isEmpty = true;
+          } else if (inp.tagName === 'SELECT') {
+            if (!inp.value || inp.value === '') isEmpty = true;
+          } else {
+            if (!inp.value.trim()) isEmpty = true;
+          }
+          if (isEmpty) {
+            valid = false;
+            if (!firstEmptyInput) firstEmptyInput = inp;
+          }
         });
 
-        // =====================================================
-        //   REFRESH MANUAL
-        // =====================================================
-        async function manualRefresh() {
-            if (isRefreshing) return;
-            isRefreshing = true;
-            const btn = document.getElementById('refreshBtn');
-            if (btn) {
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                btn.disabled = true;
-            }
-            try {
-                await loadSkriningQuestions(true);
-                showToast('Data berhasil disegarkan', 'success');
-            } catch (e) {
-                showToast('Gagal menyegarkan data', 'error');
-            } finally {
-                if (btn) {
-                    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                    btn.disabled = false;
-                }
-                isRefreshing = false;
-            }
+        if (!valid) {
+          if (firstEmptyInput) {
+            firstEmptyInput.style.borderColor = '#dc3545';
+            firstEmptyInput.focus();
+            setTimeout(() => { firstEmptyInput.style.borderColor = ''; }, 2000);
+          }
+          showToastLocal('Harap isi semua field wajib!', 'warning');
+          return;
         }
 
-        // =====================================================
-        //   INISIALISASI (DIOPTIMALKAN)
-        // =====================================================
-        function init() {
-            // 1. LOAD DARI DATACACHE DAHULU (CEPAT)
-            const cached = DataCache.getData('skriningQuestions');
-            if (cached && Array.isArray(cached) && cached.length > 0) {
-                questions = cached;
-                renderForm(false);
-                const statusEl = document.getElementById('dataStatus');
-                if (statusEl) {
-                    statusEl.textContent = '✅ Siap';
-                    statusEl.className = 'badge bg-success text-white';
-                }
-                isInitialLoad = false;
+        if (!sigPad || sigPad.isEmpty()) {
+          showToastLocal('Tanda tangan assessor wajib diisi!', 'error');
+          return;
+        }
+
+        showSummaryModal(params, sorted, answers, false);
+      });
+    }
+
+    function showSummaryModal(params, sortedQuestions, rawAnswers, isPreviewMode) {
+      const modalEl = document.getElementById('previewModal');
+      const summaryContainer = document.getElementById('summaryContent');
+      const modalTitle = document.getElementById('previewModalTitle');
+
+      modalTitle.innerHTML = isPreviewMode ?
+        '<i class="bi bi-eye me-2"></i>Preview Total Semua Jawaban' :
+        '<i class="bi bi-check-circle me-2"></i>Konfirmasi & Kirim Data Skrining';
+
+      let html = '';
+      sortedQuestions.forEach(q => {
+        const fieldName = generateFieldName(q.teks);
+        const value = rawAnswers[fieldName] || '-';
+        html += `
+          <div class="col-md-6 mb-2">
+            <div class="bg-light p-2 rounded-3 border border-0 shadow-sm small">
+              <strong>${escapeHtml(q.teks)}</strong><br>
+              <span class="text-primary fw-bold">${escapeHtml(value)}</span>
+            </div>
+          </div>
+        `;
+      });
+      html += `
+        <div class="col-md-12 mt-3">
+          <div class="bg-success bg-opacity-10 p-2 rounded-3 border border-0 shadow-sm small text-success">
+            <strong>✍️ Tanda Tangan Assessor:</strong> <i class="bi bi-check-circle-fill"></i> Sudah ditandatangani
+          </div>
+        </div>
+      `;
+      summaryContainer.innerHTML = html;
+
+      const finalBtn = document.getElementById('modalFinalSubmitBtn');
+      const newFinalBtn = finalBtn.cloneNode(true);
+      finalBtn.parentNode.replaceChild(newFinalBtn, finalBtn);
+
+      if (isPreviewMode) {
+        newFinalBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Lanjut Kirim';
+        newFinalBtn.addEventListener('click', function() {
+          bootstrap.Modal.getInstance(modalEl).hide();
+          document.getElementById('formSkriningDinamis')?.querySelector('button[type="submit"]')?.focus();
+        });
+      } else {
+        newFinalBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Ya, Kirim Data';
+        newFinalBtn.addEventListener('click', async function() {
+          const btn = this;
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
+          try {
+            const result = await submitSkrining(params);
+            if (result && result.success) {
+              document.getElementById('formSkriningDinamis')?.reset();
+              if (sigPad) sigPad.clear();
+              clearFormState();
+              jumpToStep(0);
+              showToastLocal('✅ Skrining berhasil dikirim!', 'success');
+              bootstrap.Modal.getInstance(modalEl).hide();
             } else {
-                renderForm(true);
+              showToastLocal('❌ Gagal mengirim: ' + (result.message || 'Unknown error'), 'error');
             }
+          } catch (e) {
+            showToastLocal('❌ Gagal mengirim: ' + e.message, 'error');
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Ya, Kirim Data';
+          }
+        });
+      }
 
-            // 2. BACKGROUND FETCH INSTAN (SETELAH RENDER, TANPA TIMEOUT)
-            loadSkriningQuestions(true);
+      document.getElementById('modalEditBtn')?.addEventListener('click', function() {
+        bootstrap.Modal.getInstance(modalEl).hide();
+      });
 
-            // Refresh button
-            document.getElementById('refreshBtn')?.addEventListener('click', manualRefresh);
+      new bootstrap.Modal(modalEl).show();
+    }
+
+    function getDefaultQuestions() {
+      return [
+        { id: 1, teks: 'Nama Lengkap', jenis: 'text', opsi: '', urutan: 1 },
+        { id: 2, teks: 'Alamat', jenis: 'text', opsi: '', urutan: 2 },
+        { id: 3, teks: 'Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)', jenis: 'text', opsi: '', urutan: 3 },
+        { id: 4, teks: 'Pengetahuan tentang Ansor', jenis: 'text', opsi: '', urutan: 4 },
+        { id: 5, teks: 'Doa Qunut?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 5 },
+        { id: 6, teks: 'Riwayat penyakit', jenis: 'text', opsi: '', urutan: 6 },
+        { id: 7, teks: 'Pernah rekrutmen PKD / diklatsar?', jenis: 'radio', opsi: 'Ya,Tidak', urutan: 7 },
+        { id: 8, teks: 'Alasan tertarik mengikuti PKD', jenis: 'text', opsi: '', urutan: 8 },
+        { id: 9, teks: 'Catatan (opsional)', jenis: 'text', opsi: '', urutan: 9 }
+      ];
+    }
+
+    async function switchMode(mode) {
+      if (mode === currentMode) return;
+      currentMode = mode;
+      document.getElementById('modeWizardBtn').classList.toggle('active', mode === 'wizard');
+      document.getElementById('modeAllBtn').classList.toggle('active', mode === 'all');
+      currentStep = 0;
+      renderForm();
+      saveFormState();
+    }
+
+    // ==========================================================
+    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    // ==========================================================
+    (async function boot() {
+      const canAccess = await guardPublicAccess();
+      if (!canAccess) return;
+
+      // Update navbar user menu
+      updateNavbarMenu();
+
+      // Load data
+      const container = document.getElementById('skriningFormContainer');
+
+      // 1. Pastikan skeleton tetap terlihat saat memuat data (jika belum diganti oleh DOMContentLoaded)
+      renderSkeletonForm(container);
+
+      // Coba cache dengan fetch biasa + manual cache 
+      const CACHE_KEY = 'skrining_questions';
+      const CACHE_AGE = 30; // menit
+      let cachedData = null;
+      try {
+        const item = localStorage.getItem('pkd_cache_' + CACHE_KEY);
+        if (item) {
+          const { data, timestamp } = JSON.parse(item);
+          if ((Date.now() - timestamp) < CACHE_AGE * 60 * 1000) {
+            cachedData = data;
+          } else {
+            localStorage.removeItem('pkd_cache_' + CACHE_KEY);
+          }
         }
+      } catch (e) {}
 
-        // =====================================================
-        //   EKSEKUSI UTAMA
-        // =====================================================
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkAccessAndLoad);
-        } else {
-            checkAccessAndLoad();
+      if (cachedData && cachedData.length > 0) {
+        questions = cachedData;
+        renderForm();
+      }
+
+      // Event listener untuk mode switch
+      document.getElementById('modeWizardBtn').addEventListener('click', () => switchMode('wizard'));
+      document.getElementById('modeAllBtn').addEventListener('click', () => switchMode('all'));
+
+      // Background refresh
+      (async function refreshData() {
+        try {
+          const fresh = await getSkriningQuestions();
+          if (fresh && Array.isArray(fresh.data) && fresh.data.length > 0) {
+            const data = fresh.data;
+            // Simpan ke cache
+            try {
+              localStorage.setItem('pkd_cache_' + CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+            } catch (e) {}
+            if (JSON.stringify(questions) !== JSON.stringify(data)) {
+              questions = data;
+              renderForm();
+            }
+          } else if (!cachedData || cachedData.length === 0) {
+            questions = getDefaultQuestions();
+            renderForm();
+          }
+        } catch (e) {
+          console.warn('Gagal fetch skrining di background:', e);
+          if (!cachedData || cachedData.length === 0) {
+            questions = getDefaultQuestions();
+            renderForm();
+          }
         }
-
-        // Expose for debug
-        window.__skrining = {
-            reload: loadSkriningQuestions,
-            refresh: manualRefresh,
-            questions: () => questions,
-            clearState: clearFormState
-        };
-
+      })();
     })();
-</script>
+
+    // ==========================================================
+    //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
+    // ==========================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Render skeleton secara instan (sinkron) saat DOM siap
+      const container = document.getElementById('skriningFormContainer');
+      if (container) {
+        renderSkeletonForm(container);
+      }
+    });
+
+  </script>
 </body>
 </html>

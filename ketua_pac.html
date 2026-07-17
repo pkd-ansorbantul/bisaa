@@ -2,45 +2,168 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Ketua PAC · PKD GP Ansor Bantul</title>
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- 🛠 PERBAIKAN: Library html5-qrcode untuk multi-browser -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
   <style>
-    body { background: #f1f5f9; font-family: 'Inter', sans-serif; }
-    .navbar-brand img { height: 40px; margin-right: 12px; }
-    .brand-title { font-size: 1.3rem; font-weight: 700; color: #0a3d62; }
-    .brand-sub { font-size: 0.85rem; color: #64748b; display: block; margin-top: 2px; }
+    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- HEADER MINIMALIS ELEGAN --- */
+    .header-minimal {
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+      padding-top: 0 !important; padding-bottom: 0 !important;
+    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .btn-back {
+      background: rgba(37, 99, 235, 0.08); color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-back:hover { background: #2563eb; color: white; transform: translateX(-3px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
+    .brand-logo-mini:hover { transform: scale(1.05); }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* --- WRAPPER & SIDEBAR --- */
     .wrapper { display: flex; width: 100%; align-items: stretch; }
-    #sidebar { min-width: 280px; max-width: 280px; background: white; border-right: 1px solid #e2e8f0; box-shadow: 2px 0 10px rgba(0,0,0,0.02); }
-    #sidebar .sidebar-header { padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    #sidebar {
+      min-width: 280px; max-width: 280px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      border-right: 1px solid rgba(226, 232, 240, 0.5);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+      transition: all 0.3s ease;
+    }
+    #sidebar .sidebar-header { padding: 20px; background: rgba(248, 250, 252, 0.6); border-bottom: 1px solid rgba(226, 232, 240, 0.3); }
     #sidebar ul.components { padding: 20px 0; }
-    #sidebar ul li a { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #334155; text-decoration: none; font-weight: 500; border-left: 4px solid transparent; }
+    #sidebar ul li a {
+      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+      color: #334155; text-decoration: none; font-weight: 500;
+      border-left: 4px solid transparent; transition: all 0.2s;
+    }
     #sidebar ul li a i { width: 24px; font-size: 1.2rem; color: #64748b; }
     #sidebar ul li a:hover { background: #f1f5f9; border-left-color: #2563eb; }
     #sidebar ul li.active a { background: #e6f0ff; border-left-color: #2563eb; color: #2563eb; font-weight: 600; }
     #sidebar ul li.active a i { color: #2563eb; }
+
+    /* --- CONTENT --- */
     #content { width: 100%; padding: 30px; min-height: 100vh; background: #f8fafc; }
-    .card-dashboard { background: white; border-radius: 24px; padding: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e9eef2; margin-bottom: 24px; }
-    .section-title { font-size: 1.6rem; font-weight: 650; margin-bottom: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
-    .footer-modern { font-size: 0.85rem; color: #64748b; text-align: center; padding: 1.5rem; background: white; border-top: 1px solid #e2e8f0; }
-    .table-responsive { max-height: 500px; overflow-y: auto; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .glass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.2); }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .card-dashboard { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 24px; }
+    .stat-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; padding: 1.5rem; text-align: center; transition: all 0.35s; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(37,99,235,0.08); }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
+    .stat-label { font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* --- SCAN QR FLOATING BUTTON --- */
+    .scan-float-btn {
+      position: fixed; bottom: 30px; right: 15px; z-index: 1050;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
+      color: white; border: none; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+      display: none; align-items: center; justify-content: center;
+      font-size: 24px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;
+    }
+    .scan-float-btn:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5); }
+    .scan-float-btn:active { transform: scale(0.95); }
+    .scan-float-btn.show { display: flex; }
+
+    /* --- RESPONSIVE MOBILE --- */
+    @media (max-width: 991px) {
+      #sidebar { min-width: 100%; max-width: 100%; position: fixed; top: 0; left: 0; z-index: 1050; height: 100vh; overflow-y: auto; transform: translateX(-100%); transition: transform 0.3s; }
+      #sidebar.show { transform: translateX(0); }
+      #content { padding: 1rem; padding-bottom: 90px; }
+      .scan-float-btn { bottom: 100px; right: 10px; width: 48px; height: 48px; font-size: 20px; }
+    }
+    @media (max-width: 576px) {
+      .glass-card { border-radius: 16px; padding: 1rem !important; }
+      .header-minimal .container { padding: 0 0.5rem; }
+      .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
+      .brand-title-mini { display: none; } .brand-sub-mini { display: none; }
+      .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
+      .stat-number { font-size: 1.8rem; }
+    }
+
+    /* --- SCANNER MODAL --- */
+    #scanQrModal .modal-dialog { margin: 0; width: 100%; height: 100%; max-width: 100%; }
+    #scanQrModal .modal-content { background: #0f172a; border: none; border-radius: 0; height: 100%; }
+    #scanQrModal .modal-header { border: none; background: transparent; padding: 8px 16px; }
+    #scanQrModal .modal-body { display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0; height: calc(100% - 56px); }
+    #scannerVideoContainer { width: 100%; display: flex; justify-content: center; align-items: center; }
+    #scannerVideoContainer video { width: 100%; object-fit: contain; background: #000; }
+    #scanQrModal .scanner-status { color: #ccc; margin-top: 15px; font-size: 1rem; font-weight: 500; z-index: 10; }
+    #scanQrModal .scan-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 10000; }
+    #scanQrModal .scan-close-btn:hover { background: rgba(255,255,255,0.4); }
+    #scanQrModal .scan-stop-btn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; padding: 10px 30px; }
+
+    /* --- ANIMASI --- */
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- FOOTER --- */
+    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="index.html">
-        <img src="LOGO ANSOR.webp" alt="GP Ansor">
-        <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub">Kabupaten Bantul</span></span>
-      </a>
-      <div class="d-flex align-items-center" id="navbarUserMenu"></div>
-    </div>
-  </nav>
 
+  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
+  <header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
+          <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <div>
+            <div class="brand-title-mini">PKD GP Ansor</div>
+            <span class="brand-sub-mini">Kabupaten Bantul</span>
+          </div>
+        </a>
+      </div>
+      <!-- Area User Role (diisi oleh api.js) -->
+      <div id="navbarUserMenu" class="user-menu-area"></div>
+    </div>
+  </header>
+
+  <!-- ================= WRAPPER ================= -->
   <div class="wrapper">
+    <!-- Sidebar -->
     <nav id="sidebar">
       <div class="sidebar-header">
         <h5 class="mb-1"><i class="bi bi-person-badge me-2"></i>Ketua PAC</h5>
@@ -53,180 +176,452 @@
         <li id="menu-skrining"><a href="#" onclick="loadContent('skrining')"><i class="bi bi-clipboard-check"></i> Hasil Skrining</a></li>
         <li id="menu-pretest"><a href="#" onclick="loadContent('pretest')"><i class="bi bi-pencil-square"></i> Hasil Pretest</a></li>
         <li id="menu-posttest"><a href="#" onclick="loadContent('posttest')"><i class="bi bi-trophy"></i> Hasil Posttest</a></li>
+        <li id="menu-absensi"><a href="#" onclick="loadContent('absensi')"><i class="bi bi-calendar-check"></i> Absensi</a></li>
+        <li id="menu-sertifikat"><a href="#" onclick="loadContent('sertifikat')"><i class="bi bi-award"></i> Sertifikat</a></li>
+        <li id="menu-rtl"><a href="#" onclick="loadContent('rtl')"><i class="bi bi-file-earmark-text"></i> RTL & Tugas</a></li>
+        <li id="menu-informasi"><a href="#" onclick="loadContent('informasi')"><i class="bi bi-megaphone"></i> Informasi</a></li>
         <li><hr class="my-2"></li>
         <li><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </nav>
 
+    <!-- Content -->
     <div id="content">
       <div id="content-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        <div class="text-center py-5 fade-up">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+          </div>
+          <p class="mt-2 text-muted">Memuat dashboard...</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <footer class="footer-modern">
+  <!-- ================= SCAN QR FLOATING BUTTON ================= -->
+  <button class="scan-float-btn" id="scanFloatBtn" title="Scan QR">
+    <i class="bi bi-qr-code-scan"></i>
+  </button>
+
+  <!-- ================= MODAL SCANNER QR ================= -->
+  <div class="modal fade" id="scanQrModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-white" id="scanQrModalTitle"><i class="bi bi-qr-code-scan me-2"></i>Scan QR</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body position-relative">
+          <div id="scannerVideoContainer"></div>
+          <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
+          <button class="btn btn-danger btn-lg rounded-pill scan-stop-btn" id="scanStopBtn">
+            <i class="bi bi-stop-circle me-2"></i> Hentikan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer-modern container py-3 mt-auto text-center text-muted small">
     <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
   </footer>
 
+  <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="api.js"></script>
-  <script>
-    // -------------------------------------------------------
-    // Ambil kapanewon dari user data
-    // -------------------------------------------------------
-    function getKapanewon() {
-      const userData = PKD.getUserData();
-      return userData.kapanewon || '';
-    }
 
-    function checkAccess() {
-      if (PKD.getUserRole() !== 'ketua_pac') {
-        window.location.href = 'login.html';
-        return false;
+  <!-- Modul ES Khusus Halaman Ini -->
+  <script type="module">
+    // ==========================================================
+    //   IMPOR DARI CORE API DAN MODUL KETUA PAC
+    // ==========================================================
+    import {
+      guardPublicAccess,
+      callApi,
+      showToast,
+      escapeHtml,
+      getUserRole,
+      getUserData,
+      updateNavbarMenu,
+      logout as apiLogout
+    } from '../js/core/api.js';
+    import { KetuaPACModule } from '../js/modules/ketua_pac.js';
+
+    // ==========================================================
+    //   SCANNER STATE
+    // ==========================================================
+    let html5QrCode = null;
+    let isScannerRunning = false;
+
+    function escapeHtmlLocal(str) { return escapeHtml(str); }
+    function showToastLocal(message, type) { showToast(message, type); }
+    function logout() { apiLogout(); }
+
+    window.loadContent = loadContent;
+    window.logout = logout;
+    window.toggleSidebar = toggleSidebar;
+    window.closeSidebar = closeSidebar;
+
+    // ==========================================================
+    //   🛡️ PENGAMAN AKSES
+    // ==========================================================
+    (async function boot() {
+      const role = getUserRole();
+      if (role !== 'ketua_pac') {
+        window.location.href = '/bisaa/login.html';
+        return;
       }
-      const kap = getKapanewon();
-      document.getElementById('sidebarUserName').innerText = PKD.getUserData().nama || 'Ketua PAC';
+
+      updateNavbarMenu();
+      const userData = getUserData();
+      const kap = userData?.kapanewon || '';
+      document.getElementById('sidebarUserName').innerText = userData?.nama || 'Ketua PAC';
       document.getElementById('sidebarKapanewon').innerText = kap ? `Kapanewon ${kap}` : '';
-      return true;
-    }
 
-    function logout() { PKD.logout(); }
+      const scanBtn = document.getElementById('scanFloatBtn');
+      if (scanBtn) {
+        scanBtn.classList.add('show');
+        scanBtn.addEventListener('click', function() {
+          const modal = new bootstrap.Modal(document.getElementById('scanQrModal'));
+          modal.show();
+          startScanner();
+        });
+      }
 
-    // -------------------------------------------------------
-    // Filter data berdasarkan kapanewon
-    // -------------------------------------------------------
-    async function getFilteredPeserta() {
-      const all = await PKD.getPesertaList();
-      const kap = getKapanewon().toLowerCase();
-      return all.filter(p => (p.utusan || '').toLowerCase().includes(kap));
-    }
+      await loadContent('dashboard');
+    })();
 
-    async function getFilteredSkrining() {
-      const filteredPeserta = await getFilteredPeserta();
-      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
-      const all = await PKD.getSkriningResponses();
-      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
 
-    async function getFilteredPretest() {
-      const filteredPeserta = await getFilteredPeserta();
-      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
-      const all = await PKD.getPretestResponses();
-      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
-    }
-
-    async function getFilteredPosttest() {
-      const filteredPeserta = await getFilteredPeserta();
-      const namaSet = new Set(filteredPeserta.map(p => (p.nama_lengkap || '').trim().toLowerCase()));
-      const all = await PKD.getPosttestResponses();
-      return all.filter(d => namaSet.has((d.nama || '').trim().toLowerCase()));
-    }
-
-    // -------------------------------------------------------
-    // Load konten sesuai menu
-    // -------------------------------------------------------
+    // ==========================================================
+    //   LOAD CONTENT (Menggunakan KetuaPACModule)
+    // ==========================================================
     async function loadContent(menu) {
       document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
       document.getElementById(`menu-${menu}`)?.classList.add('active');
+      closeSidebar();
 
       const container = document.getElementById('content-container');
-      container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+      container.innerHTML = `<div class="text-center py-5 fade-up"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>`;
 
       try {
-        switch(menu) {
+        if (!KetuaPACModule.getState().lastSync) {
+          await KetuaPACModule.loadAllData();
+        }
+        switch (menu) {
           case 'dashboard': await renderDashboard(container); break;
           case 'peserta': await renderPeserta(container); break;
           case 'skrining': await renderSkrining(container); break;
           case 'pretest': await renderPretest(container); break;
           case 'posttest': await renderPosttest(container); break;
+          case 'absensi': await renderAbsensi(container); break;
+          case 'sertifikat': await renderSertifikat(container); break;
+          case 'rtl': await renderRTL(container); break;
+          case 'informasi': await renderInformasi(container); break;
+          default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
         }
-      } catch(e) {
-        container.innerHTML = `<div class="alert alert-danger">Error: ${PKD.escapeHtml(e.message)}</div>`;
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${escapeHtmlLocal(err.message)}</div>`;
       }
     }
 
-    // -------------------------------------------------------
-    // Render dashboard
-    // -------------------------------------------------------
+    // --- Render Functions (Data dari KetuaPACModule) ---
     async function renderDashboard(container) {
-      const [peserta, skrining, pretest, posttest] = await Promise.all([
-        getFilteredPeserta(),
-        getFilteredSkrining(),
-        getFilteredPretest(),
-        getFilteredPosttest()
-      ]);
+      const stats = KetuaPACModule.getStats();
       container.innerHTML = `
-        <h2 class="section-title">Dashboard Kapanewon ${getKapanewon()}</h2>
+        <h2 class="section-title">Dashboard Kapanewon ${stats.kapanewon}</h2>
         <div class="row g-4">
-          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-people fs-1 text-primary"></i><h3>${peserta.length}</h3><p>Total Peserta</p></div></div>
-          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-clipboard-check fs-1 text-success"></i><h3>${skrining.length}</h3><p>Skrining Terisi</p></div></div>
-          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-pencil-square fs-1 text-warning"></i><h3>${pretest.length}</h3><p>Pretest Terisi</p></div></div>
-          <div class="col-md-3"><div class="card-dashboard text-center"><i class="bi bi-trophy fs-1 text-info"></i><h3>${posttest.length}</h3><p>Posttest Terisi</p></div></div>
-        </div>`;
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPeserta}</div><div class="stat-label">Total Peserta</div></div></div>
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalSkrining}</div><div class="stat-label">Skrining Terisi</div></div></div>
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPretest}</div><div class="stat-label">Pretest Terisi</div></div></div>
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPosttest}</div><div class="stat-label">Posttest Terisi</div></div></div>
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalAbsensi}</div><div class="stat-label">Absensi</div></div></div>
+          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalSertifikat}</div><div class="stat-label">Sertifikat</div></div></div>
+        </div>
+        <div class="alert alert-info mt-3 small">
+          <i class="bi bi-info-circle"></i> Data diperbarui otomatis. <br>
+          <small>Terakhir sinkronisasi: ${stats.lastSync ? new Date(stats.lastSync).toLocaleString() : '-'}</small>
+        </div>
+      `;
     }
 
-    // -------------------------------------------------------
-    // Render tabel peserta
-    // -------------------------------------------------------
     async function renderPeserta(container) {
-      const data = await getFilteredPeserta();
-      let html = `<h2 class="section-title">Data Peserta Kapanewon ${getKapanewon()}</h2>
-        <div class="card-dashboard"><div class="table-responsive">
-          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama Lengkap</th><th>Utusan</th><th>Pendidikan</th><th>No HP</th><th>Email</th></tr></thead><tbody>`;
-      data.forEach((p,i) => {
-        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(p.nama_lengkap)}</td><td>${PKD.escapeHtml(p.utusan)}</td><td>${PKD.escapeHtml(p.pendidikan_terakhir)}</td><td>${PKD.escapeHtml(p.no_hp)}</td><td>${PKD.escapeHtml(p.email)}</td></tr>`;
-      });
-      html += `</tbody></table></div></div>`;
+      const data = KetuaPACModule.getFilteredPeserta();
+      let html = `<h2 class="section-title">Data Peserta Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama Lengkap</th><th>Utusan</th><th>Pendidikan</th><th>No HP</th><th>Email</th></tr></thead><tbody>`;
+      data.forEach((p, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(p.nama_lengkap)}</td><td>${escapeHtmlLocal(p.utusan)}</td><td>${escapeHtmlLocal(p.pendidikan_terakhir)}</td><td>${escapeHtmlLocal(p.no_hp)}</td><td>${escapeHtmlLocal(p.email)}</td></tr>`; });
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
     }
 
-    // -------------------------------------------------------
-    // Render tabel skrining, pretest, posttest
-    // -------------------------------------------------------
     async function renderSkrining(container) {
-      const data = await getFilteredSkrining();
-      let html = `<h2 class="section-title">Hasil Skrining Kapanewon ${getKapanewon()}</h2>
-        <div class="card-dashboard"><div class="table-responsive">
-          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Pernah</th><th>Alasan</th></tr></thead><tbody>`;
-      data.forEach((d,i) => {
-        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${PKD.escapeHtml(d.alamat)}</td><td>${PKD.escapeHtml(d.info)}</td><td>${PKD.escapeHtml(d.pengetahuan)}</td><td>${PKD.escapeHtml(d.qunut)}</td><td>${PKD.escapeHtml(d.pernah)}</td><td>${PKD.escapeHtml(d.alasan)}</td></tr>`;
-      });
-      html += `</tbody></table></div></div>`;
+      const data = KetuaPACModule.getFilteredSkrining();
+      let html = `<h2 class="section-title">Hasil Skrining Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Pernah</th><th>Alasan</th></tr></thead><tbody>`;
+      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${escapeHtmlLocal(d.alamat)}</td><td>${escapeHtmlLocal(d.info)}</td><td>${escapeHtmlLocal(d.pengetahuan)}</td><td>${escapeHtmlLocal(d.qunut)}</td><td>${escapeHtmlLocal(d.pernah)}</td><td>${escapeHtmlLocal(d.alasan)}</td></tr>`; });
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
     }
 
     async function renderPretest(container) {
-      const data = await getFilteredPretest();
-      let html = `<h2 class="section-title">Hasil Pretest Kapanewon ${getKapanewon()}</h2>
-        <div class="card-dashboard"><div class="table-responsive">
-          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
-      data.forEach((d,i) => {
-        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${d.score}</td><td>${PKD.escapeHtml(d.timestamp)}</td><td>${PKD.escapeHtml(d.nohp)}</td></tr>`;
-      });
-      html += `</tbody></table></div></div>`;
+      const data = KetuaPACModule.getFilteredPretest();
+      let html = `<h2 class="section-title">Hasil Pretest Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
+      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${d.score}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${escapeHtmlLocal(d.nohp)}</td></tr>`; });
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
     }
 
     async function renderPosttest(container) {
-      const data = await getFilteredPosttest();
-      let html = `<h2 class="section-title">Hasil Posttest Kapanewon ${getKapanewon()}</h2>
-        <div class="card-dashboard"><div class="table-responsive">
-          <table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
-      data.forEach((d,i) => {
-        html += `<tr><td>${i+1}</td><td>${PKD.escapeHtml(d.nama)}</td><td>${d.score}</td><td>${PKD.escapeHtml(d.timestamp)}</td><td>${PKD.escapeHtml(d.nohp)}</td></tr>`;
-      });
-      html += `</tbody></table></div></div>`;
+      const data = KetuaPACModule.getFilteredPosttest();
+      let html = `<h2 class="section-title">Hasil Posttest Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
+      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${d.score}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${escapeHtmlLocal(d.nohp)}</td></tr>`; });
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
     }
 
-    // -------------------------------------------------------
-    // Inisialisasi
-    // -------------------------------------------------------
-    window.onload = function() {
-      if (!checkAccess()) return;
-      loadContent('dashboard');
-    };
+    async function renderAbsensi(container) {
+      const data = KetuaPACModule.getFilteredAbsensi();
+      let html = `<h2 class="section-title">Absensi Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Sesi</th><th>Tanggal</th><th>Tanda Tangan</th></tr></thead><tbody>`;
+      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${escapeHtmlLocal(d.namaSesi)}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${d.signatureDriveId ? `<a href="https://drive.google.com/file/d/${d.signatureDriveId}/view" target="_blank">Lihat</a>` : '-'}</td></tr>`; });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    async function renderSertifikat(container) {
+      const data = KetuaPACModule.getFilteredSertifikat();
+      let html = `<h2 class="section-title">Sertifikat Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
+      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama_peserta)}</td><td>${escapeHtmlLocal(d.nomor_sertifikat)}</td><td>${d.pdf_url ? `<a href="${escapeHtmlLocal(d.pdf_url)}" target="_blank">Unduh</a>` : '-'}</td></tr>`; });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    async function renderRTL(container) {
+      const data = KetuaPACModule.getFilteredRTL();
+      let html = `<h2 class="section-title">RTL & Tugas Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Judul</th><th>Deskripsi</th><th>Deadline</th><th>Status</th><th>Peserta</th></tr></thead><tbody>`;
+      data.forEach((item, i) => {
+        const badge = item.status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+        html += `<tr><td>${i+1}</td><td><strong>${escapeHtmlLocal(item.judul)}</strong></td><td>${escapeHtmlLocal(item.deskripsi)}</td><td>${escapeHtmlLocal(item.deadline)}</td><td><span class="badge ${badge}">${escapeHtmlLocal(item.status)}</span></td><td>${escapeHtmlLocal(item.namaPeserta || '-')}</td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    async function renderInformasi(container) {
+      const data = KetuaPACModule.getAllInformasi();
+      let html = `<h2 class="section-title">Informasi & Pengumuman</h2><div class="row g-4">`;
+      if (!data || data.length === 0) {
+        html += '<p class="text-muted">Belum ada informasi.</p>';
+      } else {
+        data.forEach(item => {
+          if (item.jenis === 'flyer' && item.url) {
+            const imgUrl = `https://drive.google.com/thumbnail?id=${item.url}`;
+            html += `<div class="col-md-4"><div class="glass-card p-3"><img src="${imgUrl}" class="img-fluid rounded" alt="${escapeHtmlLocal(item.judul)}"><h6 class="mt-2">${escapeHtmlLocal(item.judul)}</h6><p class="small">${escapeHtmlLocal(item.deskripsi)}</p></div></div>`;
+          } else {
+            html += `<div class="col-md-6"><div class="glass-card p-3"><h5>${escapeHtmlLocal(item.judul)}</h5><p>${escapeHtmlLocal(item.deskripsi)}</p></div></div>`;
+          }
+        });
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ==========================================================
+    //   SCANNER QR LOGIC (HANYA MODE OTOMATIS)
+    // ==========================================================
+    function startScanner() {
+      const statusEl = document.getElementById('scannerStatus');
+      const readerDiv = document.getElementById('scannerVideoContainer');
+      
+      if (isScannerRunning) {
+        stopScanner();
+        return;
+      }
+
+      const isDesktop = window.innerWidth >= 992;
+      let qrboxSize = isDesktop ? 400 : 250; 
+
+      statusEl.innerText = 'Mengakses kamera...';
+
+      try {
+        html5QrCode = new Html5Qrcode("scannerVideoContainer");
+        const config = { fps: 30, qrbox: { width: qrboxSize, height: qrboxSize }, aspectRatio: 1.0 };
+
+        html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText, decodedResult) => { onQRDetected(decodedText); },
+          (errorMessage) => { /* Abaikan error agar scan tetap berjalan */ }
+        ).then(() => {
+          isScannerRunning = true;
+          statusEl.innerText = 'Memindai QR...';
+        }).catch((err) => {
+          statusEl.innerText = 'Gagal mengakses kamera: ' + err.message;
+          showToastLocal('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
+        });
+
+      } catch (err) {
+        statusEl.innerText = 'Error: ' + err.message;
+        showToastLocal('Terjadi kesalahan saat memuat scanner.', 'error');
+      }
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScannerRunning) {
+        try {
+          html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            isScannerRunning = false;
+            document.getElementById('scannerVideoContainer').innerHTML = '';
+            document.getElementById('scannerStatus').innerText = '';
+          });
+        } catch (e) {
+          console.warn('Stop scanner error:', e);
+          isScannerRunning = false;
+        }
+      } else {
+        document.getElementById('scannerVideoContainer').innerHTML = '';
+        document.getElementById('scannerStatus').innerText = '';
+        isScannerRunning = false;
+      }
+    }
+
+    async function onQRDetected(decodedText) {
+      stopScanner();
+
+      const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
+      const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
+
+      if (matchSesi) {
+        const sesiId = matchSesi[1];
+        const tokenMatch = decodedText.match(/token=([^&]+)/);
+        const token = tokenMatch ? tokenMatch[1] : '';
+        window.location.href = `/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(token)}`;
+        return;
+      }
+
+      if (matchPeserta) {
+        const pesertaId = matchPeserta[1];
+        const res = await callApi('getPesertaById', { id: pesertaId }, 'GET');
+        if (!res.success || !res.data) {
+          showToastLocal('ID Peserta tidak ditemukan.', 'error');
+          return;
+        }
+        if (res.data.status !== 'approved') {
+          showToastLocal('Peserta belum disetujui oleh admin. QR tidak aktif.', 'warning');
+          return;
+        }
+
+        const namaPeserta = res.data.nama_lengkap;
+
+        // 🔥 HANYA MODE OTOMATIS: Filter sesi yang submission_open = true
+        const allSesi = await callApi('getSesiAbsen', {}, 'GET');
+        const activeSesi = allSesi.filter(s => s.submission_open === true);
+
+        if (activeSesi.length === 0) {
+          showToastLocal('Tidak ada sesi aktif saat ini.', 'info');
+          return;
+        }
+
+        let selectedSesi;
+        if (activeSesi.length === 1) {
+          selectedSesi = activeSesi[0];
+        } else {
+          // Tampilkan Modal Pilihan Sesi hanya dari list activeSesi
+          const modalHtml = `
+            <div class="modal fade" id="pacSesiModal" tabindex="-1" data-bs-backdrop="static">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-list-ul me-2"></i>Pilih Sesi Absen</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="mb-3">Peserta: <strong>${escapeHtmlLocal(namaPeserta)}</strong></p>
+                    <label class="form-label fw-bold">Pilih Sesi Aktif:</label>
+                    <select class="form-select" id="pacSesiSelect">
+                      ${activeSesi.map(s => `<option value="${s.id}">${escapeHtmlLocal(s.nama)}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success" id="pacSesiSubmit">Absen Sekarang</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const oldModal = document.getElementById('pacSesiModal');
+          if (oldModal) oldModal.remove();
+
+          document.body.insertAdjacentHTML('beforeend', modalHtml);
+          
+          const modalElement = document.getElementById('pacSesiModal');
+          const modal = new bootstrap.Modal(modalElement);
+          modal.show();
+
+          document.getElementById('pacSesiSubmit').addEventListener('click', async function() {
+            const selectedId = document.getElementById('pacSesiSelect').value;
+            selectedSesi = activeSesi.find(s => s.id == selectedId);
+            modal.hide();
+
+            try {
+              const result = await callApi('submitAbsen', {
+                nama: namaPeserta,
+                sesiId: selectedSesi.id,
+                tandaTangan: '',
+                password: '',
+                qrToken: null,
+                pesertaId: pesertaId
+              }, 'POST');
+              if (result.success) {
+                showToastLocal(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`, 'success');
+              } else {
+                showToastLocal(`❌ Gagal: ${result.error || 'Unknown error'}`, 'error');
+              }
+            } catch (e) {
+              showToastLocal(`Error: ${e.message}`, 'error');
+            }
+          });
+
+          modalElement.addEventListener('hidden.bs.modal', function() {
+            this.remove();
+          });
+          return;
+        }
+
+        // Jika hanya 1 sesi yang aktif, langsung submit tanpa modal
+        try {
+          const result = await callApi('submitAbsen', {
+            nama: namaPeserta,
+            sesiId: selectedSesi.id,
+            tandaTangan: '',
+            password: '',
+            qrToken: null,
+            pesertaId: pesertaId
+          }, 'POST');
+          if (result.success) {
+            showToastLocal(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`, 'success');
+          } else {
+            showToastLocal(`❌ Gagal: ${result.error || 'Unknown error'}`, 'error');
+          }
+        } catch (e) {
+          showToastLocal(`Error: ${e.message}`, 'error');
+        }
+        return;
+      }
+
+      showToastLocal('Format QR tidak dikenali. Pastikan QR yang benar.', 'warning');
+    }
+
+    document.getElementById('scanStopBtn')?.addEventListener('click', function() {
+      stopScanner();
+      bootstrap.Modal.getInstance(document.getElementById('scanQrModal')).hide();
+    });
+
+    document.getElementById('scanQrModal')?.addEventListener('hidden.bs.modal', function() {
+      stopScanner();
+    });
+
   </script>
 </body>
 </html>

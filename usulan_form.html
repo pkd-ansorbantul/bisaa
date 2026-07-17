@@ -3,80 +3,276 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Bantul · Form Usulan PKD dari PAC</title>
-  <link rel="icon" type="image/png" href="LOGO ANSOR.webp">
+  <title>Form Usulan PKD · GP Ansor Bantul</title>
+
+  <!-- Favicon & Font -->
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <style>
-    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; }
-    .container-card { max-width: 1000px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); }
-    .section-title { font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.8rem; }
-    .form-usulan-card { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 24px; padding: 1.5rem; margin-bottom: 2rem; }
-    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: 2rem; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
-    .simple-header { text-align: center; margin: 1.5rem 0; }
-    .simple-header img { height: 50px; }
-    .simple-header h1 { font-size: 1.5rem; font-weight: 700; color: #0a3d62; margin: 0.5rem 0; }
-    .simple-header p { color: #6c757d; margin: 0; }
+    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
+    .header-minimal {
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+    .header-minimal .container {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+    .btn-back {
+      background: rgba(37, 99, 235, 0.08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-back:hover {
+      background: #2563eb;
+      color: white;
+      transform: translateX(-3px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .brand-logo-mini { 
+      height: 40px; 
+      width: auto; 
+      margin-right: 14px; 
+      transition: transform 0.2s;
+    }
+    .brand-logo-mini:hover { transform: scale(1.05); }
+    .brand-title-mini { 
+      font-weight: 700; 
+      color: #0a3d62; 
+      font-size: 1.3rem; 
+      line-height: 1.2; 
+      letter-spacing: -0.02em;
+    }
+    .brand-sub-mini { 
+      font-size: 0.8rem; 
+      color: #64748b; 
+      display: block; 
+      margin-top: 0px; 
+      letter-spacing: 0.02em;
+    }
+
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* --- GLASS CARD --- */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .glass-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    /* --- FORM ELEMENTS --- */
+    .form-control, .form-select {
+      border-radius: 12px;
+      border: 1.5px solid #e2e8f0;
+      padding: 0.6rem 1rem;
+      transition: 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
     .btn-wa {
       background-color: #25D366;
       border-color: #25D366;
       color: white;
+      transition: 0.2s;
     }
     .btn-wa:hover {
       background-color: #20b859;
       border-color: #20b859;
       color: white;
+      transform: translateY(-2px);
+    }
+
+    /* --- ANIMASI --- */
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- FOOTER --- */
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: auto;
+      text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    /* --- RESPONSIF --- */
+    @media (max-width: 576px) {
+      .glass-card { border-radius: 16px; padding: 1rem !important; }
+      .header-minimal .container { padding: 0 0.5rem; }
+      .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
+      .brand-title-mini { display: none; }
+      .brand-sub-mini { display: none; }
+      .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
     }
   </style>
 </head>
 <body>
-  <div class="simple-header">
-    <img src="LOGO ANSOR.webp" alt="GP Ansor">
-    <h1>PKD GP Ansor Kabupaten Bantul</h1>
-    <p>Form Usulan PKD dari PAC</p>
-  </div>
 
-  <div class="container container-card">
-    <h2 class="section-title mb-4"><i class="bi bi-envelope-paper me-2"></i>Form Usulan PKD dari PAC</h2>
-    
-    <div class="form-usulan-card">
-      <h4 class="fw-bold mb-3"><i class="bi bi-send me-2"></i>Ajukan Usulan PKD dari PAC</h4>
+  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
+  <header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
+          <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <div>
+            <div class="brand-title-mini">PKD GP Ansor</div>
+            <span class="brand-sub-mini">Kabupaten Bantul</span>
+          </div>
+        </a>
+      </div>
+      <!-- Area User Role (diisi oleh api.js) -->
+      <div id="navbarUserMenu" class="user-menu-area"></div>
+    </div>
+  </header>
+
+  <!-- ================= KONTEN UTAMA ================= -->
+  <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 700px;">
+    <div class="glass-card p-4 fade-up">
+      <h2 class="section-title mb-4"><i class="bi bi-envelope-paper me-2"></i>Form Usulan PKD dari PAC</h2>
+
+      <div class="bg-light rounded-4 p-3 mb-4 border border-0 shadow-sm" style="background: #eff6ff !important;">
+        <h4 class="fw-bold mb-3"><i class="bi bi-send me-2"></i>Ajukan Usulan PKD dari PAC</h4>
+        <p class="text-muted small">Isi data berikut untuk mengajukan usulan kegiatan PKD dari PAC Anda. Data akan diproses oleh admin.</p>
+      </div>
+
       <form id="usulanForm">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label fw-semibold">Nama Lengkap</label><input type="text" class="form-control" id="usulanNama" placeholder="Contoh: Ulinnuha" required></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Usulan (Nama PAC)</label><input type="text" class="form-control" id="usulanUsulan" placeholder="Contoh: PAC GP Ansor Kapanewon Sewon" required></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Tanggal Mulai</label><input type="date" class="form-control" id="usulanTanggalMulai" required></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Tanggal Berakhir (opsional)</label><input type="date" class="form-control" id="usulanTanggalAkhir"><div class="form-text">Kosongkan jika hanya satu hari.</div></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Lokasi</label><input type="text" class="form-control" id="usulanLokasi" placeholder="SKB Semail, Bangunharjo" required></div>
-          <div class="col-md-6"><label class="form-label fw-semibold">Nomor HP</label><input type="tel" class="form-control" id="usulanNoHp" placeholder="083866675521" required></div>
-          <div class="col-12"><label class="form-label fw-semibold">Upload Flyer (opsional)</label><input type="file" class="form-control" id="usulanFlyer" accept="image/*"><img id="flyerPreview" style="max-width:100px;max-height:80px;margin-top:8px;border-radius:8px;display:none;object-fit:cover;" alt="Preview"><div class="form-text">Upload gambar flyer acara (max 2MB, JPG/PNG). Kosongkan jika tidak ada.</div></div>
-          <div class="col-12"><label class="form-label fw-semibold">Verifikasi: <span id="captchaQuestion">5 + 3 = ?</span></label><input type="number" class="form-control" id="captchaAnswer" placeholder="Masukkan hasil penjumlahan" required></div>
-          <div class="col-12"><button type="submit" class="btn btn-primary rounded-pill px-4"><i class="bi bi-send me-1"></i>Kirim Usulan</button></div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="usulanNama" placeholder="Contoh: Ulinnuha" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Usulan (Nama PAC) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="usulanUsulan" placeholder="Contoh: PAC GP Ansor Kapanewon Sewon" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="usulanTanggalMulai" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Tanggal Berakhir (opsional)</label>
+            <input type="date" class="form-control" id="usulanTanggalAkhir">
+            <div class="form-text text-muted small">Kosongkan jika hanya satu hari.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Lokasi <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="usulanLokasi" placeholder="SKB Semail, Bangunharjo" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nomor HP <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control" id="usulanNoHp" placeholder="083866675521" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Upload Flyer (opsional)</label>
+            <input type="file" class="form-control" id="usulanFlyer" accept="image/*">
+            <div class="form-text text-muted small">Upload gambar flyer acara (max 2MB, JPG/PNG). Kosongkan jika tidak ada.</div>
+            <img id="flyerPreview" style="max-width:100px;max-height:80px;margin-top:8px;border-radius:8px;display:none;object-fit:cover;" alt="Preview">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Verifikasi: <span id="captchaQuestion">5 + 3 = ?</span></label>
+            <input type="number" class="form-control" id="captchaAnswer" placeholder="Masukkan hasil penjumlahan" required>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-semibold">
+              <i class="bi bi-send me-2"></i>Kirim Usulan
+            </button>
+          </div>
         </div>
       </form>
+
       <div id="usulanFormMessage" class="mt-3 small"></div>
     </div>
   </div>
 
+  <!-- ================= FOOTER ================= -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
-      <i class="bi bi-c-circle"></i><span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+      <i class="bi bi-c-circle"></i>
+      <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
     </div>
   </footer>
 
+  <!-- ================= TOAST ================= -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+      <div class="toast-header bg-white border-0">
+        <i class="bi me-2" id="toastIcon"></i>
+        <strong class="me-auto" id="toastTitle">Berhasil</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body" id="toastMessage"></div>
+    </div>
+  </div>
+
+  <!-- ================= SCRIPTS ================= -->
+  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="api.js"></script>
-  <script>
-    // Menggunakan PKD
-    const { escapeHtml } = PKD;
 
+  <!-- Modul ES Khusus Halaman Ini -->
+  <script type="module">
+    // ==========================================================
+    //   IMPOR DARI CORE API (ES Modules)
+    // ==========================================================
+    import {
+      guardPublicAccess,
+      callApi,
+      showToast,
+      escapeHtml,
+      updateNavbarMenu,
+      getUserRole
+    } from './js/core/api.js';
+
+    // ==========================================================
+    //   STATE & VARIABLES
+    // ==========================================================
     let currentCaptchaResult = 0;
-    let lastSubmittedData = null; // menyimpan data usulan terakhir untuk konfirmasi WA
+    let lastSubmittedData = null;
 
-    // Storage fallback tidak diperlukan lagi, PKD sudah menangani cache.
+    // ==========================================================
+    //   UTILITY
+    // ==========================================================
+    function escapeHtmlLocal(str) { return escapeHtml(str); }
+    function showToastLocal(message, type) { showToast(message, type); }
 
-    // CAPTCHA
     function generateCaptcha() {
       const a = Math.floor(Math.random() * 10) + 1;
       const b = Math.floor(Math.random() * 10) + 1;
@@ -84,17 +280,6 @@
       document.getElementById('captchaQuestion').innerText = `${a} + ${b} = ?`;
       document.getElementById('captchaAnswer').value = '';
     }
-
-    // Preview flyer
-    document.getElementById('usulanFlyer').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      const preview = document.getElementById('flyerPreview');
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = ev => { preview.src = ev.target.result; preview.style.display = 'block'; };
-        reader.readAsDataURL(file);
-      } else { preview.style.display = 'none'; preview.src = ''; }
-    });
 
     function readFileAsBase64(file) {
       return new Promise((resolve, reject) => {
@@ -105,7 +290,6 @@
       });
     }
 
-    // Format tanggal menjadi string lokal Indonesia (opsional, untuk tampilan WA)
     function formatDateForWA(dateStr) {
       if (!dateStr) return '';
       const parts = dateStr.split('-');
@@ -113,7 +297,6 @@
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    // Generate teks pesan WhatsApp berdasarkan data usulan
     function generateWhatsAppText(data) {
       const nama = data.nama || '-';
       const usulan = data.usulan || '-';
@@ -122,7 +305,6 @@
       const periode = tglAkhir ? `${tglMulai} s.d ${tglAkhir}` : tglMulai;
       const lokasi = data.lokasi || '-';
       const noHp = data.no_hp || '-';
-      
       let pesan = `*KONFIRMASI USULAN PKD*%0A%0A` +
                   `Saya mengajukan usulan PKD melalui form online:%0A` +
                   `Nama: ${nama}%0A` +
@@ -134,15 +316,17 @@
       return pesan;
     }
 
-    // Tampilkan pesan sukses beserta tombol konfirmasi WA
+    // ==========================================================
+    //   SHOW SUCCESS WITH WA BUTTON
+    // ==========================================================
     function showSuccessWithWaButton(data) {
       const msgDiv = document.getElementById('usulanFormMessage');
       const waText = generateWhatsAppText(data);
       const waLink = `https://wa.me/6283866675521?text=${waText}`;
-      
+
       msgDiv.innerHTML = `
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <i class="bi bi-check-circle-fill me-2"></i> <strong>Usulan berhasil dikirim!</strong> Data Anda sudah tercatat di sistem. 
+          <i class="bi bi-check-circle-fill me-2"></i> <strong>Usulan berhasil dikirim!</strong> Data Anda sudah tercatat di sistem.
           <hr>
           <div class="d-flex flex-wrap gap-2 mt-2">
             <a href="${waLink}" target="_blank" class="btn btn-wa btn-sm rounded-pill">
@@ -156,87 +340,120 @@
       msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // Submit form utama
-    document.getElementById('usulanForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nama = document.getElementById('usulanNama').value.trim();
-      const usulan = document.getElementById('usulanUsulan').value.trim();
-      const tanggalMulai = document.getElementById('usulanTanggalMulai').value;
-      const tanggalAkhir = document.getElementById('usulanTanggalAkhir').value;
-      const lokasi = document.getElementById('usulanLokasi').value.trim();
-      const no_hp = document.getElementById('usulanNoHp').value.trim();
-      const captchaAnswer = parseInt(document.getElementById('captchaAnswer').value.trim(), 10);
-      const msgDiv = document.getElementById('usulanFormMessage');
+    // ==========================================================
+    //   INIT FORM
+    // ==========================================================
+    function initForm() {
+      generateCaptcha();
 
-      // Validasi CAPTCHA
-      if (isNaN(captchaAnswer) || captchaAnswer !== currentCaptchaResult) {
-        msgDiv.innerHTML = '<div class="alert alert-danger">Jawaban verifikasi salah.</div>';
-        generateCaptcha();
-        return;
-      }
-      if (!nama || !usulan || !tanggalMulai || !lokasi || !no_hp) {
-        msgDiv.innerHTML = '<div class="alert alert-danger">Semua field wajib diisi.</div>';
-        return;
-      }
+      // Preview flyer
+      document.getElementById('usulanFlyer').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('flyerPreview');
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = ev => { preview.src = ev.target.result; preview.style.display = 'block'; };
+          reader.readAsDataURL(file);
+        } else { preview.style.display = 'none'; preview.src = ''; }
+      });
 
-      let flyerData = null, flyerName = null;
-      const flyerFileInput = document.getElementById('usulanFlyer');
-      if (flyerFileInput.files.length > 0) {
-        const file = flyerFileInput.files[0];
-        if (file.size > 2*1024*1024) {
-          msgDiv.innerHTML = '<div class="alert alert-danger">Ukuran file flyer maksimal 2MB</div>';
+      // Submit form
+      document.getElementById('usulanForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nama = document.getElementById('usulanNama').value.trim();
+        const usulan = document.getElementById('usulanUsulan').value.trim();
+        const tanggalMulai = document.getElementById('usulanTanggalMulai').value;
+        const tanggalAkhir = document.getElementById('usulanTanggalAkhir').value;
+        const lokasi = document.getElementById('usulanLokasi').value.trim();
+        const no_hp = document.getElementById('usulanNoHp').value.trim();
+        const captchaAnswer = parseInt(document.getElementById('captchaAnswer').value.trim(), 10);
+        const msgDiv = document.getElementById('usulanFormMessage');
+
+        // Validasi CAPTCHA
+        if (isNaN(captchaAnswer) || captchaAnswer !== currentCaptchaResult) {
+          msgDiv.innerHTML = '<div class="alert alert-danger">Jawaban verifikasi salah.</div>';
+          generateCaptcha();
           return;
         }
-        flyerName = file.name;
-        try { flyerData = await readFileAsBase64(file); }
-        catch (err) { msgDiv.innerHTML = '<div class="alert alert-danger">Gagal membaca file flyer</div>'; return; }
-      }
-
-      const btn = e.target.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...';
-      msgDiv.innerHTML = '';
-
-      try {
-        // Kirim via PKD.submitUsulan
-        const res = await PKD.submitUsulan({
-          nama, usulan, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir,
-          lokasi, no_hp, flyerData, flyerName
-        });
-        
-        if (res.success) {
-          // Simpan data untuk keperluan WhatsApp
-          lastSubmittedData = {
-            nama: nama,
-            usulan: usulan,
-            tanggalMulai: tanggalMulai,
-            tanggalAkhir: tanggalAkhir,
-            lokasi: lokasi,
-            no_hp: no_hp
-          };
-          
-          // Reset form dan preview
-          document.getElementById('usulanForm').reset();
-          document.getElementById('flyerPreview').style.display = 'none';
-          generateCaptcha();
-          
-          // Tampilkan pesan sukses + tombol WA
-          showSuccessWithWaButton(lastSubmittedData);
-        } else {
-          throw new Error(res.error || 'Gagal mengirim usulan');
+        if (!nama || !usulan || !tanggalMulai || !lokasi || !no_hp) {
+          msgDiv.innerHTML = '<div class="alert alert-danger">Semua field wajib diisi.</div>';
+          return;
         }
-      } catch(err) {
-        msgDiv.innerHTML = `<div class="alert alert-danger">Gagal: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-send me-1"></i>Kirim Usulan';
-      }
-    });
 
-    // Init CAPTCHA
-    window.addEventListener('DOMContentLoaded', () => {
-      generateCaptcha();
-    });
+        let flyerData = null, flyerName = null;
+        const flyerFileInput = document.getElementById('usulanFlyer');
+        if (flyerFileInput.files.length > 0) {
+          const file = flyerFileInput.files[0];
+          if (file.size > 2 * 1024 * 1024) {
+            msgDiv.innerHTML = '<div class="alert alert-danger">Ukuran file flyer maksimal 2MB</div>';
+            return;
+          }
+          flyerName = file.name;
+          try { flyerData = await readFileAsBase64(file); }
+          catch (err) { msgDiv.innerHTML = '<div class="alert alert-danger">Gagal membaca file flyer</div>'; return; }
+        }
+
+        const btn = this.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
+        msgDiv.innerHTML = '';
+
+        try {
+          // Gunakan callApi langsung (submitUsulan ada di api.js, tapi kita gunakan callApi dengan action yang sesuai)
+          // Karena di api.js ada submitUsulan, tapi kita belum mengimpornya. Kita gunakan callApi langsung.
+          const res = await callApi('submitUsulan', {
+            nama,
+            usulan,
+            tanggal_mulai: tanggalMulai,
+            tanggal_akhir: tanggalAkhir,
+            lokasi,
+            no_hp,
+            flyerData,
+            flyerName
+          }, 'POST');
+
+          if (res.success) {
+            lastSubmittedData = {
+              nama: nama,
+              usulan: usulan,
+              tanggalMulai: tanggalMulai,
+              tanggalAkhir: tanggalAkhir,
+              lokasi: lokasi,
+              no_hp: no_hp
+            };
+
+            document.getElementById('usulanForm').reset();
+            document.getElementById('flyerPreview').style.display = 'none';
+            generateCaptcha();
+
+            showSuccessWithWaButton(lastSubmittedData);
+          } else {
+            throw new Error(res.error || 'Gagal mengirim usulan');
+          }
+        } catch (err) {
+          msgDiv.innerHTML = `<div class="alert alert-danger">Gagal: ${escapeHtmlLocal(err.message)}</div>`;
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-send me-2"></i>Kirim Usulan';
+        }
+      });
+    }
+
+    // ==========================================================
+    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    // ==========================================================
+    (async function boot() {
+      const canAccess = await guardPublicAccess();
+      if (!canAccess) return;
+
+      // Update navbar user
+      updateNavbarMenu();
+
+      // Inisialisasi form
+      initForm();
+    })();
+
   </script>
 </body>
 </html>

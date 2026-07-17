@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>Lupa Akun - PKD GP Ansor Bantul</title>
+    <title>Lupa Akun · PKD GP Ansor Bantul</title>
 
     <!-- Favicon & Font -->
-    <link rel="icon" type="image/png" href="LOGO ANSOR.webp" />
+    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
     <!-- Bootstrap 5 + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
-        /* ===== PREMIUM GLOBAL STYLES ===== */
-        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
+        * { font-family: 'Inter', system-ui, sans-serif; }
         body {
             background: #f8fafc;
             color: #0f172a;
@@ -23,83 +23,74 @@
             flex-direction: column;
         }
 
-        /* ===== PREMIUM NAVBAR ===== */
-        .navbar {
+        /* --- HEADER MINIMALIS (SAMA DENGAN INDEX) --- */
+        .header-minimal {
             background: rgba(255, 255, 255, 0.72) !important;
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            z-index: 1030;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
         }
-        .navbar-brand {
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #0f172a !important;
+        .header-minimal .container {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
         }
-        .navbar-brand img {
-            height: 48px;
-            width: auto;
-            margin-right: 14px;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        .btn-back {
+            background: rgba(37, 99, 235, 0.08);
+            color: #2563eb;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .brand-title { font-size: 1.4rem; font-weight: 700; color: #0a3d62; letter-spacing: -0.02em; }
-        .brand-sub { font-size: 0.85rem; font-weight: 400; color: #64748b; display: block; margin-top: 2px; }
-        .navbar .btn { border-radius: 9999px; padding: 0.4rem 1.5rem; font-weight: 500; }
+        .btn-back:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
+        .brand-logo-mini:hover { transform: scale(1.05); }
+        .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+        .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
 
-        /* ===== PREMIUM CONTAINER ===== */
-        .container-card {
-            max-width: 700px;
-            background: white;
-            border-radius: 32px;
-            padding: 2.5rem;
-            margin: 30px auto;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.6);
-            animation: fadeInUp 0.6s ease-out;
-            flex: 1;
+        #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+        .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+        .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+        /* --- GLASS CARD --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
+            border-color: rgba(37, 99, 235, 0.2);
         }
 
-        .section-title {
-            font-weight: 650;
-            font-size: 1.75rem;
-            margin-bottom: 1.8rem;
-            color: #0f172a;
-            border-left: 6px solid #2563eb;
-            padding-left: 1.2rem;
-        }
-
-        /* ===== PREMIUM FORM ===== */
-        .form-control {
-            border-radius: 12px;
-            border: 1.5px solid #e2e8f0;
-            padding: 0.6rem 1rem;
-            transition: all 0.2s;
-        }
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
-
-        /* ===== OPTION CARDS ===== */
+        /* --- OPTION CARDS --- */
         .option-card {
-            background: #f8fafc;
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: 2px solid transparent;
+            border-radius: 20px;
             padding: 1.5rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 2px solid transparent;
             text-align: center;
             height: 100%;
         }
         .option-card:hover {
+            transform: translateY(-4px);
             border-color: #2563eb;
             background: #eff6ff;
-            transform: translateY(-4px);
         }
         .option-card.active {
             border-color: #2563eb;
@@ -110,127 +101,147 @@
         .option-card h6 { font-weight: 600; margin-top: 0.75rem; }
         .option-card p { font-size: 0.85rem; color: #64748b; margin-bottom: 0; }
 
-        /* ===== FOOTER ===== */
+        /* --- FORM ELEMENTS --- */
+        .form-control {
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            padding: 0.6rem 1rem;
+            transition: 0.2s;
+        }
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* --- ANIMASI --- */
+        .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- FOOTER --- */
         .footer-modern {
             font-size: 0.85rem;
             color: #64748b;
-            text-align: center;
-            padding: 2rem 0;
-            border-top: 1px solid rgba(203, 213, 225, 0.4);
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(4px);
             margin-top: auto;
+            text-align: center;
+            padding: 1.5rem 0;
+            border-top: 1px solid #e2e8f0;
+            background: white;
         }
 
-        /* ===== TOAST ===== */
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-
-        /* ===== RESPONSIVE ===== */
+        /* --- RESPONSIF --- */
         @media (max-width: 576px) {
-            .container-card { padding: 1.5rem; }
+            .glass-card { border-radius: 16px; padding: 1rem !important; }
+            .header-minimal .container { padding: 0 0.5rem; }
+            .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
+            .brand-title-mini { display: none; }
+            .brand-sub-mini { display: none; }
+            .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
             .option-card { padding: 1rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ==================== PREMIUM NAVBAR ==================== -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="index.html">
-                <img src="LOGO ANSOR.webp" alt="GP Ansor" />
-                <span>
-                    <span class="brand-title">PKD GP Ansor</span>
-                    <span class="brand-sub">Kabupaten Bantul</span>
-                </span>
-            </a>
-            <div class="ms-auto">
-                <a href="login.html" class="btn btn-outline-secondary rounded-pill px-4">
+    <!-- ================= HEADER MINIMALIS ================= -->
+    <header class="header-minimal sticky-top shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center gap-2">
+                <a href="/bisaa/login.html" class="btn btn-back rounded-pill">
                     <i class="bi bi-arrow-left me-1"></i> Kembali
                 </a>
+                <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+                    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+                    <div>
+                        <div class="brand-title-mini">PKD GP Ansor</div>
+                        <span class="brand-sub-mini">Kabupaten Bantul</span>
+                    </div>
+                </a>
             </div>
+            <!-- Area User Role (diisi oleh api.js) -->
+            <div id="navbarUserMenu" class="user-menu-area"></div>
         </div>
-    </nav>
+    </header>
 
-    <!-- ==================== KONTEN UTAMA ==================== -->
-    <div class="container container-card">
-        <h2 class="section-title"><i class="bi bi-key me-2"></i>Lupa Akun</h2>
-        <p class="text-muted mb-4">Pilih opsi pemulihan di bawah, lalu isi data yang diminta untuk verifikasi.</p>
+    <!-- ================= KONTEN UTAMA ================= -->
+    <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 700px;">
+        <div class="glass-card p-4 fade-up">
+            <h2 class="section-title mb-4"><i class="bi bi-key me-2"></i>Lupa Akun</h2>
+            <p class="text-muted mb-4">Pilih opsi pemulihan di bawah, lalu isi data yang diminta untuk verifikasi.</p>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="option-card" id="optUsername" data-mode="username">
-                    <i class="bi bi-person text-primary"></i>
-                    <h6>Lupa Username</h6>
-                    <p>Dapatkan username Anda dengan verifikasi data profil.</p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="option-card" id="optPassword" data-mode="password">
-                    <i class="bi bi-lock text-warning"></i>
-                    <h6>Lupa Password</h6>
-                    <p>Reset password dengan verifikasi data profil.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== FORM ===== -->
-        <form id="forgotForm" style="display: none;">
-            <input type="hidden" id="mode" value="" />
-
-            <!-- Field umum -->
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="fullName" placeholder="Contoh: Ahmad Fauzi" required />
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="email" placeholder="email@example.com" required />
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">No. HP <span class="text-danger">*</span></label>
-                <input type="tel" class="form-control" id="phone" placeholder="081234567890" required />
-            </div>
-
-            <!-- Field untuk Reset Password -->
-            <div id="resetPasswordFields" style="display: none;">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="username" placeholder="Masukkan username Anda" required />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Password Baru (minimal 6 karakter) <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" id="newPassword" placeholder="Password baru" minlength="6" required />
-                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
-                            <i class="bi bi-eye"></i>
-                        </button>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="option-card" id="optUsername" data-mode="username">
+                        <i class="bi bi-person text-primary"></i>
+                        <h6>Lupa Username</h6>
+                        <p>Dapatkan username Anda dengan verifikasi data profil.</p>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Konfirmasi Password Baru <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password baru" required />
-                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword')">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                <div class="col-md-6">
+                    <div class="option-card" id="optPassword" data-mode="password">
+                        <i class="bi bi-lock text-warning"></i>
+                        <h6>Lupa Password</h6>
+                        <p>Reset password dengan verifikasi data profil.</p>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg btn-rounded px-5 w-100 fw-semibold shadow-sm mt-3" id="submitBtn">
-                <i class="bi bi-check-circle me-2"></i> Kirim
-            </button>
-            <div id="formStatus" class="mt-3"></div>
-        </form>
+            <!-- ===== FORM ===== -->
+            <form id="forgotForm" style="display: none;">
+                <input type="hidden" id="mode" value="" />
 
-        <div class="text-center mt-4">
-            <a href="login.html" class="text-decoration-none small text-muted">Kembali ke halaman login</a>
+                <!-- Field umum -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="fullName" placeholder="Contoh: Ahmad Fauzi" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="email" placeholder="email@example.com" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">No. HP <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" id="phone" placeholder="081234567890" required />
+                </div>
+
+                <!-- Field untuk Reset Password -->
+                <div id="resetPasswordFields" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="username" placeholder="Masukkan username Anda" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Password Baru (minimal 6 karakter) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword" placeholder="Password baru" minlength="6" required />
+                            <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Konfirmasi Password Baru <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password baru" required />
+                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-semibold shadow-sm mt-3" id="submitBtn">
+                    <i class="bi bi-check-circle me-2"></i> Kirim
+                </button>
+                <div id="formStatus" class="mt-3"></div>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="/bisaa/login.html" class="text-decoration-none small text-muted">Kembali ke halaman login</a>
+            </div>
         </div>
     </div>
 
-    <!-- ==================== FOOTER ==================== -->
+    <!-- ================= FOOTER ================= -->
     <footer class="footer-modern container">
         <div class="d-flex justify-content-center align-items-center gap-2">
             <i class="bi bi-c-circle"></i>
@@ -238,8 +249,8 @@
         </div>
     </footer>
 
-    <!-- ==================== TOAST ==================== -->
-    <div class="toast-container">
+    <!-- ================= TOAST ================= -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
             <div class="toast-header bg-white border-0">
                 <i class="bi me-2" id="toastIcon"></i>
@@ -250,161 +261,191 @@
         </div>
     </div>
 
-    <!-- ==================== SCRIPTS ==================== -->
+    <!-- ================= SCRIPTS ================= -->
+    <!-- Library Eksternal (tetap sebagai script biasa) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="api.js"></script>
 
-    <script>
-        // =====================================================
-        //   TOGGLE PASSWORD VISIBILITY
-        // =====================================================
-        window.togglePassword = function(id) {
+    <!-- Modul ES Khusus Halaman Ini -->
+    <script type="module">
+        // ==========================================================
+        //   IMPOR DARI CORE API (ES Modules)
+        // ==========================================================
+        import {
+            callApi,
+            showToast,
+            escapeHtml,
+            getUserRole,
+            updateNavbarMenu
+        } from './js/core/api.js';
+
+        // ==========================================================
+        //   STATE & UTILITY
+        // ==========================================================
+        let selectedMode = null;
+
+        // ==========================================================
+        //   TOGGLE PASSWORD (fungsi lokal, diekspos ke window untuk onclick)
+        // ==========================================================
+        function togglePassword(id) {
             const el = document.getElementById(id);
             if (el) el.type = el.type === 'password' ? 'text' : 'password';
-        };
-
-        // =====================================================
-        //   STATE & UTILITY
-        // =====================================================
-        let selectedMode = null;
-        const optUsername = document.getElementById('optUsername');
-        const optPassword = document.getElementById('optPassword');
-        const forgotForm = document.getElementById('forgotForm');
-        const modeInput = document.getElementById('mode');
-        const resetPasswordFields = document.getElementById('resetPasswordFields');
-        const formStatus = document.getElementById('formStatus');
-        const submitBtn = document.getElementById('submitBtn');
-
-        function showToast(message, type = 'success') {
-            const toastEl = document.getElementById('notificationToast');
-            if (!toastEl) return;
-            const toast = new bootstrap.Toast(toastEl);
-            document.getElementById('toastMessage').innerText = message;
-            const icon = document.getElementById('toastIcon');
-            if (type === 'success') {
-                icon.className = 'bi bi-check-circle-fill text-success';
-                document.getElementById('toastTitle').innerText = 'Berhasil';
-            } else {
-                icon.className = 'bi bi-x-circle-fill text-danger';
-                document.getElementById('toastTitle').innerText = 'Gagal';
-            }
-            toast.show();
         }
+        window.togglePassword = togglePassword;
 
-        function setMode(mode) {
-            selectedMode = mode;
-            document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
-            if (mode === 'username') optUsername.classList.add('active');
-            else optPassword.classList.add('active');
+        // ==========================================================
+        //   INIT FORM
+        // ==========================================================
+        function initForgotForm() {
+            const optUsername = document.getElementById('optUsername');
+            const optPassword = document.getElementById('optPassword');
+            const forgotForm = document.getElementById('forgotForm');
+            const modeInput = document.getElementById('mode');
+            const resetPasswordFields = document.getElementById('resetPasswordFields');
+            const formStatus = document.getElementById('formStatus');
+            const toggleNew = document.getElementById('toggleNewPassword');
+            const toggleConfirm = document.getElementById('toggleConfirmPassword');
 
-            forgotForm.style.display = 'block';
-            modeInput.value = mode;
-            resetPasswordFields.style.display = (mode === 'password') ? 'block' : 'none';
+            // Event listener untuk toggle password
+            toggleNew.addEventListener('click', () => togglePassword('newPassword'));
+            toggleConfirm.addEventListener('click', () => togglePassword('confirmPassword'));
 
-            // Atur required field
-            document.querySelectorAll('#forgotForm input').forEach(el => el.required = false);
-            document.getElementById('fullName').required = true;
-            document.getElementById('email').required = true;
-            document.getElementById('phone').required = true;
-            if (mode === 'password') {
-                document.getElementById('username').required = true;
-                document.getElementById('newPassword').required = true;
-                document.getElementById('confirmPassword').required = true;
+            function setMode(mode) {
+                selectedMode = mode;
+                document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
+                if (mode === 'username') optUsername.classList.add('active');
+                else optPassword.classList.add('active');
+
+                forgotForm.style.display = 'block';
+                modeInput.value = mode;
+                resetPasswordFields.style.display = (mode === 'password') ? 'block' : 'none';
+
+                // Atur required field
+                document.querySelectorAll('#forgotForm input').forEach(el => el.required = false);
+                document.getElementById('fullName').required = true;
+                document.getElementById('email').required = true;
+                document.getElementById('phone').required = true;
+                if (mode === 'password') {
+                    document.getElementById('username').required = true;
+                    document.getElementById('newPassword').required = true;
+                    document.getElementById('confirmPassword').required = true;
+                }
+                formStatus.innerHTML = '';
             }
-            formStatus.innerHTML = '';
-        }
 
-        // === Klik opsi ===
-        optUsername.addEventListener('click', function() { setMode('username'); });
-        optPassword.addEventListener('click', function() { setMode('password'); });
+            optUsername.addEventListener('click', function() { setMode('username'); });
+            optPassword.addEventListener('click', function() { setMode('password'); });
 
-        // === Submit form ===
-        forgotForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const mode = modeInput.value;
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const username = document.getElementById('username').value.trim();
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            forgotForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const mode = modeInput.value;
+                const fullName = document.getElementById('fullName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
 
-            formStatus.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
-            submitBtn.disabled = true;
+                formStatus.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
+                document.getElementById('submitBtn').disabled = true;
 
-            try {
-                if (mode === 'username') {
-                    // Cari username berdasarkan data profil
-                    const res = await PKD.callApi('getMemberUsername', {
-                        nama_lengkap: fullName,
-                        email: email,
-                        no_hp: phone
-                    }, 'GET');
-                    if (res.success && res.username) {
-                        formStatus.innerHTML = `
-                            <div class="alert alert-success">
-                                Username Anda adalah: <strong>${PKD.escapeHtml(res.username)}</strong>
-                            </div>`;
-                        showToast('Username ditemukan!', 'success');
-                    } else {
-                        formStatus.innerHTML = `
-                            <div class="alert alert-danger">
-                                Data tidak ditemukan. Pastikan nama, email, dan no HP sesuai dengan data peserta.
-                            </div>`;
-                    }
-                } else if (mode === 'password') {
-                    // Verifikasi data profil + username
-                    if (newPassword !== confirmPassword) {
-                        formStatus.innerHTML = `<div class="alert alert-danger">Konfirmasi password tidak cocok.</div>`;
-                        submitBtn.disabled = false;
-                        return;
-                    }
-                    if (newPassword.length < 6) {
-                        formStatus.innerHTML = `<div class="alert alert-danger">Password minimal 6 karakter.</div>`;
-                        submitBtn.disabled = false;
-                        return;
-                    }
-                    const verifyRes = await PKD.callApi('verifyMemberForgot', {
-                        username: username,
-                        nama_lengkap: fullName,
-                        email: email,
-                        no_hp: phone
-                    }, 'GET');
-                    if (verifyRes.success) {
-                        // Reset password
-                        const resetRes = await PKD.callApi('resetMemberPassword', {
-                            username: username,
-                            newPassword: newPassword
-                        }, 'POST');
-                        if (resetRes.success) {
+                try {
+                    if (mode === 'username') {
+                        // Cari username
+                        const res = await callApi('getMemberUsername', {
+                            nama_lengkap: fullName,
+                            email: email,
+                            no_hp: phone
+                        }, 'GET');
+                        if (res.success && res.username) {
                             formStatus.innerHTML = `
                                 <div class="alert alert-success">
-                                    Password berhasil direset. Silakan login dengan password baru.
+                                    Username Anda adalah: <strong>${escapeHtml(res.username)}</strong>
                                 </div>`;
-                            showToast('Password berhasil direset!', 'success');
-                            setTimeout(() => window.location.href = 'login.html', 3000);
+                            showToast('Username ditemukan!', 'success');
                         } else {
                             formStatus.innerHTML = `
                                 <div class="alert alert-danger">
-                                    Gagal mereset password: ${PKD.escapeHtml(resetRes.error || 'Unknown error')}
+                                    Data tidak ditemukan. Pastikan nama, email, dan no HP sesuai dengan data peserta.
                                 </div>`;
                         }
-                    } else {
-                        formStatus.innerHTML = `
-                            <div class="alert alert-danger">
-                                Data verifikasi tidak cocok. Pastikan data yang Anda masukkan sesuai dengan data profil Anda.
-                            </div>`;
+                    } else if (mode === 'password') {
+                        // Verifikasi data + reset password
+                        if (newPassword !== confirmPassword) {
+                            formStatus.innerHTML = `<div class="alert alert-danger">Konfirmasi password tidak cocok.</div>`;
+                            document.getElementById('submitBtn').disabled = false;
+                            return;
+                        }
+                        if (newPassword.length < 6) {
+                            formStatus.innerHTML = `<div class="alert alert-danger">Password minimal 6 karakter.</div>`;
+                            document.getElementById('submitBtn').disabled = false;
+                            return;
+                        }
+                        const verifyRes = await callApi('verifyMemberForgot', {
+                            username: username,
+                            nama_lengkap: fullName,
+                            email: email,
+                            no_hp: phone
+                        }, 'GET');
+                        if (verifyRes.success) {
+                            const resetRes = await callApi('resetMemberPassword', {
+                                username: username,
+                                newPassword: newPassword
+                            }, 'POST');
+                            if (resetRes.success) {
+                                formStatus.innerHTML = `
+                                    <div class="alert alert-success">
+                                        Password berhasil direset. Silakan login dengan password baru.
+                                    </div>`;
+                                showToast('Password berhasil direset!', 'success');
+                                setTimeout(() => window.location.href = '/bisaa/login.html', 3000);
+                            } else {
+                                formStatus.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        Gagal mereset password: ${escapeHtml(resetRes.error || 'Unknown error')}
+                                    </div>`;
+                            }
+                        } else {
+                            formStatus.innerHTML = `
+                                <div class="alert alert-danger">
+                                    Data verifikasi tidak cocok. Pastikan data yang Anda masukkan sesuai dengan data profil Anda.
+                                </div>`;
+                        }
                     }
+                } catch (err) {
+                    formStatus.innerHTML = `
+                        <div class="alert alert-danger">
+                            Terjadi kesalahan: ${escapeHtml(err.message)}
+                        </div>`;
+                } finally {
+                    document.getElementById('submitBtn').disabled = false;
                 }
-            } catch (err) {
-                formStatus.innerHTML = `
-                    <div class="alert alert-danger">
-                        Terjadi kesalahan: ${PKD.escapeHtml(err.message)}
-                    </div>`;
-            } finally {
-                submitBtn.disabled = false;
+            });
+        }
+
+        // ==========================================================
+        //   🛡️ GUARD PUBLIC ACCESS & BOOT
+        // ==========================================================
+        (async function boot() {
+            // Jika sudah login, redirect ke dashboard masing-masing
+            const role = getUserRole();
+            if (role === 'admin') {
+                window.location.href = '/bisaa/admin/dashboard_admin.html';
+                return;
+            } else if (role === 'ketua_pac') {
+                window.location.href = '/bisaa/ketua_pac.html';
+                return;
+            } else if (role === 'member') {
+                window.location.href = '/bisaa/member.html';
+                return;
             }
-        });
+
+            // Update menu user (guest)
+            updateNavbarMenu();
+
+            // Inisialisasi form
+            initForgotForm();
+        })();
+
     </script>
 </body>
 </html>
