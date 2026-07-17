@@ -368,17 +368,27 @@
         function escapeHtmlLocal(unsafe) { return escapeHtml(unsafe); }
         function showToastLocal(message, type) { showToast(message, type); }
 
+        // 🔥 PERBAIKAN: Fungsi localStorage dilindungi try-catch
         function savePesertaFormState() {
             const form = document.getElementById('formPesertaDinamis');
             if (!form) return;
             const formData = new FormData(form);
             const data = {};
             formData.forEach((v, k) => data[k] = v);
-            try { localStorage.setItem('pesertaFormState', JSON.stringify(data)); } catch (e) {}
+            try {
+                localStorage.setItem('pesertaFormState', JSON.stringify(data));
+            } catch (e) {
+                console.warn('Storage diblokir browser, state tidak disimpan.');
+            }
         }
 
         function restorePesertaFormState() {
-            const saved = localStorage.getItem('pesertaFormState');
+            let saved = null;
+            try {
+                saved = localStorage.getItem('pesertaFormState');
+            } catch (e) {
+                return;
+            }
             if (!saved) return;
             try {
                 const data = JSON.parse(saved);
@@ -392,7 +402,9 @@
         }
 
         function clearPesertaFormState() {
-            localStorage.removeItem('pesertaFormState');
+            try {
+                localStorage.removeItem('pesertaFormState');
+            } catch (e) {}
         }
 
         // ==========================================================
@@ -878,7 +890,7 @@
         });
 
         // ==========================================================
-        //   SUBMIT FORM
+        //   🔥 PERBAIKAN: SUBMIT FORM (TANPA ERROR)
         // ==========================================================
         async function submitPesertaForm(e) {
             e.preventDefault();
@@ -921,7 +933,9 @@
                 return;
             }
 
-            overlay.style.display = 'flex';
+            // 🔥 CEGAH ERROR NULL .style
+            if (overlay) overlay.style.display = 'flex';
+            
             document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
                 .forEach(el => el.disabled = true);
             const btn = e.target.querySelector('button[type="submit"]');
@@ -990,7 +1004,9 @@
             } catch (err) {
                 showToastLocal('❌ Gagal mengirim: ' + err.message, 'danger');
             } finally {
-                overlay.style.display = 'none';
+                // 🔥 CEGAH ERROR NULL .style
+                if (overlay) overlay.style.display = 'none';
+                
                 document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
                     .forEach(el => el.disabled = false);
                 btn.disabled = false;
