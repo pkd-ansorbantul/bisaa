@@ -490,6 +490,10 @@
           let errorMsg = e.message || 'Terjadi kesalahan';
           if (errorMsg.includes('Sudah absen')) {
             showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya. Absen ganda tidak diizinkan.', 'warning');
+          } else if (errorMsg.includes('Password salah')) {
+            showToastLocal('❌ Password salah. Silakan coba lagi.', 'danger');
+          } else if (errorMsg.includes('Token QR tidak valid')) {
+            showToastLocal('❌ Token QR tidak valid. Silakan scan ulang.', 'danger');
           } else {
             showToastLocal('❌ ' + errorMsg, 'danger');
           }
