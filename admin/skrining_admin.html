@@ -256,7 +256,7 @@
         <div class="col-md-6 text-md-end">
           <div class="input-group" style="max-width: 300px; display: inline-flex;">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama peserta...">
+            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama atau alamat...">
           </div>
           <select class="form-select d-inline-block ms-2" style="width: auto; display: inline-block !important;" id="filterHasil">
             <option value="">Semua Hasil</option>
@@ -322,7 +322,7 @@
       <div class="modal-body p-4">
         <input type="hidden" id="editSkriningId">
         <div class="mb-3"><label class="form-label fw-semibold">Nama Peserta</label><input type="text" class="form-control" id="skriningNama" placeholder="Nama lengkap peserta" required></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Asal</label><input type="text" class="form-control" id="skriningAsal" placeholder="Asal peserta" required></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Alamat</label><input type="text" class="form-control" id="skriningAlamat" placeholder="Alamat peserta" required></div>
         <div class="mb-3"><label class="form-label fw-semibold">Hasil Skrining</label><select class="form-select" id="skriningHasil"><option value="Layak">Layak</option><option value="Tidak Layak">Tidak Layak</option><option value="Perlu Tindak Lanjut">Perlu Tindak Lanjut</option></select></div>
         <div class="mb-3"><label class="form-label fw-semibold">Tanggal</label><input type="date" class="form-control" id="skriningTanggal" required></div>
         <div class="mb-3"><label class="form-label fw-semibold">Keterangan</label><textarea class="form-control" id="skriningNote" rows="2" placeholder="Catatan tambahan (opsional)"></textarea></div>
@@ -335,16 +335,16 @@
   </div>
 </div>
 
-<!-- ==================== MODAL DETAIL SKRINING ==================== -->
+<!-- ==================== MODAL DETAIL SKRINING (MENAMPILKAN 9 JAWABAN) ==================== -->
 <div class="modal fade" id="detailSkriningModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Skrining</h5>
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Jawaban Skrining</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4">
-        <div id="detailContent"><div class="text-center"><div class="spinner-border text-primary"></div></div></div>
+      <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+        <div id="detailContent"></div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
@@ -484,6 +484,13 @@
     return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
+  function formatTimestamp(ts) {
+    if (!ts) return '-';
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
   function updateCacheStatus(status) {
     const el = document.getElementById('cacheStatus');
     if (el) {
@@ -550,7 +557,7 @@
       if (freshData && Array.isArray(freshData) && freshData.length > 0) {
         STATE.skriningList = freshData;
         
-        // 🔥 Reset filter agar semua data muncul saat load
+        // Reset filter agar semua data muncul saat load
         document.getElementById('searchInput').value = '';
         document.getElementById('filterHasil').value = '';
         STATE.searchQuery = '';
@@ -560,7 +567,6 @@
         renderTable(STATE.skriningList);
         updateCacheStatus('Live');
       } else {
-        // Jika data kosong (tapi API berhasil), tampilkan pesan kosong
         container.innerHTML = '<div class="alert alert-info text-center">Belum ada data skrining.</div>';
         updateCacheStatus('Empty');
       }
@@ -619,14 +625,16 @@
     const container = document.getElementById('skriningTableContainer');
     if (!container) return;
 
-    let html = `<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th style="width: 50px;">#</th><th>Nama Peserta</th><th>Asal</th><th>Tanggal</th><th>Hasil</th><th style="width: 200px;" class="text-center">Aksi</th></tr></thead><tbody>`;
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th style="width: 50px;">#</th><th>Nama Peserta</th><th>Alamat</th><th>Tanggal</th><th>Hasil</th><th style="width: 200px;" class="text-center">Aksi</th></tr></thead><tbody>`;
     if (data.length === 0) {
       html += `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-4 d-block mb-2"></i>Tidak ada data skrining.</td></tr>`;
     } else {
       data.forEach((item, index) => {
-        const badge = getHasilBadge(item.hasil);
+        const badge = getHasilBadge(item.hasil || 'Belum');
         const safeId = String(item.id);
-        html += `<tr><td>${index + 1}</td><td><strong>${escapeHtml(item.nama || '-')}</strong></td><td>${escapeHtml(item.asal || '-')}</td><td>${formatDate(item.tanggal)}</td><td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td><td class="text-center"><button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSkrining('${safeId}')" title="Lihat Detail"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSkrining('${safeId}')" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSkrining('${safeId}')" title="Hapus"><i class="bi bi-trash"></i></button></td></tr>`;
+        const alamat = item.alamat || item.asal || '-';
+        const tanggal = formatTimestamp(item.timestamp);
+        html += `<tr><td>${index + 1}</td><td><strong>${escapeHtml(item.nama || '-')}</strong></td><td>${escapeHtml(alamat)}</td><td>${escapeHtml(tanggal)}</td><td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td><td class="text-center"><button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSkrining('${safeId}')" title="Lihat Detail"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSkrining('${safeId}')" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSkrining('${safeId}')" title="Hapus"><i class="bi bi-trash"></i></button></td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
@@ -634,10 +642,17 @@
   }
 
   // ==========================================================
-  //   CRUD OPERATIONS (SKRINING) - Lokal dengan AdminModule
+  //   CRUD OPERATIONS (SKRINING)
   // ==========================================================
   function addSkrining(data) {
-    const newItem = { id: generateId(), nama: data.nama || '', asal: data.asal || '', tanggal: data.tanggal || new Date().toISOString().slice(0, 10), hasil: data.hasil || 'Layak', catatan: data.catatan || '' };
+    const newItem = { 
+      id: generateId(), 
+      nama: data.nama || '', 
+      alamat: data.alamat || '', 
+      timestamp: new Date().toISOString(),
+      hasil: data.hasil || 'Layak', 
+      catatan: data.catatan || '' 
+    };
     STATE.skriningList.unshift(newItem);
     return newItem;
   }
@@ -645,7 +660,7 @@
   function updateSkrining(id, data) {
     const index = STATE.skriningList.findIndex(item => String(item.id) === String(id));
     if (index === -1) return null;
-    const updated = { ...STATE.skriningList[index], nama: data.nama !== undefined ? data.nama : STATE.skriningList[index].nama, asal: data.asal !== undefined ? data.asal : STATE.skriningList[index].asal, tanggal: data.tanggal !== undefined ? data.tanggal : STATE.skriningList[index].tanggal, hasil: data.hasil !== undefined ? data.hasil : STATE.skriningList[index].hasil, catatan: data.catatan !== undefined ? data.catatan : STATE.skriningList[index].catatan };
+    const updated = { ...STATE.skriningList[index], nama: data.nama !== undefined ? data.nama : STATE.skriningList[index].nama, alamat: data.alamat !== undefined ? data.alamat : STATE.skriningList[index].alamat, hasil: data.hasil !== undefined ? data.hasil : STATE.skriningList[index].hasil, catatan: data.catatan !== undefined ? data.catatan : STATE.skriningList[index].catatan };
     STATE.skriningList[index] = updated;
     return updated;
   }
@@ -665,7 +680,7 @@
   function resetForm() {
     document.getElementById('editSkriningId').value = '';
     document.getElementById('skriningNama').value = '';
-    document.getElementById('skriningAsal').value = '';
+    document.getElementById('skriningAlamat').value = '';
     document.getElementById('skriningHasil').value = 'Layak';
     document.getElementById('skriningTanggal').value = new Date().toISOString().slice(0, 10);
     document.getElementById('skriningNote').value = '';
@@ -678,23 +693,41 @@
     if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
     document.getElementById('editSkriningId').value = id;
     document.getElementById('skriningNama').value = item.nama || '';
-    document.getElementById('skriningAsal').value = item.asal || '';
+    document.getElementById('skriningAlamat').value = item.alamat || '';
     document.getElementById('skriningHasil').value = item.hasil || 'Layak';
-    document.getElementById('skriningTanggal').value = item.tanggal || '';
+    document.getElementById('skriningTanggal').value = item.timestamp ? new Date(item.timestamp).toISOString().slice(0, 10) : '';
     document.getElementById('skriningNote').value = item.catatan || '';
     document.getElementById('formModalTitle').innerText = 'Edit Skrining';
     STATE.isEditing = true;
     new bootstrap.Modal(document.getElementById('skriningFormModal')).show();
   }
+
+  // 🔥 PERBAIKAN UTAMA: Tampilkan 9 Jawaban di Modal Detail
   function openDetailModal(id) {
     const item = getSkriningById(id);
     if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
     const modal = new bootstrap.Modal(document.getElementById('detailSkriningModal'));
     const content = document.getElementById('detailContent');
     const badge = getHasilBadge(item.hasil);
-    let html = `<div class="list-group list-group-flush"><div class="list-group-item py-3"><strong>Nama:</strong> ${escapeHtml(item.nama || '-')}</div><div class="list-group-item py-3"><strong>Asal:</strong> ${escapeHtml(item.asal || '-')}</div><div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div><div class="list-group-item py-3"><strong>Hasil:</strong> <span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></div><div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div></div>`;
+
+    let html = `
+      <div class="list-group list-group-flush border rounded-3">
+        <div class="list-group-item py-3 bg-light"><strong>🔹 Hasil Skrining:</strong> <span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></div>
+        <div class="list-group-item py-3"><strong>1. Nama Lengkap:</strong> <br> ${escapeHtml(item.nama || '-')}</div>
+        <div class="list-group-item py-3"><strong>2. Alamat:</strong> <br> ${escapeHtml(item.alamat || '-')}</div>
+        <div class="list-group-item py-3"><strong>3. Info Rekrutmen:</strong> <br> ${escapeHtml(item.info || '-')}</div>
+        <div class="list-group-item py-3"><strong>4. Pengetahuan tentang Ansor:</strong> <br> ${escapeHtml(item.pengetahuan || '-')}</div>
+        <div class="list-group-item py-3"><strong>5. Doa Qunut?</strong> <br> ${escapeHtml(item.qunut || '-')}</div>
+        <div class="list-group-item py-3"><strong>6. Riwayat Penyakit:</strong> <br> ${escapeHtml(item.penyakit || '-')}</div>
+        <div class="list-group-item py-3"><strong>7. Pernah rekrutmen PKD / diklatsar?</strong> <br> ${escapeHtml(item.pernah || '-')}</div>
+        <div class="list-group-item py-3"><strong>8. Alasan tertarik mengikuti PKD:</strong> <br> ${escapeHtml(item.alasan || '-')}</div>
+        <div class="list-group-item py-3"><strong>9. Catatan:</strong> <br> ${escapeHtml(item.catatan || '-')}</div>
+        <div class="list-group-item py-3 text-muted small"><i class="bi bi-clock me-1"></i> Waktu Skrining: ${escapeHtml(formatTimestamp(item.timestamp))}</div>
+      </div>
+    `;
     content.innerHTML = html; modal.show();
   }
+
   function confirmDelete(id) { document.getElementById('deleteSkriningId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); }
   
   function executeDelete() {
@@ -711,36 +744,39 @@
   function saveData() {
     const id = document.getElementById('editSkriningId').value;
     const nama = document.getElementById('skriningNama').value.trim();
-    const asal = document.getElementById('skriningAsal').value.trim();
+    const alamat = document.getElementById('skriningAlamat').value.trim();
     const hasil = document.getElementById('skriningHasil').value;
-    const tanggal = document.getElementById('skriningTanggal').value;
     const catatan = document.getElementById('skriningNote').value.trim();
 
-    if (!nama || !asal || !tanggal) { showToast('Nama, asal, dan tanggal wajib diisi.', 'error'); return; }
+    if (!nama || !alamat) { showToast('Nama dan alamat wajib diisi.', 'error'); return; }
 
-    const data = { nama, asal, hasil, tanggal, catatan };
+    const data = { nama, alamat, hasil, catatan };
     if (id === '') {
       const newItem = addSkrining(data);
       if (newItem) { 
         showToast('Data skrining berhasil ditambahkan.', 'success'); 
         bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); 
-        renderTable(STATE.skriningList); // Render ulang semua data
+        renderTable(STATE.skriningList);
       } else { showToast('Gagal menambahkan data.', 'error'); }
     } else {
       const updated = updateSkrining(id, data);
       if (updated) { 
         showToast('Data skrining berhasil diperbarui.', 'success'); 
         bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); 
-        renderTable(STATE.skriningList); // Render ulang semua data
+        renderTable(STATE.skriningList);
       } else { showToast('Gagal memperbarui data.', 'error'); }
     }
   }
 
   function exportData() {
-    // 🔥 Ekspor berdasarkan data yang sedang difilter (filteredList), bukan semua data
     const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.skriningList;
     if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
-    const exportData = data.map(item => ({ id: item.id, nama: item.nama, asal: item.asal, tanggal: item.tanggal, hasil: item.hasil, catatan: item.catatan }));
+    const exportData = data.map(item => ({ 
+      id: item.id, nama: item.nama, alamat: item.alamat, 
+      info: item.info, pengetahuan: item.pengetahuan, qunut: item.qunut,
+      penyakit: item.penyakit, pernah: item.pernah, alasan: item.alasan,
+      catatan: item.catatan, hasil: item.hasil, timestamp: item.timestamp 
+    }));
     const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -863,6 +899,21 @@
   // ==========================================================
   //   SEARCH & FILTER
   // ==========================================================
+  function getFilteredSkrining(query = '', hasil = '') {
+    let filtered = STATE.skriningList;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        (item.nama && item.nama.toLowerCase().includes(q)) ||
+        (item.alamat && item.alamat.toLowerCase().includes(q))
+      );
+    }
+    if (hasil !== '' && hasil !== '') {
+      filtered = filtered.filter(item => item.hasil === hasil);
+    }
+    return filtered;
+  }
+
   const debouncedSearch = debounce(function(query) {
     STATE.searchQuery = query;
     const filtered = getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter);
@@ -913,7 +964,7 @@
   document.getElementById('confirmDeleteQuestionBtn').addEventListener('click', deleteQuestionConfirm);
 
   // ==========================================================
-  //   🔥 LOGIN AUTH CHECK & BOOT (Pastikan Refresh Total)
+  //   🔥 LOGIN AUTH CHECK & BOOT
   // ==========================================================
   (function boot() {
     if (getUserRole() !== 'admin') {
