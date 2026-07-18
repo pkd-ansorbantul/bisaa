@@ -347,12 +347,12 @@
         
         <div class="row g-3 mb-3">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Waktu Mulai <span class="text-danger">*</span></label>
-            <input type="datetime-local" class="form-control" id="sesiWaktuMulai" required>
+            <label class="form-label fw-semibold">Waktu Mulai <span class="text-muted">(Opsional. Kosongkan jika tanpa batas waktu)</span></label>
+            <input type="datetime-local" class="form-control" id="sesiWaktuMulai">
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Waktu Selesai <span class="text-danger">*</span></label>
-            <input type="datetime-local" class="form-control" id="sesiWaktuSelesai" required>
+            <label class="form-label fw-semibold">Waktu Selesai <span class="text-muted">(Opsional. Kosongkan jika tanpa batas waktu)</span></label>
+            <input type="datetime-local" class="form-control" id="sesiWaktuSelesai">
           </div>
         </div>
 
@@ -406,7 +406,7 @@
         <div class="alert alert-info mt-3 mb-0 rounded-4 border-0 bg-light">
           <i class="bi bi-info-circle"></i> 
           <strong>Scan QR ini untuk absen tanpa password.</strong><br>
-          Pastikan sesi dalam waktu yang telah ditentukan dan status <strong>Buka</strong>.
+          Pastikan sesi dalam waktu yang telah ditentukan (jika diisi) dan status <strong>Buka</strong>.
         </div>
       </div>
       <div class="modal-footer border-0">
@@ -1034,8 +1034,8 @@
     const password = document.getElementById('sesiPassword').value;
     const aktif = document.getElementById('sesiAktif').checked;
 
-    if (!nama || !waktuMulai || !waktuSelesai) {
-      showToast('Nama sesi, waktu mulai, dan waktu selesai wajib diisi.', 'error');
+    if (!nama) {
+      showToast('Nama sesi wajib diisi.', 'error');
       return;
     }
 
