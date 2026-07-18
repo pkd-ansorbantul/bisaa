@@ -85,25 +85,35 @@
       100% { opacity: 0.6; }
     }
 
-    /* --- SIGNATURE AREA --- */
+    /* 🔥 PERBAIKAN UTAMA: SIGNATURE AREA FULL CANVAS 🔥 */
     .signature-area {
       border: 2px dashed #cbd5e1;
       border-radius: 20px;
       background: white;
       padding: 12px;
       transition: border-color 0.2s;
+      width: 100%;
+      height: 180px; /* Tinggi tetap, bisa disesuaikan */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      touch-action: none; /* Mencegah scroll saat mencoret di mobile */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .signature-area:hover { border-color: #2563eb; }
+    
     .signature-area canvas {
-      width: 100%;
-      height: auto;
-      max-width: 300px;
-      max-height: 150px;
-      background: white;
+      width: 100%; /* Mengisi lebar container */
+      height: 100%; /* Mengisi tinggi container */
       display: block;
+      background: white;
       border-radius: 12px;
-      margin: 0 auto;
-      touch-action: none;
+      touch-action: none; /* Penting untuk mencegah gesture browser */
+      cursor: crosshair;
     }
 
     /* --- ANIMASI --- */
@@ -129,7 +139,7 @@
       .brand-title-mini { display: none; }
       .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
-      .signature-area canvas { max-width: 100%; }
+      .signature-area { height: 140px; } /* Sedikit lebih kecil di mobile */
     }
   </style>
 </head>
@@ -224,7 +234,7 @@
           <div class="mb-4"><div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
           <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
           <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div><div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div></div>
-          <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div><div class="skeleton-box" style="width: 100%; max-width: 300px; height: 150px; border-radius: 16px; margin: 0 auto;"></div></div>
+          <div class="mb-3"><div class="skeleton-box" style="height: 16px; width: 120px; margin-bottom: 8px;"></div><div class="skeleton-box" style="width: 100%; max-width: 100%; height: 180px; border-radius: 16px; margin: 0 auto;"></div></div>
           <div class="mt-4"><div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div></div>
         </div>
       `;
@@ -250,15 +260,57 @@
     }
 
     // ==========================================================
+    //   🔥 PERBAIKAN: RESIZE CANVAS AGAR FULL
+    // ==========================================================
+    function resizeAbsenCanvas() {
+      const canvas = document.getElementById('signatureCanvasAbsen');
+      if (!canvas) return;
+
+      // Dapatkan ukuran container (parent element)
+      const container = canvas.parentElement;
+      const rect = container.getBoundingClientRect();
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+      // Atur dimensi internal canvas agar sesuai dengan ukuran visual (dikali ratio untuk DPI tinggi)
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      
+      // Pastikan ukuran CSS sama dengan ukuran asli (agar tidak terdistorsi)
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      // Scale context agar garis tetap tebal/tipis secara proporsional
+      const ctx = canvas.getContext('2d');
+      ctx.scale(ratio, ratio);
+
+      // Kosongkan canvas yang sudah ada sebelumnya (jika sudah ada coretan)
+      if (window.sigPadAbsen) {
+        window.sigPadAbsen.clear();
+      }
+    }
+
+    // ==========================================================
     //   SIGNATURE PAD
     // ==========================================================
     function initAbsenSignaturePad() {
       const canvas = document.getElementById('signatureCanvasAbsen');
       if (!canvas) return;
+      
+      // Hapus instance lama jika ada
       if (window.sigPadAbsen) { window.sigPadAbsen.clear(); window.sigPadAbsen = null; }
+
+      // Resize dulu agar ukurannya pas
+      resizeAbsenCanvas();
+
+      // Inisialisasi Signature Pad dengan ukuran penuh
       window.sigPadAbsen = new SignaturePad(canvas, {
-        backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3
+        backgroundColor: 'white', 
+        penColor: '#0f172a', 
+        minWidth: 1.5, 
+        maxWidth: 3,
+        throttle: 16 // Mencegah lag saat mencoret cepat
       });
+      
       window.sigPadAbsen.clear();
 
       document.getElementById('clearAbsenSign')?.addEventListener('click', () => {
@@ -380,10 +432,13 @@
         `;
       }
 
+      // 🔥 PERBAIKAN: Tanda tangan full canvas
       html += `
         <div class="mb-3">
-          <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-          <div class="signature-area"><canvas id="signatureCanvasAbsen" width="300" height="150"></canvas></div>
+          <label class="form-label fw-bold">✍️ Tanda Tangan Digital <small class="text-muted">(coret di seluruh area)</small></label>
+          <div class="signature-area">
+            <canvas id="signatureCanvasAbsen" width="300" height="150"></canvas>
+          </div>
           <div class="signature-buttons mt-2 d-flex gap-2">
             <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAbsenSign">Hapus</button>
             <button type="button" class="btn btn-outline-primary btn-sm" id="undoAbsenSign">Undo</button>
@@ -392,25 +447,33 @@
         <button id="submitAbsenBtn" class="btn btn-warning btn-lg w-100 rounded-pill">📋 Kirim Absen</button>
       `;
 
-      // 🔥 Tulis HTML ke DOM terlebih dahulu
       container.innerHTML = html;
       container.classList.add('fade-up');
 
       // 🔥 Inisialisasi komponen setelah HTML terpasang
       initAbsenSignaturePad();
 
-      // === 🔥 GUARD CLAUSE PALING PENTING UNTUK ERROR NULL ===
+      // 🔥 Re-inisialisasi jika window di-resize (agar canvas tetap full)
+      window.addEventListener('resize', () => {
+        if (window.sigPadAbsen) {
+          // Simpan data yang sudah dicoret
+          const data = window.sigPadAbsen.toData();
+          resizeAbsenCanvas();
+          // Kembalikan data ke canvas yang sudah di-resize
+          if (data && data.length > 0) {
+            window.sigPadAbsen.fromData(data);
+          }
+        }
+      });
+
       if (isQRMode) {
         const selectEl = document.getElementById('pilihSesiAbsen');
-        // Pastikan dropdown benar-benar ada di DOM, barulah set nilainya
         if (selectEl) {
           if (sesiIdFromUrl) {
             selectEl.value = sesiIdFromUrl;
           } else if (sesiList.length > 0) {
             selectEl.value = sesiList[0].id;
           }
-        } else {
-          console.warn("⚠️ Elemen dropdown (#pilihSesiAbsen) tidak ditemukan di DOM saat pengisian QR!");
         }
       }
 
@@ -419,18 +482,15 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
-        // Validasi dengan guard clause
         const pad = window.sigPadAbsen;
         const namaInput = document.getElementById('namaAbsen');
         const sesiInput = document.getElementById('pilihSesiAbsen');
         const pwInput = document.getElementById('passwordAbsen');
         const qrInput = document.getElementById('qrTokenAbsen');
 
-        // 🔥 Cek apakah tanda tangan sudah diisi
         const hasSignature = pad && !pad.isEmpty();
         let params = {};
 
-        // Validasi nama
         if (!namaInput) {
           showToastLocal('Elemen nama tidak ditemukan!', 'danger');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
@@ -441,14 +501,16 @@
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
 
-        // Validasi sesi
         if (!sesiInput) {
           showToastLocal('Elemen sesi tidak ditemukan!', 'danger');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
-        const sesiId = sesiInput.value;
+        const sesiId = sesiInput.value.trim();
+        if (!sesiId) {
+          showToastLocal('Sesi tidak valid atau belum dipilih.', 'danger');
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
+        }
 
-        // Siapkan parameter dasar
         params = { nama, sesiId };
 
         if (isQRMode) {
@@ -464,17 +526,13 @@
             btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
           const password = pwInput.value.trim();
-          // 🔥 PERBAIKAN: Jika password kosong, jangan kirim, tapi tampilkan error
           if (!password) {
             showToastLocal('Password sesi wajib diisi!', 'danger');
             btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
-          params.password = password; // Kirim password yang sudah di-trim
+          params.password = password;
         }
 
-        // 🔥 Logika dua langkah:
-        // Jika tanda tangan belum ada, kirim validasi dulu (tanpa tandaTangan)
-        // Jika sudah ada, kirim dengan tandaTangan
         let signatureDataURL = null;
         if (hasSignature) {
           signatureDataURL = pad.toDataURL('image/jpeg', 0.2);
@@ -484,25 +542,20 @@
         try {
           const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, null);
           
-          // 🔥 PERBAIKAN UTAMA: Cek apakah backend mengembalikan success: false (error validasi)
           if (!result.success) {
-            // Jika backend gagal, tampilkan pesan error dari backend
             showToastLocal('❌ ' + (result.error || 'Terjadi kesalahan validasi'), 'danger');
             btn.disabled = false;
             btn.innerHTML = '📋 Kirim Absen';
             return;
           }
 
-          // 🔥 PERBAIKAN: Jika API mengembalikan needSignature, minta tanda tangan
           if (result.needSignature) {
             showToastLocal('Silakan isi tanda tangan terlebih dahulu.', 'warning');
-            // Fokuskan ke area tanda tangan
             btn.disabled = false;
             btn.innerHTML = '📋 Kirim Absen';
             return;
           }
 
-          // 🔥 Jika sukses dan sudah ada tanda tangan, maka absen berhasil
           showToastLocal('✅ Absen berhasil tercatat!', 'success');
           pad.clear();
           if (namaInput) namaInput.value = '';
@@ -514,7 +567,6 @@
         } catch (e) {
           let errorMsg = e.message || 'Terjadi kesalahan';
           console.error('❌ Error saat absen:', errorMsg);
-          // 🔥 PERBAIKAN: Pastikan semua error ditampilkan dengan jelas
           if (errorMsg.includes('Sudah absen')) {
             showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya. Absen ganda tidak diizinkan.', 'warning');
           } else if (errorMsg.includes('Password salah')) {
