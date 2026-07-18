@@ -6,8 +6,10 @@
   <title>Admin Skrining - PKD GP Ansor Bantul</title>
   <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <style>
     /* --- GLOBAL --- */
     * { font-family: 'Inter', sans-serif; }
@@ -433,7 +435,6 @@
 <!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Modul ES Khusus Halaman Ini -->
 <script type="module">
   // ==========================================================
   //   IMPOR DARI CORE API DAN MODUL ADMIN
@@ -534,24 +535,33 @@
   });
 
   // ==========================================================
-  //   LOAD DATA SKRINING (via AdminModule)
+  //   🔥 PERBAIKAN UTAMA: LOAD DATA DENGAN FORCE REFRESH & RESET FILTER
   // ==========================================================
   async function loadData(forceRefresh = false) {
     const container = document.getElementById('skriningTableContainer');
     container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
 
     try {
-      // Pastikan AdminModule sudah dimuat
       if (!AdminModule.getState().lastSync || forceRefresh) {
         await AdminModule.loadAllData(forceRefresh);
       }
       const freshData = AdminModule.getSkriningList() || [];
+      
       if (freshData && Array.isArray(freshData) && freshData.length > 0) {
         STATE.skriningList = freshData;
-        renderTable(getFilteredSkrining(STATE.searchQuery, STATE.hasilFilter));
+        
+        // 🔥 Reset filter agar semua data muncul saat load
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterHasil').value = '';
+        STATE.searchQuery = '';
+        STATE.hasilFilter = '';
+        
+        // Tampilkan SEMUA data tanpa filter
+        renderTable(STATE.skriningList);
         updateCacheStatus('Live');
       } else {
-        container.innerHTML = '<div class="alert alert-info text-center">Tidak ada data skrining.</div>';
+        // Jika data kosong (tapi API berhasil), tampilkan pesan kosong
+        container.innerHTML = '<div class="alert alert-info text-center">Belum ada data skrining.</div>';
         updateCacheStatus('Empty');
       }
     } catch (e) {
@@ -562,14 +572,13 @@
   }
 
   // ==========================================================
-  //   LOAD PERTANYAAN SKRINING (via AdminModule)
+  //   LOAD PERTANYAAN SKRINING (via API)
   // ==========================================================
   async function loadQuestions(forceRefresh = false) {
     const container = document.getElementById('questionsTableContainer');
     container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
 
     try {
-      // AdminModule tidak memiliki getter khusus untuk pertanyaan, gunakan callApi langsung
       const result = await callApi('getSkriningQuestions', {}, 'GET');
       const freshQuestions = result?.data || result;
       if (freshQuestions && Array.isArray(freshQuestions) && freshQuestions.length > 0) {
@@ -604,23 +613,8 @@
   }
 
   // ==========================================================
-  //   RENDER TABEL SKRINING
+  //   RENDER TABEL SKRINING (Tampilkan SEMUA data)
   // ==========================================================
-  function getFilteredSkrining(query = '', hasil = '') {
-    let filtered = STATE.skriningList;
-    if (query.trim() !== '') {
-      const q = query.toLowerCase().trim();
-      filtered = filtered.filter(item =>
-        (item.nama && item.nama.toLowerCase().includes(q)) ||
-        (item.asal && item.asal.toLowerCase().includes(q))
-      );
-    }
-    if (hasil !== '' && hasil !== '') {
-      filtered = filtered.filter(item => item.hasil === hasil);
-    }
-    return filtered;
-  }
-
   function renderTable(data) {
     const container = document.getElementById('skriningTableContainer');
     if (!container) return;
@@ -631,7 +625,8 @@
     } else {
       data.forEach((item, index) => {
         const badge = getHasilBadge(item.hasil);
-        html += `<tr><td>${index + 1}</td><td><strong>${escapeHtml(item.nama || '-')}</strong></td><td>${escapeHtml(item.asal || '-')}</td><td>${formatDate(item.tanggal)}</td><td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td><td class="text-center"><button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSkrining('${item.id}')" title="Lihat Detail"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSkrining('${item.id}')" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSkrining('${item.id}')" title="Hapus"><i class="bi bi-trash"></i></button></td></tr>`;
+        const safeId = String(item.id);
+        html += `<tr><td>${index + 1}</td><td><strong>${escapeHtml(item.nama || '-')}</strong></td><td>${escapeHtml(item.asal || '-')}</td><td>${formatDate(item.tanggal)}</td><td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td><td class="text-center"><button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewSkrining('${safeId}')" title="Lihat Detail"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editSkrining('${safeId}')" title="Edit"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteSkrining('${safeId}')" title="Hapus"><i class="bi bi-trash"></i></button></td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
@@ -648,7 +643,7 @@
   }
 
   function updateSkrining(id, data) {
-    const index = STATE.skriningList.findIndex(item => item.id === id);
+    const index = STATE.skriningList.findIndex(item => String(item.id) === String(id));
     if (index === -1) return null;
     const updated = { ...STATE.skriningList[index], nama: data.nama !== undefined ? data.nama : STATE.skriningList[index].nama, asal: data.asal !== undefined ? data.asal : STATE.skriningList[index].asal, tanggal: data.tanggal !== undefined ? data.tanggal : STATE.skriningList[index].tanggal, hasil: data.hasil !== undefined ? data.hasil : STATE.skriningList[index].hasil, catatan: data.catatan !== undefined ? data.catatan : STATE.skriningList[index].catatan };
     STATE.skriningList[index] = updated;
@@ -656,13 +651,13 @@
   }
 
   function deleteSkrining(id) {
-    const index = STATE.skriningList.findIndex(item => item.id === id);
+    const index = STATE.skriningList.findIndex(item => String(item.id) === String(id));
     if (index === -1) return false;
     STATE.skriningList.splice(index, 1);
     return true;
   }
 
-  function getSkriningById(id) { return STATE.skriningList.find(item => item.id === id); }
+  function getSkriningById(id) { return STATE.skriningList.find(item => String(item.id) === String(id)); }
 
   // ==========================================================
   //   EVENT HANDLERS (DATA SKRINING) - diekspos ke global
@@ -701,13 +696,18 @@
     content.innerHTML = html; modal.show();
   }
   function confirmDelete(id) { document.getElementById('deleteSkriningId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); }
+  
   function executeDelete() {
     const id = document.getElementById('deleteSkriningId').value;
     if (!id) return;
     const result = deleteSkrining(id);
-    if (result) { showToast('Data skrining berhasil dihapus.', 'success'); bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); loadData(); }
-    else { showToast('Gagal menghapus data.', 'error'); }
+    if (result) { 
+      showToast('Data skrining berhasil dihapus.', 'success'); 
+      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); 
+      renderTable(STATE.skriningList); // Render ulang semua data
+    } else { showToast('Gagal menghapus data.', 'error'); }
   }
+
   function saveData() {
     const id = document.getElementById('editSkriningId').value;
     const nama = document.getElementById('skriningNama').value.trim();
@@ -715,20 +715,30 @@
     const hasil = document.getElementById('skriningHasil').value;
     const tanggal = document.getElementById('skriningTanggal').value;
     const catatan = document.getElementById('skriningNote').value.trim();
+
     if (!nama || !asal || !tanggal) { showToast('Nama, asal, dan tanggal wajib diisi.', 'error'); return; }
+
     const data = { nama, asal, hasil, tanggal, catatan };
     if (id === '') {
       const newItem = addSkrining(data);
-      if (newItem) { showToast('Data skrining berhasil ditambahkan.', 'success'); bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); loadData(); }
-      else { showToast('Gagal menambahkan data.', 'error'); }
+      if (newItem) { 
+        showToast('Data skrining berhasil ditambahkan.', 'success'); 
+        bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); 
+        renderTable(STATE.skriningList); // Render ulang semua data
+      } else { showToast('Gagal menambahkan data.', 'error'); }
     } else {
       const updated = updateSkrining(id, data);
-      if (updated) { showToast('Data skrining berhasil diperbarui.', 'success'); bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); loadData(); }
-      else { showToast('Gagal memperbarui data.', 'error'); }
+      if (updated) { 
+        showToast('Data skrining berhasil diperbarui.', 'success'); 
+        bootstrap.Modal.getInstance(document.getElementById('skriningFormModal')).hide(); 
+        renderTable(STATE.skriningList); // Render ulang semua data
+      } else { showToast('Gagal memperbarui data.', 'error'); }
     }
   }
+
   function exportData() {
-    const data = STATE.filteredList;
+    // 🔥 Ekspor berdasarkan data yang sedang difilter (filteredList), bukan semua data
+    const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.skriningList;
     if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
     const exportData = data.map(item => ({ id: item.id, nama: item.nama, asal: item.asal, tanggal: item.tanggal, hasil: item.hasil, catatan: item.catatan }));
     const json = JSON.stringify(exportData, null, 2);
@@ -761,7 +771,7 @@
   }
 
   window.editQuestion = function(id) {
-    const q = STATE.questionList.find(item => item.id == id);
+    const q = STATE.questionList.find(item => String(item.id) === String(id));
     if (!q) return;
     document.getElementById('editQuestionId').value = q.id;
     document.getElementById('questionTeks').value = q.teks || '';
@@ -774,26 +784,33 @@
   };
 
   function saveQuestion() {
-    const btn = document.getElementById('saveQuestionBtn'); btn.disabled = true;
+    const btn = document.getElementById('saveQuestionBtn'); 
+    const originalText = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menyimpan...';
+
     const id = document.getElementById('editQuestionId').value;
     const teks = document.getElementById('questionTeks').value.trim();
     const jenis = document.getElementById('questionJenis').value;
     const opsi = document.getElementById('questionOpsi').value.trim();
     const urutan = parseInt(document.getElementById('questionUrutan').value) || 1;
-    if (!teks) { showToast('Teks pertanyaan wajib diisi.', 'error'); btn.disabled = false; return; }
-    callApi('addSkriningQuestion', { teks, jenis, opsi, urutan }, 'POST').then(() => {
-      if (id) {
-        callApi('updateSkriningQuestion', { id, teks, jenis, opsi, urutan }, 'POST').then(() => {
-          showToast('Pertanyaan berhasil diperbarui.', 'success');
-          bootstrap.Modal.getInstance(document.getElementById('questionFormModal')).hide();
-          loadQuestions(true);
-        }).catch(e => showToast('Gagal: ' + e.message, 'error'));
-      } else {
-        showToast('Pertanyaan berhasil ditambahkan.', 'success');
+
+    if (!teks) { 
+      showToast('Teks pertanyaan wajib diisi.', 'error'); 
+      btn.disabled = false; btn.innerHTML = originalText; return; 
+    }
+
+    const params = { teks, jenis, opsi, urutan };
+    const action = id ? 'updateSkriningQuestion' : 'addSkriningQuestion';
+    if (id) params.id = id;
+
+    callApi(action, params, 'POST')
+      .then(() => {
+        showToast(id ? 'Pertanyaan berhasil diperbarui.' : 'Pertanyaan berhasil ditambahkan.', 'success');
         bootstrap.Modal.getInstance(document.getElementById('questionFormModal')).hide();
         loadQuestions(true);
-      }
-    }).catch(e => showToast('Gagal: ' + e.message, 'error')).finally(() => btn.disabled = false);
+      })
+      .catch(e => showToast('Gagal: ' + e.message, 'error'))
+      .finally(() => { btn.disabled = false; btn.innerHTML = originalText; });
   }
 
   window.deleteQuestion = function(id) {
@@ -803,32 +820,44 @@
 
   function deleteQuestionConfirm() {
     const id = document.getElementById('deleteQuestionId').value;
-    callApi('deleteSkriningQuestion', { id }, 'POST').then(() => {
-      showToast('Pertanyaan berhasil dihapus.', 'success');
-      bootstrap.Modal.getInstance(document.getElementById('deleteQuestionModal')).hide();
-      loadQuestions(true);
-    }).catch(e => showToast('Gagal: ' + e.message, 'error'));
+    const btn = document.getElementById('confirmDeleteQuestionBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menghapus...';
+
+    callApi('deleteSkriningQuestion', { id }, 'POST')
+      .then(() => {
+        showToast('Pertanyaan berhasil dihapus.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteQuestionModal')).hide();
+        loadQuestions(true);
+      })
+      .catch(e => showToast('Gagal: ' + e.message, 'error'))
+      .finally(() => { btn.disabled = false; btn.innerHTML = originalText; });
   }
 
   function loadDefaultQuestions() {
     if (!confirm('Ini akan menghapus semua pertanyaan yang ada dan mengembalikan ke default. Lanjutkan?')) return;
-    Promise.all(STATE.questionList.map(q => callApi('deleteSkriningQuestion', { id: q.id }, 'POST'))).then(() => {
-      const defaults = [
-        { teks: "Nama Lengkap", jenis: "text", opsi: "", urutan: 1 },
-        { teks: "Alamat", jenis: "text", opsi: "", urutan: 2 },
-        { teks: "Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)", jenis: "text", opsi: "", urutan: 3 },
-        { teks: "Pengetahuan tentang Ansor", jenis: "text", opsi: "", urutan: 4 },
-        { teks: "Doa Qunut?", jenis: "radio", opsi: "Ya,Tidak", urutan: 5 },
-        { teks: "Riwayat penyakit", jenis: "text", opsi: "", urutan: 6 },
-        { teks: "Pernah rekrutmen PKD / diklatsar?", jenis: "radio", opsi: "Ya,Tidak", urutan: 7 },
-        { teks: "Alasan tertarik mengikuti PKD", jenis: "text", opsi: "", urutan: 8 },
-        { teks: "Catatan (opsional)", jenis: "text", opsi: "", urutan: 9 }
-      ];
-      return Promise.all(defaults.map(q => callApi('addSkriningQuestion', q, 'POST')));
-    }).then(() => {
-      showToast('Default questions loaded.', 'success');
-      loadQuestions(true);
-    }).catch(e => showToast('Gagal: ' + e.message, 'error'));
+    
+    const deletePromises = STATE.questionList.map(q => callApi('deleteSkriningQuestion', { id: q.id }, 'POST'));
+    Promise.all(deletePromises)
+      .then(() => {
+        const defaults = [
+          { teks: "Nama Lengkap", jenis: "text", opsi: "", urutan: 1 },
+          { teks: "Alamat", jenis: "text", opsi: "", urutan: 2 },
+          { teks: "Info rekrutmen (IG/FB/WA/Website/Teman/Saudara/Lainnya)", jenis: "text", opsi: "", urutan: 3 },
+          { teks: "Pengetahuan tentang Ansor", jenis: "text", opsi: "", urutan: 4 },
+          { teks: "Doa Qunut?", jenis: "radio", opsi: "Ya,Tidak", urutan: 5 },
+          { teks: "Riwayat penyakit", jenis: "text", opsi: "", urutan: 6 },
+          { teks: "Pernah rekrutmen PKD / diklatsar?", jenis: "radio", opsi: "Ya,Tidak", urutan: 7 },
+          { teks: "Alasan tertarik mengikuti PKD", jenis: "text", opsi: "", urutan: 8 },
+          { teks: "Catatan (opsional)", jenis: "text", opsi: "", urutan: 9 }
+        ];
+        return Promise.all(defaults.map(q => callApi('addSkriningQuestion', q, 'POST')));
+      })
+      .then(() => {
+        showToast('Default questions loaded.', 'success');
+        loadQuestions(true);
+      })
+      .catch(e => showToast('Gagal: ' + e.message, 'error'));
   }
 
   // ==========================================================
@@ -858,8 +887,7 @@
   document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
     this.disabled = true;
-    loadData(true).then(() => {
-      loadQuestions(true);
+    Promise.all([loadData(true), loadQuestions(true)]).then(() => {
       this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
       this.disabled = false;
       showToast('Data berhasil disegarkan', 'success');
@@ -885,7 +913,7 @@
   document.getElementById('confirmDeleteQuestionBtn').addEventListener('click', deleteQuestionConfirm);
 
   // ==========================================================
-  //   LOGIN AUTH CHECK & BOOT
+  //   🔥 LOGIN AUTH CHECK & BOOT (Pastikan Refresh Total)
   // ==========================================================
   (function boot() {
     if (getUserRole() !== 'admin') {
@@ -893,12 +921,11 @@
       return;
     }
 
-    // Update navbar user
     updateNavbarMenu();
-
-    // Load data
-    loadData();
-    loadQuestions();
+    
+    // Memuat data dengan paksa (forceRefresh = true) agar data terbaru dari API langsung ditampilkan
+    loadData(true);
+    loadQuestions(true);
   })();
 
 </script>
