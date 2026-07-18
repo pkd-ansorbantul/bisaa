@@ -404,7 +404,6 @@
         const selectEl = document.getElementById('pilihSesiAbsen');
         // Pastikan dropdown benar-benar ada di DOM, barulah set nilainya
         if (selectEl) {
-          // Jika sesiIdFromUrl valid, set nilainya. Jika tidak ada, set ke index pertama
           if (sesiIdFromUrl) {
             selectEl.value = sesiIdFromUrl;
           } else if (sesiList.length > 0) {
@@ -427,7 +426,7 @@
         const pwInput = document.getElementById('passwordAbsen');
         const qrInput = document.getElementById('qrTokenAbsen');
 
-        // 🔥 PERBAIKAN: Cek apakah tanda tangan sudah diisi (jika sudah diisi, langsung kirim; jika belum, minta isi)
+        // 🔥 Cek apakah tanda tangan sudah diisi
         const hasSignature = pad && !pad.isEmpty();
         let params = {};
 
@@ -485,6 +484,15 @@
         try {
           const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, null);
           
+          // 🔥 PERBAIKAN UTAMA: Cek apakah backend mengembalikan success: false (error validasi)
+          if (!result.success) {
+            // Jika backend gagal, tampilkan pesan error dari backend
+            showToastLocal('❌ ' + (result.error || 'Terjadi kesalahan validasi'), 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '📋 Kirim Absen';
+            return;
+          }
+
           // 🔥 PERBAIKAN: Jika API mengembalikan needSignature, minta tanda tangan
           if (result.needSignature) {
             showToastLocal('Silakan isi tanda tangan terlebih dahulu.', 'warning');
