@@ -195,6 +195,7 @@
     //   STATE & KONFIGURASI
     // ==========================================================
     let sesiList = [];
+    let isQRMode = false;
 
     // ==========================================================
     //   UTILITY
@@ -273,7 +274,7 @@
     }
 
     // ==========================================================
-    //   🔥 PERBAIKAN UTAMA: STATE MANAGEMENT (Lindungi dari Tracking Prevention)
+    //   🔥 STATE MANAGEMENT (Lindungi dari Tracking Prevention)
     // ==========================================================
     function saveAbsenFormState() {
       try {
@@ -312,8 +313,9 @@
     // ==========================================================
     //   RENDER FORM ASLI
     // ==========================================================
-    function renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRMode) {
+    function renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRModeParam) {
       sesiList = sesiListData;
+      isQRMode = isQRModeParam;
       const container = document.getElementById('absenContainer');
 
       if (!sesiList || sesiList.length === 0) {
@@ -425,10 +427,11 @@
         const pwInput = document.getElementById('passwordAbsen');
         const qrInput = document.getElementById('qrTokenAbsen');
 
-        if (!pad || pad.isEmpty()) {
-          showToastLocal('Tanda tangan wajib!', 'danger');
-          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-        }
+        // 🔥 PERBAIKAN: Cek apakah tanda tangan sudah diisi (jika sudah diisi, langsung kirim; jika belum, minta isi)
+        const hasSignature = pad && !pad.isEmpty();
+        let params = {};
+
+        // Validasi nama
         if (!namaInput) {
           showToastLocal('Elemen nama tidak ditemukan!', 'danger');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
@@ -438,13 +441,16 @@
           showToastLocal('Nama wajib diisi!', 'danger');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
+
+        // Validasi sesi
         if (!sesiInput) {
           showToastLocal('Elemen sesi tidak ditemukan!', 'danger');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
         const sesiId = sesiInput.value;
 
-        let params = { nama, sesiId, tandaTangan: pad.toDataURL('image/jpeg', 0.2) };
+        // Siapkan parameter dasar
+        params = { nama, sesiId };
 
         if (isQRMode) {
           if (qrInput) {
@@ -464,6 +470,15 @@
             btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
           params.password = password;
+        }
+
+        // 🔥 Logika dua langkah:
+        // Jika tanda tangan belum ada, kirim validasi dulu (tanpa tandaTangan)
+        // Jika sudah ada, kirim dengan tandaTangan
+        let signatureDataURL = null;
+        if (hasSignature) {
+          signatureDataURL = pad.toDataURL('image/jpeg', 0.2);
+          params.tandaTangan = signatureDataURL;
         }
 
         try {
@@ -494,6 +509,8 @@
             showToastLocal('❌ Password salah. Silakan coba lagi.', 'danger');
           } else if (errorMsg.includes('Token QR tidak valid')) {
             showToastLocal('❌ Token QR tidak valid. Silakan scan ulang.', 'danger');
+          } else if (errorMsg.includes('Sesi absen sedang ditutup')) {
+            showToastLocal('⛔ Sesi absen sedang ditutup oleh panitia. Silakan hubungi admin.', 'warning');
           } else {
             showToastLocal('❌ ' + errorMsg, 'danger');
           }
