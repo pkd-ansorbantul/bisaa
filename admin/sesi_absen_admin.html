@@ -127,7 +127,15 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     .btn-aksi { min-width: 80px; }
-    .qr-canvas { display: block; margin: 0 auto; max-width: 256px; max-height: 256px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: white; }
+
+    /* --- QR CANVAS --- */
+    .qr-canvas {
+        display: block; margin: 0 auto;
+        max-width: 256px; max-height: 256px;
+        border: 2px solid #e2e8f0; border-radius: 16px;
+        padding: 12px; background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
 
     /* --- Pagination & Sorting --- */
     .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
@@ -384,18 +392,22 @@
   </div>
 </div>
 
-<!-- ==================== MODAL QR SESI ==================== -->
+<!-- ==================== MODAL QR SESI (DIREKTUR ABSEN TANPA PASSWORD) ==================== -->
 <div class="modal fade" id="qrSesiModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title"><i class="bi bi-qr-code-scan me-2"></i>QR Code Absen Sesi</h5>
+        <h5 class="modal-title"><i class="bi bi-qr-code-scan me-2"></i>QR Code Absen (Tanpa Password)</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body text-center p-4">
         <div id="qrSesiCanvasContainer"></div>
         <div id="qrSesiDataText" class="mt-3 small text-muted"></div>
-        <div class="alert alert-info mt-3 mb-0 rounded-4 border-0 bg-light"><i class="bi bi-info-circle"></i> Scan QR ini untuk absen tanpa password.</div>
+        <div class="alert alert-info mt-3 mb-0 rounded-4 border-0 bg-light">
+          <i class="bi bi-info-circle"></i> 
+          <strong>Scan QR ini untuk absen tanpa password.</strong><br>
+          Pastikan sesi dalam waktu yang telah ditentukan dan status <strong>Buka</strong>.
+        </div>
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -562,7 +574,7 @@
   });
 
   // ==========================================================
-  //   LOAD SESI ABSEN (FIX: RESET SEARCH QUERY)
+  //   LOAD SESI ABSEN
   // ==========================================================
   async function loadSesiAbsen(forceRefresh = false) {
     const container = document.getElementById('sesiAbsenTableContainer');
@@ -574,11 +586,9 @@
       }
       let freshData = AdminModule.getSesiList() || [];
 
-      // --- PERBAIKAN 1: Jika data dari API kosong, jangan hapus data yang ada di layar ---
       if (freshData.length === 0 && STATE.sesiList.length > 0) {
-        console.warn('⚠️ Server mengembalikan data kosong. Mempertahankan data yang ada saat ini.');
+        console.warn('⚠️ Server mengembalikan data kosong. Mempertahankan data yang ada.');
         updateCacheStatus('Offline');
-        // Jangan update STATE, langsung render ulang apa yang ada
         applyFiltersAndSort();
         return;
       } else if (freshData.length === 0) {
@@ -588,7 +598,6 @@
         return;
       }
 
-      // --- PERBAIKAN 2: Konversi status Buka/Tutup yang benar ---
       const cleanedData = freshData.map(item => {
         let isOpen = false;
         const rawSubmission = item.submission_open;
@@ -610,7 +619,6 @@
       STATE.sesiList = cleanedData;
       updateCacheStatus('Live');
 
-      // --- PERBAIKAN 3: Kosongkan paksa input pencarian saat data baru dimuat ---
       document.getElementById('searchInput').value = '';
       STATE.searchQuery = '';
 
@@ -629,12 +637,10 @@
   }
 
   // ==========================================================
-  //   FILTER, SORT, PAGINATION (PERBAIKAN LOGIKA FILTER)
+  //   FILTER, SORT, PAGINATION
   // ==========================================================
   function getFilteredSesi(query = '') {
     let filtered = STATE.sesiList;
-    
-    // --- PERBAIKAN PALING PENTING: Jangan filter jika string kosong ---
     if (query && query.trim() !== '') {
       const q = query.toLowerCase().trim();
       filtered = filtered.filter(item => (item.nama && item.nama.toLowerCase().includes(q)));
@@ -682,7 +688,7 @@
               <th class="sortable" onclick="sortTable('waktu_mulai')">Waktu Mulai</th>
               <th class="sortable" onclick="sortTable('waktu_selesai')">Waktu Selesai</th>
               <th class="sortable" onclick="sortTable('submission_open')">Status</th>
-              <th style="width: 180px;">QR Sesi</th>
+              <th style="width: 180px;">QR Sesi (Tanpa Password)</th>
               <th style="width: 280px;" class="text-center">Aksi</th>
             </tr>
           </thead>
@@ -779,7 +785,7 @@
   };
 
   // ==========================================================
-  //   QR GENERATION
+  //   QR GENERATION (DIREKTUR ABSEN TANPA PASSWORD)
   // ==========================================================
   window.generateQRSesi = function(sesiId) {
     const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
@@ -793,7 +799,7 @@
       AdminModule.regenerateQRSesi(sesiId).then(res => {
         if (res.success) {
           item.qrToken = res.qrToken;
-          applyFiltersAndSort(); // Update lokal tanpa refresh
+          applyFiltersAndSort();
           showToast('Token QR diperbarui', 'success');
         }
       }).catch(e => showToast('Gagal generate token: ' + e.message, 'error'));
@@ -825,7 +831,8 @@
       document.getElementById('qrSesiDataText').innerHTML = `
         <strong>Sesi:</strong> ${escapeHtml(item.nama)}<br>
         <strong>ID Sesi:</strong> ${sesiId}<br>
-        <span class="text-success">Token tersemat dalam QR (tanpa password)</span>
+        <span class="text-success">✨ Scan QR ini untuk absen tanpa password</span><br>
+        <span class="text-muted small">Token tersemat dalam QR (absen langsung).</span>
       `;
 
       window.__qrSesiCanvas = canvas;
@@ -847,7 +854,7 @@
     AdminModule.regenerateQRSesi(sesiId).then(res => {
       if (res.success) {
         item.qrToken = res.qrToken;
-        applyFiltersAndSort(); // Update lokal
+        applyFiltersAndSort();
         showToast('QR berhasil diregenerasi', 'success');
       } else {
         showToast('Gagal: ' + (res.message || 'Server error'), 'error');
@@ -905,7 +912,7 @@
     AdminModule.toggleAttendanceSession(sesiId, newState).then(res => {
       if (res.success) {
         item.submission_open = newState;
-        applyFiltersAndSort(); // Update lokal
+        applyFiltersAndSort();
         showToast(`Sesi ${newState ? 'dibuka' : 'ditutup'} untuk absen.`, 'success');
       } else {
         showToast('Gagal mengubah status: ' + (res.message || 'Server error'), 'error');
@@ -916,7 +923,7 @@
   };
 
   // ==========================================================
-  //   CRUD HANDLERS (Optimistic UI, TIDAK REFRESH TOTAL)
+  //   CRUD HANDLERS (Optimistic UI)
   // ==========================================================
   function resetForm() {
     document.getElementById('editSesiAbsenId').value = '';
@@ -1002,7 +1009,7 @@
     AdminModule.deleteSesiAbsen(id).then(res => {
       if (res.success) {
         STATE.sesiList = STATE.sesiList.filter(i => String(i.id) !== String(id));
-        applyFiltersAndSort(); // Update lokal
+        applyFiltersAndSort();
         showToast('Sesi absen berhasil dihapus.', 'success');
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
       } else {
@@ -1040,7 +1047,6 @@
     if (id === '') {
       AdminModule.addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password).then(res => {
         if (res.success) {
-          // Tambahkan secara manual ke state lokal (Optimistic)
           const newItem = { 
             id: res.id, 
             nama, 
@@ -1065,7 +1071,6 @@
     } else {
       AdminModule.updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password).then(res => {
         if (res.success) {
-          // Update secara manual di state lokal
           const index = STATE.sesiList.findIndex(i => String(i.id) === String(id));
           if (index !== -1) {
             STATE.sesiList[index].nama = nama;
@@ -1117,21 +1122,17 @@
   }
 
   // ==========================================================
-  //   SEARCH HANDLER (Anti Autofill & Debug)
+  //   SEARCH HANDLER
   // ==========================================================
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
-    // Matikan autofill browser
     searchInput.setAttribute('autocomplete', 'off');
-    
-    // Kosongkan paksa input setiap kali halaman dimuat
     setTimeout(() => {
       searchInput.value = '';
       STATE.searchQuery = '';
       console.log('✅ Input pencarian dipaksa kosong.');
     }, 100);
 
-    // Jika pengguna mengklik input, hapus semua isinya untuk mengalahkan ekstensi autofill
     searchInput.addEventListener('focus', function() {
       this.value = '';
       STATE.searchQuery = '';
@@ -1155,7 +1156,6 @@
   document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
     this.disabled = true;
-    // Refresh tetap menggunakan logika backup di dalamnya
     loadSesiAbsen(true).then(() => {
       this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
       this.disabled = false;
