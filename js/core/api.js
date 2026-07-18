@@ -1,6 +1,6 @@
 // js/core/api.js
 // Modul API Terpadu untuk PKD GP Ansor Bantul (ES Module)
-// Versi: 9.0.3 - Fix submitAbsen with needSignature support
+// Versi: 9.0.4 - Full functions with submitAbsen needSignature support
 // ============================================================
 
 import { SCRIPT_URL, DEFAULT_CACHE_AGE, APP_NAME, BASE_PATH } from './config.js';
