@@ -465,11 +465,12 @@
             btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
           const password = pwInput.value.trim();
+          // 🔥 PERBAIKAN: Jika password kosong, jangan kirim, tapi tampilkan error
           if (!password) {
             showToastLocal('Password sesi wajib diisi!', 'danger');
             btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
           }
-          params.password = password;
+          params.password = password; // Kirim password yang sudah di-trim
         }
 
         // 🔥 Logika dua langkah:
@@ -493,6 +494,7 @@
             return;
           }
 
+          // 🔥 Jika sukses dan sudah ada tanda tangan, maka absen berhasil
           showToastLocal('✅ Absen berhasil tercatat!', 'success');
           pad.clear();
           if (namaInput) namaInput.value = '';
@@ -503,6 +505,8 @@
           }
         } catch (e) {
           let errorMsg = e.message || 'Terjadi kesalahan';
+          console.error('❌ Error saat absen:', errorMsg);
+          // 🔥 PERBAIKAN: Pastikan semua error ditampilkan dengan jelas
           if (errorMsg.includes('Sudah absen')) {
             showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya. Absen ganda tidak diizinkan.', 'warning');
           } else if (errorMsg.includes('Password salah')) {
@@ -511,6 +515,8 @@
             showToastLocal('❌ Token QR tidak valid. Silakan scan ulang.', 'danger');
           } else if (errorMsg.includes('Sesi absen sedang ditutup')) {
             showToastLocal('⛔ Sesi absen sedang ditutup oleh panitia. Silakan hubungi admin.', 'warning');
+          } else if (errorMsg.includes('waktu absen')) {
+            showToastLocal('⏰ ' + errorMsg, 'warning');
           } else {
             showToastLocal('❌ ' + errorMsg, 'danger');
           }
