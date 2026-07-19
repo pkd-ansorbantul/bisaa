@@ -1,6 +1,6 @@
 // js/core/api.js
 // Modul API Terpadu untuk PKD GP Ansor Bantul (ES Module)
-// Versi: 9.0.4 - Full functions with submitAbsen needSignature support
+// Versi: 9.0.5 - Perbaikan POST JSON (fix upload file & binary)
 // ============================================================
 
 import { SCRIPT_URL, DEFAULT_CACHE_AGE, APP_NAME, BASE_PATH } from './config.js';
@@ -202,7 +202,7 @@ export async function fetchWithCache(action, params = {}, cacheKey, maxAgeMinute
   return null;
 }
 
-// =============================== CORE API ===============================
+// =============================== CORE API (PERBAIKAN POST JSON) ===============================
 export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
   params = params || {};
   method = method || 'GET';
@@ -274,13 +274,17 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
           document.head.appendChild(script);
         });
       } else if (method === 'POST') {
-        const formData = new FormData();
-        for (let key in finalParams) {
-          formData.append(key, finalParams[key]);
-        }
+        // ================= PERBAIKAN UTAMA =================
+        // Mengirim data menggunakan JSON (application/json)
+        // Ini memastikan fileData (base64) dan parameter lainnya dikirim utuh
+        const jsonString = JSON.stringify(finalParams);
+        
         fetch(url, {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: jsonString
         })
         .then(response => {
           if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -288,7 +292,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
         })
         .then(data => resolve(data))
         .catch(err => {
-          console.error('Fetch POST gagal:', err);
+          console.error('Fetch POST JSON gagal:', err);
           reject(err);
         });
       }
@@ -348,7 +352,6 @@ export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }
 export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
 export function getAttendanceSessionStatus(id) { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
 
-// 🔥 submitAbsen – pastikan parameter tandaTangan dikirim
 export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
   return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
 }
@@ -417,11 +420,12 @@ export function getCertificateLayout(identifier) { return callApi('getCertificat
 export function listCertificateLayouts() { return callApi('listCertificateLayouts', {}, 'GET'); }
 
 // --- Tanda Tangan Digital ---
-export function submitDigitalSignature(role, nama, signature, password) { return callApi('submitDigitalSignature', { role, nama, signature, password }, 'POST'); }
+export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) { return callApi('submitDigitalSignature', { role, nama, signature, password, peserta_nama, kegunaan }, 'POST'); }
 export function getDigitalApproval(role) { return callApi('getDigitalApproval', { role }, 'GET'); }
 export function getAllDigitalApprovals() { return callApi('getAllDigitalApprovals', {}, 'GET'); }
 export function updateSignPassword(role, newPassword) { return callApi('updateSignPassword', { role, newPassword }, 'POST'); }
 export function getSignPasswords() { return callApi('getSignPasswords', {}, 'GET'); }
+export function bulkGenerateTTD(params) { return callApi('bulkGenerateTTD', params, 'POST'); }
 
 // --- RTL ---
 export function getRTLTasks(pesertaId) { return callApi('getRTLTasks', { pesertaId }, 'GET'); }
