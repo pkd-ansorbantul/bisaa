@@ -124,14 +124,42 @@
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
     .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+
+    /* --- TABLE --- */
+    .table-container {
+        background: white; border-radius: 20px; padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+    }
+    .btn-aksi { min-width: 80px; }
 
     /* --- PREVIEW MODAL --- */
     .modal-xl .modal-body { background: #f1f5f9; }
     .modal-xl iframe { width: 100%; height: 80vh; border: none; }
 
+    /* --- UPLOAD PROGRESS --- */
+    #uploadProgressContainer {
+        margin-top: 10px;
+        display: none;
+    }
+    #uploadProgressBar {
+        height: 6px;
+        border-radius: 10px;
+    }
+
+    /* --- TOAST --- */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    /* --- PAGINATION & SORTING --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
   </style>
 </head>
 <body>
@@ -324,18 +352,12 @@
       <div class="modal-body p-4">
         <input type="hidden" id="editMateriId">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Judul Materi</label>
+          <label class="form-label fw-semibold">Judul Materi <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="materiJudul" placeholder="Judul materi" required>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Deskripsi</label>
           <textarea class="form-control" id="materiDeskripsi" rows="3" placeholder="Deskripsi materi (opsional)"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Upload File Materi</label>
-          <input type="file" class="form-control" id="materiFile" accept=".pdf,.ppt,.pptx,.doc,.docx,.jpg,.png,.webp" required>
-          <div class="form-text text-muted">Format: PDF, PPT, DOC, JPG, PNG, WEBP (Maks 5MB)</div>
-          <div id="filePreview" class="mt-2 small text-muted"></div>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Kategori</label>
@@ -348,8 +370,23 @@
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Tanggal</label>
-          <input type="date" class="form-control" id="materiTanggal" required>
+          <label class="form-label fw-semibold">Upload File <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="file" class="form-control" id="materiFile" accept=".pdf,.ppt,.pptx,.doc,.docx,.jpg,.jpeg,.png,.webp" required>
+            <button class="btn btn-outline-secondary" type="button" id="clearFileBtn"><i class="bi bi-x-circle"></i></button>
+          </div>
+          <div class="form-text text-muted">Format: PDF, PPT, DOC, JPG, PNG, WEBP (Maks 10MB)</div>
+        </div>
+        <div id="filePreviewContainer" class="mt-2 text-center" style="display:none;">
+          <img id="filePreviewImage" src="#" alt="Preview" class="img-thumbnail" style="max-height:100px;">
+          <p id="filePreviewName" class="small text-muted mt-1"></p>
+        </div>
+        <!-- Progress Bar -->
+        <div id="uploadProgressContainer">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="uploadProgressBar" style="width:0%"></div>
+          </div>
+          <div class="small text-muted mt-1 text-center" id="uploadProgressText">0%</div>
         </div>
       </div>
       <div class="modal-footer border-0">
@@ -463,7 +500,10 @@
     filteredList: [],
     searchQuery: '',
     kategoriFilter: '',
-    isLoading: false
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc'
   };
 
   // ==========================================================
@@ -480,10 +520,6 @@
     return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
-  function generateId() {
-    return 'm' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-  }
-
   function updateCacheStatus(status) {
     const el = document.getElementById('cacheStatus');
     if (el) {
@@ -498,6 +534,10 @@
       clearTimeout(timer);
       timer = setTimeout(() => fn.apply(this, args), delay);
     };
+  }
+
+  function generateId() {
+    return 'm' + Date.now() + '_' + Math.floor(Math.random() * 1000);
   }
 
   // ==========================================================
@@ -536,12 +576,10 @@
   });
 
   // ==========================================================
-  //   LOAD MATERI (langsung dari API via AdminModule)
+  //   LOAD MATERI (menggunakan AdminModule)
   // ==========================================================
   async function loadMateri(forceRefresh = false) {
     const container = document.getElementById('materiTableContainer');
-
-    // Tampilkan loading
     container.innerHTML = `
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
@@ -550,14 +588,13 @@
     `;
 
     try {
-      // Pastikan AdminModule sudah dimuat
       if (!AdminModule.getState().lastSync || forceRefresh) {
         await AdminModule.loadAllData(forceRefresh);
       }
       const freshData = AdminModule.getMateriList() || [];
       if (freshData && Array.isArray(freshData) && freshData.length > 0) {
         STATE.materiList = freshData;
-        renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
+        applyFiltersAndSort();
         updateCacheStatus('Live');
       } else {
         container.innerHTML = `<div class="alert alert-info text-center">Tidak ada data materi.</div>`;
@@ -571,7 +608,7 @@
   }
 
   // ==========================================================
-  //   FILTER, SORT
+  //   FILTER, SORT, PAGINATION
   // ==========================================================
   function getFilteredMateri(query = '', kategori = '') {
     let filtered = STATE.materiList;
@@ -589,7 +626,28 @@
     return filtered;
   }
 
-  function renderTable(data) {
+  function applyFiltersAndSort() {
+    let filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
+    if (STATE.sortColumn) {
+      filtered.sort(function(a, b) {
+        let va = (a[STATE.sortColumn] || '').toLowerCase();
+        let vb = (b[STATE.sortColumn] || '').toLowerCase();
+        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    STATE.filteredList = filtered;
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+    if (STATE.currentPage < 1) STATE.currentPage = 1;
+    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+    const end = Math.min(start + STATE.itemsPerPage, totalItems);
+    renderTable(filtered.slice(start, end), totalItems);
+  }
+
+  function renderTable(data, totalItems) {
     const container = document.getElementById('materiTableContainer');
     if (!container) return;
 
@@ -633,7 +691,7 @@
             <td>${formatDate(item.tanggal)}</td>
             <td class="text-center">
               ${item.fileId ? `
-                <button class="btn btn-sm btn-outline-primary" onclick="previewMateri('${escapeHtml(item.judul)}', '${escapeHtml(item.fileId)}')">
+                <button class="btn btn-sm btn-outline-primary preview-btn" data-judul="${escapeHtml(item.judul)}" data-fileid="${escapeHtml(item.fileId)}">
                   <i class="bi bi-eye"></i> Tayangkan
                 </button>
                 <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-secondary">
@@ -642,13 +700,13 @@
               ` : '-'}
             </td>
             <td class="text-center">
-              <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewMateri('${item.id}')" title="Lihat Detail">
+              <button class="btn btn-sm btn-outline-info" onclick="viewMateri('${item.id}')" title="Lihat Detail">
                 <i class="bi bi-eye"></i>
               </button>
-              <button class="btn btn-sm btn-outline-warning btn-aksi" onclick="editMateri('${item.id}')" title="Edit">
+              <button class="btn btn-sm btn-outline-warning" onclick="editMateri('${item.id}')" title="Edit">
                 <i class="bi bi-pencil"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger btn-aksi" onclick="deleteMateri('${item.id}')" title="Hapus">
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteMateri('${item.id}')" title="Hapus">
                 <i class="bi bi-trash"></i>
               </button>
             </td>
@@ -663,9 +721,35 @@
       </div>
     `;
 
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    html += `
+      <div class="pagination-container">
+        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+        <div class="btn-group">
+    `;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    html += `</div></div>`;
+
     container.innerHTML = html;
     container.classList.add('fade-in');
   }
+
+  window.goToPage = function(page) {
+    const totalItems = STATE.filteredList.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+    if (page < 1 || page > totalPages) return;
+    STATE.currentPage = page;
+    applyFiltersAndSort();
+  };
+
+  window.sortTable = function(col) {
+    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
+    STATE.currentPage = 1;
+    applyFiltersAndSort();
+  };
 
   // ==========================================================
   //   PREVIEW MATERI (Modal) - diekspos ke global
@@ -710,10 +794,14 @@
     document.getElementById('editMateriId').value = '';
     document.getElementById('materiJudul').value = '';
     document.getElementById('materiDeskripsi').value = '';
-    document.getElementById('materiFile').value = '';
-    document.getElementById('filePreview').innerHTML = '';
     document.getElementById('materiKategori').value = 'Umum';
-    document.getElementById('materiTanggal').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('materiFile').value = '';
+    document.getElementById('filePreviewContainer').style.display = 'none';
+    document.getElementById('filePreviewImage').src = '#';
+    document.getElementById('filePreviewName').textContent = '';
+    document.getElementById('uploadProgressContainer').style.display = 'none';
+    document.getElementById('uploadProgressBar').style.width = '0%';
+    document.getElementById('uploadProgressText').textContent = '0%';
     document.getElementById('formModalTitle').innerText = 'Tambah Materi';
   }
 
@@ -731,10 +819,9 @@
     document.getElementById('editMateriId').value = id;
     document.getElementById('materiJudul').value = item.judul || '';
     document.getElementById('materiDeskripsi').value = item.deskripsi || '';
-    document.getElementById('materiFile').value = '';
-    document.getElementById('filePreview').innerHTML = item.fileId ? `File saat ini: <a href="https://drive.google.com/file/d/${item.fileId}/view" target="_blank">Lihat</a>` : '';
     document.getElementById('materiKategori').value = item.kategori || 'Umum';
-    document.getElementById('materiTanggal').value = item.tanggal || '';
+    document.getElementById('materiFile').value = '';
+    document.getElementById('filePreviewContainer').style.display = 'none';
     document.getElementById('formModalTitle').innerText = 'Edit Materi';
     new bootstrap.Modal(document.getElementById('materiFormModal')).show();
   };
@@ -769,52 +856,62 @@
     new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
   };
 
-  function executeDelete() {
-    const id = document.getElementById('deleteMateriId').value;
-    if (!id) return;
-    const item = STATE.materiList.find(i => String(i.id) === String(id));
-    if (!item) {
-      showToast('Data tidak ditemukan.', 'error');
-      return;
-    }
-    const btn = document.getElementById('confirmDeleteBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
-    btn.disabled = true;
-
-    // Gunakan AdminModule untuk menghapus (optimistic update)
-    AdminModule.deleteMateri(id, item.fileId).then(res => {
-      if (res.success) {
-        STATE.materiList = STATE.materiList.filter(i => i.id !== id);
-        showToast('Materi berhasil dihapus.', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-      } else {
-        showToast('Gagal: ' + (res.message || 'Unknown error'), 'error');
+  // ==========================================================
+  //   FILE PREVIEW
+  // ==========================================================
+  document.getElementById('materiFile')?.addEventListener('change', function() {
+    const file = this.files[0];
+    const previewContainer = document.getElementById('filePreviewContainer');
+    const previewImage = document.getElementById('filePreviewImage');
+    const previewName = document.getElementById('filePreviewName');
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('Ukuran file maksimal 10 MB.', 'error');
+        this.value = '';
+        return;
       }
-    }).catch(e => {
-      showToast('Error: ' + e.message, 'error');
-    }).finally(() => {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    });
-  }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (file.type.startsWith('image/')) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = 'block';
+        } else {
+          previewImage.src = '#';
+          previewContainer.style.display = 'block';
+          previewImage.style.display = 'none';
+          previewName.textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewContainer.style.display = 'none';
+      previewImage.src = '#';
+    }
+  });
 
-  function saveData() {
+  document.getElementById('clearFileBtn')?.addEventListener('click', function() {
+    document.getElementById('materiFile').value = '';
+    document.getElementById('filePreviewContainer').style.display = 'none';
+    document.getElementById('filePreviewImage').src = '#';
+  });
+
+  // ==========================================================
+  //   SIMPAN DATA (Tambah/Edit) dengan Upload File
+  // ==========================================================
+  async function saveData() {
     const id = document.getElementById('editMateriId').value;
     const judul = document.getElementById('materiJudul').value.trim();
     const deskripsi = document.getElementById('materiDeskripsi').value.trim();
     const fileInput = document.getElementById('materiFile');
     const kategori = document.getElementById('materiKategori').value;
-    const tanggal = document.getElementById('materiTanggal').value;
 
-    if (!judul || !tanggal) {
-      showToast('Judul dan tanggal wajib diisi.', 'error');
+    if (!judul) {
+      showToast('Judul wajib diisi.', 'error');
       return;
     }
 
     if (!id && (!fileInput || !fileInput.files.length)) {
-      showToast('File wajib diunggah.', 'error');
+      showToast('File wajib diunggah untuk materi baru.', 'error');
       return;
     }
 
@@ -823,119 +920,121 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
-    if (id) {
-      // Update existing: need to handle file upload if new file, else keep existing
-      if (fileInput && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        if (file.size > 5 * 1024 * 1024) {
-          showToast('Ukuran file maksimal 5 MB.', 'error');
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-          const base64 = e.target.result;
-          const fileName = file.name;
-          try {
-            // Gunakan AdminModule untuk menambahkan materi
-            const res = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
-            if (res.success) {
-              const updated = {
-                id: id,
-                judul: judul,
-                deskripsi: deskripsi,
-                fileId: res.fileId,
-                tipe: fileName.split('.').pop().toLowerCase(),
-                kategori: kategori,
-                tanggal: tanggal,
-                timestamp: new Date().toISOString(),
-                uploadBy: 'admin'
-              };
-              const index = STATE.materiList.findIndex(i => i.id === id);
-              if (index !== -1) {
-                STATE.materiList[index] = updated;
-                showToast('Materi berhasil diperbarui.', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-                renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
-              } else {
-                showToast('Gagal memperbarui data lokal.', 'error');
-              }
-            } else {
-              showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
-            }
-          } catch (e) {
-            showToast('Error: ' + e.message, 'error');
-          } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-          }
-        };
-        reader.readAsDataURL(file);
-        return;
-      } else {
-        // Update without new file
-        const index = STATE.materiList.findIndex(i => i.id === id);
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressText = document.getElementById('uploadProgressText');
+
+    // Untuk update tanpa file baru
+    if (id && (!fileInput || !fileInput.files.length)) {
+      try {
+        const index = STATE.materiList.findIndex(i => String(i.id) === String(id));
         if (index !== -1) {
           const updated = { ...STATE.materiList[index] };
           updated.judul = judul;
           updated.deskripsi = deskripsi;
           updated.kategori = kategori;
-          updated.tanggal = tanggal;
           STATE.materiList[index] = updated;
           showToast('Materi berhasil diperbarui.', 'success');
           bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-          renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
+          applyFiltersAndSort();
         } else {
-          showToast('Data tidak ditemukan.', 'error');
+          throw new Error('Data tidak ditemukan.');
         }
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
-        return;
       }
-    } else {
-      // Add new with file
-      const file = fileInput.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Ukuran file maksimal 5 MB.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const base64 = e.target.result;
-        const fileName = file.name;
-        try {
-          const res = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
-          if (res.success) {
+      return;
+    }
+
+    // Upload file (Tambah atau Update dengan file baru)
+    const file = fileInput.files[0];
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Ukuran file maksimal 10 MB.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+
+    // Simulasi progress (sebenarnya tidak bisa tracking upload via base64, tapi kita tampilkan animasi)
+    progressContainer.style.display = 'block';
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      if (progress > 90) clearInterval(interval);
+      progressBar.style.width = progress + '%';
+      progressText.textContent = progress + '%';
+    }, 100);
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const base64 = e.target.result;
+      const fileName = file.name;
+      try {
+        let result;
+        if (id) {
+          // Update dengan file baru
+          // Kita perlu menghapus file lama dulu atau langsung upload baru?
+          // Di sini kita akan upload baru dan ganti fileId
+          result = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
+          if (result.success) {
+            // Update state lokal
+            const index = STATE.materiList.findIndex(i => String(i.id) === String(id));
+            if (index !== -1) {
+              STATE.materiList[index].judul = judul;
+              STATE.materiList[index].deskripsi = deskripsi;
+              STATE.materiList[index].kategori = kategori;
+              STATE.materiList[index].fileId = result.fileId;
+              STATE.materiList[index].tipe = fileName.split('.').pop().toLowerCase();
+              STATE.materiList[index].tanggal = new Date().toISOString().slice(0, 10);
+            }
+            showToast('Materi berhasil diperbarui dengan file baru.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+            applyFiltersAndSort();
+          } else {
+            throw new Error(result.error || 'Gagal mengupload file.');
+          }
+        } else {
+          // Tambah baru
+          result = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
+          if (result.success) {
             const newItem = {
               id: generateId(),
               judul: judul,
               deskripsi: deskripsi,
-              fileId: res.fileId,
+              fileId: result.fileId,
               tipe: fileName.split('.').pop().toLowerCase(),
               kategori: kategori,
-              tanggal: tanggal,
+              tanggal: new Date().toISOString().slice(0, 10),
               timestamp: new Date().toISOString(),
               uploadBy: 'admin'
             };
             STATE.materiList.unshift(newItem);
             showToast('Materi berhasil ditambahkan.', 'success');
             bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-            renderTable(getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter));
+            applyFiltersAndSort();
           } else {
-            showToast('Gagal mengunggah file: ' + (res.message || 'Unknown error'), 'error');
+            throw new Error(result.error || 'Gagal mengupload file.');
           }
-        } catch (e) {
-          showToast('Error: ' + e.message, 'error');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = originalText;
         }
-      };
-      reader.readAsDataURL(file);
-    }
+      } catch (e) {
+        showToast('Gagal: ' + e.message, 'error');
+      } finally {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        progressText.textContent = '100%';
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          progressBar.style.width = '0%';
+          progressText.textContent = '0%';
+        }, 1500);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   function exportData() {
@@ -969,19 +1068,73 @@
   // ==========================================================
   const debouncedSearch = debounce(function(query) {
     STATE.searchQuery = query;
-    const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
-    STATE.filteredList = filtered;
-    renderTable(filtered);
+    applyFiltersAndSort();
   }, 300);
 
   function handleSearch(e) { debouncedSearch(e.target.value); }
 
   function handleKategoriFilter(e) {
     STATE.kategoriFilter = e.target.value;
-    const filtered = getFilteredMateri(STATE.searchQuery, STATE.kategoriFilter);
-    STATE.filteredList = filtered;
-    renderTable(filtered);
+    applyFiltersAndSort();
   }
+
+  // ==========================================================
+  //   EVENT LISTENERS
+  // ==========================================================
+  document.getElementById('addMateriBtn')?.addEventListener('click', openAddModal);
+  document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    this.disabled = true;
+    loadMateri(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+      this.disabled = false;
+      showToast('Gagal menyegarkan', 'error');
+    });
+  });
+  document.getElementById('saveMateriBtn')?.addEventListener('click', saveData);
+  document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('deleteMateriId').value;
+    if (!id) return;
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+    try {
+      const item = STATE.materiList.find(i => String(i.id) === String(id));
+      if (!item) throw new Error('Data tidak ditemukan.');
+      const result = await AdminModule.deleteMateri(id, item.fileId);
+      if (result.success) {
+        STATE.materiList = STATE.materiList.filter(i => String(i.id) !== String(id));
+        showToast('Materi berhasil dihapus.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+        applyFiltersAndSort();
+      } else {
+        throw new Error(result.error || 'Gagal menghapus.');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+  document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+  document.getElementById('filterKategori')?.addEventListener('change', handleKategoriFilter);
+
+  // Event listener untuk tombol preview (dinamis)
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.preview-btn')) {
+      const btn = e.target.closest('.preview-btn');
+      const judul = btn.dataset.judul;
+      const fileId = btn.dataset.fileid;
+      window.previewMateri(judul, fileId);
+    }
+  });
 
   // ==========================================================
   //   LOGIN AUTH CHECK & INIT
@@ -992,32 +1145,8 @@
       return;
     }
 
-    // Update navbar user
     updateNavbarMenu();
-
-    // Load data
     loadMateri();
-
-    // Event listeners
-    document.getElementById('addMateriBtn')?.addEventListener('click', openAddModal);
-    document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
-    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-      this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-      this.disabled = true;
-      loadMateri(true).then(() => {
-        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-        this.disabled = false;
-        showToast('Data berhasil disegarkan', 'success');
-      }).catch(() => {
-        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-        this.disabled = false;
-        showToast('Gagal menyegarkan', 'error');
-      });
-    });
-    document.getElementById('saveMateriBtn')?.addEventListener('click', saveData);
-    document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
-    document.getElementById('searchInput')?.addEventListener('input', handleSearch);
-    document.getElementById('filterKategori')?.addEventListener('change', handleKategoriFilter);
   })();
 
 </script>
