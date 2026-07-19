@@ -535,7 +535,14 @@
 
         let signatureDataURL = null;
         if (hasSignature) {
-          signatureDataURL = pad.toDataURL('image/jpeg', 0.2);
+          // 🔥 PERBAIKAN: Gunakan WEBP dengan kualitas rendah (0.05) untuk mengurangi ukuran payload
+          // Jika browser tidak mendukung WEBP, fallback ke JPEG dengan kualitas 0.05
+          try {
+            signatureDataURL = pad.toDataURL('image/webp', 0.05);
+          } catch (e) {
+            // Fallback untuk browser yang tidak support WEBP
+            signatureDataURL = pad.toDataURL('image/jpeg', 0.05);
+          }
           params.tandaTangan = signatureDataURL;
         }
 
