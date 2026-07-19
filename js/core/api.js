@@ -1,6 +1,6 @@
 // js/core/api.js
 // Modul API Terpadu untuk PKD GP Ansor Bantul (ES Module)
-// Versi: 9.0.5 - Perbaikan POST JSON (fix upload file & binary)
+// Versi: 9.1.0 - POST menggunakan application/x-www-form-urlencoded (robust CORS)
 // ============================================================
 
 import { SCRIPT_URL, DEFAULT_CACHE_AGE, APP_NAME, BASE_PATH } from './config.js';
@@ -202,7 +202,7 @@ export async function fetchWithCache(action, params = {}, cacheKey, maxAgeMinute
   return null;
 }
 
-// =============================== CORE API (PERBAIKAN POST JSON) ===============================
+// =============================== CORE API (PERBAIKAN POST) ===============================
 export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
   params = params || {};
   method = method || 'GET';
@@ -274,17 +274,15 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
           document.head.appendChild(script);
         });
       } else if (method === 'POST') {
-        // ================= PERBAIKAN UTAMA =================
-        // Mengirim data menggunakan JSON (application/json)
-        // Ini memastikan fileData (base64) dan parameter lainnya dikirim utuh
-        const jsonString = JSON.stringify(finalParams);
-        
+        // 🔥 PERBAIKAN UTAMA: Gunakan application/x-www-form-urlencoded
+        // Ini menghindari preflight CORS karena bukan application/json
+        const urlEncoded = new URLSearchParams(finalParams).toString();
         fetch(url, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: jsonString
+          body: urlEncoded
         })
         .then(response => {
           if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -292,7 +290,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
         })
         .then(data => resolve(data))
         .catch(err => {
-          console.error('Fetch POST JSON gagal:', err);
+          console.error('Fetch POST x-www-form-urlencoded gagal:', err);
           reject(err);
         });
       }
