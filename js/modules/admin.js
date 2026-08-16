@@ -1,92 +1,118 @@
 // js/modules/admin.js
-// Modul State Admin untuk PKD GP Ansor Bantul (ES Module)
-// Versi: 3.5.0 - Full Integration with Fixed moveMultipleToAlumni
+// Modul State Admin PKD GP Ansor Bantul - Versi Lengkap & Stabil
 // ============================================================
 
 import {
   callApi,
   showToast,
   escapeHtml,
-  // Fungsi API yang dibutuhkan
+  // Autentikasi & Peserta
   getPesertaList,
   submitPeserta,
   updatePeserta,
   deletePeserta as apiDeletePeserta,
   approvePeserta as apiApprovePeserta,
   rejectPeserta as apiRejectPeserta,
+  getPesertaById,
+  getTotalPeserta,
+  getAlumniList,
   moveToAlumni as apiMoveToAlumni,
   moveMultipleToAlumni as apiMoveMultipleToAlumni,
+  moveBackToActive as apiMoveBackToActive,
+  getPesertaCredentials,
+  
+  // Sesi Absen
   getSesiAbsen,
   addSesiAbsen as apiAddSesiAbsen,
   updateSesiAbsen as apiUpdateSesiAbsen,
   deleteSesiAbsen as apiDeleteSesiAbsen,
   regenerateQRSesi as apiRegenerateQRSesi,
   toggleAttendanceSession as apiToggleAttendance,
+  getAttendanceSessionStatus,
+  
+  // Materi
   getMateriList,
   addMateri as apiAddMateri,
   deleteMateri as apiDeleteMateri,
+  
+  // Skrining, Pretest, Posttest
   getSkriningResponses,
-  addSkriningQuestion as apiAddSkriningQ,
-  updateSkriningQuestion as apiUpdateSkriningQ,
-  deleteSkriningQuestion as apiDeleteSkriningQ,
   getPretestResponses,
-  addPretestQuestion as apiAddPretest,
-  updatePretestQuestion as apiUpdatePretest,
-  deletePretestQuestion as apiDeletePretest,
   getPosttestResponses,
-  addPosttestQuestion as apiAddPosttest,
-  updatePosttestQuestion as apiUpdatePosttest,
-  deletePosttestQuestion as apiDeletePosttest,
-  getAlumniList,
-  getKaderList,
-  getInfoList,
   getAbsensiResponses,
   getUploadedCertificates,
-  getAllDigitalApprovals,
-  getAssetList,
-  getFolders,
-  getUsulanList,
-  getRTLTasks,
-  getQuizSettings,
-  getLoginMode,
-  getPublicVisibility,
-  getPKDLokasi,
-  getFormSettings,
-  setLoginMode as apiSetLoginMode,
-  setPublicVisibility as apiSetPublicVisibility,
-  setPKDLokasi as apiSetPKDLokasi,
-  setFormSettings as apiSetFormSettings,
+  
+  // Kader
+  getKaderList,
+  addKader as apiAddKader,
+  updateKader as apiUpdateKader,
+  deleteKader as apiDeleteKader,
+  
+  // Informasi & Usulan
+  getInfoList,
   addInfo as apiAddInfo,
   updateInfo as apiUpdateInfo,
   deleteInfo as apiDeleteInfo,
   toggleInfoStatus as apiToggleInfo,
+  getUsulanList,
+  updateUsulanStatus as apiUpdateUsulanStatus,
+  
+  // Asset & Folder
+  getAssetList,
   addAsset as apiAddAsset,
+  updateAsset as apiUpdateAsset,
   deleteAsset as apiDeleteAsset,
+  getFolders,
   addFolder as apiAddFolder,
   deleteFolder as apiDeleteFolder,
-  addKader as apiAddKader,
-  updateKader as apiUpdateKader,
-  deleteKader as apiDeleteKader,
+  toggleFolderPublic as apiToggleFolderPublic,
+  toggleFolderHideFromGallery as apiToggleFolderHideFromGallery,
+  setFolderPassword as apiSetFolderPassword,
+  clearFolderPassword as apiClearFolderPassword,
+  
+  // RTL & Tugas
+  getRTLTasks,
   addRTLTask as apiAddRTL,
   updateRTLTask as apiUpdateRTL,
   deleteRTLTask as apiDeleteRTL,
-  // FUNGSI BARU
+  approveRTLTask as apiApproveRTLTask,
+  approveAllRTL as apiApproveAllRTL,
+  getRTLStatus as apiGetRTLStatus,
+  submitRTLAttachment as apiSubmitRTLAttachment,
+  
+  // Sertifikat
   getCertificateTemplates as apiGetCertificateTemplates,
   addCertificateTemplateManual as apiAddCertificateTemplateManual,
   updateCertificateTemplate as apiUpdateCertificateTemplate,
   deleteCertificateTemplate as apiDeleteCertificateTemplate,
   generateCertificateForParticipant as apiGenerateCertificateForParticipant,
-  approveRTLTask as apiApproveRTLTask,
-  approveAllRTL as apiApproveAllRTL,
-  getRTLStatus as apiGetRTLStatus,
+  getCertPresets,
+  listCertificateLayouts as apiListCertificateLayouts,
   saveCertificateLayout as apiSaveCertificateLayout,
-  getCertificateLayout as apiGetCertificateLayout,
-  listCertificateLayouts as apiListCertificateLayouts
+  
+  // Tanda Tangan Digital
+  getAllDigitalApprovals,
+  bulkGenerateTTD as apiBulkGenerateTTD,
+  
+  // Pengaturan
+  getQuizSettings,
+  setQuizSettings as apiSetQuizSettings,
+  getLoginMode,
+  setLoginMode as apiSetLoginMode,
+  getPublicVisibility,
+  setPublicVisibility as apiSetPublicVisibility,
+  getPKDLokasi,
+  setPKDLokasi as apiSetPKDLokasi,
+  getFormSettings,
+  setFormSettings as apiSetFormSettings,
+  getRealtimeSetting,
+  setRealtimeSetting as apiSetRealtimeSetting,
+  getDefaultFormFields
 } from '../core/api.js';
 
-// =============================== STATE ===============================
+// =============================== STATE UTAMA ===============================
 const STATE = {
-  // Data arrays
+  // Data Arrays
   peserta: [],
   sesi: [],
   materi: [],
@@ -103,37 +129,23 @@ const STATE = {
   folders: [],
   usulan: [],
   rtl: [],
-  // Additional data for settings
+  // Settings Data
   quizSettings: {},
   loginMode: false,
   publicVisibility: {},
-  pkdLokasi: '',
+  pkdlokasi: '',
   formSettings: [],
-  // State flags
+  realtimeEnabled: false,
+  // State Flags
   isLoading: false,
   lastSync: null
 };
 
-// =============================== PRIVATE HELPERS ===============================
+// =============================== UTILITY HELPERS ===============================
+
+// Generate ID lokal sementara untuk Optimistic UI
 function generateId() {
   return 'tmp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-}
-
-// Helper untuk mendapatkan Field Default Form
-function getDefaultFormFields() {
-  return [
-    { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
-    { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'alamat', label: 'Alamat', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'no_hp', label: 'No HP', type: 'text', options: '', required: true, isCore: true },
-    { id: 'email', label: 'Email', type: 'text', options: '', required: true, isCore: true },
-    { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-    { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
-    { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: true, isCore: true }
-  ];
 }
 
 // =============================== EXPORTED MODULE ===============================
@@ -160,7 +172,7 @@ export const AdminModule = {
     };
   },
 
-  // --- DATA GETTERS ---
+  // --- DATA GETTERS (READ) ---
   getPesertaList(status = null) {
     if (status) return STATE.peserta.filter(p => p.status === status);
     return STATE.peserta;
@@ -250,6 +262,10 @@ export const AdminModule = {
     return STATE.pkdlokasi;
   },
 
+  getRealtimeSetting() {
+    return STATE.realtimeEnabled;
+  },
+
   getFormSettings() {
     if (!STATE.formSettings || STATE.formSettings.length === 0) {
       return getDefaultFormFields();
@@ -257,72 +273,46 @@ export const AdminModule = {
     return STATE.formSettings;
   },
 
-  // --- NEW GETTERS FOR TEMPLATES & LAYOUTS ---
+  // --- SERTIFIKAT TEMPLATE GETTERS ---
   async getCertificateTemplates() {
     return await apiGetCertificateTemplates();
+  },
+
+  async getCertPresets() {
+    return await getCertPresets();
   },
 
   async getCertificateLayouts() {
     return await apiListCertificateLayouts();
   },
 
-  // --- NEW RTL UTILITIES ---
+  // --- RTL UTILITIES ---
   async getRTLStatus(pesertaId) {
     return await apiGetRTLStatus({ pesertaId });
   },
 
-  // --- LOAD DATA (Single Source of Truth) ---
+  // ==================================================================
+  //   LOAD ALL DATA (SINGLE SOURCE OF TRUTH)
+  // ==================================================================
   async loadAllData(forceRefresh = false) {
     if (STATE.isLoading && !forceRefresh) return;
     STATE.isLoading = true;
 
     try {
       const [
-        pesertaData,
-        sesiData,
-        materiData,
-        skriningData,
-        pretestData,
-        posttestData,
-        alumniData,
-        kaderData,
-        informasiData,
-        absensiData,
-        sertifikatData,
-        approvalsData,
-        assetData,
-        foldersData,
-        usulanData,
-        rtlData,
-        quizSettingsData,
-        loginModeData,
-        visibilityData,
-        pkdLokasiData,
-        formSettingsData
+        pesertaData, sesiData, materiData, skriningData, pretestData, posttestData,
+        alumniData, kaderData, informasiData, absensiData, sertifikatData, approvalsData,
+        assetData, foldersData, usulanData, rtlData,
+        quizSettingsData, loginModeData, visibilityData, pkdLokasiData, formSettingsData, realtimeData
       ] = await Promise.all([
-        getPesertaList(),
-        getSesiAbsen(),
-        getMateriList(),
-        getSkriningResponses(),
-        getPretestResponses(),
-        getPosttestResponses(),
-        getAlumniList(),
-        getKaderList(),
-        getInfoList(),
-        getAbsensiResponses(),
-        getUploadedCertificates(),
-        getAllDigitalApprovals(),
-        getAssetList(),
-        getFolders(),
-        getUsulanList(),
-        getRTLTasks(),
-        getQuizSettings(),
-        getLoginMode(),
-        getPublicVisibility(),
-        getPKDLokasi(),
-        getFormSettings()
+        getPesertaList(), getSesiAbsen(), getMateriList(), getSkriningResponses(),
+        getPretestResponses(), getPosttestResponses(), getAlumniList(), getKaderList(),
+        getInfoList(), getAbsensiResponses(), getUploadedCertificates(), getAllDigitalApprovals(),
+        getAssetList(), getFolders(), getUsulanList(), getRTLTasks(),
+        getQuizSettings(), getLoginMode(), getPublicVisibility(), getPKDLokasi(), getFormSettings(), getRealtimeSetting()
       ]);
 
+      // Parsing Data
       STATE.peserta = Array.isArray(pesertaData) ? pesertaData : (pesertaData?.data || []);
       STATE.sesi = Array.isArray(sesiData) ? sesiData : (sesiData?.data || []);
       STATE.materi = Array.isArray(materiData) ? materiData : (materiData?.data || []);
@@ -340,17 +330,18 @@ export const AdminModule = {
       STATE.usulan = Array.isArray(usulanData) ? usulanData : (usulanData?.data || []);
       STATE.rtl = Array.isArray(rtlData) ? rtlData : (rtlData?.data || []);
 
+      // Parsing Settings
       STATE.quizSettings = quizSettingsData?.data || {};
       STATE.loginMode = loginModeData?.enabled || false;
       STATE.publicVisibility = visibilityData?.data || {};
       STATE.pkdlokasi = pkdLokasiData?.data || 'Kabupaten Bantul';
+      STATE.realtimeEnabled = realtimeData?.enabled || false;
 
       let rawFormSettings = Array.isArray(formSettingsData?.data) ? formSettingsData.data : [];
       STATE.formSettings = (rawFormSettings.length > 0) ? rawFormSettings : getDefaultFormFields();
 
       STATE.lastSync = new Date().toISOString();
 
-      // Broadcast event ke halaman
       window.dispatchEvent(new CustomEvent('adminDataUpdated', {
         detail: { state: STATE }
       }));
@@ -369,17 +360,10 @@ export const AdminModule = {
     window.dispatchEvent(new CustomEvent('adminDataUpdated', {
       detail: { type, state: STATE }
     }));
-    if (type === 'peserta' && typeof window.updatePesertaTable === 'function') {
-      window.updatePesertaTable();
-    } else if (type === 'sesi' && typeof window.updateSesiTable === 'function') {
-      window.updateSesiTable();
-    } else if (type === 'materi' && typeof window.updateMateriTable === 'function') {
-      window.updateMateriTable();
-    }
   },
 
   // ==================================================================
-  //   CRUD PESERTA (Dengan Optimistic UI)
+  //   CRUD PESERTA (Optimistic UI)
   // ==================================================================
   async addPeserta(data) {
     const tempId = generateId();
@@ -392,9 +376,7 @@ export const AdminModule = {
       const result = await submitPeserta(data);
       if (result.success) {
         const index = STATE.peserta.findIndex(p => p.id === tempId);
-        if (index !== -1) {
-          STATE.peserta[index].id = result.id;
-        }
+        if (index !== -1) STATE.peserta[index].id = result.id;
         showToast('Peserta berhasil ditambahkan!', 'success');
         await this.loadAllData(true);
         return result;
@@ -413,12 +395,9 @@ export const AdminModule = {
     const id = data.id;
     const original = STATE.peserta.find(p => String(p.id) === String(id));
     if (!original) return { success: false, error: 'Data tidak ditemukan' };
-    const backup = { ...original };
     const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index !== -1) {
-      STATE.peserta[index] = { ...STATE.peserta[index], ...data };
-      this.triggerRender('peserta');
-    }
+    if (index !== -1) STATE.peserta[index] = { ...STATE.peserta[index], ...data };
+    this.triggerRender('peserta');
     showToast('Memperbarui data...', 'info');
 
     try {
@@ -431,10 +410,8 @@ export const AdminModule = {
         throw new Error(result.error || 'Gagal memperbarui');
       }
     } catch (e) {
-      if (index !== -1) {
-        STATE.peserta[index] = backup;
-        this.triggerRender('peserta');
-      }
+      if (index !== -1) STATE.peserta[index] = original;
+      this.triggerRender('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
     }
@@ -540,38 +517,20 @@ export const AdminModule = {
     }
   },
 
-  // ==================================================================
-  //   PERBAIKAN PENTING: moveMultipleToAlumni dengan pembersihan ID
-  // ==================================================================
   async moveMultipleToAlumni(ids) {
-    // === 1. Bersihkan ID ===
-    const cleanedIds = ids
-      .map(id => String(id).trim())
-      .filter(id => id !== '');
-
-    if (cleanedIds.length === 0) {
-      return { success: false, error: 'Tidak ada ID valid untuk dipindahkan' };
-    }
-
-    // === 2. Optimistic UI: hapus dari state lokal ===
+    const cleanedIds = ids.map(id => String(id).trim()).filter(id => id !== '');
+    if (cleanedIds.length === 0) return { success: false, error: 'Tidak ada ID valid' };
     const itemsToRemove = [];
     cleanedIds.forEach(id => {
       const idx = STATE.peserta.findIndex(p => String(p.id).trim() === id);
-      if (idx !== -1) {
-        itemsToRemove.push({ index: idx, data: STATE.peserta[idx] });
-      }
+      if (idx !== -1) itemsToRemove.push({ index: idx, data: STATE.peserta[idx] });
     });
-    const removed = [];
     itemsToRemove.sort((a, b) => b.index - a.index);
-    itemsToRemove.forEach(item => {
-      removed.push(STATE.peserta.splice(item.index, 1)[0]);
-    });
+    itemsToRemove.forEach(item => STATE.peserta.splice(item.index, 1));
     this.triggerRender('peserta');
     showToast('Memindahkan ' + cleanedIds.length + ' peserta...', 'info');
 
-    // === 3. Kirim ke API ===
     try {
-      // cleanedIds dikirim sebagai array (api.js akan handle serialisasi)
       const result = await apiMoveMultipleToAlumni(cleanedIds);
       if (result.success) {
         showToast('Berhasil memindahkan ' + (result.moved || cleanedIds.length) + ' peserta!', 'success');
@@ -581,11 +540,8 @@ export const AdminModule = {
         throw new Error(result.error || 'Gagal memindahkan');
       }
     } catch (e) {
-      // === 4. Rollback jika gagal ===
       itemsToRemove.sort((a, b) => a.index - b.index);
-      itemsToRemove.forEach(item => {
-        STATE.peserta.splice(item.index, 0, item.data);
-      });
+      itemsToRemove.forEach(item => STATE.peserta.splice(item.index, 0, item.data));
       this.triggerRender('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
@@ -597,13 +553,7 @@ export const AdminModule = {
   // ==================================================================
   async addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) {
     const tempId = generateId();
-    const newItem = { 
-      id: tempId, 
-      nama, 
-      waktu_mulai: waktuMulai, 
-      waktu_selesai: waktuSelesai, 
-      submission_open: aktif !== false 
-    };
+    const newItem = { id: tempId, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, submission_open: aktif !== false };
     STATE.sesi.unshift(newItem);
     this.triggerRender('sesi');
     showToast('Menambahkan sesi...', 'info');
@@ -612,10 +562,7 @@ export const AdminModule = {
       const result = await apiAddSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password);
       if (result.success) {
         const index = STATE.sesi.findIndex(s => s.id === tempId);
-        if (index !== -1) {
-          STATE.sesi[index].id = result.id;
-          STATE.sesi[index].qrToken = result.qrToken;
-        }
+        if (index !== -1) { STATE.sesi[index].id = result.id; STATE.sesi[index].qrToken = result.qrToken; }
         showToast('Sesi absen berhasil ditambahkan!', 'success');
         await this.loadAllData(true);
         return result;
@@ -634,10 +581,7 @@ export const AdminModule = {
     const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
     if (index === -1) return { success: false };
     const backup = { ...STATE.sesi[index] };
-    STATE.sesi[index].nama = nama;
-    STATE.sesi[index].waktu_mulai = waktuMulai;
-    STATE.sesi[index].waktu_selesai = waktuSelesai;
-    STATE.sesi[index].submission_open = aktif !== false;
+    STATE.sesi[index].nama = nama; STATE.sesi[index].waktu_mulai = waktuMulai; STATE.sesi[index].waktu_selesai = waktuSelesai; STATE.sesi[index].submission_open = aktif !== false;
     this.triggerRender('sesi');
     showToast('Memperbarui sesi...', 'info');
 
@@ -688,9 +632,7 @@ export const AdminModule = {
       const result = await apiRegenerateQRSesi(id);
       if (result.success) {
         const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-        if (index !== -1) {
-          STATE.sesi[index].qrToken = result.qrToken;
-        }
+        if (index !== -1) STATE.sesi[index].qrToken = result.qrToken;
         showToast('QR berhasil diregenerasi!', 'success');
         await this.loadAllData(true);
         return result;
@@ -708,9 +650,7 @@ export const AdminModule = {
       const result = await apiToggleAttendance(id, open);
       if (result.success) {
         const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-        if (index !== -1) {
-          STATE.sesi[index].submission_open = open;
-        }
+        if (index !== -1) STATE.sesi[index].submission_open = open;
         this.triggerRender('sesi');
         showToast('Status sesi berhasil diubah!', 'success');
         await this.loadAllData(true);
@@ -727,30 +667,18 @@ export const AdminModule = {
   // ==================================================================
   //   CRUD MATERI
   // ==================================================================
-  async addMateri(judul, deskripsi, fileData, fileName, uploadBy) {
+  async addMateri(judul, deskripsi, file, fileName, uploadBy) {
     const tempId = generateId();
-    const newItem = {
-      id: tempId,
-      judul,
-      deskripsi,
-      fileId: 'uploading',
-      tipe: fileName.split('.').pop(),
-      kategori: 'Umum',
-      tanggal: new Date().toISOString().slice(0, 10),
-      uploadBy
-    };
+    const newItem = { id: tempId, judul, deskripsi, fileId: 'uploading', tipe: fileName.split('.').pop(), kategori: 'Umum', timestamp: new Date().toISOString(), uploadBy };
     STATE.materi.unshift(newItem);
     this.triggerRender('materi');
     showToast('Mengunggah materi...', 'info');
 
     try {
-      const result = await apiAddMateri(judul, deskripsi, fileData, fileName, uploadBy);
+      const result = await apiAddMateri(judul, deskripsi, file, fileName, uploadBy);
       if (result.success) {
         const index = STATE.materi.findIndex(m => m.id === tempId);
-        if (index !== -1) {
-          STATE.materi[index].id = result.id;
-          STATE.materi[index].fileId = result.fileId;
-        }
+        if (index !== -1) { STATE.materi[index].id = result.id; STATE.materi[index].fileId = result.fileId; }
         showToast('Materi berhasil ditambahkan!', 'success');
         await this.loadAllData(true);
         return result;
@@ -791,17 +719,17 @@ export const AdminModule = {
   },
 
   // ==================================================================
-  //   CRUD SKRINING & PERTANYAAN
+  //   CRUD ASET DIGITAL & FOLDERS
   // ==================================================================
-  async addSkriningQuestion(teks, jenis, opsi, urutan) {
+  async addAsset(params) {
     try {
-      const result = await apiAddSkriningQ(teks, jenis, opsi, urutan);
+      const result = await apiAddAsset(params);
       if (result.success) {
-        showToast('Pertanyaan berhasil ditambahkan!', 'success');
+        showToast('Aset berhasil diupload!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        throw new Error(result.error || 'Gagal upload aset');
       }
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
@@ -809,15 +737,15 @@ export const AdminModule = {
     }
   },
 
-  async updateSkriningQuestion(id, teks, jenis, opsi, urutan) {
+  async updateAsset(params) {
     try {
-      const result = await apiUpdateSkriningQ(id, teks, jenis, opsi, urutan);
+      const result = await apiUpdateAsset(params);
       if (result.success) {
-        showToast('Pertanyaan berhasil diperbarui!', 'success');
+        showToast('Aset berhasil diperbarui!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
-        throw new Error(result.error || 'Gagal memperbarui');
+        throw new Error(result.error || 'Gagal memperbarui aset');
       }
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
@@ -825,11 +753,11 @@ export const AdminModule = {
     }
   },
 
-  async deleteSkriningQuestion(id) {
+  async deleteAsset(id) {
     try {
-      const result = await apiDeleteSkriningQ(id);
+      const result = await apiDeleteAsset(id);
       if (result.success) {
-        showToast('Pertanyaan berhasil dihapus!', 'success');
+        showToast('Aset berhasil dihapus!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
@@ -841,14 +769,110 @@ export const AdminModule = {
     }
   },
 
-  // ==================================================================
-  //   CRUD PRETEST & POSTTEST
-  // ==================================================================
-  async addPretestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+  async addFolder(nama, parentId) {
     try {
-      const result = await apiAddPretest(teks, opsi, jawaban, urutan, timer_enabled, timer_duration);
+      const result = await apiAddFolder(nama, parentId);
       if (result.success) {
-        showToast('Soal pretest berhasil ditambahkan!', 'success');
+        showToast('Folder berhasil dibuat!', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal membuat folder');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  async deleteFolder(id) {
+    try {
+      const result = await apiDeleteFolder(id);
+      if (result.success) {
+        showToast('Folder berhasil dihapus!', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal menghapus folder');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  async toggleFolderPublic(id, isPublic) {
+    try {
+      const result = await apiToggleFolderPublic({ id, isPublic });
+      if (result.success) {
+        showToast(`Folder ${isPublic ? 'dipublikasikan' : 'ditarik'}`, 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal toggle publik');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  async toggleFolderHideFromGallery(id, isHidden) {
+    try {
+      const result = await apiToggleFolderHideFromGallery({ id, isHidden });
+      if (result.success) {
+        showToast(`Folder ${isHidden ? 'disembunyikan' : 'ditampilkan'}`, 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal toggle sembunyi');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  async setFolderPassword(id, password) {
+    try {
+      const result = await apiSetFolderPassword({ id, password });
+      if (result.success) {
+        showToast('Password folder berhasil disimpan', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal menyimpan password');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  async clearFolderPassword(id) {
+    try {
+      const result = await apiClearFolderPassword({ id });
+      if (result.success) {
+        showToast('Password folder dihapus', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal menghapus password');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
+  // ==================================================================
+  //   CRUD KADER
+  // ==================================================================
+  async addKader(params) {
+    try {
+      const result = await apiAddKader(params);
+      if (result.success) {
+        showToast('Kader berhasil ditambahkan!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
@@ -860,11 +884,11 @@ export const AdminModule = {
     }
   },
 
-  async updatePretestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
+  async updateKader(params) {
     try {
-      const result = await apiUpdatePretest(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration);
+      const result = await apiUpdateKader(params);
       if (result.success) {
-        showToast('Soal pretest berhasil diperbarui!', 'success');
+        showToast('Kader berhasil diperbarui!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
@@ -876,59 +900,11 @@ export const AdminModule = {
     }
   },
 
-  async deletePretestQuestion(id) {
+  async deleteKader(id) {
     try {
-      const result = await apiDeletePretest(id);
+      const result = await apiDeleteKader(id);
       if (result.success) {
-        showToast('Soal pretest berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async addPosttestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
-    try {
-      const result = await apiAddPosttest(teks, opsi, jawaban, urutan, timer_enabled, timer_duration);
-      if (result.success) {
-        showToast('Soal posttest berhasil ditambahkan!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async updatePosttestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) {
-    try {
-      const result = await apiUpdatePosttest(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration);
-      if (result.success) {
-        showToast('Soal posttest berhasil diperbarui!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deletePosttestQuestion(id) {
-    try {
-      const result = await apiDeletePosttest(id);
-      if (result.success) {
-        showToast('Soal posttest berhasil dihapus!', 'success');
+        showToast('Kader berhasil dihapus!', 'success');
         await this.loadAllData(true);
         return result;
       } else {
@@ -1008,125 +984,7 @@ export const AdminModule = {
   },
 
   // ==================================================================
-  //   CRUD ASET & FOLDER
-  // ==================================================================
-  async addAsset(params) {
-    try {
-      const result = await apiAddAsset(params);
-      if (result.success) {
-        showToast('Aset berhasil diupload!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal upload');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteAsset(id) {
-    try {
-      const result = await apiDeleteAsset(id);
-      if (result.success) {
-        showToast('Aset berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async addFolder(nama, parentId) {
-    try {
-      const result = await apiAddFolder(nama, parentId);
-      if (result.success) {
-        showToast('Folder berhasil dibuat!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal membuat folder');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteFolder(id) {
-    try {
-      const result = await apiDeleteFolder(id);
-      if (result.success) {
-        showToast('Folder berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus folder');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  // ==================================================================
-  //   CRUD KADER
-  // ==================================================================
-  async addKader(params) {
-    try {
-      const result = await apiAddKader(params);
-      if (result.success) {
-        showToast('Kader berhasil ditambahkan!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async updateKader(params) {
-    try {
-      const result = await apiUpdateKader(params);
-      if (result.success) {
-        showToast('Kader berhasil diperbarui!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteKader(id) {
-    try {
-      const result = await apiDeleteKader(id);
-      if (result.success) {
-        showToast('Kader berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  // ==================================================================
-  //   CRUD RTL
+  //   CRUD RTL & TUGAS
   // ==================================================================
   async addRTLTask(params) {
     try {
@@ -1176,17 +1034,40 @@ export const AdminModule = {
     }
   },
 
-  // --- NEW RTL ACTIONS ---
   async approveRTLTask(id) {
-    return await apiApproveRTLTask({ id });
+    try {
+      const result = await apiApproveRTLTask({ id });
+      if (result.success) {
+        showToast('Tugas disetujui!', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal menyetujui');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
   },
 
   async approveAllRTL(pesertaId) {
-    return await apiApproveAllRTL({ pesertaId });
+    try {
+      const result = await apiApproveAllRTL({ pesertaId });
+      if (result.success) {
+        showToast('Semua tugas RTL disetujui!', 'success');
+        await this.loadAllData(true);
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal menyetujui semua');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
   },
 
   // ==================================================================
-  //   CRUD TEMPLATE SERTIFIKAT
+  //   CRUD SERTIFIKAT & TEMPLATE
   // ==================================================================
   async addCertificateTemplate(params) {
     return await apiAddCertificateTemplateManual(params);
@@ -1200,15 +1081,20 @@ export const AdminModule = {
     return await apiDeleteCertificateTemplate({ id });
   },
 
-  // ==================================================================
-  //   GENERATE SERTIFIKAT PER PESERTA
-  // ==================================================================
   async generateCertificateForParticipant(templateId, pesertaId) {
     return await apiGenerateCertificateForParticipant({ templateId, pesertaId });
   },
 
+  async saveCertificateLayout(nama, data_json, id = null) {
+    return await apiSaveCertificateLayout({ nama, data_json, id });
+  },
+
+  async bulkGenerateTTD(params) {
+    return await apiBulkGenerateTTD(params);
+  },
+
   // ==================================================================
-  //   PENGATURAN (SETTINGS)
+  //   CRUD PENGATURAN (SETTINGS)
   // ==================================================================
   async setLoginMode(enabled) {
     try {
@@ -1278,14 +1164,31 @@ export const AdminModule = {
     }
   },
 
+  async setRealtimeSetting(enabled) {
+    try {
+      const result = await apiSetRealtimeSetting(enabled);
+      if (result.success) {
+        STATE.realtimeEnabled = enabled;
+        await this.loadAllData(true);
+        showToast('Pengaturan realtime berhasil diubah!', 'success');
+        return result;
+      } else {
+        throw new Error(result.error || 'Gagal mengubah realtime');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false };
+    }
+  },
+
   // ==================================================================
-  //   UTILITY
+  //   UTILITY CLEAR STATE
   // ==================================================================
   clearState() {
     Object.keys(STATE).forEach(key => {
       if (Array.isArray(STATE[key])) {
         STATE[key] = [];
-      } else if (typeof STATE[key] === 'object' && STATE[key] !== null && key !== 'pkdLokasi') {
+      } else if (typeof STATE[key] === 'object' && STATE[key] !== null && key !== 'pkdlokasi') {
         STATE[key] = {};
       }
     });
