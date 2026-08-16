@@ -12,10 +12,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   
-  <!-- 🛠 PERBAIKAN: Library html5-qrcode untuk multi-browser -->
+  <!-- 🛠 Library html5-qrcode & signature_pad -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- 🛠 PERBAIKAN: Library Signature Pad untuk modal tanda tangan -->
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <!-- 🔥 Library Chart.js untuk Grafik -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
     /* --- GLOBAL --- */
@@ -110,20 +111,119 @@
         .bottom-nav .nav-item i { font-size: 1.2rem; }
         .row.g-2.g-sm-3 { margin: 0 !important; }
         .row.g-2.g-sm-3 > .col-6 { padding: 0.15rem !important; }
+        .dashboard-row { margin-top: 1rem !important; }
+        .chart-container { height: 150px !important; }
+        .quick-btn { padding: 0.5rem !important; }
+        .quick-btn i { font-size: 1rem !important; }
+        .quick-btn span { font-size: 0.6rem !important; }
         .alert-info.mt-3.rounded-4 { font-size: 0.7rem; padding: 0.4rem; }
+        .notif-btn { width: 32px !important; height: 32px !important; font-size: 1rem !important; }
     }
 
     /* --- CONTENT --- */
     .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease; box-sizing: border-box; }
-    .stat-card { background: white; border-radius: 20px; padding: 1.2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: transform 0.2s; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .stat-card { background: white; border-radius: 20px; padding: 1.2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: center; transition: transform 0.2s; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .stat-card:hover { transform: translateY(-4px); }
     .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
     .stat-label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
     .stat-card i { margin-top: 10px; font-size: 1.8rem; }
+    .stat-trend { position: absolute; top: 10px; right: 10px; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #16a34a; }
+    .stat-trend.down { background: #fee2e2; color: #dc2626; }
     .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
+
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+      background: #e2e8f0;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    .stat-card.skeleton {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0.5rem;
+    }
+    .stat-card.skeleton .stat-number {
+      display: block;
+      width: 60%;
+      height: 2.5rem;
+      margin: 0 auto 0.5rem;
+    }
+    .stat-card.skeleton .stat-label {
+      display: block;
+      width: 40%;
+      height: 1rem;
+      margin: 0 auto;
+    }
+
+    /* --- GLOBAL SEARCH --- */
+    .global-search-wrapper { position: relative; flex: 1; max-width: 400px; }
+    .global-search-wrapper input { border-radius: 50px; padding-left: 40px; border: 1px solid #e2e8f0; background: white; transition: all 0.2s; }
+    .global-search-wrapper input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .global-search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .global-search-results {
+      position: absolute; top: 110%; left: 0; right: 0;
+      background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0; max-height: 300px; overflow-y: auto;
+      display: none; z-index: 1050; padding: 0.5rem 0;
+    }
+    .global-search-results.show { display: block; }
+    .global-search-results .result-item {
+      padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      transition: background 0.15s; border-bottom: 1px solid #f1f5f9;
+    }
+    .global-search-results .result-item:hover { background: #f1f5f9; }
+    .global-search-results .result-item:last-child { border-bottom: none; }
+    .global-search-results .result-item i { color: #64748b; flex-shrink: 0; }
+    .global-search-results .result-item .label { font-weight: 500; font-size: 0.9rem; }
+    .global-search-results .result-item .sub { font-size: 0.75rem; color: #94a3b8; }
+    .global-search-results .empty { text-align: center; padding: 1rem; color: #94a3b8; font-size: 0.85rem; }
+
+    /* --- NOTIFICATION CENTER --- */
+    .notif-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; background: white; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: #0f172a; }
+    .notif-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .notif-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 0.65rem; font-weight: 700; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+    .notif-dropdown {
+      position: absolute; top: 120%; right: 0;
+      width: 350px; max-width: calc(100vw - 20px);
+      background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+      border: 1px solid #e2e8f0; max-height: 400px; overflow-y: auto;
+      display: none; z-index: 1060; padding: 0.5rem 0;
+    }
+    .notif-dropdown.show { display: block; }
+    .notif-dropdown .notif-item {
+      padding: 0.75rem 1rem; display: flex; align-items: flex-start; gap: 10px;
+      border-bottom: 1px solid #f1f5f9; transition: background 0.15s;
+    }
+    .notif-dropdown .notif-item:hover { background: #f8fafc; }
+    .notif-dropdown .notif-item:last-child { border-bottom: none; }
+    .notif-dropdown .notif-item .icon-box { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+    .notif-dropdown .notif-item .content { flex: 1; }
+    .notif-dropdown .notif-item .content .title { font-weight: 600; font-size: 0.9rem; }
+    .notif-dropdown .notif-item .content .desc { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+    .notif-dropdown .notif-item .time { font-size: 0.7rem; color: #94a3b8; flex-shrink: 0; margin-top: 2px; }
+    .notif-dropdown .empty { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem; }
+
+    /* --- TODO LIST --- */
+    .todo-list { list-style: none; padding: 0; margin: 0; }
+    .todo-item { display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; gap: 8px; }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .todo-item .status-dot.pending { background: #f59e0b; }
+    .todo-item .status-dot.done { background: #22c55e; }
+    .todo-item .status-dot.urgent { background: #ef4444; }
+    .todo-item .text { flex: 1; font-size: 0.85rem; }
+    .todo-item .text strong { font-weight: 600; }
+    .todo-item .action { font-size: 0.75rem; color: #2563eb; text-decoration: none; font-weight: 500; }
 
     /* --- SCAN QR FLOATING BUTTON (DESKTOP) --- */
     .scan-float-btn {
@@ -202,6 +302,51 @@
       margin: 0 auto;
       touch-action: none;
     }
+
+    /* --- DASHBOARD ADDITIONS (CHART, FEED, QUICK ACTIONS) --- */
+    .dashboard-row { margin-top: 2rem; }
+    .chart-container { position: relative; height: 200px; width: 100%; margin-top: 10px; }
+    .feed-list { list-style: none; padding: 0; margin: 0; }
+    .feed-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9;
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item .icon-box {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 12px; font-size: 1rem; flex-shrink: 0;
+    }
+    .feed-item .content { flex: 1; font-size: 0.85rem; }
+    .feed-item .content .name { font-weight: 600; color: #0f172a; }
+    .feed-item .time { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
+
+    /* --- CARD HEADER UTILITIES --- */
+    .card-header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .card-header-actions h6 { margin: 0; font-weight: 600; }
+    .quick-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .quick-btn {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1rem; text-align: center; transition: all 0.2s; cursor: pointer;
+      text-decoration: none; color: #0f172a;
+    }
+    .quick-btn:hover { background: #eff6ff; border-color: #2563eb; transform: translateY(-2px); }
+    .quick-btn i { font-size: 1.5rem; color: #2563eb; display: block; margin-bottom: 0.25rem; }
+    .quick-btn span { font-size: 0.8rem; font-weight: 600; display: block; }
+    .status-badge-success { background: #dcfce7; color: #16a34a; padding: 2px 10px; border-radius: 20px; font-weight: 500; font-size: 0.75rem; }
+    .status-badge-warning { background: #fef3c7; color: #d97706; padding: 2px 10px; border-radius: 20px; font-weight: 500; font-size: 0.75rem; }
+    
+    /* --- 🛠 PERBAIKAN: Pesan Error Modul --- */
+    #moduleLoadError {
+        display: none;
+        background: #fee2e2;
+        border: 1px solid #dc2626;
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 2rem auto;
+        text-align: center;
+        max-width: 800px;
+    }
   </style>
 </head>
 <body>
@@ -260,12 +405,56 @@
 
     <!-- KONTEN -->
     <div class="content-wrapper">
-      <h2 class="section-title"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
-      <div class="top-toolbar d-flex justify-content-between align-items-center flex-wrap mb-3">
-        <div><span id="cacheStatus" class="cache-status">Memuat...</span></div>
-        <div><button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button></div>
+      <!-- HEADER SECTION -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div class="d-flex align-items-center gap-2">
+          <h2 class="section-title mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <!-- 🔍 Global Search Bar -->
+          <div class="global-search-wrapper d-none d-md-block">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control form-control-sm" id="globalSearchInput" placeholder="Cari peserta, materi, sesi...">
+            <div class="global-search-results" id="globalSearchResults">
+              <div class="empty">Ketik untuk mencari...</div>
+            </div>
+          </div>
+          <!-- 🔔 Notification Button -->
+          <div style="position: relative;">
+            <button class="notif-btn" id="notifToggleBtn">
+              <i class="bi bi-bell"></i>
+              <span class="notif-badge" id="notifBadge">0</span>
+            </button>
+            <div class="notif-dropdown" id="notifDropdown">
+              <div class="empty">Tidak ada notifikasi</div>
+            </div>
+          </div>
+          <!-- Refresh & Cache -->
+          <span id="cacheStatus" class="cache-status">Memuat...</span>
+          <button class="btn btn-outline-secondary rounded-pill btn-sm" id="refreshDataBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+          </button>
+        </div>
       </div>
-      <div id="dashboardContent"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div></div></div>
+
+      <!-- 🛠 Error Module -->
+      <div id="moduleLoadError">
+        <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-3"></i>
+        <h4>Gagal Memuat Modul JavaScript</h4>
+        <p class="text-muted">File <strong>api.js</strong> atau <strong>admin.js</strong> tidak ditemukan (Error 404).</p>
+        <hr>
+        <p class="text-start small">
+          <strong>Solusi:</strong><br>
+          1. Pastikan struktur folder di komputer Anda <strong>persis</strong> seperti ini:<br>
+          <code>root_project/</code> → <code>bisaa/</code> → <code>js/</code> → <code>core/</code> & <code>modules/</code><br>
+          2. Jika menggunakan Live Server, buka VS Code di folder <strong>root_project</strong>, bukan di dalam folder <code>/bisaa/</code>.<br>
+          3. Refresh halaman setelah memperbaiki struktur folder.
+        </p>
+      </div>
+
+      <div id="dashboardContent">
+        <!-- Skeleton akan dirender oleh JS -->
+      </div>
     </div>
   </div>
 </div>
@@ -396,6 +585,27 @@
   import { AdminModule } from '../js/modules/admin.js';
 
   // ==========================================================
+  //   🛠 PERBAIKAN: GLOBAL ERROR HANDLER UNTUK MODUL LOAD FAILURES
+  // ==========================================================
+  window.addEventListener('error', function(e) {
+    if (e.message && (e.message.includes('Failed to resolve module') || 
+                      e.message.includes('404') || 
+                      (e.filename && e.filename.includes('api.js')))) {
+      const errorContainer = document.getElementById('moduleLoadError');
+      if (errorContainer) errorContainer.style.display = 'block';
+      
+      const dashboardContent = document.getElementById('dashboardContent');
+      if (dashboardContent) dashboardContent.innerHTML = '';
+      
+      const refreshBtn = document.getElementById('refreshDataBtn');
+      if (refreshBtn) refreshBtn.style.display = 'none';
+      
+      const cacheStatus = document.getElementById('cacheStatus');
+      if (cacheStatus) cacheStatus.textContent = 'Error 404';
+    }
+  });
+
+  // ==========================================================
   //   STATE & UTILITY
   // ==========================================================
   let cacheStatusEl = document.getElementById('cacheStatus');
@@ -404,10 +614,15 @@
   let currentScanMode = 'otomatis';
   let manualSessionData = [];
   let pendingScanData = { pesertaId: null, nama: null };
+  let refreshInterval = null;
   
   // Scanner library state
   let html5QrCode = null;
   let isScannerRunning = false;
+
+  // Notification state
+  let notifCount = 0;
+  let notifList = [];
 
   function updateCacheStatus(status) {
     if (cacheStatusEl) { 
@@ -417,14 +632,97 @@
   }
 
   // ==========================================================
-  //   RENDER DASHBOARD
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonDashboard() {
+    dashboardContent.innerHTML = `
+      <div class="row g-2 g-sm-3 fade-in">
+        ${Array(6).fill(0).map(() => `
+          <div class="col-6 col-md-4">
+            <div class="stat-card skeleton">
+              <div class="skeleton-box stat-number"></div>
+              <div class="skeleton-box stat-label"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="alert alert-info mt-3 rounded-4 border-0 bg-light skeleton-box" style="height:60px;width:100%;"></div>
+    `;
+  }
+
+  // ==========================================================
+  //   HELPER: TREND CALCULATION (Compare with previous week)
+  // ==========================================================
+  function calculateTrend(currentCount, type) {
+    // Get data from last 7 days (current week) vs previous 7 days
+    const now = new Date();
+    const sevenDaysAgo = new Date(now); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourteenDaysAgo = new Date(now); fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    let currentWeekCount = 0, previousWeekCount = 0;
+    
+    // We need to access the actual data lists
+    let dataList = [];
+    if (type === 'peserta') dataList = AdminModule.getPesertaList();
+    else if (type === 'sesi') dataList = AdminModule.getSesiList();
+    else if (type === 'materi') dataList = AdminModule.getMateriList();
+    else if (type === 'skrining') dataList = AdminModule.getSkriningList();
+    else if (type === 'pretest') dataList = AdminModule.getPretestList();
+    else if (type === 'posttest') dataList = AdminModule.getPosttestList();
+    else if (type === 'alumni') dataList = AdminModule.getAlumniList();
+
+    dataList.forEach(item => {
+      let ts = null;
+      if (item.timestamp) ts = new Date(item.timestamp);
+      else if (item.createdAt) ts = new Date(item.createdAt);
+      if (!ts || isNaN(ts.getTime())) return;
+
+      if (ts >= sevenDaysAgo && ts <= now) currentWeekCount++;
+      else if (ts >= fourteenDaysAgo && ts < sevenDaysAgo) previousWeekCount++;
+    });
+
+    if (previousWeekCount === 0) return { trend: 0, direction: 'none' };
+    const diff = ((currentWeekCount - previousWeekCount) / previousWeekCount) * 100;
+    return { trend: Math.round(diff), direction: diff > 0 ? 'up' : (diff < 0 ? 'down' : 'none') };
+  }
+
+  // ==========================================================
+  //   RENDER DASHBOARD (DATA ASLI + FITUR BARU)
   // ==========================================================
   function renderDashboardUI() {
     const stats = AdminModule.getStats();
+    const allPeserta = AdminModule.getPesertaList();
+    const pendingCount = allPeserta.filter(p => p.status === 'pending').length;
+    const approvedCount = allPeserta.filter(p => p.status === 'approved' || p.status === 'active').length;
+    const totalAlumni = AdminModule.getAlumniList().length;
+
+    // Hitung trend untuk setiap kartu
+    const trendPeserta = calculateTrend(stats.totalPeserta, 'peserta');
+    const trendSesi = calculateTrend(stats.totalSesi, 'sesi');
+    const trendMateri = calculateTrend(stats.totalMateri, 'materi');
+    const trendSkrining = calculateTrend(stats.totalSkrining, 'skrining');
+    const trendPretest = calculateTrend(stats.totalPretest, 'pretest');
+    const trendPosttest = calculateTrend(stats.totalPosttest, 'posttest');
+
+    const formatTrend = (trend) => {
+      if (trend.direction === 'none') return `<span class="text-muted">±0%</span>`;
+      const icon = trend.direction === 'up' ? 'bi-arrow-up' : 'bi-arrow-down';
+      const cls = trend.direction === 'up' ? 'text-success' : 'text-danger';
+      return `<span class="${cls}"><i class="bi ${icon}"></i> ${Math.abs(trend.trend)}%</span>`;
+    };
+
+    // Ambil data untuk Todo & Notif
+    const sesiList = AdminModule.getSesiList();
+    const closedSessions = sesiList.filter(s => s.submission_open === false || s.submission_open === 'false');
+    const noMateri = AdminModule.getMateriList().length === 0;
+
+    // Bangun HTML
     dashboardContent.innerHTML = `
       <div class="row g-2 g-sm-3 fade-in">
+        <!-- Kartu Statistik dengan Trend -->
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendPeserta.direction === 'down' ? 'down' : ''}">${formatTrend(trendPeserta)}</div>
             <div class="stat-number">${stats.totalPeserta}</div>
             <div class="stat-label">Total Peserta</div>
             <i class="bi bi-people-fill"></i>
@@ -432,6 +730,7 @@
         </div>
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendSesi.direction === 'down' ? 'down' : ''}">${formatTrend(trendSesi)}</div>
             <div class="stat-number">${stats.totalSesi}</div>
             <div class="stat-label">Sesi Absen</div>
             <i class="bi bi-calendar-event"></i>
@@ -439,6 +738,7 @@
         </div>
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendMateri.direction === 'down' ? 'down' : ''}">${formatTrend(trendMateri)}</div>
             <div class="stat-number">${stats.totalMateri}</div>
             <div class="stat-label">Materi</div>
             <i class="bi bi-file-earmark-pdf"></i>
@@ -446,6 +746,7 @@
         </div>
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendSkrining.direction === 'down' ? 'down' : ''}">${formatTrend(trendSkrining)}</div>
             <div class="stat-number">${stats.totalSkrining}</div>
             <div class="stat-label">Skrining Terisi</div>
             <i class="bi bi-clipboard-check"></i>
@@ -453,6 +754,7 @@
         </div>
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendPretest.direction === 'down' ? 'down' : ''}">${formatTrend(trendPretest)}</div>
             <div class="stat-number">${stats.totalPretest}</div>
             <div class="stat-label">Pretest Terisi</div>
             <i class="bi bi-pencil-square"></i>
@@ -460,25 +762,434 @@
         </div>
         <div class="col-6 col-md-4">
           <div class="stat-card">
+            <div class="stat-trend ${trendPosttest.direction === 'down' ? 'down' : ''}">${formatTrend(trendPosttest)}</div>
             <div class="stat-number">${stats.totalPosttest}</div>
             <div class="stat-label">Posttest Terisi</div>
             <i class="bi bi-trophy"></i>
           </div>
         </div>
       </div>
-      <div class="alert alert-info mt-3 rounded-4 border-0 bg-light small">
-        <i class="bi bi-info-circle"></i> Data langsung dari sumber cloud, diperbarui secara otomatis.
-        ${stats.lastSync ? `<br><small>Terakhir sinkronisasi: ${stats.lastSync}</small>` : ''}
+
+      <!-- =================== FITUR BARU (ROW 2) =================== -->
+      <div class="row g-2 dashboard-row">
+        <div class="col-md-8">
+          <div class="stat-card" style="text-align: left; padding: 1.2rem;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Tren Aktivitas 7 Hari Terakhir</h6>
+              <span class="small text-muted">Skrining & Quiz</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="stat-card" style="text-align: left; padding: 1.2rem;">
+            <h6 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill me-2"></i>Aksi Cepat</h6>
+            <div class="quick-action-grid">
+              <a href="/bisaa/admin/peserta_admin.html" class="quick-btn" title="Setujui Peserta">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Setujui Peserta</span>
+                <span class="status-badge-warning">${pendingCount} Pending</span>
+              </a>
+              <a href="/bisaa/admin/sesi_absen_admin.html" class="quick-btn" title="Buka Sesi Absen">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Kelola Sesi</span>
+              </a>
+              <a href="/bisaa/admin/materi_admin.html" class="quick-btn" title="Upload Materi">
+                <i class="bi bi-file-earmark-plus-fill"></i>
+                <span>Upload Materi</span>
+              </a>
+              <a href="/bisaa/admin/informasi_admin.html" class="quick-btn" title="Buat Pengumuman">
+                <i class="bi bi-megaphone-fill"></i>
+                <span>Buat Pengumuman</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== FITUR BARU (ROW 3) =================== -->
+      <div class="row g-2 dashboard-row">
+        <div class="col-md-6">
+          <div class="stat-card" style="text-align: left; padding: 1rem;">
+            <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Aktivitas Terbaru</h6>
+            <ul class="feed-list" id="activityFeed">
+              <li class="text-center text-muted small py-3">Memuat aktivitas...</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="stat-card" style="text-align: left; padding: 1rem;">
+            <h6 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>📋 Todo List</h6>
+            <ul class="todo-list" id="todoListContainer">
+              <li class="text-center text-muted small py-3">Memuat tugas...</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-2 dashboard-row">
+        <div class="col-12">
+          <div class="stat-card" style="text-align: left; padding: 0.5rem 1rem; background: #f8fafc; border: none;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+              <div class="small text-muted">
+                <i class="bi bi-info-circle"></i> Data langsung dari sumber cloud, diperbarui secara otomatis.
+                ${stats.lastSync ? `<br><small>Terakhir sinkronisasi: ${stats.lastSync}</small>` : ''}
+              </div>
+              <div class="small text-muted">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> ${approvedCount} Disetujui, ${pendingCount} Pending
+                <span class="ms-2"><i class="bi bi-trophy text-warning me-1"></i> ${totalAlumni} Alumni</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     `;
+
+    // --- RENDER GRAFIK & FEED ---
+    const allPretest = AdminModule.getPretestList();
+    const allPosttest = AdminModule.getPosttestList();
+    const allSkrining = AdminModule.getSkriningList();
+    renderActivityChart(allPretest, allPosttest, allSkrining);
+    renderActivityFeed(allPretest, allPosttest, allSkrining, allPeserta);
+    renderTodoList(allPeserta, sesiList, closedSessions, noMateri);
+    generateNotifications(allPeserta, pendingCount, closedSessions, noMateri);
   }
 
   // ==========================================================
-  //   BACKGROUND SYNC
+  //   🆕 FUNGSI GRAFIK TREN (Chart.js)
+  // ==========================================================
+  function renderActivityChart(pretestData, posttestData, skriningData) {
+    const ctx = document.getElementById('activityChart');
+    if (!ctx) return;
+
+    const labels = [];
+    const pretestCount = [];
+    const posttestCount = [];
+    const skriningCount = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      labels.push(date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }));
+      
+      pretestCount.push(pretestData.filter(d => d.timestamp && d.timestamp.startsWith(dateStr)).length);
+      posttestCount.push(posttestData.filter(d => d.timestamp && d.timestamp.startsWith(dateStr)).length);
+      skriningCount.push(skriningData.filter(d => d.timestamp && d.timestamp.startsWith(dateStr)).length);
+    }
+
+    let existingChart = Chart.getChart('activityChart');
+    if (existingChart) existingChart.destroy();
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Pretest', data: pretestCount, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+          { label: 'Posttest', data: posttestCount, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+          { label: 'Skrining', data: skriningCount, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  }
+
+  // ==========================================================
+  //   🆕 FUNGSI FEED AKTIVITAS (Recent Activity)
+  // ==========================================================
+  function renderActivityFeed(pretestData, posttestData, skriningData, pesertaData) {
+    const feedContainer = document.getElementById('activityFeed');
+    if (!feedContainer) return;
+
+    let activities = [];
+    pretestData.forEach(d => { if(d.nama && d.timestamp) activities.push({ type: 'pretest', nama: d.nama, timestamp: d.timestamp }); });
+    posttestData.forEach(d => { if(d.nama && d.timestamp) activities.push({ type: 'posttest', nama: d.nama, timestamp: d.timestamp }); });
+    skriningData.forEach(d => { if(d.nama && d.timestamp) activities.push({ type: 'skrining', nama: d.nama, timestamp: d.timestamp }); });
+    pesertaData.forEach(d => {
+      if(d.nama_lengkap && d.timestamp) {
+        const daysDiff = (Date.now() - new Date(d.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+        if(daysDiff < 3) activities.push({ type: 'daftar', nama: d.nama_lengkap, timestamp: d.timestamp });
+      }
+    });
+
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const latest = activities.slice(0, 6);
+
+    if (latest.length === 0) {
+      feedContainer.innerHTML = `<li class="text-center text-muted small py-3">Belum ada aktivitas terkini.</li>`;
+      return;
+    }
+
+    const icons = {
+      pretest: { class: 'bg-primary bg-opacity-10 text-primary', icon: 'bi-pencil-square' },
+      posttest: { class: 'bg-success bg-opacity-10 text-success', icon: 'bi-trophy' },
+      skrining: { class: 'bg-warning bg-opacity-10 text-warning', icon: 'bi-clipboard-check' },
+      daftar: { class: 'bg-info bg-opacity-10 text-info', icon: 'bi-person-plus-fill' }
+    };
+    const labels = {
+      pretest: 'Pretest', posttest: 'Posttest', skrining: 'Skrining', daftar: 'Pendaftaran'
+    };
+
+    function timeSince(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+      let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + " thn lalu";
+      interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + " bln lalu";
+      interval = seconds / 86400; if (interval > 1) return Math.floor(interval) + " hr lalu";
+      interval = seconds / 3600; if (interval > 1) return Math.floor(interval) + " jam lalu";
+      interval = seconds / 60; if (interval > 1) return Math.floor(interval) + " mnt lalu";
+      return Math.floor(seconds) + " dtk lalu";
+    }
+
+    let html = '';
+    latest.forEach(item => {
+      const icon = icons[item.type] || icons.daftar;
+      const label = labels[item.type] || 'Aktivitas';
+      html += `
+        <li class="feed-item">
+          <div class="d-flex align-items-center" style="min-width: 0;">
+            <div class="icon-box ${icon.class}"><i class="bi ${icon.icon}"></i></div>
+            <div class="content">
+              <span class="name">${escapeHtml(item.nama)}</span>
+              <span class="text-muted"> mengirim <strong>${label}</strong></span>
+            </div>
+          </div>
+          <span class="time">${timeSince(new Date(item.timestamp))}</span>
+        </li>
+      `;
+    });
+    feedContainer.innerHTML = html;
+  }
+
+  // ==========================================================
+  //   🆕 FUNGSI TODO LIST
+  // ==========================================================
+  function renderTodoList(pesertaList, sesiList, closedSessions, noMateri) {
+    const container = document.getElementById('todoListContainer');
+    let todos = [];
+
+    // 1. Peserta pending
+    const pending = pesertaList.filter(p => p.status === 'pending');
+    if (pending.length > 0) {
+      todos.push({ status: 'urgent', text: `<strong>${pending.length} peserta</strong> menunggu persetujuan`, action: 'Setujui Sekarang', link: '/bisaa/admin/peserta_admin.html' });
+    }
+
+    // 2. Sesi tertutup (perlu dibuka)
+    if (closedSessions.length > 0) {
+      // Hanya tampilkan 2 sesi teratas
+      const limited = closedSessions.slice(0, 2);
+      limited.forEach(s => {
+        todos.push({ status: 'pending', text: `Sesi "<strong>${escapeHtml(s.nama)}</strong>" masih tertutup`, action: 'Buka Sesi', link: '/bisaa/admin/sesi_absen_admin.html' });
+      });
+      if (closedSessions.length > 2) {
+        todos.push({ status: 'pending', text: `...dan ${closedSessions.length - 2} sesi lainnya tertutup`, action: 'Lihat Semua', link: '/bisaa/admin/sesi_absen_admin.html' });
+      }
+    }
+
+    // 3. Tidak ada materi
+    if (noMateri) {
+      todos.push({ status: 'pending', text: 'Belum ada materi pelatihan diunggah', action: 'Upload Sekarang', link: '/bisaa/admin/materi_admin.html' });
+    }
+
+    // 4. Jika tidak ada todo
+    if (todos.length === 0) {
+      container.innerHTML = `<li class="text-center text-muted small py-3"><i class="bi bi-check-circle-fill text-success me-2"></i>Semua tugas selesai! 👍</li>`;
+      return;
+    }
+
+    let html = '';
+    todos.forEach(t => {
+      html += `
+        <li class="todo-item">
+          <span class="status-dot ${t.status}"></span>
+          <span class="text">${t.text}</span>
+          <a href="${t.link}" class="action">${t.action} →</a>
+        </li>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // ==========================================================
+  //   🆕 SISTEM NOTIFIKASI
+  // ==========================================================
+  function generateNotifications(pesertaList, pendingCount, closedSessions, noMateri) {
+    let notifs = [];
+    
+    // Notif jika ada peserta baru dalam 1 jam terakhir
+    const now = new Date();
+    const oneHourAgo = new Date(now); oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    const newPeserta = pesertaList.filter(p => p.timestamp && new Date(p.timestamp) >= oneHourAgo);
+    if (newPeserta.length > 0) {
+      notifs.push({ 
+        icon: 'bi-person-plus-fill', 
+        iconClass: 'bg-info text-white', 
+        title: `Peserta Baru`, 
+        desc: `${newPeserta.length} peserta baru mendaftar dalam 1 jam terakhir.`, 
+        time: 'Baru saja' 
+      });
+    }
+
+    if (pendingCount > 0) {
+      notifs.push({ 
+        icon: 'bi-person-check-fill', 
+        iconClass: 'bg-warning text-white', 
+        title: `Persetujuan Tertunda`, 
+        desc: `${pendingCount} peserta masih menunggu approval.`, 
+        time: 'Segera' 
+      });
+    }
+
+    if (closedSessions.length > 0) {
+      // Tampilkan 1 notifikasi saja
+      notifs.push({ 
+        icon: 'bi-calendar-x-fill', 
+        iconClass: 'bg-danger text-white', 
+        title: `Sesi Tertutup`, 
+        desc: `Ada ${closedSessions.length} sesi yang belum dibuka.`, 
+        time: 'Perhatian' 
+      });
+    }
+
+    if (noMateri) {
+      notifs.push({ 
+        icon: 'bi-file-earmark-plus-fill', 
+        iconClass: 'bg-primary text-white', 
+        title: `Materi Kosong`, 
+        desc: `Belum ada materi yang diunggah ke sistem.`, 
+        time: 'Segera' 
+      });
+    }
+
+    // Simpan notifikasi
+    notifList = notifs;
+    notifCount = notifs.length;
+    
+    const badge = document.getElementById('notifBadge');
+    if (badge) {
+      badge.innerText = notifCount;
+      badge.style.display = notifCount > 0 ? 'flex' : 'none';
+    }
+
+    // Render notif dropdown
+    const dropdown = document.getElementById('notifDropdown');
+    if (dropdown) {
+      if (notifCount === 0) {
+        dropdown.innerHTML = `<div class="empty">Tidak ada notifikasi</div>`;
+      } else {
+        let html = '';
+        notifs.forEach(n => {
+          html += `
+            <div class="notif-item">
+              <div class="icon-box ${n.iconClass}"><i class="bi ${n.icon}"></i></div>
+              <div class="content">
+                <div class="title">${n.title}</div>
+                <div class="desc">${n.desc}</div>
+              </div>
+              <div class="time">${n.time}</div>
+            </div>
+          `;
+        });
+        dropdown.innerHTML = html;
+      }
+    }
+  }
+
+  // ==========================================================
+  //   TOGGLE NOTIFIKASI
+  // ==========================================================
+  document.getElementById('notifToggleBtn')?.addEventListener('click', function() {
+    const dropdown = document.getElementById('notifDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('show');
+    }
+  });
+
+  // Tutup notif saat klik di luar
+  document.addEventListener('click', function(e) {
+    const btn = document.getElementById('notifToggleBtn');
+    const dropdown = document.getElementById('notifDropdown');
+    if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  // ==========================================================
+  //   GLOBAL SEARCH
+  // ==========================================================
+  const searchInput = document.getElementById('globalSearchInput');
+  const searchResults = document.getElementById('globalSearchResults');
+
+  searchInput?.addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    if (q.length < 2) { searchResults.classList.remove('show'); return; }
+
+    // Search di peserta, materi, sesi
+    let results = [];
+    const peserta = AdminModule.getPesertaList();
+    const materi = AdminModule.getMateriList();
+    const sesi = AdminModule.getSesiList();
+
+    peserta.forEach(p => {
+      if (p.nama_lengkap && p.nama_lengkap.toLowerCase().includes(q)) {
+        results.push({ type: 'peserta', label: p.nama_lengkap, sub: p.utusan || 'Peserta', link: '/bisaa/admin/peserta_admin.html' });
+      }
+    });
+    materi.forEach(m => {
+      if (m.judul && m.judul.toLowerCase().includes(q)) {
+        results.push({ type: 'materi', label: m.judul, sub: m.deskripsi || 'Materi', link: '/bisaa/admin/materi_admin.html' });
+      }
+    });
+    sesi.forEach(s => {
+      if (s.nama && s.nama.toLowerCase().includes(q)) {
+        results.push({ type: 'sesi', label: s.nama, sub: 'Sesi Absen', link: '/bisaa/admin/sesi_absen_admin.html' });
+      }
+    });
+
+    if (results.length === 0) {
+      searchResults.innerHTML = `<div class="empty">Tidak ditemukan hasil untuk "<strong>${escapeHtml(q)}</strong>"</div>`;
+    } else {
+      let html = '';
+      results.slice(0, 8).forEach(r => {
+        const icon = r.type === 'peserta' ? 'bi-person-badge' : (r.type === 'materi' ? 'bi-file-earmark-pdf' : 'bi-calendar-event');
+        html += `
+          <a href="${r.link}" class="result-item" style="text-decoration:none;">
+            <i class="bi ${icon}"></i>
+            <div>
+              <div class="label">${escapeHtml(r.label)}</div>
+              <div class="sub">${escapeHtml(r.sub)}</div>
+            </div>
+          </a>
+        `;
+      });
+      searchResults.innerHTML = html;
+    }
+    searchResults.classList.add('show');
+  });
+
+  // Tutup search saat klik di luar
+  document.addEventListener('click', function(e) {
+    const wrapper = document.querySelector('.global-search-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      searchResults.classList.remove('show');
+    }
+  });
+
+  // ==========================================================
+  //   BACKGROUND SYNC (REALTIME POLLING)
   // ==========================================================
   async function syncDashboardData(forceRefresh = false) {
-    renderDashboardUI();
+    renderSkeletonDashboard();
     updateCacheStatus('Local');
+
     if (forceRefresh) {
       try {
         await AdminModule.loadAllData(true);
@@ -490,13 +1201,33 @@
       }
       return;
     }
+
     try {
+      if (AdminModule.getState().lastSync) {
+        renderDashboardUI();
+        updateCacheStatus('Cache');
+      }
       await AdminModule.loadAllData(false);
       renderDashboardUI();
       updateCacheStatus('Live');
     } catch (e) {
       updateCacheStatus('Offline');
     }
+  }
+
+  // ==========================================================
+  //   POLLING OTOMATIS (SETIAP 30 DETIK)
+  // ==========================================================
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      AdminModule.loadAllData(false).then(() => {
+        renderDashboardUI();
+        updateCacheStatus('Live');
+      }).catch(() => {
+        updateCacheStatus('Offline');
+      });
+    }, 30000);
   }
 
   // ==========================================================
@@ -661,7 +1392,6 @@
   //   🔥 FUNGSI BARU: SHOW SIGNATURE MODAL & SUBMIT ABSEN
   // ==========================================================
   function showSignatureModalAndAbsen(pesertaId, nama) {
-    // Hapus modal lama jika ada
     const oldModal = document.getElementById('adminSignatureModal');
     if (oldModal) oldModal.remove();
 
@@ -697,7 +1427,6 @@
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
 
-    // Inisialisasi Signature Pad
     const canvas = document.getElementById('adminSignatureCanvas');
     let sigPad = new SignaturePad(canvas, { backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3 });
     
@@ -775,7 +1504,6 @@
     const resultModal = bootstrap.Modal.getInstance(document.getElementById('scanResultModal'));
     if (resultModal) resultModal.hide();
 
-    // 🔥 Tampilkan modal tanda tangan
     showSignatureModalAndAbsen(pesertaId, namaPeserta);
   });
 
@@ -872,8 +1600,11 @@
       return;
     }
     updateNavbarMenu();
-    renderDashboardUI();
+
+    renderSkeletonDashboard();
     syncDashboardData(false);
+    startAutoRefresh();
+
     document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
       this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
       this.disabled = true;
@@ -888,7 +1619,6 @@
       });
     });
   })();
-
 </script>
 </body>
 </html>

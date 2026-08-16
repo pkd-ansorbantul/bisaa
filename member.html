@@ -157,6 +157,22 @@
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
+
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+      background: #e2e8f0;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    .stat-card.skeleton { background: transparent; border: none; box-shadow: none; padding: 0.5rem; }
+    .stat-card.skeleton .stat-number { display: block; width: 60%; height: 2.5rem; margin: 0 auto 0.5rem; }
+    .stat-card.skeleton .stat-label { display: block; width: 40%; height: 1rem; margin: 0 auto; }
   </style>
 </head>
 <body>
@@ -201,7 +217,7 @@
     <!-- Konten Utama -->
     <div id="content">
       <div id="content-container">
-        <!-- konten akan dimuat oleh JavaScript -->
+        <!-- Akan diisi oleh render functions -->
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Memuat...</span>
@@ -241,6 +257,8 @@
     // ==========================================================
     //   UTILITY & GLOBAL FUNCTIONS
     // ==========================================================
+    let refreshInterval = null;
+
     function escapeHtmlLocal(str) { return escapeHtml(str); }
 
     function logout() {
@@ -277,6 +295,68 @@
     }
 
     // ==========================================================
+    //   🔥 SKELETON RENDER (INSTANT)
+    // ==========================================================
+    function renderSkeletonDashboard(container) {
+      let html = `
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="section-title">Dashboard</h2>
+          <span class="skeleton-box" style="height:2rem;width:120px;"></span>
+        </div>
+        <div class="row g-4">
+          ${Array(6).fill(0).map(() => `
+            <div class="col-md-3">
+              <div class="stat-card skeleton">
+                <div class="skeleton-box stat-number"></div>
+                <div class="skeleton-box stat-label"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="row mt-4">
+          <div class="col-md-6"><div class="skeleton-box" style="height:80px;width:100%;"></div></div>
+          <div class="col-md-6"><div class="skeleton-box" style="height:80px;width:100%;"></div></div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    function renderSkeletonProfil(container) {
+      let html = `
+        <h2 class="section-title">Profil Saya</h2>
+        <div class="card-dashboard">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <div class="skeleton-box" style="width:140px;height:140px;border-radius:50%;margin:0 auto 1rem;"></div>
+              <div class="skeleton-box" style="height:1.5rem;width:80%;margin:0 auto;"></div>
+              <div class="skeleton-box" style="height:1rem;width:60%;margin:0.5rem auto;"></div>
+              <div class="skeleton-box" style="height:1rem;width:60%;margin:0 auto;"></div>
+            </div>
+            <div class="col-md-8">
+              ${Array(5).fill(0).map(() => `
+                <div class="mb-3">
+                  <div class="skeleton-box" style="height:1rem;width:80px;margin-bottom:0.3rem;"></div>
+                  <div class="skeleton-box" style="height:2.5rem;width:100%;"></div>
+                </div>
+              `).join('')}
+              <div class="skeleton-box" style="height:2.5rem;width:150px;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    function renderSkeletonList(container, title, count = 4) {
+      let html = `<h2 class="section-title">${title}</h2><div class="card-dashboard">`;
+      for (let i = 0; i < count; i++) {
+        html += `<div class="skeleton-box" style="height:3rem;width:100%;margin-bottom:0.5rem;"></div>`;
+      }
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    // ==========================================================
     //   LOAD CONTENT (Menggunakan MemberModule)
     // ==========================================================
     async function loadContent(menu) {
@@ -285,7 +365,20 @@
       document.getElementById(`menu-${menu}`)?.classList.add('active');
 
       const container = document.getElementById('content-container');
-      container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+      // Tampilkan skeleton sesuai menu
+      switch (menu) {
+        case 'dashboard': renderSkeletonDashboard(container); break;
+        case 'profil': renderSkeletonProfil(container); break;
+        case 'materi': renderSkeletonList(container, 'Materi Pembelajaran', 4); break;
+        case 'skrining': renderSkeletonList(container, 'Hasil Skrining', 6); break;
+        case 'pretest': renderSkeletonList(container, 'Riwayat Pretest', 3); break;
+        case 'posttest': renderSkeletonList(container, 'Riwayat Posttest', 3); break;
+        case 'absensi': renderSkeletonList(container, 'Riwayat Kehadiran', 4); break;
+        case 'sertifikat': renderSkeletonList(container, 'Sertifikat Saya', 3); break;
+        case 'informasi': renderSkeletonList(container, 'Informasi & Pengumuman', 4); break;
+        default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
+      }
 
       try {
         // Pastikan data member sudah dimuat (jika belum)
@@ -707,6 +800,22 @@
     }
 
     // ==========================================================
+    //   AUTO REFRESH (POLLING 30 DETIK)
+    // ==========================================================
+    function startAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => {
+        MemberModule.loadAllData(false).then(() => {
+          // Jika menu saat ini adalah dashboard, refresh dashboard
+          const activeMenu = document.querySelector('#sidebar ul li.active')?.id?.replace('menu-', '') || 'dashboard';
+          loadContent(activeMenu);
+        }).catch(() => {
+          // silent fail
+        });
+      }, 30000);
+    }
+
+    // ==========================================================
     //   BOOT APP
     // ==========================================================
     (async function boot() {
@@ -715,8 +824,11 @@
       // Update navbar user
       updateNavbarMenu();
 
-      // Load default menu (dashboard)
+      // Load default menu (dashboard) dengan skeleton
       await loadContent('dashboard');
+
+      // Mulai auto-refresh
+      startAutoRefresh();
     })();
 
   </script>

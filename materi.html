@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
     * { font-family: 'Inter', system-ui, sans-serif; }
     body {
       background: #f8fafc;
@@ -20,7 +19,6 @@
       flex-direction: column;
     }
 
-    /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -31,10 +29,7 @@
       padding-top: 0 !important;
       padding-bottom: 0 !important;
     }
-    .header-minimal .container {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
     .btn-back {
       background: rgba(37, 99, 235, 0.08);
       color: #2563eb;
@@ -47,33 +42,14 @@
       transform: translateX(-3px);
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
-    .brand-logo-mini { 
-      height: 40px; 
-      width: auto; 
-      margin-right: 14px; 
-      transition: transform 0.2s;
-    }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
     .brand-logo-mini:hover { transform: scale(1.05); }
-    .brand-title-mini { 
-      font-weight: 700; 
-      color: #0a3d62; 
-      font-size: 1.3rem; 
-      line-height: 1.2; 
-      letter-spacing: -0.02em;
-    }
-    .brand-sub-mini { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      display: block; 
-      margin-top: 0px; 
-      letter-spacing: 0.02em;
-    }
-
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* --- GLASS CARD --- */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -89,7 +65,6 @@
       border-color: rgba(37, 99, 235, 0.2);
     }
 
-    /* --- SKELETON LOADING INSTANT --- */
     .skeleton-box {
       background: #e2e8f0;
       border-radius: 12px;
@@ -105,7 +80,6 @@
     .skeleton-title { height: 24px; width: 80%; margin-bottom: 10px; }
     .skeleton-desc { height: 16px; width: 60%; }
 
-    /* --- MATERI CARD INTERAKTIF --- */
     .materi-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       transform-style: preserve-3d;
@@ -131,7 +105,6 @@
       transform: scale(1.15) rotate(-5deg);
     }
 
-    /* --- PREVIEW MODAL --- */
     #previewMateriModal .modal-content {
       background: #0f172a;
       border-radius: 20px;
@@ -142,12 +115,55 @@
       border: none;
       border-radius: 0 0 20px 20px;
     }
+    #fullscreenExitBtn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 99999;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        pointer-events: auto;
+    }
+    #fullscreenExitBtn:hover {
+        background: rgba(255, 59, 48, 0.9);
+        transform: scale(1.05);
+    }
+    #previewMateriModal.fullscreen-mode .modal-header,
+    #previewMateriModal.fullscreen-mode .modal-footer {
+        display: none !important;
+    }
+    #previewMateriModal.fullscreen-mode .modal-body {
+        min-height: 100vh !important;
+        background: #000 !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        pointer-events: none;
+    }
+    #previewMateriModal.fullscreen-mode .modal-body iframe,
+    #previewMateriModal.fullscreen-mode .modal-body img {
+        pointer-events: auto;
+    }
+    #previewMateriModal.fullscreen-mode .modal-content {
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
 
-    /* --- ANIMASI --- */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- FOOTER --- */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -158,7 +174,6 @@
       background: white;
     }
 
-    /* --- RESPONSIF --- */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -172,27 +187,19 @@
 </head>
 <body>
 
-  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
-        <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
-          <i class="bi bi-arrow-left me-1"></i> Kembali
-        </a>
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
           <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
-          <div>
-            <div class="brand-title-mini">PKD GP Ansor</div>
-            <span class="brand-sub-mini">Kabupaten Bantul</span>
-          </div>
+          <div><div class="brand-title-mini">PKD GP Ansor</div><span class="brand-sub-mini">Kabupaten Bantul</span></div>
         </a>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
   <div id="contentArea">
     <section id="materiSection" class="container" style="padding: 2rem 0; max-width: 1000px;">
       <h2 class="section-title fade-up"><i class="bi bi-journal-bookmark-fill me-2"></i>Materi Pelatihan</h2>
@@ -200,38 +207,32 @@
     </section>
   </div>
 
-  <!-- ================= MODAL PREVIEW ================= -->
   <div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg">
         <div class="modal-header bg-dark text-white border-0 rounded-top-4">
-          <h5 class="modal-title" id="previewMateriLabel">
-            <i class="bi bi-file-earmark-play me-2"></i><span id="previewMateriJudul">Pratinjau Materi</span>
-          </h5>
+          <h5 class="modal-title" id="previewMateriLabel"><i class="bi bi-file-earmark-play me-2"></i><span id="previewMateriJudul">Pratinjau Materi</span></h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background: #0f172a; border-radius: 0 0 20px 20px; position: relative;">
           <div id="previewMateriSpinner" class="position-absolute top-50 start-50 translate-middle">
-            <div class="spinner-border text-light" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
+            <div class="spinner-border text-light" role="status"><span class="visually-hidden">Memuat...</span></div>
           </div>
-          <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen onload="document.getElementById('previewMateriSpinner').style.display='none';"></iframe>
+          <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen></iframe>
         </div>
         <div class="modal-footer border-0 bg-dark rounded-bottom-4">
-          <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
-            <i class="bi bi-fullscreen"></i> Fullscreen (F5)
-          </button>
+          <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()"><i class="bi bi-fullscreen"></i> Fullscreen (F5)</button>
           <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-          <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-download me-1"></i>Unduh
-          </a>
+          <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4"><i class="bi bi-download me-1"></i>Unduh</a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ================= FOOTER ================= -->
+  <button id="fullscreenExitBtn" onclick="toggleFullscreen()" title="Keluar Fullscreen (ESC)">
+    <i class="bi bi-x-lg"></i>
+  </button>
+
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
       <i class="bi bi-c-circle"></i>
@@ -239,15 +240,9 @@
     </div>
   </footer>
 
-  <!-- ================= SCRIPTS ================= -->
-  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
-    // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
-    // ==========================================================
     import {
       guardPublicAccess,
       getMateriList,
@@ -257,19 +252,11 @@
       fetchWithCache
     } from './js/core/api.js';
 
-    // ==========================================================
-    //   UTILITY & CACHE LOCAL
-    // ==========================================================
-    function escapeHtmlLocal(str) {
-      return escapeHtml(str);
-    }
+    function escapeHtmlLocal(str) { return escapeHtml(str); }
+    function showToastLocal(message, type) { showToast(message, type); }
 
-    // ==========================================================
-    //   🔥 RENDER SKELETON (Tampilan instan saat DOM siap)
-    // ==========================================================
     function renderSkeletonMateri(container) {
       if (!container) return;
-      console.log("🟡 Menampilkan SKELETON Materi...");
       let html = '';
       for (let i = 0; i < 6; i++) {
         html += `
@@ -289,10 +276,124 @@
       container.classList.add('fade-up');
     }
 
-    // ==========================================================
-    //   RENDER DATA ASLI
-    // ==========================================================
+    document.addEventListener('keydown', function(e) {
+      const modal = document.getElementById('previewMateriModal');
+      if (!modal || !modal.classList.contains('show')) return;
+      if (e.key === 'Escape') {
+          e.preventDefault();
+          if (document.fullscreenElement) {
+              document.exitFullscreen();
+          } else {
+              bootstrap.Modal.getInstance(modal).hide();
+          }
+          return;
+      }
+    });
+
+    window.toggleFullscreen = function() {
+      const modalElement = document.getElementById('previewMateriModal');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (!modalElement) return;
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        modalElement.requestFullscreen()
+          .then(() => {
+            modalElement.classList.add('fullscreen-mode');
+            exitBtn.style.display = 'flex';
+          })
+          .catch(err => {
+            console.warn('Gagal masuk fullscreen:', err);
+            showToastLocal('Gagal mengaktifkan mode fullscreen', 'error');
+          });
+      }
+    };
+
+    document.addEventListener('fullscreenchange', function() {
+      const modalElement = document.getElementById('previewMateriModal');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (!document.fullscreenElement) {
+        modalElement.classList.remove('fullscreen-mode');
+        exitBtn.style.display = 'none';
+      }
+    });
+
+    // PERBAIKAN UTAMA: Event listener untuk menghilangkan error aria-hidden
+    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
+      const iframe = document.getElementById('previewMateriIframe');
+      const spinner = document.getElementById('previewMateriSpinner');
+      
+      if (iframe) iframe.src = '';
+      if (spinner) spinner.style.display = 'flex';
+      
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      
+      // 🛑 MEMPERBAIKI ERROR ARIA-HIDDEN: Hapus fokus dari tombol yang masih aktif
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+      }
+
+      this.classList.remove('fullscreen-mode');
+      document.getElementById('fullscreenExitBtn').style.display = 'none';
+    });
+
+    // PERBAIKAN UTAMA: Fungsi previewMateri
+    window.previewMateri = function(index) {
+      const materi = window._cachedMateriList || [];
+      if (index < 0 || index >= materi.length) return;
+      
+      const item = materi[index];
+      if (!item || !item.fileId) {
+          showToastLocal('File tidak ditemukan atau ID file kosong.', 'error');
+          return;
+      }
+      
+      const judul = item.judul || 'Materi';
+      const fileId = item.fileId;
+      
+      // 🛑 PERBAIKAN: Gunakan Google Drive Embed langsung, bukan Docs Viewer
+      // Docs Viewer sering gagal dimuat (memunculkan layar kosong)
+      const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      const downloadUrl = `https://drive.google.com/file/d/${fileId}/view`;
+
+      const judulEl = document.getElementById('previewMateriJudul');
+      const iframe = document.getElementById('previewMateriIframe');
+      const downloadBtn = document.getElementById('previewMateriDownloadBtn');
+      const spinner = document.getElementById('previewMateriSpinner');
+
+      if (judulEl) judulEl.innerText = judul;
+      if (downloadBtn) downloadBtn.href = downloadUrl;
+      
+      // Reset iframe dan spinner
+      if (iframe) iframe.src = '';
+      if (spinner) spinner.style.display = 'flex';
+
+      // Tunggu sebentar agar spinner terlihat, lalu set src
+      setTimeout(() => {
+        if (iframe) {
+            iframe.src = previewUrl;
+            // Jika iframe gagal dimuat, kita bisa menangani error di sini dengan listener
+            iframe.onerror = function() {
+                spinner.style.display = 'none';
+                showToastLocal('Gagal memuat pratinjau file. File mungkin tidak memiliki izin akses publik.', 'error');
+            };
+            iframe.onload = function() {
+                // Sembunyikan spinner saat konten berhasil dimuat
+                if (spinner) spinner.style.display = 'none';
+            };
+        }
+      }, 100);
+
+      const modal = document.getElementById('previewMateriModal');
+      if (!modal.classList.contains('show')) {
+          new bootstrap.Modal(modal).show();
+      }
+    };
+
     function renderMateriList(container, materi) {
+      window._cachedMateriList = materi;
       if (!materi || materi.length === 0) {
         container.innerHTML = `
           <div class="col-12">
@@ -305,15 +406,12 @@
         `;
         return;
       }
-
       let html = '';
       materi.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach((m, idx) => {
         const fileUrl = `https://drive.google.com/file/d/${m.fileId}/view`;
-        const previewUrl = `https://drive.google.com/file/d/${m.fileId}/preview`;
         const iconClass = m.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
                           (m.tipe === 'ppt' || m.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' :
                           (m.tipe === 'doc' || m.tipe === 'docx' ? 'bi-file-word-fill text-primary' : 'bi-file-earmark-fill text-secondary'));
-
         html += `
           <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${(idx * 0.05)}s;">
             <div class="materi-card glass-card p-4 h-100 d-flex flex-column">
@@ -325,10 +423,7 @@
               <div class="d-flex justify-content-between align-items-center mt-3">
                 <span class="badge bg-light text-dark">${(m.tipe || 'file').toUpperCase()}</span>
                 <div>
-                  <button class="preview-btn btn btn-sm rounded-pill px-3 me-1" 
-                    data-judul="${escapeHtmlLocal(m.judul)}" 
-                    data-preview-url="${previewUrl}" 
-                    data-download-url="${fileUrl}">
+                  <button class="preview-btn btn btn-sm rounded-pill px-3 me-1" data-index="${idx}">
                     <i class="bi bi-play-circle me-1"></i>Tayangkan
                   </button>
                   <a href="${fileUrl}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
@@ -343,99 +438,43 @@
           </div>
         `;
       });
-
       container.innerHTML = html;
       container.classList.add('fade-up');
-
-      // Event listener untuk tombol preview
+      
+      // Pastikan event listener tombol preview terpasang dengan benar
       document.querySelectorAll('.preview-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-          const judul = this.dataset.judul;
-          const previewUrl = this.dataset.previewUrl;
-          const downloadUrl = this.dataset.downloadUrl;
-
-          document.getElementById('previewMateriJudul').innerText = judul;
-          document.getElementById('previewMateriIframe').src = previewUrl;
-          document.getElementById('previewMateriDownloadBtn').href = downloadUrl;
-          document.getElementById('previewMateriSpinner').style.display = 'flex';
-
-          new bootstrap.Modal(document.getElementById('previewMateriModal')).show();
+          const idx = parseInt(this.dataset.index);
+          previewMateri(idx);
         });
       });
     }
 
-    // ==========================================================
-    //   FULLSCREEN TOGGLE (Diekspos ke global untuk onclick)
-    // ==========================================================
-    window.toggleFullscreen = function() {
-      const iframe = document.getElementById('previewMateriIframe');
-      if (!iframe) return;
-      if (!document.fullscreenElement) {
-        iframe.requestFullscreen().then(() => {
-          const modalHeader = document.querySelector('#previewMateriModal .modal-header');
-          const modalFooter = document.querySelector('#previewMateriModal .modal-footer');
-          if (modalHeader) modalHeader.style.display = 'none';
-          if (modalFooter) modalFooter.style.display = 'none';
-        }).catch(err => {
-          console.warn('Gagal fullscreen:', err);
-        });
-      } else {
-        document.exitFullscreen();
-      }
-    };
-
-    // Reset modal saat ditutup
-    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function () {
-      document.getElementById('previewMateriIframe').src = '';
-      document.getElementById('previewMateriSpinner').style.display = 'flex';
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
-    });
-
-    // ==========================================================
-    //   LOAD MATERI (CACHE INSTAN + BACKGROUND SYNC)
-    // ==========================================================
     async function loadMateriList() {
       const container = document.getElementById('materiContainer');
       const CACHE_KEY = 'materi_list';
-      const CACHE_AGE = 30; // menit
+      const CACHE_AGE = 30;
 
-      // 1. Cek cache lokal (menggunakan fetchWithCache)
       let cachedData = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, false);
-
       if (cachedData && cachedData.length > 0) {
-        console.log('[DEBUG] Memuat data dari CACHE lokal. Jumlah item:', cachedData.length);
         renderMateriList(container, cachedData);
-      } else {
-        console.log('[DEBUG] Tidak ada cache lokal yang valid.');
       }
-
-      // 2. Fetch data dari API di LATAR BELAKANG (refresh cache)
       (async function refreshData() {
         try {
-          console.log('[DEBUG] Mengambil data materi dari API...');
-          // Gunakan fetchWithCache dengan forceRefresh = true untuk memaksa update cache
           const dataArray = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, true);
-
           if (dataArray && dataArray.length > 0) {
-            // Jika data dari API berbeda dengan cache atau cache kosong, render ulang
             const currentDataStr = JSON.stringify(cachedData || []);
             const newDataStr = JSON.stringify(dataArray);
             if (currentDataStr !== newDataStr) {
-              console.log('[DEBUG] Data API berubah, merender ulang...');
               renderMateriList(container, dataArray);
-            } else {
-              console.log('[DEBUG] Data API sama dengan cache, tidak perlu merender ulang.');
             }
           } else {
-            console.warn('[DEBUG] API tidak mengembalikan array data yang valid.');
             if (!cachedData || cachedData.length === 0) {
               renderMateriList(container, []);
             }
           }
         } catch (e) {
-          console.error('[DEBUG] Gagal fetch di background:', e);
+          console.error('Gagal fetch di background:', e);
           if (!cachedData || cachedData.length === 0) {
             renderMateriList(container, []);
           }
@@ -443,24 +482,14 @@
       })();
     }
 
-    // ==========================================================
-    //   🛡️ GUARD PUBLIC ACCESS & BOOT
-    // ==========================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
-
-      // Update navbar user
       updateNavbarMenu();
-
       await loadMateriList();
     })();
 
-    // ==========================================================
-    //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
-    // ==========================================================
     document.addEventListener('DOMContentLoaded', function() {
-      // Render skeleton secara instan (sinkron) saat DOM siap
       const container = document.getElementById('materiContainer');
       if (container) {
         renderSkeletonMateri(container);

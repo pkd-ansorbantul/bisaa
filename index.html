@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
   <title>PKD GP Ansor Kabupaten Bantul</title>
 
   <!-- Favicon & Font Modern -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="LOGO%20ANSOR.webp" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
   <style>
     /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
@@ -329,7 +329,6 @@
     /* --- RESPONSIVE (MOBILE & TABLET) --- */
     @media (max-width: 576px) {
       .hero-title { font-size: 2rem; }
-      /* Grid Menu 2 Kolom untuk Mobile */
       .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
       .menu-card { padding: 1rem 0.5rem; min-height: 130px; }
       .menu-card .icon-wrapper { width: 48px; height: 48px; font-size: 1.5rem; margin-bottom: 0.5rem; }
@@ -355,13 +354,13 @@
 </head>
 <body>
 
-  <!-- ================= HEADER ELEGAN (DIPERBESAR) ================= -->
+  <!-- ================= HEADER ELEGAN ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
         <!-- Logo & Judul Aplikasi -->
-        <a href="/bisaa/index.html" class="d-flex align-items-center text-decoration-none">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+        <a href="index.html" class="d-flex align-items-center text-decoration-none">
+          <img src="LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
@@ -382,7 +381,7 @@
             <div class="d-flex align-items-start flex-column">
               <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
                 <h1 class="hero-title fade-up">Pelatihan Kepemimpinan Dasar</h1>
-                <!-- Total Peserta Badge (Akan diisi oleh JS) -->
+                <!-- Total Peserta Badge -->
                 <span class="total-badge-premium d-none" id="totalPesertaBadge">
                   <i class="bi bi-people-fill"></i>
                   <span>Total Kader</span>
@@ -400,7 +399,7 @@
             </div>
           </div>
           <div class="col-lg-5 text-center fade-up delay-2">
-            <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor" class="hero-logo">
+            <img src="LOGO%20ANSOR.webp" alt="Logo Ansor" class="hero-logo">
             <div class="hero-tagline">"Berdaya, Berkhidmat, Berkemajuan"</div>
           </div>
         </div>
@@ -414,11 +413,11 @@
         </h2>
       </div>
 
-      <!-- Login Prompt (Untuk Pengguna Guest, muncul otomatis oleh JS) -->
+      <!-- Login Prompt -->
       <div id="loginPrompt" class="fade-up">
         <h5><i class="bi bi-shield-lock"></i> Akses Terbatas</h5>
         <p class="text-muted">Anda harus login untuk mengakses seluruh menu.</p>
-        <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='/bisaa/login.html'">Login</button>
+        <button class="btn btn-primary rounded-pill px-4" onclick="window.location.href='login.html'">Login</button>
       </div>
 
       <!-- Menu Grid -->
@@ -468,11 +467,18 @@
           <div class="card-label">Verifikasi</div>
           <div class="card-desc">Cek sertifikat</div>
         </div>
+        <!-- Tambahan: Galeri Aset Publik -->
+        <div class="menu-card fade-up delay-4" onclick="openPublicFolderModal()" style="position:relative;">
+          <div class="icon-wrapper"><i class="bi bi-folder-fill"></i></div>
+          <div class="card-label">Galeri Aset Publik</div>
+          <div class="card-desc">Lihat folder publik</div>
+          <span id="publicFolderCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.7rem; display:none;">0</span>
+        </div>
       </div>
-
-      <hr class="my-4">
-      <div class="text-center text-muted small"><i class="bi bi-shield-check me-1"></i> Sistem aman & terintegrasi</div>
     </section>
+
+    <hr class="my-4">
+    <div class="text-center text-muted small"><i class="bi bi-shield-check me-1"></i> Sistem aman & terintegrasi</div>
   </div>
 
   <!-- ================= FOOTER ================= -->
@@ -483,7 +489,32 @@
     </div>
   </footer>
 
-  <!-- ================= FAQ PANEL (CHATBOT) ================= -->
+  <!-- ================= MODAL GALERI ASET PUBLIK ================= -->
+  <div class="modal fade" id="publicFolderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title"><i class="bi bi-folder-fill me-2"></i>Galeri Aset Publik</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div id="publicFolderModalContent">
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Memuat...</span>
+              </div>
+              <p class="mt-2 text-muted">Memuat folder publik...</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FAQ PANEL ================= -->
   <div>
     <button class="chatbot-button" id="chatbotToggleBtn"><i class="bi bi-question-circle-fill"></i></button>
     <div class="chatbot-panel" id="chatbotPanel">
@@ -498,7 +529,7 @@
         </div>
         <div class="faq-item">
           <div class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Bagaimana cara mendaftar PKD?</div>
-          <div class="text-muted small">Pendaftaran melalui <a href="/bisaa/peserta.html" target="_blank">Menu Peserta</a>. Isi data dan tunggu konfirmasi.</div>
+          <div class="text-muted small">Pendaftaran melalui <a href="peserta.html" target="_blank">Menu Peserta</a>. Isi data dan tunggu konfirmasi.</div>
         </div>
         <div class="faq-item">
           <div class="fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Materi apa saja yang tersedia?</div>
@@ -518,13 +549,11 @@
   </div>
 
   <!-- ================= SCRIPTS ================= -->
-  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
+    //   IMPOR DARI CORE API & CONFIG
     // ==========================================================
     import {
       callApi,
@@ -534,32 +563,33 @@
       getUserRole,
       escapeHtml
     } from './js/core/api.js';
+    import { BASE_PATH } from './js/core/config.js';
 
     // ==========================================================
     //   STATE & KONFIGURASI
     // ==========================================================
     let requireLogin = false;
     let bgSyncInterval = null;
+    let publicFolders = [];
 
     // ==========================================================
-    //   NAVIGASI (Diekspos ke global untuk onclick HTML)
+    //   NAVIGASI (Otomatis menggunakan BASE_PATH)
     // ==========================================================
     window.navigateTo = function(url) {
+      // Hapus prefix /bisaa/ jika ada, dan gunakan BASE_PATH
       const cleanUrl = url.replace(/^\/bisaa\//, '');
-      // Jika mode login aktif dan user belum login, arahkan ke login
       if (requireLogin && !getUserRole()) {
-        window.location.href = '/bisaa/login.html?redirect=' + encodeURIComponent('/bisaa/' + cleanUrl);
+        window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(BASE_PATH + cleanUrl);
       } else {
-        window.location.href = '/bisaa/' + cleanUrl;
+        window.location.href = BASE_PATH + cleanUrl;
       }
     };
 
     // ==========================================================
-    //   PERBAIKAN UTAMA: UPDATE TOTAL PESERTA (DATA REAL-TIME + ANTI-CACHE)
+    //   UPDATE TOTAL PESERTA
     // ==========================================================
     async function updateTotalPeserta() {
       try {
-        // Tambahkan parameter _t (timestamp) untuk memaksa browser/server tidak mengembalikan cache
         const params = { _t: Date.now() };
         const res = await callApi('getTotalPeserta', params, 'GET');
         const total = res?.total || 0;
@@ -578,18 +608,17 @@
     }
 
     // ==========================================================
-    //   BACKGROUND SYNC (POLLING OTOMATIS SETIAP 15 DETIK)
+    //   BACKGROUND SYNC
     // ==========================================================
     function startBackgroundSync() {
-      // Cek setiap 15 detik agar data selalu sinkron dengan database
       if (bgSyncInterval) clearInterval(bgSyncInterval);
       bgSyncInterval = setInterval(async () => {
         await updateTotalPeserta();
-      }, 15000); // 15000ms = 15 detik
+      }, 15000);
     }
 
     // ==========================================================
-    //   CEK LOGIN MODE (PERBAIKAN UNTUK MOBILE & PC)
+    //   CEK LOGIN MODE
     // ==========================================================
     async function checkLoginMode() {
       try {
@@ -597,16 +626,14 @@
         requireLogin = res.success ? res.enabled : false;
         const menuGrid = document.getElementById('menuGrid');
         const loginPrompt = document.getElementById('loginPrompt');
-        const isMobile = window.innerWidth <= 768; // Deteksi layar mobile
+        const isMobile = window.innerWidth <= 768;
 
         if (requireLogin && !getUserRole()) {
           if (isMobile) {
-            // MOBILE: Tampilkan Menu + Prompt Login di bawahnya
             menuGrid.style.display = 'grid';
             loginPrompt.style.display = 'block';
             loginPrompt.style.marginTop = '1.5rem';
           } else {
-            // PC: Sembunyikan menu, hanya tampilkan prompt login
             menuGrid.style.display = 'none';
             loginPrompt.style.display = 'block';
           }
@@ -618,6 +645,80 @@
         console.warn('Gagal check login mode:', e);
       }
     }
+
+    // ==========================================================
+    //   🔥 LOAD FOLDER PUBLIK & UPDATE BADGE & MODAL
+    // ==========================================================
+    async function loadPublicFolders() {
+      try {
+        const res = await callApi('getFolders', { _t: Date.now() }, 'GET');
+        publicFolders = (res?.data || []).filter(f => f.isPublic === true || f.isPublic === 'true');
+        
+        // Update badge count
+        const badge = document.getElementById('publicFolderCount');
+        if (badge) {
+          if (publicFolders.length > 0) {
+            badge.textContent = publicFolders.length;
+            badge.style.display = 'inline-block';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      } catch (e) {
+        console.warn('Gagal memuat folder publik:', e);
+        publicFolders = [];
+      }
+    }
+
+    // ==========================================================
+    //   🔥 OPEN PUBLIC FOLDER MODAL
+    // ==========================================================
+    window.openPublicFolderModal = async function() {
+      const modal = new bootstrap.Modal(document.getElementById('publicFolderModal'));
+      const content = document.getElementById('publicFolderModalContent');
+      
+      // Tampilkan loading
+      content.innerHTML = `
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Memuat...</span>
+          </div>
+          <p class="mt-2 text-muted">Memuat folder publik...</p>
+        </div>
+      `;
+      
+      modal.show();
+
+      // Pastikan data folder sudah dimuat (jika belum)
+      if (publicFolders.length === 0) {
+        await loadPublicFolders();
+      }
+
+      // Render daftar folder dalam grid kecil
+      let html = '';
+      if (publicFolders.length === 0) {
+        html = `<div class="alert alert-info text-center">Belum ada folder yang dipublikasikan oleh admin.</div>`;
+      } else {
+        html = `<div class="row g-3">`;
+        publicFolders.forEach(f => {
+          html += `
+            <div class="col-md-4 col-6">
+              <a href="${BASE_PATH}public_assets.html?folderId=${f.id}" class="text-decoration-none">
+                <div class="card h-100 border-0 shadow-sm text-center p-3" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); border-radius: 16px; transition: transform 0.2s;">
+                  <div class="icon-wrapper mb-2" style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02)); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #2563eb; margin: 0 auto;">
+                    <i class="bi bi-folder-fill"></i>
+                  </div>
+                  <h6 class="card-title mb-0 fw-bold">${escapeHtml(f.nama)}</h6>
+                  <p class="card-text small text-muted">Galeri Publik</p>
+                </div>
+              </a>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+      content.innerHTML = html;
+    };
 
     // ==========================================================
     //   WA CONTACT & FAQ
@@ -671,23 +772,15 @@
     })();
 
     // ==========================================================
-    //   BOOT (INISIALISASI)
+    //   BOOT
     // ==========================================================
     document.addEventListener('DOMContentLoaded', function() {
-      // 1. Update Total Kader secara instan (paling awal agar data langsung muncul)
       updateTotalPeserta();
-      
-      // 2. Mulai Background Sync (Polling setiap 15 detik) untuk menjaga data tetap segar
       startBackgroundSync();
-
-      // 3. Cek Status Login Mode
       checkLoginMode();
-
-      // 4. Setup Kontak WA
       updateWAContact();
-
-      // 5. Update Menu User di Header
       updateNavbarMenu();
+      loadPublicFolders(); // Memuat folder publik untuk badge
     });
 
   </script>

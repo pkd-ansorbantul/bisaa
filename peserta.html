@@ -676,7 +676,18 @@
                     options.forEach(opt => {
                         html += `<option value="${escapeHtmlLocal(opt)}">${escapeHtmlLocal(opt)}</option>`;
                     });
-                    html += `</select></div>`;
+                    html += `</select>`;
+
+                    // 🔥 PERBAIKAN: Tambahkan input manual untuk "Lainnya" pada field utusan
+                    if (field.id === 'utusan') {
+                        html += `
+                            <div id="utusanLuarContainer" style="display: none; margin-top: 8px;">
+                                <label class="form-label fw-bold">Tulis Asal (Lainnya)</label>
+                                <input type="text" class="form-control" name="utusan_luar" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas, Mushola dll">
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
                 } else {
                     html += `
                         <div class="mb-3">
@@ -708,7 +719,7 @@
                     <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">📤 Kirim Data Peserta</button>
                 </form>
 
-                <div id="qrResult">
+                <div id="qrResult" style="display: none;">
                     <h5><i class="bi bi-qr-code"></i> ID Peserta Anda</h5>
                     <p class="text-muted">Simpan QR Code ini. Panitia akan memindainya saat absen setiap sesi.</p>
                     <div id="qrCodeContainer"></div>
@@ -806,19 +817,19 @@
                 window.sigPad.addEventListener('endStroke', savePesertaFormState);
             }
 
+            // 🔥 PERBAIKAN: Event listener untuk dropdown "Lainnya" pada field utusan
             const utusanSelect = document.querySelector('select[name="utusan"]');
-            const luarContainer = document.createElement('div');
-            luarContainer.id = 'utusanLuarContainer';
-            luarContainer.style.display = 'none';
-            luarContainer.style.marginTop = '8px';
-            luarContainer.innerHTML = `
-                <label class="form-label fw-bold">Tulis Asal (Lainnya)</label>
-                <input type="text" class="form-control" name="utusan_luar" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas, Mushola dll">
-            `;
-            if (utusanSelect && !document.getElementById('utusanLuarContainer')) {
-                utusanSelect.parentNode.appendChild(luarContainer);
+            const luarContainer = document.getElementById('utusanLuarContainer');
+            if (utusanSelect && luarContainer) {
                 utusanSelect.addEventListener('change', function() {
-                    document.getElementById('utusanLuarContainer').style.display = this.value === 'Lainnya' ? 'block' : 'none';
+                    if (this.value === 'Lainnya') {
+                        luarContainer.style.display = 'block';
+                    } else {
+                        luarContainer.style.display = 'none';
+                        // Kosongkan input manual jika tidak dipilih
+                        const inputLuar = document.querySelector('input[name="utusan_luar"]');
+                        if (inputLuar) inputLuar.value = '';
+                    }
                 });
             }
 
@@ -975,9 +986,11 @@
                     }
                 });
 
+                // 🔥 PERBAIKAN: Gabungkan nilai utusan dengan input manual "Lainnya"
                 if (data.utusan === 'Lainnya') {
-                    const luarValue = data.utusan_luar ? data.utusan_luar.trim() : '';
-                    data.utusan = luarValue ? 'Lainnya - ' + luarValue : 'Lainnya (tidak diisi)';
+                    const luarValue = formData.get('utusan_luar');
+                    const luarInput = typeof luarValue === 'string' ? luarValue.trim() : '';
+                    data.utusan = luarInput ? `Lainnya - ${luarInput}` : 'Lainnya (tidak diisi)';
                 }
                 delete data.utusan_luar;
 

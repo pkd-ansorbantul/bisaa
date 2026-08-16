@@ -15,8 +15,8 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
-    * { font-family: 'Inter', system-ui, sans-serif; }
+    /* --- UNIVERSAL PREMIUM (GLASSMORPHISM) --- */
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
     body {
       background: #f8fafc;
       color: #0f172a;
@@ -25,7 +25,7 @@
       flex-direction: column;
     }
 
-    /* --- HEADER MINIMALIS ELEGAN --- */
+    /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -87,12 +87,34 @@
       border-radius: 24px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      padding: 2rem;
+      max-width: 700px;
+      margin: 2rem auto;
     }
     .glass-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
       border-color: rgba(37, 99, 235, 0.2);
     }
+    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- FORM ELEMEN PREMIUM --- */
+    .form-label { font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+    .form-control, .form-select {
+      border-radius: 12px;
+      border: 1.5px solid #e2e8f0;
+      padding: 0.6rem 1rem;
+      background: #ffffff;
+      transition: all 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .input-group .form-control { border-radius: 0 12px 12px 0; }
+    .input-group-text { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px 0 0 12px; }
 
     /* --- SIGNATURE AREA --- */
     .signature-area {
@@ -103,58 +125,36 @@
       transition: border-color 0.2s;
     }
     .signature-area:hover { border-color: #2563eb; }
-    .signature-area canvas {
-      width: 100%;
-      height: auto;
-      max-width: 300px;
-      max-height: 150px;
-      background: white;
-      display: block;
-      border-radius: 12px;
-      margin: 0 auto;
-      touch-action: none;
+    .signature-area canvas { 
+      width: 100%; 
+      max-height: 150px; 
+      background: white; 
+      display: block; 
+      border-radius: 12px; 
+      margin: 0 auto; 
+      touch-action: none; 
     }
+    .saved-signature-img { max-height: 80px; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px; background: white; }
+    
+    /* --- TOMBOL PREMIUM --- */
+    .btn-primary-custom {
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
+      border: none;
+      color: white;
+      border-radius: 50px;
+      padding: 0.8rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+    }
+    .btn-primary-custom:active { transform: scale(0.98); }
+    .btn-outline-custom { border-radius: 50px; padding: 0.4rem 1.2rem; font-weight: 500; }
 
-    /* --- QR & IMAGE --- */
-    .saved-signature-img {
-      max-height: 80px;
-      max-width: 200px;
-      object-fit: contain;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 4px;
-      background: white;
-      margin-bottom: 10px;
-    }
-    .qr-container {
-      margin-top: 10px;
-      text-align: center;
-    }
-    .qr-container img {
-      width: 120px;
-      height: 120px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 4px;
-      background: white;
-    }
-
-    /* --- ANIMASI --- */
-    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* --- FOOTER --- */
-    .footer-modern {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-top: auto;
-      text-align: center;
-      padding: 1.5rem 0;
-      border-top: 1px solid #e2e8f0;
-      background: white;
-    }
-
-    /* --- RESPONSIF --- */
+    /* --- RESPONSIVE --- */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -162,7 +162,8 @@
       .brand-title-mini { display: none; }
       .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
-      .signature-area canvas { max-width: 100%; }
+      .signature-area canvas { max-height: 120px; }
+      .section-title { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -175,7 +176,7 @@
         <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
           <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
-        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+        <a href="/bisaa/index.html" class="text-decoration-none d-flex align-items-center ms-1">
           <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
@@ -188,105 +189,86 @@
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
-  <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 700px;">
-    <div class="glass-card p-4 fade-up">
-      <h2 class="section-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital</h2>
-      <h5 class="text-muted text-center mb-4">Ketua PC GP Ansor Kabupaten Bantul</h5>
+  <!-- ================= KONTEN UTAMA (GLASS CARD) ================= -->
+  <div class="glass-card fade-up">
+    <h2 class="section-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital</h2>
+    <h5 class="text-muted text-center mb-4">Ketua PC GP Ansor Kabupaten Bantul</h5>
 
-      <form id="signForm">
-        <!-- Nama -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Nama Lengkap <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="nama" value="Ahmad Sidik" placeholder="Masukkan nama lengkap" required>
-        </div>
-
-        <!-- Kegunaan (Dropdown + Manual Input) -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Kegunaan Tanda Tangan</label>
-          <select class="form-select" id="kegunaan">
-            <option value="Untuk verifikasi sertifikat PKD Dlingo">Untuk verifikasi sertifikat PKD Dlingo</option>
-            <option value="Untuk keperluan administrasi umum">Untuk keperluan administrasi umum</option>
-            <option value="Untuk keperluan verifikasi kehadiran">Untuk keperluan verifikasi kehadiran</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-          <!-- Input Manual jika memilih Lainnya -->
-          <div id="kegunaanLainnyaWrapper" style="display:none; margin-top: 8px;">
-            <input type="text" class="form-control" id="kegunaanLainnya" placeholder="Tulis kegunaan lainnya...">
-          </div>
-          <div class="form-text text-muted">Isikan secara manual keperluan atau alasan tanda tangan ini.</div>
-        </div>
-
-        <!-- Password -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Password Verifikasi <span class="text-danger">*</span></label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="password" placeholder="Masukkan password Anda" required>
-            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-          <div class="form-text text-muted">Password digunakan untuk verifikasi internal.</div>
-        </div>
-
-        <!-- Tanda tangan -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">✍️ Tanda Tangan Digital <span class="text-danger">*</span></label>
-          <div class="signature-area">
-            <canvas id="signatureCanvas"></canvas>
-          </div>
-          <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature">Hapus</button>
-            <button type="button" class="btn btn-outline-primary btn-sm" id="undoSignature">Undo</button>
-          </div>
-        </div>
-
-        <!-- Tombol submit -->
-        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-semibold shadow-sm">
-          <i class="bi bi-cloud-upload me-2"></i>Kirim Tanda Tangan
-        </button>
-
-        <!-- Status -->
-        <div id="status" class="mt-3"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ================= FOOTER ================= -->
-  <footer class="footer-modern container">
-    <div class="d-flex justify-content-center align-items-center gap-2">
-      <i class="bi bi-c-circle"></i>
-      <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
-    </div>
-  </footer>
-
-  <!-- ================= TOAST ================= -->
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-      <div class="toast-header bg-white border-0">
-        <i class="bi me-2" id="toastIcon"></i>
-        <strong class="me-auto" id="toastTitle">Berhasil</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    <form id="signForm">
+      <!-- Nama -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Nama Lengkap <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="nama" value="Ketua PC" placeholder="Masukkan nama lengkap" required>
       </div>
-      <div class="toast-body" id="toastMessage"></div>
-    </div>
+
+      <!-- Kegunaan -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Kegunaan Tanda Tangan</label>
+        <select class="form-select" id="kegunaan">
+          <option value="Untuk verifikasi sertifikat PKD Kabupaten Bantul">Untuk verifikasi sertifikat PKD Kabupaten Bantul</option>
+          <option value="Untuk keperluan administrasi umum">Untuk keperluan administrasi umum</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+        <div id="kegunaanLainnyaWrapper" style="display:none; margin-top: 8px;">
+          <input type="text" class="form-control" id="kegunaanLainnya" placeholder="Tulis kegunaan lainnya...">
+        </div>
+      </div>
+
+      <!-- Dropdown Peserta -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="form-label fw-bold mb-0">Pilih Peserta yang Ditandatangani <span class="text-danger">*</span></label>
+          <span class="badge bg-primary rounded-pill" id="totalPesertaBadge">0</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+          <span class="badge bg-info text-dark" id="pkdLokasiBadge">Lokasi PKD: Memuat...</span>
+        </div>
+        <select class="form-select" id="pesertaSelect" required>
+          <option value="">-- Pilih Peserta --</option>
+        </select>
+        <div class="form-text text-muted">Pilih nama peserta atau "Pilih Semua" untuk tanda tangan massal.</div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Password Verifikasi <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <input type="password" class="form-control" id="password" placeholder="Masukkan password Anda" required>
+          <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+
+      <!-- Tanda tangan -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">✍️ Tanda Tangan Digital <span class="text-danger">*</span></label>
+        <div class="signature-area">
+          <canvas id="signatureCanvas" width="300" height="150"></canvas>
+        </div>
+        <div class="signature-buttons mt-2 d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature">Hapus</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="undoSignature">Undo</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary-custom w-100 mt-2">
+        <i class="bi bi-cloud-upload me-2"></i>Kirim & Simpan ke Database
+      </button>
+      <div id="status" class="mt-3"></div>
+    </form>
   </div>
 
-  <!-- ================= SCRIPTS ================= -->
-  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
+    //   IMPOR DARI CORE API
     // ==========================================================
-    import {
-      guardPublicAccess,
-      callApi,
-      showToast,
-      getUserRole,
-      updateNavbarMenu
+    import { 
+      callApi, 
+      showToast, 
+      guardPublicAccess, 
+      updateNavbarMenu, 
+      getUserRole, 
+      getPesertaList 
     } from './js/core/api.js';
 
     // ==========================================================
@@ -294,9 +276,11 @@
     // ==========================================================
     let sigPad = null;
     const canvas = document.getElementById('signatureCanvas');
+    let currentFilteredPeserta = [];
+    let pkdLokasi = '';
 
     // ==========================================================
-    //   TOGGLE PASSWORD (diekspos ke global agar onclick berfungsi)
+    //   TOGGLE PASSWORD
     // ==========================================================
     window.togglePassword = function(id) {
       const input = document.getElementById(id);
@@ -304,156 +288,206 @@
     };
 
     // ==========================================================
-    //   SIGNATURE PAD
+    //   INIT SIGNATURE PAD
     // ==========================================================
     function initSignaturePad() {
       if (!canvas) return;
-      if (sigPad) { sigPad.clear(); sigPad = null; }
-      sigPad = new SignaturePad(canvas, {
-        backgroundColor: 'white',
-        penColor: '#0f172a',
-        minWidth: 1.5,
-        maxWidth: 3
-      });
+      sigPad = new SignaturePad(canvas, { backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3 });
       sigPad.clear();
 
-      document.getElementById('clearSignature').addEventListener('click', function() {
-        sigPad.clear();
-      });
-
-      document.getElementById('undoSignature').addEventListener('click', function() {
+      document.getElementById('clearSignature').onclick = () => sigPad.clear();
+      document.getElementById('undoSignature').onclick = () => {
         const data = sigPad.toData();
-        if (data && data.length > 0) {
-          data.pop();
-          sigPad.fromData(data);
-        }
-      });
+        if (data && data.length > 0) { data.pop(); sigPad.fromData(data); }
+      };
 
-      // Resize canvas untuk DPI
-      resizeCanvas();
+      const resizeCanvas = () => {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = rect.width * ratio;
+        canvas.height = rect.height * ratio;
+        canvas.getContext('2d').scale(ratio, ratio);
+        sigPad.clear();
+      };
       window.addEventListener('resize', resizeCanvas);
-    }
-
-    function resizeCanvas() {
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      canvas.width = rect.width * ratio;
-      canvas.height = rect.height * ratio;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(ratio, ratio);
-      if (sigPad) sigPad.clear();
+      resizeCanvas();
     }
 
     // ==========================================================
-    //   SUBMIT FORM
+    //   LOAD PESERTA DROPDOWN (FILTER BERDASARKAN LOKASI_PKD)
     // ==========================================================
-    function initSignatureForm() {
+    async function loadPesertaDropdown() {
+      try {
+        // 🔥 Ambil lokasi PKD dari server
+        const lokasiRes = await callApi('getPKDLokasi', {}, 'GET');
+        pkdLokasi = lokasiRes.success ? (lokasiRes.data || '') : '';
+        
+        const badge = document.getElementById('pkdLokasiBadge');
+        badge.textContent = pkdLokasi ? `Lokasi PKD: ${pkdLokasi}` : 'Lokasi PKD: Semua PAC';
+
+        // 🔥 Ambil semua peserta, lalu filter non-alumni dan filter lokasi_pkd
+        const res = await getPesertaList();
+        const allData = Array.isArray(res) ? res : (res?.data || []);
+        
+        // Filter non-alumni
+        let filtered = allData.filter(p => p.status !== 'alumni');
+        
+        // 🔥 PERBAIKAN: Filter berdasarkan lokasi_pkd (bukan utusan)
+        if (pkdLokasi.trim() !== '') {
+          const locLower = pkdLokasi.toLowerCase();
+          filtered = filtered.filter(p => (p.lokasi_pkd || '').toLowerCase().includes(locLower));
+        }
+        
+        currentFilteredPeserta = filtered;
+
+        const select = document.getElementById('pesertaSelect');
+        const totalBadge = document.getElementById('totalPesertaBadge');
+        totalBadge.textContent = filtered.length;
+
+        select.innerHTML = '<option value="">-- Pilih Peserta --</option>';
+        
+        if (filtered.length > 0) {
+          const optAll = document.createElement('option');
+          optAll.value = 'all';
+          optAll.textContent = `-- Pilih Semua Peserta (${filtered.length}) --`;
+          select.appendChild(optAll);
+        }
+
+        filtered.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.nama_lengkap} (${p.utusan || 'Tidak ada utusan'}) - Status: ${p.status}`;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('Gagal memuat daftar peserta:', e);
+      }
+    }
+
+    // ==========================================================
+    //   INIT FORM & SUBMIT
+    // ==========================================================
+    function initForm() {
       initSignaturePad();
+      loadPesertaDropdown();
 
-      // --- LOGIKA DROPDOWN KEGUNAAN ---
       const kegunaanSelect = document.getElementById('kegunaan');
       const kegunaanLainnyaWrapper = document.getElementById('kegunaanLainnyaWrapper');
-      
       kegunaanSelect.addEventListener('change', function() {
-        if (this.value === 'Lainnya') {
-          kegunaanLainnyaWrapper.style.display = 'block';
-        } else {
-          kegunaanLainnyaWrapper.style.display = 'none';
-        }
+        kegunaanLainnyaWrapper.style.display = this.value === 'Lainnya' ? 'block' : 'none';
       });
 
-      // --- SUBMIT FORM ---
       document.getElementById('signForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const nama = document.getElementById('nama').value.trim();
         const password = document.getElementById('password').value.trim();
+        const pesertaSelect = document.getElementById('pesertaSelect');
+        const selectedValue = pesertaSelect.value;
         const statusDiv = document.getElementById('status');
 
-        // --- PERBAIKAN: Ambil nilai kegunaan ---
         let kegunaan = kegunaanSelect.value;
         if (kegunaan === 'Lainnya') {
           kegunaan = document.getElementById('kegunaanLainnya').value.trim();
-          if (!kegunaan) {
-            statusDiv.innerHTML = '<div class="alert alert-danger">Harap isi kegunaan manual jika memilih Lainnya.</div>';
-            return;
-          }
+          if (!kegunaan) { statusDiv.innerHTML = '<div class="alert alert-danger">Harap isi kegunaan manual jika memilih Lainnya.</div>'; return; }
         }
 
-        if (!nama || !password) {
-          statusDiv.innerHTML = '<div class="alert alert-danger">Nama dan password wajib diisi.</div>';
-          return;
+        if (!nama || !password || !selectedValue) { 
+          statusDiv.innerHTML = '<div class="alert alert-danger">Nama, Password, dan Peserta wajib diisi.</div>'; 
+          return; 
         }
-
-        if (!sigPad || sigPad.isEmpty()) {
-          statusDiv.innerHTML = '<div class="alert alert-danger">Tanda tangan wajib diisi.</div>';
-          return;
+        if (!sigPad || sigPad.isEmpty()) { 
+          statusDiv.innerHTML = '<div class="alert alert-danger">Tanda tangan wajib diisi.</div>'; 
+          return; 
         }
 
         const signatureDataURL = sigPad.toDataURL('image/jpeg', 0.2);
-
         const btn = this.querySelector('button[type="submit"]');
         const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+        btn.disabled = true; 
         statusDiv.innerHTML = '';
 
         try {
-          const result = await callApi('submitDigitalSignature', {
-            role: 'ketua_pc',
-            nama: nama,
-            signature: signatureDataURL,
-            password: password,
-            peserta_nama: '',
-            kegunaan: kegunaan // Kirim kegunaan ke backend
-          }, 'POST');
+          if (selectedValue === 'all') {
+            if (!confirm(`Anda akan melakukan tanda tangan digital untuk ${currentFilteredPeserta.length} peserta sekaligus. Lanjutkan?`)) {
+              btn.disabled = false; btn.innerHTML = originalText; return;
+            }
 
-          if (result.success) {
-            const driveId = result.driveId || '';
-            const verifyUrl = `/bisaa/verify_signature.html?role=ketua_pc&driveId=${driveId}`;
+            statusDiv.innerHTML = `<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memproses tanda tangan massal (1/${currentFilteredPeserta.length})...</p></div>`;
+            
+            let successCount = 0;
+            let errorMessages = [];
 
-            // QR Code menuju verifikasi_qr.html (persetujuan)
-            const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent('/bisaa/verifikasi_qr.html?role=ketua_pc&nama=' + encodeURIComponent(nama))}&size=120&ecLevel=L`;
+            for (let i = 0; i < currentFilteredPeserta.length; i++) {
+              const p = currentFilteredPeserta[i];
+              statusDiv.innerHTML = `<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memproses ${i+1}/${currentFilteredPeserta.length}: ${p.nama_lengkap}</p></div>`;
 
-            statusDiv.innerHTML = `
-              <div class="alert alert-success">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                <strong>✅ Tanda tangan digital berhasil disimpan!</strong>
-                ${kegunaan ? `<p class="mt-2 mb-0"><strong>Kegunaan:</strong> ${kegunaan}</p>` : ''}
-              </div>
-              <div class="text-center mt-3">
-                <h6 class="fw-bold">Tanda Tangan Tersimpan</h6>
-                ${driveId ? `<img src="https://drive.google.com/thumbnail?id=${driveId}&sz=w200" class="saved-signature-img" alt="Tanda tangan">` : ''}
-              </div>
-              <div class="text-center mt-3">
-                <h6 class="fw-bold">QR Code Verifikasi Persetujuan</h6>
-                <div class="qr-container">
-                  <img src="${qrUrl}" alt="QR Verifikasi">
-                </div>
-                <p class="small text-muted mt-2">
-                  Scan QR code ini untuk melihat persetujuan anda.<br>
-                  <a href="${qrUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">Buka QR di tab baru</a>
-                </p>
-              </div>
-              <div class="text-center mt-3">
-                <a href="${verifyUrl}" target="_blank" class="btn btn-sm btn-outline-success">
-                  <i class="bi bi-shield-check me-1"></i> Verifikasi Tanda Tangan (Gambar)
-                </a>
-              </div>
-            `;
+              try {
+                const result = await callApi('submitDigitalSignature', {
+                  role: 'ketua_pc',
+                  nama: nama,
+                  signature: signatureDataURL,
+                  password: password,
+                  peserta_nama: p.nama_lengkap,
+                  kegunaan: kegunaan
+                }, 'POST');
+                if (result.success) {
+                  successCount++;
+                } else {
+                  errorMessages.push(`${p.nama_lengkap}: ${result.error || 'Gagal'}`);
+                }
+              } catch (err) {
+                errorMessages.push(`${p.nama_lengkap}: ${err.message}`);
+              }
+            }
 
+            let resultHtml = `<div class="alert alert-success">✅ Berhasil: ${successCount} dari ${currentFilteredPeserta.length} peserta.</div>`;
+            if (errorMessages.length > 0) {
+              resultHtml += `<div class="alert alert-danger mt-2"><strong>Gagal pada peserta:</strong><br>${errorMessages.join('<br>')}</div>`;
+            }
+            statusDiv.innerHTML = resultHtml;
             sigPad.clear();
             document.getElementById('password').value = '';
-            document.getElementById('kegunaan').value = 'Untuk verifikasi sertifikat PKD Dlingo';
-            document.getElementById('kegunaanLainnya').value = '';
-            kegunaanLainnyaWrapper.style.display = 'none';
-            showToast('Tanda tangan Ketua PC tersimpan', 'success');
+            showToast(`Selesai! ${successCount} peserta berhasil ditandatangani.`, 'success');
+
           } else {
-            statusDiv.innerHTML = `<div class="alert alert-danger">${result.error || 'Gagal menyimpan tanda tangan.'}</div>`;
+            const selectedText = pesertaSelect.options[pesertaSelect.selectedIndex].text;
+            const pesertaNama = selectedText.split('(')[0].trim();
+
+            const result = await callApi('submitDigitalSignature', {
+              role: 'ketua_pc',
+              nama: nama,
+              signature: signatureDataURL,
+              password: password,
+              peserta_nama: pesertaNama,
+              kegunaan: kegunaan
+            }, 'POST');
+
+            if (result.success) {
+              const driveId = result.driveId || '';
+              statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                  <i class="bi bi-check-circle-fill me-2"></i> <strong>✅ Tanda tangan digital berhasil disimpan!</strong><br>
+                  <small>ID Drive: ${driveId}</small>
+                  <div class="mt-3 text-center">
+                    ${driveId ? `<img src="https://drive.google.com/thumbnail?id=${driveId}&sz=w200" class="saved-signature-img" alt="Tanda tangan">` : ''}
+                  </div>
+                </div>`;
+              sigPad.clear();
+              document.getElementById('password').value = '';
+              showToast('Data tanda tangan berhasil direkam!', 'success');
+            } else {
+              let errorMsg = result.error || 'Terjadi kesalahan.';
+              if (errorMsg.toLowerCase().includes('password')) {
+                errorMsg = '❌ Password salah. Silakan coba lagi.';
+              }
+              statusDiv.innerHTML = `<div class="alert alert-danger">${errorMsg}</div>`;
+              showToast(errorMsg, 'error');
+            }
           }
         } catch (err) {
           statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+          showToast('Terjadi kesalahan: ' + err.message, 'error');
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalText;
@@ -465,29 +499,11 @@
     //   🛡️ GUARD PUBLIC ACCESS & BOOT
     // ==========================================================
     (async function boot() {
-      // Halaman publik, tidak perlu guard strict, tapi jika sudah login sebagai admin/ketua_pac/member tetap redirect
-      const role = getUserRole();
-      if (role === 'admin') {
-        window.location.href = '/bisaa/admin/dashboard_admin.html';
-        return;
-      } else if (role === 'ketua_pac') {
-        // Tetap di halaman ini, tapi kita tampilkan info
-      } else if (role === 'member') {
-        window.location.href = '/bisaa/member.html';
-        return;
-      }
-
-      // Cek akses publik (jika mode login diaktifkan)
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
-
-      // Update navbar user menu
       updateNavbarMenu();
-
-      // Inisialisasi form
-      initSignatureForm();
+      initForm();
     })();
-
   </script>
 </body>
 </html>
