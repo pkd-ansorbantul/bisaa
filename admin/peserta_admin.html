@@ -11,6 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   
+  <!-- Library html2canvas untuk download ID Card -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <style>
     /* --- GLOBAL & SIDEBAR --- */
     * { font-family: 'Inter', sans-serif; }
@@ -76,6 +79,7 @@
     .status-badge.approved { background: #d1fae5; color: #059669; }
     .status-badge.rejected { background: #fee2e2; color: #dc2626; }
     .status-badge.active { background: #d1fae5; color: #059669; }
+    .status-badge.alumni { background: #cbd5e1; color: #475569; }
     .field-builder-card { background: #f8fafc; border-radius: 16px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
     .field-builder-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .field-builder-card .field-label { font-weight: 600; margin-bottom: 0; }
@@ -89,6 +93,26 @@
     th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
     th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
     th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
+    /* ==========================================================
+       🔥 PREMIUM ID CARD STYLES (Untuk Modal Admin)
+       ========================================================== */
+    #adminIdCardModal .id-card-wrapper { max-width: 450px; margin: 0 auto; padding: 10px; background: transparent; }
+    #adminIdCardModal .id-card { background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); padding: 24px; border: 1px solid rgba(255, 255, 255, 0.8); position: relative; overflow: hidden; transition: transform 0.2s ease; }
+    #adminIdCardModal .id-card .header { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #14994c; padding-bottom: 12px; margin-bottom: 16px; }
+    #adminIdCardModal .id-card .header img { height: 35px; width: auto; }
+    #adminIdCardModal .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
+    #adminIdCardModal .id-card .header h5 small { font-weight: 400; font-size: 0.75rem; color: #64748b; display: block; }
+    #adminIdCardModal .id-card .body { display: flex; gap: 20px; align-items: center; flex-wrap: nowrap; }
+    #adminIdCardModal .id-card .qr-area { flex-shrink: 0; width: 120px; height: 120px; background: white; border-radius: 16px; padding: 6px; display: flex; justify-content: center; align-items: center; border: 1px solid #e2e8f0; }
+    #adminIdCardModal .id-card .qr-area canvas, #adminIdCardModal .id-card .qr-area img { width: 100%; height: auto; max-width: 110px; }
+    #adminIdCardModal .id-card .data-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    #adminIdCardModal .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
+    #adminIdCardModal .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
+    #adminIdCardModal .id-card .footer { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: center; font-size: 0.75rem; color: #64748b; }
+    #adminIdCardModal .id-card .footer span { color: #2563eb; font-weight: 600; }
+    @media (max-width: 480px) { #adminIdCardModal .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; } #adminIdCardModal .id-card .qr-area { margin: 0 auto 10px auto; } }
+
     .credential-modal-qr { max-width: 200px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: white; }
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
@@ -99,10 +123,6 @@
     .ttd-box .no-signature { color: #94a3b8; font-size: 0.85rem; margin-top: 10px; }
     .ttd-qr-container { text-align: center; margin-bottom: 10px; min-height: 150px; display: flex; justify-content: center; align-items: center; width: 100%; background: #f8fafc; border-radius: 12px; padding: 8px; border: 1px solid #e2e8f0; }
     .ttd-qr-container img { max-width: 130px; max-height: 130px; object-fit: contain; border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
-    .rtl-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
-    .rtl-status.ready { background: #d1fae5; color: #059669; }
-    .rtl-status.notready { background: #fee2e2; color: #dc2626; }
-    .rtl-status.partial { background: #fef3c7; color: #d97706; }
     .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     .skeleton-row td { padding: 0.5rem; }
@@ -115,164 +135,30 @@
        PREMIUM BUTTONS (Elegan, Profesional, Ringkas)
        ========================================================== */
     .btn {
-      border-radius: 50px !important; /* Pill shape */
-      padding: 0.55rem 1.35rem;
-      font-weight: 600;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      border: none;
-      position: relative;
-      overflow: hidden;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+      border-radius: 50px !important; padding: 0.55rem 1.35rem; font-weight: 600;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
     }
-    
-    .btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
     .btn:active { transform: translateY(-1px) scale(0.98); }
-
-    /* Primary Gradient */
-    .btn-primary {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
-    .btn-primary:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%); color: white; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35); }
-
-    /* Success Gradient */
-    .btn-success {
-      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
-    }
-    .btn-success:hover { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35); }
-
-    /* Warning Gradient */
-    .btn-warning {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
-    }
-    .btn-warning:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: white; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35); }
-
-    /* Danger Gradient */
-    .btn-danger {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-    }
-    .btn-danger:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35); }
-
-    /* Secondary / Outline */
-    .btn-outline-secondary {
-      background: transparent;
-      color: #475569;
-      border: 1.5px solid #cbd5e1;
-      box-shadow: none;
-    }
-    .btn-outline-secondary:hover { background: #f1f5f9; color: #1e293b; border-color: #94a3b8; transform: translateY(-3px); }
-
-    /* Outline Primary */
-    .btn-outline-primary {
-      background: transparent;
-      color: #2563eb;
-      border: 1.5px solid #2563eb;
-      box-shadow: none;
-    }
-    .btn-outline-primary:hover { background: #eff6ff; border-color: #1d4ed8; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(37,99,235,0.15); }
-
-    /* Outline Success */
-    .btn-outline-success {
-      background: transparent;
-      color: #16a34a;
-      border: 1.5px solid #16a34a;
-      box-shadow: none;
-    }
-    .btn-outline-success:hover { background: #f0fdf4; border-color: #15803d; transform: translateY(-3px); }
-
-    /* Outline Danger */
-    .btn-outline-danger {
-      background: transparent;
-      color: #dc2626;
-      border: 1.5px solid #dc2626;
-      box-shadow: none;
-    }
-    .btn-outline-danger:hover { background: #fef2f2; border-color: #b91c1c; transform: translateY(-3px); }
-
-    /* Outline Warning */
-    .btn-outline-warning {
-      background: transparent;
-      color: #d97706;
-      border: 1.5px solid #d97706;
-      box-shadow: none;
-    }
-    .btn-outline-warning:hover { background: #fffbeb; border-color: #b45309; transform: translateY(-3px); }
-
-    /* Small buttons for table */
-    .btn-sm {
-      padding: 0.3rem 0.8rem !important;
-      font-size: 0.8rem;
-      gap: 0.3rem;
-      min-width: 32px;
-    }
+    .btn-primary { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    .btn-success { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
+    .btn-outline-secondary { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+    .btn-outline-primary { background: transparent; color: #2563eb; border: 1.5px solid #2563eb; }
+    .btn-outline-success { background: transparent; color: #16a34a; border: 1.5px solid #16a34a; }
+    .btn-outline-danger { background: transparent; color: #dc2626; border: 1.5px solid #dc2626; }
+    .btn-outline-warning { background: transparent; color: #d97706; border: 1.5px solid #d97706; }
+    .btn-sm { padding: 0.3rem 0.8rem !important; font-size: 0.8rem; gap: 0.3rem; min-width: 32px; }
     
-    /* Toolbar Grouping */
     .toolbar-group { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
-    .toolbar-group .btn { margin-bottom: 0; }
-
-    /* ==========================================================
-       ✅ NEW: AKSI DROPDOWN PREMIUM (RAPI & ELEGAN)
-       ========================================================== */
-    .action-dropdown .btn-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: white;
-      border: 1px solid #e2e8f0;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-    .action-dropdown .btn-icon:hover {
-      background: #f1f5f9;
-      color: #0f172a;
-      border-color: #94a3b8;
-    }
-    .action-dropdown .btn-icon::after { display: none; } /* Hilangkan caret default bootstrap */
-    
-    .action-dropdown .dropdown-menu {
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      border: 1px solid #e2e8f0;
-      padding: 0.5rem 0;
-      min-width: 200px;
-    }
-    .action-dropdown .dropdown-item {
-      padding: 0.5rem 1.2rem;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .action-dropdown .dropdown-item:hover {
-      background-color: #f1f5f9;
-    }
-    .action-dropdown .dropdown-item i {
-      font-size: 1.1rem;
-      width: 20px;
-      text-align: center;
-    }
-    .action-dropdown .dropdown-divider {
-      margin: 0.3rem 0;
-      border-top: 1px solid #e2e8f0;
-    }
+    .action-dropdown .btn-icon { width: 36px; height: 36px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #e2e8f0; color: #64748b; transition: all 0.2s; }
+    .action-dropdown .btn-icon:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+    .action-dropdown .dropdown-menu { border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; padding: 0.5rem 0; min-width: 200px; }
+    .action-dropdown .dropdown-item { padding: 0.5rem 1.2rem; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
+    .action-dropdown .dropdown-item:hover { background-color: #f1f5f9; }
+    .action-dropdown .dropdown-item i { font-size: 1.1rem; width: 20px; text-align: center; }
+    .action-dropdown .dropdown-divider { margin: 0.3rem 0; border-top: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
@@ -313,7 +199,6 @@
     <div class="content-wrapper">
       <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Manajemen Peserta & Form Builder</h2>
       
-      <!-- Toolbar Ringkas & Premium -->
       <div class="row mb-4 align-items-center">
         <div class="col-md-8 toolbar-group">
           <button class="btn btn-primary" id="addPesertaBtn"><i class="bi bi-plus-circle me-1"></i> Tambah Peserta</button>
@@ -341,7 +226,6 @@
 
       <div id="pesertaTableContainer" class="table-container"></div>
 
-      <!-- FORM BUILDER -->
       <div class="mt-5 pt-4 border-top">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <h4 class="fw-bold mb-0"><i class="bi bi-gear me-2"></i>Form Builder - Kelola Field Isian Peserta</h4>
@@ -352,7 +236,6 @@
         <div class="mt-3 text-end"><button class="btn btn-success px-4" id="saveFormStructureBtn"><i class="bi bi-save me-1"></i> Simpan Struktur Form</button></div>
       </div>
 
-      <!-- LOKASI PKD -->
       <div class="mt-5 pt-4 border-top">
         <div class="card border-0 shadow-sm rounded-4">
           <div class="card-body p-4">
@@ -362,26 +245,13 @@
             </div>
             <p class="text-muted small">Kelola daftar lokasi PKD dan tentukan lokasi yang sedang aktif.</p>
             <div class="row g-2 align-items-end mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold mb-1">Tambah Lokasi Baru</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="newLokasiInput" placeholder="Contoh: Gedung Serbaguna A">
-                  <button class="btn btn-success" id="addLokasiBtn"><i class="bi bi-plus-circle"></i> Tambah</button>
-                </div>
-              </div>
+              <div class="col-md-6"><label class="form-label fw-semibold mb-1">Tambah Lokasi Baru</label><div class="input-group"><input type="text" class="form-control" id="newLokasiInput" placeholder="Contoh: Gedung Serbaguna A"><button class="btn btn-success" id="addLokasiBtn"><i class="bi bi-plus-circle"></i> Tambah</button></div></div>
             </div>
             <div id="lokasiPKDListContainer" class="mb-4"></div>
             <hr class="my-3">
             <div class="row g-2 align-items-end">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold mb-1">Lokasi PKD Saat Ini (untuk filter)</label>
-                <select class="form-select" id="pkdLokasiSelect">
-                  <option value="">-- Semua Lokasi --</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <button class="btn btn-primary w-100" id="savePkdLokasiBtn"><i class="bi bi-save me-1"></i> Simpan Filter</button>
-              </div>
+              <div class="col-md-6"><label class="form-label fw-semibold mb-1">Lokasi PKD Saat Ini (untuk filter)</label><select class="form-select" id="pkdLokasiSelect"><option value="">-- Semua Lokasi --</option></select></div>
+              <div class="col-md-3"><button class="btn btn-primary w-100" id="savePkdLokasiBtn"><i class="bi bi-save me-1"></i> Simpan Filter</button></div>
             </div>
             <div id="pkdLokasiStatus" class="mt-2 small text-muted"></div>
           </div>
@@ -397,18 +267,72 @@
 <div class="modal fade" id="fieldEditorModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-info text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="fieldModalTitle">Tambah Field Baru</span></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><input type="hidden" id="editFieldId"><div class="mb-3"><label class="form-label fw-semibold">Label Field</label><input type="text" class="form-control" id="fieldLabel"></div><div class="mb-3"><label class="form-label fw-semibold">Tipe Input</label><select class="form-select" id="fieldType"><option value="text">Text</option><option value="textarea">Textarea</option><option value="radio">Radio</option><option value="select">Select</option><option value="file">File</option></select></div><div class="mb-3" id="fieldOptionsGroup" style="display:none;"><label>Opsi (pisahkan koma)</label><input type="text" class="form-control" id="fieldOptions" placeholder="Ya,Tidak"></div><div class="mb-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="fieldRequired"><label>Wajib diisi</label></div></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="saveFieldBtn">Simpan Field</button></div></div></div></div>
 <div class="modal fade" id="detailPesertaModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-info text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Peserta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div id="detailContent"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button></div></div></div></div>
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-danger text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><i class="bi bi-exclamation-triangle fs-1 text-warning mb-3"></i><p>Yakin ingin menghapus peserta ini?</p><p class="text-muted small">Tindakan tidak dapat dibatalkan.</p><input type="hidden" id="deletePesertaId"></div><div class="modal-footer border-0 justify-content-center"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button></div></div></div></div>
-<div class="modal fade" id="credentialModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-success text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Kredensial Login Peserta</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><p class="mb-2"><strong>Nama:</strong> <span id="credentialNama"></span></p><div id="credentialQrContainer" class="mb-3"></div><p><strong>Username:</strong> <span id="credentialUsername" class="fw-bold text-primary"></span></p><p><strong>Password:</strong> <span id="credentialPassword" class="fw-bold text-danger"></span></p><p class="small text-muted">* Password dapat diubah oleh peserta.</p></div><div class="modal-footer border-0 justify-content-center"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button><button type="button" class="btn btn-primary rounded-pill px-4" id="copyCredentialBtn"><i class="bi bi-clipboard"></i> Salin Kredensial</button></div></div></div></div>
+
+<!-- ========== MODAL KREDENSIAL (USERNAME & PASSWORD) ========== -->
+<div class="modal fade" id="credentialModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Kredensial Login Peserta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <p class="mb-2"><strong>Nama:</strong> <span id="credentialNama"></span></p>
+        <p><strong>Username:</strong> <span id="credentialUsername" class="fw-bold text-primary"></span></p>
+        <p><strong>Password:</strong> <span id="credentialPassword" class="fw-bold text-danger"></span></p>
+        <p class="small text-muted">* Password dapat diubah oleh peserta.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="copyCredentialBtn"><i class="bi bi-clipboard"></i> Salin Kredensial</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL TTD DIGITAL ========== -->
 <div class="modal fade" id="ttdModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-primary text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital (QR)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div id="ttdCardsContainer" class="row g-4 d-flex align-items-stretch"></div><div id="ttdEmptyMessage" class="text-center text-muted py-4" style="display:none;"><i class="bi bi-pencil-square fs-2"></i><p class="mt-2 mb-0">Belum ada tanda tangan digital untuk peserta ini.</p></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button></div></div></div></div>
+
+<!-- ========== MODAL GENERATE SERTIFIKAT ========== -->
 <div class="modal fade" id="generateCertModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content border-0 shadow-lg"><div class="modal-header bg-success text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-file-earmark-pdf me-2"></i>Buat Sertifikat</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="mb-3"><label class="form-label fw-semibold">Pilih Template Sertifikat</label><select class="form-select" id="certTemplateSelect"><option value="">-- Pilih Template --</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Peserta yang akan dibuatkan sertifikat</label><div id="selectedParticipantsList" class="small text-muted"></div></div><div class="alert alert-info small" id="generateStatusMsg"><i class="bi bi-info-circle"></i> Pastikan peserta sudah disetujui, RTL selesai, dan TTD Digital terdaftar.</div><div id="generateProgress" style="display:none;"><div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div></div><p class="small text-muted mt-1" id="generateProgressText">Memproses...</p></div><div id="generateResultArea" class="mt-3"></div></div><div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button><button type="button" class="btn btn-success rounded-pill px-4" id="generateCertSubmit"><i class="bi bi-file-earmark-pdf me-1"></i> Generate Sertifikat</button></div></div></div></div>
 
+<!-- ========================================================== -->
+<!-- 🔥 MODAL ID CARD PREMIUM (Dengan Tombol Unduh) -->
+<!-- ========================================================== -->
+<div class="modal fade" id="adminIdCardModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-person-vcard"></i> Kartu ID Digital</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div id="idCardModalContent">
+          <!-- Akan diisi oleh JS -->
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div class="toast-container"><div id="notificationToast" class="toast border-0 shadow-lg"><div class="toast-header bg-white border-0"><i class="bi me-2" id="toastIcon"></i><strong class="me-auto" id="toastTitle">Berhasil</strong><button type="button" class="btn-close" data-bs-dismiss="toast"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script type="module">
+  // ==========================================================
+  //   IMPOR
+  // ==========================================================
   import { callApi, showToast, escapeHtml, getUserRole, getUserData, updateNavbarMenu, logout, getLokasiPKDList, addLokasiPKD, deleteLokasiPKD } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
   window.AdminModule = AdminModule;
 
+  // ==========================================================
+  //   STATE
+  // ==========================================================
   let STATE = {
     pesertaList: [], filteredList: [], formStructure: [], rtlData: [], approvalsData: [],
     searchQuery: '', statusFilter: '', currentPage: 1, itemsPerPage: 15,
@@ -437,6 +361,9 @@
     return function(...args) { clearTimeout(timer); timer = setTimeout(() => fn.apply(this, args), delay); };
   }
 
+  // ==========================================================
+  //   SKELETON
+  // ==========================================================
   function renderSkeletonPeserta() {
     const container = document.getElementById('pesertaTableContainer');
     let html = `<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr>
@@ -473,6 +400,9 @@
     container.innerHTML = html;
   }
 
+  // ==========================================================
+  //   LOKASI PKD
+  // ==========================================================
   async function loadLokasiPKDList() {
     try {
       const res = await getLokasiPKDList();
@@ -550,6 +480,9 @@
     finally { btn.disabled = false; btn.innerHTML = originalText; }
   });
 
+  // ==========================================================
+  //   SIDEBAR
+  // ==========================================================
   function initSidebar() {
     const toggleBtn = document.getElementById('toggleSidebarBtn');
     const sidebar = document.getElementById('sidebarWrapper');
@@ -575,12 +508,14 @@
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) { e.preventDefault(); logout(); });
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() { logout(); });
 
+  // ==========================================================
+  //   LOAD PESERTA
+  // ==========================================================
   async function loadPesertaData(forceRefresh = false) {
     const container = document.getElementById('pesertaTableContainer');
     try {
       if (!AdminModule.getState().lastSync || forceRefresh) await AdminModule.loadAllData(forceRefresh);
       const freshData = AdminModule.getPesertaList() || [];
-      console.log("[DEBUG] Data mentah dari AdminModule:", freshData.length, "row");
       if (freshData && Array.isArray(freshData) && freshData.length > 0) {
         STATE.pesertaList = freshData;
         const rtlRes = await callApi('getRTLTasks', {}, 'GET');
@@ -591,7 +526,6 @@
         updateCacheStatus('Live');
       } else {
         if (STATE.pesertaList.length > 0) {
-          console.warn("[DEBUG] API mengembalikan data kosong. Mempertahankan data lama.");
           const rtlRes = await callApi('getRTLTasks', {}, 'GET');
           STATE.rtlData = rtlRes.data || STATE.rtlData;
           const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
@@ -616,6 +550,9 @@
     }
   }
 
+  // ==========================================================
+  //   FORM BUILDER
+  // ==========================================================
   async function loadFormStructure() {
     try {
       let configData = null;
@@ -736,6 +673,9 @@
     finally { btn.disabled = false; btn.innerHTML = originalText; }
   });
 
+  // ==========================================================
+  //   FILTER, SORT, PAGINATION
+  // ==========================================================
   function getFilteredPeserta(query = '', status = '') {
     let filtered = STATE.pesertaList;
     if (query.trim() !== '') {
@@ -765,7 +705,6 @@
       document.getElementById('searchInput').value = '';
       document.getElementById('filterStatus').value = '';
       filtered = STATE.pesertaList;
-      console.warn("⚠️ Data tersaring habis, filter direset ke 'Semua'.");
     }
     filtered.sort((a,b) => {
       const aIsAlumni = (a.status || '').toLowerCase().trim() === 'alumni';
@@ -787,7 +726,7 @@
   }
 
   // ==========================================================
-  // ✅ RENDER TABLE DENGAN DROPDOWN AKSI YANG RAPI
+  //   RENDER TABLE (DROPDOWN AKSI PREMIUM)
   // ==========================================================
   function renderTable(data, totalItems) {
     const container = document.getElementById('pesertaTableContainer');
@@ -829,37 +768,29 @@
           <td><span class="badge bg-info text-dark">${escapeHtml(lokasiPKD)}</span></td>
           <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
           <td>
-            <!-- ✅ DROPDOWN AKSI PREMIUM -->
             <div class="dropdown action-dropdown">
               <button class="btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-three-dots-vertical"></i>
               </button>
-              <ul class="dropdown-menu dropdown-menu-end">`;
-
-        // Item menu dasar
-        html += `
+              <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="#" onclick="viewPeserta('${item.id}')"><i class="bi bi-eye me-2 text-info"></i> Lihat Detail</a></li>
                 <li><a class="dropdown-item" href="#" onclick="editPeserta('${item.id}')"><i class="bi bi-pencil me-2 text-warning"></i> Edit Data</a></li>
+                ${status === 'approved' || status === 'active' ? `
+                  <li><a class="dropdown-item" href="#" onclick="showIdCard('${item.id}')"><i class="bi bi-person-vcard me-2 text-success"></i> Lihat ID Card</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="showCredential('${item.id}')"><i class="bi bi-key me-2 text-warning"></i> Lihat Kredensial</a></li>
+                ` : ''}
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="deletePeserta('${item.id}')"><i class="bi bi-trash me-2 text-danger"></i> Hapus Peserta</a></li>`;
-
-        // Kondisional: ACC (hanya untuk pending)
-        if (status === 'pending') {
-          html += `
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-success" href="#" onclick="approvePeserta('${item.id}')"><i class="bi bi-check-circle me-2 text-success"></i> Setujui Peserta</a></li>`;
-        }
-
-        // Kondisional: TTD, Sertif, ACC RTL (untuk approved/active)
-        if (status === 'approved' || status === 'active') {
-          html += `
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" onclick="showTTD('${item.id}', '${escapeHtml(nama)}')"><i class="bi bi-pencil-square me-2 text-primary"></i> TTD Digital</a></li>
-                <li><a class="dropdown-item" href="#" onclick="generateCertificateForOne('${item.id}')"><i class="bi bi-file-earmark-pdf me-2 text-success"></i> Buat Sertifikat</a></li>
-                <li><a class="dropdown-item" href="#" onclick="approveRTLForParticipant('${item.id}', '${escapeHtml(nama)}')"><i class="bi bi-check2-square me-2 text-secondary"></i> ACC RTL</a></li>`;
-        }
-
-        html += `
+                <li><a class="dropdown-item text-danger" href="#" onclick="deletePeserta('${item.id}')"><i class="bi bi-trash me-2 text-danger"></i> Hapus Peserta</a></li>
+                ${status === 'pending' ? `
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-success" href="#" onclick="approvePeserta('${item.id}')"><i class="bi bi-check-circle me-2 text-success"></i> Setujui Peserta</a></li>
+                ` : ''}
+                ${status === 'approved' || status === 'active' ? `
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#" onclick="showTTD('${item.id}', '${escapeHtml(nama)}')"><i class="bi bi-pencil-square me-2 text-primary"></i> TTD Digital</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="generateCertificateForOne('${item.id}')"><i class="bi bi-file-earmark-pdf me-2 text-success"></i> Buat Sertifikat</a></li>
+                  <li><a class="dropdown-item" href="#" onclick="approveRTLForParticipant('${item.id}', '${escapeHtml(nama)}')"><i class="bi bi-check2-square me-2 text-secondary"></i> ACC RTL</a></li>
+                ` : ''}
               </ul>
             </div>
           </td>
@@ -878,7 +809,6 @@
     container.innerHTML = html;
     container.classList.add('fade-in');
 
-    // Event listener checkbox select all
     const selectAll = document.getElementById('selectAllPeserta');
     if (selectAll) {
       selectAll.addEventListener('change', function() {
@@ -910,122 +840,268 @@
     STATE.currentPage = page; applyFiltersAndSort();
   };
 
-  // 🔥 OPTIMIZED APPROVE (Optimistic UI)
-  window.approvePeserta = async function(id) {
-    // Hapus dropdown jika terbuka agar tidak mengganggu
-    document.querySelectorAll('.dropdown-menu.show').forEach(el => el.classList.remove('show'));
-    
-    if (!confirm('Setujui peserta ini? Peserta akan mendapatkan akun login.')) return;
-    
-    const index = STATE.pesertaList.findIndex(p => String(p.id) === String(id));
-    const originalStatus = index !== -1 ? STATE.pesertaList[index].status : null;
-    if (index !== -1) STATE.pesertaList[index].status = 'approved';
-    applyFiltersAndSort();
-
+  // ==========================================================
+  //   🔥 FUNGSI SHOW KREDENSIAL
+  // ==========================================================
+  window.showCredential = async function(id) {
     try {
-      const result = await AdminModule.approvePeserta(id);
-      if (result.success) {
-        showToast(result.username ? `✅ Disetujui! Username: ${result.username}` : '✅ Berhasil!', 'success');
-        await loadPesertaData(false);
-      } else {
-        throw new Error(result.error || 'Gagal menyetujui');
+      const res = await callApi('getPesertaCredentials', { id }, 'GET');
+      if (!res.success || !res.data) {
+        showToast('Data kredensial tidak ditemukan.', 'error');
+        return;
       }
+      const data = res.data;
+      document.getElementById('credentialNama').innerText = data.nama_lengkap || '-';
+      document.getElementById('credentialUsername').innerText = data.username || '-';
+      document.getElementById('credentialPassword').innerText = data.password || '-';
+      new bootstrap.Modal(document.getElementById('credentialModal')).show();
     } catch (e) {
-      if (index !== -1) STATE.pesertaList[index].status = originalStatus;
-      applyFiltersAndSort();
-      showToast('❌ Gagal: ' + e.message, 'error');
+      showToast('Gagal mengambil kredensial: ' + e.message, 'error');
     }
   };
 
-  function isParticipantEligible(participant, approvalsList) {
-    if (participant.status !== 'approved' && participant.status !== 'active') return { eligible: false, reason: 'Status belum disetujui/aktif.' };
-    const tasks = STATE.rtlData.filter(t => t.pesertaId == participant.id);
-    if (tasks.length > 0 && !tasks.every(t => t.status === 'selesai')) return { eligible: false, reason: 'Belum semua tugas RTL selesai.' };
-    const name = participant.nama_lengkap;
-    const hasKetua = approvalsList.some(a => a.peserta_nama === name && a.role === 'ketua_pc');
-    const hasSekretaris = approvalsList.some(a => a.peserta_nama === name && a.role === 'sekretaris');
-    const hasInstruktur = approvalsList.some(a => a.peserta_nama === name && a.role === 'instruktur');
-    if (!hasKetua || !hasSekretaris || !hasInstruktur) return { eligible: false, reason: `Tanda tangan digital belum lengkap (Butuh: Ketua PC, Sekretaris, Instruktur)` };
-    return { eligible: true };
-  }
-  async function openGenerateModal(ids) {
-    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
-    STATE.approvalsData = approvalRes.data || [];
-    const templatesRes = await callApi('getCertificateTemplates', {}, 'GET');
-    const templates = templatesRes.data || [];
-    const templateSelect = document.getElementById('certTemplateSelect');
-    templateSelect.innerHTML = '<option value="">-- Pilih Template --</option>' + templates.map(t => `<option value="${t.id}">${escapeHtml(t.nama_template)}</option>`).join('');
-    const selectedParticipants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
-    let listHtml = '', allValid = true;
-    selectedParticipants.forEach(p => {
-      const result = isParticipantEligible(p, STATE.approvalsData);
-      if (result.eligible) listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)}</span>`;
-      else { listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} <small>(${result.reason})</small></span>`; allValid = false; }
-    });
-    document.getElementById('selectedParticipantsList').innerHTML = listHtml;
-    document.getElementById('generateStatusMsg').innerHTML = allValid ? '<i class="bi bi-check-circle text-success"></i> Semua peserta memenuhi syarat.' : '<i class="bi bi-exclamation-triangle text-warning"></i> Ada peserta yang belum memenuhi syarat.';
-    document.getElementById('generateCertSubmit').disabled = !allValid;
-    document.getElementById('generateProgress').style.display = 'none';
-    document.getElementById('generateResultArea').innerHTML = '';
-    document.getElementById('generateCertSubmit').dataset.ids = JSON.stringify(ids);
-    new bootstrap.Modal(document.getElementById('generateCertModal')).show();
-  }
-  document.getElementById('generateCertificateBtn').addEventListener('click', function() {
-    const checked = document.querySelectorAll('.peserta-checkbox:checked');
-    const ids = Array.from(checked).map(cb => cb.value);
-    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'info'); return; }
-    openGenerateModal(ids);
-  });
-  async function generateCertificateForOne(id) {
-    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
-    STATE.approvalsData = approvalRes.data || [];
-    const participant = STATE.pesertaList.find(p => String(p.id) === String(id));
-    if (!participant) return;
-    const result = isParticipantEligible(participant, STATE.approvalsData);
-    if (!result.eligible) { showToast('Peserta belum memenuhi syarat: ' + result.reason, 'warning'); return; }
-    openGenerateModal([id]);
-  }
-  document.getElementById('generateCertSubmit').addEventListener('click', async function() {
-    const ids = JSON.parse(this.dataset.ids);
-    const templateId = document.getElementById('certTemplateSelect').value;
-    if (!templateId) { showToast('Pilih template terlebih dahulu.', 'warning'); return; }
-    const participants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
-    const validParticipants = participants.filter(p => isParticipantEligible(p, STATE.approvalsData).eligible);
-    if (validParticipants.length === 0) { showToast('Tidak ada peserta yang memenuhi syarat.', 'warning'); return; }
-    const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
-    document.getElementById('generateProgress').style.display = 'block';
-    document.getElementById('generateResultArea').innerHTML = '';
-    let results = [], errors = [];
-    for (let i = 0; i < validParticipants.length; i++) {
-      const p = validParticipants[i];
-      document.getElementById('generateProgressText').innerText = `Memproses ${i+1}/${validParticipants.length}: ${p.nama_lengkap}`;
-      document.querySelector('#generateProgress .progress-bar').style.width = ((i+1)/validParticipants.length * 100) + '%';
-      try {
-        const result = await callApi('generateCertificateForParticipant', { templateId: templateId, pesertaId: p.id }, 'POST');
-        if (result.success) { results.push({ nama: p.nama_lengkap, nomor: result.nomorSertifikat, url: result.pdfUrl }); }
-        else { errors.push({ nama: p.nama_lengkap, error: result.error || 'Gagal' }); }
-      } catch (err) { errors.push({ nama: p.nama_lengkap, error: err.message }); }
+  // ==========================================================
+  //   🔥 FUNGSI SHOW ID CARD (DIPERBAIKI UNTUK QR CODE)
+  // ==========================================================
+  window.showIdCard = function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
+    if (item.status !== 'approved' && item.status !== 'active') {
+      showToast('ID Card hanya tersedia untuk peserta yang sudah disetujui/aktif.', 'warning');
+      return;
     }
-    document.getElementById('generateProgress').style.display = 'none';
-    btn.disabled = false; btn.innerHTML = 'Generate Sertifikat';
-    let html = '';
-    if (results.length > 0) {
-      html += `<div class="alert alert-success">Berhasil: ${results.length} sertifikat.</div><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
-      results.forEach(r => html += `<tr><td>${escapeHtml(r.nama)}</td><td>${escapeHtml(r.nomor)}</td><td><a href="${escapeHtml(r.url)}" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-download"></i> Unduh</a></td></tr>`);
-      html += `</tbody></table></div>`;
+    const nama = item.nama_lengkap || '-';
+    const alamat = item.alamat || '-';
+    const idPeserta = item.id || '-';
+
+    const content = document.getElementById('idCardModalContent');
+
+    // 1. Buat struktur HTML kartu terlebih dahulu
+    content.innerHTML = `
+      <div class="id-card-wrapper">
+          <div id="idCard" class="id-card">
+              <div class="header">
+                  <img src="/bisaa/LOGO%20ANSOR.webp" alt="Ansor">
+                  <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
+              </div>
+              <div class="body">
+                  <div class="qr-area">
+                      <!-- Tempat QR Code -->
+                      <div id="adminQrContainer" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"></div>
+                  </div>
+                  <div class="data-area">
+                      <div><span class="label">ID Peserta</span><div class="value">${escapeHtml(idPeserta)}</div></div>
+                      <div><span class="label">Nama Lengkap</span><div class="value">${escapeHtml(nama)}</div></div>
+                      <div><span class="label">Alamat</span><div class="value" style="font-weight:400;">${escapeHtml(alamat)}</div></div>
+                  </div>
+              </div>
+              <div class="footer">
+                  Password Login: <span>No HP Terdaftar</span>
+              </div>
+          </div>
+      </div>
+      <div class="text-center mt-3">
+          <button class="btn btn-primary rounded-pill px-4" id="downloadAdminIdCardBtn">
+              <i class="bi bi-download me-1"></i> Unduh Kartu (PNG)
+          </button>
+      </div>
+    `;
+
+    // 2. Generate QR Code menggunakan DOM yang baru dibuat
+    const qrTarget = document.getElementById('adminQrContainer');
+    if (qrTarget) {
+        // Bersihkan isi target
+        qrTarget.innerHTML = '';
+        
+        const qr = qrcode(0, 'M');
+        qr.addData(`peserta_id=${idPeserta}`);
+        qr.make();
+        
+        const moduleCount = qr.getModuleCount();
+        const cellSize = 8;
+        const margin = 4;
+        const size = moduleCount * cellSize + (margin * 2);
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        const offsetX = margin;
+        const offsetY = margin;
+        
+        for (let r = 0; r < moduleCount; r++) {
+            for (let c = 0; c < moduleCount; c++) {
+                if (qr.isDark(r, c)) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(offsetX + c * cellSize, offsetY + r * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+        // Masukkan canvas ke dalam target
+        qrTarget.appendChild(canvas);
     }
-    if (errors.length > 0) html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul>${errors.map(e => `<li>${escapeHtml(e.nama)}: ${escapeHtml(e.error)}</li>`).join('')}</ul></div>`;
-    document.getElementById('generateResultArea').innerHTML = html;
-    showToast(`Selesai: ${results.length} berhasil, ${errors.length} gagal.`, 'info');
-  });
-  async function approveRTLForParticipant(id, nama) {
-    if (!confirm(`Setujui semua tugas RTL untuk peserta "${nama}"?`)) return;
+
+    // 3. Tampilkan modal
+    const modal = new bootstrap.Modal(document.getElementById('adminIdCardModal'));
+    modal.show();
+
+    // 4. Event listener download (sama seperti sebelumnya)
+    setTimeout(() => {
+        document.getElementById('downloadAdminIdCardBtn')?.addEventListener('click', function() {
+            const cardElement = document.getElementById('idCard');
+            if (!cardElement) return;
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+
+            html2canvas(cardElement, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff' 
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Kartu_ID_${nama.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Kartu ID berhasil diunduh!', 'success');
+            }).catch(err => {
+                showToast('Gagal mengunduh kartu ID: ' + err.message, 'error');
+            }).finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-download me-1"></i> Unduh Kartu (PNG)';
+            });
+        });
+    }, 300);
+  };
+
+  // ==========================================================
+  //   ACTIONS
+  // ==========================================================
+  window.approvePeserta = async function(id) {
+    if (!confirm('Setujui peserta ini? Peserta akan mendapatkan akun login (Username & Password).')) return;
+    const btn = document.querySelector(`.approve-btn[data-id="${id}"]`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
     try {
-      const res = await callApi('approveAllRTL', { pesertaId: id }, 'POST');
-      if (res.success) { const tasks = STATE.rtlData.filter(t => t.pesertaId == id); tasks.forEach(t => t.status = 'selesai'); showToast(`✅ Semua tugas RTL untuk ${nama} telah disetujui.`, 'success'); applyFiltersAndSort(); }
-      else { showToast('Gagal menyetujui RTL.', 'error'); }
-    } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
-  }
+      const result = await AdminModule.approvePeserta(id);
+      if (result.success) {
+        showToast(result.username ? `✅ Disetujui! Username: ${result.username}, Password: ${result.password}` : '✅ Peserta disetujui!', 'success');
+        await loadPesertaData(true);
+      } else { throw new Error(result.error || 'Gagal menyetujui'); }
+    } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
+    finally { if (btn) { btn.disabled = false; btn.innerHTML = '✔ ACC'; } }
+  };
+  window.viewPeserta = function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+    const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
+    const content = document.getElementById('detailContent');
+    let html = '<div class="list-group list-group-flush">';
+    for (let i = 0; i < STATE.formStructure.length; i++) {
+      const field = STATE.formStructure[i];
+      const val = item[field.id] || '-';
+      html += '<div class="list-group-item py-2"><strong>' + escapeHtml(field.label) + ':</strong> ' + escapeHtml(val) + '</div>';
+    }
+    html += '<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> ' + escapeHtml(item.lokasi_pkd || '-') + '</div>';
+    html += '<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ' + getStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></div>';
+    html += '</div>';
+    content.innerHTML = html; modal.show();
+  };
+  window.editPeserta = function(id) {
+    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+    document.getElementById('editPesertaId').value = id;
+    document.getElementById('formModalTitle').innerText = 'Edit Peserta';
+    renderDynamicForm(item);
+    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  };
+  window.deletePeserta = function(id) { document.getElementById('deletePesertaId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); };
+  document.getElementById('addPesertaBtn')?.addEventListener('click', function() {
+    document.getElementById('editPesertaId').value = '';
+    document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
+    renderDynamicForm();
+    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  });
+  document.getElementById('savePesertaBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('editPesertaId').value;
+    const form = document.getElementById('dynamicAdminFormContainer').querySelector('form');
+    if (!form) { showToast('Form tidak ditemukan', 'error'); return; }
+    const formData = new FormData(form); 
+    let data = { id: id };
+    STATE.formStructure.forEach(field => { 
+        const val = formData.get(field.id); 
+        if (field.type !== 'file') { data[field.id] = val || ''; } 
+    });
+
+    // 🔥 AMBIL STATUS DARI DROPDOWN
+    const statusSelect = form.querySelector('select[name="status"]');
+    if (statusSelect) {
+        data.status = statusSelect.value;
+    }
+
+    const lokasiPkdSelect = form.querySelector('select[name="lokasi_pkd"]'); 
+    data.lokasi_pkd = lokasiPkdSelect ? lokasiPkdSelect.value : '';
+    const fotoInput = form.querySelector('input[name="foto"]');
+    if (fotoInput && fotoInput.files && fotoInput.files.length > 0) { const file = fotoInput.files[0]; if (file.size > 0) { data.foto = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); } }
+    const suratInput = form.querySelector('input[name="surat_rekomendasi"]');
+    if (suratInput && suratInput.files && suratInput.files.length > 0) { const file = suratInput.files[0]; if (file.size > 0) { data.surat_rekomendasi = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); }); } }
+    if (data.utusan === 'Lainnya') { const utusanLuar = document.getElementById('utusanLuarContainerAdmin')?.querySelector('input')?.value?.trim() || ''; data.utusan = utusanLuar ? 'Lainnya - ' + utusanLuar : 'Lainnya (tidak diisi)'; }
+    if (!data.lokasi_pkd) { showToast('Lokasi PKD wajib diisi.', 'error'); return; }
+    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    try {
+      let result = id ? await AdminModule.updatePeserta(data) : await AdminModule.addPeserta(data);
+      if (result.success) { showToast(id ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success'); bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide(); await loadPesertaData(true); }
+      else { throw new Error(result.error || 'Gagal menyimpan'); }
+    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = originalText; }
+  });
+  document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
+    const id = document.getElementById('deletePesertaId').value; if (!id) return;
+    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    try {
+      const result = await AdminModule.deletePeserta(id);
+      if (result.success) { showToast('Peserta berhasil dihapus', 'success'); bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); await loadPesertaData(true); }
+      else { throw new Error(result.error || 'Gagal'); }
+    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = originalText; }
+  });
+  document.getElementById('exportDataBtn')?.addEventListener('click', function() {
+    const data = STATE.filteredList; if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
+    const exportData = data.map(item => ({ id: item.id, nama: item.nama_lengkap, email: item.email, hp: item.no_hp, utusan: item.utusan, lokasi_pkd: item.lokasi_pkd, status: item.status }));
+    const json = JSON.stringify(exportData, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url); showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
+  });
+  document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked'); const ids = Array.from(checked).map(cb => cb.value); if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'warning'); return; }
+    if (!confirm(`Generate TTD digital untuk ${ids.length} peserta?`)) return;
+    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    try {
+      const res = await callApi('bulkGenerateTTD', { ids: JSON.stringify(ids) }, 'POST');
+      if (res.success) { showToast(`Berhasil generate TTD untuk ${res.addedCount || ids.length} peserta!`, 'success'); await loadPesertaData(false); }
+      else { throw new Error(res.message || 'Gagal generate TTD'); }
+    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = originalText; }
+  });
+  document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked'); const ids = Array.from(checked).map(cb => cb.value.trim()).filter(id => id !== '');
+    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'warning'); return; }
+    if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?`)) return;
+    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    try {
+      const res = await AdminModule.moveMultipleToAlumni(ids);
+      if (res.success) { showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta.`, 'success'); await loadPesertaData(false); }
+      else { throw new Error(res.error || 'Gagal memindahkan'); }
+    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = originalText; }
+  });
+  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...'; this.disabled = true;
+    loadPesertaData(true).then(() => {
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; this.disabled = false; showToast('Data berhasil disegarkan', 'success');
+    }).catch(() => { this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; this.disabled = false; showToast('Gagal menyegarkan', 'error'); });
+  });
   window.showTTD = async function(id, nama) {
     try {
       const approvalsRes = await callApi('getAllDigitalApprovals', {}, 'GET');
@@ -1064,132 +1140,94 @@
       new bootstrap.Modal(document.getElementById('ttdModal')).show();
     } catch (e) { showToast('Gagal memuat data TTD: ' + e.message, 'error'); }
   };
-  window.viewPeserta = function(id) {
-    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
-    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
-    const modal = new bootstrap.Modal(document.getElementById('detailPesertaModal'));
-    const content = document.getElementById('detailContent');
-    let html = '<div class="list-group list-group-flush">';
-    for (let i = 0; i < STATE.formStructure.length; i++) {
-      const field = STATE.formStructure[i];
-      const val = item[field.id] || '-';
-      html += '<div class="list-group-item py-2"><strong>' + escapeHtml(field.label) + ':</strong> ' + escapeHtml(val) + '</div>';
-    }
-    html += '<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> ' + escapeHtml(item.lokasi_pkd || '-') + '</div>';
-    html += '<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ' + getStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></div>';
-    html += '</div>';
-    content.innerHTML = html; modal.show();
+  window.approveRTLForParticipant = async function(id, nama) {
+    if (!confirm(`Setujui semua tugas RTL untuk peserta "${nama}"?`)) return;
+    try {
+      const res = await callApi('approveAllRTL', { pesertaId: id }, 'POST');
+      if (res.success) { const tasks = STATE.rtlData.filter(t => t.pesertaId == id); tasks.forEach(t => t.status = 'selesai'); showToast(`✅ Semua tugas RTL untuk ${nama} telah disetujui.`, 'success'); applyFiltersAndSort(); }
+      else { showToast('Gagal menyetujui RTL.', 'error'); }
+    } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
   };
-  window.editPeserta = function(id) {
-    const item = STATE.pesertaList.find(p => String(p.id) === String(id));
-    if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
-    document.getElementById('editPesertaId').value = id;
-    document.getElementById('formModalTitle').innerText = 'Edit Peserta';
-    renderDynamicForm(item);
-    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
+  window.generateCertificateForOne = async function(id) {
+    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+    STATE.approvalsData = approvalRes.data || [];
+    const participant = STATE.pesertaList.find(p => String(p.id) === String(id));
+    if (!participant) return;
+    const result = isParticipantEligible(participant, STATE.approvalsData);
+    if (!result.eligible) { showToast('Peserta belum memenuhi syarat: ' + result.reason, 'warning'); return; }
+    openGenerateModal([id]);
   };
-  window.deletePeserta = function(id) { document.getElementById('deletePesertaId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); };
-  document.getElementById('addPesertaBtn')?.addEventListener('click', function() {
-    document.getElementById('editPesertaId').value = '';
-    document.getElementById('formModalTitle').innerText = 'Tambah Peserta';
-    renderDynamicForm();
-    new bootstrap.Modal(document.getElementById('pesertaFormModal')).show();
-  });
-  document.getElementById('savePesertaBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('editPesertaId').value;
-    const form = document.getElementById('dynamicAdminFormContainer').querySelector('form');
-    if (!form) { showToast('Form tidak ditemukan', 'error'); return; }
-    const formData = new FormData(form);
-    let data = { id: id };
-    STATE.formStructure.forEach(field => {
-      const val = formData.get(field.id);
-      if (field.type !== 'file') { data[field.id] = val || ''; }
+  async function openGenerateModal(ids) {
+    const approvalRes = await callApi('getAllDigitalApprovals', {}, 'GET');
+    STATE.approvalsData = approvalRes.data || [];
+    const templatesRes = await callApi('getCertificateTemplates', {}, 'GET');
+    const templates = templatesRes.data || [];
+    const templateSelect = document.getElementById('certTemplateSelect');
+    templateSelect.innerHTML = '<option value="">-- Pilih Template --</option>' + templates.map(t => `<option value="${t.id}">${escapeHtml(t.nama_template)}</option>`).join('');
+    const selectedParticipants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+    let listHtml = '', allValid = true;
+    selectedParticipants.forEach(p => {
+      const result = isParticipantEligible(p, STATE.approvalsData);
+      if (result.eligible) listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)}</span>`;
+      else { listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} <small>(${result.reason})</small></span>`; allValid = false; }
     });
-    const lokasiPkdSelect = form.querySelector('select[name="lokasi_pkd"]');
-    data.lokasi_pkd = lokasiPkdSelect ? lokasiPkdSelect.value : '';
-    const fotoInput = form.querySelector('input[name="foto"]');
-    if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
-      const file = fotoInput.files[0];
-      if (file.size > 0) {
-        data.foto = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
+    document.getElementById('selectedParticipantsList').innerHTML = listHtml;
+    document.getElementById('generateStatusMsg').innerHTML = allValid ? '<i class="bi bi-check-circle text-success"></i> Semua peserta memenuhi syarat.' : '<i class="bi bi-exclamation-triangle text-warning"></i> Ada peserta yang belum memenuhi syarat.';
+    document.getElementById('generateCertSubmit').disabled = !allValid;
+    document.getElementById('generateProgress').style.display = 'none';
+    document.getElementById('generateResultArea').innerHTML = '';
+    document.getElementById('generateCertSubmit').dataset.ids = JSON.stringify(ids);
+    new bootstrap.Modal(document.getElementById('generateCertModal')).show();
+  }
+  function isParticipantEligible(participant, approvalsList) {
+    if (participant.status !== 'approved' && participant.status !== 'active') return { eligible: false, reason: 'Status belum disetujui/aktif.' };
+    const tasks = STATE.rtlData.filter(t => t.pesertaId == participant.id);
+    if (tasks.length > 0 && !tasks.every(t => t.status === 'selesai')) return { eligible: false, reason: 'Belum semua tugas RTL selesai.' };
+    const name = participant.nama_lengkap;
+    const hasKetua = approvalsList.some(a => a.peserta_nama === name && a.role === 'ketua_pc');
+    const hasSekretaris = approvalsList.some(a => a.peserta_nama === name && a.role === 'sekretaris');
+    const hasInstruktur = approvalsList.some(a => a.peserta_nama === name && a.role === 'instruktur');
+    if (!hasKetua || !hasSekretaris || !hasInstruktur) return { eligible: false, reason: `Tanda tangan digital belum lengkap (Butuh: Ketua PC, Sekretaris, Instruktur)` };
+    return { eligible: true };
+  }
+  document.getElementById('generateCertificateBtn').addEventListener('click', function() {
+    const checked = document.querySelectorAll('.peserta-checkbox:checked');
+    const ids = Array.from(checked).map(cb => cb.value);
+    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'info'); return; }
+    openGenerateModal(ids);
+  });
+  document.getElementById('generateCertSubmit').addEventListener('click', async function() {
+    const ids = JSON.parse(this.dataset.ids);
+    const templateId = document.getElementById('certTemplateSelect').value;
+    if (!templateId) { showToast('Pilih template terlebih dahulu.', 'warning'); return; }
+    const participants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+    const validParticipants = participants.filter(p => isParticipantEligible(p, STATE.approvalsData).eligible);
+    if (validParticipants.length === 0) { showToast('Tidak ada peserta yang memenuhi syarat.', 'warning'); return; }
+    const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
+    document.getElementById('generateProgress').style.display = 'block';
+    document.getElementById('generateResultArea').innerHTML = '';
+    let results = [], errors = [];
+    for (let i = 0; i < validParticipants.length; i++) {
+      const p = validParticipants[i];
+      document.getElementById('generateProgressText').innerText = `Memproses ${i+1}/${validParticipants.length}: ${p.nama_lengkap}`;
+      document.querySelector('#generateProgress .progress-bar').style.width = ((i+1)/validParticipants.length * 100) + '%';
+      try {
+        const result = await callApi('generateCertificateForParticipant', { templateId: templateId, pesertaId: p.id }, 'POST');
+        if (result.success) { results.push({ nama: p.nama_lengkap, nomor: result.nomorSertifikat, url: result.pdfUrl }); }
+        else { errors.push({ nama: p.nama_lengkap, error: result.error || 'Gagal' }); }
+      } catch (err) { errors.push({ nama: p.nama_lengkap, error: err.message }); }
     }
-    const suratInput = form.querySelector('input[name="surat_rekomendasi"]');
-    if (suratInput && suratInput.files && suratInput.files.length > 0) {
-      const file = suratInput.files[0];
-      if (file.size > 0) {
-        data.surat_rekomendasi = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
+    document.getElementById('generateProgress').style.display = 'none';
+    btn.disabled = false; btn.innerHTML = 'Generate Sertifikat';
+    let html = '';
+    if (results.length > 0) {
+      html += `<div class="alert alert-success">Berhasil: ${results.length} sertifikat.</div><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
+      results.forEach(r => html += `<tr><td>${escapeHtml(r.nama)}</td><td>${escapeHtml(r.nomor)}</td><td><a href="${escapeHtml(r.url)}" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-download"></i> Unduh</a></td></tr>`);
+      html += `</tbody></table></div>`;
     }
-    if (data.utusan === 'Lainnya') {
-      const utusanLuar = document.getElementById('utusanLuarContainerAdmin')?.querySelector('input')?.value?.trim() || '';
-      data.utusan = utusanLuar ? 'Lainnya - ' + utusanLuar : 'Lainnya (tidak diisi)';
-    }
-    if (!data.lokasi_pkd) { showToast('Lokasi PKD wajib diisi.', 'error'); return; }
-    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-    try {
-      let result = id ? await AdminModule.updatePeserta(data) : await AdminModule.addPeserta(data);
-      if (result.success) { showToast(id ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success'); bootstrap.Modal.getInstance(document.getElementById('pesertaFormModal')).hide(); await loadPesertaData(true); }
-      else { throw new Error(result.error || 'Gagal menyimpan'); }
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = originalText; }
-  });
-  document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('deletePesertaId').value; if (!id) return;
-    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    try {
-      const result = await AdminModule.deletePeserta(id);
-      if (result.success) { showToast('Peserta berhasil dihapus', 'success'); bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); await loadPesertaData(true); }
-      else { throw new Error(result.error || 'Gagal'); }
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = originalText; }
-  });
-  document.getElementById('exportDataBtn')?.addEventListener('click', function() {
-    const data = STATE.filteredList; if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
-    const exportData = data.map(item => ({ id: item.id, nama: item.nama_lengkap, email: item.email, hp: item.no_hp, utusan: item.utusan, lokasi_pkd: item.lokasi_pkd, status: item.status }));
-    const json = JSON.stringify(exportData, null, 2); const blob = new Blob([json], { type: 'application/json' }); const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `peserta_export_${new Date().toISOString().slice(0,10)}.json`; a.click();
-    URL.revokeObjectURL(url); showToast(`Berhasil mengekspor ${data.length} data.`, 'success');
-  });
-  document.getElementById('bulkGenerateTTDBtn')?.addEventListener('click', async function() {
-    const checked = document.querySelectorAll('.peserta-checkbox:checked'); const ids = Array.from(checked).map(cb => cb.value);
-    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'warning'); return; }
-    if (!confirm(`Generate TTD digital untuk ${ids.length} peserta?`)) return;
-    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    try {
-      const res = await callApi('bulkGenerateTTD', { ids: JSON.stringify(ids) }, 'POST');
-      if (res.success) { showToast(`Berhasil generate TTD untuk ${res.addedCount || ids.length} peserta!`, 'success'); await loadPesertaData(false); }
-      else { throw new Error(res.message || 'Gagal generate TTD'); }
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = originalText; }
-  });
-  document.getElementById('moveToAlumniBtn')?.addEventListener('click', async function() {
-    const checked = document.querySelectorAll('.peserta-checkbox:checked'); const ids = Array.from(checked).map(cb => cb.value.trim()).filter(id => id !== '');
-    if (ids.length === 0) { showToast('Pilih minimal satu peserta.', 'warning'); return; }
-    if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?`)) return;
-    const btn = this; const originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    try {
-      const res = await AdminModule.moveMultipleToAlumni(ids);
-      if (res.success) { showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta.`, 'success'); await loadPesertaData(false); }
-      else { throw new Error(res.error || 'Gagal memindahkan'); }
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = originalText; }
-  });
-  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...'; this.disabled = true;
-    loadPesertaData(true).then(() => {
-      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; this.disabled = false; showToast('Data berhasil disegarkan', 'success');
-    }).catch(() => { this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan'; this.disabled = false; showToast('Gagal menyegarkan', 'error'); });
+    if (errors.length > 0) html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul>${errors.map(e => `<li>${escapeHtml(e.nama)}: ${escapeHtml(e.error)}</li>`).join('')}</ul></div>`;
+    document.getElementById('generateResultArea').innerHTML = html;
+    showToast(`Selesai: ${results.length} berhasil, ${errors.length} gagal.`, 'info');
   });
   function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
@@ -1231,6 +1269,23 @@
         html += `</div>`;
       } else { html += `<div class="mb-3"><label class="form-label fw-bold">${escapeHtml(field.label)}${asterisk}</label><input type="text" class="form-control" name="${field.id}" value="${escapeHtml(val)}" ${required}></div>`; }
     });
+    // ==========================================================
+    // 🔥 TAMBAHKAN DROPDOWN STATUS PESERTA
+    // ==========================================================
+    const currentStatus = data ? (data.status || 'pending') : 'pending';
+    const statusOptions = ['pending', 'approved', 'active', 'alumni', 'rejected'];
+    html += `
+        <div class="mb-3">
+            <label class="form-label fw-bold">Status Peserta <span class="text-danger">*</span></label>
+            <select class="form-select" name="status" required>
+                ${statusOptions.map(opt => `<option value="${opt}" ${currentStatus === opt ? 'selected' : ''}>${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`).join('')}
+            </select>
+            <div class="form-text text-muted small">
+                ⚠️ <strong>Perhatian:</strong> Mengubah status ke <strong>'Approved'</strong> akan membuat akun login peserta. Mengubah status ke <strong>'Alumni'</strong> akan memindahkan peserta ke daftar Alumni.
+            </div>
+        </div>
+    `;
+    // ==========================================================
     html += `<div class="mb-3"><label class="form-label fw-bold">Lokasi PKD <span class="text-danger">*</span></label><select class="form-select" name="lokasi_pkd" required><option value="">-- Pilih Lokasi --</option>${lokasiList.map(item => `<option value="${escapeHtml(item.nama)}" ${(data && data.lokasi_pkd === item.nama) ? 'selected' : ''}>${escapeHtml(item.nama)}</option>`).join('')}</select></div>`;
     html += `</form>`;
     container.innerHTML = html; container.classList.add('fade-in');
@@ -1244,13 +1299,17 @@
     }
   }
 
+  // ==========================================================
+  //   BOOT
+  // ==========================================================
   (function boot() {
     if (getUserRole() !== 'admin') { window.location.href = '/bisaa/login.html'; return; }
     updateNavbarMenu(); initSidebar(); loadFormStructure();
     document.getElementById('filterStatus').value = ''; STATE.statusFilter = '';
     document.getElementById('searchInput').value = ''; STATE.searchQuery = '';
     renderSkeletonPeserta(); renderSkeletonFormBuilder();
-    loadPesertaData(true); loadLokasiPKDList(); loadPkdLokasi();
+    loadPesertaData(true);
+    loadLokasiPKDList(); loadPkdLokasi();
     startAutoRefresh();
     document.getElementById('filterStatus')?.addEventListener('change', handleStatusFilter);
     document.getElementById('searchInput')?.addEventListener('input', debounce(handleSearch, 300));
