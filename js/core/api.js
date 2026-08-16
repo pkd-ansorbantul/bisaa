@@ -1,6 +1,6 @@
 // js/core/api.js
 // Core API untuk PKD GP Ansor Bantul - ES Module
-// Versi: 13.0.0 - Full support with LokasiPKD dynamic, guardPublicAccess & All Fixes
+// Versi: 13.0.2 - FULL FIX: Semua ekspor fungsi tersedia, Clean Parameters robust
 // ============================================================
 
 import { SCRIPT_URL, BASE_PATH } from './config.js';
@@ -159,10 +159,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
           });
       };
 
-      // 🔥 FIX: buang key yang value-nya undefined/null supaya tidak ikut
-      // ter-serialize jadi string "undefined" oleh URLSearchParams
-      // (sebelumnya ini menyebabkan mis. status=undefined dikirim ke server
-      // dan filter di backend jadi tidak pernah match apapun -> data kosong)
+      // 🔥 PERBAIKAN PENTING: Bersihkan parameter undefined/null
       const cleanParams = {};
       Object.keys(params || {}).forEach(key => {
         const val = params[key];
@@ -227,7 +224,7 @@ export async function guardPublicAccess() {
   }
 }
 
-// =============================== DEFAULT FORM FIELDS (tanpa lokasi_pkd) ===============================
+// =============================== DEFAULT FORM FIELDS ===============================
 export function getDefaultFormFields() {
   return [
     { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
@@ -241,7 +238,6 @@ export function getDefaultFormFields() {
     { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
     { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
     { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: false, isCore: true }
-    // 🔥 LOKASI_PKD DIHAPUS, AKAN DITANGANI DINAMIS DI FRONTEND
   ];
 }
 
@@ -275,6 +271,11 @@ export function deleteSesiAbsen(id) { return callApi('deleteSesiAbsen', { id }, 
 export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }, 'POST'); }
 export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
 export function getAttendanceSessionStatus(id) { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
+
+// 🔥 PERBAIKAN PENTING: Ekspor submitAbsen agar halaman absen.html bisa berjalan
+export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
+    return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
+}
 
 // --- Materi ---
 export function getMateriList() { return callApi('getMateriList', {}, 'GET'); }
