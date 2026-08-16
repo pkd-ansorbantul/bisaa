@@ -1,9 +1,9 @@
 // js/core/api.js
-// Modul API Terpadu untuk PKD GP Ansor Bantul (ES Module)
-// Versi: 9.1.0 - POST menggunakan application/x-www-form-urlencoded (robust CORS)
+// Core API untuk PKD GP Ansor Bantul - ES Module
+// Versi: 13.0.0 - Full support with LokasiPKD dynamic, guardPublicAccess & All Fixes
 // ============================================================
 
-import { SCRIPT_URL, DEFAULT_CACHE_AGE, APP_NAME, BASE_PATH } from './config.js';
+import { SCRIPT_URL, BASE_PATH } from './config.js';
 
 // =============================== AUTH STATE ===============================
 let userRole = null;
@@ -92,8 +92,9 @@ export function logout() {
 export function updateNavbarMenu() {
   const menu = document.getElementById('navbarUserMenu');
   if (!menu) return;
+  let html = '';
   if (userRole === 'admin') {
-    menu.innerHTML = `
+    html = `
       <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
         <i class="bi bi-shield-fill me-1"></i>Admin
       </span>
@@ -107,219 +108,144 @@ export function updateNavbarMenu() {
           <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
         </ul>
       </div>`;
-  } else if (userRole === 'ketua_pac') {
-    menu.innerHTML = `
-      <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
-        <i class="bi bi-person-badge me-1"></i>Ketua PAC
-      </span>
-      <div class="dropdown">
-        <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Ketua PAC')}
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="${BASE_PATH}ketua_pac.html"><i class="bi bi-house-door me-2"></i>Dashboard Ketua PAC</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
-        </ul>
-      </div>`;
-  } else if (userRole === 'member') {
-    menu.innerHTML = `
-      <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
-        <i class="bi bi-person-fill me-1"></i>Member
-      </span>
-      <div class="dropdown">
-        <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Member')}
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="${BASE_PATH}member.html"><i class="bi bi-person-badge me-2"></i>Profil Saya</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
-        </ul>
-      </div>`;
   } else {
-    menu.innerHTML = `
+    html = `
       <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
         <i class="bi bi-person-circle me-1"></i>Guest
       </span>
       <button class="btn btn-outline-primary rounded-pill px-4" id="apiLoginBtn">Login</button>`;
   }
-
-  document.getElementById('apiLogoutBtn')?.addEventListener('click', function (e) {
-    e.preventDefault();
-    logout();
-  });
-  document.getElementById('apiLoginBtn')?.addEventListener('click', function () {
-    window.location.href = BASE_PATH + 'login.html';
-  });
+  menu.innerHTML = html;
+  document.getElementById('apiLogoutBtn')?.addEventListener('click', function (e) { e.preventDefault(); logout(); });
+  document.getElementById('apiLoginBtn')?.addEventListener('click', function () { window.location.href = BASE_PATH + 'login.html'; });
 }
 
-// =============================== CACHE ===============================
-export function getCache(key, maxAgeMinutes = DEFAULT_CACHE_AGE) {
-  try {
-    const item = localStorage.getItem('pkd_cache_' + key);
-    if (!item) return null;
-    const { data, timestamp } = JSON.parse(item);
-    if ((Date.now() - timestamp) > maxAgeMinutes * 60 * 1000) {
-      localStorage.removeItem('pkd_cache_' + key);
-      return null;
-    }
-    return data;
-  } catch (e) { return null; }
-}
-
-export function setCache(key, data) {
-  try {
-    localStorage.setItem('pkd_cache_' + key, JSON.stringify({ data, timestamp: Date.now() }));
-  } catch (e) { /* ignore */ }
-}
-
-export function clearCache(key = null) {
-  try {
-    if (key) {
-      localStorage.removeItem('pkd_cache_' + key);
-    } else {
-      Object.keys(localStorage)
-        .filter(k => k.startsWith('pkd_cache_'))
-        .forEach(k => localStorage.removeItem(k));
-    }
-  } catch (e) { /* ignore */ }
-}
-
-export async function fetchWithCache(action, params = {}, cacheKey, maxAgeMinutes = DEFAULT_CACHE_AGE, forceRefresh = false) {
-  if (!forceRefresh) {
-    const cached = getCache(cacheKey, maxAgeMinutes);
-    if (cached) return cached;
-  }
-  const result = await callApi(action, params, 'GET');
-  if (result && result.success === true && result.data !== undefined) {
-    setCache(cacheKey, result.data);
-    return result.data;
-  } else if (Array.isArray(result)) {
-    setCache(cacheKey, result);
-    return result;
-  }
-  return null;
-}
-
-// =============================== CORE API (PERBAIKAN POST) ===============================
+// =============================== CORE API ===============================
 export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
-  params = params || {};
-  method = method || 'GET';
-  timeout = timeout || 30000;
-  const finalParams = { action: action, ...params };
-
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve) {
     try {
       let url = SCRIPT_URL;
-      
+      const doFetch = (fetchUrl, fetchOptions) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        fetch(fetchUrl, { ...fetchOptions, signal: controller.signal })
+          .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+              return response.text().then(text => {
+                resolve({ success: false, error: `Server Error (${response.status}): ${text.substring(0, 200)}` });
+              });
+            }
+            return response.json().then(data => {
+              if (typeof data === 'object' && data !== null) {
+                if (data.success === undefined) {
+                  resolve({ success: true, data: data });
+                } else {
+                  resolve(data);
+                }
+              } else {
+                resolve({ success: true, data: data });
+              }
+            });
+          })
+          .catch(err => {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+              resolve({ success: false, error: 'Request timeout' });
+            } else {
+              resolve({ success: false, error: err.message || 'Network error' });
+            }
+          });
+      };
+
+      // 🔥 FIX: buang key yang value-nya undefined/null supaya tidak ikut
+      // ter-serialize jadi string "undefined" oleh URLSearchParams
+      // (sebelumnya ini menyebabkan mis. status=undefined dikirim ke server
+      // dan filter di backend jadi tidak pernah match apapun -> data kosong)
+      const cleanParams = {};
+      Object.keys(params || {}).forEach(key => {
+        const val = params[key];
+        if (val !== undefined && val !== null) cleanParams[key] = val;
+      });
+
       if (method === 'GET') {
-        const qs = new URLSearchParams(finalParams).toString();
+        const qs = new URLSearchParams({ action: action, ...cleanParams }).toString();
         url += '?' + qs;
-        fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
-        })
-        .then(response => {
-          if (!response.ok) throw new Error('HTTP ' + response.status);
-          return response.json();
-        })
-        .then(data => resolve(data))
-        .catch(fetchError => {
-          console.error('Fetch GET gagal, fallback ke JSONP:', fetchError);
-          let callbackName = 'jsonp_cb_' + Date.now();
-          let script = document.createElement('script');
-          let isResolved = false;
-          let timer = setTimeout(function () {
-            if (!isResolved) {
-              isResolved = true;
-              if (document.head.contains(script)) document.head.removeChild(script);
-              delete window[callbackName];
-              reject(new Error('Timeout: Server tidak merespon JSONP'));
-            }
-          }, timeout);
-
-          window[callbackName] = function (data) {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              resolve(data || {});
-            }
-            delete window[callbackName];
-            if (document.head.contains(script)) document.head.removeChild(script);
-          };
-
-          script.onerror = function () {
-            if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timer);
-              delete window[callbackName];
-              if (document.head.contains(script)) document.head.removeChild(script);
-              reject(new Error('Gagal memuat script JSONP'));
-            }
-          };
-
-          let cleanParams = { action: action };
-          for (let k in params) {
-            if (k !== 'tandaTangan' && k !== 'signature' && k !== 'fileData' && params.hasOwnProperty(k)) {
-              cleanParams[k] = params[k];
-            }
-          }
-          let qs = new URLSearchParams({ callback: callbackName });
-          for (let kk in cleanParams) {
-            if (cleanParams.hasOwnProperty(kk)) qs.append(kk, cleanParams[kk]);
-          }
-          script.src = SCRIPT_URL + '?' + qs.toString();
-          document.head.appendChild(script);
-        });
-      } else if (method === 'POST') {
-        // 🔥 PERBAIKAN UTAMA: Gunakan application/x-www-form-urlencoded
-        // Ini menghindari preflight CORS karena bukan application/json
-        const urlEncoded = new URLSearchParams(finalParams).toString();
-        fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: urlEncoded
-        })
-        .then(response => {
-          if (!response.ok) throw new Error('HTTP ' + response.status);
-          return response.json();
-        })
-        .then(data => resolve(data))
-        .catch(err => {
-          console.error('Fetch POST x-www-form-urlencoded gagal:', err);
-          reject(err);
-        });
+        doFetch(url, { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } });
+      } else {
+        const urlEncoded = new URLSearchParams({ action: action, ...cleanParams }).toString();
+        doFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: urlEncoded });
       }
     } catch (e) {
-      reject(e);
+      resolve({ success: false, error: e.message });
     }
   });
 }
 
-export async function guardPublicAccess() {
+// =============================== FETCH WITH CACHE ===============================
+export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinutes = 30, forceRefresh = false) {
+  if (!cacheKey) return await callApi(action, params, 'GET');
+  const CACHE_PREFIX = 'pkd_cache_';
+  const fullKey = CACHE_PREFIX + cacheKey;
+  const now = Date.now();
+  let cached = null;
   try {
-    const loginModeRes = await callApi('getLoginMode', {}, 'GET');
-    const requireLogin = loginModeRes.success ? loginModeRes.enabled : false;
-    if (requireLogin) {
-      const role = getUserRole();
-      if (!role || role === 'guest' || role === null) {
-        const currentPage = window.location.pathname.split('/').pop();
-        window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(currentPage);
-        return false;
-      }
+    const item = localStorage.getItem(fullKey);
+    if (item) {
+      const parsed = JSON.parse(item);
+      if (now - parsed.timestamp < cacheAgeMinutes * 60 * 1000) cached = parsed.data;
+    }
+  } catch (e) {}
+  if (!forceRefresh && cached !== null) return cached;
+  try {
+    const res = await callApi(action, params, 'GET');
+    let data = res?.data || res;
+    try { localStorage.setItem(fullKey, JSON.stringify({ data, timestamp: now })); } catch (e) {}
+    return data;
+  } catch (e) {
+    if (cached !== null) return cached;
+    throw e;
+  }
+}
+
+// =============================== GUARD PUBLIC ACCESS ===============================
+export async function guardPublicAccess() {
+  const role = getUserRole();
+  if (role) return true;
+  try {
+    const modeRes = await getLoginMode();
+    if (modeRes.success && modeRes.enabled) {
+      const redirect = window.location.pathname;
+      window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(redirect);
+      return false;
     }
     return true;
   } catch (e) {
-    console.warn('Gagal mengecek login mode, fallback ke akses publik:', e);
+    console.warn('Gagal memeriksa login mode, mengizinkan akses publik.');
     return true;
   }
 }
 
-// =============================== WRAPPER FUNCTIONS ===============================
+// =============================== DEFAULT FORM FIELDS (tanpa lokasi_pkd) ===============================
+export function getDefaultFormFields() {
+  return [
+    { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
+    { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', options: '', required: true, isCore: true },
+    { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', options: '', required: true, isCore: true },
+    { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', options: '', required: true, isCore: true },
+    { id: 'alamat', label: 'Alamat', type: 'textarea', options: '', required: true, isCore: true },
+    { id: 'no_hp', label: 'No HP', type: 'text', options: '', required: true, isCore: true },
+    { id: 'email', label: 'Email', type: 'text', options: '', required: true, isCore: true },
+    { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
+    { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
+    { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
+    { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: false, isCore: true }
+    // 🔥 LOKASI_PKD DIHAPUS, AKAN DITANGANI DINAMIS DI FRONTEND
+  ];
+}
+
+// =============================== EXPORTED API FUNCTIONS ===============================
 
 // --- Autentikasi ---
 export function verifyAdmin(username, password) { return callApi('verifyAdmin', { username, password }, 'GET'); }
@@ -327,21 +253,21 @@ export function verifyKetuaPAC(username, password) { return callApi('verifyKetua
 export function verifyMember(username, password) { return callApi('verifyMember', { username, password }, 'GET'); }
 
 // --- Peserta ---
-export function getPesertaList(status) { const params = {}; if (status !== undefined) params.status = status; return callApi('getPesertaList', params, 'GET'); }
-export function submitPeserta(formData) { return callApi('submitPeserta', formData, 'POST'); }
+export function getPesertaList(status) { return callApi('getPesertaList', status ? { status } : {}, 'GET'); }
+export function submitPeserta(data) { return callApi('submitPeserta', data, 'POST'); }
 export function deletePeserta(id) { return callApi('deletePeserta', { id }, 'POST'); }
-export function updatePeserta(formData) { return callApi('updatePeserta', formData, 'POST'); }
+export function updatePeserta(data) { return callApi('updatePeserta', data, 'POST'); }
 export function approvePeserta(id) { return callApi('approvePeserta', { id }, 'POST'); }
 export function rejectPeserta(id) { return callApi('rejectPeserta', { id }, 'POST'); }
 export function getPesertaById(id) { return callApi('getPesertaById', { id }, 'GET'); }
-export function getPesertaCredentials(id) { return callApi('getPesertaCredentials', { id }, 'GET'); }
 export function getTotalPeserta() { return callApi('getTotalPeserta', {}, 'GET'); }
 export function getAlumniList() { return callApi('getAlumniList', {}, 'GET'); }
 export function moveToAlumni(id) { return callApi('moveToAlumni', { id }, 'POST'); }
 export function moveMultipleToAlumni(ids) { return callApi('moveMultipleToAlumni', { ids }, 'POST'); }
 export function moveBackToActive(id) { return callApi('moveBackToActive', { id }, 'POST'); }
+export function getPesertaCredentials(id) { return callApi('getPesertaCredentials', { id }, 'GET'); }
 
-// --- Absensi ---
+// --- Sesi Absen ---
 export function getSesiAbsen() { return callApi('getSesiAbsen', {}, 'GET'); }
 export function addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('addSesiAbsen', { nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
 export function updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('updateSesiAbsen', { id, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
@@ -350,97 +276,76 @@ export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }
 export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
 export function getAttendanceSessionStatus(id) { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
 
-export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
-  return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
-}
-
-export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
-export function getAttendanceBySesi(sesiId) { return callApi('getAttendanceBySesi', { sesiId }, 'GET'); }
-export function getAttendanceMatrix() { return callApi('getAttendanceMatrix', {}, 'GET'); }
-
-// --- Skrining ---
-export function getSkriningQuestions() { return callApi('getSkriningQuestions', {}, 'GET'); }
-export function addSkriningQuestion(teks, jenis, opsi, urutan) { return callApi('addSkriningQuestion', { teks, jenis, opsi, urutan }, 'POST'); }
-export function updateSkriningQuestion(id, teks, jenis, opsi, urutan) { return callApi('updateSkriningQuestion', { id, teks, jenis, opsi, urutan }, 'POST'); }
-export function deleteSkriningQuestion(id) { return callApi('deleteSkriningQuestion', { id }, 'POST'); }
-export function submitSkrining(formData) { return callApi('submitSkrining', formData, 'POST'); }
-export function getSkriningResponses() { return callApi('getSkriningResponses', {}, 'GET'); }
-
-// --- Pretest ---
-export function getPretestQuestions() { return callApi('getPretestQuestions', {}, 'GET'); }
-export function addPretestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) { return callApi('addPretestQuestion', { teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST'); }
-export function updatePretestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) { return callApi('updatePretestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST'); }
-export function deletePretestQuestion(id) { return callApi('deletePretestQuestion', { id }, 'POST'); }
-export function submitPretest(nama, nohp, alamat, answers, score) { return callApi('submitPretest', { nama, nohp, alamat, answers, score }, 'POST'); }
-export function getPretestResponses() { return callApi('getPretestResponses', {}, 'GET'); }
-
-// --- Posttest ---
-export function getPosttestQuestions() { return callApi('getPosttestQuestions', {}, 'GET'); }
-export function addPosttestQuestion(teks, opsi, jawaban, urutan, timer_enabled, timer_duration) { return callApi('addPosttestQuestion', { teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST'); }
-export function updatePosttestQuestion(id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration) { return callApi('updatePosttestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled, timer_duration }, 'POST'); }
-export function deletePosttestQuestion(id) { return callApi('deletePosttestQuestion', { id }, 'POST'); }
-export function submitPosttest(nama, nohp, alamat, answers, score) { return callApi('submitPosttest', { nama, nohp, alamat, answers, score }, 'POST'); }
-export function getPosttestResponses() { return callApi('getPosttestResponses', {}, 'GET'); }
-
 // --- Materi ---
 export function getMateriList() { return callApi('getMateriList', {}, 'GET'); }
-export function addMateri(judul, deskripsi, fileData, fileName, uploadBy) { return callApi('addMateri', { judul, deskripsi, fileData, fileName, uploadBy }, 'POST'); }
+export function addMateri(judul, deskripsi, file, fileName, uploadBy) { return callApi('addMateri', { judul, deskripsi, file, fileName, uploadBy }, 'POST'); }
 export function deleteMateri(id, fileId) { return callApi('deleteMateri', { id, fileId }, 'POST'); }
 
-// --- Informasi ---
-export function getInfoList() { return callApi('getInfoList', {}, 'GET'); }
-export function addInfo(params) { return callApi('addInfo', params, 'POST'); }
-export function updateInfo(params) { return callApi('updateInfo', params, 'POST'); }
-export function deleteInfo(id) { return callApi('deleteInfo', { id }, 'POST'); }
-export function toggleInfoStatus(id) { return callApi('toggleInfoStatus', { id }, 'POST'); }
-
-// --- Usulan ---
-export function getUsulanList() { return callApi('getUsulanList', {}, 'GET'); }
-export function submitUsulan(formData) { return callApi('submitUsulan', formData, 'POST'); }
-export function updateUsulanStatus(id, status) { return callApi('updateUsulanStatus', { id, status }, 'POST'); }
-
-// --- Sertifikat ---
-export function getCertificateTemplates() { return callApi('getCertificateTemplates', {}, 'GET'); }
-export function getCertPresets() { return callApi('getCertPresets', {}, 'GET'); }
-export function addCertPreset(name, config) { return callApi('addCertPreset', { name, config }, 'POST'); }
-export function updateCertPreset(id, name, config) { return callApi('updateCertPreset', { id, name, config }, 'POST'); }
-export function deleteCertPreset(id) { return callApi('deleteCertPreset', { id }, 'POST'); }
-export function addCertificateTemplateManual(nama_template, doc_template_id, config) { return callApi('addCertificateTemplateManual', { nama_template, doc_template_id, config }, 'POST'); }
-export function updateCertificateTemplate(id, nama_template, doc_template_id, config) { return callApi('updateCertificateTemplate', { id, nama_template, doc_template_id, config }, 'POST'); }
-export function deleteCertificateTemplate(id) { return callApi('deleteCertificateTemplate', { id }, 'POST'); }
-export function generateCertificates(templateId, presetId, participants, startNumber, customData) { return callApi('generateCertificates', { templateId, presetId, participants: JSON.stringify(participants), startNumber, customData: JSON.stringify(customData || {}) }, 'POST'); }
-export function getUploadedCertificates() { return callApi('getUploadedCertificates', {}, 'GET'); }
-export function uploadManualCertificate(pesertaId, nomorSertifikat, fileData) { return callApi('uploadManualCertificate', { pesertaId, nomorSertifikat, fileData }, 'POST'); }
-export function verifyCertificate(nomor) { return callApi('verifyCertificate', { nomor }, 'GET'); }
-export function getNextCertificateNumber() { return callApi('getNextCertificateNumber', {}, 'GET'); }
-export function saveCertificateLayout(nama, data_json, id) { return callApi('saveCertificateLayout', { nama, data_json, id }, 'POST'); }
-export function getCertificateLayout(identifier) { return callApi('getCertificateLayout', { id: identifier, nama: identifier }, 'GET'); }
-export function listCertificateLayouts() { return callApi('listCertificateLayouts', {}, 'GET'); }
-
-// --- Tanda Tangan Digital ---
-export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) { return callApi('submitDigitalSignature', { role, nama, signature, password, peserta_nama, kegunaan }, 'POST'); }
-export function getDigitalApproval(role) { return callApi('getDigitalApproval', { role }, 'GET'); }
-export function getAllDigitalApprovals() { return callApi('getAllDigitalApprovals', {}, 'GET'); }
-export function updateSignPassword(role, newPassword) { return callApi('updateSignPassword', { role, newPassword }, 'POST'); }
-export function getSignPasswords() { return callApi('getSignPasswords', {}, 'GET'); }
-export function bulkGenerateTTD(params) { return callApi('bulkGenerateTTD', params, 'POST'); }
-
-// --- RTL ---
-export function getRTLTasks(pesertaId) { return callApi('getRTLTasks', { pesertaId }, 'GET'); }
-export function addRTLTask(params) { return callApi('addRTLTask', params, 'POST'); }
-export function updateRTLTask(params) { return callApi('updateRTLTask', params, 'POST'); }
-export function deleteRTLTask(id) { return callApi('deleteRTLTask', { id }, 'POST'); }
-export function submitRTLAttachment(taskId, fileData, fileName) { return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST'); }
-export function getRTLAttachments(taskId) { return callApi('getRTLAttachments', { taskId }, 'GET'); }
-export function approveRTLTask(id) { return callApi('approveRTLTask', { id }, 'POST'); }
-export function approveAllRTL(pesertaId) { return callApi('approveAllRTL', { pesertaId }, 'POST'); }
-export function getRTLStatus(pesertaId) { return callApi('getRTLStatus', { pesertaId }, 'GET'); }
+// --- Skrining & Quiz ---
+export function getSkriningResponses() { return callApi('getSkriningResponses', {}, 'GET'); }
+export function getPretestResponses() { return callApi('getPretestResponses', {}, 'GET'); }
+export function getPosttestResponses() { return callApi('getPosttestResponses', {}, 'GET'); }
+export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
 
 // --- Kader ---
 export function getKaderList() { return callApi('getKaderList', {}, 'GET'); }
 export function addKader(params) { return callApi('addKader', params, 'POST'); }
 export function updateKader(params) { return callApi('updateKader', params, 'POST'); }
 export function deleteKader(id) { return callApi('deleteKader', { id }, 'POST'); }
+
+// --- Informasi & Usulan ---
+export function getInfoList() { return callApi('getInfoList', {}, 'GET'); }
+export function addInfo(params) { return callApi('addInfo', params, 'POST'); }
+export function updateInfo(params) { return callApi('updateInfo', params, 'POST'); }
+export function deleteInfo(id) { return callApi('deleteInfo', { id }, 'POST'); }
+export function toggleInfoStatus(id) { return callApi('toggleInfoStatus', { id }, 'POST'); }
+export function getUsulanList() { return callApi('getUsulanList', {}, 'GET'); }
+export function updateUsulanStatus(id, status) { return callApi('updateUsulanStatus', { id, status }, 'POST'); }
+
+// --- Asset & Folders ---
+export function getAssetList() { return callApi('getAssetList', {}, 'GET'); }
+export function addAsset(params) { return callApi('addAsset', params, 'POST'); }
+export function updateAsset(params) { return callApi('updateAsset', params, 'POST'); }
+export function deleteAsset(id) { return callApi('deleteAsset', { id }, 'POST'); }
+export function getFolders() { return callApi('getFolders', {}, 'GET'); }
+export function addFolder(nama, parentId) { return callApi('addFolder', { nama, parentId }, 'POST'); }
+export function deleteFolder(id) { return callApi('deleteFolder', { id }, 'POST'); }
+
+export function toggleFolderPublic(params) { return callApi('toggleFolderPublic', params, 'POST'); }
+export function toggleFolderHideFromGallery(params) { return callApi('toggleFolderHideFromGallery', params, 'POST'); }
+export function setFolderPassword(params) { return callApi('setFolderPassword', params, 'POST'); }
+export function clearFolderPassword(params) { return callApi('clearFolderPassword', params, 'POST'); }
+
+// --- RTL & Tugas ---
+export function getRTLTasks(pesertaId) { return callApi('getRTLTasks', { pesertaId }, 'GET'); }
+export function addRTLTask(params) { return callApi('addRTLTask', params, 'POST'); }
+export function updateRTLTask(params) { return callApi('updateRTLTask', params, 'POST'); }
+export function deleteRTLTask(id) { return callApi('deleteRTLTask', { id }, 'POST'); }
+export function approveRTLTask(id) { return callApi('approveRTLTask', { id }, 'POST'); }
+export function approveAllRTL(pesertaId) { return callApi('approveAllRTL', { pesertaId }, 'POST'); }
+export function getRTLStatus(pesertaId) { return callApi('getRTLStatus', { pesertaId }, 'GET'); }
+export function submitRTLAttachment(taskId, fileData, fileName) { return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST'); }
+
+// --- Sertifikat ---
+export function getUploadedCertificates() { return callApi('getUploadedCertificates', {}, 'GET'); }
+export function getCertificateTemplates() { return callApi('getCertificateTemplates', {}, 'GET'); }
+export function addCertificateTemplateManual(params) { return callApi('addCertificateTemplateManual', params, 'POST'); }
+export function updateCertificateTemplate(params) { return callApi('updateCertificateTemplate', params, 'POST'); }
+export function deleteCertificateTemplate(id) { return callApi('deleteCertificateTemplate', { id }, 'POST'); }
+export function generateCertificateForParticipant(templateId, pesertaId) { return callApi('generateCertificateForParticipant', { templateId, pesertaId }, 'POST'); }
+export function getCertPresets() { return callApi('getCertPresets', {}, 'GET'); }
+export function listCertificateLayouts() { return callApi('listCertificateLayouts', {}, 'GET'); }
+export function saveCertificateLayout(nama, data_json, id) { return callApi('saveCertificateLayout', { nama, data_json, id }, 'POST'); }
+
+// --- Tanda Tangan Digital ---
+export function getAllDigitalApprovals() { return callApi('getAllDigitalApprovals', {}, 'GET'); }
+export function bulkGenerateTTD(params) { return callApi('bulkGenerateTTD', params, 'POST'); }
+export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) { return callApi('submitDigitalSignature', { role, nama, signature, password, peserta_nama, kegunaan }, 'POST'); }
+
+// --- 🔥 LOKASI PKD DINAMIS ---
+export function getLokasiPKDList() { return callApi('getLokasiPKDList', {}, 'GET'); }
+export function addLokasiPKD(nama) { return callApi('addLokasiPKD', { nama }, 'POST'); }
+export function deleteLokasiPKD(id) { return callApi('deleteLokasiPKD', { id }, 'POST'); }
 
 // --- Pengaturan ---
 export function getQuizSettings() { return callApi('getQuizSettings', {}, 'GET'); }
@@ -449,41 +354,15 @@ export function getLoginMode() { return callApi('getLoginMode', {}, 'GET'); }
 export function setLoginMode(enabled) { return callApi('setLoginMode', { enabled }, 'POST'); }
 export function getPublicVisibility() { return callApi('getPublicVisibility', {}, 'GET'); }
 export function setPublicVisibility(data) { return callApi('setPublicVisibility', { data: JSON.stringify(data) }, 'POST'); }
-export function getDashboardStats() { return callApi('getDashboardStats', {}, 'GET'); }
-export function getRealtimeSetting() { return callApi('getRealtimeSetting', {}, 'GET'); }
-export function setRealtimeSetting(enabled) { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
-export function getFormSettings() { return callApi('getFormSettings', {}, 'GET'); }
-export function setFormSettings(fields) { return callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST'); }
 export function getPKDLokasi() { return callApi('getPKDLokasi', {}, 'GET'); }
 export function setPKDLokasi(lokasi) { return callApi('setPKDLokasi', { lokasi }, 'POST'); }
-
-// --- Member ---
-export function getMemberData(username) { return callApi('getMemberData', { username }, 'GET'); }
-export function updateMemberProfile(username, data) { return callApi('updateMemberProfile', { username, ...data }, 'POST'); }
-export function getMemberSkrining(nama) { return callApi('getMemberSkrining', { nama }, 'GET'); }
-export function getMemberAbsensi(nama) { return callApi('getMemberAbsensi', { nama }, 'GET'); }
-export function getMemberSertifikat(nama) { return callApi('getMemberSertifikat', { nama }, 'GET'); }
-export function getMemberUsername(params) { return callApi('getMemberUsername', params, 'GET'); }
-export function verifyMemberForgot(params) { return callApi('verifyMemberForgot', params, 'GET'); }
-export function resetMemberPassword(params) { return callApi('resetMemberPassword', params, 'POST'); }
-
-// --- Aset Digital ---
-export function getAssetList() { return callApi('getAssetList', {}, 'GET'); }
-export function addAsset(params) { return callApi('addAsset', params, 'POST'); }
-export function deleteAsset(id) { return callApi('deleteAsset', { id }, 'POST'); }
-export function getFolders() { return callApi('getFolders', {}, 'GET'); }
-export function addFolder(nama, parentId) { return callApi('addFolder', { nama, parentId }, 'POST'); }
-export function deleteFolder(id) { return callApi('deleteFolder', { id }, 'POST'); }
-
-// --- Generate Sertifikat per Peserta ---
-export function generateCertificateForParticipant(templateId, pesertaId) {
-  return callApi('generateCertificateForParticipant', { templateId, pesertaId }, 'POST');
-}
+export function getFormSettings() { return callApi('getFormSettings', {}, 'GET'); }
+export function setFormSettings(fields) { return callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST'); }
+export function getRealtimeSetting() { return callApi('getRealtimeSetting', {}, 'GET'); }
+export function setRealtimeSetting(enabled) { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
 
 // --- Kontak ---
-export function submitKontak(nama, email, pesan, username, role, ip) {
-  return callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'GET');
-}
+export function submitKontak(nama, email, pesan, username, role, ip) { return callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'GET'); }
 
 // =============================== INIT ===============================
 if (typeof document !== 'undefined') {
