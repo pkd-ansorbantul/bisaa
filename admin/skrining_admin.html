@@ -62,25 +62,11 @@
     }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-    /* --- SUBMENU --- */
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
     .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
     .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
@@ -131,6 +117,19 @@
     .badge-jenis { font-size: 0.75rem; padding: 4px 10px; border-radius: 50px; }
     .badge-text { background: #e2e8f0; color: #475569; }
     .badge-radio { background: #dbeafe; color: #2563eb; }
+
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+        background: #e2e8f0;
+        border-radius: 8px;
+        animation: pulse 1.5s infinite ease-in-out;
+        display: inline-block;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
   </style>
 </head>
 <body>
@@ -268,7 +267,7 @@
 
       <!-- TABLE SKRINING -->
       <div id="skriningTableContainer" class="table-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+        <!-- Akan diisi skeleton atau data -->
       </div>
 
       <!-- KELOLA PERTANYAAN -->
@@ -279,7 +278,7 @@
           <button class="btn btn-outline-secondary rounded-pill" id="loadDefaultQuestionsBtn"><i class="bi bi-arrow-repeat me-1"></i> Muat Default</button>
         </div>
         <div id="questionsTableContainer" class="table-container">
-          <div class="text-center py-3 text-muted">Memuat pertanyaan...</div>
+          <!-- Akan diisi skeleton atau data -->
         </div>
       </div>
     </div>
@@ -334,7 +333,7 @@
   </div>
 </div>
 
-<!-- ==================== MODAL DETAIL SKRINING (MENAMPILKAN 9 JAWABAN) ==================== -->
+<!-- ==================== MODAL DETAIL SKRINING (MENAMPILKAN SEMUA JAWABAN) ==================== -->
 <div class="modal fade" id="detailSkriningModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg">
@@ -443,17 +442,10 @@
     showToast,
     escapeHtml,
     getUserRole,
-    updateNavbarMenu
+    updateNavbarMenu,
+    logout
   } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
-
-  // ==========================================================
-  //   TOGGLE PASSWORD VISIBILITY (diekspos ke global)
-  // ==========================================================
-  window.togglePasswordVisibility = function(id) {
-    const el = document.getElementById(id);
-    if (el) el.type = el.type === 'password' ? 'text' : 'password';
-  };
 
   // ==========================================================
   //   STATE & UTILITY
@@ -468,7 +460,9 @@
     isEditing: false
   };
 
-  function generateId() { return 'sk' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
+  let refreshInterval = null;
+
+  function generateId() { return 'sk_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
 
   function getHasilBadge(hasil) {
     if (hasil === 'Layak') return 'bg-success';
@@ -503,6 +497,73 @@
   }
 
   // ==========================================================
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonSkrining() {
+    const container = document.getElementById('skriningTableContainer');
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th style="width:200px;"><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(5).fill(0).map(() => `
+              <tr>
+                <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:150px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderSkeletonQuestions() {
+    const container = document.getElementById('questionsTableContainer');
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th class="text-center"><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(5).fill(0).map(() => `
+              <tr>
+                <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:150px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td class="text-center"><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // ==========================================================
   //   SIDEBAR TOGGLE & SUBMENU
   // ==========================================================
   document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
@@ -528,25 +589,21 @@
   // ==========================================================
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
     const modalEl = document.getElementById('moreMenuModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   // ==========================================================
-  //   🔥 PERBAIKAN UTAMA: LOAD DATA DENGAN FORCE REFRESH & RESET FILTER
+  //   LOAD DATA SKRINING
   // ==========================================================
-  async function loadData(forceRefresh = false) {
+  async function loadSkriningData(forceRefresh = false) {
     const container = document.getElementById('skriningTableContainer');
-    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-
     try {
       if (!AdminModule.getState().lastSync || forceRefresh) {
         await AdminModule.loadAllData(forceRefresh);
@@ -555,14 +612,10 @@
       
       if (freshData && Array.isArray(freshData) && freshData.length > 0) {
         STATE.skriningList = freshData;
-        
-        // Reset filter agar semua data muncul saat load
         document.getElementById('searchInput').value = '';
         document.getElementById('filterHasil').value = '';
         STATE.searchQuery = '';
         STATE.hasilFilter = '';
-        
-        // Tampilkan SEMUA data tanpa filter
         renderTable(STATE.skriningList);
         updateCacheStatus('Live');
       } else {
@@ -577,12 +630,10 @@
   }
 
   // ==========================================================
-  //   LOAD PERTANYAAN SKRINING (via API)
+  //   LOAD PERTANYAAN SKRINING
   // ==========================================================
   async function loadQuestions(forceRefresh = false) {
     const container = document.getElementById('questionsTableContainer');
-    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
-
     try {
       const result = await callApi('getSkriningQuestions', {}, 'GET');
       const freshQuestions = result?.data || result;
@@ -618,7 +669,7 @@
   }
 
   // ==========================================================
-  //   RENDER TABEL SKRINING (Tampilkan SEMUA data)
+  //   RENDER TABEL SKRINING
   // ==========================================================
   function renderTable(data) {
     const container = document.getElementById('skriningTableContainer');
@@ -664,7 +715,7 @@
     return updated;
   }
 
-  function deleteSkrining(id) {
+  function deleteSkriningLocal(id) {
     const index = STATE.skriningList.findIndex(item => String(item.id) === String(id));
     if (index === -1) return false;
     STATE.skriningList.splice(index, 1);
@@ -674,20 +725,57 @@
   function getSkriningById(id) { return STATE.skriningList.find(item => String(item.id) === String(id)); }
 
   // ==========================================================
-  //   EVENT HANDLERS (DATA SKRINING) - diekspos ke global
+  //   VIEW DETAIL (Menampilkan semua jawaban berdasarkan ID yang benar)
   // ==========================================================
-  function resetForm() {
-    document.getElementById('editSkriningId').value = '';
-    document.getElementById('skriningNama').value = '';
-    document.getElementById('skriningAlamat').value = '';
-    document.getElementById('skriningHasil').value = 'Layak';
-    document.getElementById('skriningTanggal').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('skriningNote').value = '';
-    document.getElementById('formModalTitle').innerText = 'Tambah Skrining';
-    STATE.isEditing = false;
-  }
-  function openAddModal() { resetForm(); new bootstrap.Modal(document.getElementById('skriningFormModal')).show(); }
-  function openEditModal(id) {
+  window.viewSkrining = function(id) {
+    const item = getSkriningById(id);
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      return;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('detailSkriningModal'));
+    const content = document.getElementById('detailContent');
+    const badge = getHasilBadge(item.hasil);
+
+    let html = `
+        <div class="list-group list-group-flush border rounded-3">
+            <div class="list-group-item py-3 bg-light"><strong>🔹 Hasil Skrining:</strong> <span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></div>
+    `;
+
+    const excludeFields = ['id', 'timestamp', 'hasil', 'catatan', 'dataJson', 'signatureDriveId'];
+    Object.keys(item).forEach(key => {
+        if (!excludeFields.includes(key)) {
+            const val = item[key] || '-';
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `<div class="list-group-item py-3"><strong>${escapeHtml(label)}:</strong> <br> ${escapeHtml(val)}</div>`;
+        }
+    });
+
+    if (item.catatan && item.catatan.trim() !== '') {
+        html += `<div class="list-group-item py-3"><strong>Catatan:</strong> <br> ${escapeHtml(item.catatan)}</div>`;
+    }
+
+    if (item.dataJson) {
+        try {
+            const extraData = JSON.parse(item.dataJson);
+            Object.keys(extraData).forEach(key => {
+                const val = extraData[key] || '-';
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                html += `<div class="list-group-item py-3"><strong>${escapeHtml(label)}:</strong> <br> ${escapeHtml(val)}</div>`;
+            });
+        } catch (e) { console.warn('Gagal parse dataJson:', e); }
+    }
+
+    html += `
+            <div class="list-group-item py-3 text-muted small"><i class="bi bi-clock me-1"></i> Waktu Skrining: ${escapeHtml(formatTimestamp(item.timestamp))}</div>
+        </div>
+    `;
+
+    content.innerHTML = html;
+    modal.show();
+  };
+
+  window.editSkrining = function(id) {
     const item = getSkriningById(id);
     if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
     document.getElementById('editSkriningId').value = id;
@@ -699,47 +787,46 @@
     document.getElementById('formModalTitle').innerText = 'Edit Skrining';
     STATE.isEditing = true;
     new bootstrap.Modal(document.getElementById('skriningFormModal')).show();
-  }
+  };
 
-  // 🔥 PERBAIKAN UTAMA: Tampilkan 9 Jawaban di Modal Detail
-  function openDetailModal(id) {
-    const item = getSkriningById(id);
-    if (!item) { showToast('Data tidak ditemukan.', 'error'); return; }
-    const modal = new bootstrap.Modal(document.getElementById('detailSkriningModal'));
-    const content = document.getElementById('detailContent');
-    const badge = getHasilBadge(item.hasil);
+  window.deleteSkrining = function(id) {
+    document.getElementById('deleteSkriningId').value = id;
+    new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+  };
 
-    let html = `
-      <div class="list-group list-group-flush border rounded-3">
-        <div class="list-group-item py-3 bg-light"><strong>🔹 Hasil Skrining:</strong> <span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></div>
-        <div class="list-group-item py-3"><strong>1. Nama Lengkap:</strong> <br> ${escapeHtml(item.nama || '-')}</div>
-        <div class="list-group-item py-3"><strong>2. Alamat:</strong> <br> ${escapeHtml(item.alamat || '-')}</div>
-        <div class="list-group-item py-3"><strong>3. Info Rekrutmen:</strong> <br> ${escapeHtml(item.info || '-')}</div>
-        <div class="list-group-item py-3"><strong>4. Pengetahuan tentang Ansor:</strong> <br> ${escapeHtml(item.pengetahuan || '-')}</div>
-        <div class="list-group-item py-3"><strong>5. Doa Qunut?</strong> <br> ${escapeHtml(item.qunut || '-')}</div>
-        <div class="list-group-item py-3"><strong>6. Riwayat Penyakit:</strong> <br> ${escapeHtml(item.penyakit || '-')}</div>
-        <div class="list-group-item py-3"><strong>7. Pernah rekrutmen PKD / diklatsar?</strong> <br> ${escapeHtml(item.pernah || '-')}</div>
-        <div class="list-group-item py-3"><strong>8. Alasan tertarik mengikuti PKD:</strong> <br> ${escapeHtml(item.alasan || '-')}</div>
-        <div class="list-group-item py-3"><strong>9. Catatan:</strong> <br> ${escapeHtml(item.catatan || '-')}</div>
-        <div class="list-group-item py-3 text-muted small"><i class="bi bi-clock me-1"></i> Waktu Skrining: ${escapeHtml(formatTimestamp(item.timestamp))}</div>
-      </div>
-    `;
-    content.innerHTML = html; modal.show();
-  }
-
-  function confirmDelete(id) { document.getElementById('deleteSkriningId').value = id; new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); }
-  
-  function executeDelete() {
+  // ==========================================================
+  //   EXECUTE DELETE (SERVER & LOCAL)
+  // ==========================================================
+  async function executeDelete() {
     const id = document.getElementById('deleteSkriningId').value;
     if (!id) return;
-    const result = deleteSkrining(id);
-    if (result) { 
-      showToast('Data skrining berhasil dihapus.', 'success'); 
-      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); 
-      renderTable(STATE.skriningList); // Render ulang semua data
-    } else { showToast('Gagal menghapus data.', 'error'); }
+    
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menghapus...';
+
+    try {
+      const res = await callApi('deleteSkriningResponse', { id }, 'POST');
+      if (res.success) {
+        deleteSkriningLocal(id);
+        showToast('Data skrining berhasil dihapus.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+        renderTable(STATE.skriningList);
+      } else {
+        throw new Error(res.error || 'Gagal menghapus data di server.');
+      }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
 
+  // ==========================================================
+  //   SAVE DATA (ADD / UPDATE)
+  // ==========================================================
   function saveData() {
     const id = document.getElementById('editSkriningId').value;
     const nama = document.getElementById('skriningNama').value.trim();
@@ -767,6 +854,9 @@
     }
   }
 
+  // ==========================================================
+  //   EXPORT DATA
+  // ==========================================================
   function exportData() {
     const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.skriningList;
     if (data.length === 0) { showToast('Tidak ada data untuk diekspor.', 'info'); return; }
@@ -787,13 +877,8 @@
     showToast(`Berhasil mengekspor ${data.length} data skrining.`, 'success');
   }
 
-  // Ekspos fungsi global
-  window.viewSkrining = openDetailModal;
-  window.editSkrining = openEditModal;
-  window.deleteSkrining = confirmDelete;
-
   // ==========================================================
-  //   EVENT HANDLERS (PERTANYAAN) - diekspos ke global
+  //   QUESTION CRUD
   // ==========================================================
   function resetQuestionForm() {
     document.getElementById('editQuestionId').value = '';
@@ -930,14 +1015,48 @@
   }
 
   // ==========================================================
+  //   AUTO REFRESH (Polling setiap 30 detik)
+  // ==========================================================
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      AdminModule.loadAllData(false).then(() => {
+        const fresh = AdminModule.getSkriningList() || [];
+        if (JSON.stringify(STATE.skriningList) !== JSON.stringify(fresh)) {
+          STATE.skriningList = fresh;
+          // Reset filter agar semua data tampil saat refresh
+          document.getElementById('searchInput').value = '';
+          document.getElementById('filterHasil').value = '';
+          STATE.searchQuery = '';
+          STATE.hasilFilter = '';
+          renderTable(STATE.skriningList);
+          updateCacheStatus('Live');
+        }
+      }).catch(() => {
+        updateCacheStatus('Offline');
+      });
+    }, 30000);
+  }
+
+  // ==========================================================
   //   EVENT LISTENERS TOMBOL
   // ==========================================================
-  document.getElementById('addSkriningBtn')?.addEventListener('click', openAddModal);
+  document.getElementById('addSkriningBtn')?.addEventListener('click', function() {
+    document.getElementById('editSkriningId').value = '';
+    document.getElementById('skriningNama').value = '';
+    document.getElementById('skriningAlamat').value = '';
+    document.getElementById('skriningHasil').value = 'Layak';
+    document.getElementById('skriningTanggal').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('skriningNote').value = '';
+    document.getElementById('formModalTitle').innerText = 'Tambah Skrining';
+    STATE.isEditing = false;
+    new bootstrap.Modal(document.getElementById('skriningFormModal')).show();
+  });
   document.getElementById('exportDataBtn')?.addEventListener('click', exportData);
   document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
     this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
     this.disabled = true;
-    Promise.all([loadData(true), loadQuestions(true)]).then(() => {
+    Promise.all([loadSkriningData(true), loadQuestions(true)]).then(() => {
       this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
       this.disabled = false;
       showToast('Data berhasil disegarkan', 'success');
@@ -963,7 +1082,7 @@
   document.getElementById('confirmDeleteQuestionBtn').addEventListener('click', deleteQuestionConfirm);
 
   // ==========================================================
-  //   🔥 LOGIN AUTH CHECK & BOOT
+  //   BOOT
   // ==========================================================
   (function boot() {
     if (getUserRole() !== 'admin') {
@@ -973,9 +1092,16 @@
 
     updateNavbarMenu();
     
-    // Memuat data dengan paksa (forceRefresh = true) agar data terbaru dari API langsung ditampilkan
-    loadData(true);
+    // 🔥 Tampilkan skeleton instan
+    renderSkeletonSkrining();
+    renderSkeletonQuestions();
+
+    // Memuat data
+    loadSkriningData(true);
     loadQuestions(true);
+
+    // Mulai auto-refresh
+    startAutoRefresh();
   })();
 
 </script>

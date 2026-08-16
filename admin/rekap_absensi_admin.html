@@ -12,8 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         /* ===== GLOBAL ===== */
@@ -68,25 +67,11 @@
         }
         .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
         .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-        .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-        .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-        .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-        .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-        .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-        /* --- SUBMENU --- */
         .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
         .submenu.open { max-height: 500px; }
         .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
         .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
         .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-        .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-        .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-        .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-        .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-        .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-        /* --- SIDEBAR TOGGLE --- */
         .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
         .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
         .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
@@ -131,6 +116,19 @@
             display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== SKELETON ===== */
+        .skeleton-box {
+            background: #e2e8f0;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
 
         /* ===== CARD STATISTIK ===== */
         .stat-card {
@@ -328,30 +326,7 @@
 
                 <!-- Statistik Cards -->
                 <div id="statsContainer" class="row g-4 mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-number text-primary" id="totalHadir">0</div>
-                            <div class="stat-label">Hadir</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-number text-warning" id="totalIzin">0</div>
-                            <div class="stat-label">Izin</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-number text-info" id="totalSakit">0</div>
-                            <div class="stat-label">Sakit</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-number text-danger" id="totalAlpha">0</div>
-                            <div class="stat-label">Alpha</div>
-                        </div>
-                    </div>
+                    <!-- Akan diisi skeleton atau data -->
                 </div>
 
                 <!-- Chart -->
@@ -381,9 +356,7 @@
                         <button class="btn btn-outline-secondary btn-sm rounded-pill" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
                     </div>
                     <div id="rekapTableContainer">
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div>
-                        </div>
+                        <!-- Akan diisi skeleton atau data -->
                     </div>
                 </div>
             </div>
@@ -449,8 +422,7 @@
     <!--   SCRIPTS (PATH BARU)                                       -->
     <!-- ========================================================== -->
     <!-- Library Eksternal (tetap sebagai script biasa) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Modul ES Khusus Halaman Ini -->
     <script type="module">
@@ -462,7 +434,8 @@
             showToast,
             escapeHtml,
             getUserRole,
-            updateNavbarMenu
+            updateNavbarMenu,
+            logout
         } from '../js/core/api.js';
         import { AdminModule } from '../js/modules/admin.js';
 
@@ -521,6 +494,10 @@
             sortDirection: 'asc'
         };
 
+        let refreshInterval = null;
+        let statusChartInstance = null;
+        let sesiChartInstance = null;
+
         // ==========================================================
         //   UTILITY
         // ==========================================================
@@ -566,6 +543,59 @@
         }
 
         // ==========================================================
+        //   🔥 SKELETON RENDER (INSTANT)
+        // ==========================================================
+        function renderSkeletonStats() {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = `
+                <div class="col-md-3"><div class="stat-card skeleton"><div class="skeleton-box stat-number"></div><div class="skeleton-box stat-label"></div></div></div>
+                <div class="col-md-3"><div class="stat-card skeleton"><div class="skeleton-box stat-number"></div><div class="skeleton-box stat-label"></div></div></div>
+                <div class="col-md-3"><div class="stat-card skeleton"><div class="skeleton-box stat-number"></div><div class="skeleton-box stat-label"></div></div></div>
+                <div class="col-md-3"><div class="stat-card skeleton"><div class="skeleton-box stat-number"></div><div class="skeleton-box stat-label"></div></div></div>
+            `;
+        }
+
+        function renderSkeletonRekap() {
+            const container = document.getElementById('rekapTableContainer');
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array(5).fill(0).map(() => `
+                                <tr>
+                                    <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:150px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-container">
+                    <div class="skeleton-box" style="height:20px;width:200px;"></div>
+                    <div class="btn-group">
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================================
         //   RENDER SESI DROPDOWN
         // ==========================================================
         function renderSesiDropdown() {
@@ -584,9 +614,6 @@
         // ==========================================================
         //   CHART FUNCTIONS
         // ==========================================================
-        let statusChartInstance = null;
-        let sesiChartInstance = null;
-
         function updateStatusChart(hadir, izin, sakit, alpha) {
             const ctx = document.getElementById('statusChart').getContext('2d');
             if (statusChartInstance) statusChartInstance.destroy();
@@ -681,10 +708,6 @@
         async function loadRekapData(forceRefresh = false) {
             const container = document.getElementById('rekapTableContainer');
 
-            // Tampilkan loading
-            container.innerHTML =
-                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
-
             try {
                 // Pastikan AdminModule sudah dimuat
                 if (!AdminModule.getState().lastSync || forceRefresh) {
@@ -703,17 +726,16 @@
                 updateCacheStatus('Live');
             } catch (e) {
                 console.warn('Gagal load rekap:', e);
-                container.innerHTML =
-                    '<div class="alert alert-danger text-center">Gagal memuat data.</div>';
+                container.innerHTML = '<div class="alert alert-danger text-center">Gagal memuat data.</div>';
                 updateCacheStatus('Error');
             }
         }
 
         // ==========================================================
-        //   FILTER, SORT, PAGINATION
+        //   🔥 PERBAIKAN FINAL: FILTER, SORT, PAGINATION
         // ==========================================================
         function getFilteredData(absensiList, sesiList, filterSesi, filterTanggal) {
-            let data = absensiList;
+            let data = absensiList || [];
             if (filterSesi) {
                 data = data.filter(item => item.id_sesi === filterSesi);
             }
@@ -746,15 +768,41 @@
             const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
             const end = Math.min(start + STATE.itemsPerPage, totalItems);
 
-            // Hitung statistik
+            // 🔥 PERBAIKAN UTAMA: Rendering Langsung Container Statistik, bukan menggunakan ID yang hilang
             const hadir = data.filter(item => item.status === 'Hadir').length;
             const izin = data.filter(item => item.status === 'Izin').length;
             const sakit = data.filter(item => item.status === 'Sakit').length;
             const alpha = data.filter(item => item.status === 'Alpha').length;
-            document.getElementById('totalHadir').textContent = hadir;
-            document.getElementById('totalIzin').textContent = izin;
-            document.getElementById('totalSakit').textContent = sakit;
-            document.getElementById('totalAlpha').textContent = alpha;
+
+            const statsContainer = document.getElementById('statsContainer');
+            if (statsContainer) {
+                statsContainer.innerHTML = `
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: #28a745;">${hadir}</div>
+                            <div class="stat-label">Hadir</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: #ffc107;">${izin}</div>
+                            <div class="stat-label">Izin</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: #17a2b8;">${sakit}</div>
+                            <div class="stat-label">Sakit</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number" style="color: #dc3545;">${alpha}</div>
+                            <div class="stat-label">Alpha</div>
+                        </div>
+                    </div>
+                `;
+            }
 
             // Update charts
             updateStatusChart(hadir, izin, sakit, alpha);
@@ -886,6 +934,44 @@
         }
 
         // ==========================================================
+        //   AUTO REFRESH (Polling setiap 30 detik)
+        // ==========================================================
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                AdminModule.loadAllData(false).then(() => {
+                    const freshAbsensi = AdminModule.getAbsensiList() || [];
+                    const freshSesi = AdminModule.getSesiList() || [];
+                    if (JSON.stringify(STATE.absensiList) !== JSON.stringify(freshAbsensi) ||
+                        JSON.stringify(STATE.sesiList) !== JSON.stringify(freshSesi)) {
+                        STATE.absensiList = freshAbsensi;
+                        STATE.sesiList = freshSesi;
+                        renderSesiDropdown();
+                        applyFiltersAndSort();
+                        updateCacheStatus('Live');
+                    }
+                }).catch(() => {
+                    updateCacheStatus('Offline');
+                });
+            }, 30000); // 30 detik
+        }
+
+        // ==========================================================
+        //   LOGOUT
+        // ==========================================================
+        document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+
+        document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+            const modalEl = document.getElementById('moreMenuModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            logout();
+        });
+
+        // ==========================================================
         //   LOGIN AUTH CHECK & INIT
         // ==========================================================
         (function boot() {
@@ -900,24 +986,19 @@
             // Update navbar user
             updateNavbarMenu();
 
+            // 🔥 Tampilkan skeleton instan
+            renderSkeletonStats();
+            renderSkeletonRekap();
+
             // Muat data
             loadRekapData();
+
+            // Mulai auto-refresh
+            startAutoRefresh();
 
             // Event listeners
             document.getElementById('applyFilterBtn').addEventListener('click', applyFilter);
             document.getElementById('refreshDataBtn').addEventListener('click', manualRefresh);
-            document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (typeof logout !== 'undefined') logout();
-                else window.location.href = '/bisaa/index.html';
-            });
-            document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-                const modalEl = document.getElementById('moreMenuModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) modal.hide();
-                if (typeof logout !== 'undefined') logout();
-                else window.location.href = '/bisaa/index.html';
-            });
         })();
 
     </script>

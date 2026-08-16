@@ -11,9 +11,11 @@
   <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+  
   <!-- 🛠 PERBAIKAN: Library html5-qrcode untuk multi-browser -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- 🛠 PERBAIKAN: Library Signature Pad untuk modal tanda tangan -->
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
     /* --- GLOBAL --- */
@@ -123,6 +125,37 @@
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
 
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+      background: #e2e8f0;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    .stat-card.skeleton {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0.5rem;
+    }
+    .stat-card.skeleton .stat-number {
+      display: block;
+      width: 60%;
+      height: 2.5rem;
+      margin: 0 auto 0.5rem;
+    }
+    .stat-card.skeleton .stat-label {
+      display: block;
+      width: 40%;
+      height: 1rem;
+      margin: 0 auto;
+    }
+
     /* --- SCAN QR FLOATING BUTTON (DESKTOP) --- */
     .scan-float-btn {
         position: fixed; bottom: 30px; right: 15px;
@@ -154,8 +187,8 @@
         top: 60px;
         left: 20px;
         right: 20px;
-        z-index: 10001; /* Di atas video */
-        display: none; /* Default sembunyi */
+        z-index: 10001;
+        display: none;
         background: rgba(15, 23, 42, 0.9);
         backdrop-filter: blur(8px);
         padding: 15px;
@@ -171,19 +204,35 @@
         background: #1e293b; color: white; border: 1px solid #475569;
     }
     #manualSessionContainer select option { color: white; background: #1e293b; }
-    
-    /* Animasi muncul */
     #manualSessionContainer.show { display: block; animation: fadeInDown 0.4s ease-out; }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 
     /* --- MODAL HASIL SCAN PESERTA --- */
     #scanResultModal .modal-content { border-radius: 24px; }
     #scanResultModal .btn-icon { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 10px auto; }
     #scanResultModal .option-btn { transition: transform 0.2s, box-shadow 0.2s; }
     #scanResultModal .option-btn:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+    /* --- SIGNATURE MODAL STYLES --- */
+    .signature-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      background: white;
+      padding: 12px;
+      margin: 0 auto;
+      max-width: 350px;
+    }
+    .signature-area canvas {
+      width: 100%;
+      height: auto;
+      max-width: 300px;
+      max-height: 150px;
+      background: white;
+      display: block;
+      border-radius: 12px;
+      margin: 0 auto;
+      touch-action: none;
+    }
   </style>
 </head>
 <body>
@@ -247,7 +296,7 @@
         <div><span id="cacheStatus" class="cache-status">Memuat...</span></div>
         <div><button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button></div>
       </div>
-      <div id="dashboardContent"><div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div></div></div>
+      <div id="dashboardContent"></div>
     </div>
   </div>
 </div>
@@ -322,7 +371,7 @@
   <i class="bi bi-qr-code-scan"></i>
 </button>
 
-<!-- ===== MODAL SCANNER QR (Dengan Dropdown Manual) ===== -->
+<!-- ===== MODAL SCANNER QR ===== -->
 <div class="modal fade" id="scanQrModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-fullscreen">
     <div class="modal-content">
@@ -372,7 +421,8 @@
     showToast,
     updateNavbarMenu,
     callApi, 
-    escapeHtml
+    escapeHtml,
+    logout
   } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
 
@@ -383,8 +433,9 @@
   let dashboardContent = document.getElementById('dashboardContent');
   let openScannerButton = null;
   let currentScanMode = 'otomatis';
-  let manualSessionData = []; // Menyimpan data sesi untuk mode manual
-  let pendingScanData = { pesertaId: null, nama: null }; // Menyimpan data hasil scan untuk modal pilihan
+  let manualSessionData = [];
+  let pendingScanData = { pesertaId: null, nama: null };
+  let refreshInterval = null;
   
   // Scanner library state
   let html5QrCode = null;
@@ -398,7 +449,26 @@
   }
 
   // ==========================================================
-  //   RENDER DASHBOARD
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonDashboard() {
+    dashboardContent.innerHTML = `
+      <div class="row g-2 g-sm-3 fade-in">
+        ${Array(6).fill(0).map(() => `
+          <div class="col-6 col-md-4">
+            <div class="stat-card skeleton">
+              <div class="skeleton-box stat-number"></div>
+              <div class="skeleton-box stat-label"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="alert alert-info mt-3 rounded-4 border-0 bg-light skeleton-box" style="height:60px;width:100%;"></div>
+    `;
+  }
+
+  // ==========================================================
+  //   RENDER DASHBOARD (DATA ASLI)
   // ==========================================================
   function renderDashboardUI() {
     const stats = AdminModule.getStats();
@@ -455,11 +525,13 @@
   }
 
   // ==========================================================
-  //   BACKGROUND SYNC
+  //   BACKGROUND SYNC (REALTIME POLLING)
   // ==========================================================
   async function syncDashboardData(forceRefresh = false) {
-    renderDashboardUI();
+    // Saat memuat, langsung tampilkan skeleton
+    renderSkeletonDashboard();
     updateCacheStatus('Local');
+
     if (forceRefresh) {
       try {
         await AdminModule.loadAllData(true);
@@ -471,13 +543,36 @@
       }
       return;
     }
+
     try {
+      // Jika data sudah ada di cache (lastSync), tampilkan data asli
+      if (AdminModule.getState().lastSync) {
+        renderDashboardUI();
+        updateCacheStatus('Cache');
+      }
+      // Refresh di background
       await AdminModule.loadAllData(false);
       renderDashboardUI();
       updateCacheStatus('Live');
     } catch (e) {
       updateCacheStatus('Offline');
     }
+  }
+
+  // ==========================================================
+  //   POLLING OTOMATIS (SETIAP 30 DETIK)
+  // ==========================================================
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      // Refresh data di background tanpa force refresh
+      AdminModule.loadAllData(false).then(() => {
+        renderDashboardUI();
+        updateCacheStatus('Live');
+      }).catch(() => {
+        updateCacheStatus('Offline');
+      });
+    }, 30000); // 30 detik
   }
 
   // ==========================================================
@@ -488,8 +583,6 @@
     const select = document.getElementById('manualSessionSelect');
     
     if (!select) return;
-
-    // Tampilkan loading
     select.innerHTML = '<option value="">Memuat data sesi...</option>';
     
     try {
@@ -500,15 +593,11 @@
       } else if (Array.isArray(sesiRes)) {
         allSesi = sesiRes;
       }
-
       manualSessionData = allSesi;
-
       if (!allSesi || allSesi.length === 0) {
         select.innerHTML = '<option value="">Tidak ada sesi tersedia</option>';
         return;
       }
-
-      // Render dropdown
       let optionsHtml = '<option value="">-- Pilih Sesi --</option>';
       allSesi.forEach(s => {
         const isOpen = String(s.submission_open).toLowerCase() === 'true';
@@ -516,7 +605,6 @@
         optionsHtml += `<option value="${s.id}">${escapeHtml(s.nama)} (${statusLabel})</option>`;
       });
       select.innerHTML = optionsHtml;
-      
     } catch (err) {
       console.error('Gagal load sesi dropdown:', err);
       select.innerHTML = '<option value="">Gagal memuat data</option>';
@@ -531,7 +619,6 @@
     const modeManual = document.getElementById('modeManual');
     const containerManual = document.getElementById('manualSessionContainer');
 
-    // Event listener untuk Mode Otomatis
     modeOtomatis.addEventListener('change', function() {
         if (this.checked) {
             currentScanMode = 'otomatis';
@@ -539,15 +626,11 @@
             containerManual.style.display = 'none';
         }
     });
-
-    // Event listener untuk Mode Manual
     modeManual.addEventListener('change', function() {
         if (this.checked) {
             currentScanMode = 'manual';
             containerManual.style.display = 'block';
-            // Animasi sedikit delay agar smooth
             setTimeout(() => containerManual.classList.add('show'), 10);
-            // Muat data dropdown
             loadManualSesiDropdown();
         }
     });
@@ -561,25 +644,17 @@
       stopScanner();
       return;
     }
-
     const isDesktop = window.innerWidth >= 992;
     let qrboxSize = isDesktop ? 400 : 250; 
-
     statusEl.innerText = 'Mengakses kamera...';
-
     try {
       html5QrCode = new Html5Qrcode("scannerVideoContainer");
       const config = { fps: 30, qrbox: { width: qrboxSize, height: qrboxSize }, aspectRatio: 1.0 };
-
       html5QrCode.start(
         { facingMode: "environment" },
         config,
-        (decodedText, decodedResult) => {
-          onQRDetected(decodedText);
-        },
-        (errorMessage) => {
-          // ignore errors
-        }
+        (decodedText, decodedResult) => { onQRDetected(decodedText); },
+        (errorMessage) => { /* ignore errors */ }
       ).then(() => {
         isScannerRunning = true;
         statusEl.innerText = 'Memindai QR...';
@@ -587,7 +662,6 @@
         statusEl.innerText = 'Gagal mengakses kamera: ' + err.message;
         showToast('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
       });
-
     } catch (err) {
       statusEl.innerText = 'Error: ' + err.message;
       showToast('Terjadi kesalahan saat memuat scanner.', 'error');
@@ -615,15 +689,13 @@
   }
 
   // ==========================================================
-  //   🔥 PERBAIKAN FINAL: ONQR DETECTED (Dengan Modal Pilihan)
+  //   🔥 PERBAIKAN FINAL: ONQR DETECTED
   // ==========================================================
   async function onQRDetected(decodedText) {
     stopScanner();
-
     const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
     const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
 
-    // Kasus 1: Scan QR untuk Sesi (biasanya untuk peserta umum)
     if (matchSesi) {
       const sesiId = matchSesi[1];
       const tokenMatch = decodedText.match(/token=([^&]+)/);
@@ -632,48 +704,134 @@
       return;
     }
 
-    // Kasus 2: Scan QR Peserta (peserta_id)
     if (matchPeserta) {
       const pesertaId = matchPeserta[1];
-      
-      // 1. Cari data di state lokal
       let peserta = AdminModule.getPesertaById(pesertaId);
-
-      // 🔥 Jika tidak ditemukan di cache, paksa refresh data dari Server
       if (!peserta) {
         console.warn('⚠️ Peserta tidak ditemukan di cache, mencoba sinkronisasi ulang...');
-        await AdminModule.loadAllData(true); // Force refresh
+        await AdminModule.loadAllData(true);
         peserta = AdminModule.getPesertaById(pesertaId);
-        
         if (!peserta) {
-          alert('ID Peserta tidak ditemukan setelah sinkronisasi. Pastikan QR benar dan peserta sudah disetujui.');
+          alert('ID Peserta tidak ditemukan. Pastikan QR benar dan peserta sudah disetujui.');
           return;
         }
       }
-
-      // 2. Cek status peserta
       const statusLower = (peserta.status || '').toLowerCase().trim();
       if (statusLower !== 'approved' && statusLower !== 'active') {
         alert('Peserta belum disetujui oleh admin. QR tidak aktif.');
         return;
       }
-
-      // Simpan data sementara untuk digunakan di modal pilihan
       pendingScanData.pesertaId = pesertaId;
       pendingScanData.nama = peserta.nama_lengkap;
-
-      // Tampilkan Modal Hasil Scan
       document.getElementById('resultNamaPeserta').innerText = peserta.nama_lengkap;
       document.getElementById('resultStatusPeserta').innerHTML = `<span class="badge bg-success">Disetujui / Aktif</span>`;
       
       const resultModal = new bootstrap.Modal(document.getElementById('scanResultModal'));
       resultModal.show();
-
       return;
     }
-
-    // Kasus 3: Format Tidak Dikenali
     alert('Format QR tidak dikenali. Pastikan QR Peserta atau QR Sesi yang benar.');
+  }
+
+  // ==========================================================
+  //   🔥 FUNGSI BARU: SHOW SIGNATURE MODAL & SUBMIT ABSEN
+  // ==========================================================
+  function showSignatureModalAndAbsen(pesertaId, nama) {
+    // Hapus modal lama jika ada
+    const oldModal = document.getElementById('adminSignatureModal');
+    if (oldModal) oldModal.remove();
+
+    const modalHtml = `
+      <div class="modal fade" id="adminSignatureModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Tanda Tangan Digital</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+              <p class="mb-3">Peserta: <strong>${escapeHtml(nama)}</strong></p>
+              <div class="signature-area">
+                <canvas id="adminSignatureCanvas" width="300" height="150"></canvas>
+              </div>
+              <div class="mt-2 d-flex gap-2 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAdminSign">Hapus</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="undoAdminSign">Undo</button>
+              </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+              <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+              <button type="button" class="btn btn-success rounded-pill px-4" id="adminSubmitAbsen">✅ Kirim Absen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modalElement = document.getElementById('adminSignatureModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+
+    // Inisialisasi Signature Pad
+    const canvas = document.getElementById('adminSignatureCanvas');
+    let sigPad = new SignaturePad(canvas, { backgroundColor: 'white', penColor: '#0f172a', minWidth: 1.5, maxWidth: 3 });
+    
+    document.getElementById('clearAdminSign').addEventListener('click', () => sigPad.clear());
+    document.getElementById('undoAdminSign').addEventListener('click', () => {
+      const data = sigPad.toData();
+      if (data && data.length > 0) { data.pop(); sigPad.fromData(data); }
+    });
+
+    document.getElementById('adminSubmitAbsen').addEventListener('click', async function() {
+      const btn = this;
+      if (sigPad.isEmpty()) { alert('Tanda tangan wajib diisi!'); return; }
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
+
+      let selectedSesiId = null;
+      if (currentScanMode === 'otomatis') {
+        const allSesi = AdminModule.getSesiList();
+        const now = new Date();
+        const activeSesi = allSesi.filter(s => {
+          if (!s.waktu_mulai || !s.waktu_selesai) return false;
+          const start = new Date(s.waktu_mulai);
+          const end = new Date(s.waktu_selesai);
+          return now >= start && now <= end;
+        });
+        if (activeSesi.length === 0) { alert('Tidak ada sesi aktif.'); btn.disabled = false; btn.innerHTML = '✅ Kirim Absen'; return; }
+        selectedSesiId = activeSesi[0].id;
+      } else if (currentScanMode === 'manual') {
+        const manualSelect = document.getElementById('manualSessionSelect');
+        if (!manualSelect || !manualSelect.value) { alert('Pilih sesi manual terlebih dahulu.'); btn.disabled = false; btn.innerHTML = '✅ Kirim Absen'; return; }
+        selectedSesiId = manualSelect.value;
+      }
+
+      try {
+        const signatureDataURL = sigPad.toDataURL('image/jpeg', 0.2);
+        const result = await callApi('submitAbsen', {
+          nama: nama,
+          sesiId: selectedSesiId,
+          tandaTangan: signatureDataURL,
+          password: null,
+          qrToken: null,
+          pesertaId: pesertaId
+        }, 'POST');
+
+        if (result.success) {
+          alert(`✅ Absen berhasil untuk ${nama}`);
+          sigPad.clear();
+          modal.hide();
+          AdminModule.loadAllData(true);
+        } else {
+          alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✅ Kirim Absen';
+      }
+    });
   }
 
   // ==========================================================
@@ -685,98 +843,21 @@
     if (modal) modal.hide();
   };
 
-  document.getElementById('btnAbsenSekarang').addEventListener('click', async function() {
+  document.getElementById('btnAbsenSekarang').addEventListener('click', function() {
     const pesertaId = pendingScanData.pesertaId;
     const namaPeserta = pendingScanData.nama;
-    
-    if (!pesertaId) {
-        alert('Data peserta tidak valid.');
-        return;
-    }
+    if (!pesertaId) { alert('Data peserta tidak valid.'); return; }
 
-    // Tutup modal pilihan
     const resultModal = bootstrap.Modal.getInstance(document.getElementById('scanResultModal'));
     if (resultModal) resultModal.hide();
 
-    // --- Logic Absen (Sama seperti sebelumnya) ---
-    if (currentScanMode === 'otomatis') {
-        const allSesi = AdminModule.getSesiList();
-        const now = new Date();
-        const activeSesi = allSesi.filter(s => {
-            if (!s.waktu_mulai || !s.waktu_selesai) return false;
-            const start = new Date(s.waktu_mulai);
-            const end = new Date(s.waktu_selesai);
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-            return now >= start && now <= end;
-        });
-
-        if (activeSesi.length === 0) {
-            alert('Tidak ada sesi yang sedang berlangsung saat ini. Silakan pilih mode manual.');
-            return;
-        }
-
-        let selectedSesi;
-        if (activeSesi.length === 1) {
-            selectedSesi = activeSesi[0];
-        } else {
-            const options = activeSesi.map(s => `${s.id}: ${s.nama}`).join('\n');
-            const choice = prompt(`Ditemukan ${activeSesi.length} sesi aktif. Pilih ID sesi:\n${options}`, activeSesi[0].id);
-            selectedSesi = activeSesi.find(s => s.id == choice);
-            if (!selectedSesi) {
-                alert('Pilihan tidak valid.');
-                return;
-            }
-        }
-
-        try {
-            const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
-            if (result.success) {
-                alert(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
-            } else {
-                alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
-            }
-        } catch (e) {
-            alert(`Error: ${e.message}`);
-        }
-        return;
-    }
-
-    // --- 🔥 Mode Manual (Menggunakan Dropdown yang sudah dipilih) ---
-    if (currentScanMode === 'manual') {
-        const manualSelect = document.getElementById('manualSessionSelect');
-        const selectedSesiId = manualSelect ? manualSelect.value : null;
-
-        if (!selectedSesiId) {
-            alert('Anda belum memilih sesi. Silakan pilih sesi dari dropdown di atas terlebih dahulu.');
-            return;
-        }
-
-        const selectedSesi = manualSessionData.find(s => s.id == selectedSesiId);
-        if (!selectedSesi) {
-            alert('Sesi yang dipilih tidak valid.');
-            return;
-        }
-
-        try {
-            const result = await AdminModule.submitAbsen(namaPeserta, selectedSesi.id, '', '', null, pesertaId);
-            if (result.success) {
-                alert(`✅ Absen manual berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`);
-            } else {
-                alert(`❌ Gagal: ${result.error || 'Unknown error'}`);
-            }
-        } catch (e) {
-            alert(`Error: ${e.message}`);
-        }
-        return;
-    }
+    // 🔥 Tampilkan modal tanda tangan
+    showSignatureModalAndAbsen(pesertaId, namaPeserta);
   });
 
   document.getElementById('btnBukaSesi').addEventListener('click', function() {
-    // Tutup modal pilihan
     const resultModal = bootstrap.Modal.getInstance(document.getElementById('scanResultModal'));
     if (resultModal) resultModal.hide();
-
-    // Redirect ke halaman manajemen sesi
     window.location.href = '/bisaa/admin/sesi_absen_admin.html';
   });
 
@@ -786,16 +867,13 @@
   const scanFloatBtn = document.getElementById('scanFloatBtn');
   if (scanFloatBtn) {
     scanFloatBtn.classList.add('show');
-    scanFloatBtn.addEventListener('click', function() {
-      openScanner();
-    });
+    scanFloatBtn.addEventListener('click', function() { openScanner(); });
   }
 
   const scanNavBtn = document.getElementById('scanNavBtn');
   if (scanNavBtn) {
     scanNavBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      openScanner();
+      e.preventDefault(); openScanner();
     });
   }
 
@@ -803,10 +881,8 @@
     openScannerButton = document.activeElement;
     const modal = new bootstrap.Modal(document.getElementById('scanQrModal'));
     modal.show();
-    initScanMode(); // Pastikan listener mode terpasang
+    initScanMode();
     startScanner();
-    
-    // Jika mode manual sudah dipilih sebelumnya, pastikan dropdown terisi
     if (currentScanMode === 'manual') {
         loadManualSesiDropdown();
         document.getElementById('manualSessionContainer').style.display = 'block';
@@ -854,17 +930,13 @@
   });
 
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    e.preventDefault(); logout();
   });
 
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
     const modalEl = document.getElementById('moreMenuModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    if (modal) modal.hide(); logout();
   });
 
   // ==========================================================
@@ -876,8 +948,16 @@
       return;
     }
     updateNavbarMenu();
-    renderDashboardUI();
+
+    // Tampilkan skeleton instan
+    renderSkeletonDashboard();
+
+    // Muat data dan mulai sinkronisasi
     syncDashboardData(false);
+
+    // Mulai auto-refresh setiap 30 detik
+    startAutoRefresh();
+
     document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
       this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
       this.disabled = true;

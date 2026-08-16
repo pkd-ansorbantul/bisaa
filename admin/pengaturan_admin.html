@@ -12,7 +12,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
-    <!-- Sidebar & Admin CSS (Universal) -->
     <style>
         /* ===== GLOBAL & SIDEBAR ADMIN ===== */
         * { font-family: 'Inter', sans-serif; }
@@ -143,7 +142,6 @@
         .login-mode-status.on { background: #dcfce7; color: #16a34a; border-left: 4px solid #16a34a; }
         .login-mode-status.off { background: #fee2e2; color: #dc2626; border-left: 4px solid #dc2626; }
 
-        /* --- VISIBILITAS TOGGLE --- */
         .form-switch .form-check-input {
             width: 3em;
             height: 1.5em;
@@ -159,11 +157,22 @@
             cursor: pointer;
         }
 
-        /* --- TOAST --- */
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
 
-        /* --- RESPONSIVE --- */
+        /* --- SKELETON --- */
+        .skeleton-box {
+            background: #e2e8f0;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
         @media (max-width: 576px) {
             .settings-card { padding: 1rem; }
             .section-title { font-size: 1.3rem; }
@@ -293,21 +302,21 @@
           <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
             <i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache
           </button>
-          <span id="cacheStatus" class="cache-status ms-2">Cache: OK</span>
+          <span id="cacheStatus" class="cache-status ms-2">Live</span>
         </div>
       </div>
 
-      <!-- Section: Pengaturan Umum -->
-      <div class="settings-card">
+      <!-- Section: Pengaturan Umum (TIDAK DI-SKELETON) -->
+      <div class="settings-card" id="generalSettingsCard">
         <div class="card-title"><i class="bi bi-globe2"></i> Pengaturan Umum</div>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Nama Aplikasi</label>
-            <input type="text" class="form-control" id="appName" placeholder="Nama aplikasi" value="PKD GP Ansor Kabupaten Bantul" />
+            <input type="text" class="form-control" id="appName" placeholder="Nama aplikasi" />
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Deskripsi Singkat</label>
-            <input type="text" class="form-control" id="appDescription" placeholder="Deskripsi aplikasi" value="Platform Pelatihan Kader Dasar GP Ansor" />
+            <input type="text" class="form-control" id="appDescription" placeholder="Deskripsi aplikasi" />
           </div>
           <div class="col-md-12">
             <label class="form-label fw-semibold">Logo Aplikasi</label>
@@ -326,7 +335,7 @@
       </div>
 
       <!-- Section: Mode Login Publik -->
-      <div class="settings-card">
+      <div class="settings-card" id="loginModeCard">
         <div class="card-title"><i class="bi bi-shield-lock"></i> Mode Login Publik</div>
         <div class="row g-3">
           <div class="col-md-6">
@@ -349,7 +358,7 @@
       <!-- ========================================================== -->
       <!--   BAGIAN: VISIBILITAS MENU PER HALAMAN                 -->
       <!-- ========================================================== -->
-      <div class="settings-card">
+      <div class="settings-card" id="visibilityCard">
         <div class="card-title"><i class="bi bi-eye-fill"></i> Visibilitas Menu Publik</div>
         <p class="text-muted small mb-3">
           Aktifkan atau nonaktifkan akses menu tertentu tanpa harus login (Guest).
@@ -369,12 +378,12 @@
       </div>
 
       <!-- Section: Akun Admin -->
-      <div class="settings-card">
+      <div class="settings-card" id="accountCard">
         <div class="card-title"><i class="bi bi-shield-lock"></i> Keamanan Akun Admin</div>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Username Saat Ini</label>
-            <input type="text" class="form-control" id="currentUsername" disabled placeholder="Tidak dapat diubah" value="admin" />
+            <input type="text" class="form-control" id="currentUsername" disabled placeholder="Tidak dapat diubah" />
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Password Baru</label>
@@ -397,7 +406,7 @@
       </div>
 
       <!-- Section: Backup & Data -->
-      <div class="settings-card">
+      <div class="settings-card" id="backupCard">
         <div class="card-title"><i class="bi bi-database"></i> Backup & Pengelolaan Data</div>
         <div class="row g-3">
           <div class="col-md-6">
@@ -412,7 +421,7 @@
       </div>
 
       <!-- Section: Informasi Sistem -->
-      <div class="settings-card">
+      <div class="settings-card" id="infoCard">
         <div class="card-title"><i class="bi bi-info-circle"></i> Informasi Sistem</div>
         <div class="row g-2">
           <div class="col-md-6">
@@ -420,7 +429,7 @@
             <p class="mb-1"><strong>Platform:</strong> PKD GP Ansor Kabupaten Bantul</p>
           </div>
           <div class="col-md-6">
-            <p class="mb-1"><strong>Total Data:</strong> <span id="totalDataInfo">Memuat...</span></p>
+            <p class="mb-1"><strong>Total Data:</strong> <span id="totalDataInfo">-</span></p>
             <p class="mb-1"><strong>Terakhir Update:</strong> <span id="lastUpdateInfo">-</span></p>
           </div>
         </div>
@@ -516,6 +525,7 @@
     escapeHtml,
     getUserRole,
     updateNavbarMenu,
+    logout,
     getPublicVisibility,
     setPublicVisibility,
     setLoginMode,
@@ -559,20 +569,18 @@
   // ==========================================================
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
     const modalEl = document.getElementById('moreMenuModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   // ==========================================================
-  //   UTILITY
+  //   UTILITY & CACHE
   // ==========================================================
   function updateCacheStatus(status) {
     const el = document.getElementById('cacheStatus');
@@ -582,110 +590,164 @@
     }
   }
 
-  function loadSystemInfo() {
-    // Menggunakan AdminModule yang sudah memuat data
-    const stats = AdminModule.getStats();
-    let total = 0;
-    if (stats) {
-      total = stats.totalPeserta + stats.totalSesi + stats.totalMateri + stats.totalSkrining + stats.totalPretest + stats.totalPosttest + stats.totalAlumni + stats.totalKader + stats.totalAbsensi + stats.totalSertifikat;
+  // ==========================================================
+  //   🔥 LOAD LOGIN MODE (Cache + API) — ROBUST
+  // ==========================================================
+  async function loadLoginModeFast() {
+    const toggleEl = document.getElementById('loginModeToggle');
+    // Langkah 1: Set default secara instan
+    if (toggleEl) {
+      toggleEl.checked = false;
+      updateLoginModeStatus(false);
     }
-    document.getElementById('totalDataInfo').textContent = total + ' entri';
-    document.getElementById('lastUpdateInfo').textContent = stats.lastSync ? new Date(stats.lastSync).toLocaleString('id-ID', {
-      dateStyle: 'full',
-      timeStyle: 'short'
-    }) : '-';
+
+    // 1. Cek Cache (30 detik) — dengan try-catch aman
+    let cached = null;
+    try { cached = localStorage.getItem('pkd_cache_loginMode'); } catch (e) {}
+    if (cached) {
+      try {
+        const { enabled, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 30000) {
+          if (toggleEl) toggleEl.checked = enabled;
+          updateLoginModeStatus(enabled);
+          console.log('[Settings] Login Mode loaded from cache:', enabled);
+          return;
+        }
+      } catch (e) { /* cache rusak, abaikan */ }
+    }
+
+    // 2. Ambil dari API
+    try {
+      console.log('[Settings] Fetching Login Mode from API...');
+      const res = await getLoginMode();
+      // getLoginMode sekarang mengembalikan { success, enabled } atau { success, error }
+      const enabled = res.success ? res.enabled : false;
+      
+      try { localStorage.setItem('pkd_cache_loginMode', JSON.stringify({ enabled, timestamp: Date.now() })); } catch (e) {}
+      
+      if (toggleEl) toggleEl.checked = enabled;
+      updateLoginModeStatus(enabled);
+      console.log('[Settings] Login Mode API success:', enabled);
+    } catch (e) {
+      console.warn('Gagal load login mode:', e.message);
+      // Tetap gunakan default false yang sudah diset di awal
+      // Hapus cache rusak
+      try { localStorage.removeItem('pkd_cache_loginMode'); } catch (e) {}
+    }
   }
 
-  // ==========================================================
-  //   BACKGROUND UPDATE (refresh data dari API)
-  // ==========================================================
-  async function backgroundUpdate() {
-    let updating = false;
-    if (updating) return;
-    updating = true;
-    updateCacheStatus('Updating...');
-
-    try {
-      await AdminModule.loadAllData(false);
-      loadSystemInfo();
-      updateCacheStatus('Live');
-    } catch (e) {
-      console.warn('Background update gagal:', e);
-      updateCacheStatus('Offline');
-    } finally {
-      updating = false;
+  function updateLoginModeStatus(enabled) {
+    const statusEl = document.getElementById('loginModeStatus');
+    if (!statusEl) return;
+    if (enabled) {
+      statusEl.className = 'login-mode-status on';
+      statusEl.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Mode Wajib Login AKTIF – Semua halaman publik memerlukan login.';
+    } else {
+      statusEl.className = 'login-mode-status off';
+      statusEl.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Mode Guest AKTIF – Semua halaman publik dapat diakses tanpa login.';
     }
   }
 
-  // ==========================================================
-  //   MANUAL REFRESH
-  // ==========================================================
-  async function manualRefresh() {
-    const btn = document.getElementById('refreshDataBtn');
-    if (btn) {
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-      btn.disabled = true;
-    }
+  document.getElementById('saveLoginModeBtn')?.addEventListener('click', async function() {
+    const enabled = document.getElementById('loginModeToggle').checked;
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    btn.disabled = true;
 
     try {
-      await AdminModule.loadAllData(true);
-      loadSystemInfo();
-      showToast('Data berhasil diperbarui', 'success');
-      updateCacheStatus('Live');
-    } catch (e) {
-      showToast('Gagal memperbarui: ' + e.message, 'error');
-      updateCacheStatus('Error');
-    } finally {
-      if (btn) {
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache';
-        btn.disabled = false;
+      const res = await setLoginMode(enabled);
+      if (res.success) {
+        // Hapus cache agar refresh berikutnya mengambil data baru
+        try { localStorage.removeItem('pkd_cache_loginMode'); } catch (e) {}
+        const freshRes = await getLoginMode();
+        if (freshRes.success) {
+          document.getElementById('loginModeToggle').checked = freshRes.enabled;
+          updateLoginModeStatus(freshRes.enabled);
+          showToast(`Mode login berhasil diubah menjadi ${freshRes.enabled ? 'Wajib Login' : 'Guest'}`, 'success');
+        } else {
+          showToast('Mode login tersimpan, tetapi gagal memverifikasi status.', 'warning');
+        }
+      } else {
+        throw new Error(res.error || 'Gagal menyimpan');
       }
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
     }
-  }
+  });
 
   // ==========================================================
-  //   LOAD & SIMPAN VISIBILITAS MENU PER HALAMAN
+  //   🔥 LOAD VISIBILITAS (Cache + API) — ROBUST
   // ==========================================================
-  async function loadVisibilitySettings() {
+  async function loadVisibilityFast() {
     const container = document.getElementById('menuVisibilityContainer');
+    
+    // Set default instan (fallback)
+    renderVisibilityToggles({});
 
+    // 1. Cek Cache (30 detik)
+    let cached = null;
+    try { cached = localStorage.getItem('pkd_cache_publicVisibility'); } catch (e) {}
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 30000) {
+          renderVisibilityToggles(data);
+          console.log('[Settings] Visibility loaded from cache');
+          return;
+        }
+      } catch (e) { /* cache rusak, abaikan */ }
+    }
+
+    // 2. Ambil dari API
     try {
+      console.log('[Settings] Fetching Visibility from API...');
       const res = await getPublicVisibility();
       if (res.success && res.data) {
-        const visibility = res.data;
-        const menuLabels = {
-          pretest: 'Pre-test',
-          posttest: 'Post-test',
-          absen: 'Absen Digital',
-          skrining: 'Skrining',
-          peserta: 'Peserta',
-          materi: 'Materi',
-          informasi: 'Informasi',
-          asset: 'Aset Digital',
-          verifikasi: 'Verifikasi Sertifikat',
-          kader: 'Kader'
-        };
-
-        let html = '';
-        for (const [key, label] of Object.entries(menuLabels)) {
-          const isEnabled = visibility[key] !== false;
-          html += `
-              <div class="col-md-6 col-lg-4">
-                <div class="form-check form-switch">
-                  <input class="form-check-input visibility-toggle" type="checkbox" id="vis_${key}" data-key="${key}" ${isEnabled ? 'checked' : ''}>
-                  <label class="form-check-label fw-semibold" for="vis_${key}">${label}</label>
-                </div>
-              </div>
-            `;
-        }
-        container.innerHTML = html;
+        try { localStorage.setItem('pkd_cache_publicVisibility', JSON.stringify({ data: res.data, timestamp: Date.now() })); } catch (e) {}
+        renderVisibilityToggles(res.data);
+        console.log('[Settings] Visibility API success');
       } else {
-        container.innerHTML = '<div class="col-12 text-danger">Gagal memuat data visibilitas.</div>';
+        renderVisibilityToggles({});
       }
     } catch (e) {
       console.warn('Gagal load visibility:', e);
-      container.innerHTML = `<div class="col-12 text-danger">Error: ${escapeHtml(e.message)}</div>`;
+      renderVisibilityToggles({});
+      try { localStorage.removeItem('pkd_cache_publicVisibility'); } catch (e) {}
     }
+  }
+
+  function renderVisibilityToggles(visibility) {
+    const container = document.getElementById('menuVisibilityContainer');
+    if (!container) return;
+    const menuLabels = {
+      pretest: 'Pre-test',
+      posttest: 'Post-test',
+      absen: 'Absen Digital',
+      skrining: 'Skrining',
+      peserta: 'Peserta',
+      materi: 'Materi',
+      informasi: 'Informasi',
+      asset: 'Aset Digital',
+      verifikasi: 'Verifikasi Sertifikat',
+      kader: 'Kader'
+    };
+    let html = '';
+    for (const [key, label] of Object.entries(menuLabels)) {
+      const isEnabled = visibility[key] !== false;
+      html += `
+          <div class="col-md-6 col-lg-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input visibility-toggle" type="checkbox" id="vis_${key}" data-key="${key}" ${isEnabled ? 'checked' : ''}>
+              <label class="form-check-label fw-semibold" for="vis_${key}">${label}</label>
+            </div>
+          </div>
+        `;
+    }
+    container.innerHTML = html;
   }
 
   document.getElementById('saveVisibilityBtn')?.addEventListener('click', async function() {
@@ -703,11 +765,10 @@
     try {
       const res = await setPublicVisibility(data);
       if (res.success) {
+        try { localStorage.removeItem('pkd_cache_publicVisibility'); } catch (e) {}
         showToast('Pengaturan visibilitas menu berhasil disimpan.', 'success');
-        // Refresh data
-        await AdminModule.loadAllData(true);
       } else {
-        showToast('Gagal menyimpan: ' + (res.message || 'Error'), 'error');
+        showToast('Gagal menyimpan: ' + (res.error || 'Error'), 'error');
       }
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
@@ -718,7 +779,7 @@
   });
 
   // ==========================================================
-  //   PENGATURAN UMUM
+  //   PENGATURAN UMUM (Tanpa Skeleton)
   // ==========================================================
   function loadGeneralSettings() {
     try {
@@ -728,10 +789,12 @@
         if (parsed.appName) document.getElementById('appName').value = parsed.appName;
         if (parsed.appDesc) document.getElementById('appDescription').value = parsed.appDesc;
       }
+      if (!document.getElementById('appName').value) document.getElementById('appName').value = 'PKD GP Ansor Kabupaten Bantul';
+      if (!document.getElementById('appDescription').value) document.getElementById('appDescription').value = 'Platform Pelatihan Kader Dasar GP Ansor';
     } catch (e) {}
   }
 
-  document.getElementById('saveGeneralSettings').addEventListener('click', function() {
+  document.getElementById('saveGeneralSettings')?.addEventListener('click', function() {
     const appName = document.getElementById('appName').value.trim();
     const appDesc = document.getElementById('appDescription').value.trim();
     const logoFile = document.getElementById('logoUpload').files[0];
@@ -755,71 +818,16 @@
         showToast('Pengaturan umum berhasil disimpan.', 'success');
       }
 
-      localStorage.setItem('pkd_app_settings', JSON.stringify(settings));
+      try { localStorage.setItem('pkd_app_settings', JSON.stringify(settings)); } catch (e) {}
     } catch (e) {
       showToast('Gagal menyimpan pengaturan: ' + e.message, 'error');
     }
   });
 
   // ==========================================================
-  //   LOGIN MODE
-  // ==========================================================
-  async function loadLoginMode() {
-    try {
-      const res = await getLoginMode();
-      const enabled = res.success ? res.enabled : false;
-      document.getElementById('loginModeToggle').checked = enabled;
-      updateLoginModeStatus(enabled);
-    } catch (e) {
-      console.warn('Gagal load login mode:', e);
-      document.getElementById('loginModeStatus').innerHTML = 'Gagal memuat status login.';
-    }
-  }
-
-  function updateLoginModeStatus(enabled) {
-    const statusEl = document.getElementById('loginModeStatus');
-    if (enabled) {
-      statusEl.className = 'login-mode-status on';
-      statusEl.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Mode Wajib Login AKTIF – Semua halaman publik memerlukan login.';
-    } else {
-      statusEl.className = 'login-mode-status off';
-      statusEl.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Mode Guest AKTIF – Semua halaman publik dapat diakses tanpa login.';
-    }
-  }
-
-  document.getElementById('saveLoginModeBtn').addEventListener('click', async function() {
-    const enabled = document.getElementById('loginModeToggle').checked;
-    const btn = this;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
-    btn.disabled = true;
-
-    try {
-      const res = await setLoginMode(enabled);
-      if (res.success) {
-        // Refresh data
-        await AdminModule.loadAllData(true);
-        const freshRes = await getLoginMode();
-        if (freshRes.success) {
-          document.getElementById('loginModeToggle').checked = freshRes.enabled;
-          updateLoginModeStatus(freshRes.enabled);
-          showToast(`Mode login berhasil diubah menjadi ${freshRes.enabled ? 'Wajib Login' : 'Guest'}`, 'success');
-        }
-      } else {
-        throw new Error(res.message || 'Gagal menyimpan');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-    } finally {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    }
-  });
-
-  // ==========================================================
   //   CHANGE PASSWORD
   // ==========================================================
-  document.getElementById('changePasswordBtn').addEventListener('click', function() {
+  document.getElementById('changePasswordBtn')?.addEventListener('click', function() {
     const newPass = document.getElementById('newPassword').value;
     const confirmPass = document.getElementById('confirmPassword').value;
 
@@ -839,7 +847,7 @@
     }
 
     try {
-      localStorage.setItem('pkd_admin_password', newPass);
+      try { localStorage.setItem('pkd_admin_password', newPass); } catch (e) {}
       showToast('Password berhasil diubah.', 'success');
       document.getElementById('newPassword').value = '';
       document.getElementById('confirmPassword').value = '';
@@ -851,15 +859,13 @@
   // ==========================================================
   //   BACKUP & RESET
   // ==========================================================
-  document.getElementById('backupDataBtn').addEventListener('click', function() {
-    // Ambil data dari AdminModule
+  document.getElementById('backupDataBtn')?.addEventListener('click', function() {
     const state = AdminModule.getState();
     if (!state || Object.keys(state).length === 0) {
       showToast('Tidak ada data untuk dibackup.', 'info');
       return;
     }
 
-    // Siapkan data untuk ekspor (tanpa fungsi-fungsi)
     const exportData = {
       data: state,
       exportedAt: new Date().toISOString()
@@ -877,7 +883,7 @@
     showToast('Backup data berhasil diunduh.', 'success');
   });
 
-  document.getElementById('resetDataBtn').addEventListener('click', function() {
+  document.getElementById('resetDataBtn')?.addEventListener('click', function() {
     document.getElementById('confirmResetCheck').checked = false;
     document.getElementById('confirmResetBtn').disabled = true;
     new bootstrap.Modal(document.getElementById('resetConfirmModal')).show();
@@ -887,8 +893,7 @@
     document.getElementById('confirmResetBtn').disabled = !this.checked;
   });
 
-  document.getElementById('confirmResetBtn').addEventListener('click', function() {
-    // Hapus state di AdminModule
+  document.getElementById('confirmResetBtn')?.addEventListener('click', function() {
     AdminModule.clearState();
     showToast('Semua data berhasil dihapus.', 'success');
     bootstrap.Modal.getInstance(document.getElementById('resetConfirmModal')).hide();
@@ -896,39 +901,37 @@
   });
 
   // ==========================================================
-  //   INIT
-  // ==========================================================
-  function initSettingsPage() {
-    initSidebar();
-    loadGeneralSettings();
-    loadSystemInfo();
-    loadLoginMode();
-    loadVisibilitySettings();
-
-    // Background update setelah 1 detik
-    setTimeout(() => {
-      backgroundUpdate();
-    }, 1000);
-
-    // Event listeners
-    document.getElementById('refreshDataBtn').addEventListener('click', manualRefresh);
-  }
-
-  // ==========================================================
-  //   PENGAMAN AKSES & BOOT
+  //   🔥 BOOT & INISIALISASI CEPAT
   // ==========================================================
   (function boot() {
-    // Cek role admin
     if (getUserRole() !== 'admin') {
       window.location.href = '/bisaa/login.html';
       return;
     }
 
-    // Update navbar user
     updateNavbarMenu();
 
-    // Inisialisasi halaman
-    initSettingsPage();
+    // 🔥 Load data spesifik (Login Mode & Visibility) dengan cache agar tidak stuck
+    loadLoginModeFast();
+    loadVisibilityFast();
+    loadGeneralSettings();
+
+    initSidebar();
+    document.getElementById('refreshDataBtn').addEventListener('click', async function() {
+      this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      this.disabled = true;
+      
+      // Refresh data spesifik
+      await loadLoginModeFast();
+      await loadVisibilityFast();
+      
+      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan Cache';
+      this.disabled = false;
+      showToast('Pengaturan berhasil disegarkan!', 'success');
+      updateCacheStatus('Live');
+    });
+
+    updateCacheStatus('Live');
   })();
 
 </script>

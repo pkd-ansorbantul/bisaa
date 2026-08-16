@@ -151,6 +151,19 @@
         th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
         th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
         th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
+        /* --- SKELETON LOADING --- */
+        .skeleton-box {
+            background: #e2e8f0;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
     </style>
 </head>
 <body>
@@ -323,9 +336,7 @@
 
                 <!-- TABLE -->
                 <div id="absensiTableContainer" class="table-container">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div>
-                    </div>
+                    <!-- Akan diisi skeleton atau data -->
                 </div>
             </div>
             <!-- END CONTENT WRAPPER -->
@@ -500,7 +511,8 @@
             showToast,
             escapeHtml,
             getUserRole,
-            updateNavbarMenu
+            updateNavbarMenu,
+            logout
         } from '../js/core/api.js';
         import { AdminModule } from '../js/modules/admin.js';
 
@@ -561,13 +573,20 @@
             isEditing: false
         };
 
+        let refreshInterval = null;
+
         // ==========================================================
         //   UTILITY
         // ==========================================================
         function formatDate(dateStr) {
             if (!dateStr) return '-';
-            const d = new Date(dateStr + 'T00:00:00');
-            return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '-';
+                return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } catch (e) {
+                return dateStr;
+            }
         }
 
         function formatDateTimeRange(startStr, endStr) {
@@ -618,6 +637,52 @@
         }
 
         // ==========================================================
+        //   🔥 SKELETON RENDER (INSTANT)
+        // ==========================================================
+        function renderSkeletonAbsensi() {
+            const container = document.getElementById('absensiTableContainer');
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                                <th style="width:200px;"><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array(5).fill(0).map(() => `
+                                <tr>
+                                    <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:150px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                                    <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-container">
+                    <div class="skeleton-box" style="height:20px;width:200px;"></div>
+                    <div class="btn-group">
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                        <div class="skeleton-box" style="height:30px;width:30px;"></div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        // ==========================================================
         //   RENDER DROPDOWNS
         // ==========================================================
         function renderDropdowns() {
@@ -625,7 +690,6 @@
             const pesertaSelect = document.getElementById('absensiPeserta');
             if (pesertaSelect) {
                 pesertaSelect.innerHTML = '<option value="">-- Pilih Peserta --</option>';
-                // Gunakan AdminModule untuk mendapatkan peserta
                 const pesertaList = AdminModule.getPesertaList('approved') || [];
                 pesertaList.forEach(item => {
                     const opt = document.createElement('option');
@@ -641,7 +705,6 @@
                 sesiSelect.innerHTML = '<option value="">-- Pilih Sesi --</option>';
                 const sesiList = AdminModule.getSesiList() || [];
                 sesiList.forEach(item => {
-                    // Tampilkan nama sesi beserta rentang waktu
                     const timeRange = formatDateTimeRange(item.waktu_mulai, item.waktu_selesai);
                     const opt = document.createElement('option');
                     opt.value = item.id;
@@ -656,10 +719,6 @@
         // ==========================================================
         async function loadData(forceRefresh = false) {
             const container = document.getElementById('absensiTableContainer');
-
-            // Tampilkan loading
-            container.innerHTML =
-                '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>';
 
             try {
                 // Jika state admin belum dimuat, load dulu
@@ -694,8 +753,8 @@
             if (query.trim() !== '') {
                 const q = query.toLowerCase().trim();
                 filtered = filtered.filter(item =>
-                    (item.nama_peserta && item.nama_peserta.toLowerCase().includes(q)) ||
-                    (item.nama_sesi && item.nama_sesi.toLowerCase().includes(q))
+                    (item.nama && item.nama.toLowerCase().includes(q)) ||
+                    (item.namaSesi && item.namaSesi.toLowerCase().includes(q))
                 );
             }
             if (status && status !== '') {
@@ -735,9 +794,9 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width:50px;">#</th>
-                                <th class="sortable" onclick="sortTable('nama_peserta')">Peserta</th>
-                                <th class="sortable" onclick="sortTable('nama_sesi')">Sesi</th>
-                                <th class="sortable" onclick="sortTable('tanggal')">Tanggal</th>
+                                <th class="sortable" onclick="sortTable('nama')">Peserta</th>
+                                <th class="sortable" onclick="sortTable('namaSesi')">Sesi</th>
+                                <th class="sortable" onclick="sortTable('timestamp')">Tanggal</th>
                                 <th class="sortable" onclick="sortTable('status')">Status</th>
                                 <th>Keterangan</th>
                                 <th style="width:200px;" class="text-center">Aksi</th>
@@ -758,24 +817,24 @@
             } else {
                 data.forEach((item, index) => {
                     const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
-                    const badge = getStatusBadge(item.status);
-
-                    // Ambil data sesi untuk menampilkan rentang waktu
-                    const sesi = STATE.sesiList.find(s => String(s.id) === String(item.id_sesi));
-                    let sesiDisplay = escapeHtml(item.nama_sesi || '-');
-                    if (sesi) {
-                        const timeRange = formatDateTimeRange(sesi.waktu_mulai, sesi.waktu_selesai);
-                        sesiDisplay += `<br><small class="text-muted">${timeRange}</small>`;
-                    }
+                    
+                    // 🔥 PERBAIKAN UTAMA: Mapping data backend ke frontend
+                    const nama = item.nama || '-';
+                    const namaSesi = item.namaSesi || '-';
+                    // Format timestamp menjadi tanggal
+                    const tanggal = item.timestamp ? new Date(item.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                    const status = item.status || 'Hadir'; // Default 'Hadir' jika data dari backend belum memiliki status
+                    const badge = getStatusBadge(status);
+                    const catatan = item.catatan || '-';
 
                     html += `
                         <tr>
                             <td>${globalIndex}</td>
-                            <td><strong>${escapeHtml(item.nama_peserta || '-')}</strong></td>
-                            <td>${sesiDisplay}</td>
-                            <td>${formatDate(item.tanggal)}</td>
-                            <td><span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></td>
-                            <td>${escapeHtml(item.catatan || '-')}</td>
+                            <td><strong>${escapeHtml(nama)}</strong></td>
+                            <td>${escapeHtml(namaSesi)}</td>
+                            <td>${escapeHtml(tanggal)}</td>
+                            <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
+                            <td>${escapeHtml(catatan)}</td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-info btn-aksi" onclick="viewAbsensi('${item.id}')" title="Lihat Detail">
                                     <i class="bi bi-eye"></i>
@@ -829,16 +888,16 @@
         };
 
         // ==========================================================
-        //   CRUD OPERATIONS (Local state, with API sync via AdminModule)
+        //   CRUD OPERATIONS (Local state, dengan API sync via AdminModule)
         // ==========================================================
         function addAbsensi(data) {
             const newItem = {
                 id: generateId(),
                 id_peserta: data.id_peserta || '',
                 id_sesi: data.id_sesi || '',
-                nama_peserta: data.nama_peserta || '',
-                nama_sesi: data.nama_sesi || '',
-                tanggal: data.tanggal || new Date().toISOString().slice(0, 10),
+                nama: data.nama || '', // Gunakan 'nama' sesuai backend
+                namaSesi: data.namaSesi || '', // Gunakan 'namaSesi'
+                timestamp: data.timestamp || new Date().toISOString(), // Backend pakai 'timestamp'
                 status: data.status || 'Hadir',
                 catatan: data.catatan || '',
                 pesertaId: data.pesertaId || ''
@@ -855,9 +914,9 @@
                 ...existing,
                 id_peserta: data.id_peserta !== undefined ? data.id_peserta : existing.id_peserta,
                 id_sesi: data.id_sesi !== undefined ? data.id_sesi : existing.id_sesi,
-                nama_peserta: data.nama_peserta !== undefined ? data.nama_peserta : existing.nama_peserta,
-                nama_sesi: data.nama_sesi !== undefined ? data.nama_sesi : existing.nama_sesi,
-                tanggal: data.tanggal !== undefined ? data.tanggal : existing.tanggal,
+                nama: data.nama !== undefined ? data.nama : existing.nama,
+                namaSesi: data.namaSesi !== undefined ? data.namaSesi : existing.namaSesi,
+                timestamp: data.timestamp !== undefined ? data.timestamp : existing.timestamp,
                 status: data.status !== undefined ? data.status : existing.status,
                 catatan: data.catatan !== undefined ? data.catatan : existing.catatan,
                 pesertaId: data.pesertaId !== undefined ? data.pesertaId : existing.pesertaId
@@ -903,7 +962,7 @@
             document.getElementById('editAbsensiId').value = id;
             document.getElementById('absensiPeserta').value = item.id_peserta || '';
             document.getElementById('absensiSesi').value = item.id_sesi || '';
-            document.getElementById('absensiTanggal').value = item.tanggal || '';
+            document.getElementById('absensiTanggal').value = item.timestamp ? new Date(item.timestamp).toISOString().slice(0, 10) : '';
             document.getElementById('absensiStatus').value = item.status || 'Hadir';
             document.getElementById('absensiNote').value = item.catatan || '';
             document.getElementById('formModalTitle').innerText = 'Edit Absensi';
@@ -920,20 +979,14 @@
             const modal = new bootstrap.Modal(document.getElementById('detailAbsensiModal'));
             const content = document.getElementById('detailContent');
             const badge = getStatusBadge(item.status);
-
-            // Ambil data sesi untuk rentang waktu
-            const sesi = STATE.sesiList.find(s => String(s.id) === String(item.id_sesi));
-            let sesiRange = '-';
-            if (sesi) {
-                sesiRange = formatDateTimeRange(sesi.waktu_mulai, sesi.waktu_selesai);
-            }
+            const status = item.status || 'Hadir';
 
             let html = `
                 <div class="list-group list-group-flush">
-                    <div class="list-group-item py-3"><strong>Peserta:</strong> ${escapeHtml(item.nama_peserta || '-')}</div>
-                    <div class="list-group-item py-3"><strong>Sesi:</strong> ${escapeHtml(item.nama_sesi || '-')} <br><small class="text-muted">${sesiRange}</small></div>
-                    <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.tanggal)}</div>
-                    <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(item.status || 'Hadir')}</span></div>
+                    <div class="list-group-item py-3"><strong>Peserta:</strong> ${escapeHtml(item.nama || '-')}</div>
+                    <div class="list-group-item py-3"><strong>Sesi:</strong> ${escapeHtml(item.namaSesi || '-')}</div>
+                    <div class="list-group-item py-3"><strong>Tanggal:</strong> ${formatDate(item.timestamp)}</div>
+                    <div class="list-group-item py-3"><strong>Status:</strong> <span class="badge ${badge}">${escapeHtml(status)}</span></div>
                     <div class="list-group-item py-3"><strong>Keterangan:</strong> ${escapeHtml(item.catatan || '-')}</div>
                 </div>
             `;
@@ -978,9 +1031,9 @@
             const data = {
                 id_peserta: id_peserta,
                 id_sesi: id_sesi,
-                nama_peserta: peserta ? (peserta.nama_lengkap || peserta.nama) : 'Unknown',
-                nama_sesi: sesi ? sesi.nama : 'Unknown',
-                tanggal: tanggal,
+                nama: peserta ? (peserta.nama_lengkap || peserta.nama) : 'Unknown',
+                namaSesi: sesi ? sesi.nama : 'Unknown',
+                timestamp: new Date(tanggal).toISOString(),
                 status: status,
                 catatan: catatan,
                 pesertaId: peserta ? peserta.id : ''
@@ -1015,9 +1068,9 @@
             }
             const exportData = data.map(item => ({
                 id: item.id,
-                peserta: item.nama_peserta,
-                sesi: item.nama_sesi,
-                tanggal: item.tanggal,
+                peserta: item.nama,
+                sesi: item.namaSesi,
+                tanggal: item.timestamp,
                 status: item.status,
                 catatan: item.catatan,
                 pesertaId: item.pesertaId
@@ -1055,6 +1108,43 @@
         }
 
         // ==========================================================
+        //   AUTO REFRESH (POLLING 30 detik)
+        // ==========================================================
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                AdminModule.loadAllData(false).then(() => {
+                    const fresh = AdminModule.getAbsensiList() || [];
+                    if (JSON.stringify(STATE.absensiList) !== JSON.stringify(fresh)) {
+                        STATE.absensiList = fresh;
+                        STATE.pesertaList = AdminModule.getPesertaList() || [];
+                        STATE.sesiList = AdminModule.getSesiList() || [];
+                        renderDropdowns();
+                        applyFiltersAndSort();
+                        updateCacheStatus('Live');
+                    }
+                }).catch(() => {
+                    updateCacheStatus('Offline');
+                });
+            }, 30000);
+        }
+
+        // ==========================================================
+        //   LOGOUT & SIDEBAR
+        // ==========================================================
+        document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+
+        document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
+            const modalEl = document.getElementById('moreMenuModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            logout();
+        });
+
+        // ==========================================================
         //   LOGIN AUTH CHECK & INIT
         // ==========================================================
         (function boot() {
@@ -1069,8 +1159,14 @@
             // Update navbar user
             updateNavbarMenu();
 
+            // 🔥 Tampilkan skeleton instan
+            renderSkeletonAbsensi();
+
             // Load data
             loadData();
+
+            // Mulai auto-refresh
+            startAutoRefresh();
 
             // Event listeners
             document.getElementById('addAbsensiBtn').addEventListener('click', openAddModal);

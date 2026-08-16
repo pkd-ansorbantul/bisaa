@@ -73,13 +73,6 @@
     .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
     .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
@@ -163,6 +156,19 @@
         font-weight: 600;
     }
     .option-btn .badge { margin-left: 0.5rem; }
+
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+        background: #e2e8f0;
+        border-radius: 8px;
+        animation: pulse 1.5s infinite ease-in-out;
+        display: inline-block;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
 
     /* --- TOAST & UTILITY --- */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
@@ -311,14 +317,14 @@
         <!-- TAB SOAL -->
         <div class="tab-pane fade show active" id="soal" role="tabpanel">
           <div id="soalContainer">
-            <div class="text-center py-3 text-muted">Memuat soal...</div>
+            <!-- Akan diisi oleh JS -->
           </div>
         </div>
 
         <!-- TAB DATA -->
         <div class="tab-pane fade" id="data" role="tabpanel">
           <div id="dataContainer">
-            <div class="text-center py-3 text-muted">Memuat data pretest...</div>
+            <!-- Akan diisi oleh JS -->
           </div>
         </div>
       </div>
@@ -444,24 +450,17 @@
     showToast,
     escapeHtml,
     getUserRole,
-    updateNavbarMenu
+    updateNavbarMenu,
+    logout
   } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
 
   // ==========================================================
-  //   PENGAMAN AKSES
+  //   STATE
   // ==========================================================
-  (function boot() {
-    if (getUserRole() !== 'admin') {
-      window.location.href = '/bisaa/login.html';
-      return;
-    }
-    // Update navbar user
-    updateNavbarMenu();
-    // Load data
-    loadQuestionsInstan();
-    loadResponsesInstan();
-  })();
+  let questions = [];
+  let responses = [];
+  let selectedAnswerIndex = 0;
 
   // ==========================================================
   //   UTILITY
@@ -472,64 +471,242 @@
     return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  function escapeHtmlLocal(str) {
+    return escapeHtml(str);
+  }
+
   // ==========================================================
-  //   SIDEBAR TOGGLE & LOGOUT
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonSoal() {
+    const container = document.getElementById('soalContainer');
+    let html = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><span class="text-muted small">Total Soal: </span><span class="badge bg-primary" id="totalSoalBadge">0</span></div>
+        <div>
+          <button class="btn btn-outline-secondary btn-sm" id="refreshSoalBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+          <button class="btn btn-success btn-sm ms-2" id="addSoalBtn">➕ Tambah Soal</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Array(5).fill(0).map(() => `
+                <tr>
+                  <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:180px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  function renderSkeletonData() {
+    const container = document.getElementById('dataContainer');
+    let html = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><span class="text-muted small">Total Data: </span><span class="badge bg-primary" id="totalDataBadge">0</span></div>
+        <div>
+          <button class="btn btn-outline-secondary btn-sm" id="refreshDataBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+          <button class="btn btn-success btn-sm ms-2" id="exportCSVBtn">📥 Ekspor CSV</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <input type="text" class="form-control" id="filterDataInput" placeholder="🔍 Cari nama peserta...">
+      </div>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th><div class="skeleton-box" style="height:20px;width:60px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+                <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Array(5).fill(0).map(() => `
+                <tr>
+                  <td><div class="skeleton-box" style="height:20px;width:40px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                  <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  // ==========================================================
+  //   SIDEBAR TOGGLE & SUBMENU
   // ==========================================================
   document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
     document.getElementById('sidebarWrapper')?.classList.toggle('minimized');
     const icon = this.querySelector('i');
-    if (icon) { icon.classList.toggle('bi-arrow-left-right'); icon.classList.toggle('bi-arrow-right-left'); }
+    if (icon) {
+      icon.classList.toggle('bi-arrow-left-right');
+      icon.classList.toggle('bi-arrow-right-left');
+    }
   });
 
+  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = this.dataset.target;
+      const submenu = document.getElementById('submenu-' + target);
+      if (submenu) submenu.classList.toggle('open');
+    });
+  });
+
+  // ==========================================================
+  //   LOGOUT
+  // ==========================================================
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   // ==========================================================
-  //   STATE
-  // ==========================================================
-  let questions = [];
-  let responses = [];
-  let selectedAnswerIndex = 0;
-
-  // ==========================================================
-  //   LOAD SOAL (via callApi)
+  //   LOAD SOAL (via AdminModule dan cache)
   // ==========================================================
   async function loadQuestionsInstan() {
     const container = document.getElementById('soalContainer');
-    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div> Memuat soal...</div>';
+    const CACHE_KEY = 'pretest_questions';
+
+    // Tampilkan skeleton
+    renderSkeletonSoal();
 
     try {
-      // Gunakan callApi untuk mendapatkan data pretest questions
-      const fresh = await callApi('getPretestQuestions', {}, 'GET');
-      const dataArray = fresh?.data || fresh;
+      // Coba ambil dari cache dulu
+      let cached = null;
+      try {
+        const item = localStorage.getItem('pkd_cache_' + CACHE_KEY);
+        if (item) {
+          const { data, timestamp } = JSON.parse(item);
+          if (Date.now() - timestamp < 300000) { // 5 menit
+            cached = data;
+          }
+        }
+      } catch (e) {}
 
-      if (dataArray && Array.isArray(dataArray) && dataArray.length > 0) {
-        questions = dataArray;
+      if (cached && cached.length > 0) {
+        questions = cached;
         renderSoal(container);
-      } else {
-        container.innerHTML = '<div class="alert alert-info text-center">Belum ada soal pretest.</div>';
       }
+
+      // Refresh dari API di background
+      (async function refresh() {
+        try {
+          const res = await callApi('getPretestQuestions', {}, 'GET');
+          let dataArray = res?.data || res;
+          if (Array.isArray(dataArray) && dataArray.length > 0) {
+            questions = dataArray;
+            // Simpan ke cache
+            try {
+              localStorage.setItem('pkd_cache_' + CACHE_KEY, JSON.stringify({ data: questions, timestamp: Date.now() }));
+            } catch (e) {}
+            renderSoal(container);
+          } else if (!cached || cached.length === 0) {
+            container.innerHTML = '<div class="alert alert-info text-center">Belum ada soal pretest.</div>';
+          }
+        } catch (e) {
+          console.warn('Gagal refresh soal:', e);
+          if (!cached || cached.length === 0) {
+            container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat soal: ${e.message}</div>`;
+          }
+        }
+      })();
+
     } catch (e) {
       container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat soal: ${e.message}</div>`;
     }
   }
 
   function renderSoal(container) {
-    let html = `<div class="table-responsive"><table class="table table-bordered table-sm table-hover"><thead class="table-light"><tr><th>ID</th><th>Teks</th><th>Opsi</th><th>Jawaban</th><th>Urutan</th><th>Timer</th><th>Aksi</th></tr></thead><tbody>`;
+    let html = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><span class="text-muted small">Total Soal: </span><span class="badge bg-primary" id="totalSoalBadge">${questions.length}</span></div>
+        <div>
+          <button class="btn btn-outline-secondary btn-sm" id="refreshSoalBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+          <button class="btn btn-success btn-sm ms-2" id="addSoalBtn">➕ Tambah Soal</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Teks</th>
+                <th>Opsi</th>
+                <th>Jawaban</th>
+                <th>Urutan</th>
+                <th>Timer</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
     questions.sort((a, b) => (a.urutan || 0) - (b.urutan || 0)).forEach(q => {
       const opsiStr = Array.isArray(q.opsi) ? q.opsi.join(', ') : q.opsi;
-      html += `<tr><td>${q.id}</td><td>${escapeHtml(q.teks)}</td><td>${escapeHtml(opsiStr)}</td><td>${q.jawaban}</td><td>${q.urutan || '-'}</td><td>${q.timer_enabled ? '⏱️ '+q.timer_duration+'s' : '⛔'}</td><td><button class="btn btn-sm btn-warning edit-pretest" data-id="${q.id}">✏️</button><button class="btn btn-sm btn-danger delete-pretest" data-id="${q.id}">🗑️</button></td></tr>`;
+      html += `
+        <tr>
+          <td>${q.id}</td>
+          <td>${escapeHtmlLocal(q.teks)}</td>
+          <td>${escapeHtmlLocal(opsiStr)}</td>
+          <td>${q.jawaban}</td>
+          <td>${q.urutan || '-'}</td>
+          <td>${q.timer_enabled ? '⏱️ '+q.timer_duration+'s' : '⛔'}</td>
+          <td>
+            <button class="btn btn-sm btn-warning edit-pretest" data-id="${q.id}">✏️</button>
+            <button class="btn btn-sm btn-danger delete-pretest" data-id="${q.id}">🗑️</button>
+          </td>
+        </tr>
+      `;
     });
-    html += `</tbody></table></div>`;
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
     container.innerHTML = html;
+    container.classList.add('fade-in');
 
+    // Event listeners untuk edit dan delete
     container.querySelectorAll('.edit-pretest').forEach(btn => {
       btn.addEventListener('click', function() {
         const q = questions.find(s => s.id == this.dataset.id);
@@ -540,14 +717,20 @@
       btn.addEventListener('click', async function() {
         if (!confirm('Hapus soal ini?')) return;
         try {
-          await callApi('deletePretestQuestion', { id: this.dataset.id }, 'POST');
-          showToast('Soal dihapus', 'success');
-          loadQuestionsInstan();
+          const res = await callApi('deletePretestQuestion', { id: this.dataset.id }, 'POST');
+          if (res.success) {
+            showToast('Soal dihapus', 'success');
+            loadQuestionsInstan();
+          } else {
+            showToast('Gagal: ' + (res.error || 'Unknown error'), 'error');
+          }
         } catch (e) {
           showToast('Gagal: ' + e.message, 'error');
         }
       });
     });
+    document.getElementById('refreshSoalBtn')?.addEventListener('click', loadQuestionsInstan);
+    document.getElementById('addSoalBtn')?.addEventListener('click', () => showPretestModal());
   }
 
   // ==========================================================
@@ -555,25 +738,83 @@
   // ==========================================================
   async function loadResponsesInstan() {
     const container = document.getElementById('dataContainer');
-    container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div> Memuat data pretest...</div>';
+    const CACHE_KEY = 'pretest_responses';
+
+    // Tampilkan skeleton
+    renderSkeletonData();
 
     try {
-      const fresh = await callApi('getPretestResponses', {}, 'GET');
-      const dataArray = fresh?.data || fresh;
+      // Coba cache
+      let cached = null;
+      try {
+        const item = localStorage.getItem('pkd_cache_' + CACHE_KEY);
+        if (item) {
+          const { data, timestamp } = JSON.parse(item);
+          if (Date.now() - timestamp < 300000) {
+            cached = data;
+          }
+        }
+      } catch (e) {}
 
-      if (dataArray && Array.isArray(dataArray) && dataArray.length > 0) {
-        responses = dataArray;
+      if (cached && cached.length > 0) {
+        responses = cached;
         renderData(container);
-      } else {
-        container.innerHTML = '<div class="alert alert-info text-center">Belum ada data pretest.</div>';
       }
+
+      // Refresh background
+      (async function refresh() {
+        try {
+          const res = await callApi('getPretestResponses', {}, 'GET');
+          let dataArray = res?.data || res;
+          if (Array.isArray(dataArray) && dataArray.length > 0) {
+            responses = dataArray;
+            try {
+              localStorage.setItem('pkd_cache_' + CACHE_KEY, JSON.stringify({ data: responses, timestamp: Date.now() }));
+            } catch (e) {}
+            renderData(container);
+          } else if (!cached || cached.length === 0) {
+            container.innerHTML = '<div class="alert alert-info text-center">Belum ada data pretest.</div>';
+          }
+        } catch (e) {
+          console.warn('Gagal refresh data:', e);
+          if (!cached || cached.length === 0) {
+            container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data: ${e.message}</div>`;
+          }
+        }
+      })();
+
     } catch (e) {
       container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data: ${e.message}</div>`;
     }
   }
 
   function renderData(container) {
-    let html = `<div class="table-responsive" style="max-height:500px;overflow-y:auto;"><table class="table table-bordered table-sm table-striped"><thead class="table-light"><tr><th>Waktu</th><th>Nama</th><th>No HP</th><th>Skor</th><th>Jawaban</th><th>Detail</th></tr></thead><tbody>`;
+    let html = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><span class="text-muted small">Total Data: </span><span class="badge bg-primary" id="totalDataBadge">${responses.length}</span></div>
+        <div>
+          <button class="btn btn-outline-secondary btn-sm" id="refreshDataBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+          <button class="btn btn-success btn-sm ms-2" id="exportCSVBtn">📥 Ekspor CSV</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <input type="text" class="form-control" id="filterDataInput" placeholder="🔍 Cari nama peserta...">
+      </div>
+      <div class="table-container">
+        <div class="table-responsive" style="max-height:500px;overflow-y:auto;">
+          <table class="table table-bordered table-sm table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>Waktu</th>
+                <th>Nama</th>
+                <th>No HP</th>
+                <th>Skor</th>
+                <th>Jawaban</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
     responses.forEach(row => {
       let ringkasan = '';
       try {
@@ -581,10 +822,25 @@
         const benar = jawaban.filter(a => a.correct).length;
         ringkasan = `${benar}/${jawaban.length}`;
       } catch { ringkasan = 'Error'; }
-      html += `<tr class="data-row"><td>${formatDate(row.timestamp)}</td><td class="nama">${escapeHtml(row.nama || '')}</td><td>${escapeHtml(row.nohp || '')}</td><td>${row.score || 0}</td><td>${ringkasan}</td><td><button class="btn btn-sm btn-outline-info btn-detail" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button></td></tr>`;
+      html += `
+        <tr class="data-row">
+          <td>${formatDate(row.timestamp)}</td>
+          <td class="nama">${escapeHtmlLocal(row.nama || '')}</td>
+          <td>${escapeHtmlLocal(row.nohp || '')}</td>
+          <td>${row.score || 0}</td>
+          <td>${ringkasan}</td>
+          <td><button class="btn btn-sm btn-outline-info btn-detail" data-row='${encodeURIComponent(JSON.stringify(row))}'>🔍</button></td>
+        </tr>
+      `;
     });
-    html += `</tbody></table></div>`;
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
     container.innerHTML = html;
+    container.classList.add('fade-in');
 
     container.querySelectorAll('.btn-detail').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -594,6 +850,15 @@
         } catch (e) {
           showToast('Gagal menampilkan detail', 'error');
         }
+      });
+    });
+    document.getElementById('refreshDataBtn')?.addEventListener('click', loadResponsesInstan);
+    document.getElementById('exportCSVBtn')?.addEventListener('click', exportCSV);
+    document.getElementById('filterDataInput')?.addEventListener('input', function() {
+      const keyword = this.value.toLowerCase();
+      document.querySelectorAll('#dataContainer .data-row').forEach(row => {
+        const nama = row.querySelector('.nama')?.innerText.toLowerCase() || '';
+        row.style.display = nama.includes(keyword) ? '' : 'none';
       });
     });
   }
@@ -666,17 +931,39 @@
         const timerEnabled = timerEnabledEl ? timerEnabledEl.checked : false;
         const timerDuration = timerDurationEl ? parseInt(timerDurationEl.value) : 30;
 
-        if (!teks || !opsi) { showToast('Teks soal dan opsi wajib diisi!', 'error'); return; }
+        if (!teks || !opsi) {
+          showToast('Teks soal dan opsi wajib diisi!', 'error');
+          return;
+        }
         try {
+          let res;
           if (id) {
-            await callApi('updatePretestQuestion', { id, teks, opsi, jawaban, urutan, timer_enabled: timerEnabled, timer_duration: timerDuration }, 'POST');
-            showToast('Soal diperbarui', 'success');
+            res = await callApi('updatePretestQuestion', {
+              id,
+              teks,
+              opsi,
+              jawaban,
+              urutan,
+              timer_enabled: timerEnabled,
+              timer_duration: timerDuration
+            }, 'POST');
           } else {
-            await callApi('addPretestQuestion', { teks, opsi, jawaban, urutan, timer_enabled: timerEnabled, timer_duration: timerDuration }, 'POST');
-            showToast('Soal ditambahkan', 'success');
+            res = await callApi('addPretestQuestion', {
+              teks,
+              opsi,
+              jawaban,
+              urutan,
+              timer_enabled: timerEnabled,
+              timer_duration: timerDuration
+            }, 'POST');
           }
-          modal.hide();
-          loadQuestionsInstan();
+          if (res.success) {
+            showToast(id ? 'Soal diperbarui' : 'Soal ditambahkan', 'success');
+            modal.hide();
+            loadQuestionsInstan();
+          } else {
+            throw new Error(res.error || 'Gagal menyimpan');
+          }
         } catch (e) {
           showToast('Gagal: ' + e.message, 'error');
         }
@@ -695,7 +982,7 @@
     let html = '';
     options.forEach((opt, idx) => {
       const isCorrect = (idx === selectedIndex);
-      html += `<div class="option-btn ${isCorrect ? 'correct' : ''}" data-index="${idx}" onclick="window.selectOption(this)">${escapeHtml(opt)} ${isCorrect ? '<span class="badge bg-success">✓</span>' : ''}</div>`;
+      html += `<div class="option-btn ${isCorrect ? 'correct' : ''}" data-index="${idx}" onclick="window.selectOption(this)">${escapeHtmlLocal(opt)} ${isCorrect ? '<span class="badge bg-success">✓</span>' : ''}</div>`;
     });
     container.innerHTML = html;
   }
@@ -728,17 +1015,46 @@
     new bootstrap.Modal(document.getElementById('detailModal')).show();
   }
 
-  // ==========================================================
-  //   SUBMENU DROPDOWN SIDEBAR
-  // ==========================================================
-  document.querySelectorAll('.sidebar-menu-area .nav-link[data-target]').forEach(link => {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      const target = this.dataset.target;
-      const submenu = document.getElementById('submenu-' + target);
-      if (submenu) submenu.classList.toggle('open');
+  function exportCSV() {
+    if (!responses || responses.length === 0) {
+      showToast('Tidak ada data untuk diekspor.', 'info');
+      return;
+    }
+    const headers = ['Timestamp', 'Nama', 'No HP', 'Skor', 'Jawaban (Soal ID - Pilihan - Benar?)'];
+    const rows = responses.map(r => {
+      let js = '';
+      try {
+        const ans = JSON.parse(r.answers);
+        js = ans.map(a => `${a.qid}:${a.selected}${a.correct ? '(✓)' : '✗'}`).join('; ');
+      } catch { js = 'Error'; }
+      return [r.timestamp, r.nama, r.nohp, r.score, js];
     });
-  });
+    const csvContent = [headers, ...rows].map(e => e.map(c => `"${c}"`).join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'pretest_data.csv';
+    link.click();
+    showToast('Data berhasil diekspor', 'success');
+  }
+
+  // ==========================================================
+  //   🛡️ GUARD ACCESS & BOOT
+  // ==========================================================
+  (function boot() {
+    if (getUserRole() !== 'admin') {
+      window.location.href = '/bisaa/login.html';
+      return;
+    }
+
+    // Update navbar user
+    updateNavbarMenu();
+
+    // Load data dengan skeleton
+    loadQuestionsInstan();
+    loadResponsesInstan();
+  })();
 
 </script>
 </body>

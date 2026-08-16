@@ -11,7 +11,6 @@
     <!-- Bootstrap 5 + Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
@@ -158,6 +157,19 @@
         .cache-status.live { background: #dcfce7; color: #16a34a; }
         .cache-status.offline { background: #fee2e2; color: #dc2626; }
 
+        /* --- SKELETON LOADING --- */
+        .skeleton-box {
+            background: #e2e8f0;
+            border-radius: 8px;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
         /* Responsive Table */
         @media (max-width: 768px) {
             .ttd-preview-img { max-height: 30px; max-width: 80px; }
@@ -253,7 +265,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Cari nama peserta atau penanda tangan..." autocomplete="off">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari nama peserta..." autocomplete="off">
                 </div>
                 <div class="col-md-4 text-end">
                     <button class="btn btn-outline-secondary btn-sm" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
@@ -273,7 +285,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr>
+                        <!-- Akan diisi skeleton atau data -->
                     </tbody>
                 </table>
             </div>
@@ -402,8 +414,10 @@
 </div>
 
 <!-- ================= SCRIPTS ================= -->
+<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
+<!-- Modul ES Khusus Halaman Ini -->
 <script type="module">
     // ==========================================================
     //   IMPOR DARI CORE API DAN MODUL ADMIN
@@ -413,7 +427,8 @@
         showToast,
         escapeHtml,
         getUserRole,
-        updateNavbarMenu
+        updateNavbarMenu,
+        logout
     } from '../js/core/api.js';
     import { AdminModule } from '../js/modules/admin.js';
 
@@ -451,12 +466,10 @@
     // ==========================================================
     document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
-        if (typeof logout !== 'undefined') logout();
-        else window.location.href = '/bisaa/index.html';
+        logout();
     });
     document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-        if (typeof logout !== 'undefined') logout();
-        else window.location.href = '/bisaa/index.html';
+        logout();
     });
 
     // ==========================================================
@@ -469,6 +482,7 @@
     let sortColumn = 'peserta_nama';
     let sortDirection = 'asc';
     let deleteTarget = null;
+    let refreshInterval = null;
 
     const tableBody = document.getElementById('tableBody');
     const filterRole = document.getElementById('filterRole');
@@ -485,29 +499,66 @@
         } catch (e) { return dateStr; }
     }
 
-    // Fungsi utama untuk mengelompokkan data mentah menjadi per peserta
-    function groupDataByParticipant(dataArray) {
-        const groupedMap = {};
-        dataArray.forEach(item => {
-            const key = item.peserta_nama || 'Tanpa Nama';
-            if (!groupedMap[key]) {
-                groupedMap[key] = { peserta_nama: key, ketua: null, sekretaris: null, instruktur: null };
-            }
-            if (item.role === 'ketua_pc') groupedMap[key].ketua = item;
-            else if (item.role === 'sekretaris') groupedMap[key].sekretaris = item;
-            else if (item.role === 'instruktur') groupedMap[key].instruktur = item;
-        });
-        return Object.values(groupedMap);
+    // ==========================================================
+    //   🔥 SKELETON RENDER (INSTANT)
+    // ==========================================================
+    function renderSkeleton() {
+        let html = '';
+        for (let i = 0; i < 8; i++) {
+            html += `
+                <tr>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:2rem;"></div></td>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:120px;"></div></td>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:80px;"></div></td>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:80px;"></div></td>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:80px;"></div></td>
+                    <td><div class="skeleton-box" style="height:1.2rem;width:100px;"></div></td>
+                </tr>
+            `;
+        }
+        tableBody.innerHTML = html;
+        recordCount.textContent = 'Memuat data...';
+        paginationControls.innerHTML = '';
     }
 
+    // ==========================================================
+    //   🔥 LOAD & GROUP DATA
+    // ==========================================================
     async function loadData() {
         try {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr>`;
             if (!AdminModule.getState().lastSync) {
                 await AdminModule.loadAllData();
             }
             const rawData = AdminModule.getDigitalApprovals() || [];
-            allData = rawData;
+            
+            // 🔥 Kunci Utama: Kelompokkan data flat menjadi 1 baris per peserta
+            const groupedMap = {};
+            rawData.forEach(row => {
+                const peserta = row.peserta_nama || 'Tanpa Nama';
+                if (!groupedMap[peserta]) {
+                    groupedMap[peserta] = {
+                        peserta_nama: peserta,
+                        ketua_pc_nama: '', ketua_pc_driveId: '', ketua_pc_timestamp: '',
+                        sekretaris_nama: '', sekretaris_driveId: '', sekretaris_timestamp: '',
+                        instruktur_nama: '', instruktur_driveId: '', instruktur_timestamp: ''
+                    };
+                }
+                if (row.role === 'ketua_pc') {
+                    groupedMap[peserta].ketua_pc_nama = row.nama || '';
+                    groupedMap[peserta].ketua_pc_driveId = row.driveId || '';
+                    groupedMap[peserta].ketua_pc_timestamp = row.timestamp || '';
+                } else if (row.role === 'sekretaris') {
+                    groupedMap[peserta].sekretaris_nama = row.nama || '';
+                    groupedMap[peserta].sekretaris_driveId = row.driveId || '';
+                    groupedMap[peserta].sekretaris_timestamp = row.timestamp || '';
+                } else if (row.role === 'instruktur') {
+                    groupedMap[peserta].instruktur_nama = row.nama || '';
+                    groupedMap[peserta].instruktur_driveId = row.driveId || '';
+                    groupedMap[peserta].instruktur_timestamp = row.timestamp || '';
+                }
+            });
+            
+            allData = Object.values(groupedMap);
             applyFilters();
         } catch (err) {
             console.error('Error loading data:', err);
@@ -519,23 +570,23 @@
         const role = filterRole.value;
         const search = searchInput.value.toLowerCase().trim();
 
-        let grouped = groupDataByParticipant(allData);
+        let grouped = allData;
 
         if (role) {
             grouped = grouped.filter(g => {
-                if (role === 'ketua_pc' && g.ketua) return true;
-                if (role === 'sekretaris' && g.sekretaris) return true;
-                if (role === 'instruktur' && g.instruktur) return true;
+                if (role === 'ketua_pc' && g.ketua_pc_driveId) return true;
+                if (role === 'sekretaris' && g.sekretaris_driveId) return true;
+                if (role === 'instruktur' && g.instruktur_driveId) return true;
                 return false;
             });
         }
 
         if (search) {
             grouped = grouped.filter(g => {
-                const searchable = g.peserta_nama.toLowerCase() + ' ' +
-                    (g.ketua?.nama || '').toLowerCase() + ' ' +
-                    (g.sekretaris?.nama || '').toLowerCase() + ' ' +
-                    (g.instruktur?.nama || '').toLowerCase();
+                const searchable = (g.peserta_nama || '').toLowerCase() + ' ' +
+                    (g.ketua_pc_nama || '').toLowerCase() + ' ' +
+                    (g.sekretaris_nama || '').toLowerCase() + ' ' +
+                    (g.instruktur_nama || '').toLowerCase();
                 return searchable.includes(search);
             });
         }
@@ -544,11 +595,11 @@
             grouped.sort(function(a, b) {
                 let va = '', vb = '';
                 if (sortColumn === 'peserta_nama') {
-                    va = a.peserta_nama.toLowerCase();
-                    vb = b.peserta_nama.toLowerCase();
-                } else if (sortColumn === 'ketua_nama') {
-                    va = (a.ketua?.nama || '').toLowerCase();
-                    vb = (b.ketua?.nama || '').toLowerCase();
+                    va = (a.peserta_nama || '').toLowerCase();
+                    vb = (b.peserta_nama || '').toLowerCase();
+                } else if (sortColumn === 'ketua_pc_nama') {
+                    va = (a.ketua_pc_nama || '').toLowerCase();
+                    vb = (b.ketua_pc_nama || '').toLowerCase();
                 } else {
                     va = (a[sortColumn] || '').toString().toLowerCase();
                     vb = (b[sortColumn] || '').toString().toLowerCase();
@@ -590,17 +641,17 @@
             let html = '';
             pageData.forEach((g, idx) => {
                 const globalIdx = start + idx;
-                const renderTTDColumn = (item) => {
-                    if (item) {
+                const renderTTDColumn = (nama, driveId) => {
+                    if (driveId) {
                         return `
                             <div class="ttd-preview-container">
-                                <span class="ttd-signer-name">${escapeHtml(item.nama)}</span>
-                                <img src="https://drive.google.com/thumbnail?id=${escapeHtml(item.driveId)}&sz=w150" 
-                                     alt="TTD ${escapeHtml(item.nama)}" 
+                                <span class="ttd-signer-name">${escapeHtml(nama)}</span>
+                                <img src="https://drive.google.com/thumbnail?id=${escapeHtml(driveId)}&sz=w150" 
+                                     alt="TTD ${escapeHtml(nama)}" 
                                      class="ttd-preview-img"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                <span class="ttd-fallback" style="display:none;">${escapeHtml(item.driveId)}</span>
-                                <small class="text-muted" style="font-size:0.6rem;">${formatDate(item.timestamp)}</small>
+                                <span class="ttd-fallback" style="display:none;">${escapeHtml(driveId)}</span>
+                                <small class="text-muted" style="font-size:0.6rem;">${formatDate(g.ketua_pc_timestamp || g.sekretaris_timestamp || g.instruktur_timestamp)}</small>
                             </div>
                         `;
                     }
@@ -610,9 +661,9 @@
                 html += `<tr>
                     <td>${globalIdx + 1}</td>
                     <td><strong>${escapeHtml(g.peserta_nama)}</strong></td>
-                    <td>${renderTTDColumn(g.ketua)}</td>
-                    <td>${renderTTDColumn(g.sekretaris)}</td>
-                    <td>${renderTTDColumn(g.instruktur)}</td>
+                    <td>${renderTTDColumn(g.ketua_pc_nama, g.ketua_pc_driveId)}</td>
+                    <td>${renderTTDColumn(g.sekretaris_nama, g.sekretaris_driveId)}</td>
+                    <td>${renderTTDColumn(g.instruktur_nama, g.instruktur_driveId)}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-info" onclick="showQRGroup('${escapeHtml(g.peserta_nama)}')">
                             <i class="bi bi-qr-code"></i>
@@ -668,11 +719,14 @@
     document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
         const nama = deleteTarget;
         if (!nama) return;
+        // Hapus dari state lokal (optimistic) lalu kirim ke server
         allData = allData.filter(item => item.peserta_nama !== nama);
         deleteTarget = null;
         bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
         applyFilters();
         showToast(`Berhasil menghapus semua tanda tangan untuk peserta "${nama}".`, 'success');
+        // Kirim ke server
+        callApi('deleteDigitalApprovalByPeserta', { peserta_nama: nama }, 'POST').catch(e => console.warn(e));
     });
 
     window.showQRGroup = async function(pesertaNama) {
@@ -732,10 +786,22 @@
 
     filterRole.addEventListener('change', applyFilters);
     searchInput.addEventListener('input', applyFilters);
-    refreshBtn.addEventListener('click', loadData);
+    refreshBtn.addEventListener('click', function() {
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        this.disabled = true;
+        loadData().then(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+            showToast('Data disegarkan', 'success');
+        }).catch(() => {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+            this.disabled = false;
+            showToast('Gagal menyegarkan', 'error');
+        });
+    });
 
     // ==========================================================
-    //   LOGIKA ATUR PASSWORD (TERINTEGRASI)
+    //   LOGIKA ATUR PASSWORD
     // ==========================================================
     async function loadPasswordStatus() {
         try {
@@ -785,6 +851,26 @@
     });
 
     // ==========================================================
+    //   AUTO REFRESH (Polling 30 detik)
+    // ==========================================================
+    function startAutoRefresh() {
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(() => {
+            AdminModule.loadAllData(false).then(() => {
+                const fresh = AdminModule.getDigitalApprovals() || [];
+                // Hanya refresh jika ada perubahan data
+                if (JSON.stringify(allData) !== JSON.stringify(fresh)) {
+                    // Kita harus melakukan grouping ulang. 
+                    // Cara termudah adalah memanggil loadData() kembali.
+                    loadData(); 
+                }
+            }).catch(() => {
+                // silent fail
+            });
+        }, 30000);
+    }
+
+    // ==========================================================
     //   BOOT
     // ==========================================================
     (function boot() {
@@ -793,8 +879,16 @@
             return;
         }
         updateNavbarMenu();
+
+        // Tampilkan skeleton instan
+        renderSkeleton();
+
+        // Load data
         loadData();
         loadPasswordStatus();
+
+        // Mulai auto-refresh
+        startAutoRefresh();
     })();
 </script>
 </body>

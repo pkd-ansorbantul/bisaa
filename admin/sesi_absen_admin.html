@@ -11,15 +11,13 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
   <style>
-    /* --- GLOBAL --- */
+    /* ===== GLOBAL & SIDEBAR ===== */
     * { font-family: 'Inter', sans-serif; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
 
-    /* --- LAYOUT UTAMA --- */
     .container-card { max-width: 100%; padding: 0; margin: 0; }
     .admin-wrapper { display: flex; flex-wrap: wrap; min-height: 100vh; width: 100%; }
 
-    /* --- SIDEBAR STYLES (UNIVERSAL) --- */
     .sidebar-wrapper {
         width: 260px; max-width: 260px;
         background: #0f172a; color: #f1f5f9;
@@ -31,7 +29,6 @@
     }
     .sidebar-wrapper.minimized { width: 70px; max-width: 70px; }
 
-    /* --- BRAND AREA --- */
     .sidebar-brand-area {
         flex-shrink: 0; padding: 1.5rem 1.5rem 0.75rem 1.5rem;
         border-bottom: 1px solid #1e293b; transition: padding 0.3s ease;
@@ -50,11 +47,9 @@
     .sidebar-wrapper.minimized .brand-sidebar img { max-height: 40px; }
     .sidebar-wrapper.minimized .brand-sidebar-title, .sidebar-wrapper.minimized .brand-sidebar-sub { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
 
-    /* --- MENU AREA --- */
     .sidebar-menu-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; }
     .sidebar-menu-area::-webkit-scrollbar { display: none; }
 
-    /* --- NAV PILLS --- */
     .nav-pills .nav-link {
         width: calc(100% - 1.6rem); margin: 0.2rem 0.8rem; border-radius: 12px; padding: 0.7rem 1rem;
         color: #cbd5e1 !important; font-weight: 500; transition: all 0.3s ease; display: flex;
@@ -63,33 +58,15 @@
     }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-    /* --- SUBMENU --- */
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
     .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
     .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
     .sidebar-toggle button:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-
-    /* --- LOGOUT --- */
-    .sidebar-logout { border-top: 1px solid #1e293b; margin-top: 0.5rem; padding-top: 0.5rem; }
-    .sidebar-wrapper.minimized .sidebar-logout .nav-link span { display: none; }
 
     /* --- BOTTOM NAV (MOBILE) --- */
     .bottom-nav {
@@ -107,14 +84,14 @@
     }
     @media (min-width: 992px) { .bottom-nav { display: none; } }
 
-    /* --- CONTENT WRAPPER --- */
+    /* ===== CONTENT WRAPPER ===== */
     .content-wrapper {
         margin-left: 260px; padding: 1.5rem; background: #f8fafc;
         min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease;
     }
     .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
 
-    /* --- UTILITY --- */
+    /* ===== UTILITY ===== */
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .section-title {
@@ -127,6 +104,19 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     .btn-aksi { min-width: 80px; }
+
+    /* ===== SKELETON LOADING ===== */
+    .skeleton-box {
+        background: #e2e8f0;
+        border-radius: 8px;
+        animation: pulse 1.5s infinite ease-in-out;
+        display: inline-block;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
 
     /* --- QR CANVAS --- */
     .qr-canvas {
@@ -303,7 +293,7 @@
 
       <!-- TABLE -->
       <div id="sesiAbsenTableContainer" class="table-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+        <!-- Akan diisi oleh skeleton atau data -->
       </div>
     </div>
   </div>
@@ -479,7 +469,8 @@
     showToast,
     escapeHtml,
     getUserRole,
-    updateNavbarMenu
+    updateNavbarMenu,
+    logout
   } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
 
@@ -495,6 +486,9 @@
     sortColumn: null,
     sortDirection: 'asc'
   };
+
+  let refreshInterval = null;
+  let __qrSesiCanvas = null; // untuk menyimpan canvas QR agar bisa di-download
 
   // ==========================================================
   //   UTILITY
@@ -536,6 +530,52 @@
   }
 
   // ==========================================================
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonSesi() {
+    const container = document.getElementById('sesiAbsenTableContainer');
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th style="width:180px;"><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th style="width:280px;"><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(5).fill(0).map(() => `
+              <tr>
+                <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:100px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:180px;"></div></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-container">
+        <div class="skeleton-box" style="height:20px;width:200px;"></div>
+        <div class="btn-group">
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  // ==========================================================
   //   SIDEBAR TOGGLE & SUBMENU
   // ==========================================================
   document.getElementById('toggleSidebarBtn')?.addEventListener('click', function() {
@@ -561,16 +601,14 @@
   // ==========================================================
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
     const modalEl = document.getElementById('moreMenuModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   // ==========================================================
@@ -578,7 +616,6 @@
   // ==========================================================
   async function loadSesiAbsen(forceRefresh = false) {
     const container = document.getElementById('sesiAbsenTableContainer');
-    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
 
     try {
       if (!AdminModule.getState().lastSync || forceRefresh) {
@@ -675,8 +712,6 @@
   function renderTable(data, totalItems) {
     const container = document.getElementById('sesiAbsenTableContainer');
     if (!container) return;
-
-    console.log(`📊 Render Tabel: Menampilkan ${data.length} baris dari total ${totalItems} data.`);
 
     let html = `
       <div class="table-responsive">
@@ -835,7 +870,7 @@
         <span class="text-muted small">Token tersemat dalam QR (absen langsung).</span>
       `;
 
-      window.__qrSesiCanvas = canvas;
+      __qrSesiCanvas = canvas;
       new bootstrap.Modal(document.getElementById('qrSesiModal')).show();
     } catch (e) {
       showToast('Gagal generate QR: ' + e.message, 'danger');
@@ -1149,6 +1184,26 @@
   }
 
   // ==========================================================
+  //   AUTO REFRESH (Polling setiap 30 detik)
+  // ==========================================================
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      // Refresh data di background
+      AdminModule.loadAllData(false).then(() => {
+        const freshData = AdminModule.getSesiList() || [];
+        if (JSON.stringify(STATE.sesiList) !== JSON.stringify(freshData)) {
+          STATE.sesiList = freshData;
+          applyFiltersAndSort();
+          updateCacheStatus('Live');
+        }
+      }).catch(() => {
+        updateCacheStatus('Offline');
+      });
+    }, 30000); // 30 detik
+  }
+
+  // ==========================================================
   //   EVENT LISTENERS
   // ==========================================================
   document.getElementById('addSesiAbsenBtn')?.addEventListener('click', openAddModal);
@@ -1169,10 +1224,10 @@
   document.getElementById('saveSesiAbsenBtn')?.addEventListener('click', saveData);
   document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
   document.getElementById('downloadQRSesiBtn')?.addEventListener('click', function() {
-    if (window.__qrSesiCanvas) {
+    if (__qrSesiCanvas) {
       const link = document.createElement('a');
       link.download = `QR_Sesi_${Date.now()}.png`;
-      link.href = window.__qrSesiCanvas.toDataURL('image/png');
+      link.href = __qrSesiCanvas.toDataURL('image/png');
       link.click();
     } else {
       showToast('Tidak ada QR yang tersedia', 'warning');
@@ -1189,7 +1244,15 @@
     }
 
     updateNavbarMenu();
+
+    // 🔥 Tampilkan skeleton instan
+    renderSkeletonSesi();
+
+    // Load data pertama
     loadSesiAbsen();
+
+    // Mulai auto-refresh
+    startAutoRefresh();
   })();
 
 </script>

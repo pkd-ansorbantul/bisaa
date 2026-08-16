@@ -62,25 +62,11 @@
     }
     .nav-pills .nav-link:hover { background: rgba(255,255,255,0.08); color: #ffffff !important; }
     .nav-pills .nav-link.active { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .nav-pills .nav-link i { flex-shrink: 0; font-size: 1.2rem; }
-    .nav-pills .nav-link span { transition: opacity 0.3s ease, width 0.3s ease; white-space: nowrap; overflow: hidden; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link { padding: 0.7rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.2rem 0.6rem; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link span { width: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
-    .sidebar-wrapper.minimized .nav-pills .nav-link i { font-size: 1.4rem; }
-
-    /* --- SUBMENU --- */
     .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; padding-left: 1rem; }
     .submenu.open { max-height: 500px; }
     .submenu .nav-link { padding: 0.4rem 1rem; margin: 0.1rem 0.8rem; width: calc(100% - 1.6rem); font-weight: 400; color: #94a3b8 !important; white-space: nowrap; overflow: hidden; }
     .submenu .nav-link:hover { color: #ffffff !important; background: rgba(255,255,255,0.05); }
     .submenu .nav-link.active { background: #2563eb !important; color: #ffffff !important; }
-    .sidebar-wrapper.minimized .submenu { padding-left: 0; }
-    .sidebar-wrapper.minimized .submenu .nav-link { padding: 0.4rem 0.5rem; justify-content: center; gap: 0; width: calc(100% - 1.2rem); margin: 0.1rem 0.6rem; }
-    .sidebar-wrapper.minimized .submenu .nav-link span { width: 0; opacity: 0; overflow: hidden; }
-    .sidebar-wrapper.minimized .submenu .nav-link i { font-size: 1.2rem; }
-    .sidebar-wrapper.minimized .nav-link[data-target] span { display: none; }
-
-    /* --- SIDEBAR TOGGLE --- */
     .sidebar-toggle { display: flex; justify-content: flex-end; padding: 0.5rem 1.5rem; transition: padding 0.3s ease; }
     .sidebar-wrapper.minimized .sidebar-toggle { padding: 0.5rem 0.75rem; justify-content: center; }
     .sidebar-toggle button { background: rgba(255,255,255,0.1); border: none; color: #94a3b8; border-radius: 8px; padding: 0.25rem 0.6rem; transition: all 0.2s; }
@@ -125,16 +111,52 @@
     .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* --- TABLE --- */
+    /* --- TABLE STYLES --- */
     .table-container {
         background: white; border-radius: 20px; padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
     }
     .btn-aksi { min-width: 80px; }
 
+    /* --- SKELETON LOADING --- */
+    .skeleton-box {
+        background: #e2e8f0;
+        border-radius: 8px;
+        animation: pulse 1.5s infinite ease-in-out;
+        display: inline-block;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+
+    /* --- Pagination & Sorting --- */
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
+    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
+    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
+    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    th.sortable:hover { background-color: #f1f5f9; }
+    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
+    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
+
     /* --- PREVIEW MODAL --- */
-    .modal-xl .modal-body { background: #f1f5f9; }
-    .modal-xl iframe { width: 100%; height: 80vh; border: none; }
+    #previewMateriModal .modal-body {
+        background: #f1f5f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        position: relative;
+        overflow: hidden;
+    }
+    #previewMateriModal iframe {
+        width: 100%;
+        height: 80vh;
+        border: none;
+    }
 
     /* --- UPLOAD PROGRESS --- */
     #uploadProgressContainer {
@@ -149,17 +171,6 @@
     /* --- TOAST --- */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
-
-    /* --- PAGINATION & SORTING --- */
-    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
-    .pagination-container .info { font-size: 0.9rem; color: #64748b; }
-    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
-    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
-    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
-    th.sortable:hover { background-color: #f1f5f9; }
-    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
-    th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
-    th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
   </style>
 </head>
 <body>
@@ -278,7 +289,7 @@
       <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
       <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
       <a href="/bisaa/admin/rtl_admin.html" class="nav-item"><i class="bi bi-file-earmark-text"></i><span>RTL</span></a>
-      <a href="#" class="nav-item active" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
     </div>
 
     <!-- ==================== CONTENT WRAPPER ==================== -->
@@ -311,7 +322,7 @@
 
       <!-- TABLE -->
       <div id="materiTableContainer" class="table-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat data...</span></div></div>
+        <!-- Akan diisi oleh skeleton/data -->
       </div>
     </div>
   </div>
@@ -335,7 +346,7 @@
           <div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div>
           <div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div>
         </div>
-        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div>
+        <div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></div></div>
       </div>
     </div>
   </div>
@@ -411,35 +422,6 @@
   </div>
 </div>
 
-<!-- ==================== MODAL PREVIEW ==================== -->
-<div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="background: #1e1e2f; border-radius: 20px;">
-      <div class="modal-header bg-dark text-white border-0 rounded-top-4">
-        <h5 class="modal-title" id="previewMateriLabel">
-          <i class="bi bi-file-earmark-play me-2"></i><span id="previewMateriJudul">Pratinjau Materi</span>
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background: #0f172a; border-radius: 0 0 20px 20px; position: relative;">
-        <div id="previewMateriSpinner" class="position-absolute top-50 start-50 translate-middle">
-          <div class="spinner-border text-light" role="status"><span class="visually-hidden">Memuat...</span></div>
-        </div>
-        <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen onload="document.getElementById('previewMateriSpinner').style.display='none';"></iframe>
-      </div>
-      <div class="modal-footer border-0 bg-dark rounded-bottom-4">
-        <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
-          <i class="bi bi-fullscreen"></i> Fullscreen (F5)
-        </button>
-        <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-        <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4">
-          <i class="bi bi-download me-1"></i>Unduh
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== MODAL HAPUS ==================== -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -475,10 +457,8 @@
 </div>
 
 <!-- ==================== SCRIPTS ==================== -->
-<!-- Library Eksternal (tetap sebagai script biasa) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Modul ES Khusus Halaman Ini -->
 <script type="module">
   // ==========================================================
   //   IMPOR DARI CORE API DAN MODUL ADMIN
@@ -488,7 +468,8 @@
     showToast,
     escapeHtml,
     getUserRole,
-    updateNavbarMenu
+    updateNavbarMenu,
+    logout
   } from '../js/core/api.js';
   import { AdminModule } from '../js/modules/admin.js';
 
@@ -506,14 +487,11 @@
     sortDirection: 'asc'
   };
 
-  // ==========================================================
-  //   UTILITY FUNCTIONS
-  // ==========================================================
-  window.togglePasswordVisibility = function(id) {
-    const el = document.getElementById(id);
-    if (el) el.type = el.type === 'password' ? 'text' : 'password';
-  };
+  let refreshInterval = null;
 
+  // ==========================================================
+  //   UTILITY
+  // ==========================================================
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     const d = new Date(dateStr + 'T00:00:00');
@@ -536,8 +514,48 @@
     };
   }
 
-  function generateId() {
-    return 'm' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  // ==========================================================
+  //   🔥 SKELETON RENDER (INSTANT)
+  // ==========================================================
+  function renderSkeletonMateri() {
+    const container = document.getElementById('materiTableContainer');
+    let html = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:50px;"><div class="skeleton-box" style="height:20px;width:20px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th style="width:200px;"><div class="skeleton-box" style="height:20px;width:80px;"></div></th>
+              <th style="width:250px;"><div class="skeleton-box" style="height:20px;width:120px;"></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Array(5).fill(0).map(() => `
+              <tr>
+                <td><div class="skeleton-box" style="height:20px;width:20px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td class="text-center"><div class="skeleton-box" style="height:20px;width:80px;"></div></td>
+                <td class="text-center"><div class="skeleton-box" style="height:20px;width:120px;"></div></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-container">
+        <div class="skeleton-box" style="height:20px;width:200px;"></div>
+        <div class="btn-group">
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+          <div class="skeleton-box" style="height:30px;width:30px;"></div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
   }
 
   // ==========================================================
@@ -566,26 +584,21 @@
   // ==========================================================
   document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    logout();
   });
 
   document.getElementById('mobileLogoutBtn')?.addEventListener('click', function() {
-    if (typeof logout !== 'undefined') logout();
-    else window.location.href = '/bisaa/index.html';
+    const modalEl = document.getElementById('moreMenuModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    logout();
   });
 
   // ==========================================================
-  //   LOAD MATERI (menggunakan AdminModule)
+  //   LOAD MATERI (via AdminModule)
   // ==========================================================
   async function loadMateri(forceRefresh = false) {
     const container = document.getElementById('materiTableContainer');
-    container.innerHTML = `
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">Memuat data...</p>
-      </div>
-    `;
 
     try {
       if (!AdminModule.getState().lastSync || forceRefresh) {
@@ -691,7 +704,7 @@
             <td>${formatDate(item.tanggal)}</td>
             <td class="text-center">
               ${item.fileId ? `
-                <button class="btn btn-sm btn-outline-primary preview-btn" data-judul="${escapeHtml(item.judul)}" data-fileid="${escapeHtml(item.fileId)}">
+                <button class="btn btn-sm btn-outline-primary preview-btn" data-id="${item.id}">
                   <i class="bi bi-eye"></i> Tayangkan
                 </button>
                 <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-secondary">
@@ -752,44 +765,12 @@
   };
 
   // ==========================================================
-  //   PREVIEW MATERI (Modal) - diekspos ke global
+  //   CRUD OPERATIONS (via AdminModule)
   // ==========================================================
-  window.previewMateri = function(judul, fileId) {
-    const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-    const downloadUrl = `https://drive.google.com/file/d/${fileId}/view`;
-    document.getElementById('previewMateriJudul').innerText = judul;
-    document.getElementById('previewMateriIframe').src = previewUrl;
-    document.getElementById('previewMateriDownloadBtn').href = downloadUrl;
-    document.getElementById('previewMateriSpinner').style.display = 'flex';
-    new bootstrap.Modal(document.getElementById('previewMateriModal')).show();
-  };
+  function getMateriById(id) {
+    return STATE.materiList.find(i => String(i.id) === String(id));
+  }
 
-  window.toggleFullscreen = function() {
-    const iframe = document.getElementById('previewMateriIframe');
-    if (!iframe) return;
-    if (!document.fullscreenElement) {
-      iframe.requestFullscreen().then(() => {
-        const header = document.querySelector('#previewMateriModal .modal-header');
-        const footer = document.querySelector('#previewMateriModal .modal-footer');
-        if (header) header.style.display = 'none';
-        if (footer) footer.style.display = 'none';
-      }).catch(err => console.warn('Gagal fullscreen:', err));
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
-  document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
-    document.getElementById('previewMateriIframe').src = '';
-    document.getElementById('previewMateriSpinner').style.display = 'flex';
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    }
-  });
-
-  // ==========================================================
-  //   CRUD OPERATIONS
-  // ==========================================================
   function resetForm() {
     document.getElementById('editMateriId').value = '';
     document.getElementById('materiJudul').value = '';
@@ -811,7 +792,7 @@
   }
 
   window.editMateri = function(id) {
-    const item = STATE.materiList.find(i => String(i.id) === String(id));
+    const item = getMateriById(id);
     if (!item) {
       showToast('Data tidak ditemukan.', 'error');
       return;
@@ -827,7 +808,7 @@
   };
 
   window.viewMateri = function(id) {
-    const item = STATE.materiList.find(i => String(i.id) === String(id));
+    const item = getMateriById(id);
     if (!item) {
       showToast('Data tidak ditemukan.', 'error');
       return;
@@ -856,47 +837,42 @@
     new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
   };
 
-  // ==========================================================
-  //   FILE PREVIEW
-  // ==========================================================
-  document.getElementById('materiFile')?.addEventListener('change', function() {
-    const file = this.files[0];
-    const previewContainer = document.getElementById('filePreviewContainer');
-    const previewImage = document.getElementById('filePreviewImage');
-    const previewName = document.getElementById('filePreviewName');
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        showToast('Ukuran file maksimal 10 MB.', 'error');
-        this.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        if (file.type.startsWith('image/')) {
-          previewImage.src = e.target.result;
-          previewContainer.style.display = 'block';
-        } else {
-          previewImage.src = '#';
-          previewContainer.style.display = 'block';
-          previewImage.style.display = 'none';
-          previewName.textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-        }
-      };
-      reader.readAsDataURL(file);
-    } else {
-      previewContainer.style.display = 'none';
-      previewImage.src = '#';
+  function executeDelete() {
+    const id = document.getElementById('deleteMateriId').value;
+    if (!id) return;
+
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+    btn.disabled = true;
+
+    const item = getMateriById(id);
+    if (!item) {
+      showToast('Data tidak ditemukan.', 'error');
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      return;
     }
-  });
 
-  document.getElementById('clearFileBtn')?.addEventListener('click', function() {
-    document.getElementById('materiFile').value = '';
-    document.getElementById('filePreviewContainer').style.display = 'none';
-    document.getElementById('filePreviewImage').src = '#';
-  });
+    AdminModule.deleteMateri(id, item.fileId).then(res => {
+      if (res.success) {
+        STATE.materiList = STATE.materiList.filter(i => String(i.id) !== String(id));
+        showToast('Materi berhasil dihapus.', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+        applyFiltersAndSort();
+      } else {
+        showToast('Gagal: ' + (res.message || 'Server error'), 'error');
+      }
+    }).catch(err => {
+      showToast('Gagal: ' + err.message, 'error');
+    }).finally(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    });
+  }
 
   // ==========================================================
-  //   SIMPAN DATA (Tambah/Edit) dengan Upload File
+  //   SAVE DATA (ADD / EDIT)
   // ==========================================================
   async function saveData() {
     const id = document.getElementById('editMateriId').value;
@@ -924,7 +900,6 @@
     const progressBar = document.getElementById('uploadProgressBar');
     const progressText = document.getElementById('uploadProgressText');
 
-    // Untuk update tanpa file baru
     if (id && (!fileInput || !fileInput.files.length)) {
       try {
         const index = STATE.materiList.findIndex(i => String(i.id) === String(id));
@@ -949,7 +924,6 @@
       return;
     }
 
-    // Upload file (Tambah atau Update dengan file baru)
     const file = fileInput.files[0];
     if (file.size > 10 * 1024 * 1024) {
       showToast('Ukuran file maksimal 10 MB.', 'error');
@@ -958,7 +932,6 @@
       return;
     }
 
-    // Simulasi progress (sebenarnya tidak bisa tracking upload via base64, tapi kita tampilkan animasi)
     progressContainer.style.display = 'block';
     let progress = 0;
     const interval = setInterval(() => {
@@ -968,75 +941,55 @@
       progressText.textContent = progress + '%';
     }, 100);
 
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      const base64 = e.target.result;
-      const fileName = file.name;
-      try {
-        let result;
-        if (id) {
-          // Update dengan file baru
-          // Kita perlu menghapus file lama dulu atau langsung upload baru?
-          // Di sini kita akan upload baru dan ganti fileId
-          result = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
-          if (result.success) {
-            // Update state lokal
-            const index = STATE.materiList.findIndex(i => String(i.id) === String(id));
-            if (index !== -1) {
-              STATE.materiList[index].judul = judul;
-              STATE.materiList[index].deskripsi = deskripsi;
-              STATE.materiList[index].kategori = kategori;
-              STATE.materiList[index].fileId = result.fileId;
-              STATE.materiList[index].tipe = fileName.split('.').pop().toLowerCase();
-              STATE.materiList[index].tanggal = new Date().toISOString().slice(0, 10);
-            }
-            showToast('Materi berhasil diperbarui dengan file baru.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-            applyFiltersAndSort();
-          } else {
-            throw new Error(result.error || 'Gagal mengupload file.');
+    try {
+      let result;
+      if (id) {
+        result = await AdminModule.addMateri(judul, deskripsi, file, file.name, 'admin');
+        if (result.success) {
+          const index = STATE.materiList.findIndex(i => String(i.id) === String(id));
+          if (index !== -1) {
+            STATE.materiList[index].judul = judul;
+            STATE.materiList[index].deskripsi = deskripsi;
+            STATE.materiList[index].kategori = kategori;
+            STATE.materiList[index].fileId = result.fileId;
+            STATE.materiList[index].tipe = file.name.split('.').pop().toLowerCase();
+            STATE.materiList[index].tanggal = new Date().toISOString().slice(0, 10);
           }
+          showToast('Materi berhasil diperbarui dengan file baru.', 'success');
+          bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+          applyFiltersAndSort();
         } else {
-          // Tambah baru
-          result = await AdminModule.addMateri(judul, deskripsi, base64, fileName, 'admin');
-          if (result.success) {
-            const newItem = {
-              id: generateId(),
-              judul: judul,
-              deskripsi: deskripsi,
-              fileId: result.fileId,
-              tipe: fileName.split('.').pop().toLowerCase(),
-              kategori: kategori,
-              tanggal: new Date().toISOString().slice(0, 10),
-              timestamp: new Date().toISOString(),
-              uploadBy: 'admin'
-            };
-            STATE.materiList.unshift(newItem);
-            showToast('Materi berhasil ditambahkan.', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
-            applyFiltersAndSort();
-          } else {
-            throw new Error(result.error || 'Gagal mengupload file.');
-          }
+          throw new Error(result.error || 'Gagal mengupload file.');
         }
-      } catch (e) {
-        showToast('Gagal: ' + e.message, 'error');
-      } finally {
-        clearInterval(interval);
-        progressBar.style.width = '100%';
-        progressText.textContent = '100%';
-        setTimeout(() => {
-          progressContainer.style.display = 'none';
-          progressBar.style.width = '0%';
-          progressText.textContent = '0%';
-        }, 1500);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+      } else {
+        result = await AdminModule.addMateri(judul, deskripsi, file, file.name, 'admin');
+        if (result.success) {
+          showToast('Materi berhasil ditambahkan.', 'success');
+          bootstrap.Modal.getInstance(document.getElementById('materiFormModal')).hide();
+          applyFiltersAndSort();
+        } else {
+          throw new Error(result.error || 'Gagal mengupload file.');
+        }
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      clearInterval(interval);
+      progressBar.style.width = '100%';
+      progressText.textContent = '100%';
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+      }, 1500);
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
 
+  // ==========================================================
+  //   EXPORT DATA
+  // ==========================================================
   function exportData() {
     const data = STATE.filteredList;
     if (data.length === 0) {
@@ -1064,18 +1017,38 @@
   }
 
   // ==========================================================
-  //   SEARCH & FILTER HANDLERS
+  //   SEARCH & FILTER
   // ==========================================================
   const debouncedSearch = debounce(function(query) {
     STATE.searchQuery = query;
+    STATE.currentPage = 1;
     applyFiltersAndSort();
   }, 300);
 
   function handleSearch(e) { debouncedSearch(e.target.value); }
-
   function handleKategoriFilter(e) {
     STATE.kategoriFilter = e.target.value;
+    STATE.currentPage = 1;
     applyFiltersAndSort();
+  }
+
+  // ==========================================================
+  //   AUTO REFRESH (Polling setiap 30 detik)
+  // ==========================================================
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(() => {
+      AdminModule.loadAllData(false).then(() => {
+        const fresh = AdminModule.getMateriList() || [];
+        if (JSON.stringify(STATE.materiList) !== JSON.stringify(fresh)) {
+          STATE.materiList = fresh;
+          applyFiltersAndSort();
+          updateCacheStatus('Live');
+        }
+      }).catch(() => {
+        updateCacheStatus('Offline');
+      });
+    }, 30000);
   }
 
   // ==========================================================
@@ -1097,47 +1070,17 @@
     });
   });
   document.getElementById('saveMateriBtn')?.addEventListener('click', saveData);
-  document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
-    const id = document.getElementById('deleteMateriId').value;
-    if (!id) return;
-    const btn = this;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
-    try {
-      const item = STATE.materiList.find(i => String(i.id) === String(id));
-      if (!item) throw new Error('Data tidak ditemukan.');
-      const result = await AdminModule.deleteMateri(id, item.fileId);
-      if (result.success) {
-        STATE.materiList = STATE.materiList.filter(i => String(i.id) !== String(id));
-        showToast('Materi berhasil dihapus.', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
-        applyFiltersAndSort();
-      } else {
-        throw new Error(result.error || 'Gagal menghapus.');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
-  });
+  document.getElementById('confirmDeleteBtn')?.addEventListener('click', executeDelete);
   document.getElementById('searchInput')?.addEventListener('input', handleSearch);
   document.getElementById('filterKategori')?.addEventListener('change', handleKategoriFilter);
 
-  // Event listener untuk tombol preview (dinamis)
-  document.addEventListener('click', function(e) {
-    if (e.target.closest('.preview-btn')) {
-      const btn = e.target.closest('.preview-btn');
-      const judul = btn.dataset.judul;
-      const fileId = btn.dataset.fileid;
-      window.previewMateri(judul, fileId);
-    }
-  });
+  // Expose fungsi global
+  window.viewMateri = viewMateri;
+  window.editMateri = editMateri;
+  window.deleteMateri = deleteMateri;
 
   // ==========================================================
-  //   LOGIN AUTH CHECK & INIT
+  //   BOOT
   // ==========================================================
   (function boot() {
     if (getUserRole() !== 'admin') {
@@ -1146,7 +1089,15 @@
     }
 
     updateNavbarMenu();
+
+    // 🔥 Tampilkan skeleton instan
+    renderSkeletonMateri();
+
+    // Load data
     loadMateri();
+
+    // Mulai auto-refresh
+    startAutoRefresh();
   })();
 
 </script>
