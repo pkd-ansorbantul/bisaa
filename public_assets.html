@@ -217,7 +217,7 @@
 
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API (Path sudah diperbaiki)
+    //   IMPOR DARI CORE API
     // ==========================================================
     import { 
       callApi, 
@@ -365,7 +365,7 @@
     };
 
     // ==========================================================
-    //   🔥 RENDER FUNCTIONS (DIPERBAIKI: ROOT DIHAPUS)
+    //   🔥 RENDER FUNCTIONS
     // ==========================================================
     function renderFolderList() {
       const container = document.getElementById('folderList');
@@ -437,7 +437,7 @@
           if (isVideo) {
             previewContent = `
               <div class="thumbnail-container">
-                <img src="${imgUrl}" alt="${escapeHtml(item.judul)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="fallback" style="display:none;">
                   <i class="bi bi-file-play-fill text-secondary" style="font-size:2.5rem;"></i>
                   <div class="small text-muted mt-2">Video</div>
@@ -491,9 +491,12 @@
     }
 
     // ==========================================================
-    //   NAVIGASI FOLDER
+    //   NAVIGASI FOLDER (INSTAN, HANYA RENDER ULANG UI)
     // ==========================================================
     window.navigateFolder = function(folderId) {
+      // Tampilkan skeleton instan agar user merasa ada respon segera
+      renderSkeletonPublicAssets();
+      
       currentFolderId = folderId;
       folderPasswordAttempted = false;
       folderPasswordRequired = false;
@@ -508,6 +511,8 @@
       }
       
       folderPasswordAttempted = true;
+      
+      // Render ulang UI dengan data yang sudah ada di memori (tanpa fetch)
       renderFolderList();
       renderBreadcrumb();
       renderAssets();

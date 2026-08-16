@@ -25,7 +25,7 @@
       flex-direction: column;
     }
 
-    /* --- HEADER ELEGAN (DIPERBESAR) --- */
+    /* --- HEADER ELEGAN --- */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -176,6 +176,7 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       padding: 1.8rem 1.2rem;
+      position: relative;
     }
     .menu-card:hover {
       transform: translateY(-6px) scale(1.02);
@@ -309,6 +310,17 @@
     .faq-item .fw-bold { color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .faq-item .text-muted { font-size: 0.9rem; color: #475569; }
 
+    /* --- BADGE NOTIFIKASI --- */
+    .badge-notification {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 50px;
+      background: #ef4444;
+      color: white;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    }
+
     /* --- ANIMASI --- */
     .fade-up { animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -326,7 +338,7 @@
       backdrop-filter: blur(4px);
     }
 
-    /* --- RESPONSIVE (MOBILE & TABLET) --- */
+    /* --- RESPONSIVE --- */
     @media (max-width: 576px) {
       .hero-title { font-size: 2rem; }
       .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
@@ -422,57 +434,74 @@
 
       <!-- Menu Grid -->
       <div class="menu-grid" id="menuGrid">
-        <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html')">
+        
+        <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html', 'pretest')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-pretest" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-pencil-square"></i></div>
           <div class="card-label">Pre-test</div>
           <div class="card-desc">Uji pengetahuan awal</div>
         </div>
-        <div class="menu-card fade-up delay-1" onclick="navigateTo('posttest.html')">
+
+        <div class="menu-card fade-up delay-1" onclick="navigateTo('posttest.html', 'posttest')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-posttest" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-trophy"></i></div>
           <div class="card-label">Post-test</div>
           <div class="card-desc">Evaluasi akhir</div>
         </div>
-        <div class="menu-card fade-up delay-2" onclick="navigateTo('absen.html')">
+
+        <div class="menu-card fade-up delay-2" onclick="navigateTo('absen.html', 'absen')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-absen" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-qr-code"></i></div>
           <div class="card-label">Absen Digital</div>
           <div class="card-desc">Scan QR / password</div>
         </div>
-        <div class="menu-card fade-up delay-2" onclick="navigateTo('skrining.html')">
+
+        <div class="menu-card fade-up delay-2" onclick="navigateTo('skrining.html', 'skrining')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-skrining" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-clipboard-check"></i></div>
           <div class="card-label">Skrining</div>
           <div class="card-desc">Pendataan awal</div>
         </div>
-        <div class="menu-card fade-up delay-3" onclick="navigateTo('peserta.html')">
+
+        <div class="menu-card fade-up delay-3" onclick="navigateTo('peserta.html', 'peserta')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-peserta" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-person-badge"></i></div>
           <div class="card-label">Peserta</div>
           <div class="card-desc">Isi data diri</div>
         </div>
-        <div class="menu-card fade-up delay-3" onclick="navigateTo('materi.html')">
+
+        <div class="menu-card fade-up delay-3" onclick="navigateTo('materi.html', 'materi')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-materi" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-file-earmark-pdf"></i></div>
           <div class="card-label">Materi</div>
           <div class="card-desc">Akses modul</div>
         </div>
+
         <div class="menu-card fade-up delay-4" onclick="navigateTo('about.html')">
           <div class="icon-wrapper"><i class="bi bi-info-circle"></i></div>
           <div class="card-label">Tentang Kami</div>
           <div class="card-desc">Informasi PKD</div>
         </div>
-        <div class="menu-card fade-up delay-4" onclick="navigateTo('informasi.html')">
+
+        <div class="menu-card fade-up delay-4" onclick="navigateTo('informasi.html', 'informasi')">
+          <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-informasi" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-newspaper"></i></div>
           <div class="card-label">Informasi</div>
           <div class="card-desc">Flyer & timeline</div>
         </div>
+
         <div class="menu-card fade-up delay-4" onclick="navigateTo('verifikasi.html')">
           <div class="icon-wrapper"><i class="bi bi-qr-code-scan"></i></div>
           <div class="card-label">Verifikasi</div>
           <div class="card-desc">Cek sertifikat</div>
         </div>
+
         <!-- Tambahan: Galeri Aset Publik -->
-        <div class="menu-card fade-up delay-4" onclick="openPublicFolderModal()" style="position:relative;">
+        <div class="menu-card fade-up delay-4" onclick="openPublicFolderModal()">
           <div class="icon-wrapper"><i class="bi bi-folder-fill"></i></div>
           <div class="card-label">Galeri Aset Publik</div>
           <div class="card-desc">Lihat folder publik</div>
-          <span id="publicFolderCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.7rem; display:none;">0</span>
+          <span id="publicFolderCount" class="position-absolute top-0 start-100 translate-middle badge-notification" style="display:none;">0</span>
         </div>
       </div>
     </section>
@@ -525,7 +554,8 @@
       <div class="faq-content">
         <div class="faq-item">
           <div class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Kapan pretest dilaksanakan?</div>
-          <div class="text-muted small">Pretest dilaksanakan secara online mulai 1 April 2026. Akses di menu "Pre‑test" setelah login.</div>
+          <!-- 🔥 PERBAIKAN: Teks FAQ Pretest telah diperbarui -->
+          <div class="text-muted small">Pretest dilaksanakan secara online di awal sesi. Akses di menu "Pre‑test" setelah login.</div>
         </div>
         <div class="faq-item">
           <div class="fw-bold"><i class="bi bi-pencil-square me-2"></i>Bagaimana cara mendaftar PKD?</div>
@@ -573,10 +603,32 @@
     let publicFolders = [];
 
     // ==========================================================
-    //   NAVIGASI (Otomatis menggunakan BASE_PATH)
+    //   🔥 NAVIGASI (Otomatis + Penanganan Badge "Hilang Saat Diklik")
     // ==========================================================
-    window.navigateTo = function(url) {
-      // Hapus prefix /bisaa/ jika ada, dan gunakan BASE_PATH
+    window.navigateTo = function(url, badgeId = null) {
+      // Jika ada ID badge, tandai sebagai sudah dibaca dan hapus dari UI
+      if (badgeId) {
+        const badgeEl = document.getElementById(`badge-${badgeId}`);
+        if (badgeEl) {
+          // Ambil angka saat ini sebelum dihapus
+          const countStr = badgeEl.textContent;
+          const currentCount = parseInt(countStr) || 0;
+          
+          // Simpan ke localStorage bahwa menu ini sudah dibuka dan jumlahnya saat ini
+          try {
+            localStorage.setItem(`pkd_notif_${badgeId}`, JSON.stringify({ 
+              count: currentCount, 
+              read: true,
+              timestamp: Date.now()
+            }));
+          } catch (e) {}
+
+          // Hilangkan badge dari UI
+          badgeEl.style.display = 'none';
+        }
+      }
+
+      // Logika navigasi asli
       const cleanUrl = url.replace(/^\/bisaa\//, '');
       if (requireLogin && !getUserRole()) {
         window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(BASE_PATH + cleanUrl);
@@ -586,7 +638,89 @@
     };
 
     // ==========================================================
-    //   UPDATE TOTAL PESERTA
+    //   🔥 FUNGSI UPDATE BADGE NOTIFIKASI (SMART READ STATUS)
+    // ==========================================================
+    async function updateBadgeCounts() {
+      const role = getUserRole();
+      const menuIds = ['peserta', 'materi', 'skrining', 'informasi', 'pretest', 'posttest', 'absen'];
+
+      // Jika bukan admin, sembunyikan semua badge
+      if (role !== 'admin') {
+        menuIds.forEach(id => {
+          const el = document.getElementById(`badge-${id}`);
+          if (el) el.style.display = 'none';
+        });
+        return;
+      }
+
+      try {
+        // Ambil data count secara paralel
+        const [pesertaRes, materiRes, skriningRes, infoRes, pretestRes, posttestRes, absenRes] = await Promise.all([
+          callApi('getTotalPeserta', {}, 'GET'),
+          callApi('getMateriList', {}, 'GET'),
+          callApi('getSkriningResponses', {}, 'GET'),
+          callApi('getInfoList', {}, 'GET'),
+          callApi('getPretestResponses', {}, 'GET'),
+          callApi('getPosttestResponses', {}, 'GET'),
+          callApi('getSesiAbsen', {}, 'GET')
+        ]);
+
+        const getCount = (res) => {
+          if (res?.total !== undefined) return res.total;
+          if (Array.isArray(res?.data)) return res.data.length;
+          if (Array.isArray(res)) return res.length;
+          return 0;
+        };
+
+        const counts = {
+          peserta: getCount(pesertaRes),
+          materi: getCount(materiRes),
+          skrining: getCount(skriningRes),
+          informasi: getCount(infoRes),
+          pretest: getCount(pretestRes),
+          posttest: getCount(posttestRes),
+          absen: getCount(absenRes)
+        };
+
+        const updateBadge = (id, count) => {
+          const el = document.getElementById(`badge-${id}`);
+          if (!el) return;
+
+          // Cek apakah user sudah membaca notifikasi ini sebelumnya
+          let isRead = false;
+          let savedCount = 0;
+          try {
+            const saved = localStorage.getItem(`pkd_notif_${id}`);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              isRead = parsed.read === true;
+              savedCount = parsed.count || 0;
+            }
+          } catch (e) {}
+
+          // Logika: Jika data baru (count) LEBIH BESAR dari data terakhir yang dibaca user, munculkan badge!
+          if (count > savedCount) {
+            el.textContent = count > 99 ? '99+' : count;
+            el.style.display = 'inline-block';
+            // Reset status baca karena ada data baru
+            try {
+              localStorage.setItem(`pkd_notif_${id}`, JSON.stringify({ count: count, read: false, timestamp: Date.now() }));
+            } catch (e) {}
+          } else {
+            // Jika data masih sama atau user sudah membaca, sembunyikan
+            el.style.display = 'none';
+          }
+        };
+
+        menuIds.forEach(id => updateBadge(id, counts[id]));
+
+      } catch (e) {
+        console.warn('Gagal memuat notifikasi dashboard:', e);
+      }
+    }
+
+    // ==========================================================
+    //   UPDATE TOTAL PESERTA (HERO SECTION)
     // ==========================================================
     async function updateTotalPeserta() {
       try {
@@ -614,6 +748,7 @@
       if (bgSyncInterval) clearInterval(bgSyncInterval);
       bgSyncInterval = setInterval(async () => {
         await updateTotalPeserta();
+        await updateBadgeCounts(); // 🔥 Refresh badge juga
       }, 15000);
     }
 
@@ -647,14 +782,13 @@
     }
 
     // ==========================================================
-    //   🔥 LOAD FOLDER PUBLIK & UPDATE BADGE & MODAL
+    //   🔥 LOAD FOLDER PUBLIK & UPDATE BADGE
     // ==========================================================
     async function loadPublicFolders() {
       try {
         const res = await callApi('getFolders', { _t: Date.now() }, 'GET');
         publicFolders = (res?.data || []).filter(f => f.isPublic === true || f.isPublic === 'true');
         
-        // Update badge count
         const badge = document.getElementById('publicFolderCount');
         if (badge) {
           if (publicFolders.length > 0) {
@@ -677,7 +811,6 @@
       const modal = new bootstrap.Modal(document.getElementById('publicFolderModal'));
       const content = document.getElementById('publicFolderModalContent');
       
-      // Tampilkan loading
       content.innerHTML = `
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
@@ -686,15 +819,12 @@
           <p class="mt-2 text-muted">Memuat folder publik...</p>
         </div>
       `;
-      
       modal.show();
 
-      // Pastikan data folder sudah dimuat (jika belum)
       if (publicFolders.length === 0) {
         await loadPublicFolders();
       }
 
-      // Render daftar folder dalam grid kecil
       let html = '';
       if (publicFolders.length === 0) {
         html = `<div class="alert alert-info text-center">Belum ada folder yang dipublikasikan oleh admin.</div>`;
@@ -776,11 +906,12 @@
     // ==========================================================
     document.addEventListener('DOMContentLoaded', function() {
       updateTotalPeserta();
+      updateBadgeCounts(); // 🔥 Update badge notifikasi
       startBackgroundSync();
       checkLoginMode();
       updateWAContact();
       updateNavbarMenu();
-      loadPublicFolders(); // Memuat folder publik untuk badge
+      loadPublicFolders();
     });
 
   </script>

@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
+    /* ===== UNIVERSAL PREMIUM ===== */
     * { font-family: 'Inter', system-ui, sans-serif; }
     body {
       background: #f8fafc;
@@ -25,7 +25,7 @@
       flex-direction: column;
     }
 
-    /* --- HEADER MINIMALIS (SAMA DENGAN INDEX) --- */
+    /* ===== HEADER MINIMALIS ===== */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -61,7 +61,7 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* --- GLASS CARD --- */
+    /* ===== GLASS CARD ===== */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -72,7 +72,7 @@
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* --- SKELETON LOADING --- */
+    /* ===== SKELETON LOADING ===== */
     .skeleton-box {
       background: #e2e8f0;
       border-radius: 8px;
@@ -85,7 +85,7 @@
       100% { opacity: 0.6; }
     }
 
-    /* 🔥 PERBAIKAN UTAMA: SIGNATURE AREA FULL CANVAS 🔥 */
+    /* ===== SIGNATURE AREA ===== */
     .signature-area {
       border: 2px dashed #cbd5e1;
       border-radius: 20px;
@@ -93,34 +93,31 @@
       padding: 12px;
       transition: border-color 0.2s;
       width: 100%;
-      height: 180px; /* Tinggi tetap, bisa disesuaikan */
+      height: 180px;
       display: flex;
       justify-content: center;
       align-items: center;
       position: relative;
       overflow: hidden;
-      touch-action: none; /* Mencegah scroll saat mencoret di mobile */
+      touch-action: none;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
     }
     .signature-area:hover { border-color: #2563eb; }
-    
     .signature-area canvas {
-      width: 100%; /* Mengisi lebar container */
-      height: 100%; /* Mengisi tinggi container */
+      width: 100%;
+      height: 100%;
       display: block;
       background: white;
       border-radius: 12px;
-      touch-action: none; /* Penting untuk mencegah gesture browser */
+      touch-action: none;
       cursor: crosshair;
     }
 
-    /* --- ANIMASI --- */
+    /* ===== ANIMASI & FOOTER ===== */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* --- FOOTER --- */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -131,7 +128,7 @@
       background: white;
     }
 
-    /* --- RESPONSIF --- */
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -139,13 +136,13 @@
       .brand-title-mini { display: none; }
       .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
-      .signature-area { height: 140px; } /* Sedikit lebih kecil di mobile */
+      .signature-area { height: 140px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ================= HEADER MINIMALIS ================= -->
+  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -160,16 +157,14 @@
           </div>
         </a>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
+  <!-- ================= KONTEN ================= -->
   <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 800px;">
     <div class="glass-card p-4 fade-up">
       <h2 class="section-title"><i class="bi bi-pen me-2"></i>Absen Digital per Sesi</h2>
-
       <div id="absenContainer" class="mt-3">
         <!-- Akan diisi oleh JS (Skeleton atau Form Asli) -->
       </div>
@@ -185,20 +180,20 @@
   </footer>
 
   <!-- ================= SCRIPTS ================= -->
-  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
+    //   IMPOR DARI CORE API
     // ==========================================================
     import {
       guardPublicAccess,
       getSesiAbsen,
       submitAbsen,
       showToast,
-      updateNavbarMenu
+      updateNavbarMenu,
+      callApi
     } from './js/core/api.js';
 
     // ==========================================================
@@ -206,6 +201,7 @@
     // ==========================================================
     let sesiList = [];
     let isQRMode = false;
+    let daftarPesertaValid = [];
 
     // ==========================================================
     //   UTILITY
@@ -224,7 +220,7 @@
     function showToastLocal(message, type) { showToast(message, type); }
 
     // ==========================================================
-    //   🔥 FUNGSI SKELETON
+    //   SKELETON LOADING
     // ==========================================================
     function renderSkeletonAbsen(container) {
       if (!container) return;
@@ -243,7 +239,7 @@
     }
 
     // ==========================================================
-    //   FETCH SESI ABSEN
+    //   FETCH SESI & PESERTA VALID
     // ==========================================================
     async function fetchSesiAbsen() {
       try {
@@ -259,84 +255,97 @@
       }
     }
 
+    async function fetchPesertaValid() {
+      try {
+        const res = await callApi('getPesertaList', {}, 'GET');
+        const semuaPeserta = res.data || [];
+        // Filter: hanya yang statusnya active/approved, dan bukan alumni
+        return semuaPeserta.filter(p => 
+          (p.status === 'approved' || p.status === 'active') && p.status !== 'alumni'
+        );
+      } catch (err) {
+        console.warn('Gagal mengambil daftar peserta valid:', err);
+        return [];
+      }
+    }
+
     // ==========================================================
-    //   🔥 PERBAIKAN: RESIZE CANVAS AGAR FULL
+    //   RESIZE CANVAS SIGNATURE
     // ==========================================================
     function resizeAbsenCanvas() {
       const canvas = document.getElementById('signatureCanvasAbsen');
       if (!canvas) return;
 
-      // Dapatkan ukuran container (parent element)
       const container = canvas.parentElement;
       const rect = container.getBoundingClientRect();
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
 
-      // Atur dimensi internal canvas agar sesuai dengan ukuran visual (dikali ratio untuk DPI tinggi)
       canvas.width = rect.width * ratio;
       canvas.height = rect.height * ratio;
       
-      // Pastikan ukuran CSS sama dengan ukuran asli (agar tidak terdistorsi)
       canvas.style.width = rect.width + 'px';
       canvas.style.height = rect.height + 'px';
 
-      // Scale context agar garis tetap tebal/tipis secara proporsional
       const ctx = canvas.getContext('2d');
       ctx.scale(ratio, ratio);
 
-      // Kosongkan canvas yang sudah ada sebelumnya (jika sudah ada coretan)
       if (window.sigPadAbsen) {
         window.sigPadAbsen.clear();
       }
     }
 
     // ==========================================================
-    //   SIGNATURE PAD
+    //   INIT SIGNATURE PAD
     // ==========================================================
     function initAbsenSignaturePad() {
       const canvas = document.getElementById('signatureCanvasAbsen');
       if (!canvas) return;
       
-      // Hapus instance lama jika ada
       if (window.sigPadAbsen) { window.sigPadAbsen.clear(); window.sigPadAbsen = null; }
 
-      // Resize dulu agar ukurannya pas
       resizeAbsenCanvas();
 
-      // Inisialisasi Signature Pad dengan ukuran penuh
       window.sigPadAbsen = new SignaturePad(canvas, {
         backgroundColor: 'white', 
         penColor: '#0f172a', 
         minWidth: 1.5, 
         maxWidth: 3,
-        throttle: 16 // Mencegah lag saat mencoret cepat
+        throttle: 16
       });
       
       window.sigPadAbsen.clear();
 
       document.getElementById('clearAbsenSign')?.addEventListener('click', () => {
-        window.sigPadAbsen.clear(); saveAbsenFormState();
+        window.sigPadAbsen.clear();
+        saveAbsenFormState();
       });
       document.getElementById('undoAbsenSign')?.addEventListener('click', () => {
         const data = window.sigPadAbsen.toData();
         if (data && data.length > 0) {
-          data.pop(); window.sigPadAbsen.fromData(data); saveAbsenFormState();
+          data.pop();
+          window.sigPadAbsen.fromData(data);
+          saveAbsenFormState();
         }
       });
       window.sigPadAbsen.addEventListener('endStroke', saveAbsenFormState);
     }
 
     // ==========================================================
-    //   🔥 STATE MANAGEMENT (Lindungi dari Tracking Prevention)
+    //   STATE MANAGEMENT (Form State)
     // ==========================================================
     function saveAbsenFormState() {
       try {
-        const nama = document.getElementById('namaAbsen')?.value || '';
-        const sesiId = document.getElementById('pilihSesiAbsen')?.value || '';
+        const select = document.getElementById('pilihSesiAbsen');
+        const namaSelect = document.getElementById('namaAbsen');
+        let savedData = {
+          sesiId: select ? select.value : '',
+          pesertaId: namaSelect ? namaSelect.value : ''
+        };
         let signatureData = null;
         if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
           signatureData = window.sigPadAbsen.toData();
         }
-        localStorage.setItem('absenFormState', JSON.stringify({ nama, sesiId, signatureData }));
+        localStorage.setItem('absenFormState', JSON.stringify({ ...savedData, signatureData }));
       } catch (e) { console.warn('Storage tidak tersedia.'); }
     }
 
@@ -345,12 +354,12 @@
       try { saved = localStorage.getItem('absenFormState'); } catch (e) { return; }
       if (!saved) return;
       try {
-        const { nama, sesiId, signatureData } = JSON.parse(saved);
-        const namaEl = document.getElementById('namaAbsen');
-        if (namaEl && nama) namaEl.value = nama;
-        
+        const { sesiId, pesertaId, signatureData } = JSON.parse(saved);
         const sesiEl = document.getElementById('pilihSesiAbsen');
         if (sesiEl && sesiId) sesiEl.value = sesiId;
+        
+        const namaEl = document.getElementById('namaAbsen');
+        if (namaEl && pesertaId) namaEl.value = pesertaId;
 
         if (signatureData && window.sigPadAbsen) {
           window.sigPadAbsen.fromData(signatureData);
@@ -363,7 +372,7 @@
     }
 
     // ==========================================================
-    //   RENDER FORM ASLI
+    //   RENDER FORM UTAMA
     // ==========================================================
     function renderForm(sesiListData, sesiIdFromUrl, tokenFromUrl, isQRModeParam) {
       sesiList = sesiListData;
@@ -405,9 +414,21 @@
             }).join('')}
           </select>
         </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">ID Peserta <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="pesertaIdAbsen" placeholder="Masukkan ID dari QR (contoh: 22, 15)" autocomplete="off">
+          <div class="form-text text-muted">ID terdapat di QR Code pada kartu peserta.</div>
+        </div>
+
         <div class="mb-3">
           <label class="form-label fw-bold">Nama Lengkap</label>
-          <input type="text" class="form-control" id="namaAbsen" required>
+          <input type="text" class="form-control" id="namaAbsen" placeholder="Akan terisi otomatis..." readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nomor HP</label>
+          <input type="text" class="form-control" id="hpAbsen" placeholder="Akan terisi otomatis..." readonly>
         </div>
       `;
 
@@ -420,7 +441,7 @@
         `;
       } else {
         html += `
-          <div class="mb-3 password-field-wrapper">
+          <div class="mb-3">
             <label class="form-label fw-bold">🔑 Password Sesi</label>
             <div class="input-group">
               <input type="password" class="form-control" id="passwordAbsen" placeholder="Masukkan password sesi">
@@ -432,14 +453,13 @@
         `;
       }
 
-      // 🔥 PERBAIKAN: Tanda tangan full canvas
       html += `
         <div class="mb-3">
-          <label class="form-label fw-bold">✍️ Tanda Tangan Digital <small class="text-muted">(coret di seluruh area)</small></label>
+          <label class="form-label fw-bold">✍️ Tanda Tangan Digital <small class="text-muted">(coret di area ini)</small></label>
           <div class="signature-area">
             <canvas id="signatureCanvasAbsen" width="300" height="150"></canvas>
           </div>
-          <div class="signature-buttons mt-2 d-flex gap-2">
+          <div class="mt-2 d-flex gap-2">
             <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAbsenSign">Hapus</button>
             <button type="button" class="btn btn-outline-primary btn-sm" id="undoAbsenSign">Undo</button>
           </div>
@@ -450,19 +470,32 @@
       container.innerHTML = html;
       container.classList.add('fade-up');
 
-      // 🔥 Inisialisasi komponen setelah HTML terpasang
       initAbsenSignaturePad();
 
-      // 🔥 Re-inisialisasi jika window di-resize (agar canvas tetap full)
       window.addEventListener('resize', () => {
         if (window.sigPadAbsen) {
-          // Simpan data yang sudah dicoret
           const data = window.sigPadAbsen.toData();
           resizeAbsenCanvas();
-          // Kembalikan data ke canvas yang sudah di-resize
           if (data && data.length > 0) {
             window.sigPadAbsen.fromData(data);
           }
+        }
+      });
+
+      // 🔥 AUTO-FILL NAMA & HP BERDASARKAN ID
+      const idInput = document.getElementById('pesertaIdAbsen');
+      const namaInput = document.getElementById('namaAbsen');
+      const hpInput = document.getElementById('hpAbsen');
+
+      idInput.addEventListener('input', function() {
+        const currentId = this.value.trim();
+        const found = daftarPesertaValid.find(p => String(p.id) === String(currentId));
+        if (found) {
+          namaInput.value = found.nama_lengkap || '';
+          hpInput.value = found.no_hp || '';
+        } else {
+          namaInput.value = '';
+          hpInput.value = '';
         }
       });
 
@@ -477,111 +510,66 @@
         }
       }
 
+      // 🔥 SUBMIT ABSEN
       document.getElementById('submitAbsenBtn').addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
-        const pad = window.sigPadAbsen;
-        const namaInput = document.getElementById('namaAbsen');
-        const sesiInput = document.getElementById('pilihSesiAbsen');
-        const pwInput = document.getElementById('passwordAbsen');
-        const qrInput = document.getElementById('qrTokenAbsen');
-
-        const hasSignature = pad && !pad.isEmpty();
-        let params = {};
-
-        if (!namaInput) {
-          showToastLocal('Elemen nama tidak ditemukan!', 'danger');
-          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-        }
+        const pesertaId = idInput.value.trim();
         const nama = namaInput.value.trim();
-        if (!nama) {
-          showToastLocal('Nama wajib diisi!', 'danger');
+        const hp = hpInput.value.trim();
+        const sesiId = document.getElementById('pilihSesiAbsen').value.trim();
+        const password = document.getElementById('passwordAbsen')?.value.trim();
+        const qrToken = document.getElementById('qrTokenAbsen')?.value;
+
+        // Validasi data
+        if (!pesertaId || !nama || !hp) {
+          showToastLocal('ID tidak valid atau peserta tidak ditemukan. Periksa kembali ID Anda.', 'warning');
           btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
 
-        if (!sesiInput) {
-          showToastLocal('Elemen sesi tidak ditemukan!', 'danger');
-          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-        }
-        const sesiId = sesiInput.value.trim();
-        if (!sesiId) {
-          showToastLocal('Sesi tidak valid atau belum dipilih.', 'danger');
-          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-        }
+        let params = { nama, sesiId, pesertaId, password, qrToken };
 
-        params = { nama, sesiId };
-
-        if (isQRMode) {
-          if (qrInput) {
-            params.qrToken = qrInput.value;
-          } else {
-            showToastLocal('QR Token tidak ditemukan. Silakan scan ulang QR.', 'danger');
-            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
+        if (window.sigPadAbsen && !window.sigPadAbsen.isEmpty()) {
+          try {
+            params.tandaTangan = window.sigPadAbsen.toDataURL('image/webp', 0.05);
+          } catch (e) {
+            params.tandaTangan = window.sigPadAbsen.toDataURL('image/jpeg', 0.05);
           }
         } else {
-          if (!pwInput) {
-            showToastLocal('Elemen password tidak ditemukan!', 'danger');
-            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-          }
-          const password = pwInput.value.trim();
-          if (!password) {
-            showToastLocal('Password sesi wajib diisi!', 'danger');
-            btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
-          }
-          params.password = password;
-        }
-
-        let signatureDataURL = null;
-        if (hasSignature) {
-          // 🔥 PERBAIKAN: Gunakan WEBP dengan kualitas rendah (0.05) untuk mengurangi ukuran payload
-          // Jika browser tidak mendukung WEBP, fallback ke JPEG dengan kualitas 0.05
-          try {
-            signatureDataURL = pad.toDataURL('image/webp', 0.05);
-          } catch (e) {
-            // Fallback untuk browser yang tidak support WEBP
-            signatureDataURL = pad.toDataURL('image/jpeg', 0.05);
-          }
-          params.tandaTangan = signatureDataURL;
+          showToastLocal('Harap isi tanda tangan terlebih dahulu.', 'error');
+          btn.disabled = false; btn.innerHTML = '📋 Kirim Absen'; return;
         }
 
         try {
-          const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, null);
-          
-          if (!result.success) {
-            showToastLocal('❌ ' + (result.error || 'Terjadi kesalahan validasi'), 'danger');
-            btn.disabled = false;
-            btn.innerHTML = '📋 Kirim Absen';
-            return;
-          }
-
-          if (result.needSignature) {
-            showToastLocal('Silakan isi tanda tangan terlebih dahulu.', 'warning');
-            btn.disabled = false;
-            btn.innerHTML = '📋 Kirim Absen';
-            return;
-          }
-
-          showToastLocal('✅ Absen berhasil tercatat!', 'success');
-          pad.clear();
-          if (namaInput) namaInput.value = '';
-          if (pwInput) pwInput.value = '';
-          clearAbsenFormState();
-          if (isQRMode) {
-            window.history.replaceState({}, document.title, window.location.pathname);
+          const result = await submitAbsen(params.nama, params.sesiId, params.tandaTangan, params.password, params.qrToken, params.pesertaId);
+          if (result.success) {
+            showToastLocal('✅ Absen berhasil tercatat!', 'success');
+            window.sigPadAbsen.clear();
+            idInput.value = '';
+            namaInput.value = '';
+            hpInput.value = '';
+            if (!isQRMode && document.getElementById('passwordAbsen')) {
+              document.getElementById('passwordAbsen').value = '';
+            }
+            clearAbsenFormState();
+            if (isQRMode) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          } else {
+            throw new Error(result.error || 'Gagal melakukan absen');
           }
         } catch (e) {
           let errorMsg = e.message || 'Terjadi kesalahan';
-          console.error('❌ Error saat absen:', errorMsg);
           if (errorMsg.includes('Sudah absen')) {
-            showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya. Absen ganda tidak diizinkan.', 'warning');
+            showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini sebelumnya.', 'warning');
           } else if (errorMsg.includes('Password salah')) {
             showToastLocal('❌ Password salah. Silakan coba lagi.', 'danger');
           } else if (errorMsg.includes('Token QR tidak valid')) {
             showToastLocal('❌ Token QR tidak valid. Silakan scan ulang.', 'danger');
           } else if (errorMsg.includes('Sesi absen sedang ditutup')) {
-            showToastLocal('⛔ Sesi absen sedang ditutup oleh panitia. Silakan hubungi admin.', 'warning');
+            showToastLocal('⛔ Sesi absen sedang ditutup.', 'warning');
           } else if (errorMsg.includes('waktu absen')) {
             showToastLocal('⏰ ' + errorMsg, 'warning');
           } else {
@@ -595,8 +583,8 @@
 
       if (!isQRMode) {
         setTimeout(() => restoreAbsenFormState(), 100);
-        if (document.getElementById('namaAbsen')) document.getElementById('namaAbsen').addEventListener('input', saveAbsenFormState);
         if (document.getElementById('pilihSesiAbsen')) document.getElementById('pilihSesiAbsen').addEventListener('change', saveAbsenFormState);
+        if (document.getElementById('pesertaIdAbsen')) document.getElementById('pesertaIdAbsen').addEventListener('input', saveAbsenFormState);
       }
     }
 
@@ -609,7 +597,7 @@
     };
 
     // ==========================================================
-    //   🔥 LOAD SESI
+    //   LOAD SESI & PESERTA
     // ==========================================================
     async function loadAbsenSesi() {
       const container = document.getElementById('absenContainer');
@@ -621,20 +609,26 @@
       if (isQRMode) clearAbsenFormState();
 
       try {
-        const freshSesi = await fetchSesiAbsen();
+        const [freshSesi, freshPeserta] = await Promise.all([
+          fetchSesiAbsen(),
+          fetchPesertaValid()
+        ]);
+
+        daftarPesertaValid = freshPeserta;
+
         if (freshSesi && Array.isArray(freshSesi) && freshSesi.length > 0) {
           renderForm(freshSesi, sesiIdFromUrl, tokenFromUrl, isQRMode);
-          console.log('✅ Absen: data sesi dimuat dari API.');
+          console.log('✅ Absen: data sesi dan peserta dimuat dari API.');
         } else {
           container.innerHTML = '<div class="alert alert-info text-center">Belum ada sesi absen tersedia.</div>';
         }
       } catch (e) {
-        container.innerHTML = `<div class="alert alert-danger">Gagal memuat sesi: ${escapeHtmlLocal(e.message)}</div>`;
+        container.innerHTML = `<div class="alert alert-danger">Gagal memuat data: ${escapeHtmlLocal(e.message)}</div>`;
       }
     }
 
     // ==========================================================
-    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    //   GUARD PUBLIC ACCESS & BOOT
     // ==========================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
@@ -644,9 +638,6 @@
       await loadAbsenSesi();
     })();
 
-    // ==========================================================
-    //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
-    // ==========================================================
     document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById('absenContainer');
       if (container) {

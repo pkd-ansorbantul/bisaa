@@ -17,6 +17,8 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- 🔥 Library untuk mengubah HTML Kartu menjadi Gambar (Download) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <style>
         /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
@@ -31,7 +33,7 @@
             flex-direction: column;
         }
 
-        /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
+        /* --- HEADER MINIMALIS ELEGAN --- */
         .header-minimal {
             background: rgba(255, 255, 255, 0.72) !important;
             backdrop-filter: blur(20px) saturate(180%);
@@ -112,9 +114,7 @@
             border-color: rgba(37, 99, 235, 0.2);
         }
 
-        /* ==========================================================
-           SKELETON LOADING (BARU - SAMA SEPERTI HALAMAN LAIN)
-           ========================================================== */
+        /* --- SKELETON LOADING --- */
         .skeleton-box {
             background: #e2e8f0;
             border-radius: 8px;
@@ -127,7 +127,7 @@
             100% { opacity: 0.6; }
         }
 
-        /* --- SIGNATURE AREA (UX NATURAL SEPERTI TANGAN SENDIRI) --- */
+        /* --- SIGNATURE AREA --- */
         .signature-wrapper {
             position: relative;
             width: 100%;
@@ -191,7 +191,90 @@
             pointer-events: none;
         }
 
-        /* --- FORM CUSTOM --- */
+        /* ==========================================================
+           🔥 PREMIUM ID CARD STYLES (Untuk Halaman Peserta)
+           ========================================================== */
+        .id-card-wrapper {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 10px;
+            background: transparent;
+        }
+        .id-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+        .id-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.12); }
+
+        /* Header Logo & Judul */
+        .id-card .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid #14994c;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .id-card .header img { height: 35px; width: auto; }
+        .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
+        .id-card .header h5 small { font-weight: 400; font-size: 0.75rem; color: #64748b; display: block; }
+
+        /* Body Layout */
+        .id-card .body {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        /* QR Code Area */
+        .id-card .qr-area {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 16px;
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+        .id-card .qr-area canvas, .id-card .qr-area img { width: 100%; height: auto; max-width: 110px; }
+
+        /* Data Area */
+        .id-card .data-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
+        .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
+
+        /* Footer */
+        .id-card .footer {
+            margin-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .id-card .footer span { color: #2563eb; font-weight: 600; }
+
+        /* Responsif Mobile */
+        @media (max-width: 480px) {
+            .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; }
+            .id-card .qr-area { margin: 0 auto 10px auto; }
+        }
+
+        /* --- ADMIN CONTACT & FORM --- */
         .admin-contact {
             background: #eff6ff;
             border-left: 4px solid #2563eb;
@@ -368,7 +451,6 @@
         function escapeHtmlLocal(unsafe) { return escapeHtml(unsafe); }
         function showToastLocal(message, type) { showToast(message, type); }
 
-        // 🔥 PERBAIKAN: Fungsi localStorage dilindungi try-catch
         function savePesertaFormState() {
             const form = document.getElementById('formPesertaDinamis');
             if (!form) return;
@@ -408,23 +490,16 @@
         }
 
         // ==========================================================
-        //   🔥 RENDER SKELETON PESERTA (BARU)
+        //   🔥 RENDER SKELETON PESERTA
         // ==========================================================
         function renderSkeletonPeserta(container) {
-            console.log("🟡 Menampilkan SKELETON Peserta...");
+            if (!container) return;
             let html = `
                 <h4 class="mb-4">📝 Memuat formulir peserta...</h4>
                 <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
-                    <!-- WA Box -->
                     <div class="admin-contact mb-4">
                         <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
                         <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
-                    </div>
-
-                    <!-- Form Fields -->
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
                     </div>
                     <div class="mb-3">
                         <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
@@ -463,13 +538,11 @@
                         <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
                     </div>
                     
-                    <!-- Signature Area -->
                     <div class="mb-3">
                         <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
                         <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
                     </div>
 
-                    <!-- Submit Button -->
                     <div class="mt-4">
                         <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
                     </div>
@@ -480,35 +553,93 @@
         }
 
         // ==========================================================
-        //   GENERATE & DOWNLOAD QR (Diekspos ke global)
+        //   🔥 GENERATE QR DENGAN LOGO GAMBAR ASLI
         // ==========================================================
         window.generateQR = function(id) {
             const container = document.getElementById('qrCodeContainer');
             container.innerHTML = '';
+            
+            if (!id) {
+                container.innerHTML = '<div class="text-muted small">ID tidak tersedia</div>';
+                return;
+            }
+
+            // 1. Setup QR Code
             const qr = qrcode(0, 'M');
             qr.addData(`peserta_id=${id}`);
             qr.make();
+            
+            const moduleCount = qr.getModuleCount();
+            const cellSize = 10;
+            const margin = 20;
+            const qrSize = moduleCount * cellSize;
+            const canvasSize = qrSize + (margin * 2);
+            
+            // 2. Siapkan Canvas Utama
             const canvas = document.createElement('canvas');
-            const size = qr.getModuleCount() * 8;
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
             const ctx = canvas.getContext('2d');
-            for (let row = 0; row < qr.getModuleCount(); row++) {
-                for (let col = 0; col < qr.getModuleCount(); col++) {
-                    ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-                    ctx.fillRect(col * 8, row * 8, 8, 8);
+            
+            // Latar belakang putih
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasSize, canvasSize);
+            
+            // Gambar modul QR
+            for (let row = 0; row < moduleCount; row++) {
+                for (let col = 0; col < moduleCount; col++) {
+                    if (qr.isDark(row, col)) {
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(margin + col * cellSize, margin + row * cellSize, cellSize, cellSize);
+                    }
                 }
             }
-            container.appendChild(canvas);
-        };
+            
+            // ==========================================================
+            //   🔥 3. TAMBAHKAN LOGO ANSOR DI TENGAH DENGAN GAMBAR ASLI
+            // ==========================================================
+            const logoSize = 70;
+            const logoX = (canvasSize - logoSize) / 2;
+            const logoY = (canvasSize - logoSize) / 2;
 
-        window.downloadQR = function() {
-            const canvas = document.querySelector('#qrCodeContainer canvas');
-            if (!canvas) return;
-            const link = document.createElement('a');
-            link.download = `QR_Peserta_${document.getElementById('pesertaIdDisplay').textContent}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            const logoImg = new Image();
+            logoImg.src = '/bisaa/LOGO%20ANSOR.webp'; // Path absolut untuk menghindari error cache
+
+            logoImg.onload = function() {
+                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+            };
+
+            logoImg.onerror = function() {
+                // Fallback: Jika gambar gagal dimuat, gunakan logo segitiga teks
+                const fallbackCanvas = document.createElement('canvas');
+                fallbackCanvas.width = logoSize;
+                fallbackCanvas.height = logoSize;
+                const fCtx = fallbackCanvas.getContext('2d');
+                
+                fCtx.fillStyle = '#14994c';
+                fCtx.beginPath();
+                fCtx.moveTo(logoSize/2, 0);
+                fCtx.lineTo(logoSize, logoSize);
+                fCtx.lineTo(0, logoSize);
+                fCtx.closePath();
+                fCtx.fill();
+
+                fCtx.fillStyle = '#ffffff';
+                fCtx.font = 'bold 22px Inter';
+                fCtx.textAlign = 'center';
+                fCtx.textBaseline = 'middle';
+                fCtx.fillText('ANSOR', logoSize/2, logoSize/2 - 2);
+                
+                ctx.drawImage(fallbackCanvas, logoX, logoY, logoSize, logoSize);
+            };
+            // ==========================================================
+            
+            // 4. Tambahkan Border Putih tipis di sekeliling QR
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(0, 0, canvasSize, canvasSize);
+            
+            container.appendChild(canvas);
         };
 
         // ==========================================================
@@ -537,13 +668,11 @@
             const container = document.getElementById('pesertaFormContainer');
 
             try {
-                console.log('[DEBUG] Memuat data form dari API...');
                 let rawData = null;
                 const settingsRes = await callApi('getFormSettings', {}, 'GET');
 
                 if (settingsRes && settingsRes.success) {
                     let data = settingsRes.data;
-                    console.log('[DEBUG] Data API diterima:', data);
 
                     if (typeof data === 'string') {
                         try { data = JSON.parse(data); } catch (e) { data = null; }
@@ -563,15 +692,12 @@
 
                 if (rawData && Array.isArray(rawData) && rawData.length > 0) {
                     formStructure = rawData;
-                    console.log('✅ Form structure dimuat dari API.');
                 } else {
-                    console.warn('⚠️ Data API tidak valid, menggunakan form default.');
                     formStructure = getDefaultFormFields();
                 }
                 buildForm(container);
 
             } catch (e) {
-                console.error('❌ Error memuat form, fallback default:', e);
                 container.innerHTML = `<div class="alert alert-danger text-center py-5">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i> Gagal memuat form dari server.<br>
                     <small>Silakan refresh halaman. Jika tetap error, hubungi Admin.</small>
@@ -678,7 +804,6 @@
                     });
                     html += `</select>`;
 
-                    // 🔥 PERBAIKAN: Tambahkan input manual untuk "Lainnya" pada field utusan
                     if (field.id === 'utusan') {
                         html += `
                             <div id="utusanLuarContainer" style="display: none; margin-top: 8px;">
@@ -719,14 +844,55 @@
                     <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">📤 Kirim Data Peserta</button>
                 </form>
 
+                <!-- ========================================================== -->
+                <!-- 🔥 ID CARD DIGITAL PREMIUM (Menggantikan QR Sederhana) -->
+                <!-- ========================================================== -->
                 <div id="qrResult" style="display: none;">
-                    <h5><i class="bi bi-qr-code"></i> ID Peserta Anda</h5>
-                    <p class="text-muted">Simpan QR Code ini. Panitia akan memindainya saat absen setiap sesi.</p>
-                    <div id="qrCodeContainer"></div>
-                    <p class="small text-muted">ID Peserta: <span id="pesertaIdDisplay"></span></p>
-                    <button class="btn btn-outline-secondary btn-sm mt-2" onclick="downloadQR()"><i class="bi bi-download"></i> Unduh QR</button>
-                    <div class="alert alert-info mt-3 small">
-                        <i class="bi bi-info-circle me-1"></i> QR ini hanya aktif setelah data Anda disetujui oleh admin. Jika belum muncul, mohon tunggu konfirmasi.
+                    <h5 class="mt-4 mb-3 fw-bold text-center"><i class="bi bi-person-vcard me-2"></i>Kartu ID Digital</h5>
+                    
+                    <div class="id-card-wrapper">
+                        <div id="idCard" class="id-card">
+                            <div class="header">
+                                <img src="/bisaa/LOGO%20ANSOR.webp" alt="Ansor">
+                                <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
+                            </div>
+                            <div class="body">
+                                <div class="qr-area" id="qrCodeContainer">
+                                    <!-- QR Code akan digenerate di sini -->
+                                </div>
+                                <div class="data-area">
+                                    <div>
+                                        <span class="label">ID Peserta</span>
+                                        <div class="value" id="pesertaIdDisplay">-</div>
+                                    </div>
+                                    <div>
+                                        <span class="label">Nama Lengkap</span>
+                                        <div class="value" id="idCardNama">-</div>
+                                    </div>
+                                    <div>
+                                        <span class="label">Alamat</span>
+                                        <div class="value" id="idCardAlamat" style="font-weight:400;">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="footer">
+                                Password Login: <span>No HP Terdaftar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                        <button class="btn btn-primary rounded-pill px-4" id="downloadIdCardBtn">
+                            <i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)
+                        </button>
+                        <button class="btn btn-outline-secondary rounded-pill px-4" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i> Cetak
+                        </button>
+                    </div>
+
+                    <div class="alert alert-info mt-3 small text-center rounded-4 border-0 shadow-sm bg-light">
+                        <i class="bi bi-info-circle me-1"></i> Data Anda sedang diverifikasi oleh admin. QR Code ini akan aktif setelah disetujui.
                     </div>
                 </div>
             `;
@@ -734,6 +900,7 @@
             container.innerHTML = html;
             container.classList.add('fade-up');
 
+            // Event listener file inputs
             document.querySelectorAll('#formPesertaDinamis input[type="file"]').forEach(input => {
                 input.addEventListener('change', function(e) {
                     const file = e.target.files[0];
@@ -817,7 +984,6 @@
                 window.sigPad.addEventListener('endStroke', savePesertaFormState);
             }
 
-            // 🔥 PERBAIKAN: Event listener untuk dropdown "Lainnya" pada field utusan
             const utusanSelect = document.querySelector('select[name="utusan"]');
             const luarContainer = document.getElementById('utusanLuarContainer');
             if (utusanSelect && luarContainer) {
@@ -826,7 +992,6 @@
                         luarContainer.style.display = 'block';
                     } else {
                         luarContainer.style.display = 'none';
-                        // Kosongkan input manual jika tidak dipilih
                         const inputLuar = document.querySelector('input[name="utusan_luar"]');
                         if (inputLuar) inputLuar.value = '';
                     }
@@ -901,14 +1066,13 @@
         });
 
         // ==========================================================
-        //   🔥 PERBAIKAN: SUBMIT FORM (TANPA ERROR)
+        //   🔥 SUBMIT FORM (MENGISI KARTU ID & DOWNLOAD)
         // ==========================================================
         async function submitPesertaForm(e) {
             e.preventDefault();
             const form = document.getElementById('formPesertaDinamis');
             const formData = new FormData(form);
             const data = { action: 'submitPeserta', custom_data: {} };
-            const overlay = document.getElementById('loadingOverlay');
 
             const missingFields = [];
             formStructure.forEach(field => {
@@ -943,9 +1107,6 @@
                 showToastLocal('Ukuran surat rekomendasi maksimal 5 MB', 'danger');
                 return;
             }
-
-            // 🔥 CEGAH ERROR NULL .style
-            if (overlay) overlay.style.display = 'flex';
             
             document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
                 .forEach(el => el.disabled = true);
@@ -986,7 +1147,6 @@
                     }
                 });
 
-                // 🔥 PERBAIKAN: Gabungkan nilai utusan dengan input manual "Lainnya"
                 if (data.utusan === 'Lainnya') {
                     const luarValue = formData.get('utusan_luar');
                     const luarInput = typeof luarValue === 'string' ? luarValue.trim() : '';
@@ -999,10 +1159,15 @@
 
                 showToastLocal('✅ Data peserta berhasil dikirim!', 'success');
 
+                // 🔥 Tampilkan Kartu ID Premium & Isi Data
                 const qrResult = document.getElementById('qrResult');
                 qrResult.style.display = 'block';
-                document.getElementById('pesertaIdDisplay').textContent = result.id || 'ID belum tersedia';
-                generateQR(result.id);
+                
+                document.getElementById('pesertaIdDisplay').textContent = result.id || '-';
+                document.getElementById('idCardNama').textContent = data.nama_lengkap || '-';
+                document.getElementById('idCardAlamat').textContent = data.alamat || '-';
+                window.generateQR(result.id);
+                
                 document.querySelector('#qrResult .alert-info').innerHTML = `
                     <i class="bi bi-info-circle me-1"></i> Data Anda sedang diverifikasi oleh admin. 
                     QR Code ini akan aktif setelah disetujui. Silakan cek kembali nanti.
@@ -1014,12 +1179,37 @@
                 clearPesertaFormState();
                 const utusanLuar = document.getElementById('utusanLuarContainer');
                 if (utusanLuar) utusanLuar.style.display = 'none';
+
+                // 🔥 Event Listener Tombol Unduh Kartu ID
+                document.getElementById('downloadIdCardBtn')?.addEventListener('click', function() {
+                    const cardElement = document.getElementById('idCard');
+                    if (!cardElement) return;
+                    const downloadBtn = this;
+                    downloadBtn.disabled = true;
+                    downloadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+
+                    html2canvas(cardElement, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#ffffff' 
+                    }).then(canvasImg => {
+                        const link = document.createElement('a');
+                        const namaFile = data.nama_lengkap.replace(/\s+/g, '_');
+                        link.download = `Kartu_ID_${namaFile}.png`;
+                        link.href = canvasImg.toDataURL('image/png');
+                        link.click();
+                        showToast('Kartu ID berhasil diunduh!', 'success');
+                    }).catch(err => {
+                        showToast('Gagal mengunduh kartu ID: ' + err.message, 'error');
+                    }).finally(() => {
+                        downloadBtn.disabled = false;
+                        downloadBtn.innerHTML = '<i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)';
+                    });
+                });
+
             } catch (err) {
                 showToastLocal('❌ Gagal mengirim: ' + err.message, 'danger');
             } finally {
-                // 🔥 CEGAH ERROR NULL .style
-                if (overlay) overlay.style.display = 'none';
-                
                 document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
                     .forEach(el => el.disabled = false);
                 btn.disabled = false;
@@ -1037,11 +1227,7 @@
             await loadPesertaForm();
         })();
 
-        // ==========================================================
-        //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
-        // ==========================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Render skeleton secara instan (sinkron) saat DOM siap
             const container = document.getElementById('pesertaFormContainer');
             if (container) {
                 renderSkeletonPeserta(container);
