@@ -70,8 +70,30 @@
       background: #f8fafc; color: #64748b;
     }
     .asset-card .card-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
-    .asset-card .card-title { font-weight: 600; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .asset-card .card-text { font-size: 0.85rem; color: #64748b; margin: 0; flex: 1; }
+    .asset-card .card-title { font-weight: 600; margin-bottom: 0.25rem; word-wrap: break-word; white-space: normal; }
+    .asset-card .card-text { font-size: 0.85rem; color: #64748b; margin: 0; flex: 1; word-wrap: break-word; }
+
+    /* ===== TOMBOL AKSI / SHARE ===== */
+    .asset-card .card-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .asset-card .card-actions .btn {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.75rem;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .asset-card .card-actions .btn:hover {
+      transform: scale(1.1);
+    }
 
     /* ===== CUSTOM PREVIEW MODAL ===== */
     .custom-preview-overlay {
@@ -292,7 +314,7 @@
     });
 
     // ==========================================================
-    //   PREVIEW ASET (Dengan Efek Smooth Transisi)
+    //   PREVIEW ASET
     // ==========================================================
     window.previewAsset = function(judul, driveId) {
       const cleanedDriveId = cleanDriveId(driveId);
@@ -363,6 +385,59 @@
       overlay.addEventListener('click', function(e) {
         if (e.target === this) this.remove();
       });
+    };
+
+    // ==========================================================
+    //   SHARE / COPY LINK UNTUK SETIAP FILE
+    // ==========================================================
+    window.copyAssetLinkPublic = function(driveId, judul) {
+        if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
+        const url = `https://drive.google.com/file/d/${driveId}/view`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link file berhasil disalin!', 'success');
+            }).catch(() => {
+                const input = document.createElement('input');
+                input.value = url;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Link file berhasil disalin!', 'success');
+            });
+        } else {
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showToast('Link file berhasil disalin!', 'success');
+        }
+    };
+
+    window.shareAssetPublic = function(driveId, judul) {
+        if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
+        const url = `https://drive.google.com/file/d/${driveId}/view`;
+        if (navigator.share) {
+            navigator.share({
+                title: judul || 'Aset PKD GP Ansor',
+                url: url
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link berhasil disalin!', 'success');
+            }).catch(() => {
+                showToast('Gagal menyalin link.', 'error');
+            });
+        }
+    };
+
+    window.shareViaWhatsAppPublic = function(driveId, judul) {
+        if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
+        const url = `https://drive.google.com/file/d/${driveId}/view`;
+        const text = encodeURIComponent(`Halo, saya ingin berbagi aset digital PKD GP Ansor: ${judul}\n${url}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
     };
 
     // ==========================================================
@@ -482,6 +557,13 @@
             <div class="card-body">
               <div class="card-title">${escapeHtml(item.judul || '')}</div>
               <div class="card-text">${escapeHtml(item.deskripsi || '')}</div>
+              <div class="card-actions">
+                ${isIdValid ? `
+                  <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); copyAssetLinkPublic('${cleanedDriveId}', '${escapeHtml(item.judul)}')" title="Salin Link"><i class="bi bi-link-45deg"></i></button>
+                  <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); shareAssetPublic('${cleanedDriveId}', '${escapeHtml(item.judul)}')" title="Bagikan"><i class="bi bi-share"></i></button>
+                  <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); shareViaWhatsAppPublic('${cleanedDriveId}', '${escapeHtml(item.judul)}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+                ` : ''}
+              </div>
               <div class="mt-2 text-end text-muted small">${formatDate(item.timestamp)}</div>
             </div>
           </div>
@@ -492,7 +574,7 @@
     }
 
     // ==========================================================
-    //   NAVIGASI FOLDER (INSTAN, HANYA RENDER ULANG UI)
+    //   NAVIGASI FOLDER
     // ==========================================================
     window.navigateFolder = function(folderId) {
       renderSkeletonPublicAssets();
@@ -512,7 +594,6 @@
       
       folderPasswordAttempted = true;
       
-      // Render ulang UI dengan data yang sudah ada di memori (tanpa fetch)
       renderFolderList();
       renderBreadcrumb();
       renderAssets();
@@ -582,13 +663,12 @@
     };
 
     // ==========================================================
-    //   LOAD DATA PUBLIK (Dengan Cache & Background Refresh)
+    //   LOAD DATA PUBLIK
     // ==========================================================
     async function loadPublicAssets(targetFolderId = null) {
       renderSkeletonPublicAssets();
       renderSkeletonFolderList();
       
-      // 🔥 Tentukan mode single folder
       isSingleFolderMode = !!targetFolderId;
 
       const CACHE_AGE = 10;
@@ -596,16 +676,13 @@
       let cachedData = await fetchWithCache('getAssetList', { _t: Date.now() }, 'public_assets_data', CACHE_AGE, false);
       let cachedFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, false);
 
-      // 🔥 Filter folder yang valid
       let rawFolders = cachedFolders || [];
       
       if (targetFolderId) {
-        // Mode single folder: paksa ambil data terbaru dari API
         let freshFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, true);
         
-        // Fallback jika cache gagal
         if (!freshFolders || freshFolders.length === 0) {
-            const res = await callApi('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'GET');
+            const res = await callApi('getFolders', { _t: Date.now(), all: 'true' }, 'GET');
             freshFolders = res?.data || [];
         }
         
@@ -613,16 +690,13 @@
         
         folderList = rawFolders.filter(f => 
             String(f.id) === String(targetFolderId) &&
-            (f.isPublic === true || f.isPublic === 'true') &&
-            !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+            (f.isPublic === true || f.isPublic === 'true')
         );
         
         if (folderList.length === 0) {
             document.getElementById('assetContainer').innerHTML = '<div class="alert alert-danger">Folder tidak ditemukan atau tidak dapat diakses.</div>';
-            // Sembunyikan sidebar folder
             const sidebarFolder = document.getElementById('sidebarContainer');
             if (sidebarFolder) sidebarFolder.style.display = 'none';
-            // Perluas kolom konten menjadi 12
             const contentCol = document.getElementById('contentContainer');
             if (contentCol) {
                 contentCol.classList.remove('col-md-9');
@@ -632,7 +706,6 @@
         }
         currentFolderId = targetFolderId;
       } else {
-        // Mode semua folder: hanya tampilkan folder publik yang tidak disembunyikan
         folderList = rawFolders.filter(f => 
             (f.isPublic === true || f.isPublic === 'true') &&
             !(f.hideFromGallery === true || f.hideFromGallery === 'true')
@@ -640,7 +713,6 @@
         currentFolderId = '';
       }
 
-      // 🔥 Jika mode single folder, sembunyikan sidebar folder dan perluas konten
       if (isSingleFolderMode) {
         const sidebarFolder = document.getElementById('sidebarContainer');
         if (sidebarFolder) sidebarFolder.style.display = 'none';
@@ -655,19 +727,16 @@
       renderBreadcrumb();
       renderAssets();
 
-      // Background refresh
       (async function refreshData() {
         try {
             const freshData = await fetchWithCache('getAssetList', { _t: Date.now() }, 'public_assets_data', CACHE_AGE, true);
             const freshFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, true);
             
-            // 🔥 Filter lagi untuk memastikan konsistensi
             let updatedFolders = freshFolders || [];
             if (targetFolderId) {
                 updatedFolders = updatedFolders.filter(f => 
                     String(f.id) === String(targetFolderId) &&
-                    (f.isPublic === true || f.isPublic === 'true') &&
-                    !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+                    (f.isPublic === true || f.isPublic === 'true')
                 );
             } else {
                 updatedFolders = updatedFolders.filter(f => 
@@ -679,7 +748,6 @@
             if (JSON.stringify(assetList) !== JSON.stringify(freshData) || JSON.stringify(folderList) !== JSON.stringify(updatedFolders)) {
                 assetList = freshData;
                 folderList = updatedFolders;
-                // Jangan ubah currentFolderId saat refresh, kecuali jika mode single folder
                 if (!targetFolderId) currentFolderId = '';
                 renderFolderList();
                 renderBreadcrumb();
