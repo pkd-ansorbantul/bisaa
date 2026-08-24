@@ -87,8 +87,55 @@
     .asset-card .card-actions .btn-group .btn { padding: 0.2rem 0.4rem; font-size: 0.75rem; }
     .asset-checkbox { cursor: pointer; }
 
-    .upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 2rem; text-align: center; background: #f8fafc; transition: all 0.2s; }
+    /* --- DRAG & DROP UPLOAD AREA --- */
+    .upload-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      background: #f8fafc;
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .upload-area.dragover {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
     .upload-area:hover { border-color: #2563eb; background: #eff6ff; }
+    .upload-area input[type="file"] {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+    .upload-area i { font-size: 2.5rem; color: #94a3b8; transition: color 0.2s; }
+    .upload-area:hover i { color: #2563eb; }
+
+    /* --- GLOBAL DRAG & DROP OVERLAY --- */
+    #globalDropOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 99999;
+      background: rgba(37, 99, 235, 0.15);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    #globalDropOverlay .drop-box {
+      background: white;
+      padding: 3rem 4rem;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      text-align: center;
+      pointer-events: auto;
+      border: 2px dashed #2563eb;
+    }
+    #globalDropOverlay .drop-box i { font-size: 4rem; color: #2563eb; }
+    #globalDropOverlay .drop-box h4 { margin-top: 1rem; font-weight: 600; }
+    #globalDropOverlay .drop-box p { color: #64748b; }
 
     .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
@@ -97,7 +144,7 @@
     .asset-card.skeleton .skeleton-title { height: 1.2rem; width: 70%; margin: 0.5rem auto 0.3rem; }
     .asset-card.skeleton .skeleton-desc { height: 0.9rem; width: 50%; margin: 0 auto; }
 
-    /* --- MODAL PREVIEW STATIS (LEBIH STABIL) --- */
+    /* --- MODAL PREVIEW STATIS --- */
     #customPreviewModal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85);
       display: none; align-items: center; justify-content: center; z-index: 99999;
@@ -199,7 +246,6 @@
           <button class="btn btn-outline-info rounded-pill" id="publicAssetConfigBtn"><i class="bi bi-globe me-1"></i> Publikasi Galeri</button>
           <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
         </div>
-        <!-- 🔍 Search & Filter (autocomplete="off" untuk mencegah autofill) -->
         <div class="col-md-6 d-flex gap-2 justify-content-end">
           <div class="input-group" style="max-width: 300px;">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
@@ -222,22 +268,41 @@
   </div>
 </div>
 
+<!-- GLOBAL DRAG & DROP OVERLAY -->
+<div id="globalDropOverlay">
+  <div class="drop-box">
+    <i class="bi bi-cloud-upload"></i>
+    <h4>Lepaskan file di sini</h4>
+    <p class="text-muted">Upload aset digital ke sistem secara instan.</p>
+  </div>
+</div>
+
 <!-- MODALS -->
 <div class="modal fade" id="moreMenuModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="bi bi-grid me-2"></i>Menu Lainnya</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row g-2"><div class="col-6"><a href="/bisaa/admin/skrining_admin.html" class="btn btn-outline-primary w-100">Skrining</a></div><div class="col-6"><a href="/bisaa/admin/pretest_admin.html" class="btn btn-outline-primary w-100">Pre-test</a></div><div class="col-6"><a href="/bisaa/admin/posttest_admin.html" class="btn btn-outline-primary w-100">Post-test</a></div><div class="col-6"><a href="/bisaa/admin/materi_admin.html" class="btn btn-outline-primary w-100">Materi</a></div><div class="col-6"><a href="/bisaa/admin/alumni_admin.html" class="btn btn-outline-primary w-100">Alumni</a></div><div class="col-6"><a href="/bisaa/admin/kader_admin.html" class="btn btn-outline-primary w-100">Kader</a></div><div class="col-6"><a href="/bisaa/admin/informasi_admin.html" class="btn btn-outline-primary w-100">Informasi</a></div><div class="col-6"><a href="/bisaa/admin/data_absensi_admin.html" class="btn btn-outline-primary w-100">Data Absensi</a></div><div class="col-6"><a href="/bisaa/admin/rekap_absensi_admin.html" class="btn btn-outline-primary w-100">Rekap Absensi</a></div><div class="col-6"><a href="/bisaa/admin/pengaturan_admin.html" class="btn btn-outline-primary w-100">Pengaturan</a></div></div><div class="row mt-3"><div class="col-12"><button class="btn btn-outline-danger w-100" id="mobileLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout / Keluar</button></div></div></div></div></div></div>
 
 <!-- MODAL UPLOAD -->
-<div class="modal fade" id="uploadAssetModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="uploadAssetModal" tabindex="-1" data-bs-backdrop="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-primary text-white border-0 rounded-top-4"><h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i>Upload Aset Digital</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body p-4">
-        <div class="mb-3"><label class="form-label fw-semibold">Judul</label><input type="text" class="form-control" id="assetJudul" /></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Judul</label><input type="text" class="form-control" id="assetJudul" placeholder="Akan diisi otomatis dari nama file" /></div>
         <div class="mb-3"><label class="form-label fw-semibold">Deskripsi</label><textarea class="form-control" id="assetDeskripsi" rows="2"></textarea></div>
         <div class="mb-3"><label class="form-label fw-semibold">Folder Tujuan</label><select class="form-select" id="assetFolder"><option value="">Root (Tanpa Folder)</option></select></div>
         <div class="mb-3"><label class="form-label fw-semibold">Jenis</label><select class="form-select" id="assetJenis"><option value="gambar">Gambar</option><option value="video">Video</option><option value="sertifikat">Sertifikat</option><option value="dokumen">Dokumen</option><option value="audio">Audio</option></select></div>
-        <div class="mb-3 upload-area"><i class="bi bi-cloud-upload fs-1 text-muted"></i><p class="mb-1"><strong>Klik atau drag & drop file di sini</strong></p><p class="text-muted small">Format: JPG, PNG, WEBP, GIF, MP4, WEBM, MP3, WAV, OGG, PDF (Max 200MB)</p><input type="file" class="form-control" id="assetFile" accept="image/*,video/*,audio/*,application/pdf" style="max-width:300px; margin:0 auto;" /></div>
+        <div class="mb-3 upload-area" id="uploadDropZone">
+          <i class="bi bi-cloud-upload"></i>
+          <p class="mb-1"><strong>Klik atau drag & drop file di sini</strong></p>
+          <p class="text-muted small">Format: JPG, PNG, WEBP, GIF, MP4, WEBM, MP3, WAV, OGG, PDF (Max 200MB)</p>
+          <input type="file" id="assetFile" accept="image/*,video/*,audio/*,application/pdf" />
+        </div>
         <div id="filePreview" class="mt-2 text-center" style="display:none;"><img id="previewImage" src="#" class="img-thumbnail" style="max-height:150px;" /><p id="fileNameDisplay" class="small text-muted mt-1"></p></div>
-        <div id="uploadProgressContainer" class="mt-3" style="display:none;"><div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="uploadProgressBar" style="width:0%"></div></div><div class="small text-muted mt-1 text-center" id="uploadProgressText">0%</div></div>
+        <div id="uploadProgressContainer" class="mt-3" style="display:none;">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="uploadProgressBar" style="width:0%"></div>
+          </div>
+          <div class="small text-muted mt-1 text-center" id="uploadProgressText">0%</div>
+        </div>
       </div>
       <div class="modal-footer border-0"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary rounded-pill px-4" id="submitUploadBtn">Upload</button></div>
     </div>
@@ -336,6 +401,9 @@
         </div>
       </div>
       <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-danger rounded-pill px-4" id="deleteFolderBtn">
+          <i class="bi bi-trash me-1"></i> Hapus Folder
+        </button>
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
@@ -433,11 +501,26 @@
       else { urlInput.select(); document.execCommand('copy'); showToast('Link berhasil disalin!', 'success'); }
     }
   };
-
   window.toggleFolderSettingPassword = function() {
     const el = document.getElementById('folderSettingPassword');
     if (el) el.type = el.type === 'password' ? 'text' : 'password';
   };
+
+  // 🔥 Auto-detect jenis file dari nama file
+  function getFileType(fileName) {
+    if (!fileName) return 'gambar';
+    const ext = fileName.split('.').pop().toLowerCase();
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tiff', 'tif', 'heic', 'heif'];
+    const videoExts = ['mp4', 'webm', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'mpeg', 'mpg', 'm4v', '3gp'];
+    const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'wma'];
+    const docExts = ['pdf'];
+
+    if (imageExts.includes(ext)) return 'gambar';
+    if (videoExts.includes(ext)) return 'video';
+    if (audioExts.includes(ext)) return 'audio';
+    if (docExts.includes(ext)) return 'dokumen';
+    return 'gambar'; // fallback
+  }
 
   function renderSkeletonAssets() {
     const container = document.getElementById('assetContainer');
@@ -546,7 +629,7 @@
   window.navigateFolder = function(folderId) { currentFolderId = folderId; render(); };
 
   // ==========================================================
-  // 🆕 MODAL PENGATURAN FOLDER
+  // MODAL PENGATURAN FOLDER (DENGAN TOMBOL HAPUS)
   // ==========================================================
   window.openFolderSettingsModal = function(id) {
     const folder = folderList.find(f => String(f.id) === String(id));
@@ -651,6 +734,36 @@
     }
   });
 
+  // 🆕 TOMBOL HAPUS FOLDER – menghapus folder fisik di Drive dan data
+  document.getElementById('deleteFolderBtn').addEventListener('click', async function() {
+    const id = document.getElementById('folderSettingsId').value;
+    const folderName = document.getElementById('folderSettingsModalTitle').innerText.replace('Pengaturan Folder: ', '');
+    if (!id) return;
+    if (!confirm(`Yakin ingin menghapus folder "${folderName}" beserta semua aset di dalamnya dari Google Drive?`)) return;
+
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menghapus...';
+
+    try {
+      const result = await callApi('deleteFolder', { id }, 'POST');
+      if (result.success) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('folderSettingsModal'));
+        if (modal) modal.hide();
+        await loadAllData(true);
+        showToast('✅ Folder berhasil dihapus dari Drive.', 'success');
+      } else {
+        throw new Error(result.error || 'Gagal menghapus folder');
+      }
+    } catch (e) {
+      showToast('❌ Gagal: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+
   // ==========================================================
   // 🚀 PREVIEW & AUTOPLAY CERDAS (MODAL STATIS, BEBAS ERROR)
   // ==========================================================
@@ -660,19 +773,16 @@
   let isAutoplayActive = false;
   let isModalOpen = false;
 
-  // Fungsi untuk menjadwalkan pemutaran berikutnya (disesuaikan)
   function scheduleNextPlay() {
     if (autoplayTimeoutId) clearTimeout(autoplayTimeoutId);
     if (!isAutoplayActive || !isModalOpen) return;
 
     const currentItem = playlistItems[currentPlaylistIndex];
-    // Video: 60 detik (kompromi agar tidak terpotong), Gambar/Dokumen: 5 detik
     const isVideo = currentItem.jenis === 'video' || (currentItem.mimeType && currentItem.mimeType.startsWith('video/'));
     const delay = isVideo ? 60000 : 5000;
 
     autoplayTimeoutId = setTimeout(() => {
       if (!isModalOpen) return;
-      // Pindah ke item berikutnya (loop)
       if (currentPlaylistIndex >= playlistItems.length - 1) {
         currentPlaylistIndex = 0;
       } else {
@@ -682,9 +792,7 @@
     }, delay);
   }
 
-  // Fungsi update konten modal (versi baru, 100% menggunakan iframe)
   function updatePreview(newItem) {
-    // Validasi keamanan: pastikan modal masih terbuka
     if (!isModalOpen) return;
 
     const iframe = document.getElementById('previewContent');
@@ -693,7 +801,7 @@
     const titleEl = document.getElementById('previewModalTitle');
     const metaEl = document.getElementById('previewMetaInfo');
 
-    if (!iframe || !spinner || !titleEl) return; // Safety check
+    if (!iframe || !spinner || !titleEl) return;
 
     if (!newItem || !newItem.driveId) {
       showToast('Item tidak valid', 'warning');
@@ -705,25 +813,19 @@
       return;
     }
 
-    // Reset timer autoplay
     if (autoplayTimeoutId) clearTimeout(autoplayTimeoutId);
 
-    // Update judul & meta
     titleEl.innerHTML = `<i class="bi bi-eye me-2"></i>${escapeHtml(newItem.judul || 'Pratinjau Aset')}`;
     metaEl.innerHTML = `${newItem.fileName ? `📄 ${escapeHtml(newItem.fileName)}` : ''} ${newItem.mimeType ? `<span class="badge bg-secondary ms-2">${escapeHtml(newItem.mimeType)}</span>` : ''}`;
 
-    // Tampilkan spinner & sembunyikan error
     spinner.style.display = 'flex';
     errorDiv.style.display = 'none';
 
-    // Reset iframe state
     iframe.style.display = 'block';
     iframe.classList.remove('show');
-    iframe.src = ''; // Kosongkan src agar iframe tidak memuat konten lama
+    iframe.src = '';
 
-    // --- PERBAIKAN UTAMA: Untuk Video, tetap gunakan iframe Google Drive (paling stabil) ---
     setTimeout(() => {
-      // Semua file (termasuk video, gambar, pdf) menggunakan iframe Google Drive
       iframe.src = `https://drive.google.com/file/d/${newId}/preview`;
       iframe.classList.remove('fade-out');
 
@@ -731,10 +833,8 @@
         spinner.style.display = 'none';
         iframe.classList.add('show');
         iframe.onload = null;
-        // Jadwalkan autoplay berikutnya dengan timer (video pakai 60 detik, gambar 5 detik)
         scheduleNextPlay();
       };
-      // Fallback jika iframe gagal load
       setTimeout(() => {
         if (spinner.style.display !== 'none') {
           spinner.style.display = 'none';
@@ -743,16 +843,13 @@
       }, 15000);
     }, 400);
 
-    // Update navigasi tombol
     const prevBtn = document.getElementById('navPrev');
     const nextBtn = document.getElementById('navNext');
     if (prevBtn) prevBtn.classList.toggle('disabled', currentPlaylistIndex <= 0);
     if (nextBtn) nextBtn.classList.toggle('disabled', currentPlaylistIndex >= playlistItems.length - 1);
   }
 
-  // Fungsi membuka modal preview
   window.openPreviewWithPlaylist = function(index) {
-    // Matikan autoplay jika modal sebelumnya terbuka
     if (isModalOpen) {
       closePreviewModal();
     }
@@ -769,18 +866,15 @@
       return;
     }
 
-    // Tampilkan modal
     isModalOpen = true;
     const modal = document.getElementById('customPreviewModal');
     if (modal) modal.classList.add('show');
 
-    // Reset state modal
     const spinner = document.getElementById('customPreviewSpinner');
     const errorDiv = document.getElementById('customPreviewError');
     if (spinner) spinner.style.display = 'flex';
     if (errorDiv) errorDiv.style.display = 'none';
 
-    // Setel autoplay button ke state non-aktif
     isAutoplayActive = false;
     const autoplayBtn = document.getElementById('autoplayToggleBtn');
     if (autoplayBtn) {
@@ -788,11 +882,9 @@
       autoplayBtn.title = "Putar Otomatis";
     }
 
-    // Muat preview pertama
     updatePreview(item);
   };
 
-  // Fungsi menutup modal preview
   window.closePreviewModal = function() {
     isModalOpen = false;
     isAutoplayActive = false;
@@ -809,11 +901,9 @@
     }
   };
 
-  // Event listener tombol Play/Pause Autoplay
   document.getElementById('autoplayToggleBtn').addEventListener('click', function() {
     if (!isModalOpen) return;
     if (isAutoplayActive) {
-      // Pause
       isAutoplayActive = false;
       if (autoplayTimeoutId) {
         clearTimeout(autoplayTimeoutId);
@@ -822,7 +912,6 @@
       this.innerHTML = '<i class="bi bi-play-circle-fill" style="font-size: 1.2rem;"></i>';
       this.title = "Putar Otomatis";
     } else {
-      // Play
       isAutoplayActive = true;
       this.innerHTML = '<i class="bi bi-pause-circle-fill" style="font-size: 1.2rem;"></i>';
       this.title = "Jeda Putar Otomatis";
@@ -830,10 +919,8 @@
     }
   });
 
-  // Event listener tombol Navigasi Manual
   document.getElementById('navPrev').addEventListener('click', function() {
     if (!isModalOpen) return;
-    // Matikan autoplay jika aktif
     if (isAutoplayActive) {
       document.getElementById('autoplayToggleBtn').click();
     }
@@ -854,7 +941,6 @@
     }
   });
 
-  // Tutup modal jika klik di luar area konten
   document.getElementById('customPreviewModal').addEventListener('click', function(e) {
     if (e.target === this) {
       closePreviewModal();
@@ -909,36 +995,235 @@
   // UPLOAD, FOLDER, DELETE SELECTED, REFRESH, PUBLIC CONFIG
   // ==========================================================
   function resetUploadForm() {
-    document.getElementById('assetJudul').value = ''; document.getElementById('assetDeskripsi').value = ''; document.getElementById('assetJenis').value = 'gambar'; document.getElementById('assetFile').value = ''; document.getElementById('filePreview').style.display = 'none'; document.getElementById('uploadProgressContainer').style.display = 'none';
-    const folderSelect = document.getElementById('assetFolder'); folderSelect.innerHTML = '<option value="">Root (Tanpa Folder)</option>'; folderList.forEach(f => { folderSelect.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; }); if (currentFolderId !== '') folderSelect.value = currentFolderId;
+    document.getElementById('assetJudul').value = '';
+    document.getElementById('assetDeskripsi').value = '';
+    document.getElementById('assetJenis').value = 'gambar';
+    document.getElementById('assetFile').value = '';
+    document.getElementById('filePreview').style.display = 'none';
+    document.getElementById('uploadProgressContainer').style.display = 'none';
+    const folderSelect = document.getElementById('assetFolder');
+    folderSelect.innerHTML = '<option value="">Root (Tanpa Folder)</option>';
+    folderList.forEach(f => {
+      folderSelect.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`;
+    });
+    if (currentFolderId !== '' && folderSelect) {
+      let optionExists = false;
+      for (let opt of folderSelect.options) {
+        if (opt.value === currentFolderId) { optionExists = true; break; }
+      }
+      if (optionExists) folderSelect.value = currentFolderId;
+    }
   }
 
   document.getElementById('uploadAssetBtn').addEventListener('click', function() { resetUploadForm(); new bootstrap.Modal(document.getElementById('uploadAssetModal')).show(); });
+
+  // --- DRAG & DROP HANDLING ---
+  const dropZone = document.getElementById('uploadDropZone');
+  const fileInput = document.getElementById('assetFile');
+  const titleInput = document.getElementById('assetJudul');
+  const typeInput = document.getElementById('assetJenis');
+  const folderSelect = document.getElementById('assetFolder'); // Tambahkan ini
+  const globalOverlay = document.getElementById('globalDropOverlay');
+
+  // Global Drag & Drop
+  document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    globalOverlay.style.display = 'flex';
+  });
+
+  document.addEventListener('dragleave', (e) => {
+    if (!e.relatedTarget || !globalOverlay.contains(e.relatedTarget)) {
+      globalOverlay.style.display = 'none';
+    }
+  });
+
+  globalOverlay.addEventListener('drop', (e) => {
+    e.preventDefault();
+    globalOverlay.style.display = 'none';
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = e.dataTransfer.files;
+      const modalEl = document.getElementById('uploadAssetModal');
+      resetUploadForm();
+
+      // Tampilkan modal, lalu jalankan handleFiles SETELAH modal selesai terbuka
+      const modal = new bootstrap.Modal(modalEl, { backdrop: true });
+      modal.show();
+
+      // 🛑 PERBAIKAN UTAMA: Gunakan 'shown.bs.modal', bukan setTimeout
+      modalEl.addEventListener('shown.bs.modal', function handler() {
+        handleFiles(files);
+        modalEl.removeEventListener('shown.bs.modal', handler); // Hapus listener agar tidak ganda
+      });
+    }
+  });
+
+  // Fungsi utama menangani file
+  function handleFiles(files) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const fileName = file.name;
+
+    // 1. Auto-fill title (hapus ekstensi)
+    const title = fileName.replace(/\.[^/.]+$/, '');
+    titleInput.value = title;
+
+    // 2. Auto-detect type
+    const detectedType = getFileType(fileName);
+    typeInput.value = detectedType;
+
+    // 3. Pilih folder aktif
+    if (currentFolderId && folderSelect) {
+      let optionExists = false;
+      for (let opt of folderSelect.options) {
+        if (opt.value === currentFolderId) { optionExists = true; break; }
+      }
+      if (optionExists) folderSelect.value = currentFolderId;
+    }
+
+    // 4. Masukkan file ke input dan trigger preview
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Drop Zone di dalam modal
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  });
+
+  // Event file input untuk preview
+  fileInput.addEventListener('change', function() {
+    if (this.files && this.files.length > 0) {
+      const file = this.files[0];
+      const fileName = file.name;
+      const title = fileName.replace(/\.[^/.]+$/, '');
+      titleInput.value = title;
+      const detectedType = getFileType(fileName);
+      typeInput.value = detectedType;
+    }
+  });
+
   document.getElementById('assetFile').addEventListener('change', function() {
     const file = this.files[0]; const previewContainer = document.getElementById('filePreview'); const previewImage = document.getElementById('previewImage'); const fileNameDisplay = document.getElementById('fileNameDisplay');
     if (file) { const reader = new FileReader(); reader.onload = e => { previewImage.src = e.target.result; }; reader.readAsDataURL(file); previewContainer.style.display = 'block'; fileNameDisplay.textContent = file.name; } else { previewContainer.style.display = 'none'; previewImage.src = '#'; }
   });
 
+  // ==========================================================
+  // 🔥 SUBMIT UPLOAD DENGAN XHR + PROGRESS REAL
+  // ==========================================================
   document.getElementById('submitUploadBtn').addEventListener('click', async function() {
-    const judul = document.getElementById('assetJudul').value.trim(); const fileInput = document.getElementById('assetFile'); const file = fileInput.files[0];
-    if (!judul) { showToast('Judul wajib diisi', 'error'); return; } if (!file) { showToast('File wajib dipilih', 'error'); return; }
+    const judul = document.getElementById('assetJudul').value.trim();
+    const deskripsi = document.getElementById('assetDeskripsi').value.trim();
+    const folderId = document.getElementById('assetFolder').value;
+    const jenis = document.getElementById('assetJenis').value;
+    const fileInput = document.getElementById('assetFile');
+    const file = fileInput.files[0];
+
+    if (!judul) { showToast('Judul wajib diisi', 'error'); return; }
+    if (!file) { showToast('File wajib dipilih', 'error'); return; }
     if (file.size > 200 * 1024 * 1024) { showToast('Ukuran file maksimal 200MB.', 'error'); return; }
-    const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border"></span> Mengupload...';
-    const progressContainer = document.getElementById('uploadProgressContainer'); const progressBar = document.getElementById('uploadProgressBar'); const progressText = document.getElementById('uploadProgressText');
-    progressContainer.style.display = 'block'; let progress = 0; const interval = setInterval(() => { progress += 2; if (progress > 90) clearInterval(interval); progressBar.style.width = progress + '%'; progressText.textContent = progress + '%'; }, 200);
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border"></span> Mengupload...';
+    
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressText = document.getElementById('uploadProgressText');
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+
     try {
+      // 1. Ambil token Drive
       const tokenRes = await callApi('getDriveToken', {}, 'GET');
       if (!tokenRes.success || !tokenRes.token) throw new Error('Gagal mendapatkan token Drive.');
-      const formData = new FormData(); formData.append('metadata', new Blob([JSON.stringify({ name: file.name })], { type: 'application/json' })); formData.append('file', file);
-      const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${tokenRes.token}` }, body: formData });
-      if (!uploadRes.ok) throw new Error('Gagal upload ke Drive: ' + uploadRes.statusText);
-      const driveData = await uploadRes.json(); const driveId = driveData.id; const mimeType = driveData.mimeType || file.type;
-      clearInterval(interval); progressBar.style.width = '100%'; progressText.textContent = '100%';
-      const result = await callApi('addAsset', { judul, deskripsi: document.getElementById('assetDeskripsi').value.trim(), folderId: document.getElementById('assetFolder').value, jenis: document.getElementById('assetJenis').value, fileData: driveId, fileName: file.name, mimeType: mimeType }, 'POST');
-      if (result.success) { showToast('Aset berhasil diupload!', 'success'); bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide(); await loadAllData(true); }
-      else throw new Error(result.error || 'Gagal mencatat metadata.');
-    } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
-    finally { setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; progressText.textContent = '0%'; }, 1500); btn.disabled = false; btn.innerHTML = 'Upload'; }
+
+      // 2. Upload file ke Google Drive menggunakan XMLHttpRequest (agar onprogress work)
+      const uploadPromise = new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('metadata', new Blob([JSON.stringify({ name: file.name })], { type: 'application/json' }));
+        formData.append('file', file);
+
+        xhr.upload.onprogress = function(e) {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percent + '%';
+            progressText.textContent = percent + '%';
+          }
+        };
+
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              resolve(data);
+            } catch (err) {
+              reject(new Error('Gagal parsing respons server.'));
+            }
+          } else {
+            reject(new Error(`Gagal upload ke Drive: ${xhr.status} - ${xhr.statusText}`));
+          }
+        };
+
+        xhr.onerror = function() {
+          reject(new Error('Network error saat upload ke Drive.'));
+        };
+
+        xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+        xhr.setRequestHeader('Authorization', `Bearer ${tokenRes.token}`);
+        xhr.send(formData);
+      });
+
+      const driveData = await uploadPromise;
+      const driveId = driveData.id;
+      const mimeType = driveData.mimeType || file.type;
+
+      // 3. Catat metadata ke Apps Script
+      const result = await callApi('addAsset', {
+        judul,
+        deskripsi,
+        folderId,
+        jenis,
+        fileData: driveId,
+        fileName: file.name,
+        mimeType
+      }, 'POST');
+
+      if (result.success) {
+        showToast('Aset berhasil diupload!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal')).hide();
+        await loadAllData(true);
+      } else {
+        throw new Error(result.error || 'Gagal mencatat metadata.');
+      }
+
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+    } finally {
+      // Reset progress bar setelah selesai
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+      }, 1000);
+      btn.disabled = false;
+      btn.innerHTML = 'Upload';
+    }
   });
 
   document.getElementById('addFolderBtn').addEventListener('click', function() { const select = document.getElementById('folderParent'); select.innerHTML = '<option value="">Root</option>'; folderList.forEach(f => { select.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; }); document.getElementById('folderNama').value = ''; new bootstrap.Modal(document.getElementById('folderModal')).show(); });
