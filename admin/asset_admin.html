@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
   <style>
-    /* --- GLOBAL & SIDEBAR ADMIN --- */
+    /* ==== GLOBAL & SIDEBAR ADMIN ==== */
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
     .container-card { max-width: 100%; padding: 0; margin: 0; }
@@ -57,160 +57,53 @@
     @media (min-width: 992px) { .bottom-nav { display: none; } }
 
     .content-wrapper { margin-left: 260px; padding: 1.5rem; background: #f8fafc; min-height: 100vh; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease; }
-    .sidebar-wrapper.minimized ~ .content-wrapper { margin-left: 70px; width: calc(100% - 70px); }
-
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
     .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .loading-spinner { display: inline-block; width: 2rem; height: 2rem; border: 3px solid rgba(37,99,235,0.2); border-radius: 50%; border-top-color: #2563eb; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+
+    /* ==== PREVIEW MODAL ==== */
+    .custom-preview-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 99999; }
+    .custom-preview-box { background: #ffffff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); max-width: 90vw; max-height: 90vh; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .custom-preview-header { background: #0f172a; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .custom-preview-header h5 { margin: 0; font-weight: 600; font-size: 1.1rem; }
+    .custom-preview-header button { background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+    .custom-preview-header button:hover { background: #dc3545; transform: scale(1.1); }
+    .custom-preview-body { flex: 1; background: #0f172a; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; padding: 0; }
+    .custom-preview-body iframe { width: 100%; height: 100%; border: none; transition: opacity 0.4s ease; opacity: 0; background: #0f172a; }
+    .custom-preview-body iframe.show { opacity: 1; }
+    .custom-preview-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; z-index: 10; display: flex; }
+    .custom-preview-error { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-align: center; display: none; z-index: 10; }
+    .custom-preview-error i { font-size: 3rem; color: #f59e0b; }
+
+    /* ==== UPLOAD AREA ==== */
+    .upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 2rem; text-align: center; background: #f8fafc; transition: all 0.2s; cursor: pointer; }
+    .upload-area:hover { border-color: #2563eb; background: #eff6ff; }
+
+    /* ==== SKELETON ==== */
+    .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: white; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
 
-    .folder-sidebar { background: white; border-radius: 16px; padding: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
-    .folder-item { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 0.25rem; }
-    .folder-item:hover { background: #f1f5f9; }
-    .folder-item.active { background: #dbeafe; font-weight: 600; }
-    .folder-item i { margin-right: 0.5rem; }
-    
-    .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
-    .asset-card { background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
-    .asset-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-    .asset-card .thumbnail-container { position: relative; width: 100%; height: 150px; background: #f1f5f9; overflow: hidden; cursor: pointer; }
-    .asset-card .thumbnail-container img { width: 100%; height: 100%; object-fit: cover; }
-    .asset-card .thumbnail-container .fallback { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; background: #f8fafc; color: #64748b; }
-    .asset-card .card-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; }
-    .asset-card .card-title { font-weight: 600; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .asset-card .card-text { font-size: 0.85rem; color: #64748b; margin: 0; flex: 1; }
-    .asset-card .card-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
-    .asset-card .card-actions .btn-group .btn { padding: 0.2rem 0.4rem; font-size: 0.75rem; }
-    .asset-checkbox { cursor: pointer; }
-
-    /* --- DRAG & DROP UPLOAD AREA --- */
-    .upload-area {
-      border: 2px dashed #cbd5e1;
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-      background: #f8fafc;
-      transition: all 0.2s;
-      cursor: pointer;
-      position: relative;
-    }
-    .upload-area.dragover {
-      border-color: #2563eb;
-      background: #eff6ff;
-    }
-    .upload-area:hover { border-color: #2563eb; background: #eff6ff; }
-    .upload-area input[type="file"] {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0; cursor: pointer;
-    }
-    .upload-area i { font-size: 2.5rem; color: #94a3b8; transition: color 0.2s; }
-    .upload-area:hover i { color: #2563eb; }
-
-    /* --- GLOBAL DRAG & DROP OVERLAY --- */
-    #globalDropOverlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 99999;
-      background: rgba(37, 99, 235, 0.15);
-      backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    #globalDropOverlay .drop-box {
-      background: white;
-      padding: 3rem 4rem;
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      text-align: center;
-      pointer-events: auto;
-      border: 2px dashed #2563eb;
-    }
-    #globalDropOverlay .drop-box i { font-size: 4rem; color: #2563eb; }
-    #globalDropOverlay .drop-box h4 { margin-top: 1rem; font-weight: 600; }
-    #globalDropOverlay .drop-box p { color: #64748b; }
-
-    .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
-    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-    .asset-card.skeleton { border: 1px solid #e2e8f0; background: #f8fafc; box-shadow: none; }
-    .asset-card.skeleton .skeleton-img { height: 150px; border-radius: 16px 16px 0 0; }
-    .asset-card.skeleton .skeleton-title { height: 1.2rem; width: 70%; margin: 0.5rem auto 0.3rem; }
-    .asset-card.skeleton .skeleton-desc { height: 0.9rem; width: 50%; margin: 0 auto; }
-
-    /* --- MODAL PREVIEW STATIS --- */
-    #customPreviewModal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85);
-      display: none; align-items: center; justify-content: center; z-index: 99999;
-    }
-    #customPreviewModal.show { display: flex; }
-    .custom-preview-box {
-      background: #ffffff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      max-width: 90vw; max-height: 90vh; width: 100%; height: 100%;
-      display: flex; flex-direction: column; overflow: hidden; position: relative; border: 1px solid #e2e8f0;
-    }
-    .custom-preview-header {
-      background: #0f172a; color: #fff; padding: 16px 20px;
-      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
-    }
-    .custom-preview-header h5 { margin: 0; font-weight: 600; font-size: 1.1rem; }
-    .custom-preview-header button {
-      background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 50%;
-      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; cursor: pointer; transition: 0.2s;
-    }
-    .custom-preview-header button:hover { background: #dc3545; transform: scale(1.1); }
-    .custom-preview-body {
-      flex: 1; background: #0f172a; display: flex; align-items: center; justify-content: center;
-      overflow: hidden; position: relative; padding: 0;
-    }
-    #previewContent {
-      width: 100%; height: 100%; border: none; background: #0f172a; transition: opacity 0.4s ease; opacity: 0;
-    }
-    #previewContent.show { opacity: 1; }
-    .custom-preview-spinner {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; z-index: 10; display: flex;
-    }
-    .custom-preview-error {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff;
-      text-align: center; display: none; z-index: 10;
-    }
-    .custom-preview-error i { font-size: 3rem; color: #f59e0b; }
-    .nav-arrow {
-      position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
-      width: 50px; height: 50px; border-radius: 50%;
-      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 1.8rem;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0.7;
-    }
-    .nav-arrow:hover { background: rgba(37, 99, 235, 0.85); transform: translateY(-50%) scale(1.1); opacity: 1; }
-    .nav-arrow:active { transform: translateY(-50%) scale(0.95); }
-    .nav-arrow.prev { left: 20px; }
-    .nav-arrow.next { right: 20px; }
-    .nav-arrow.disabled { opacity: 0.2; pointer-events: none; }
-    #autoplayToggleBtn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; transition: 0.2s; }
-    #autoplayToggleBtn:hover { background: rgba(37, 99, 235, 0.8); }
-
-    @media (max-width: 576px) {
-      #customPreviewModal .custom-preview-box { max-width: 100vw; max-height: 100vh; border-radius: 0; }
-      .asset-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-    }
+    /* ==== PERBAIKAN BACKDROP MODAL ==== */
+    .modal-backdrop { z-index: 1055; }
   </style>
 </head>
 <body>
+
 <div class="container-fluid p-0">
   <div class="admin-wrapper">
     <!-- SIDEBAR -->
     <div class="sidebar-wrapper" id="sidebarWrapper">
       <div class="sidebar-toggle"><button id="toggleSidebarBtn"><i class="bi bi-arrow-left-right"></i></button></div>
-      <div class="sidebar-brand-area"><a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" /><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a></div>
+      <div class="sidebar-brand-area"><a class="brand-sidebar" href="/bisaa/index.html"><img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor"><div><div class="brand-sidebar-title">PKD GP Ansor</div><span class="brand-sidebar-sub">Kabupaten Bantul</span></div></a></div>
       <div class="sidebar-menu-area">
         <div class="nav flex-column nav-pills">
           <a class="nav-link" href="/bisaa/admin/dashboard_admin.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a>
@@ -218,6 +111,8 @@
           <div class="submenu" id="submenu-akademik"><a class="nav-link" href="/bisaa/admin/pretest_admin.html"><i class="bi bi-pencil-square me-2"></i><span>Pre-test</span></a><a class="nav-link" href="/bisaa/admin/posttest_admin.html"><i class="bi bi-trophy me-2"></i><span>Post-test</span></a><a class="nav-link" href="/bisaa/admin/materi_admin.html"><i class="bi bi-file-earmark-pdf me-2"></i><span>Materi</span></a></div>
           <div class="nav-link" data-target="peserta"><i class="bi bi-people me-2"></i><span>Peserta</span></div>
           <div class="submenu" id="submenu-peserta"><a class="nav-link" href="/bisaa/admin/peserta_admin.html"><i class="bi bi-person-badge me-2"></i><span>Peserta</span></a><a class="nav-link" href="/bisaa/admin/alumni_admin.html"><i class="bi bi-award me-2"></i><span>Alumni</span></a><a class="nav-link" href="/bisaa/admin/kader_admin.html"><i class="bi bi-people-fill me-2"></i><span>Kader</span></a></div>
+          <div class="nav-link" data-target="absensi"><i class="bi bi-calendar-check me-2"></i><span>Absensi</span></div>
+          <div class="submenu" id="submenu-absensi"><a class="nav-link" href="/bisaa/admin/sesi_absen_admin.html"><i class="bi bi-calendar-event me-2"></i><span>Sesi Absen</span></a><a class="nav-link" href="/bisaa/admin/data_absensi_admin.html"><i class="bi bi-table me-2"></i><span>Data Absensi</span></a><a class="nav-link" href="/bisaa/admin/rekap_absensi_admin.html"><i class="bi bi-bar-chart me-2"></i><span>Rekap Absensi</span></a></div>
           <div class="nav-link active" data-target="informasi"><i class="bi bi-info-circle me-2"></i><span>Informasi</span></div>
           <div class="submenu open" id="submenu-informasi"><a class="nav-link active" href="/bisaa/admin/asset_admin.html"><i class="bi bi-image me-2"></i><span>Aset Digital</span></a><a class="nav-link" href="/bisaa/admin/informasi_admin.html"><i class="bi bi-newspaper me-2"></i><span>Informasi</span></a></div>
           <a class="nav-link" href="/bisaa/admin/skrining_admin.html"><i class="bi bi-clipboard-check me-2"></i><span>Skrining</span></a>
@@ -231,7 +126,14 @@
     </div>
 
     <!-- BOTTOM NAV -->
-    <div class="bottom-nav"><a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a><a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a><a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a><a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a><a href="/bisaa/admin/asset_admin.html" class="nav-item active"><i class="bi bi-image"></i><span>Aset</span></a><a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a></div>
+    <div class="bottom-nav">
+      <a href="/bisaa/admin/dashboard_admin.html" class="nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="/bisaa/admin/peserta_admin.html" class="nav-item"><i class="bi bi-person-badge"></i><span>Peserta</span></a>
+      <a href="/bisaa/admin/sesi_absen_admin.html" class="nav-item"><i class="bi bi-calendar-event"></i><span>Absen</span></a>
+      <a href="/bisaa/admin/sertifikat_admin.html" class="nav-item"><i class="bi bi-patch-check"></i><span>Sertifikat</span></a>
+      <a href="/bisaa/admin/asset_admin.html" class="nav-item active"><i class="bi bi-image"></i><span>Aset</span></a>
+      <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal"><i class="bi bi-grid"></i><span>Lainnya</span></a>
+    </div>
 
     <!-- CONTENT -->
     <div class="content-wrapper">
@@ -488,6 +390,27 @@
 
   let assetList = [], folderList = [], currentFolderId = '', selectedAssets = [];
 
+  // ==========================================================
+  //   PERBAIKAN UTAMA: HAPUS SEMUA MODAL YANG MASIH TERBUKA
+  // ==========================================================
+  function closeAllModals() {
+    document.querySelectorAll('.modal.show').forEach(modalEl => {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) modalInstance.hide();
+    });
+  }
+
+  // ==========================================================
+  //   PERBAIKAN BACKDROP MODAL
+  // ==========================================================
+  document.addEventListener('hidden.bs.modal', function () {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+  });
+
+  // ==========================================================
+  //   UTILITY
+  // ==========================================================
   function cleanDriveId(id) { return id ? id.trim().replace(/[^a-zA-Z0-9_-]/g, '') : ''; }
   function isValidDriveId(id) { return cleanDriveId(id).length >= 15; }
   function formatDate(timestamp) { if (!timestamp) return '-'; try { const date = new Date(timestamp); return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('id-ID'); } catch { return '-'; } }
@@ -632,6 +555,8 @@
   // MODAL PENGATURAN FOLDER (DENGAN TOMBOL HAPUS)
   // ==========================================================
   window.openFolderSettingsModal = function(id) {
+    closeAllModals(); // 🔥 TUTUP SEMUA MODAL SEBELUM MEMBUKA MODAL BARU
+
     const folder = folderList.find(f => String(f.id) === String(id));
     if (!folder) return;
     document.getElementById('folderSettingsId').value = id;
@@ -734,7 +659,6 @@
     }
   });
 
-  // 🆕 TOMBOL HAPUS FOLDER – menghapus folder fisik di Drive dan data
   document.getElementById('deleteFolderBtn').addEventListener('click', async function() {
     const id = document.getElementById('folderSettingsId').value;
     const folderName = document.getElementById('folderSettingsModalTitle').innerText.replace('Pengaturan Folder: ', '');
@@ -959,6 +883,8 @@
   window.shareViaWhatsApp = function(driveId, judul) { if (!driveId) { showToast('Tidak ada file untuk dibagikan.', 'error'); return; } window.open(`https://wa.me/?text=${encodeURIComponent(`Halo, saya ingin berbagi aset digital PKD GP Ansor: ${judul}\nhttps://drive.google.com/file/d/${driveId}/view`)}`, '_blank'); };
 
   window.editAsset = function(id) {
+    closeAllModals(); // 🔥 TUTUP SEMUA MODAL SEBELUM MEMBUKA MODAL BARU
+
     const item = assetList.find(a => String(a.id) === String(id)); if (!item) { showToast('Aset tidak ditemukan.', 'error'); return; }
     const folderSelect = document.getElementById('assetFolderEdit'); folderSelect.innerHTML = '<option value="">Root</option>'; folderList.forEach(f => { folderSelect.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; });
     document.getElementById('editAssetId').value = id; document.getElementById('assetJudulEdit').value = item.judul || ''; document.getElementById('assetDeskripsiEdit').value = item.deskripsi || ''; document.getElementById('assetJenisEdit').value = item.jenis || 'gambar'; document.getElementById('assetFolderEdit').value = item.folderId || ''; document.getElementById('assetFileEdit').value = '';
@@ -1015,14 +941,17 @@
     }
   }
 
-  document.getElementById('uploadAssetBtn').addEventListener('click', function() { resetUploadForm(); new bootstrap.Modal(document.getElementById('uploadAssetModal')).show(); });
+  document.getElementById('uploadAssetBtn').addEventListener('click', function() {
+    closeAllModals(); // 🔥 TUTUP SEMUA MODAL SEBELUM MEMBUKA MODAL BARU
+    resetUploadForm(); new bootstrap.Modal(document.getElementById('uploadAssetModal')).show();
+  });
 
   // --- DRAG & DROP HANDLING ---
   const dropZone = document.getElementById('uploadDropZone');
   const fileInput = document.getElementById('assetFile');
   const titleInput = document.getElementById('assetJudul');
   const typeInput = document.getElementById('assetJenis');
-  const folderSelect = document.getElementById('assetFolder'); // Tambahkan ini
+  const folderSelect = document.getElementById('assetFolder');
   const globalOverlay = document.getElementById('globalDropOverlay');
 
   // Global Drag & Drop
@@ -1045,33 +974,26 @@
       const modalEl = document.getElementById('uploadAssetModal');
       resetUploadForm();
 
-      // Tampilkan modal, lalu jalankan handleFiles SETELAH modal selesai terbuka
       const modal = new bootstrap.Modal(modalEl, { backdrop: true });
       modal.show();
 
       // 🛑 PERBAIKAN UTAMA: Gunakan 'shown.bs.modal', bukan setTimeout
       modalEl.addEventListener('shown.bs.modal', function handler() {
         handleFiles(files);
-        modalEl.removeEventListener('shown.bs.modal', handler); // Hapus listener agar tidak ganda
+        modalEl.removeEventListener('shown.bs.modal', handler);
       });
     }
   });
 
-  // Fungsi utama menangani file
   function handleFiles(files) {
     if (!files || files.length === 0) return;
     const file = files[0];
     const fileName = file.name;
 
-    // 1. Auto-fill title (hapus ekstensi)
-    const title = fileName.replace(/\.[^/.]+$/, '');
-    titleInput.value = title;
-
-    // 2. Auto-detect type
+    titleInput.value = fileName.replace(/\.[^/.]+$/, '');
     const detectedType = getFileType(fileName);
     typeInput.value = detectedType;
 
-    // 3. Pilih folder aktif
     if (currentFolderId && folderSelect) {
       let optionExists = false;
       for (let opt of folderSelect.options) {
@@ -1080,14 +1002,12 @@
       if (optionExists) folderSelect.value = currentFolderId;
     }
 
-    // 4. Masukkan file ke input dan trigger preview
     const dt = new DataTransfer();
     dt.items.add(file);
     fileInput.files = dt.files;
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // Drop Zone di dalam modal
   dropZone.addEventListener('dragover', function(e) {
     e.preventDefault();
     this.classList.add('dragover');
@@ -1104,7 +1024,6 @@
     }
   });
 
-  // Event file input untuk preview
   fileInput.addEventListener('change', function() {
     if (this.files && this.files.length > 0) {
       const file = this.files[0];
@@ -1193,11 +1112,11 @@
       const driveId = driveData.id;
       const mimeType = driveData.mimeType || file.type;
 
-      // 3. Catat metadata ke Apps Script
+      // 3. Catat metadata ke Apps Script DENGAN folderId
       const result = await callApi('addAsset', {
         judul,
         deskripsi,
-        folderId,
+        folderId, // 🔥 PENTING: Kirim folderId
         jenis,
         fileData: driveId,
         fileName: file.name,
@@ -1215,7 +1134,6 @@
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
     } finally {
-      // Reset progress bar setelah selesai
       setTimeout(() => {
         progressContainer.style.display = 'none';
         progressBar.style.width = '0%';
@@ -1226,7 +1144,11 @@
     }
   });
 
-  document.getElementById('addFolderBtn').addEventListener('click', function() { const select = document.getElementById('folderParent'); select.innerHTML = '<option value="">Root</option>'; folderList.forEach(f => { select.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; }); document.getElementById('folderNama').value = ''; new bootstrap.Modal(document.getElementById('folderModal')).show(); });
+  document.getElementById('addFolderBtn').addEventListener('click', function() {
+    closeAllModals(); // 🔥 TUTUP SEMUA MODAL SEBELUM MEMBUKA MODAL BARU
+
+    const select = document.getElementById('folderParent'); select.innerHTML = '<option value="">Root</option>'; folderList.forEach(f => { select.innerHTML += `<option value="${f.id}">${escapeHtml(f.nama)}</option>`; }); document.getElementById('folderNama').value = ''; new bootstrap.Modal(document.getElementById('folderModal')).show();
+  });
   document.getElementById('saveFolderBtn').addEventListener('click', async function() {
     const nama = document.getElementById('folderNama').value.trim(); if (!nama) { showToast('Nama folder wajib diisi.', 'error'); return; } const parentId = document.getElementById('folderParent').value;
     const btn = this; btn.disabled = true; btn.innerHTML = '<span class="spinner-border"></span> Menyimpan...';
@@ -1246,6 +1168,8 @@
   const publicConfigBtn = document.getElementById('publicAssetConfigBtn');
   if (publicConfigBtn) {
     publicConfigBtn.addEventListener('click', async function() {
+      closeAllModals(); // 🔥 TUTUP SEMUA MODAL SEBELUM MEMBUKA MODAL BARU
+
       const res = await callApi('getAssetPublicConfig', {}, 'GET');
       if (res.success) {
         document.getElementById('enablePublicGallery').checked = res.enabled;
