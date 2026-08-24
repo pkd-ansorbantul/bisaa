@@ -600,12 +600,23 @@
       let rawFolders = cachedFolders || [];
       
       if (targetFolderId) {
-        // Mode single folder: hanya ambil folder target yang publik & tidak disembunyikan
+        // Mode single folder: paksa ambil data terbaru dari API
+        let freshFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, true);
+        
+        // Fallback jika cache gagal
+        if (!freshFolders || freshFolders.length === 0) {
+            const res = await callApi('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'GET');
+            freshFolders = res?.data || [];
+        }
+        
+        rawFolders = freshFolders;
+        
         folderList = rawFolders.filter(f => 
             String(f.id) === String(targetFolderId) &&
             (f.isPublic === true || f.isPublic === 'true') &&
             !(f.hideFromGallery === true || f.hideFromGallery === 'true')
         );
+        
         if (folderList.length === 0) {
             document.getElementById('assetContainer').innerHTML = '<div class="alert alert-danger">Folder tidak ditemukan atau tidak dapat diakses.</div>';
             // Sembunyikan sidebar folder
