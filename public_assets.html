@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
   <style>
-    /* --- GLOBAL & HEADER --- */
+    /* ===== GLOBAL & HEADER ===== */
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; margin: 0; padding: 0; }
     
@@ -33,7 +33,7 @@
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* --- LAYOUT --- */
+    /* ===== LAYOUT ===== */
     .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
     
     .folder-sidebar {
@@ -50,7 +50,7 @@
     .folder-item i { margin-right: 0.5rem; }
     .breadcrumb { background: transparent; padding: 0; margin-bottom: 1rem; }
 
-    /* --- ASSET GRID & CARD --- */
+    /* ===== ASSET GRID & CARD ===== */
     .asset-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem;
     }
@@ -73,7 +73,7 @@
     .asset-card .card-title { font-weight: 600; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .asset-card .card-text { font-size: 0.85rem; color: #64748b; margin: 0; flex: 1; }
 
-    /* --- CUSTOM PREVIEW MODAL --- */
+    /* ===== CUSTOM PREVIEW MODAL ===== */
     .custom-preview-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.85); display: flex; align-items: center;
@@ -114,7 +114,7 @@
     }
     .custom-preview-error i { font-size: 3rem; color: #f59e0b; }
 
-    /* --- PASSWORD OVERLAY (GLOBAL) --- */
+    /* ===== PASSWORD OVERLAY (GLOBAL) ===== */
     #passwordLockOverlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 999999; background: rgba(15, 23, 42, 0.9); display: flex;
@@ -125,7 +125,7 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center;
     }
 
-    /* --- SKELETON LOADING --- */
+    /* ===== SKELETON LOADING ===== */
     .skeleton-box {
       background: #e2e8f0;
       border-radius: 8px;
@@ -142,7 +142,7 @@
     .asset-card.skeleton .skeleton-title { height: 1.2rem; width: 70%; margin: 0.5rem auto 0.3rem; border-radius: 4px; display: block; }
     .asset-card.skeleton .skeleton-desc { height: 0.9rem; width: 50%; margin: 0 auto; border-radius: 4px; display: block; }
 
-    /* --- RESPONSIVE --- */
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 576px) {
       .custom-preview-box { max-width: 100vw; max-height: 100vh; border-radius: 0; }
       .asset-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -191,7 +191,7 @@
   <div class="content-wrapper">
     <h2 class="section-title"><i class="bi bi-images me-2"></i>Galeri Aset Publik</h2>
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-md-3" id="sidebarContainer">
         <div class="folder-sidebar">
           <h6 class="fw-bold mb-3"><i class="bi bi-folder-fill me-2"></i>Folder</h6>
           <div id="folderList">
@@ -199,7 +199,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-9">
+      <div class="col-md-9" id="contentContainer">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb" id="breadcrumb">
             <li class="breadcrumb-item active">Semua Aset</li>
@@ -234,6 +234,7 @@
     let currentFolderId = '';
     let folderPasswordRequired = false;
     let folderPasswordAttempted = false;
+    let isSingleFolderMode = false;
 
     function cleanDriveId(id) {
       if (!id || typeof id !== 'string') return '';
@@ -494,7 +495,6 @@
     //   NAVIGASI FOLDER (INSTAN, HANYA RENDER ULANG UI)
     // ==========================================================
     window.navigateFolder = function(folderId) {
-      // Tampilkan skeleton instan agar user merasa ada respon segera
       renderSkeletonPublicAssets();
       
       currentFolderId = folderId;
@@ -587,52 +587,103 @@
     async function loadPublicAssets(targetFolderId = null) {
       renderSkeletonPublicAssets();
       renderSkeletonFolderList();
+      
+      // 🔥 Tentukan mode single folder
+      isSingleFolderMode = !!targetFolderId;
 
       const CACHE_AGE = 10;
 
       let cachedData = await fetchWithCache('getAssetList', { _t: Date.now() }, 'public_assets_data', CACHE_AGE, false);
       let cachedFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, false);
 
-      if (cachedData && cachedData.length > 0) {
-        assetList = cachedData;
-        folderList = (cachedFolders || []).filter(f => f.isPublic === true || f.isPublic === 'true');
-        if (targetFolderId && folderList.some(f => String(f.id) === String(targetFolderId))) {
-          currentFolderId = targetFolderId;
-        } else {
-          currentFolderId = '';
+      // 🔥 Filter folder yang valid
+      let rawFolders = cachedFolders || [];
+      
+      if (targetFolderId) {
+        // Mode single folder: hanya ambil folder target yang publik & tidak disembunyikan
+        folderList = rawFolders.filter(f => 
+            String(f.id) === String(targetFolderId) &&
+            (f.isPublic === true || f.isPublic === 'true') &&
+            !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+        );
+        if (folderList.length === 0) {
+            document.getElementById('assetContainer').innerHTML = '<div class="alert alert-danger">Folder tidak ditemukan atau tidak dapat diakses.</div>';
+            // Sembunyikan sidebar folder
+            const sidebarFolder = document.getElementById('sidebarContainer');
+            if (sidebarFolder) sidebarFolder.style.display = 'none';
+            // Perluas kolom konten menjadi 12
+            const contentCol = document.getElementById('contentContainer');
+            if (contentCol) {
+                contentCol.classList.remove('col-md-9');
+                contentCol.classList.add('col-md-12');
+            }
+            return;
         }
-        renderFolderList();
-        renderBreadcrumb();
-        renderAssets();
+        currentFolderId = targetFolderId;
+      } else {
+        // Mode semua folder: hanya tampilkan folder publik yang tidak disembunyikan
+        folderList = rawFolders.filter(f => 
+            (f.isPublic === true || f.isPublic === 'true') &&
+            !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+        );
+        currentFolderId = '';
       }
 
+      // 🔥 Jika mode single folder, sembunyikan sidebar folder dan perluas konten
+      if (isSingleFolderMode) {
+        const sidebarFolder = document.getElementById('sidebarContainer');
+        if (sidebarFolder) sidebarFolder.style.display = 'none';
+        const contentCol = document.getElementById('contentContainer');
+        if (contentCol) {
+            contentCol.classList.remove('col-md-9');
+            contentCol.classList.add('col-md-12');
+        }
+      }
+
+      renderFolderList();
+      renderBreadcrumb();
+      renderAssets();
+
+      // Background refresh
       (async function refreshData() {
         try {
-          const freshData = await fetchWithCache('getAssetList', { _t: Date.now() }, 'public_assets_data', CACHE_AGE, true);
-          const freshFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, true);
-          
-          if (JSON.stringify(assetList) !== JSON.stringify(freshData) || JSON.stringify(folderList) !== JSON.stringify(freshFolders)) {
-            assetList = freshData;
-            folderList = (freshFolders || []).filter(f => f.isPublic === true || f.isPublic === 'true');
-            if (targetFolderId && folderList.some(f => String(f.id) === String(targetFolderId))) {
-              currentFolderId = targetFolderId;
+            const freshData = await fetchWithCache('getAssetList', { _t: Date.now() }, 'public_assets_data', CACHE_AGE, true);
+            const freshFolders = await fetchWithCache('getFolders', { _t: Date.now(), folderId: targetFolderId }, 'public_assets_folders', CACHE_AGE, true);
+            
+            // 🔥 Filter lagi untuk memastikan konsistensi
+            let updatedFolders = freshFolders || [];
+            if (targetFolderId) {
+                updatedFolders = updatedFolders.filter(f => 
+                    String(f.id) === String(targetFolderId) &&
+                    (f.isPublic === true || f.isPublic === 'true') &&
+                    !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+                );
             } else {
-              currentFolderId = '';
+                updatedFolders = updatedFolders.filter(f => 
+                    (f.isPublic === true || f.isPublic === 'true') &&
+                    !(f.hideFromGallery === true || f.hideFromGallery === 'true')
+                );
             }
-            renderFolderList();
-            renderBreadcrumb();
-            renderAssets();
-          }
+
+            if (JSON.stringify(assetList) !== JSON.stringify(freshData) || JSON.stringify(folderList) !== JSON.stringify(updatedFolders)) {
+                assetList = freshData;
+                folderList = updatedFolders;
+                // Jangan ubah currentFolderId saat refresh, kecuali jika mode single folder
+                if (!targetFolderId) currentFolderId = '';
+                renderFolderList();
+                renderBreadcrumb();
+                renderAssets();
+            }
         } catch (e) {
-          console.warn('Gagal refresh data publik di background:', e);
-          if (!cachedData || cachedData.length === 0) {
-            document.getElementById('assetContainer').innerHTML = `
-              <div class="alert alert-danger text-center">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>Gagal memuat data publik.
-                <br><small>${escapeHtml(e.message)}</small>
-              </div>
-            `;
-          }
+            console.warn('Gagal refresh data publik di background:', e);
+            if (!cachedData || cachedData.length === 0) {
+                document.getElementById('assetContainer').innerHTML = `
+                  <div class="alert alert-danger text-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Gagal memuat data publik.
+                    <br><small>${escapeHtml(e.message)}</small>
+                  </div>
+                `;
+            }
         }
       })();
     }
