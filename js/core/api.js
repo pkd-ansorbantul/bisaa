@@ -1,6 +1,5 @@
 // js/core/api.js
-// Core API untuk PKD GP Ansor Bantul - ES Module
-// Versi: 13.0.2 - FULL FIX: Semua ekspor fungsi tersedia, Clean Parameters robust
+// Core API untuk PKD GP Ansor Bantul - ES Module (FULL FIX)
 // ============================================================
 
 import { SCRIPT_URL, BASE_PATH } from './config.js';
@@ -159,7 +158,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
           });
       };
 
-      // 🔥 PERBAIKAN PENTING: Bersihkan parameter undefined/null
+      // Bersihkan parameter undefined/null
       const cleanParams = {};
       Object.keys(params || {}).forEach(key => {
         const val = params[key];
@@ -241,14 +240,12 @@ export function getDefaultFormFields() {
   ];
 }
 
-// =============================== EXPORTED API FUNCTIONS ===============================
-
-// --- Autentikasi ---
+// =============================== AUTENTIKASI ===============================
 export function verifyAdmin(username, password) { return callApi('verifyAdmin', { username, password }, 'GET'); }
 export function verifyKetuaPAC(username, password) { return callApi('verifyKetuaPAC', { username, password }, 'GET'); }
 export function verifyMember(username, password) { return callApi('verifyMember', { username, password }, 'GET'); }
 
-// --- Peserta ---
+// =============================== PESERTA ===============================
 export function getPesertaList(status) { return callApi('getPesertaList', status ? { status } : {}, 'GET'); }
 export function submitPeserta(data) { return callApi('submitPeserta', data, 'POST'); }
 export function deletePeserta(id) { return callApi('deletePeserta', { id }, 'POST'); }
@@ -263,7 +260,7 @@ export function moveMultipleToAlumni(ids) { return callApi('moveMultipleToAlumni
 export function moveBackToActive(id) { return callApi('moveBackToActive', { id }, 'POST'); }
 export function getPesertaCredentials(id) { return callApi('getPesertaCredentials', { id }, 'GET'); }
 
-// --- Sesi Absen ---
+// =============================== SESI ABSEN ===============================
 export function getSesiAbsen() { return callApi('getSesiAbsen', {}, 'GET'); }
 export function addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('addSesiAbsen', { nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
 export function updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('updateSesiAbsen', { id, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
@@ -271,39 +268,57 @@ export function deleteSesiAbsen(id) { return callApi('deleteSesiAbsen', { id }, 
 export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }, 'POST'); }
 export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
 export function getAttendanceSessionStatus(id) { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
-
-// 🔥 PERBAIKAN PENTING: Ekspor submitAbsen agar halaman absen.html bisa berjalan
 export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
-    return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
+  return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
 }
 
-// --- Materi ---
+// =============================== MATERI ===============================
 export function getMateriList() { return callApi('getMateriList', {}, 'GET'); }
 export function addMateri(judul, deskripsi, file, fileName, uploadBy) { return callApi('addMateri', { judul, deskripsi, file, fileName, uploadBy }, 'POST'); }
 export function deleteMateri(id, fileId) { return callApi('deleteMateri', { id, fileId }, 'POST'); }
 
-// --- Skrining & Quiz ---
+// =============================== SKRINING & QUIZ ===============================
+export function getSkriningQuestions() { return callApi('getSkriningQuestions', {}, 'GET'); }
+export function addSkriningQuestion(params) { return callApi('addSkriningQuestion', params, 'POST'); }
+export function updateSkriningQuestion(params) { return callApi('updateSkriningQuestion', params, 'POST'); }
+export function deleteSkriningQuestion(id) { return callApi('deleteSkriningQuestion', { id }, 'POST'); }
+export function submitSkrining(params) { return callApi('submitSkrining', params, 'POST'); }
 export function getSkriningResponses() { return callApi('getSkriningResponses', {}, 'GET'); }
-export function getPretestResponses() { return callApi('getPretestResponses', {}, 'GET'); }
-export function getPosttestResponses() { return callApi('getPosttestResponses', {}, 'GET'); }
-export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
+export function deleteSkriningResponse(id) { return callApi('deleteSkriningResponse', { id }, 'POST'); }
 
-// --- Kader ---
+// --- PRETEST ---
+export function getPretestQuestions() { return callApi('getPretestQuestions', {}, 'GET'); }
+export function addPretestQuestion(params) { return callApi('addPretestQuestion', params, 'POST'); }
+export function updatePretestQuestion(params) { return callApi('updatePretestQuestion', params, 'POST'); }
+export function deletePretestQuestion(id) { return callApi('deletePretestQuestion', { id }, 'POST'); }
+export function submitPretest(nama, nohp, alamat, answers, score) { return callApi('submitPretest', { nama, nohp, alamat, answers, score }, 'POST'); }
+export function getPretestResponses() { return callApi('getPretestResponses', {}, 'GET'); }
+
+// --- POSTTEST ---
+export function getPosttestQuestions() { return callApi('getPosttestQuestions', {}, 'GET'); }
+export function addPosttestQuestion(params) { return callApi('addPosttestQuestion', params, 'POST'); }
+export function updatePosttestQuestion(params) { return callApi('updatePosttestQuestion', params, 'POST'); }
+export function deletePosttestQuestion(id) { return callApi('deletePosttestQuestion', { id }, 'POST'); }
+export function submitPosttest(nama, nohp, alamat, answers, score) { return callApi('submitPosttest', { nama, nohp, alamat, answers, score }, 'POST'); }
+export function getPosttestResponses() { return callApi('getPosttestResponses', {}, 'GET'); }
+
+// =============================== KADER ===============================
 export function getKaderList() { return callApi('getKaderList', {}, 'GET'); }
 export function addKader(params) { return callApi('addKader', params, 'POST'); }
 export function updateKader(params) { return callApi('updateKader', params, 'POST'); }
 export function deleteKader(id) { return callApi('deleteKader', { id }, 'POST'); }
 
-// --- Informasi & Usulan ---
+// =============================== INFORMASI & USULAN ===============================
 export function getInfoList() { return callApi('getInfoList', {}, 'GET'); }
 export function addInfo(params) { return callApi('addInfo', params, 'POST'); }
 export function updateInfo(params) { return callApi('updateInfo', params, 'POST'); }
 export function deleteInfo(id) { return callApi('deleteInfo', { id }, 'POST'); }
 export function toggleInfoStatus(id) { return callApi('toggleInfoStatus', { id }, 'POST'); }
 export function getUsulanList() { return callApi('getUsulanList', {}, 'GET'); }
+export function submitUsulan(params) { return callApi('submitUsulan', params, 'POST'); }
 export function updateUsulanStatus(id, status) { return callApi('updateUsulanStatus', { id, status }, 'POST'); }
 
-// --- Asset & Folders ---
+// =============================== ASET & FOLDERS ===============================
 export function getAssetList() { return callApi('getAssetList', {}, 'GET'); }
 export function addAsset(params) { return callApi('addAsset', params, 'POST'); }
 export function updateAsset(params) { return callApi('updateAsset', params, 'POST'); }
@@ -311,13 +326,16 @@ export function deleteAsset(id) { return callApi('deleteAsset', { id }, 'POST');
 export function getFolders() { return callApi('getFolders', {}, 'GET'); }
 export function addFolder(nama, parentId) { return callApi('addFolder', { nama, parentId }, 'POST'); }
 export function deleteFolder(id) { return callApi('deleteFolder', { id }, 'POST'); }
-
 export function toggleFolderPublic(params) { return callApi('toggleFolderPublic', params, 'POST'); }
 export function toggleFolderHideFromGallery(params) { return callApi('toggleFolderHideFromGallery', params, 'POST'); }
 export function setFolderPassword(params) { return callApi('setFolderPassword', params, 'POST'); }
 export function clearFolderPassword(params) { return callApi('clearFolderPassword', params, 'POST'); }
+export function verifyFolderPassword(params) { return callApi('verifyFolderPassword', params, 'GET'); }
+export function getAssetPublicConfig() { return callApi('getAssetPublicConfig', {}, 'GET'); }
+export function verifyAssetPublicPassword(params) { return callApi('verifyAssetPublicPassword', params, 'GET'); }
+export function setAssetPublicPassword(params) { return callApi('setAssetPublicPassword', params, 'POST'); }
 
-// --- RTL & Tugas ---
+// =============================== RTL & TUGAS ===============================
 export function getRTLTasks(pesertaId) { return callApi('getRTLTasks', { pesertaId }, 'GET'); }
 export function addRTLTask(params) { return callApi('addRTLTask', params, 'POST'); }
 export function updateRTLTask(params) { return callApi('updateRTLTask', params, 'POST'); }
@@ -327,7 +345,7 @@ export function approveAllRTL(pesertaId) { return callApi('approveAllRTL', { pes
 export function getRTLStatus(pesertaId) { return callApi('getRTLStatus', { pesertaId }, 'GET'); }
 export function submitRTLAttachment(taskId, fileData, fileName) { return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST'); }
 
-// --- Sertifikat ---
+// =============================== SERTIFIKAT ===============================
 export function getUploadedCertificates() { return callApi('getUploadedCertificates', {}, 'GET'); }
 export function getCertificateTemplates() { return callApi('getCertificateTemplates', {}, 'GET'); }
 export function addCertificateTemplateManual(params) { return callApi('addCertificateTemplateManual', params, 'POST'); }
@@ -337,18 +355,22 @@ export function generateCertificateForParticipant(templateId, pesertaId) { retur
 export function getCertPresets() { return callApi('getCertPresets', {}, 'GET'); }
 export function listCertificateLayouts() { return callApi('listCertificateLayouts', {}, 'GET'); }
 export function saveCertificateLayout(nama, data_json, id) { return callApi('saveCertificateLayout', { nama, data_json, id }, 'POST'); }
+export function verifyCertificate(nomor) { return callApi('verifyCertificate', { nomor }, 'GET'); }
 
-// --- Tanda Tangan Digital ---
+// =============================== TANDA TANGAN DIGITAL ===============================
 export function getAllDigitalApprovals() { return callApi('getAllDigitalApprovals', {}, 'GET'); }
 export function bulkGenerateTTD(params) { return callApi('bulkGenerateTTD', params, 'POST'); }
 export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) { return callApi('submitDigitalSignature', { role, nama, signature, password, peserta_nama, kegunaan }, 'POST'); }
+export function deleteDigitalApprovalByPeserta(peserta_nama) { return callApi('deleteDigitalApprovalByPeserta', { peserta_nama }, 'POST'); }
+export function getSignPasswords() { return callApi('getSignPasswords', {}, 'GET'); }
+export function updateSignPassword(role, newPassword) { return callApi('updateSignPassword', { role, newPassword }, 'POST'); }
 
-// --- 🔥 LOKASI PKD DINAMIS ---
+// =============================== LOKASI PKD DINAMIS ===============================
 export function getLokasiPKDList() { return callApi('getLokasiPKDList', {}, 'GET'); }
 export function addLokasiPKD(nama) { return callApi('addLokasiPKD', { nama }, 'POST'); }
 export function deleteLokasiPKD(id) { return callApi('deleteLokasiPKD', { id }, 'POST'); }
 
-// --- Pengaturan ---
+// =============================== PENGATURAN ===============================
 export function getQuizSettings() { return callApi('getQuizSettings', {}, 'GET'); }
 export function setQuizSettings(params) { return callApi('setQuizSettings', params, 'POST'); }
 export function getLoginMode() { return callApi('getLoginMode', {}, 'GET'); }
@@ -361,9 +383,26 @@ export function getFormSettings() { return callApi('getFormSettings', {}, 'GET')
 export function setFormSettings(fields) { return callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST'); }
 export function getRealtimeSetting() { return callApi('getRealtimeSetting', {}, 'GET'); }
 export function setRealtimeSetting(enabled) { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
+export function getDashboardStats() { return callApi('getDashboardStats', {}, 'GET'); }
 
-// --- Kontak ---
+// =============================== KONTAK ===============================
 export function submitKontak(nama, email, pesan, username, role, ip) { return callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'GET'); }
+
+// =============================== ABSENSI & REKAP ===============================
+export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
+export function getAttendanceBySesi(sesiId) { return callApi('getAttendanceBySesi', { sesiId }, 'GET'); }
+export function getAttendanceMatrix() { return callApi('getAttendanceMatrix', {}, 'GET'); }
+export function exportAttendanceMatrixCSV() { return callApi('exportAttendanceMatrixCSV', {}, 'GET'); }
+
+// =============================== MEMBER ===============================
+export function getMemberData(username) { return callApi('getMemberData', { username }, 'GET'); }
+export function updateMemberProfile(username, data) { return callApi('updateMemberProfile', { username, ...data }, 'POST'); }
+export function getMemberSkrining(params) { return callApi('getMemberSkrining', params, 'GET'); }
+export function getMemberAbsensi(params) { return callApi('getMemberAbsensi', params, 'GET'); }
+export function getMemberSertifikat(params) { return callApi('getMemberSertifikat', params, 'GET'); }
+export function getMemberUsername(params) { return callApi('getMemberUsername', params, 'GET'); }
+export function verifyMemberForgot(params) { return callApi('verifyMemberForgot', params, 'GET'); }
+export function resetMemberPassword(params) { return callApi('resetMemberPassword', params, 'POST'); }
 
 // =============================== INIT ===============================
 if (typeof document !== 'undefined') {
