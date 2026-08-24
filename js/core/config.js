@@ -1,7 +1,7 @@
 // js/core/config.js
 // Versi Akhir - Konfigurasi Aplikasi
 // URL APPS SCRIPT SUDAH TERBUKTI BERHASIL DARI SCREENSHOT SEBELUMNYA
-export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMjrlwAilexFutfTyhz49w3MVQeNvKsMGO16ZRZSf233_H-l7Zzr-hj679ijWS7hdC/exec';
+export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8QP_7LVSgDU5zsMJAF1feUE0j7FssxkM-XqoU11VVgaZ4v910UODE3-gdcZzxhMZS5A/exec';
 export const APP_NAME = 'PKD GP Ansor Kabupaten Bantul';
 export const APP_VERSION = '8.0.0';
 export const DEFAULT_CACHE_AGE = 10;
