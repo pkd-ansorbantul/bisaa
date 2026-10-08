@@ -1,24 +1,24 @@
 // ============================================================
-// js/router.js — v27.2.0 PRELOAD-AWARE EDITION
+// js/router.js — v27.2.2 ROBUST MODULE LOAD EDITION
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.1.0):
-//   ✅ NEW: Prefetch SEMUA route (bukan hanya 5 populer)
-//   ✅ NEW: Cache buster OFF untuk HTML fragment (instant load)
-//     → Cache buster HANYA kalau force=true (user klik refresh)
-//   ✅ FIX: Skip re-mount lebih robust (view already mounted)
-//   ✅ FIX: Pending queue lebih robust
-//   ✅ FIX: Race condition token check
-//   ✅ FIX: hasStarted reset on destroy
+// CHANGELOG v27.2.2 (dari v27.2.0):
+//   ✅ FIX CRITICAL: Dynamic import ERR_ABORTED → retry + fallback
+//   ✅ NEW: _loadModule dengan retry 2x + cache buster
+//   ✅ NEW: Skip retry kalau error non-retryable (syntax error, dll)
+//   ✅ NEW: Track failed module ke window.__pkdFailedModules
+//   ✅ FIX: Race-safe navigation (pending queue tetap robust)
+//   ✅ FIX: Error UI menampilkan info retry
+//   ✅ KEEP: Prefetch semua route
+//   ✅ KEEP: Cache buster OFF untuk HTML fragment
 //   ✅ KEEP: HTML fragment cache + retry (1×)
-//   ✅ KEEP: No cache buster on JS modules (memory leak fix)
 // ============================================================
 
 const DEFAULT_OPTIONS = {
   defaultRoute: '#/admin/dashboard',
   scrollBehavior: 'top',
-  useCacheBuster: false,        // ⚡ v27.2.0: default OFF untuk instant load
+  useCacheBuster: false,
   showLoadingUI: true,
-  maxRetries: 1,
+  maxRetries: 2,
   debug: false,
   prefetchEnabled: true,
 };
@@ -194,7 +194,7 @@ class Router {
       return;
     }
 
-    // ===== ⚡ SKIP-IF-MOUNTED =====
+    // ===== SKIP-IF-MOUNTED =====
     const isSameRoute = this.currentHash === rawHash;
     const isMounted = !!this.currentModule;
 
@@ -236,7 +236,7 @@ class Router {
 
       if (myToken !== this.navigationToken) return;
 
-      // STEP 2: Loading UI (hanya kalau fragment belum di-cache)
+      // STEP 2: Loading UI
       const isCached = this.fragmentCache.has(route.html);
       if (this.options.showLoadingUI && !isCached) {
         this._showLoading();
@@ -261,7 +261,7 @@ class Router {
       // STEP 4: Inject HTML
       this.container.innerHTML = html;
 
-      // STEP 5: Load & mount JS module
+      // STEP 5: Load & mount JS module — v27.2.2 ROBUST
       try {
         const mod = await this._loadModule(route.js);
 
@@ -286,6 +286,13 @@ class Router {
           }
         } else if (mod && typeof mod.default === 'function') {
           const cleanup = await mod.default({
+            path: hashPath, query,
+            outlet: this.container,
+            router: this,
+          });
+          this.currentCleanup = typeof cleanup === 'function' ? cleanup : null;
+        } else if (mod && mod.default && typeof mod.default.mount === 'function') {
+          const cleanup = await mod.default.mount({
             path: hashPath, query,
             outlet: this.container,
             router: this,
@@ -372,15 +379,12 @@ class Router {
 
   /* ============================================================
      FRAGMENT LOADER
-     ⚡ v27.2.0: Cache buster HANYA kalau force=true
      ============================================================ */
   async _loadFragment(url, force = false) {
-    // Cache hit (dan bukan force refresh)
     if (!force && this.fragmentCache.has(url)) {
       return this.fragmentCache.get(url);
     }
 
-    // ⚡ Cache buster HANYA saat force (user klik refresh manual)
     const cacheBuster = force && this.options.useCacheBuster ? `?v=${Date.now()}` : '';
     const finalUrl = url + cacheBuster;
     const maxRetry = this.options.maxRetries;
@@ -391,7 +395,7 @@ class Router {
         const res = await fetch(finalUrl, {
           method: 'GET',
           headers: { 'Accept': 'text/html' },
-          cache: force ? 'no-store' : 'force-cache',   // ⚡ force-cache kalau bukan refresh
+          cache: force ? 'no-store' : 'force-cache',
         });
 
         if (!res.ok) {
@@ -409,7 +413,10 @@ class Router {
         return html;
       } catch (e) {
         lastError = e;
-        if (attempt < maxRetry) await this._sleep(300 * (attempt + 1));
+        if (attempt < maxRetry) {
+          console.warn(`[Router] Fragment retry ${attempt + 1}/${maxRetry}: ${url}`, e.message);
+          await this._sleep(300 * (attempt + 1));
+        }
       }
     }
 
@@ -418,10 +425,70 @@ class Router {
   }
 
   /* ============================================================
-     MODULE LOADER — NO CACHE BUSTER
+     MODULE LOADER — v27.2.2 ROBUST RETRY
      ============================================================ */
   async _loadModule(url) {
-    return await import(url);
+    const maxRetry = this.options.maxRetries;
+    let lastError = null;
+
+    for (let attempt = 0; attempt <= maxRetry; attempt++) {
+      try {
+        if (this.options.debug) {
+          console.log(`[Router] Loading module (attempt ${attempt + 1}/${maxRetry + 1}):`, url);
+        }
+
+        // Cache buster HANYA saat retry (attempt > 0)
+        const importUrl = attempt === 0
+          ? url
+          : `${url}?retry=${Date.now()}&attempt=${attempt}`;
+
+        const mod = await import(/* @vite-ignore */ importUrl);
+
+        // ✅ Sukses — hapus dari failed registry
+        if (window.__pkdFailedModules && window.__pkdFailedModules.has(url)) {
+          window.__pkdFailedModules.delete(url);
+          console.log(`[Router] ✅ Module recovered: ${url}`);
+        }
+
+        return mod;
+
+      } catch (e) {
+        lastError = e;
+        const msg = String(e?.message || e || '');
+
+        // Skip retry untuk error yang tidak akan pulih dengan retry
+        const isRetryable =
+          msg.includes('Failed to fetch') ||
+          msg.includes('ERR_ABORTED') ||
+          msg.includes('dynamically imported module') ||
+          msg.includes('Importing a module script failed') ||
+          msg.includes('NetworkError') ||
+          msg.includes('404');
+
+        if (!isRetryable) {
+          console.error(`[Router] Non-retryable module error: ${url}`, msg);
+          throw e;
+        }
+
+        if (attempt < maxRetry) {
+          console.warn(`[Router] Module retry ${attempt + 1}/${maxRetry}: ${url} — ${msg}`);
+          await this._sleep(400 * (attempt + 1));
+        } else {
+          // Track sebagai failed untuk background retry
+          if (window.__pkdFailedModules) {
+            const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
+            window.__pkdFailedModules.set(url, {
+              count: info.count + 1,
+              lastError: msg,
+            });
+          }
+          console.error(`[Router] ❌ Module FAILED after ${maxRetry + 1} attempts: ${url}`);
+          throw e;
+        }
+      }
+    }
+
+    throw lastError || new Error('Module load failed');
   }
 
   /* ============================================================
@@ -531,7 +598,7 @@ class Router {
   }
 
   /* ============================================================
-     ERROR UI
+     ERROR UI — v27.2.2 dengan Retry Info
      ============================================================ */
   _renderNotFound(hashPath) {
     const safeHash = this._escapeHtml(hashPath);
@@ -576,6 +643,9 @@ class Router {
             <button class="btn btn-primary rounded-pill px-4" data-router-action="retry" type="button">
               <i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi
             </button>
+            <button class="btn btn-warning rounded-pill px-4" data-router-action="clearcache" type="button">
+              <i class="bi bi-trash me-1"></i> Clear Cache & Retry
+            </button>
             <button class="btn btn-outline-secondary rounded-pill px-4" data-router-action="home" type="button">
               <i class="bi bi-house-door me-1"></i> Ke Dashboard
             </button>
@@ -585,10 +655,19 @@ class Router {
     `;
 
     this.container.querySelectorAll('[data-router-action]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const action = btn.dataset.routerAction;
-        if (action === 'retry') this.reload();
-        else if (action === 'home') this.navigate(this.options.defaultRoute);
+        if (action === 'retry') {
+          this.reload();
+        } else if (action === 'home') {
+          this.navigate(this.options.defaultRoute);
+        } else if (action === 'clearcache') {
+          // Clear fragment cache & failed registry
+          this.fragmentCache.clear();
+          this.failedRoutes.clear();
+          if (window.__pkdFailedModules) window.__pkdFailedModules.clear();
+          await this.reload();
+        }
       });
     });
 
@@ -615,7 +694,7 @@ class Router {
   }
 
   /* ============================================================
-     ⚡ v27.2.0: PREFETCH SEMUA ROUTE (bukan hanya 5)
+     PREFETCH ROUTES
      ============================================================ */
   _preloadRoutes() {
     const entries = Object.entries(this.routes);
@@ -663,6 +742,6 @@ export { Router };
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c Router v27.2.0 — Preload-Aware Edition ',
+  '%c Router v27.2.2 — Robust Module Load Edition ',
   'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

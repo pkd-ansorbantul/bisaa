@@ -1,16 +1,16 @@
 // ============================================================
-// js/app.js — v27.2.1 ROBUST BOOT EDITION
+// js/app.js — v27.2.2 ROBUST MODULE LOAD EDITION
 // ============================================================
-// CHANGELOG v27.2.1 (dari v27.2.0):
-//   ✅ FIX CRITICAL: Preload data tidak lagi blocking render view
-//     → User lihat dashboard dalam 2-3s (bukan 10s+)
-//   ✅ FIX: Soft-skip preload data setelah 10s — app jalan dulu
-//   ✅ FIX: Fragment/module preload blocking, data preload background
-//   ✅ FIX: Timeout guard lebih longgar untuk cold start GAS
-//   ✅ FIX: Silent error saat preload (tidak crash app)
-//   ✅ FIX: Auto-sync idle-aware + guard race condition
+// CHANGELOG v27.2.2 (dari v27.2.1):
+//   ✅ FIX CRITICAL: Dynamic import ERR_ABORTED 404 → retry + fallback
+//   ✅ FIX: Track failed modules untuk retry background
+//   ✅ FIX: Preload JS module tidak lagi silent — track error
+//   ✅ FIX: Auto-retry failed modules setelah 3s
+//   ✅ FIX: Force preload retry saat user klik menu yang gagal
+//   ✅ FIX: Robust module preload dengan Promise.allSettled
 //   ✅ KEEP: Semua 18 routes + interactive features
 //   ✅ KEEP: Subscription + manual refresh via window.__pkd
+//   ✅ KEEP: Preload data soft-skip 10s
 // ============================================================
 
 import {
@@ -34,14 +34,16 @@ import { mount as mountNotificationCenter } from './components/notification-cent
 import Router from './router.js';
 
 // ✅ Local constant
-const APP_VERSION = '27.2.1';
+const APP_VERSION = '27.2.2';
 
 // ============================================================
-//   v27.2.1: TIMEOUT CONSTANTS (lebih longgar untuk cold start)
+//   v27.2.2: TIMEOUT & RETRY CONSTANTS
 // ============================================================
-const PRELOAD_DATA_SOFT_SKIP_MS = 10000;  // 10s — kalau data belum siap, skip (background)
+const PRELOAD_DATA_SOFT_SKIP_MS = 10000;  // 10s
 const AUTO_SYNC_INTERVAL_MS = 60000;      // 60s
 const IDLE_THRESHOLD_MS = 5 * 60 * 1000;  // 5 menit
+const FAILED_MODULE_RETRY_DELAY_MS = 3000; // 3s
+const FAILED_MODULE_MAX_RETRY = 3;
 
 // ============================================================
 //   ROUTES — 18 Views
@@ -76,6 +78,9 @@ let autoSyncInterval = null;
 let isSyncing = false;
 let adminModule = null;
 let lastUserActivity = Date.now();
+
+// ⚡ v27.2.2: Track failed modules untuk retry
+window.__pkdFailedModules = new Map(); // Map<url, {count, lastError}>
 
 // ============================================================
 //   UTILITY
@@ -113,6 +118,68 @@ function updateLoaderProgress(current, total) {
 }
 
 // ============================================================
+//   v27.2.2: SAFE DYNAMIC IMPORT dengan RETRY
+// ============================================================
+async function safeImport(url, options = {}) {
+  const { silent = false, maxRetry = 2 } = options;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= maxRetry; attempt++) {
+    try {
+      // Retry pakai cache buster
+      const importUrl = attempt === 0
+        ? url
+        : `${url}?retry=${Date.now()}&attempt=${attempt}`;
+
+      const mod = await import(/* @vite-ignore */ importUrl);
+
+      // ✅ Sukses — hapus dari failed registry
+      if (window.__pkdFailedModules.has(url)) {
+        window.__pkdFailedModules.delete(url);
+        console.log(`[SafeImport] ✅ Recovered: ${url}`);
+      }
+
+      return mod;
+    } catch (e) {
+      lastError = e;
+      const msg = String(e?.message || e || '');
+
+      // Kalau bukan retryable error, langsung throw
+      const isRetryable =
+        msg.includes('Failed to fetch') ||
+        msg.includes('ERR_ABORTED') ||
+        msg.includes('dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        msg.includes('404') ||
+        msg.includes('NetworkError');
+
+      if (!isRetryable) {
+        if (!silent) console.error(`[SafeImport] Non-retryable error: ${url}`, msg);
+        throw e;
+      }
+
+      if (attempt < maxRetry) {
+        if (!silent) {
+          console.warn(`[SafeImport] Retry ${attempt + 1}/${maxRetry}: ${url} — ${msg}`);
+        }
+        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+      } else {
+        // Max retry reached — track sebagai failed
+        const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
+        window.__pkdFailedModules.set(url, {
+          count: info.count + 1,
+          lastError: msg,
+        });
+        if (!silent) console.error(`[SafeImport] ❌ FAILED after ${maxRetry + 1} attempts: ${url}`, msg);
+        throw e;
+      }
+    }
+  }
+
+  throw lastError || new Error('SafeImport failed');
+}
+
+// ============================================================
 //   GLOBAL ERROR HANDLERS
 // ============================================================
 (function setupGlobalErrorHandlers() {
@@ -125,8 +192,7 @@ function updateLoaderProgress(current, total) {
       msg.includes('Failed to fetch dynamically imported module') ||
       msg.includes('Cannot find module') ||
       msg.includes('Importing a module script failed') ||
-      msg.includes('404') ||
-      filename.includes('api.js');
+      msg.includes('404');
 
     if (isModuleError) {
       console.error('[GlobalError]', e);
@@ -182,6 +248,9 @@ function renderShellError(message, detail) {
           <button class="btn btn-primary rounded-pill px-4" data-shell-action="reload" type="button">
             <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Refresh
           </button>
+          <button class="btn btn-warning rounded-pill px-4" data-shell-action="clearcache" type="button">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i> Clear Cache
+          </button>
           <a href="${safeLogin}" class="btn btn-outline-secondary rounded-pill px-4">
             <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Login Ulang
           </a>
@@ -190,6 +259,27 @@ function renderShellError(message, detail) {
     </div>`;
 
   shell.querySelector('[data-shell-action="reload"]')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  shell.querySelector('[data-shell-action="clearcache"]')?.addEventListener('click', async () => {
+    if (!confirm('Hapus cache browser & reload?\n\nData akan diambil ulang dari server.')) return;
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      sessionStorage.clear();
+      // Keep auth, clear other cache
+      const authKeys = ['pkd_auth'];
+      const toKeep = {};
+      authKeys.forEach(k => {
+        const v = localStorage.getItem(k);
+        if (v) toKeep[k] = v;
+      });
+      localStorage.clear();
+      Object.keys(toKeep).forEach(k => localStorage.setItem(k, toKeep[k]));
+    } catch (e) { /* silent */ }
     window.location.reload();
   });
 }
@@ -226,8 +316,7 @@ async function loadPartialsWithRetry() {
 }
 
 // ============================================================
-//   ⚡ v27.2.1: PRELOAD DATA dengan SOFT-SKIP
-//   Kalau data belum siap dalam 10s, skip — app jalan dulu
+//   PRELOAD DATA dengan SOFT-SKIP
 // ============================================================
 async function preloadAllData() {
   console.log('[Boot] ⚡ Preloading all data (background)...');
@@ -236,14 +325,13 @@ async function preloadAllData() {
   const startTime = Date.now();
 
   try {
-    const mod = await import('./modules/admin.js');
+    const mod = await safeImport('./modules/admin.js', { silent: true });
     adminModule = mod.AdminModule || mod.default;
 
     if (!adminModule) {
       throw new Error('AdminModule tidak tersedia');
     }
 
-    // ⚡ Race: data load vs soft-skip timeout
     const loadPromise = adminModule.loadAllData(true);
 
     const softSkipPromise = new Promise((resolve) => {
@@ -256,16 +344,12 @@ async function preloadAllData() {
     const elapsed = Date.now() - startTime;
 
     if (result && result.__softSkip) {
-      // Soft-skip: biarkan loadPromise jalan di background
       console.warn(`[Boot] ⚠️ Soft-skip preload data after ${elapsed}ms — app jalan dulu`);
-      // Tangkap hasil di background (tidak unhandled)
       loadPromise
         .then((r) => {
           if (r && r.success) {
             console.log('[Boot] ✅ Data loaded in background');
             window.dispatchEvent(new CustomEvent('pkd:data-ready'));
-          } else {
-            console.warn('[Boot] ⚠️ Background load partial:', r?.error);
           }
         })
         .catch((e) => console.warn('[Boot] Background load error:', e.message));
@@ -276,27 +360,19 @@ async function preloadAllData() {
     if (result && result.success) {
       const stats = adminModule.getStats() || {};
       console.log(`[Boot] ✅ Data preloaded in ${elapsed}ms via ${result.source || 'unknown'}`);
-      console.log('[Boot] Stats:', {
-        peserta: stats.totalPeserta || 0,
-        sesi: stats.totalSesi || 0,
-        materi: stats.totalMateri || 0,
-        timInstruktur: stats.totalTimInstruktur || 0,
-      });
       return { success: true, elapsed };
     }
 
-    console.warn('[Boot] ⚠️ Preload partial:', result?.error);
     return { success: false, error: result?.error };
   } catch (e) {
-    const elapsed = Date.now() - startTime;
-    console.warn(`[Boot] ⚠️ Preload failed after ${elapsed}ms:`, e.message);
+    console.warn(`[Boot] ⚠️ Preload failed:`, e.message);
     return { success: false, error: e.message };
   }
 }
 
 // ============================================================
-//   ⚡ v27.2.1: PRELOAD SEMUA FRAGMENT HTML + MODULE JS
-//   Ini BLOCKING — selesai dulu baru render view pertama
+//   PRELOAD SEMUA FRAGMENT HTML + MODULE JS
+//   ⚡ v27.2.2: Track failed modules
 // ============================================================
 async function preloadAllFragmentsAndModules() {
   const totalRoutes = Object.keys(ROUTES).length;
@@ -307,9 +383,12 @@ async function preloadAllFragmentsAndModules() {
   const total = totalRoutes * 2; // fragments + modules
 
   const tasks = entries.flatMap(([route, cfg]) => {
-    // Prefetch HTML fragment
+    // ===== HTML Fragment =====
     const htmlTask = fetch(cfg.html, { cache: 'force-cache' })
-      .then(r => r.ok ? r.text() : null)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      })
       .then(html => {
         if (html && html.trim() && router) {
           router.fragmentCache.set(cfg.html, html);
@@ -317,18 +396,20 @@ async function preloadAllFragmentsAndModules() {
         loaded++;
         updateLoaderProgress(loaded, total);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn(`[Boot] ⚠️ Fragment preload failed: ${cfg.html}`, err.message);
         loaded++;
         updateLoaderProgress(loaded, total);
       });
 
-    // Preload JS module
-    const jsTask = import(cfg.js)
+    // ===== JS Module =====
+    const jsTask = safeImport(cfg.js, { silent: true })
       .then(() => {
         loaded++;
         updateLoaderProgress(loaded, total);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn(`[Boot] ⚠️ Module preload failed: ${cfg.js}`, err.message);
         loaded++;
         updateLoaderProgress(loaded, total);
       });
@@ -337,11 +418,50 @@ async function preloadAllFragmentsAndModules() {
   });
 
   await Promise.allSettled(tasks);
+
+  const failedCount = window.__pkdFailedModules.size;
+  if (failedCount > 0) {
+    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed to preload — akan retry di background`);
+  }
+
   console.log(`[Boot] ✅ Preloaded ${totalRoutes} fragments + ${totalRoutes} modules`);
 }
 
 // ============================================================
-//   ⚡ AUTO-SYNC GLOBAL (IDLE-AWARE)
+//   ⚡ v27.2.2: AUTO-RETRY FAILED MODULES
+// ============================================================
+function scheduleFailedModuleRetry() {
+  setTimeout(async () => {
+    const failed = window.__pkdFailedModules;
+    if (!failed || failed.size === 0) return;
+
+    console.log(`[Boot] 🔄 Retrying ${failed.size} failed module(s)...`);
+    const urls = Array.from(failed.keys());
+
+    for (const url of urls) {
+      const info = failed.get(url);
+      if (info && info.count >= FAILED_MODULE_MAX_RETRY) {
+        console.error(`[Boot] ❌ Giving up on: ${url} (retry ${info.count}x)`);
+        continue;
+      }
+
+      try {
+        await safeImport(url, { silent: false, maxRetry: 0 });
+        console.log(`[Boot] ✅ Retry OK: ${url}`);
+      } catch (e) {
+        console.warn(`[Boot] ⚠️ Retry failed: ${url}`, e.message);
+      }
+    }
+
+    // Kalau masih ada yang failed, schedule lagi
+    if (failed.size > 0) {
+      scheduleFailedModuleRetry();
+    }
+  }, FAILED_MODULE_RETRY_DELAY_MS);
+}
+
+// ============================================================
+//   AUTO-SYNC GLOBAL (IDLE-AWARE)
 // ============================================================
 (function trackUserActivity() {
   const handler = () => { lastUserActivity = Date.now(); };
@@ -412,7 +532,7 @@ async function mountInteractiveFeatures() {
 }
 
 // ============================================================
-//   BOOT SEQUENCE — v27.2.1 ROBUST
+//   BOOT SEQUENCE — v27.2.2 ROBUST
 // ============================================================
 async function boot() {
   if (isBooted) {
@@ -461,14 +581,14 @@ async function boot() {
     return;
   }
 
-  // ===== 6. Create router (SEBELUM preload fragment) =====
+  // ===== 6. Create router =====
   try {
     router = new Router(viewContainer, ROUTES, {
       defaultRoute: DEFAULT_ROUTE,
       scrollBehavior: 'top',
       useCacheBuster: false,
       showLoadingUI: true,
-      maxRetries: 1,
+      maxRetries: 2,           // ⚡ v27.2.2: naik dari 1 → 2
       debug: false,
       prefetchEnabled: true,
     });
@@ -482,13 +602,13 @@ async function boot() {
     return;
   }
 
-  // ===== 7. ⚡ PRELOAD: fragment + module (BLOCKING), data (background) =====
+  // ===== 7. Preload: fragment + module (BLOCKING), data (background) =====
   updateLoaderText('Memuat menu...');
 
   // Data preload jalan di background — TIDAK di-await
   const dataPromise = preloadAllData();
 
-  // Fragment + module preload — BLOCKING sebentar (0.5s-2s)
+  // Fragment + module preload
   try {
     await preloadAllFragmentsAndModules();
     console.log('[Boot] ✅ Fragments + modules ready');
@@ -496,13 +616,16 @@ async function boot() {
     console.warn('[Boot] Preload fragments partial:', e.message);
   }
 
+  // ⚡ Schedule background retry untuk module yang gagal
+  scheduleFailedModuleRetry();
+
   // ===== 8. Set default hash =====
   const hash = window.location.hash;
   if (!hash || hash === '#' || hash === '#/') {
     window.location.hash = DEFAULT_ROUTE;
   }
 
-  // ===== 9. Start SPA (JANGAN tunggu data preload) =====
+  // ===== 9. Start SPA =====
   try {
     router.start();
     console.log('[Boot] ✅ SPA started for admin');
@@ -531,7 +654,7 @@ async function boot() {
   installBfcacheGuard();
   installTitleUpdate();
 
-  // ===== 14. Await data preload di BACKGROUND (tidak block UI) =====
+  // ===== 14. Await data preload di BACKGROUND =====
   dataPromise
     .then((result) => {
       if (result.success) {
@@ -702,12 +825,39 @@ window.__pkd = {
     return { ...result, elapsed };
   },
 
-  // Force sync + clear cache + reload view
   forceSyncAll: async () => {
     console.log('[forceSyncAll] ⚡ Force sync everything...');
     if (router) router.fragmentCache.clear();
     if (adminModule) await adminModule.loadAllData(true);
     if (router) await router.reload();
+  },
+
+  // ⚡ v27.2.2: Failed modules inspection
+  getFailedModules: () => {
+    const result = {};
+    window.__pkdFailedModules.forEach((v, k) => { result[k] = v; });
+    return result;
+  },
+  clearFailedModules: () => {
+    window.__pkdFailedModules.clear();
+    console.log('[__pkd] Failed modules registry cleared');
+  },
+  retryFailedModules: async () => {
+    const failed = window.__pkdFailedModules;
+    if (failed.size === 0) {
+      console.log('[__pkd] No failed modules to retry');
+      return;
+    }
+    console.log(`[__pkd] 🔄 Retrying ${failed.size} module(s)...`);
+    const urls = Array.from(failed.keys());
+    for (const url of urls) {
+      try {
+        await safeImport(url, { silent: false, maxRetry: 1 });
+        console.log(`[__pkd] ✅ Retry OK: ${url}`);
+      } catch (e) {
+        console.warn(`[__pkd] ⚠️ Retry failed: ${url}`, e.message);
+      }
+    }
   },
 
   startAutoSync,
@@ -720,6 +870,6 @@ window.__pkd = {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c App v27.2.1 — Robust Boot Edition ',
+  '%c App v27.2.2 — Robust Module Load Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
