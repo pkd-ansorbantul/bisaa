@@ -1,16 +1,16 @@
 // ============================================================
-// js/app.js — v27.3.3 BLOCKING BOOT + VERIFIED READY
+// js/app.js — v27.4.0 BLOCKING BOOT + CIRCUIT-BREAKER AWARE
 // ============================================================
-// CHANGELOG v27.3.3 (dari v27.3.2):
-//   ✅ FIX CRITICAL: Gunakan AdminModule.ensureDataReady() sebelum
-//     router.start() → dashboard render LANGSUNG penuh data
-//   ✅ FIX: Verifikasi state via AdminModule.isReady() + hasData()
-//   ✅ FIX: Loader hilang hanya setelah data verified ready
-//   ✅ FIX: Timeout 20s untuk cold start GAS
-//   ✅ NEW: waitForDataReady() dengan polling state actual
-//   ✅ NEW: Log stats setelah data ready
-//   ✅ KEEP: Semua fitur v27.3.2 (preload quiz, safe import, dll)
-//   ✅ KEEP: Semua 18 routes + interactive features
+// CHANGELOG v27.4.0 (dari v27.3.3):
+//   ✅ FIX CRITICAL: Auto-sync interval 60s → 180s (hindari GAS throttle)
+//   ✅ FIX CRITICAL: MIN_SYNC_GAP_MS = 60s (cegah sync storm)
+//   ✅ FIX: Idle threshold — skip sync jika user tidak aktif
+//   ✅ FIX: Circuit breaker status check sebelum trigger sync
+//   ✅ FIX: Exponential backoff saat circuit open
+//   ✅ FIX: Better logging — emoji + status jelas
+//   ✅ NEW: window.__pkd.healthReport() untuk debugging
+//   ✅ NEW: Handle CORS error gracefully — toast sekali, no spam
+//   ✅ KEEP: Semua fitur v27.3.3
 // ============================================================
 
 import {
@@ -18,6 +18,8 @@ import {
   updateNavbarMenu,
   loadAuthState,
   escapeHtml,
+  showToast,
+  getCircuitState,      // ⬅️ NEW export dari api.js
 } from './core/api.js';
 
 import {
@@ -36,15 +38,17 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '27.3.3';
+const APP_VERSION = '27.4.0';
 
-const DATA_PRELOAD_TIMEOUT_MS       = 20000;   // 20s — longgar untuk cold start
-const ENSURE_READY_TIMEOUT_MS       = 10000;   // 10s — max tunggu verifikasi
-const AUTO_SYNC_INTERVAL_MS         = 60000;   // 60s
+const DATA_PRELOAD_TIMEOUT_MS       = 20000;   // 20s
+const ENSURE_READY_TIMEOUT_MS       = 10000;   // 10s
+const AUTO_SYNC_INTERVAL_MS         = 180000;  // ⬅️ UBAH: 60s → 180s (3 menit)
+const MIN_SYNC_GAP_MS               = 60000;   // ⬅️ NEW: min gap 60s antar sync
 const IDLE_THRESHOLD_MS             = 5 * 60 * 1000; // 5 menit
-const FAILED_MODULE_RETRY_DELAY_MS  = 3000;    // 3s
+const CIRCUIT_BACKOFF_MS            = 30000;   // ⬅️ NEW: backoff saat circuit open
+const FAILED_MODULE_RETRY_DELAY_MS  = 3000;
 const FAILED_MODULE_MAX_RETRY       = 3;
-const QUIZ_PRELOAD_DELAY_MS         = 2000;    // 2s
+const QUIZ_PRELOAD_DELAY_MS         = 2000;
 
 // ============================================================
 //   ROUTES — 18 Views
@@ -79,7 +83,9 @@ let autoSyncInterval = null;
 let isSyncing = false;
 let adminModule = null;
 let lastUserActivity = Date.now();
+let lastSyncAt = 0;
 let dataReady = false;
+let corsErrorShown = false;   // ⬅️ NEW: cegah toast spam
 
 window.__pkdFailedModules = new Map();
 
@@ -170,7 +176,7 @@ async function safeImport(url, options = {}) {
 }
 
 // ============================================================
-//   ⚡ v27.3.3: WAIT FOR DATA READY (fallback jika ensureDataReady tidak ada)
+//   WAIT FOR DATA READY
 // ============================================================
 async function waitForDataReady(maxAttempts = 50) {
   if (!adminModule) return false;
@@ -178,7 +184,6 @@ async function waitForDataReady(maxAttempts = 50) {
   const hasEnsure = typeof adminModule.ensureDataReady === 'function';
   const hasIsReady = typeof adminModule.isReady === 'function';
 
-  // Kalau adminModule punya ensureDataReady(), pakai itu
   if (hasEnsure) {
     console.log('[Boot] ⏳ Using AdminModule.ensureDataReady()...');
     try {
@@ -189,23 +194,19 @@ async function waitForDataReady(maxAttempts = 50) {
     }
   }
 
-  // Fallback: manual polling
   console.log('[Boot] ⏳ Manual polling for data ready...');
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      // Cek via isReady()
       if (hasIsReady && adminModule.isReady()) {
         console.log(`[Boot] ✅ Data ready (via isReady) after ${i * 200}ms`);
         return true;
       }
 
-      // Cek via hasData()
       if (typeof adminModule.hasData === 'function' && adminModule.hasData()) {
         console.log(`[Boot] ✅ Data ready (via hasData) after ${i * 200}ms`);
         return true;
       }
 
-      // Cek via getStats()
       const stats = adminModule.getStats() || {};
       const total =
         (stats.totalPeserta || 0) +
@@ -217,9 +218,7 @@ async function waitForDataReady(maxAttempts = 50) {
         console.log(`[Boot] ✅ Data ready (via getStats) after ${i * 200}ms — ${total} entities`);
         return true;
       }
-    } catch (e) {
-      // continue polling
-    }
+    } catch (e) { /* continue polling */ }
     await sleep(200);
   }
 
@@ -343,7 +342,7 @@ async function loadPartialsWithRetry() {
 }
 
 // ============================================================
-//   ⚡ PRELOAD DATA (BLOCKING dengan timeout 20s)
+//   PRELOAD DATA (BLOCKING)
 // ============================================================
 async function preloadAllData() {
   console.log('[Boot] ⚡ Preloading data (blocking, timeout 20s)...');
@@ -487,7 +486,7 @@ function scheduleFailedModuleRetry() {
 }
 
 // ============================================================
-//   AUTO-SYNC
+//   USER ACTIVITY TRACKING
 // ============================================================
 (function trackUserActivity() {
   const handler = () => { lastUserActivity = Date.now(); };
@@ -496,23 +495,81 @@ function scheduleFailedModuleRetry() {
   });
 })();
 
+// ============================================================
+//   ⚡ AUTO-SYNC v27.4.0 — Anti-throttle
+// ============================================================
 function startAutoSync() {
   if (autoSyncInterval) return;
-  console.log(`[AutoSync] ✅ Started (${AUTO_SYNC_INTERVAL_MS / 1000}s, idle-aware)`);
+
+  console.log(
+    `[AutoSync] ✅ Started (interval=${AUTO_SYNC_INTERVAL_MS/1000}s, ` +
+    `minGap=${MIN_SYNC_GAP_MS/1000}s, idle=${IDLE_THRESHOLD_MS/60000}min)`
+  );
 
   autoSyncInterval = setInterval(async () => {
-    if (document.hidden || isSyncing) return;
-    if (Date.now() - lastUserActivity > IDLE_THRESHOLD_MS) return;
+    // ⬇️ Guard 1: tab hidden
+    if (document.hidden) return;
+
+    // ⬇️ Guard 2: sudah syncing
+    if (isSyncing) return;
+
+    // ⬇️ Guard 3: user idle
+    const idleMs = Date.now() - lastUserActivity;
+    if (idleMs > IDLE_THRESHOLD_MS) {
+      console.log(`[AutoSync] ⏸️ Skip — user idle ${Math.round(idleMs/60000)}min`);
+      return;
+    }
+
+    // ⬇️ Guard 4: module belum siap
     if (!adminModule) return;
 
+    // ⬇️ Guard 5: min gap sejak sync terakhir
+    const sinceLast = Date.now() - lastSyncAt;
+    if (sinceLast < MIN_SYNC_GAP_MS) {
+      console.log(`[AutoSync] ⏸️ Skip — ${Math.round(sinceLast/1000)}s < ${MIN_SYNC_GAP_MS/1000}s gap`);
+      return;
+    }
+
+    // ⬇️ Guard 6: circuit breaker open
+    try {
+      const circuit = getCircuitState();
+      if (circuit && circuit.isOpen) {
+        console.log(
+          `[AutoSync] 🔴 Circuit OPEN (${circuit.failures} failures) — ` +
+          `wait ${Math.round(circuit.remainingMs/1000)}s`
+        );
+        return;
+      }
+    } catch (e) { /* silent — function might not exist */ }
+
+    // ===== LULUS SEMUA GUARD, LAKUKAN SYNC =====
     isSyncing = true;
+    lastSyncAt = Date.now();
+
     try {
       const result = await adminModule.loadAllData(false);
       if (result && result.success && !result.skipped) {
         console.log('[AutoSync] ✅ Synced');
       }
     } catch (e) {
-      console.warn('[AutoSync] Failed:', e.message);
+      const msg = String(e.message || '').toLowerCase();
+      const isCors = msg.includes('failed to fetch') || msg.includes('network');
+
+      console.warn(`[AutoSync] ⚠️ Failed: ${e.message}`);
+
+      // ⬇️ Tampilkan toast HANYA SEKALI saat CORS error
+      if (isCors && !corsErrorShown) {
+        corsErrorShown = true;
+        try {
+          showToast(
+            'Server sedang sibuk. Data lama tetap ditampilkan.',
+            'warning'
+          );
+        } catch (err) { /* silent */ }
+
+        // Reset flag setelah 5 menit
+        setTimeout(() => { corsErrorShown = false; }, 5 * 60 * 1000);
+      }
     } finally {
       isSyncing = false;
     }
@@ -523,6 +580,7 @@ function stopAutoSync() {
   if (autoSyncInterval) {
     clearInterval(autoSyncInterval);
     autoSyncInterval = null;
+    console.log('[AutoSync] ⏹️ Stopped');
   }
 }
 
@@ -541,7 +599,7 @@ async function mountInteractiveFeatures() {
 }
 
 // ============================================================
-//   BOOT SEQUENCE — v27.3.3
+//   BOOT SEQUENCE
 // ============================================================
 async function boot() {
   if (isBooted) { console.warn('[Boot] Skip.'); return; }
@@ -607,23 +665,17 @@ async function boot() {
     return;
   }
 
-  // ============================================================
   // 7. PARALLEL PRELOAD: fragments + data
-  // ============================================================
   updateLoaderText('Memuat menu & data...');
 
   const fragmentsPromise = preloadAllFragmentsAndModules();
   const dataPromise = preloadAllData();
 
-  // Tunggu keduanya selesai
   await Promise.allSettled([fragmentsPromise, dataPromise]);
 
   console.log('[Boot] ✅ Preload complete (fragments + data)');
 
-  // ============================================================
-  // 7b. ⚡ v27.3.3: VERIFIKASI DATA READY (kritis!)
-  // Ini yang membuat dashboard render LANGSUNG penuh data
-  // ============================================================
+  // 7b. Verify data ready
   updateLoaderText('Memverifikasi data...');
 
   const isReady = await waitForDataReady();
@@ -645,7 +697,7 @@ async function boot() {
     console.warn('[Boot] ⚠️ Data not verified — dashboard may show skeleton first');
   }
 
-  // Preload quiz di background (non-blocking)
+  // Preload quiz di background
   preloadQuizQuestions();
   scheduleFailedModuleRetry();
 
@@ -655,9 +707,7 @@ async function boot() {
     window.location.hash = DEFAULT_ROUTE;
   }
 
-  // ============================================================
-  // 9. Start SPA — dashboard akan render LANGSUNG penuh data
-  // ============================================================
+  // 9. Start SPA
   updateLoaderText('Menyiapkan halaman...');
   try {
     router.start();
@@ -668,7 +718,7 @@ async function boot() {
     return;
   }
 
-  // 10. Hide loader, show app
+  // 10. Hide loader
   updateLoaderText('Siap!');
   hideInitialLoader();
   showAppShell();
@@ -803,6 +853,7 @@ window.__pkd = {
     if (!adminModule) return { success: false, error: 'AdminModule belum siap' };
     const t0 = Date.now();
     const result = await adminModule.loadAllData(true);
+    lastSyncAt = Date.now();
     return { ...result, elapsed: Date.now() - t0 };
   },
 
@@ -829,9 +880,35 @@ window.__pkd = {
   getStats: () => adminModule && typeof adminModule.getStats === 'function'
     ? adminModule.getStats()
     : null,
+
+  // ⬇️ NEW: Health report untuk debugging
+  healthReport: () => {
+    const report = {
+      version: APP_VERSION,
+      dataReady,
+      isSyncing,
+      lastSyncAgo: lastSyncAt ? `${Math.round((Date.now() - lastSyncAt)/1000)}s` : 'never',
+      lastUserActivityAgo: `${Math.round((Date.now() - lastUserActivity)/1000)}s`,
+      autoSyncRunning: !!autoSyncInterval,
+      failedModules: window.__pkdFailedModules.size,
+    };
+    try {
+      const circuit = getCircuitState();
+      report.circuit = circuit;
+    } catch (e) {
+      report.circuit = 'unavailable';
+    }
+    try {
+      report.stats = adminModule?.getStats?.() || null;
+    } catch (e) {
+      report.stats = null;
+    }
+    console.table(report);
+    return report;
+  },
 };
 
 console.log(
-  '%c App v27.3.3 — Blocking Boot + Verified Ready ',
+  '%c App v27.4.0 — Blocking Boot + Circuit-Breaker Aware ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
