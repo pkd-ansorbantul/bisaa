@@ -1,0 +1,1015 @@
+/* ============================================================
+   THEME-EXTENDED.CSS — Enhanced Edition
+   Versi: 26.1.8
+   Untuk: PKD GP Ansor Bantul (SPA + MPA)
+   ============================================================
+   Lanjutan dari theme.css (Section 61-70).
+   Load SETELAH theme.css:
+     <link rel="stylesheet" href="/assets/theme.css">
+     <link rel="stylesheet" href="/assets/theme-extended.css">
+   ============================================================
+   CHANGELOG:
+   v26.1.8:
+     ✅ Section 61 — Advanced Dark Mode Fine-Tuning
+     ✅ Section 62 — Enhanced Command Palette (animation + shimmer)
+     ✅ Section 63 — Enhanced Notification Center (badge pulse + skeleton)
+     ✅ Section 64 — Enhanced Shortcuts Modal (kbd hover + grouping)
+     ✅ Section 65 — Loading & Progress Indicators
+     ✅ Section 66 — Advanced Animations & Keyframes
+     ✅ Section 67 — Scroll Snap & Sticky Enhancement
+     ✅ Section 68 — Utility Classes (extended)
+     ✅ Section 69 — Print Refinement (dark & light)
+     ✅ Section 70 — Accessibility & Reduced Motion
+   ============================================================ */
+
+/* ============================================================
+   61. ADVANCED DARK MODE FINE-TUNING
+   ============================================================ */
+
+/* --- Overlay & Backdrop --- */
+[data-theme="dark"] .modal-backdrop.show {
+  background-color: rgba(0, 0, 0, 0.75);
+  opacity: 0.75;
+}
+
+[data-theme="dark"] .cmd-palette-backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* --- Input Group di Dark Mode --- */
+[data-theme="dark"] .input-group-text {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+/* --- Data Table Striped (Dark) --- */
+[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: rgba(30, 41, 59, 0.5);
+  color: #e2e8f0;
+}
+
+/* --- Progress Bar (Dark) --- */
+[data-theme="dark"] .progress {
+  background: #1e293b;
+}
+
+/* --- Spinner (Dark) --- */
+[data-theme="dark"] .spinner-border {
+  border-color: rgba(59, 130, 246, 0.25);
+  border-right-color: #3b82f6;
+}
+
+/* --- Badge Soft Variants (Dark) --- */
+[data-theme="dark"] .badge.bg-primary {
+  background: #1e3a8a !important;
+  color: #dbeafe !important;
+}
+
+[data-theme="dark"] .badge.bg-success {
+  background: #14532d !important;
+  color: #bbf7d0 !important;
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background: #78350f !important;
+  color: #fde68a !important;
+}
+
+[data-theme="dark"] .badge.bg-danger {
+  background: #7f1d1d !important;
+  color: #fecaca !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+  background: #164e63 !important;
+  color: #a5f3fc !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary {
+  background: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* --- HR Divider (Dark) --- */
+[data-theme="dark"] hr {
+  border-color: #1e293b;
+  opacity: 1;
+}
+
+/* --- Code & Pre (Dark) --- */
+[data-theme="dark"] code,
+[data-theme="dark"] kbd,
+[data-theme="dark"] pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+/* --- Link (Dark) --- */
+[data-theme="dark"] a {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] a:hover {
+  color: #93c5fd;
+}
+
+/* --- Form Checkbox / Radio (Dark) --- */
+[data-theme="dark"] .form-check-input:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .form-switch .form-check-input {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2394a3b8'/%3e%3c/svg%3e");
+}
+
+/* --- Placeholder (Dark) --- */
+[data-theme="dark"] ::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+/* --- Table Container (Dark, subtle) --- */
+[data-theme="dark"] .table-container {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+/* --- Settings Card (Dark) --- */
+[data-theme="dark"] .settings-card .card-title {
+  border-bottom-color: #1e293b;
+}
+
+/* --- Sidebar Logout Divider (Dark) --- */
+[data-theme="dark"] .sidebar-logout {
+  border-top-color: #1e293b;
+}
+
+/* ============================================================
+   62. ENHANCED COMMAND PALETTE
+   ============================================================ */
+
+/* --- Shimmer untuk item populer --- */
+.cmd-palette-item[data-featured="true"] {
+  position: relative;
+}
+
+.cmd-palette-item[data-featured="true"]::after {
+  content: '★';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.7rem;
+  color: #fbbf24;
+  opacity: 0.7;
+}
+
+/* --- Highlight matched text --- */
+.cmd-palette-item .cmd-label mark {
+  background: rgba(251, 191, 36, 0.35);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .cmd-palette-item .cmd-label mark {
+  background: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+}
+
+/* --- Smooth scroll untuk list --- */
+.cmd-palette-body {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* --- Keyboard nav indicator --- */
+.cmd-palette-item.active .cmd-arrow {
+  animation: cmdArrowSlide 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes cmdArrowSlide {
+  from { transform: translateX(0); opacity: 0.6; }
+  to   { transform: translateX(3px); opacity: 1; }
+}
+
+/* --- Palette scrollbar (thin) --- */
+.cmd-palette-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cmd-palette-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cmd-palette-body::-webkit-scrollbar-thumb {
+  background: var(--color-slate-300);
+  border-radius: 3px;
+}
+
+.cmd-palette-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate-400);
+}
+
+[data-theme="dark"] .cmd-palette-body::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+[data-theme="dark"] .cmd-palette-body::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* --- Item enter animation (stagger) --- */
+.cmd-palette-item {
+  animation: cmdItemFadeIn 0.15s ease both;
+}
+
+@keyframes cmdItemFadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================
+   63. ENHANCED NOTIFICATION CENTER
+   ============================================================ */
+
+/* --- Badge pulse (double ring) --- */
+.notif-badge:not(.hidden) {
+  animation: notifBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes notifBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+
+/* --- Notification item enter animation --- */
+.notif-item {
+  animation: notifItemEnter 0.25s ease both;
+}
+
+@keyframes notifItemEnter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Icon hover spin --- */
+.notif-item:hover .notif-icon-box i {
+  animation: notifIconSpin 0.6s ease-in-out;
+}
+
+@keyframes notifIconSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(15deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* --- Skeleton loading (notif panel) --- */
+.notif-skeleton {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid var(--color-slate-100);
+}
+
+[data-theme="dark"] .notif-skeleton {
+  border-color: #1e293b;
+}
+
+.notif-skeleton .skel-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--color-slate-200);
+  animation: pulse 1.5s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.notif-skeleton .skel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notif-skeleton .skel-line {
+  height: 12px;
+  background: var(--color-slate-200);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.notif-skeleton .skel-line.w-70 { width: 70%; }
+.notif-skeleton .skel-line.w-90 { width: 90%; }
+.notif-skeleton .skel-line.w-40 { width: 40%; }
+
+[data-theme="dark"] .notif-skeleton .skel-icon,
+[data-theme="dark"] .notif-skeleton .skel-line {
+  background: #1e293b;
+}
+
+/* --- Scrollbar thin (notif panel) --- */
+.notif-panel-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notif-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notif-panel-body::-webkit-scrollbar-thumb {
+  background: var(--color-slate-300);
+  border-radius: 3px;
+}
+
+[data-theme="dark"] .notif-panel-body::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* --- Panel open arrow (pointer) --- */
+.notif-panel::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-white);
+  border-left: 1px solid var(--color-slate-200);
+  border-top: 1px solid var(--color-slate-200);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+[data-theme="dark"] .notif-panel::before {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+/* ============================================================
+   64. ENHANCED SHORTCUTS MODAL
+   ============================================================ */
+
+/* --- Keyboard key (kbd) hover --- */
+.shortcut-keys kbd {
+  transition: all 0.15s ease;
+}
+
+.shortcut-row:hover .shortcut-keys kbd {
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .shortcut-row:hover .shortcut-keys kbd {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #dbeafe;
+}
+
+/* --- Shortcut group enter animation --- */
+.shortcut-group {
+  animation: shortcutGroupEnter 0.3s ease both;
+}
+
+.shortcut-group:nth-child(1) { animation-delay: 0.02s; }
+.shortcut-group:nth-child(2) { animation-delay: 0.06s; }
+.shortcut-group:nth-child(3) { animation-delay: 0.10s; }
+.shortcut-group:nth-child(4) { animation-delay: 0.14s; }
+.shortcut-group:nth-child(5) { animation-delay: 0.18s; }
+
+@keyframes shortcutGroupEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Modal scrollbar --- */
+#shortcutsModal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+#shortcutsModal .modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#shortcutsModal .modal-body::-webkit-scrollbar-thumb {
+  background: var(--color-slate-300);
+  border-radius: 3px;
+}
+
+[data-theme="dark"] #shortcutsModal .modal-body::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* --- Floating trigger enhancement --- */
+.shortcut-trigger-btn {
+  animation: shortcutBtnEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 0.8s;
+}
+
+@keyframes shortcutBtnEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.8);
+  }
+  to {
+    opacity: 0.7;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================================================
+   65. LOADING & PROGRESS INDICATORS
+   ============================================================ */
+
+/* --- Top loading bar (global) --- */
+.top-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.top-loading-bar.show {
+  opacity: 1;
+}
+
+.top-loading-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--color-primary) 50%,
+    transparent 100%);
+  animation: topBarSlide 1.4s linear infinite;
+}
+
+@keyframes topBarSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* --- Circular loader --- */
+.loader-ring {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-slate-200);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+[data-theme="dark"] .loader-ring {
+  border-color: #1e293b;
+  border-top-color: #3b82f6;
+}
+
+/* --- Dots loader --- */
+.loader-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.loader-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  animation: dotBounce 1.4s ease-in-out infinite both;
+}
+
+.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loader-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40%           { transform: scale(1); opacity: 1; }
+}
+
+/* --- Progress bar dengan shimmer --- */
+.progress-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-slate-200);
+  border-radius: var(--radius-full);
+  height: 8px;
+}
+
+.progress-shimmer .bar {
+  height: 100%;
+  background: linear-gradient(90deg,
+    var(--color-primary) 0%,
+    #60a5fa 50%,
+    var(--color-primary) 100%);
+  background-size: 200% 100%;
+  animation: shimmerSlide 1.6s linear infinite;
+  transition: width 0.3s ease;
+}
+
+@keyframes shimmerSlide {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+   66. ADVANCED ANIMATIONS
+   ============================================================ */
+
+/* --- Fade Down --- */
+.anim-fade-down {
+  animation: animFadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes animFadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Scale In --- */
+.anim-scale-in {
+  animation: animScaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes animScaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* --- Slide In Right --- */
+.anim-slide-right {
+  animation: animSlideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes animSlideRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Slide In Left --- */
+.anim-slide-left {
+  animation: animSlideLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes animSlideLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Bounce In --- */
+.anim-bounce-in {
+  animation: animBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes animBounceIn {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- Heartbeat --- */
+.anim-heartbeat {
+  animation: animHeartbeat 1.2s ease-in-out infinite;
+}
+
+@keyframes animHeartbeat {
+  0%   { transform: scale(1); }
+  14%  { transform: scale(1.08); }
+  28%  { transform: scale(1); }
+  42%  { transform: scale(1.08); }
+  70%  { transform: scale(1); }
+}
+
+/* --- Shake --- */
+.anim-shake {
+  animation: animShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes animShake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+/* ============================================================
+   67. SCROLL SNAP & STICKY ENHANCEMENT
+   ============================================================ */
+
+/* --- Snap scroll untuk horizontal list --- */
+.scroll-snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.scroll-snap-x > * {
+  scroll-snap-align: start;
+}
+
+/* --- Scroll snap untuk vertical list --- */
+.scroll-snap-y {
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Sticky header dengan shadow saat scroll --- */
+.sticky-header-shadow {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-white);
+  transition: box-shadow 0.2s;
+}
+
+.sticky-header-shadow.is-scrolled {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .sticky-header-shadow {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .sticky-header-shadow.is-scrolled {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Scroll padding untuk smooth scroll ke anchor --- */
+html {
+  scroll-padding-top: 80px;
+}
+
+/* --- Custom thin scrollbar global (dark & light) --- */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-slate-300);
+  border-radius: 3px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate-400);
+}
+
+[data-theme="dark"] .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+[data-theme="dark"] .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ============================================================
+   68. UTILITY CLASSES (EXTENDED)
+   ============================================================ */
+
+/* --- Gap helpers (supplement Bootstrap) --- */
+.gap-1\.5 { gap: 0.375rem !important; }
+.gap-2\.5 { gap: 0.625rem !important; }
+.gap-3\.5 { gap: 0.875rem !important; }
+
+/* --- Rounded helpers --- */
+.rounded-2xl { border-radius: var(--radius-2xl) !important; }
+.rounded-3xl { border-radius: var(--radius-3xl) !important; }
+
+/* --- Text truncate multi-line --- */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Visibility helpers --- */
+.visibility-hidden { visibility: hidden; }
+.visibility-visible { visibility: visible; }
+
+/* --- Cursor helpers --- */
+.cursor-pointer { cursor: pointer; }
+.cursor-grab { cursor: grab; }
+.cursor-grabbing { cursor: grabbing; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* --- User select --- */
+.select-none { user-select: none; -webkit-user-select: none; }
+.select-all { user-select: all; -webkit-user-select: all; }
+
+/* --- Aspect ratio --- */
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-video { aspect-ratio: 16 / 9; }
+
+/* --- Backdrop blur --- */
+.backdrop-blur-sm { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.backdrop-blur-md { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.backdrop-blur-lg { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+
+/* --- Overlay gradient (untuk thumbnails) --- */
+.overlay-gradient-bottom::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* --- Divider with text --- */
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-slate-400);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-slate-200);
+}
+
+[data-theme="dark"] .divider-text::before,
+[data-theme="dark"] .divider-text::after {
+  background: #1e293b;
+}
+
+/* --- Status dot --- */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.online  { background: #22c55e; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2); }
+.status-dot.offline { background: #94a3b8; }
+.status-dot.busy    { background: #f59e0b; }
+.status-dot.error   { background: #ef4444; }
+
+/* --- Loading state button --- */
+.btn.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.btn.is-loading.btn-outline-primary::after {
+  border-color: rgba(37, 99, 235, 0.3);
+  border-top-color: var(--color-primary);
+}
+
+/* ============================================================
+   69. PRINT REFINEMENT
+   ============================================================ */
+
+@media print {
+  /* Reset untuk dark mode saat print */
+  [data-theme="dark"] {
+    --color-slate-900: #0f172a;
+    --color-slate-800: #1e293b;
+    --color-slate-700: #334155;
+    --color-slate-600: #475569;
+    --color-slate-500: #64748b;
+    --color-slate-400: #94a3b8;
+    --color-slate-300: #cbd5e1;
+    --color-slate-200: #e2e8f0;
+    --color-slate-100: #f1f5f9;
+    --color-slate-50: #f8fafc;
+    --color-white: #ffffff;
+  }
+
+  [data-theme="dark"] body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Sembunyikan elemen interaktif */
+  .sidebar-wrapper,
+  .bottom-nav,
+  .scan-float-btn,
+  .shortcut-trigger-btn,
+  .toast-container,
+  .cmd-palette-backdrop,
+  .notif-panel,
+  .btn-group,
+  .action-dropdown,
+  .custom-preview-body .nav-arrow,
+  #customPreviewModal,
+  .chatbot-button,
+  .chatbot-panel {
+    display: none !important;
+  }
+
+  /* Layout print */
+  .content-wrapper {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Card print-friendly */
+  .table-container,
+  .stat-card,
+  .settings-card,
+  .glass-card,
+  .instructor-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+  }
+
+  /* Table print */
+  table {
+    font-size: 10pt;
+    border-collapse: collapse;
+  }
+
+  table thead th {
+    background: #f1f5f9 !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+  }
+
+  table tbody td {
+    border: 1px solid #ccc !important;
+  }
+
+  /* Link print */
+  a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  a[href]::after {
+    content: ' (' attr(href) ')';
+    font-size: 8pt;
+    color: #666;
+  }
+
+  a[href^="#"]::after,
+  a[href^="javascript"]::after {
+    content: '';
+  }
+}
+
+/* ============================================================
+   70. ACCESSIBILITY & REDUCED MOTION
+   ============================================================ */
+
+/* --- Focus visible enhanced --- */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 2px;
+}
+
+/* --- Skip target visual hint (temporary) --- */
+#view-container:focus {
+  outline: none;
+}
+
+/* --- High contrast mode --- */
+@media (prefers-contrast: more) {
+  :root {
+    --color-primary: #1d4ed8;
+    --color-slate-500: #334155;
+    --color-slate-600: #1e293b;
+  }
+
+  [data-theme="dark"] {
+    --color-primary: #60a5fa;
+    --color-slate-500: #cbd5e1;
+    --color-slate-600: #e2e8f0;
+  }
+
+  .btn,
+  .form-control,
+  .form-select,
+  .card,
+  .modal-content {
+    border-width: 2px;
+  }
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .loader-dots span,
+  .loader-ring,
+  .progress-shimmer .bar {
+    animation: none !important;
+  }
+
+  .loader-dots span {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .top-loading-bar::after {
+    animation: none !important;
+    width: 100%;
+    background: var(--color-primary);
+  }
+}
+
+/* --- Screen reader only (enhanced) --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ============================================================
+   END OF THEME-EXTENDED.CSS — v26.1.8
+   ============================================================ */
