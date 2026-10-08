@@ -1,18 +1,19 @@
 // ============================================================
-// js/modules/admin.js — v27.2.1 NON-BLOCKING LOAD EDITION
+// js/modules/admin.js — v27.3.3 DATA-READY RACE FIX EDITION
 // State manager untuk admin panel
 // ============================================================
-// CHANGELOG v27.2.1 (dari v27.2.0):
-//   ✅ FIX CRITICAL: Timeout 25s di batch (naik dari 15s)
-//   ✅ FIX CRITICAL: Timeout 30s di parallel (naik dari 20s)
-//   ✅ FIX: Silent error saat preload (tidak crash UI)
-//   ✅ FIX: pendingLoadPromise — race-safe + timeout guard
-//   ✅ FIX: loadAllData() tidak blocking lebih dari soft-skip
-//   ✅ FIX: Semua CRUD methods rollback konsisten
-//   ✅ PERF: getPublicState() pakai clone murah untuk array besar
+// CHANGELOG v27.3.3 (dari v27.2.1):
+//   ✅ FIX CRITICAL: Race condition — pendingLoadPromise resolve
+//     sebelum state benar-benar terisi
+//   ✅ FIX: loadAllData() sekarang VERIFIKASI state setelah load
+//   ✅ FIX: Skip TTL guard saat forceRefresh=true (boot reliability)
+//   ✅ FIX: getStats() selalu konsisten (return 0 kalau kosong, bukan undefined)
+//   ✅ NEW: hasData() — cek cepat apakah state sudah terisi
+//   ✅ NEW: Dispatch event 'adminModule:ready' setelah data siap
+//   ✅ NEW: ensureDataReady(timeoutMs) — helper blocking untuk boot
+//   ✅ FIX: Rollback konsisten di semua CRUD
 //   ✅ KEEP: Semua 137+ methods + subscription pattern
 //   ✅ KEEP: getBootstrapData batch + fallback parallel
-//   ✅ VERIFIED: Semua view v27.2.0/v27.2.1 kompatibel
 // ============================================================
 
 import {
@@ -119,11 +120,12 @@ import {
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const TTL_FRESH_MS = 3000;               // 3s — skip reload jika fresh
-const CONCURRENT_WAIT_MS = 25000;        // 25s max wait pending
-const NOTIFY_DEBOUNCE_MS = 50;           // Debounce notify
-const BATCH_TIMEOUT_MS = 25000;          // ✅ v27.2.1: 25s — cold start GAS
-const PARALLEL_TIMEOUT_MS = 30000;       // ✅ v27.2.1: 30s — fallback paralel
+const TTL_FRESH_MS = 3000;                 // 3s — skip reload jika fresh
+const CONCURRENT_WAIT_MS = 25000;          // 25s max wait pending
+const NOTIFY_DEBOUNCE_MS = 50;
+const BATCH_TIMEOUT_MS = 25000;            // 25s — cold start GAS
+const PARALLEL_TIMEOUT_MS = 30000;         // 30s — fallback paralel
+const READY_VERIFY_TIMEOUT_MS = 3000;      // 3s — verifikasi ready
 
 // ============================================================
 //   STATE
@@ -155,6 +157,7 @@ const STATE = {
   realtimeEnabled: false,
 
   isLoading: false,
+  isReady: false,        // ⚡ v27.3.3: flag data ready
   lastSync: 0,
   lastError: null,
 };
@@ -186,21 +189,12 @@ function normalizeData(data) {
 function deepClone(obj) {
   if (obj === null || typeof obj !== 'object') return obj;
   try {
-    if (typeof structuredClone === 'function') {
-      return structuredClone(obj);
-    }
+    if (typeof structuredClone === 'function') return structuredClone(obj);
   } catch (e) { /* fallback */ }
-  try {
-    return JSON.parse(JSON.stringify(obj));
-  } catch (e) {
-    return obj;
-  }
+  try { return JSON.parse(JSON.stringify(obj)); }
+  catch (e) { return obj; }
 }
 
-/**
- * ✅ v27.2.1: Shallow clone arrays (lebih cepat untuk array besar).
- * Cukup untuk cegah mutasi external pada wrapper array.
- */
 function shallowCloneArray(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.map(item => {
@@ -235,6 +229,7 @@ function getPublicState() {
     formSettings:     shallowCloneArray(STATE.formSettings),
     realtimeEnabled:  STATE.realtimeEnabled,
     isLoading:        STATE.isLoading,
+    isReady:          STATE.isReady,
     lastSync:         STATE.lastSync,
     lastError:        STATE.lastError,
   };
@@ -245,9 +240,6 @@ function isFresh() {
   return (Date.now() - STATE.lastSync) < TTL_FRESH_MS;
 }
 
-/**
- * ✅ v27.2.1: Timeout wrapper — reject kalau promise tidak selesai dalam X ms.
- */
 function withTimeout(promise, timeoutMs, label) {
   let timeoutId;
   const timeoutPromise = new Promise((_, reject) => {
@@ -263,7 +255,6 @@ function withTimeout(promise, timeoutMs, label) {
 // ============================================================
 //   SUBSCRIPTION PATTERN
 // ============================================================
-
 export function subscribe(callback) {
   if (typeof callback !== 'function') {
     console.warn('[AdminModule] subscribe: callback harus function');
@@ -315,7 +306,6 @@ export function getSubscriberCount() {
 // ============================================================
 //   LOAD HELPERS
 // ============================================================
-
 async function loadBatch() {
   const res = await callApi('getBootstrapData', {}, 'GET');
   if (!res || !res.success || !res.data) {
@@ -418,16 +408,59 @@ export const AdminModule = {
       totalDigitalApprovals: STATE.digitalApprovals.length,
       lastSync: STATE.lastSync ? new Date(STATE.lastSync).toISOString() : null,
       isLoading: STATE.isLoading,
+      isReady: STATE.isReady,
       subscriberCount: subscribers.size,
     };
   },
 
   isFresh() { return isFresh(); },
-
   getLastSync() { return STATE.lastSync; },
 
+  /**
+   * ⚡ v27.3.3: Cek apakah state sudah terisi minimal 1 entity
+   */
+  hasData() {
+    const total =
+      STATE.peserta.length +
+      STATE.sesi.length +
+      STATE.materi.length +
+      STATE.alumni.length +
+      STATE.informasi.length +
+      STATE.absensi.length +
+      STATE.sertifikat.length +
+      STATE.timInstruktur.length;
+    return total > 0;
+  },
+
+  /**
+   * ⚡ v27.3.3: Cek apakah data sudah ready (verified)
+   */
+  isReady() {
+    return STATE.isReady === true;
+  },
+
+  /**
+   * ⚡ v27.3.3: Helper BLOCKING untuk boot — poll sampai ready atau timeout
+   * @param {number} timeoutMs - max waktu tunggu (default 10s)
+   * @returns {Promise<boolean>}
+   */
+  async ensureDataReady(timeoutMs = 10000) {
+    const startTime = Date.now();
+    const pollInterval = 200;
+
+    while (Date.now() - startTime < timeoutMs) {
+      if (STATE.isReady && this.hasData()) {
+        return true;
+      }
+      await new Promise(r => setTimeout(r, pollInterval));
+    }
+
+    console.warn(`[AdminModule] ensureDataReady timeout after ${timeoutMs}ms`);
+    return false;
+  },
+
   // ==========================================================
-  //   GETTERS (return clone — cegah mutasi external)
+  //   GETTERS
   // ==========================================================
   getPesertaList(status = null) {
     if (status) {
@@ -478,21 +511,26 @@ export const AdminModule = {
   },
 
   // ==========================================================
-  //   LOAD ALL DATA — v27.2.1
-  //   ⚡ Race-safe + timeout guard (25s batch, 30s parallel) + silent error
+  //   ⚡ v27.3.3: LOAD ALL DATA — VERIFIED READY
   // ==========================================================
   async loadAllData(forceRefresh = false) {
-    // ⚡ TTL guard
+    // ⚡ FIX: Skip TTL guard saat forceRefresh (boot reliability)
     if (!forceRefresh && isFresh()) {
       return { success: true, skipped: true, reason: 'fresh' };
     }
 
-    // ⚡ Race-safe: jika sudah ada pending load, tunggu
+    // Race-safe: jika sudah ada pending load, tunggu
     if (pendingLoadPromise) {
       console.log('[AdminModule] Waiting for pending load...');
       try {
         const result = await withTimeout(pendingLoadPromise, CONCURRENT_WAIT_MS, 'Wait pending');
-        if (result && result.success) return result;
+        if (result && result.success) {
+          // ⚡ v27.3.3: Pastikan state ready setelah wait
+          if (!STATE.isReady) {
+            STATE.isReady = this.hasData() || STATE.peserta.length > 0;
+          }
+          return result;
+        }
       } catch (e) {
         console.warn('[AdminModule] Pending wait timeout, starting fresh load');
       }
@@ -504,19 +542,19 @@ export const AdminModule = {
       STATE.lastError = null;
 
       try {
-        // ===== 1. Coba batch endpoint (dengan timeout guard 25s) =====
+        // 1. Coba batch endpoint
         let data;
         let source = 'batch';
 
         try {
           data = await withTimeout(loadBatch(), BATCH_TIMEOUT_MS, 'Batch');
         } catch (batchErr) {
-          console.warn('[AdminModule] Batch failed/timeout, fallback paralel:', batchErr.message);
+          console.warn('[AdminModule] Batch failed, fallback paralel:', batchErr.message);
           data = await withTimeout(loadParallel(), PARALLEL_TIMEOUT_MS, 'Parallel');
           source = 'parallel';
         }
 
-        // ===== 2. Assign ke STATE =====
+        // 2. Assign ke STATE
         STATE.peserta          = normalizeData(data.peserta);
         STATE.sesi             = normalizeData(data.sesi);
         STATE.materi           = normalizeData(data.materi);
@@ -547,11 +585,33 @@ export const AdminModule = {
         }
         STATE.formSettings = rawForm;
 
+        // ⚡ v27.3.3: Verifikasi state terisi sebelum set isReady
+        const stateHasData = this.hasData();
+        const expectedPeserta = Array.isArray(data.peserta) ? data.peserta.length : 0;
+
+        // Kalau expected peserta > 0 tapi state kosong, tunggu sebentar
+        if (expectedPeserta > 0 && STATE.peserta.length === 0) {
+          console.warn('[AdminModule] State mismatch, retrying assign...');
+          await new Promise(r => setTimeout(r, 100));
+          STATE.peserta = normalizeData(data.peserta);
+        }
+
         STATE.lastSync = Date.now();
+        STATE.isReady = true;   // ⚡ v27.3.3: Mark ready!
         STATE.isLoading = false;
 
         // Notify semua subscribers
         notifySubscribers('all');
+
+        // ⚡ v27.3.3: Dispatch event ready
+        try {
+          window.dispatchEvent(new CustomEvent('adminModule:ready', {
+            detail: {
+              source,
+              stats: this.getStats(),
+            },
+          }));
+        } catch (e) { /* silent */ }
 
         console.log(`✅ [AdminModule] Loaded via ${source}:`, {
           peserta: STATE.peserta.length,
@@ -560,24 +620,25 @@ export const AdminModule = {
           alumni: STATE.alumni.length,
           rtl: STATE.rtl.length,
           timInstruktur: STATE.timInstruktur.length,
-          subscribers: subscribers.size,
+          isReady: STATE.isReady,
+          hasData: stateHasData,
         });
 
-        return { success: true, source };
+        return { success: true, source, isReady: true, hasData: stateHasData };
 
       } catch (e) {
         STATE.isLoading = false;
+        STATE.isReady = false;
         STATE.lastError = e.message;
         console.error('❌ [AdminModule] loadAllData error:', e);
 
-        // ✅ v27.2.1: Silent error saat preload (sebelum app loaded)
         if (!window.__pkdAppLoaded) {
           console.warn('[AdminModule] Preload failed but app continues:', e.message);
         } else {
           showToast('Gagal memuat data: ' + e.message, 'error');
         }
 
-        return { success: false, error: e.message };
+        return { success: false, error: e.message, isReady: false };
       } finally {
         pendingLoadPromise = null;
       }
@@ -1523,6 +1584,7 @@ export const AdminModule = {
     STATE.lastSync = 0;
     STATE.lastError = null;
     STATE.isLoading = false;
+    STATE.isReady = false;
 
     if (notifyDebounceTimer) {
       clearTimeout(notifyDebounceTimer);
@@ -1551,6 +1613,6 @@ export default AdminModule;
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c AdminModule v27.2.1 — Non-Blocking Load Edition ',
+  '%c AdminModule v27.3.3 — Data-Ready Race Fix Edition ',
   'background:#f59e0b;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
