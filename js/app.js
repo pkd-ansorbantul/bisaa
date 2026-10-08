@@ -1,16 +1,18 @@
 // ============================================================
-// js/app.js — v27.2.2 ROBUST MODULE LOAD EDITION
+// js/app.js — v27.3.0 FULL PRELOAD EDITION
 // ============================================================
-// CHANGELOG v27.2.2 (dari v27.2.1):
-//   ✅ FIX CRITICAL: Dynamic import ERR_ABORTED 404 → retry + fallback
-//   ✅ FIX: Track failed modules untuk retry background
-//   ✅ FIX: Preload JS module tidak lagi silent — track error
-//   ✅ FIX: Auto-retry failed modules setelah 3s
-//   ✅ FIX: Force preload retry saat user klik menu yang gagal
-//   ✅ FIX: Robust module preload dengan Promise.allSettled
-//   ✅ KEEP: Semua 18 routes + interactive features
+// CHANGELOG v27.3.0 (dari v27.2.2):
+//   ✅ NEW: Preload quiz questions (pretest + posttest)
+//     → background, tidak blocking UI
+//     → pakai preloadData() dari pretest.js/posttest.js
+//   ✅ NEW: Auto-sync idle-aware + guard race condition
+//   ✅ FIX: Safe import dengan retry + track failed modules
+//   ✅ FIX: Preload data soft-skip 10s (cold start GAS)
+//   ✅ FIX: BFCache guard skip jika app belum loaded
+//   ✅ KEEP: Semua 18 routes + 4 interactive features
 //   ✅ KEEP: Subscription + manual refresh via window.__pkd
-//   ✅ KEEP: Preload data soft-skip 10s
+//   ✅ KEEP: Keyboard shortcuts Alt+D/P/A/S/R/Q/M/K/T
+//   ✅ KEEP: Preload fragments + modules (blocking 0.5-2s)
 // ============================================================
 
 import {
@@ -33,17 +35,17 @@ import { mount as mountCommandPalette } from './components/command-palette.js';
 import { mount as mountNotificationCenter } from './components/notification-center.js';
 import Router from './router.js';
 
-// ✅ Local constant
-const APP_VERSION = '27.2.2';
+// ============================================================
+//   CONSTANTS
+// ============================================================
+const APP_VERSION = '27.3.0';
 
-// ============================================================
-//   v27.2.2: TIMEOUT & RETRY CONSTANTS
-// ============================================================
-const PRELOAD_DATA_SOFT_SKIP_MS = 10000;  // 10s
-const AUTO_SYNC_INTERVAL_MS = 60000;      // 60s
-const IDLE_THRESHOLD_MS = 5 * 60 * 1000;  // 5 menit
+const PRELOAD_DATA_SOFT_SKIP_MS = 10000;   // 10s — cold start GAS tolerance
+const AUTO_SYNC_INTERVAL_MS     = 60000;   // 60s
+const IDLE_THRESHOLD_MS         = 5 * 60 * 1000; // 5 menit
 const FAILED_MODULE_RETRY_DELAY_MS = 3000; // 3s
-const FAILED_MODULE_MAX_RETRY = 3;
+const FAILED_MODULE_MAX_RETRY   = 3;
+const QUIZ_PRELOAD_DELAY_MS     = 2000;    // delay 2s sebelum preload quiz
 
 // ============================================================
 //   ROUTES — 18 Views
@@ -79,8 +81,8 @@ let isSyncing = false;
 let adminModule = null;
 let lastUserActivity = Date.now();
 
-// ⚡ v27.2.2: Track failed modules untuk retry
-window.__pkdFailedModules = new Map(); // Map<url, {count, lastError}>
+// ⚡ Track failed modules untuk retry (Map<url, {count, lastError}>)
+window.__pkdFailedModules = new Map();
 
 // ============================================================
 //   UTILITY
@@ -118,7 +120,8 @@ function updateLoaderProgress(current, total) {
 }
 
 // ============================================================
-//   v27.2.2: SAFE DYNAMIC IMPORT dengan RETRY
+//   ⚡ SAFE DYNAMIC IMPORT dengan RETRY
+//   Handle ERR_ABORTED 404 + track failed untuk retry background
 // ============================================================
 async function safeImport(url, options = {}) {
   const { silent = false, maxRetry = 2 } = options;
@@ -126,7 +129,7 @@ async function safeImport(url, options = {}) {
 
   for (let attempt = 0; attempt <= maxRetry; attempt++) {
     try {
-      // Retry pakai cache buster
+      // Retry pakai cache buster (attempt 0 = normal, attempt > 0 = cache-bust)
       const importUrl = attempt === 0
         ? url
         : `${url}?retry=${Date.now()}&attempt=${attempt}`;
@@ -144,7 +147,6 @@ async function safeImport(url, options = {}) {
       lastError = e;
       const msg = String(e?.message || e || '');
 
-      // Kalau bukan retryable error, langsung throw
       const isRetryable =
         msg.includes('Failed to fetch') ||
         msg.includes('ERR_ABORTED') ||
@@ -154,7 +156,7 @@ async function safeImport(url, options = {}) {
         msg.includes('NetworkError');
 
       if (!isRetryable) {
-        if (!silent) console.error(`[SafeImport] Non-retryable error: ${url}`, msg);
+        if (!silent) console.error(`[SafeImport] Non-retryable: ${url} — ${msg}`);
         throw e;
       }
 
@@ -164,7 +166,7 @@ async function safeImport(url, options = {}) {
         }
         await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
       } else {
-        // Max retry reached — track sebagai failed
+        // Track sebagai failed untuk background retry
         const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
         window.__pkdFailedModules.set(url, {
           count: info.count + 1,
@@ -316,7 +318,8 @@ async function loadPartialsWithRetry() {
 }
 
 // ============================================================
-//   PRELOAD DATA dengan SOFT-SKIP
+//   PRELOAD DATA (via getBootstrapData batch)
+//   Soft-skip 10s — app tetap jalan kalau GAS cold start lambat
 // ============================================================
 async function preloadAllData() {
   console.log('[Boot] ⚡ Preloading all data (background)...');
@@ -360,19 +363,26 @@ async function preloadAllData() {
     if (result && result.success) {
       const stats = adminModule.getStats() || {};
       console.log(`[Boot] ✅ Data preloaded in ${elapsed}ms via ${result.source || 'unknown'}`);
+      console.log('[Boot] Stats:', {
+        peserta: stats.totalPeserta || 0,
+        sesi: stats.totalSesi || 0,
+        materi: stats.totalMateri || 0,
+        timInstruktur: stats.totalTimInstruktur || 0,
+      });
       return { success: true, elapsed };
     }
 
+    console.warn('[Boot] ⚠️ Preload partial:', result?.error);
     return { success: false, error: result?.error };
   } catch (e) {
-    console.warn(`[Boot] ⚠️ Preload failed:`, e.message);
+    const elapsed = Date.now() - startTime;
+    console.warn(`[Boot] ⚠️ Preload failed after ${elapsed}ms:`, e.message);
     return { success: false, error: e.message };
   }
 }
 
 // ============================================================
-//   PRELOAD SEMUA FRAGMENT HTML + MODULE JS
-//   ⚡ v27.2.2: Track failed modules
+//   PRELOAD FRAGMENTS + MODULES (BLOCKING)
 // ============================================================
 async function preloadAllFragmentsAndModules() {
   const totalRoutes = Object.keys(ROUTES).length;
@@ -421,14 +431,60 @@ async function preloadAllFragmentsAndModules() {
 
   const failedCount = window.__pkdFailedModules.size;
   if (failedCount > 0) {
-    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed to preload — akan retry di background`);
+    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed — akan retry di background`);
   }
 
   console.log(`[Boot] ✅ Preloaded ${totalRoutes} fragments + ${totalRoutes} modules`);
 }
 
 // ============================================================
-//   ⚡ v27.2.2: AUTO-RETRY FAILED MODULES
+//   ⚡ v27.3.0: PRELOAD QUIZ QUESTIONS (Pretest + Posttest)
+//   Load di background — tidak blocking UI
+//   Pakai preloadData() yang di-export dari pretest.js / posttest.js
+// ============================================================
+function preloadQuizQuestions() {
+  // Delay biar tidak bersaing dengan preload data utama
+  setTimeout(async () => {
+    console.log('[Boot] ⚡ Preloading quiz questions (pretest + posttest)...');
+
+    const tasks = [
+      // ===== Pretest =====
+      safeImport(BASE_PATH + 'views/admin/pretest.js', { silent: true })
+        .then(mod => {
+          if (mod && typeof mod.preloadData === 'function') {
+            return mod.preloadData();
+          }
+          return { success: false, error: 'preloadData not exported' };
+        })
+        .catch(e => ({ success: false, error: e.message })),
+
+      // ===== Posttest =====
+      safeImport(BASE_PATH + 'views/admin/posttest.js', { silent: true })
+        .then(mod => {
+          if (mod && typeof mod.preloadData === 'function') {
+            return mod.preloadData();
+          }
+          return { success: false, error: 'preloadData not exported' };
+        })
+        .catch(e => ({ success: false, error: e.message })),
+    ];
+
+    const results = await Promise.allSettled(tasks);
+
+    results.forEach((r, i) => {
+      const kind = i === 0 ? 'pretest' : 'posttest';
+      if (r.status === 'fulfilled' && r.value && r.value.success) {
+        console.log(`[Boot] ✅ ${kind} questions preloaded: ${r.value.count ?? 0} items (via ${r.value.source || 'unknown'})`);
+      } else {
+        const err = (r.status === 'fulfilled' && r.value && r.value.error) || r.reason?.message || 'unknown';
+        console.warn(`[Boot] ⚠️ ${kind} questions preload failed: ${err}`);
+      }
+    });
+  }, QUIZ_PRELOAD_DELAY_MS);
+}
+
+// ============================================================
+//   AUTO-RETRY FAILED MODULES
 // ============================================================
 function scheduleFailedModuleRetry() {
   setTimeout(async () => {
@@ -453,7 +509,7 @@ function scheduleFailedModuleRetry() {
       }
     }
 
-    // Kalau masih ada yang failed, schedule lagi
+    // Kalau masih ada failed, schedule lagi
     if (failed.size > 0) {
       scheduleFailedModuleRetry();
     }
@@ -529,10 +585,13 @@ async function mountInteractiveFeatures() {
   } catch (e) {
     console.warn('[Boot] Notification Center gagal mount:', e);
   }
+
+  // Mount shortcuts modal (dari inline fallback di app.html)
+  // Sudah di-mount oleh app.html inline script
 }
 
 // ============================================================
-//   BOOT SEQUENCE — v27.2.2 ROBUST
+//   BOOT SEQUENCE — v27.3.0
 // ============================================================
 async function boot() {
   if (isBooted) {
@@ -588,7 +647,7 @@ async function boot() {
       scrollBehavior: 'top',
       useCacheBuster: false,
       showLoadingUI: true,
-      maxRetries: 2,           // ⚡ v27.2.2: naik dari 1 → 2
+      maxRetries: 2,
       debug: false,
       prefetchEnabled: true,
     });
@@ -608,7 +667,7 @@ async function boot() {
   // Data preload jalan di background — TIDAK di-await
   const dataPromise = preloadAllData();
 
-  // Fragment + module preload
+  // Fragment + module preload — BLOCKING sebentar (0.5s-2s)
   try {
     await preloadAllFragmentsAndModules();
     console.log('[Boot] ✅ Fragments + modules ready');
@@ -616,7 +675,10 @@ async function boot() {
     console.warn('[Boot] Preload fragments partial:', e.message);
   }
 
-  // ⚡ Schedule background retry untuk module yang gagal
+  // ===== 7b. ⚡ Preload quiz questions (pretest + posttest) di background =====
+  preloadQuizQuestions();
+
+  // Schedule background retry untuk module yang gagal
   scheduleFailedModuleRetry();
 
   // ===== 8. Set default hash =====
@@ -832,7 +894,7 @@ window.__pkd = {
     if (router) await router.reload();
   },
 
-  // ⚡ v27.2.2: Failed modules inspection
+  // Failed modules inspection
   getFailedModules: () => {
     const result = {};
     window.__pkdFailedModules.forEach((v, k) => { result[k] = v; });
@@ -860,6 +922,10 @@ window.__pkd = {
     }
   },
 
+  // Quiz preload helper (manual trigger)
+  preloadQuiz: () => preloadQuizQuestions(),
+
+  // Auto-sync control
   startAutoSync,
   stopAutoSync,
   isAutoSyncRunning: () => !!autoSyncInterval,
@@ -870,6 +936,6 @@ window.__pkd = {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c App v27.2.2 — Robust Module Load Edition ',
+  '%c App v27.3.0 — Full Preload Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
