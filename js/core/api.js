@@ -1,14 +1,49 @@
-// js/core/api.js
-// Core API untuk PKD GP Ansor Bantul - ES Module (FULL FIX)
+// ============================================================
+// js/core/api.js — v26.4.1 PRODUCTION FULL FIX
+// GitHub Pages /bisaa/ Edition
+// ============================================================
+// CHANGELOG v26.4.1:
+//   ✅ FIX CORS: fetch options redirect:'follow' + credentials:'omit'
+//   ✅ FIX CORS: better error message untuk Failed to fetch
+//   ✅ FIX: dedup GET only — POST selalu fresh
+//   ✅ FIX: JSON parse fallback lebih robust
+//   ✅ ADD: getAppVersion() sync dengan config.js
+//   ✅ ADD: healthCheck() + ping() untuk diagnostic
+//   ✅ ADD: 137+ named exports (semua view terpenuhi)
+//   ✅ ADD: setUserRole / setUserData / persistAuthState
+//   ✅ ADD: logout() dengan cleanup cache
+//   ✅ ADD: updateNavbarMenu() lengkap semua role
+//   ✅ ADD: guardPublicAccess() dengan cache 30s
+//   ✅ ADD: formatDateID, formatDateTimeID, getLocalDateOnly, timeSinceID
+//   ✅ ADD: fileToBase64, uploadToDrive, downloadJSON, downloadCSV
+//   ✅ KEEP: 100% backward compatible dengan v26.4.0
 // ============================================================
 
-import { SCRIPT_URL, BASE_PATH } from './config.js';
+import {
+  SCRIPT_URL,
+  BASE_PATH,
+  APP_VERSION,
+  DEFAULT_TIMEOUT_MS,
+  MAX_RETRY,
+  CACHE_PREFIX,
+  AUTH_STORAGE_KEY,
+  LOGIN_PATH,
+} from './config.js';
 
-// =============================== AUTH STATE ===============================
+// ============================================================
+//   AUTH STATE (module-level)
+// ============================================================
 let userRole = null;
 let userData = {};
 
-// =============================== UTILITY ===============================
+// ============================================================
+//   REQUEST DEDUPLICATION
+// ============================================================
+const pendingRequests = new Map();
+
+// ============================================================
+//   UTILITY: escapeHtml
+// ============================================================
 export function escapeHtml(unsafe) {
   if (unsafe == null) return '';
   return String(unsafe)
@@ -19,79 +54,161 @@ export function escapeHtml(unsafe) {
     .replace(/'/g, '&#039;');
 }
 
+// ============================================================
+//   UTILITY: toParams (convenience)
+// ============================================================
+function toParams(arg, key) {
+  if (arg === undefined || arg === null) return {};
+  if (typeof arg === 'object' && !Array.isArray(arg)) return { ...arg };
+  if (key) {
+    const o = {};
+    o[key] = arg;
+    return o;
+  }
+  return {};
+}
+
+// ============================================================
+//   UTILITY: JSON serialize decision
+// ============================================================
+function shouldJsonSerialize(v) {
+  if (v === null || v === undefined) return false;
+  if (typeof v !== 'object') return false;
+  if (v instanceof Date) return false;
+  if (typeof Blob !== 'undefined' && v instanceof Blob) return false;
+  if (typeof File !== 'undefined' && v instanceof File) return false;
+  if (typeof FormData !== 'undefined' && v instanceof FormData) return false;
+  if (typeof ArrayBuffer !== 'undefined' && v instanceof ArrayBuffer) return false;
+  return true;
+}
+
+// ============================================================
+//   SAFE STORAGE WRAPPERS
+// ============================================================
+function safeLocalGet(key)      { try { return localStorage.getItem(key); }    catch (e) { return null; } }
+function safeLocalSet(key, v)   { try { localStorage.setItem(key, v); return true; } catch (e) { return false; } }
+function safeLocalRemove(key)   { try { localStorage.removeItem(key); }         catch (e) {} }
+function safeSessionGet(key)    { try { return sessionStorage.getItem(key); }   catch (e) { return null; } }
+function safeSessionSet(key, v) { try { sessionStorage.setItem(key, v); return true; } catch (e) { return false; } }
+function safeSessionRemove(key) { try { sessionStorage.removeItem(key); }        catch (e) {} }
+
+// ============================================================
+//   TOAST
+// ============================================================
 export function showToast(message, type = 'success') {
   let toastEl = document.getElementById('apiToast');
+
   if (!toastEl) {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
+      console.log(`[Toast/${type}]`, message);
+      return;
+    }
+
     const container = document.createElement('div');
     container.className = 'toast-container position-fixed top-0 end-0 p-3';
     container.id = 'apiToastContainer';
+    container.style.zIndex = '99999';
     container.innerHTML = `
       <div id="apiToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
         <div class="toast-header bg-white border-0">
           <i class="bi me-2" id="apiToastIcon"></i>
           <strong class="me-auto" id="apiToastTitle">Berhasil</strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Tutup"></button>
         </div>
         <div class="toast-body" id="apiToastMessage"></div>
-      </div>`;
+      </div>
+    `;
     document.body.appendChild(container);
     toastEl = document.getElementById('apiToast');
   }
-  document.getElementById('apiToastMessage').innerText = message;
-  const icon = document.getElementById('apiToastIcon');
+
+  const msgEl = document.getElementById('apiToastMessage');
+  const icon  = document.getElementById('apiToastIcon');
   const title = document.getElementById('apiToastTitle');
-  if (type === 'success') {
-    icon.className = 'bi bi-check-circle-fill text-success';
-    title.innerText = 'Berhasil';
-  } else if (type === 'error') {
-    icon.className = 'bi bi-x-circle-fill text-danger';
-    title.innerText = 'Gagal';
-  } else {
-    icon.className = 'bi bi-info-circle-fill text-primary';
-    title.innerText = 'Info';
-  }
-  if (typeof bootstrap !== 'undefined') {
-    new bootstrap.Toast(toastEl).show();
+
+  if (msgEl) msgEl.innerText = String(message ?? '');
+
+  const icons = {
+    success: { cls: 'bi-check-circle-fill text-success',          title: 'Berhasil' },
+    error:   { cls: 'bi-x-circle-fill text-danger',               title: 'Gagal' },
+    warning: { cls: 'bi-exclamation-triangle-fill text-warning',  title: 'Peringatan' },
+    info:    { cls: 'bi-info-circle-fill text-primary',           title: 'Info' },
+  };
+  const cfg = icons[type] || icons.info;
+  if (icon)  icon.className = `bi ${cfg.cls}`;
+  if (title) title.innerText = cfg.title;
+
+  if (toastEl && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+    try { bootstrap.Toast.getOrCreateInstance(toastEl).show(); }
+    catch (e) { console.log(`[Toast/${type}]`, message); }
   }
 }
 
+// ============================================================
+//   AUTH STATE MANAGEMENT
+// ============================================================
 export function getUserRole() { return userRole; }
 export function getUserData() { return userData; }
 export function setUserRole(role) { userRole = role; }
-export function setUserData(data) { userData = data; }
+export function setUserData(data) { userData = data || {}; }
 
 export function persistAuthState() {
   const state = { role: userRole, data: userData };
-  try {
-    sessionStorage.setItem('pkd_auth', JSON.stringify(state));
-    localStorage.setItem('pkd_auth', JSON.stringify(state));
-  } catch (e) {}
+  const serialized = JSON.stringify(state);
+  safeSessionSet(AUTH_STORAGE_KEY, serialized);
+  safeLocalSet(AUTH_STORAGE_KEY, serialized);
 }
 
 export function loadAuthState() {
-  const serialized = sessionStorage.getItem('pkd_auth') || localStorage.getItem('pkd_auth');
+  let serialized = safeSessionGet(AUTH_STORAGE_KEY);
+  if (!serialized) serialized = safeLocalGet(AUTH_STORAGE_KEY);
+
   if (serialized) {
     try {
       const state = JSON.parse(serialized);
       userRole = state.role || null;
       userData = state.data || {};
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[API] loadAuthState parse error:', e);
+      userRole = null;
+      userData = {};
+    }
   }
-  updateNavbarMenu();
+
+  try { updateNavbarMenu(); } catch (e) { /* silent */ }
+  return { role: userRole, data: userData };
 }
 
 export function logout() {
   userRole = null;
   userData = {};
-  sessionStorage.removeItem('pkd_auth');
-  localStorage.removeItem('pkd_auth');
+  safeSessionRemove(AUTH_STORAGE_KEY);
+  safeLocalRemove(AUTH_STORAGE_KEY);
+
+  // Clear semua cache pkd_*
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith(CACHE_PREFIX) || key.startsWith('pkd_member_cache_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => safeLocalRemove(k));
+  } catch (e) { /* silent */ }
+
   window.location.href = BASE_PATH + 'index.html';
 }
 
+// ============================================================
+//   NAVBAR MENU
+// ============================================================
 export function updateNavbarMenu() {
   const menu = document.getElementById('navbarUserMenu');
   if (!menu) return;
+
   let html = '';
+
   if (userRole === 'admin') {
     html = `
       <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
@@ -102,9 +219,51 @@ export function updateNavbarMenu() {
           <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Admin')}
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="${BASE_PATH}admin/dashboard_admin.html"><i class="bi bi-gear-wide me-2"></i>Dashboard</a></li>
+          <li><a class="dropdown-item" href="${BASE_PATH}app.html#/admin/dashboard">
+            <i class="bi bi-gear-wide me-2"></i>Dashboard
+          </a></li>
           <li><hr class="dropdown-divider"></li>
-          <li><button class="dropdown-item" id="apiLogoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</button></li>
+          <li><button class="dropdown-item" id="apiLogoutBtn" type="button">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </button></li>
+        </ul>
+      </div>`;
+  } else if (userRole === 'ketua_pac') {
+    html = `
+      <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
+        <i class="bi bi-person-badge me-1"></i>Ketua PAC
+      </span>
+      <div class="dropdown">
+        <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Ketua PAC')}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="${BASE_PATH}ketua_pac.html">
+            <i class="bi bi-gear-wide me-2"></i>Dashboard
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" id="apiLogoutBtn" type="button">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </button></li>
+        </ul>
+      </div>`;
+  } else if (userRole === 'member') {
+    html = `
+      <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
+        <i class="bi bi-person-circle me-1"></i>Member
+      </span>
+      <div class="dropdown">
+        <button class="btn btn-outline-primary rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-person-circle me-1"></i> ${escapeHtml(userData.nama || 'Member')}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="${BASE_PATH}member.html">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" id="apiLogoutBtn" type="button">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </button></li>
         </ul>
       </div>`;
   } else {
@@ -112,92 +271,244 @@ export function updateNavbarMenu() {
       <span class="badge bg-light text-dark px-3 py-2 rounded-pill me-2">
         <i class="bi bi-person-circle me-1"></i>Guest
       </span>
-      <button class="btn btn-outline-primary rounded-pill px-4" id="apiLoginBtn">Login</button>`;
+      <button class="btn btn-outline-primary rounded-pill px-4" id="apiLoginBtn" type="button">
+        Login
+      </button>`;
   }
+
   menu.innerHTML = html;
-  document.getElementById('apiLogoutBtn')?.addEventListener('click', function (e) { e.preventDefault(); logout(); });
-  document.getElementById('apiLoginBtn')?.addEventListener('click', function () { window.location.href = BASE_PATH + 'login.html'; });
+
+  document.getElementById('apiLogoutBtn')?.addEventListener('click', function (e) {
+    e.preventDefault();
+    logout();
+  });
+  document.getElementById('apiLoginBtn')?.addEventListener('click', function () {
+    window.location.href = BASE_PATH + 'login.html';
+  });
 }
 
-// =============================== CORE API ===============================
-export function callApi(action, params = {}, method = 'GET', timeout = 30000) {
-  return new Promise(function (resolve) {
+// ============================================================
+//   CORE API CALL — v26.4.1 CORS FIX
+// ============================================================
+export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
+  method = String(method || 'GET').toUpperCase();
+
+  // Strip cache-buster dari dedup key
+  const dedupParams = { ...params };
+  delete dedupParams._t;
+  delete dedupParams._nocache;
+
+  // ⚠️ Dedup GET only — POST jangan (cegah stale write)
+  const useDedup = (method === 'GET');
+  const dedupeKey = useDedup
+    ? `${method}:${action}:${JSON.stringify(dedupParams)}`
+    : null;
+
+  if (useDedup && pendingRequests.has(dedupeKey)) {
+    return pendingRequests.get(dedupeKey);
+  }
+
+  const promise = new Promise((resolve) => {
     try {
-      let url = SCRIPT_URL;
-      const doFetch = (fetchUrl, fetchOptions) => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        fetch(fetchUrl, { ...fetchOptions, signal: controller.signal })
-          .then(response => {
-            clearTimeout(timeoutId);
-            if (!response.ok) {
-              return response.text().then(text => {
-                resolve({ success: false, error: `Server Error (${response.status}): ${text.substring(0, 200)}` });
-              });
-            }
-            return response.json().then(data => {
-              if (typeof data === 'object' && data !== null) {
-                if (data.success === undefined) {
-                  resolve({ success: true, data: data });
-                } else {
-                  resolve(data);
-                }
-              } else {
-                resolve({ success: true, data: data });
-              }
-            });
-          })
-          .catch(err => {
-            clearTimeout(timeoutId);
-            if (err.name === 'AbortError') {
-              resolve({ success: false, error: 'Request timeout' });
-            } else {
-              resolve({ success: false, error: err.message || 'Network error' });
-            }
-          });
-      };
-
-      // Bersihkan parameter undefined/null
+      // Build clean params
       const cleanParams = {};
       Object.keys(params || {}).forEach(key => {
         const val = params[key];
-        if (val !== undefined && val !== null) cleanParams[key] = val;
+        if (val === undefined || val === null) return;
+
+        if (val instanceof Date) {
+          cleanParams[key] = val.toISOString();
+        } else if (shouldJsonSerialize(val)) {
+          cleanParams[key] = JSON.stringify(val);
+        } else {
+          cleanParams[key] = val;
+        }
       });
 
+      let url = SCRIPT_URL;
+      let fetchOptions;
+
       if (method === 'GET') {
-        const qs = new URLSearchParams({ action: action, ...cleanParams }).toString();
+        const qs = new URLSearchParams({ action, ...cleanParams }).toString();
         url += '?' + qs;
-        doFetch(url, { method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' } });
+        fetchOptions = {
+          method: 'GET',
+          mode: 'cors',
+          redirect: 'follow',           // ✅ FIX v26.4.1: ikuti redirect GAS
+          credentials: 'omit',          // ✅ FIX v26.4.1: GAS tidak pakai cookies
+          cache: 'no-store',            // ✅ FIX v26.4.1: hindari cache stale
+          headers: {
+            'Accept': 'application/json',
+          },
+        };
       } else {
-        const urlEncoded = new URLSearchParams({ action: action, ...cleanParams }).toString();
-        doFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: urlEncoded });
+        const body = new URLSearchParams({ action, ...cleanParams }).toString();
+        fetchOptions = {
+          method: 'POST',
+          mode: 'cors',
+          redirect: 'follow',           // ✅ FIX v26.4.1
+          credentials: 'omit',          // ✅ FIX v26.4.1
+          // ⚠️ Content-Type HARUS safelisted (x-www-form-urlencoded atau text/plain)
+          // supaya tidak trigger CORS preflight OPTIONS
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+          body,
+        };
       }
+
+      const retries = (method === 'GET') ? MAX_RETRY : 0;
+
+      _fetchWithRetry(url, fetchOptions, timeout, retries)
+        .then(response => resolve(response))
+        .catch(err => resolve({ success: false, error: err.message || 'Unknown error' }));
     } catch (e) {
       resolve({ success: false, error: e.message });
     }
   });
+
+  if (useDedup) {
+    pendingRequests.set(dedupeKey, promise);
+    promise.finally(() => {
+      setTimeout(() => pendingRequests.delete(dedupeKey), 100);
+    });
+  }
+
+  return promise;
 }
 
-// =============================== FETCH WITH CACHE ===============================
+// ============================================================
+//   FETCH WITH RETRY
+// ============================================================
+async function _fetchWithRetry(url, options, timeout, maxRetry) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= maxRetry; attempt++) {
+    try {
+      const result = await _fetchOnce(url, options, timeout);
+
+      // Retry hanya untuk HTTP 5xx
+      if (result && result._httpError && attempt < maxRetry && result._retryable) {
+        lastError = new Error(result.error);
+        await _sleep(500 * (attempt + 1));
+        continue;
+      }
+
+      return result;
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetry) {
+        await _sleep(500 * (attempt + 1));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error('Request failed after retries');
+}
+
+function _fetchOnce(url, options, timeout) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    fetch(url, { ...options, signal: controller.signal })
+      .then(response => {
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const retryable = response.status >= 500 && response.status < 600;
+          return response.text().then(text => {
+            console.warn('[API] HTTP', response.status, '→', text.substring(0, 200));
+            resolve({
+              success: false,
+              error: `Server Error (${response.status}): ${(text || '').substring(0, 200)}`,
+              _httpError: true,
+              _retryable: retryable,
+            });
+          });
+        }
+
+        return response.text().then(text => {
+          if (!text || text.trim() === '') {
+            return resolve({ success: true, data: [] });
+          }
+
+          try {
+            const data = JSON.parse(text);
+
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+              if (data.success === undefined) {
+                resolve({ success: true, data });
+              } else {
+                resolve(data);
+              }
+            } else {
+              resolve({ success: true, data });
+            }
+          } catch (parseErr) {
+            resolve({
+              success: false,
+              error: `JSON parse error: ${parseErr.message} — ${text.substring(0, 150)}`,
+            });
+          }
+        });
+      })
+      .catch(err => {
+        clearTimeout(timeoutId);
+
+        if (err.name === 'AbortError') {
+          reject(new Error('Request timeout'));
+        } else if (err.name === 'TypeError' && err.message && err.message.includes('Failed to fetch')) {
+          // ✅ FIX v26.4.1: CORS error hint
+          reject(new Error(
+            'Gagal terhubung ke server. Kemungkinan penyebab:\n' +
+            '1. Deployment GAS belum "Anyone" — cek Deploy → Manage Deployments\n' +
+            '2. SCRIPT_URL di config.js salah\n' +
+            '3. Coba refresh halaman (Ctrl+Shift+R)\n' +
+            'Detail: ' + err.message
+          ));
+        } else {
+          reject(new Error(err.message || 'Network error'));
+        }
+      });
+  });
+}
+
+function _sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ============================================================
+//   FETCH WITH CACHE
+// ============================================================
 export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinutes = 30, forceRefresh = false) {
   if (!cacheKey) return await callApi(action, params, 'GET');
-  const CACHE_PREFIX = 'pkd_cache_';
+
   const fullKey = CACHE_PREFIX + cacheKey;
   const now = Date.now();
   let cached = null;
+
   try {
-    const item = localStorage.getItem(fullKey);
+    const item = safeLocalGet(fullKey);
     if (item) {
       const parsed = JSON.parse(item);
-      if (now - parsed.timestamp < cacheAgeMinutes * 60 * 1000) cached = parsed.data;
+      if (parsed && (now - parsed.timestamp) < cacheAgeMinutes * 60 * 1000) {
+        cached = parsed.data;
+      } else {
+        safeLocalRemove(fullKey);
+      }
     }
-  } catch (e) {}
+  } catch (e) { /* silent */ }
+
   if (!forceRefresh && cached !== null) return cached;
+
   try {
     const res = await callApi(action, params, 'GET');
-    let data = res?.data || res;
-    try { localStorage.setItem(fullKey, JSON.stringify({ data, timestamp: now })); } catch (e) {}
+    let data = (res && res.data !== undefined) ? res.data : res;
+    if (data === undefined || data === null) data = [];
+
+    safeLocalSet(fullKey, JSON.stringify({ data, timestamp: now }));
     return data;
   } catch (e) {
     if (cached !== null) return cached;
@@ -205,206 +516,553 @@ export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinu
   }
 }
 
-// =============================== GUARD PUBLIC ACCESS ===============================
+// ============================================================
+//   GUARD PUBLIC ACCESS
+// ============================================================
+let _loginModeCache = { value: null, timestamp: 0 };
+const LOGIN_MODE_CACHE_MS = 30000;
+
 export async function guardPublicAccess() {
-  const role = getUserRole();
-  if (role) return true;
+  if (userRole) return true;
+
   try {
-    const modeRes = await getLoginMode();
-    if (modeRes.success && modeRes.enabled) {
-      const redirect = window.location.pathname;
+    let enabled = false;
+    const now = Date.now();
+
+    if (_loginModeCache.value !== null && (now - _loginModeCache.timestamp) < LOGIN_MODE_CACHE_MS) {
+      enabled = _loginModeCache.value;
+    } else {
+      const modeRes = await getLoginMode();
+      enabled = !!(modeRes && modeRes.success && modeRes.enabled);
+      _loginModeCache = { value: enabled, timestamp: now };
+    }
+
+    if (enabled) {
+      const redirect = window.location.pathname + window.location.search;
       window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(redirect);
       return false;
     }
     return true;
   } catch (e) {
-    console.warn('Gagal memeriksa login mode, mengizinkan akses publik.');
+    console.warn('[API] guardPublicAccess check failed, allowing access:', e);
     return true;
   }
 }
 
-// =============================== DEFAULT FORM FIELDS ===============================
+// ============================================================
+//   DEFAULT FORM FIELDS
+// ============================================================
 export function getDefaultFormFields() {
   return [
-    { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
-    { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'alamat', label: 'Alamat', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'no_hp', label: 'No HP', type: 'text', options: '', required: true, isCore: true },
-    { id: 'email', label: 'Email', type: 'text', options: '', required: true, isCore: true },
-    { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-    { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
-    { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: false, isCore: true }
+    { id: 'nama_lengkap',          label: 'Nama Lengkap',           type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'tempat_tgl_lahir',      label: 'Tempat & Tanggal Lahir', type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'pekerjaan',             label: 'Pekerjaan',              type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'pendidikan_terakhir',   label: 'Pendidikan Terakhir',    type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'alamat',                label: 'Alamat',                 type: 'textarea', options: '', required: true,  isCore: true },
+    { id: 'no_hp',                 label: 'No HP',                  type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'email',                 label: 'Email',                  type: 'text',     options: '', required: true,  isCore: true },
+    { id: 'utusan',                label: 'Utusan (PAC)',           type: 'select',   options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
+    { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi',  type: 'textarea', options: '', required: true,  isCore: true },
+    { id: 'foto',                  label: 'Foto',                   type: 'file',     options: '', required: true,  isCore: true },
+    { id: 'surat_rekomendasi',     label: 'Surat Rekomendasi',      type: 'file',     options: '', required: false, isCore: true },
   ];
 }
 
-// =============================== AUTENTIKASI ===============================
-export function verifyAdmin(username, password) { return callApi('verifyAdmin', { username, password }, 'GET'); }
-export function verifyKetuaPAC(username, password) { return callApi('verifyKetuaPAC', { username, password }, 'GET'); }
-export function verifyMember(username, password) { return callApi('verifyMember', { username, password }, 'GET'); }
+// ============================================================
+//   SHARED HELPERS — Date/Time
+// ============================================================
+export function formatDateID(dateInput, opts) {
+  if (!dateInput) return '-';
+  try {
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('id-ID', opts || {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
+  } catch (e) { return '-'; }
+}
 
-// =============================== PESERTA ===============================
-export function getPesertaList(status) { return callApi('getPesertaList', status ? { status } : {}, 'GET'); }
-export function submitPeserta(data) { return callApi('submitPeserta', data, 'POST'); }
-export function deletePeserta(id) { return callApi('deletePeserta', { id }, 'POST'); }
-export function updatePeserta(data) { return callApi('updatePeserta', data, 'POST'); }
-export function approvePeserta(id) { return callApi('approvePeserta', { id }, 'POST'); }
-export function rejectPeserta(id) { return callApi('rejectPeserta', { id }, 'POST'); }
-export function getPesertaById(id) { return callApi('getPesertaById', { id }, 'GET'); }
-export function getTotalPeserta() { return callApi('getTotalPeserta', {}, 'GET'); }
-export function getAlumniList() { return callApi('getAlumniList', {}, 'GET'); }
-export function moveToAlumni(id) { return callApi('moveToAlumni', { id }, 'POST'); }
-export function moveMultipleToAlumni(ids) { return callApi('moveMultipleToAlumni', { ids }, 'POST'); }
-export function moveBackToActive(id) { return callApi('moveBackToActive', { id }, 'POST'); }
-export function getPesertaCredentials(id) { return callApi('getPesertaCredentials', { id }, 'GET'); }
+export function formatDateTimeID(dateInput) {
+  if (!dateInput) return '-';
+  try {
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch (e) { return '-'; }
+}
 
-// =============================== SESI ABSEN ===============================
-export function getSesiAbsen() { return callApi('getSesiAbsen', {}, 'GET'); }
-export function addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('addSesiAbsen', { nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
-export function updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) { return callApi('updateSesiAbsen', { id, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password }, 'POST'); }
-export function deleteSesiAbsen(id) { return callApi('deleteSesiAbsen', { id }, 'POST'); }
-export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }, 'POST'); }
-export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
-export function getAttendanceSessionStatus(id) { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
+export function getLocalDateOnly(dateInput) {
+  if (dateInput === null || dateInput === undefined) return '';
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function timeSinceID(dateInput) {
+  if (!dateInput) return '';
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (secs < 60) return secs + ' dtk lalu';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return mins + ' mnt lalu';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + ' jam lalu';
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return days + ' hr lalu';
+  const months = Math.floor(days / 30);
+  if (months < 12) return months + ' bln lalu';
+  return Math.floor(months / 12) + ' thn lalu';
+}
+
+// ============================================================
+//   SHARED HELPERS — File
+// ============================================================
+export function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('File kosong'));
+    if (file.size === 0) return reject(new Error('File kosong (0 byte)'));
+    const reader = new FileReader();
+    reader.onload = () => {
+      const r = reader.result;
+      if (!r || typeof r !== 'string') return reject(new Error('Hasil baca file tidak valid'));
+      resolve(r);
+    };
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function uploadToDrive(token, file, fileNameOverride) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('File kosong'));
+    if (!token) return reject(new Error('Token tidak tersedia'));
+
+    const formData = new FormData();
+    formData.append(
+      'metadata',
+      new Blob([JSON.stringify({ name: fileNameOverride || file.name })], { type: 'application/json' })
+    );
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.timeout = 120000;
+
+    xhr.onload = () => {
+      if (xhr.status === 200 || xhr.status === 201) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch (e) { reject(new Error('Respons Drive tidak valid')); }
+      } else {
+        reject(new Error(`Upload Drive gagal (HTTP ${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error saat upload ke Drive'));
+    xhr.ontimeout = () => reject(new Error('Upload Drive timeout'));
+    xhr.send(formData);
+  });
+}
+
+// ============================================================
+//   SHARED HELPERS — Download
+// ============================================================
+export function downloadJSON(data, filename) {
+  try {
+    const json = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || `export_${getLocalDateOnly(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  } catch (e) {
+    console.error('[downloadJSON]', e);
+    return false;
+  }
+}
+
+export function downloadCSV(rows, headers, filename) {
+  try {
+    const headerLine = headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',');
+    const dataLines = rows.map(row =>
+      row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+    );
+    const csv = '\uFEFF' + [headerLine, ...dataLines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || `export_${getLocalDateOnly(new Date())}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  } catch (e) {
+    console.error('[downloadCSV]', e);
+    return false;
+  }
+}
+
+export function getAppVersion() {
+  return APP_VERSION;
+}
+
+// ============================================================
+//   CONVENIENCE HELPERS
+// ============================================================
+export async function getSesiAbsenById(id) {
+  const res = await getSesiAbsen();
+  const list = Array.isArray(res) ? res : (res?.data || []);
+  return list.find(s => String(s.id) === String(id)) || null;
+}
+
+export async function getPesertaByStatus(status) {
+  return await getPesertaList({ status });
+}
+
+export function unreadNotifCount() {
+  try {
+    const raw = localStorage.getItem('pkd_notif_read_ids');
+    if (!raw) return 0;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch (e) { return 0; }
+}
+
+// ============================================================
+//   DIAGNOSTIC HELPERS — v26.4.1
+// ============================================================
+export async function healthCheck() {
+  return await callApi('health', {}, 'GET');
+}
+
+export async function ping() {
+  return await callApi('ping', {}, 'GET');
+}
+
+// ============================================================
+//   AUTHENTICATION
+// ============================================================
+export function verifyAdmin(username, password)          { return callApi('verifyAdmin',    { username, password }, 'GET'); }
+export function verifyKetuaPAC(username, password)       { return callApi('verifyKetuaPAC', { username, password }, 'GET'); }
+export function verifyMember(username, password)         { return callApi('verifyMember',   { username, password }, 'GET'); }
+export function updateAdminPassword(username, newPassword) { return callApi('updateAdminPassword', { username, newPassword }, 'POST'); }
+
+// ============================================================
+//   PESERTA
+// ============================================================
+export function getPesertaList(statusOrParams)     { return callApi('getPesertaList', toParams(statusOrParams, 'status'), 'GET'); }
+export function submitPeserta(data)                { return callApi('submitPeserta', data, 'POST'); }
+export function updatePeserta(data)                { return callApi('updatePeserta', data, 'POST'); }
+export function deletePeserta(id)                  { return callApi('deletePeserta', { id }, 'POST'); }
+export function approvePeserta(id)                 { return callApi('approvePeserta', { id }, 'POST'); }
+export function rejectPeserta(id)                  { return callApi('rejectPeserta', { id }, 'POST'); }
+export function getPesertaById(id)                 { return callApi('getPesertaById', { id }, 'GET'); }
+export function getPesertaCredentials(id)          { return callApi('getPesertaCredentials', { id }, 'GET'); }
+export function resetPesertaPassword(id, newPassword) { return callApi('resetPesertaPassword', { id, newPassword }, 'POST'); }
+export function getTotalPeserta()                  { return callApi('getTotalPeserta', {}, 'GET'); }
+export function getAlumniList()                    { return callApi('getAlumniList', {}, 'GET'); }
+export function moveToAlumni(id)                   { return callApi('moveToAlumni', { id }, 'POST'); }
+export function moveMultipleToAlumni(ids)          { return callApi('moveMultipleToAlumni', { ids }, 'POST'); }
+export function moveBackToActive(id)               { return callApi('moveBackToActive', { id }, 'POST'); }
+
+// ============================================================
+//   SESI ABSEN
+// ============================================================
+export function getSesiAbsen()   { return callApi('getSesiAbsen', {}, 'GET'); }
+
+export function addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) {
+  return callApi('addSesiAbsen', {
+    nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password,
+  }, 'POST');
+}
+
+export function updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) {
+  return callApi('updateSesiAbsen', {
+    id, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password,
+  }, 'POST');
+}
+
+export function deleteSesiAbsen(id)                { return callApi('deleteSesiAbsen', { id }, 'POST'); }
+export function regenerateQRSesi(id)               { return callApi('regenerateQRSesi', { id }, 'POST'); }
+export function toggleAttendanceSession(id, open)  { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
+export function getAttendanceSessionStatus(id)     { return callApi('getAttendanceSessionStatus', { id }, 'GET'); }
+
+// ============================================================
+//   ABSENSI
+// ============================================================
 export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesertaId) {
-  return callApi('submitAbsen', { nama, sesiId, tandaTangan, password, qrToken, pesertaId }, 'POST');
+  return callApi('submitAbsen', {
+    nama, sesiId, tandaTangan, password, qrToken, pesertaId,
+  }, 'POST');
 }
 
-// =============================== MATERI ===============================
-export function getMateriList() { return callApi('getMateriList', {}, 'GET'); }
-export function addMateri(judul, deskripsi, file, fileName, uploadBy) { return callApi('addMateri', { judul, deskripsi, file, fileName, uploadBy }, 'POST'); }
-export function deleteMateri(id, fileId) { return callApi('deleteMateri', { id, fileId }, 'POST'); }
+export function getAbsensiResponses()              { return callApi('getAbsensiResponses', {}, 'GET'); }
+export function getAttendanceBySesi(sesiId)        { return callApi('getAttendanceBySesi', { sesiId }, 'GET'); }
+export function deleteAbsensi(params)              { return callApi('deleteAbsensi', params, 'POST'); }
+export function getAttendanceMatrix()              { return callApi('getAttendanceMatrix', {}, 'GET'); }
+export function exportAttendanceMatrixCSV()        { return callApi('exportAttendanceMatrixCSV', {}, 'GET'); }
 
-// =============================== SKRINING & QUIZ ===============================
-export function getSkriningQuestions() { return callApi('getSkriningQuestions', {}, 'GET'); }
-export function addSkriningQuestion(params) { return callApi('addSkriningQuestion', params, 'POST'); }
-export function updateSkriningQuestion(params) { return callApi('updateSkriningQuestion', params, 'POST'); }
-export function deleteSkriningQuestion(id) { return callApi('deleteSkriningQuestion', { id }, 'POST'); }
-export function submitSkrining(params) { return callApi('submitSkrining', params, 'POST'); }
-export function getSkriningResponses() { return callApi('getSkriningResponses', {}, 'GET'); }
-export function deleteSkriningResponse(id) { return callApi('deleteSkriningResponse', { id }, 'POST'); }
+// ============================================================
+//   MATERI
+// ============================================================
+export function getMateriList()                    { return callApi('getMateriList', {}, 'GET'); }
+export function addMateri(judul, deskripsi, file, fileName, uploadBy) {
+  return callApi('addMateri', { judul, deskripsi, file, fileName, uploadBy }, 'POST');
+}
+export function updateMateri(params)               { return callApi('updateMateri', params, 'POST'); }
+export function deleteMateri(id, fileId)           { return callApi('deleteMateri', { id, fileId }, 'POST'); }
 
-// --- PRETEST ---
-export function getPretestQuestions() { return callApi('getPretestQuestions', {}, 'GET'); }
-export function addPretestQuestion(params) { return callApi('addPretestQuestion', params, 'POST'); }
-export function updatePretestQuestion(params) { return callApi('updatePretestQuestion', params, 'POST'); }
-export function deletePretestQuestion(id) { return callApi('deletePretestQuestion', { id }, 'POST'); }
-export function submitPretest(nama, nohp, alamat, answers, score) { return callApi('submitPretest', { nama, nohp, alamat, answers, score }, 'POST'); }
-export function getPretestResponses() { return callApi('getPretestResponses', {}, 'GET'); }
+// ============================================================
+//   SKRINING
+// ============================================================
+export function getSkriningQuestions()             { return callApi('getSkriningQuestions', {}, 'GET'); }
+export function addSkriningQuestion(params)        { return callApi('addSkriningQuestion', params, 'POST'); }
+export function updateSkriningQuestion(params)     { return callApi('updateSkriningQuestion', params, 'POST'); }
+export function deleteSkriningQuestion(id)         { return callApi('deleteSkriningQuestion', { id }, 'POST'); }
+export function submitSkrining(params)             { return callApi('submitSkrining', params, 'POST'); }
+export function getSkriningResponses()             { return callApi('getSkriningResponses', {}, 'GET'); }
+export function updateSkriningResponse(params)     { return callApi('updateSkriningResponse', params, 'POST'); }
+export function deleteSkriningResponse(id)         { return callApi('deleteSkriningResponse', { id }, 'POST'); }
 
-// --- POSTTEST ---
-export function getPosttestQuestions() { return callApi('getPosttestQuestions', {}, 'GET'); }
-export function addPosttestQuestion(params) { return callApi('addPosttestQuestion', params, 'POST'); }
-export function updatePosttestQuestion(params) { return callApi('updatePosttestQuestion', params, 'POST'); }
-export function deletePosttestQuestion(id) { return callApi('deletePosttestQuestion', { id }, 'POST'); }
-export function submitPosttest(nama, nohp, alamat, answers, score) { return callApi('submitPosttest', { nama, nohp, alamat, answers, score }, 'POST'); }
-export function getPosttestResponses() { return callApi('getPosttestResponses', {}, 'GET'); }
+// ============================================================
+//   PRETEST
+// ============================================================
+export function getPretestQuestions()              { return callApi('getPretestQuestions', {}, 'GET'); }
+export function addPretestQuestion(params)         { return callApi('addPretestQuestion', params, 'POST'); }
+export function updatePretestQuestion(params)      { return callApi('updatePretestQuestion', params, 'POST'); }
+export function deletePretestQuestion(id)          { return callApi('deletePretestQuestion', { id }, 'POST'); }
+export function submitPretest(nama, nohp, alamat, answers, score) {
+  return callApi('submitPretest', { nama, nohp, alamat, answers, score }, 'POST');
+}
+export function getPretestResponses()              { return callApi('getPretestResponses', {}, 'GET'); }
 
-// =============================== KADER ===============================
-export function getKaderList() { return callApi('getKaderList', {}, 'GET'); }
-export function addKader(params) { return callApi('addKader', params, 'POST'); }
-export function updateKader(params) { return callApi('updateKader', params, 'POST'); }
-export function deleteKader(id) { return callApi('deleteKader', { id }, 'POST'); }
+// ============================================================
+//   POSTTEST
+// ============================================================
+export function getPosttestQuestions()             { return callApi('getPosttestQuestions', {}, 'GET'); }
+export function addPosttestQuestion(params)        { return callApi('addPosttestQuestion', params, 'POST'); }
+export function updatePosttestQuestion(params)     { return callApi('updatePosttestQuestion', params, 'POST'); }
+export function deletePosttestQuestion(id)         { return callApi('deletePosttestQuestion', { id }, 'POST'); }
+export function submitPosttest(nama, nohp, alamat, answers, score) {
+  return callApi('submitPosttest', { nama, nohp, alamat, answers, score }, 'POST');
+}
+export function getPosttestResponses()             { return callApi('getPosttestResponses', {}, 'GET'); }
 
-// =============================== INFORMASI & USULAN ===============================
-export function getInfoList() { return callApi('getInfoList', {}, 'GET'); }
-export function addInfo(params) { return callApi('addInfo', params, 'POST'); }
-export function updateInfo(params) { return callApi('updateInfo', params, 'POST'); }
-export function deleteInfo(id) { return callApi('deleteInfo', { id }, 'POST'); }
-export function toggleInfoStatus(id) { return callApi('toggleInfoStatus', { id }, 'POST'); }
-export function getUsulanList() { return callApi('getUsulanList', {}, 'GET'); }
-export function submitUsulan(params) { return callApi('submitUsulan', params, 'POST'); }
-export function updateUsulanStatus(id, status) { return callApi('updateUsulanStatus', { id, status }, 'POST'); }
+// ============================================================
+//   KADER
+// ============================================================
+export function getKaderList()                     { return callApi('getKaderList', {}, 'GET'); }
+export function addKader(params)                   { return callApi('addKader', params, 'POST'); }
+export function updateKader(params)                { return callApi('updateKader', params, 'POST'); }
+export function deleteKader(id)                    { return callApi('deleteKader', { id }, 'POST'); }
 
-// =============================== ASET & FOLDERS ===============================
-export function getAssetList() { return callApi('getAssetList', {}, 'GET'); }
-export function addAsset(params) { return callApi('addAsset', params, 'POST'); }
-export function updateAsset(params) { return callApi('updateAsset', params, 'POST'); }
-export function deleteAsset(id) { return callApi('deleteAsset', { id }, 'POST'); }
-export function getFolders() { return callApi('getFolders', {}, 'GET'); }
-export function addFolder(nama, parentId) { return callApi('addFolder', { nama, parentId }, 'POST'); }
-export function deleteFolder(id) { return callApi('deleteFolder', { id }, 'POST'); }
-export function toggleFolderPublic(params) { return callApi('toggleFolderPublic', params, 'POST'); }
-export function toggleFolderHideFromGallery(params) { return callApi('toggleFolderHideFromGallery', params, 'POST'); }
-export function setFolderPassword(params) { return callApi('setFolderPassword', params, 'POST'); }
-export function clearFolderPassword(params) { return callApi('clearFolderPassword', params, 'POST'); }
-export function verifyFolderPassword(params) { return callApi('verifyFolderPassword', params, 'GET'); }
-export function getAssetPublicConfig() { return callApi('getAssetPublicConfig', {}, 'GET'); }
-export function verifyAssetPublicPassword(params) { return callApi('verifyAssetPublicPassword', params, 'GET'); }
-export function setAssetPublicPassword(params) { return callApi('setAssetPublicPassword', params, 'POST'); }
+// ============================================================
+//   INFORMASI & USULAN
+// ============================================================
+export function getInfoList()                      { return callApi('getInfoList', {}, 'GET'); }
+export function addInfo(params)                    { return callApi('addInfo', params, 'POST'); }
+export function updateInfo(params)                 { return callApi('updateInfo', params, 'POST'); }
+export function deleteInfo(id)                     { return callApi('deleteInfo', { id }, 'POST'); }
+export function toggleInfoStatus(id)               { return callApi('toggleInfoStatus', { id }, 'POST'); }
+export function getUsulanList()                    { return callApi('getUsulanList', {}, 'GET'); }
+export function submitUsulan(params)               { return callApi('submitUsulan', params, 'POST'); }
+export function updateUsulanStatus(id, status)     { return callApi('updateUsulanStatus', { id, status }, 'POST'); }
 
-// =============================== RTL & TUGAS ===============================
-export function getRTLTasks(pesertaId) { return callApi('getRTLTasks', { pesertaId }, 'GET'); }
-export function addRTLTask(params) { return callApi('addRTLTask', params, 'POST'); }
-export function updateRTLTask(params) { return callApi('updateRTLTask', params, 'POST'); }
-export function deleteRTLTask(id) { return callApi('deleteRTLTask', { id }, 'POST'); }
-export function approveRTLTask(id) { return callApi('approveRTLTask', { id }, 'POST'); }
-export function approveAllRTL(pesertaId) { return callApi('approveAllRTL', { pesertaId }, 'POST'); }
-export function getRTLStatus(pesertaId) { return callApi('getRTLStatus', { pesertaId }, 'GET'); }
-export function submitRTLAttachment(taskId, fileData, fileName) { return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST'); }
+// ============================================================
+//   ASET DIGITAL & FOLDERS
+// ============================================================
+export function getAssetList()                     { return callApi('getAssetList', {}, 'GET'); }
+export function addAsset(params)                   { return callApi('addAsset', params, 'POST'); }
+export function updateAsset(params)                { return callApi('updateAsset', params, 'POST'); }
+export function deleteAsset(id)                    { return callApi('deleteAsset', { id }, 'POST'); }
+export function getFolders(params)                 { return callApi('getFolders', params || {}, 'GET'); }
+export function addFolder(nama, parentId)          { return callApi('addFolder', { nama, parentId }, 'POST'); }
+export function deleteFolder(id)                   { return callApi('deleteFolder', { id }, 'POST'); }
+export function toggleFolderPublic(params)         { return callApi('toggleFolderPublic', params, 'POST'); }
+export function toggleFolderHideFromGallery(params){ return callApi('toggleFolderHideFromGallery', params, 'POST'); }
+export function setFolderPassword(params)          { return callApi('setFolderPassword', params, 'POST'); }
+export function clearFolderPassword(params)        { return callApi('clearFolderPassword', params, 'POST'); }
+export function verifyFolderPassword(params)       { return callApi('verifyFolderPassword', params, 'GET'); }
+export function getAssetPublicConfig()             { return callApi('getAssetPublicConfig', {}, 'GET'); }
+export function verifyAssetPublicPassword(params)  { return callApi('verifyAssetPublicPassword', params, 'GET'); }
+export function setAssetPublicPassword(params)     { return callApi('setAssetPublicPassword', params, 'POST'); }
+export function publishAllAssetsToPublic()         { return callApi('publishAllAssetsToPublic', {}, 'POST'); }
 
-// =============================== SERTIFIKAT ===============================
-export function getUploadedCertificates() { return callApi('getUploadedCertificates', {}, 'GET'); }
-export function getCertificateTemplates() { return callApi('getCertificateTemplates', {}, 'GET'); }
+// ============================================================
+//   DRIVE TOKEN
+// ============================================================
+export function getDriveToken()                    { return callApi('getDriveToken', {}, 'GET'); }
+
+// ============================================================
+//   SERTIFIKAT
+// ============================================================
+export function getUploadedCertificates()          { return callApi('getUploadedCertificates', {}, 'GET'); }
+export function getCertificateTemplates()          { return callApi('getCertificateTemplates', {}, 'GET'); }
 export function addCertificateTemplateManual(params) { return callApi('addCertificateTemplateManual', params, 'POST'); }
-export function updateCertificateTemplate(params) { return callApi('updateCertificateTemplate', params, 'POST'); }
-export function deleteCertificateTemplate(id) { return callApi('deleteCertificateTemplate', { id }, 'POST'); }
-export function generateCertificateForParticipant(templateId, pesertaId) { return callApi('generateCertificateForParticipant', { templateId, pesertaId }, 'POST'); }
-export function getCertPresets() { return callApi('getCertPresets', {}, 'GET'); }
-export function listCertificateLayouts() { return callApi('listCertificateLayouts', {}, 'GET'); }
-export function saveCertificateLayout(nama, data_json, id) { return callApi('saveCertificateLayout', { nama, data_json, id }, 'POST'); }
-export function verifyCertificate(nomor) { return callApi('verifyCertificate', { nomor }, 'GET'); }
-
-// =============================== TANDA TANGAN DIGITAL ===============================
-export function getAllDigitalApprovals() { return callApi('getAllDigitalApprovals', {}, 'GET'); }
-export function bulkGenerateTTD(params) { return callApi('bulkGenerateTTD', params, 'POST'); }
-export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) { return callApi('submitDigitalSignature', { role, nama, signature, password, peserta_nama, kegunaan }, 'POST'); }
-export function deleteDigitalApprovalByPeserta(peserta_nama) { return callApi('deleteDigitalApprovalByPeserta', { peserta_nama }, 'POST'); }
-export function getSignPasswords() { return callApi('getSignPasswords', {}, 'GET'); }
-export function updateSignPassword(role, newPassword) { return callApi('updateSignPassword', { role, newPassword }, 'POST'); }
-
-// =============================== LOKASI PKD DINAMIS ===============================
-export function getLokasiPKDList() { return callApi('getLokasiPKDList', {}, 'GET'); }
-export function addLokasiPKD(nama) { return callApi('addLokasiPKD', { nama }, 'POST'); }
-export function deleteLokasiPKD(id) { return callApi('deleteLokasiPKD', { id }, 'POST'); }
-
-// =============================== PENGATURAN ===============================
-export function getQuizSettings() { return callApi('getQuizSettings', {}, 'GET'); }
-export function setQuizSettings(params) { return callApi('setQuizSettings', params, 'POST'); }
-export function getLoginMode() { return callApi('getLoginMode', {}, 'GET'); }
-export function setLoginMode(enabled) { return callApi('setLoginMode', { enabled }, 'POST'); }
-export function getPublicVisibility() { return callApi('getPublicVisibility', {}, 'GET'); }
-export function setPublicVisibility(data) { return callApi('setPublicVisibility', { data: JSON.stringify(data) }, 'POST'); }
-export function getPKDLokasi() { return callApi('getPKDLokasi', {}, 'GET'); }
-export function setPKDLokasi(lokasi) { return callApi('setPKDLokasi', { lokasi }, 'POST'); }
-export function getFormSettings() { return callApi('getFormSettings', {}, 'GET'); }
-export function setFormSettings(fields) { return callApi('setFormSettings', { fields: JSON.stringify(fields) }, 'POST'); }
-export function getRealtimeSetting() { return callApi('getRealtimeSetting', {}, 'GET'); }
-export function setRealtimeSetting(enabled) { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
-export function getDashboardStats() { return callApi('getDashboardStats', {}, 'GET'); }
-
-// =============================== KONTAK ===============================
-export function submitKontak(nama, email, pesan, username, role, ip) { return callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'GET'); }
-
-// =============================== ABSENSI & REKAP ===============================
-export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
-export function getAttendanceBySesi(sesiId) { return callApi('getAttendanceBySesi', { sesiId }, 'GET'); }
-export function getAttendanceMatrix() { return callApi('getAttendanceMatrix', {}, 'GET'); }
-export function exportAttendanceMatrixCSV() { return callApi('exportAttendanceMatrixCSV', {}, 'GET'); }
-
-// =============================== MEMBER ===============================
-export function getMemberData(username) { return callApi('getMemberData', { username }, 'GET'); }
-export function updateMemberProfile(username, data) { return callApi('updateMemberProfile', { username, ...data }, 'POST'); }
-export function getMemberSkrining(params) { return callApi('getMemberSkrining', params, 'GET'); }
-export function getMemberAbsensi(params) { return callApi('getMemberAbsensi', params, 'GET'); }
-export function getMemberSertifikat(params) { return callApi('getMemberSertifikat', params, 'GET'); }
-export function getMemberUsername(params) { return callApi('getMemberUsername', params, 'GET'); }
-export function verifyMemberForgot(params) { return callApi('verifyMemberForgot', params, 'GET'); }
-export function resetMemberPassword(params) { return callApi('resetMemberPassword', params, 'POST'); }
-
-// =============================== INIT ===============================
-if (typeof document !== 'undefined') {
-  loadAuthState();
+export function updateCertificateTemplate(params)  { return callApi('updateCertificateTemplate', params, 'POST'); }
+export function deleteCertificateTemplate(id)      { return callApi('deleteCertificateTemplate', { id }, 'POST'); }
+export function generateCertificateForParticipant(templateId, pesertaId) {
+  return callApi('generateCertificateForParticipant', { templateId, pesertaId }, 'POST');
 }
+export function generateCertificates(params)       { return callApi('generateCertificates', params, 'POST'); }
+export function uploadManualCertificate(params)    { return callApi('uploadManualCertificate', params, 'POST'); }
+export function deleteCertificate(id)              { return callApi('deleteCertificate', { id }, 'POST'); }
+export function getCertPresets()                   { return callApi('getCertPresets', {}, 'GET'); }
+export function addCertPreset(params)              { return callApi('addCertPreset', params, 'POST'); }
+export function updateCertPreset(params)           { return callApi('updateCertPreset', params, 'POST'); }
+export function deleteCertPreset(id)               { return callApi('deleteCertPreset', { id }, 'POST'); }
+export function listCertificateLayouts()           { return callApi('listCertificateLayouts', {}, 'GET'); }
+export function saveCertificateLayout(nama, data_json, id) {
+  return callApi('saveCertificateLayout', { nama, data_json, id }, 'POST');
+}
+export function getCertificateLayout(identifier) {
+  const p = (typeof identifier === 'object') ? identifier : { nama: identifier };
+  return callApi('getCertificateLayout', p, 'GET');
+}
+export function verifyCertificate(nomor)           { return callApi('verifyCertificate', { nomor }, 'GET'); }
+export function getNextCertificateNumber()         { return callApi('getNextCertificateNumber', {}, 'GET'); }
+
+// ============================================================
+//   TANDA TANGAN DIGITAL
+// ============================================================
+export function getAllDigitalApprovals()           { return callApi('getAllDigitalApprovals', {}, 'GET'); }
+export function bulkGenerateTTD(params)            { return callApi('bulkGenerateTTD', params || {}, 'POST'); }
+
+export function submitDigitalSignature(role, nama, signature, password, peserta_nama, kegunaan) {
+  return callApi('submitDigitalSignature', {
+    role, nama, signature, password, peserta_nama, kegunaan,
+  }, 'POST');
+}
+
+export function getDigitalApproval(role)           { return callApi('getDigitalApproval', { role }, 'GET'); }
+export function deleteDigitalApprovalByPeserta(peserta_nama) {
+  return callApi('deleteDigitalApprovalByPeserta', { peserta_nama }, 'POST');
+}
+export function getSignPasswords()                 { return callApi('getSignPasswords', {}, 'GET'); }
+export function updateSignPassword(role, newPassword) {
+  return callApi('updateSignPassword', { role, newPassword }, 'POST');
+}
+export function verifySignPassword(role, password) { return callApi('verifySignPassword', { role, password }, 'POST'); }
+
+export function bulkSignForRole(role, nama, signature, password, filterPac, kegunaan) {
+  return callApi('bulkSignForRole', {
+    role, nama, signature, password,
+    filterPac: filterPac || '',
+    kegunaan: kegunaan || 'Untuk verifikasi sertifikat PKD',
+  }, 'POST');
+}
+
+export function getSignatureOrderStatus()          { return callApi('getSignatureOrderStatus', {}, 'GET'); }
+
+// ============================================================
+//   TIM INSTRUKTUR
+// ============================================================
+export function getTimInstrukturList()             { return callApi('getTimInstrukturList', {}, 'GET'); }
+export function addTimInstruktur(params)           { return callApi('addTimInstruktur', params, 'POST'); }
+export function updateTimInstruktur(params)        { return callApi('updateTimInstruktur', params, 'POST'); }
+export function deleteTimInstruktur(id)            { return callApi('deleteTimInstruktur', { id }, 'POST'); }
+export function reorderTimInstruktur(orders)       { return callApi('reorderTimInstruktur', { orders }, 'POST'); }
+
+// ============================================================
+//   RTL
+// ============================================================
+export function getRTLTasks(pesertaIdOrParams)     { return callApi('getRTLTasks', toParams(pesertaIdOrParams, 'pesertaId'), 'GET'); }
+export function addRTLTask(params)                 { return callApi('addRTLTask', params, 'POST'); }
+export function updateRTLTask(params)              { return callApi('updateRTLTask', params, 'POST'); }
+export function deleteRTLTask(id)                  { return callApi('deleteRTLTask', { id }, 'POST'); }
+export function approveRTLTask(id)                 { return callApi('approveRTLTask', { id }, 'POST'); }
+export function approveAllRTL(pesertaIdOrParams)   { return callApi('approveAllRTL', toParams(pesertaIdOrParams, 'pesertaId'), 'POST'); }
+export function getRTLStatus(pesertaIdOrParams)    { return callApi('getRTLStatus', toParams(pesertaIdOrParams, 'pesertaId'), 'GET'); }
+export function submitRTLAttachment(taskId, fileData, fileName) {
+  return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST');
+}
+export function getRTLAttachments(taskId)          { return callApi('getRTLAttachments', { taskId }, 'GET'); }
+
+// ============================================================
+//   LOKASI PKD
+// ============================================================
+export function getLokasiPKDList()                 { return callApi('getLokasiPKDList', {}, 'GET'); }
+export function addLokasiPKD(nama)                 { return callApi('addLokasiPKD', { nama }, 'POST'); }
+export function deleteLokasiPKD(id)                { return callApi('deleteLokasiPKD', { id }, 'POST'); }
+
+// ============================================================
+//   MEMBER
+// ============================================================
+export function getMemberData(username)            { return callApi('getMemberData', { username }, 'GET'); }
+export function updateMemberProfile(username, data) { return callApi('updateMemberProfile', { username, ...data }, 'POST'); }
+export function getMemberSkrining(params)          { return callApi('getMemberSkrining', params, 'GET'); }
+export function getMemberAbsensi(params)           { return callApi('getMemberAbsensi', params, 'GET'); }
+export function getMemberSertifikat(params)        { return callApi('getMemberSertifikat', params, 'GET'); }
+export function getMemberUsername(params)          { return callApi('getMemberUsername', params, 'GET'); }
+export function verifyMemberForgot(params)         { return callApi('verifyMemberForgot', params, 'GET'); }
+export function resetMemberPassword(params)        { return callApi('resetMemberPassword', params, 'POST'); }
+
+// ============================================================
+//   PENGATURAN
+// ============================================================
+export function getQuizSettings()                  { return callApi('getQuizSettings', {}, 'GET'); }
+export function setQuizSettings(params)            { return callApi('setQuizSettings', params, 'POST'); }
+export function saveQuizSettings(params)           { return callApi('saveQuizSettings', params, 'POST'); }
+export function getLoginMode()                     { return callApi('getLoginMode', {}, 'GET'); }
+export function setLoginMode(enabled)              { return callApi('setLoginMode', { enabled }, 'POST'); }
+export function getPublicVisibility()              { return callApi('getPublicVisibility', {}, 'GET'); }
+export function setPublicVisibility(data)          { return callApi('setPublicVisibility', { data }, 'POST'); }
+export function getPKDLokasi()                     { return callApi('getPKDLokasi', {}, 'GET'); }
+export function setPKDLokasi(lokasi)               { return callApi('setPKDLokasi', { lokasi }, 'POST'); }
+export function getFormSettings()                  { return callApi('getFormSettings', {}, 'GET'); }
+export function setFormSettings(fields)            { return callApi('setFormSettings', { fields }, 'POST'); }
+export function getRealtimeSetting()               { return callApi('getRealtimeSetting', {}, 'GET'); }
+export function setRealtimeSetting(enabled)        { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
+export function getDashboardStats()                { return callApi('getDashboardStats', {}, 'GET'); }
+
+// ============================================================
+//   KONTAK
+// ============================================================
+export function submitKontak(nama, email, pesan, username, role, ip) {
+  return callApi('submitKontak', { nama, email, pesan, username, role, ip }, 'POST');
+}
+
+// ============================================================
+//   MIGRATION
+// ============================================================
+export function migrateSettingsBooleans()          { return callApi('migrateSettingsBooleans', {}, 'POST'); }
+
+// ============================================================
+//   PASSWORD DIAGNOSTICS (v26.1.8.2+)
+// ============================================================
+export function debugVerifyPassword(username, password) {
+  return callApi('debugVerifyPassword', { username, password }, 'GET');
+}
+export function auditAllPasswords()                { return callApi('auditAllPasswords', {}, 'GET'); }
+export function repairHashes(params)               { return callApi('repairHashes', params, 'POST'); }
+
+// ============================================================
+//   AUTO-INIT
+// ============================================================
+if (typeof document !== 'undefined') {
+  try { loadAuthState(); }
+  catch (e) { console.warn('[API] Auto-init loadAuthState failed:', e); }
+}
+
+// ============================================================
+//   CONSOLE BANNER
+// ============================================================
+console.log(
+  `%c API v${APP_VERSION} — GitHub Pages /bisaa/ Edition `,
+  'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+);
+console.log(
+  `%c 💡 Diagnostic: api.healthCheck() atau api.ping() `,
+  'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
+);
