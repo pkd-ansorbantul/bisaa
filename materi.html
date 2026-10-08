@@ -3,8 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Materi Pelatihan PKD GP Ansor Kabupaten Bantul">
   <title>Materi Pelatihan · PKD GP Ansor Bantul</title>
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+
+  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -116,49 +124,49 @@
       border-radius: 0 0 20px 20px;
     }
     #fullscreenExitBtn {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 99999;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        pointer-events: auto;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: auto;
     }
     #fullscreenExitBtn:hover {
-        background: rgba(255, 59, 48, 0.9);
-        transform: scale(1.05);
+      background: rgba(255, 59, 48, 0.9);
+      transform: scale(1.05);
     }
     #previewMateriModal.fullscreen-mode .modal-header,
     #previewMateriModal.fullscreen-mode .modal-footer {
-        display: none !important;
+      display: none !important;
     }
     #previewMateriModal.fullscreen-mode .modal-body {
-        min-height: 100vh !important;
-        background: #000 !important;
-        border-radius: 0 !important;
-        padding: 0 !important;
-        pointer-events: none;
+      min-height: 100vh !important;
+      background: #000 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      pointer-events: none;
     }
     #previewMateriModal.fullscreen-mode .modal-body iframe,
     #previewMateriModal.fullscreen-mode .modal-body img {
-        pointer-events: auto;
+      pointer-events: auto;
     }
     #previewMateriModal.fullscreen-mode .modal-content {
-        border-radius: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      border: none !important;
     }
 
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -190,10 +198,15 @@
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
-        <a href="/bisaa/index.html" class="btn btn-back rounded-pill"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
+          <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
-          <div><div class="brand-title-mini">PKD GP Ansor</div><span class="brand-sub-mini">Kabupaten Bantul</span></div>
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <div>
+            <div class="brand-title-mini">PKD GP Ansor</div>
+            <span class="brand-sub-mini">Kabupaten Bantul</span>
+          </div>
         </a>
       </div>
       <div id="navbarUserMenu" class="user-menu-area"></div>
@@ -207,29 +220,43 @@
     </section>
   </div>
 
+  <!-- ==================== MODAL PREVIEW ==================== -->
   <div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg">
         <div class="modal-header bg-dark text-white border-0 rounded-top-4">
-          <h5 class="modal-title" id="previewMateriLabel"><i class="bi bi-file-earmark-play me-2"></i><span id="previewMateriJudul">Pratinjau Materi</span></h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title" id="previewMateriLabel">
+            <i class="bi bi-file-earmark-play me-2"></i>
+            <span id="previewMateriJudul">Pratinjau Materi</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
-        <div class="modal-body p-0 d-flex justify-content-center align-items-center" style="min-height: 70vh; background: #0f172a; border-radius: 0 0 20px 20px; position: relative;">
+        <div class="modal-body p-0 d-flex justify-content-center align-items-center"
+             style="min-height: 70vh; background: #0f172a; border-radius: 0 0 20px 20px; position: relative;">
           <div id="previewMateriSpinner" class="position-absolute top-50 start-50 translate-middle">
-            <div class="spinner-border text-light" role="status"><span class="visually-hidden">Memuat...</span></div>
+            <div class="spinner-border text-light" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
           </div>
-          <iframe id="previewMateriIframe" src="" style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;" allowfullscreen></iframe>
+          <iframe id="previewMateriIframe" src="" title="Pratinjau materi"
+                  style="width: 100%; height: 80vh; border: none; border-radius: 0 0 20px 20px;"
+                  allowfullscreen></iframe>
         </div>
         <div class="modal-footer border-0 bg-dark rounded-bottom-4">
-          <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()"><i class="bi bi-fullscreen"></i> Fullscreen (F5)</button>
+          <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
+            <i class="bi bi-fullscreen"></i> Fullscreen (F5)
+          </button>
           <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-          <a id="previewMateriDownloadBtn" href="#" target="_blank" class="btn btn-primary rounded-pill px-4"><i class="bi bi-download me-1"></i>Unduh</a>
+          <a id="previewMateriDownloadBtn" href="#" target="_blank" rel="noopener"
+             class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-download me-1"></i>Unduh
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  <button id="fullscreenExitBtn" onclick="toggleFullscreen()" title="Keluar Fullscreen (ESC)">
+  <button id="fullscreenExitBtn" onclick="toggleFullscreen()" title="Keluar Fullscreen (ESC)" aria-label="Keluar fullscreen">
     <i class="bi bi-x-lg"></i>
   </button>
 
@@ -243,18 +270,23 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
+    // ==========================================================
+    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
+    // ==========================================================
     import {
       guardPublicAccess,
-      getMateriList,
       updateNavbarMenu,
       showToast,
       escapeHtml,
       fetchWithCache
-    } from './js/core/api.js';
+    } from '/bisaa/js/core/api.js';
 
     function escapeHtmlLocal(str) { return escapeHtml(str); }
     function showToastLocal(message, type) { showToast(message, type); }
 
+    // ==========================================================
+    //   SKELETON
+    // ==========================================================
     function renderSkeletonMateri(container) {
       if (!container) return;
       let html = '';
@@ -276,24 +308,14 @@
       container.classList.add('fade-up');
     }
 
-    document.addEventListener('keydown', function(e) {
-      const modal = document.getElementById('previewMateriModal');
-      if (!modal || !modal.classList.contains('show')) return;
-      if (e.key === 'Escape') {
-          e.preventDefault();
-          if (document.fullscreenElement) {
-              document.exitFullscreen();
-          } else {
-              bootstrap.Modal.getInstance(modal).hide();
-          }
-          return;
-      }
-    });
-
+    // ==========================================================
+    //   FULLSCREEN TOGGLE
+    // ==========================================================
     window.toggleFullscreen = function() {
       const modalElement = document.getElementById('previewMateriModal');
       const exitBtn = document.getElementById('fullscreenExitBtn');
       if (!modalElement) return;
+
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
@@ -309,52 +331,45 @@
       }
     };
 
+    // Sync state saat user tekan ESC di browser
     document.addEventListener('fullscreenchange', function() {
       const modalElement = document.getElementById('previewMateriModal');
       const exitBtn = document.getElementById('fullscreenExitBtn');
       if (!document.fullscreenElement) {
-        modalElement.classList.remove('fullscreen-mode');
-        exitBtn.style.display = 'none';
+        modalElement?.classList.remove('fullscreen-mode');
+        if (exitBtn) exitBtn.style.display = 'none';
       }
     });
 
-    // PERBAIKAN UTAMA: Event listener untuk menghilangkan error aria-hidden
-    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
-      const iframe = document.getElementById('previewMateriIframe');
-      const spinner = document.getElementById('previewMateriSpinner');
-      
-      if (iframe) iframe.src = '';
-      if (spinner) spinner.style.display = 'flex';
-      
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
+    // ESC di dalam modal
+    document.addEventListener('keydown', function(e) {
+      const modal = document.getElementById('previewMateriModal');
+      if (!modal || !modal.classList.contains('show')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          bootstrap.Modal.getInstance(modal)?.hide();
+        }
       }
-      
-      // 🛑 MEMPERBAIKI ERROR ARIA-HIDDEN: Hapus fokus dari tombol yang masih aktif
-      if (document.activeElement && typeof document.activeElement.blur === 'function') {
-          document.activeElement.blur();
-      }
-
-      this.classList.remove('fullscreen-mode');
-      document.getElementById('fullscreenExitBtn').style.display = 'none';
     });
 
-    // PERBAIKAN UTAMA: Fungsi previewMateri
+    // ==========================================================
+    //   PREVIEW MATERI
+    // ==========================================================
     window.previewMateri = function(index) {
       const materi = window._cachedMateriList || [];
       if (index < 0 || index >= materi.length) return;
-      
+
       const item = materi[index];
       if (!item || !item.fileId) {
-          showToastLocal('File tidak ditemukan atau ID file kosong.', 'error');
-          return;
+        showToastLocal('File tidak ditemukan atau ID file kosong.', 'error');
+        return;
       }
-      
+
       const judul = item.judul || 'Materi';
       const fileId = item.fileId;
-      
-      // 🛑 PERBAIKAN: Gunakan Google Drive Embed langsung, bukan Docs Viewer
-      // Docs Viewer sering gagal dimuat (memunculkan layar kosong)
       const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
       const downloadUrl = `https://drive.google.com/file/d/${fileId}/view`;
 
@@ -365,35 +380,56 @@
 
       if (judulEl) judulEl.innerText = judul;
       if (downloadBtn) downloadBtn.href = downloadUrl;
-      
-      // Reset iframe dan spinner
+
       if (iframe) iframe.src = '';
       if (spinner) spinner.style.display = 'flex';
 
-      // Tunggu sebentar agar spinner terlihat, lalu set src
       setTimeout(() => {
         if (iframe) {
-            iframe.src = previewUrl;
-            // Jika iframe gagal dimuat, kita bisa menangani error di sini dengan listener
-            iframe.onerror = function() {
-                spinner.style.display = 'none';
-                showToastLocal('Gagal memuat pratinjau file. File mungkin tidak memiliki izin akses publik.', 'error');
-            };
-            iframe.onload = function() {
-                // Sembunyikan spinner saat konten berhasil dimuat
-                if (spinner) spinner.style.display = 'none';
-            };
+          iframe.src = previewUrl;
+          iframe.onerror = function() {
+            if (spinner) spinner.style.display = 'none';
+            showToastLocal('Gagal memuat pratinjau file.', 'error');
+          };
+          iframe.onload = function() {
+            if (spinner) spinner.style.display = 'none';
+          };
         }
       }, 100);
 
       const modal = document.getElementById('previewMateriModal');
-      if (!modal.classList.contains('show')) {
-          new bootstrap.Modal(modal).show();
+      if (modal && !modal.classList.contains('show')) {
+        new bootstrap.Modal(modal).show();
       }
     };
 
+    // Reset iframe saat modal ditutup
+    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
+      const iframe = document.getElementById('previewMateriIframe');
+      const spinner = document.getElementById('previewMateriSpinner');
+
+      if (iframe) iframe.src = '';
+      if (spinner) spinner.style.display = 'flex';
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
+      this.classList.remove('fullscreen-mode');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (exitBtn) exitBtn.style.display = 'none';
+    });
+
+    // ==========================================================
+    //   RENDER LIST
+    // ==========================================================
     function renderMateriList(container, materi) {
       window._cachedMateriList = materi;
+
       if (!materi || materi.length === 0) {
         container.innerHTML = `
           <div class="col-12">
@@ -406,42 +442,53 @@
         `;
         return;
       }
+
       let html = '';
-      materi.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach((m, idx) => {
-        const fileUrl = `https://drive.google.com/file/d/${m.fileId}/view`;
-        const iconClass = m.tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
-                          (m.tipe === 'ppt' || m.tipe === 'pptx' ? 'bi-file-ppt-fill text-warning' :
-                          (m.tipe === 'doc' || m.tipe === 'docx' ? 'bi-file-word-fill text-primary' : 'bi-file-earmark-fill text-secondary'));
-        html += `
-          <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${(idx * 0.05)}s;">
-            <div class="materi-card glass-card p-4 h-100 d-flex flex-column">
-              <div class="d-flex align-items-center mb-3">
-                <i class="materi-icon ${iconClass} me-3"></i>
-                <h5 class="card-title mb-0 fw-semibold">${escapeHtmlLocal(m.judul || '')}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">${escapeHtmlLocal(m.deskripsi || '')}</p>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <span class="badge bg-light text-dark">${(m.tipe || 'file').toUpperCase()}</span>
-                <div>
-                  <button class="preview-btn btn btn-sm rounded-pill px-3 me-1" data-index="${idx}">
-                    <i class="bi bi-play-circle me-1"></i>Tayangkan
-                  </button>
-                  <a href="${fileUrl}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="bi bi-download"></i>
-                  </a>
+      materi
+        .slice()
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .forEach((m, idx) => {
+          const fileUrl = `https://drive.google.com/file/d/${m.fileId}/view`;
+          const tipe = String(m.tipe || '').toLowerCase();
+          const iconClass =
+            tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
+            (tipe === 'ppt' || tipe === 'pptx') ? 'bi-file-ppt-fill text-warning' :
+            (tipe === 'doc' || tipe === 'docx') ? 'bi-file-word-fill text-primary' :
+            'bi-file-earmark-fill text-secondary';
+
+          html += `
+            <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${(idx * 0.05)}s;">
+              <div class="materi-card glass-card p-4 h-100 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="materi-icon ${iconClass} me-3"></i>
+                  <h5 class="card-title mb-0 fw-semibold">${escapeHtmlLocal(m.judul || '')}</h5>
+                </div>
+                <p class="card-text text-muted small flex-grow-1">${escapeHtmlLocal(m.deskripsi || '')}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <span class="badge bg-light text-dark">${(m.tipe || 'file').toUpperCase()}</span>
+                  <div>
+                    <button class="preview-btn btn btn-sm rounded-pill px-3 me-1" data-index="${idx}">
+                      <i class="bi bi-play-circle me-1"></i>Tayangkan
+                    </button>
+                    <a href="${fileUrl}" target="_blank" rel="noopener"
+                       class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                       aria-label="Unduh materi">
+                      <i class="bi bi-download"></i>
+                    </a>
+                  </div>
+                </div>
+                <div class="mt-2 text-end text-muted small">
+                  Diupload: ${new Date(m.timestamp).toLocaleDateString('id-ID')}
                 </div>
               </div>
-              <div class="mt-2 text-end text-muted small">
-                Diupload: ${new Date(m.timestamp).toLocaleDateString('id-ID')}
-              </div>
             </div>
-          </div>
-        `;
-      });
+          `;
+        });
+
       container.innerHTML = html;
       container.classList.add('fade-up');
-      
-      // Pastikan event listener tombol preview terpasang dengan benar
+
+      // Bind preview buttons
       document.querySelectorAll('.preview-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const idx = parseInt(this.dataset.index);
@@ -450,18 +497,25 @@
       });
     }
 
+    // ==========================================================
+    //   LOAD DATA
+    // ==========================================================
     async function loadMateriList() {
       const container = document.getElementById('materiContainer');
       const CACHE_KEY = 'materi_list';
       const CACHE_AGE = 30;
 
-      let cachedData = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, false);
+      // Cached first
+      const cachedData = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, false);
       if (cachedData && cachedData.length > 0) {
         renderMateriList(container, cachedData);
       }
+
+      // Background refresh
       (async function refreshData() {
         try {
           const dataArray = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, true);
+
           if (dataArray && dataArray.length > 0) {
             const currentDataStr = JSON.stringify(cachedData || []);
             const newDataStr = JSON.stringify(dataArray);
@@ -482,13 +536,18 @@
       })();
     }
 
+    // ==========================================================
+    //   BOOT
+    // ==========================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
+
       updateNavbarMenu();
       await loadMateriList();
     })();
 
+    // Skeleton awal
     document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById('materiContainer');
       if (container) {
@@ -496,6 +555,10 @@
       }
     });
 
+    console.log(
+      '%c materi.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

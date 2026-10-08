@@ -3,30 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Ketua PAC · PKD GP Ansor Bantul</title>
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Dashboard Ketua PAC — PKD GP Ansor Kabupaten Bantul">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dashboard Ketua PAC · PKD GP Ansor Bantul</title>
 
-  <!-- Favicon & Font -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  
-  <!-- 🛠 PERBAIKAN: Library html5-qrcode untuk multi-browser -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
-    * { font-family: 'Inter', system-ui, sans-serif; }
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
       background: #f8fafc;
       color: #0f172a;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* --- HEADER MINIMALIS ELEGAN --- */
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -34,696 +40,1951 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
       z-index: 1030;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
-      padding-top: 0 !important; padding-bottom: 0 !important;
     }
-    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-    .btn-back {
-      background: rgba(37, 99, 235, 0.08); color: #2563eb;
-      border: 1px solid rgba(37, 99, 235, 0.2);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .header-minimal .container {
+      padding-top: 0.75rem; padding-bottom: 0.75rem;
     }
-    .btn-back:hover { background: #2563eb; color: white; transform: translateX(-3px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
-    .brand-logo-mini:hover { transform: scale(1.05); }
-    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
-    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
-    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
-    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
-    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.2rem; line-height: 1.2; }
+    .brand-sub-mini { font-size: 0.78rem; color: #64748b; display: block; }
 
-    /* --- WRAPPER & SIDEBAR --- */
-    .wrapper { display: flex; width: 100%; align-items: stretch; }
-    #sidebar {
-      min-width: 280px; max-width: 280px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px) saturate(180%);
-      border-right: 1px solid rgba(226, 232, 240, 0.5);
-      box-shadow: 2px 0 10px rgba(0,0,0,0.02);
-      transition: all 0.3s ease;
-    }
-    #sidebar .sidebar-header { padding: 20px; background: rgba(248, 250, 252, 0.6); border-bottom: 1px solid rgba(226, 232, 240, 0.3); }
-    #sidebar ul.components { padding: 20px 0; }
-    #sidebar ul li a {
-      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
-      color: #334155; text-decoration: none; font-weight: 500;
-      border-left: 4px solid transparent; transition: all 0.2s;
-    }
-    #sidebar ul li a i { width: 24px; font-size: 1.2rem; color: #64748b; }
-    #sidebar ul li a:hover { background: #f1f5f9; border-left-color: #2563eb; }
-    #sidebar ul li.active a { background: #e6f0ff; border-left-color: #2563eb; color: #2563eb; font-weight: 600; }
-    #sidebar ul li.active a i { color: #2563eb; }
-
-    /* --- CONTENT --- */
-    #content { width: 100%; padding: 30px; min-height: 100vh; background: #f8fafc; }
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      border-radius: 24px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .glass-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.2); }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
-    .card-dashboard { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 24px; }
-    .stat-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; padding: 1.5rem; text-align: center; transition: all 0.35s; height: 100%; display: flex; flex-direction: column; justify-content: center; }
-    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 50px rgba(37,99,235,0.08); }
-    .stat-number { font-size: 2.5rem; font-weight: 700; color: #2563eb; line-height: 1.2; }
-    .stat-label { font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .glass-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.06);
+    }
 
-    /* --- SKELETON LOADING --- */
-    .skeleton-box {
-      background: #e2e8f0;
-      border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
-      display: inline-block;
+    /* ============ HERO SCOPE ============ */
+    .hero-scope {
+      background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.3);
+      position: relative;
+      overflow: hidden;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    .hero-scope::after {
+      content: '';
+      position: absolute;
+      top: -40%; right: -10%;
+      width: 60%; height: 180%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .stat-card.skeleton { background: transparent; border: none; box-shadow: none; padding: 0.5rem; }
-    .stat-card.skeleton .stat-number { display: block; width: 60%; height: 2.5rem; margin: 0 auto 0.5rem; }
-    .stat-card.skeleton .stat-label { display: block; width: 40%; height: 1rem; margin: 0 auto; }
+    .hero-scope .label-small { font-size: 0.75rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.08em; }
+    .hero-scope .value-large { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+    .scope-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.3rem 0.75rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50px;
+      font-size: 0.78rem; font-weight: 500;
+      margin-right: 0.35rem; margin-top: 0.35rem;
+      backdrop-filter: blur(4px);
+    }
 
-    /* --- SCAN QR FLOATING BUTTON --- */
-    .scan-float-btn {
-      position: fixed; bottom: 30px; right: 15px; z-index: 1050;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, #2563eb, #1e4bb3);
-      color: white; border: none; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
-      display: none; align-items: center; justify-content: center;
-      font-size: 24px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;
+    /* ============ STAT CARDS ============ */
+    .stat-card-premium {
+      background: #fff;
+      border-radius: 20px;
+      padding: 1rem 1.1rem;
+      border: 1px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.85rem;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      height: 100%;
     }
-    .scan-float-btn:hover { transform: scale(1.08); box-shadow: 0 8px 28px rgba(37, 99, 235, 0.5); }
-    .scan-float-btn:active { transform: scale(0.95); }
-    .scan-float-btn.show { display: flex; }
+    .stat-card-premium:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.1);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+    .stat-icon-box {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .stat-icon-box.blue { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+    .stat-icon-box.amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .stat-icon-box.green { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+    .stat-icon-box.red { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+    .stat-icon-box.purple { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+    .stat-icon-box.cyan { background: rgba(6, 182, 212, 0.12); color: #0891b2; }
 
-    /* --- RESPONSIVE MOBILE --- */
-    @media (max-width: 991px) {
-      #sidebar { min-width: 100%; max-width: 100%; position: fixed; top: 0; left: 0; z-index: 1050; height: 100vh; overflow-y: auto; transform: translateX(-100%); transition: transform 0.3s; }
-      #sidebar.show { transform: translateX(0); }
-      #content { padding: 1rem; padding-bottom: 90px; }
-      .scan-float-btn { bottom: 100px; right: 10px; width: 48px; height: 48px; font-size: 20px; }
+    .stat-value { font-size: 1.55rem; font-weight: 700; line-height: 1.15; color: #0f172a; }
+    .stat-label { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+
+    /* ============ SCOPE MODE SWITCHER ============ */
+    .scope-mode-btn {
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      color: #475569;
+      border-radius: 50px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: all 0.2s;
+      cursor: pointer;
     }
+    .scope-mode-btn:hover { border-color: #2563eb; color: #2563eb; }
+    .scope-mode-btn.active {
+      background: #2563eb; border-color: #2563eb; color: #fff;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+    }
+    .scope-mode-btn .badge { background: rgba(255,255,255,0.25); color: inherit; }
+    .scope-mode-btn.active .badge { background: rgba(255,255,255,0.3); }
+
+    /* ============ TAB NAV ============ */
+    .tab-nav-scroll {
+      display: flex; gap: 0.4rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab-nav-scroll::-webkit-scrollbar { height: 4px; }
+    .tab-nav-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .tab-nav-scroll::-webkit-scrollbar-track { background: transparent; }
+
+    .tab-pill {
+      flex-shrink: 0;
+      border: none;
+      background: #f1f5f9;
+      color: #475569;
+      border-radius: 50px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-pill:hover { background: #e2e8f0; color: #0f172a; }
+    .tab-pill.active {
+      background: #0f172a; color: #fff;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+    .tab-pill .tab-badge {
+      background: rgba(255,255,255,0.9);
+      color: #2563eb;
+      padding: 0 6px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+    .tab-pill:not(.active) .tab-badge {
+      background: #2563eb; color: #fff;
+    }
+
+    /* ============ PESERTA CARD ============ */
+    .peserta-row {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.65rem;
+      display: flex; align-items: center; gap: 0.85rem;
+      transition: all 0.2s;
+    }
+    .peserta-row:hover {
+      border-color: rgba(37, 99, 235, 0.25);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.06);
+    }
+    .peserta-avatar {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      display: flex; align-items: center; justify-content: center;
+      color: #2563eb; font-weight: 700; font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .peserta-info { flex: 1; min-width: 0; }
+    .peserta-nama { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; color: #0f172a; }
+    .peserta-meta { font-size: 0.78rem; color: #64748b; }
+    .peserta-actions { display: flex; gap: 0.35rem; flex-shrink: 0; flex-wrap: wrap; }
     @media (max-width: 576px) {
-      .glass-card { border-radius: 16px; padding: 1rem !important; }
-      .header-minimal .container { padding: 0 0.5rem; }
-      .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
-      .brand-title-mini { display: none; } .brand-sub-mini { display: none; }
-      .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
-      .stat-number { font-size: 1.8rem; }
+      .peserta-actions { flex-direction: column; }
+      .peserta-row { flex-wrap: wrap; }
     }
 
-    /* --- SCANNER MODAL --- */
-    #scanQrModal .modal-dialog { margin: 0; width: 100%; height: 100%; max-width: 100%; }
-    #scanQrModal .modal-content { background: #0f172a; border: none; border-radius: 0; height: 100%; }
-    #scanQrModal .modal-header { border: none; background: transparent; padding: 8px 16px; }
-    #scanQrModal .modal-body { display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0; height: calc(100% - 56px); }
-    #scannerVideoContainer { width: 100%; display: flex; justify-content: center; align-items: center; }
-    #scannerVideoContainer video { width: 100%; object-fit: contain; background: #000; }
-    #scanQrModal .scanner-status { color: #ccc; margin-top: 15px; font-size: 1rem; font-weight: 500; z-index: 10; }
-    #scanQrModal .scan-close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; z-index: 10000; }
-    #scanQrModal .scan-close-btn:hover { background: rgba(255,255,255,0.4); }
-    #scanQrModal .scan-stop-btn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; padding: 10px 30px; }
+    .badge-status {
+      font-size: 0.68rem; font-weight: 700; padding: 0.3rem 0.6rem;
+      border-radius: 20px; letter-spacing: 0.02em;
+    }
+    .badge-status.pending  { background: #fef3c7; color: #92400e; }
+    .badge-status.approved { background: #dcfce7; color: #166534; }
+    .badge-status.active   { background: #dcfce7; color: #166534; }
+    .badge-status.rejected { background: #fee2e2; color: #991b1b; }
+    .badge-status.alumni   { background: #e2e8f0; color: #475569; }
 
-    /* --- ANIMASI --- */
-    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    /* ============ ACCORDION LOKASI ============ */
+    .accordion-item {
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 16px !important;
+      overflow: hidden;
+      background: #fff;
+    }
+    .accordion-button {
+      background: #f8fafc;
+      font-size: 0.95rem;
+      padding: 1rem 1.15rem;
+      color: #0f172a;
+    }
+    .accordion-button:not(.collapsed) {
+      background: #eff6ff;
+      color: #1e40af;
+      box-shadow: none;
+    }
+    .accordion-button:focus {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .accordion-body {
+      padding: 1rem;
+    }
 
-    /* --- FOOTER --- */
-    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
+    /* ============ SIDEBAR / DRAWER NAV ============ */
+    .nav-drawer-btn {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #1e4bb3);
+      color: #fff; border: none;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+      font-size: 1.5rem;
+      z-index: 1040;
+      transition: all 0.25s;
+    }
+    .nav-drawer-btn:hover { transform: translateY(-3px) scale(1.05); }
+    .nav-drawer-btn:active { transform: scale(0.95); }
+
+    .offcanvas-menu { width: 320px; }
+    .offcanvas-menu .menu-link {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      color: #334155;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.92rem;
+      transition: all 0.15s;
+      margin-bottom: 0.2rem;
+    }
+    .offcanvas-menu .menu-link:hover { background: #f1f5f9; color: #0f172a; }
+    .offcanvas-menu .menu-link i { font-size: 1.15rem; color: #64748b; width: 22px; text-align: center; }
+    .offcanvas-menu .menu-link .badge-count {
+      margin-left: auto;
+      background: #2563eb; color: #fff;
+      font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 20px; font-weight: 700;
+    }
+    .offcanvas-menu .menu-link .badge-count.warn { background: #dc2626; }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748b;
+    }
+    .empty-state i {
+      font-size: 3rem; color: #cbd5e1;
+      display: block; margin-bottom: 0.85rem;
+    }
+    .empty-state h6 { font-weight: 700; color: #334155; margin-bottom: 0.35rem; }
+    .empty-state p { font-size: 0.85rem; margin: 0; }
+
+    /* ============ SKELETON ============ */
+    .skeleton-box {
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite linear;
+      border-radius: 8px; display: inline-block;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ============ ID CARD (Modal) ============ */
+    .id-card-wrapper {
+      max-width: 420px; margin: 0 auto; padding: 8px;
+    }
+    .id-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      padding: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    .id-card .header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #14994c; padding-bottom: 10px; margin-bottom: 14px;
+    }
+    .id-card .header img { height: 32px; }
+    .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.05rem; line-height: 1.2; }
+    .id-card .header h5 small { font-weight: 400; font-size: 0.72rem; color: #64748b; display: block; }
+    .id-card .body { display: flex; gap: 16px; align-items: center; }
+    .id-card .qr-area {
+      flex-shrink: 0; width: 110px; height: 110px;
+      background: white; border-radius: 14px; padding: 5px;
+      display: flex; justify-content: center; align-items: center;
+      border: 1px solid #e2e8f0;
+    }
+    .id-card .data-area { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .id-card .data-area .label { font-size: 0.62rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.9rem; line-height: 1.3; word-break: break-word; }
+    .id-card .footer {
+      margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 8px;
+      text-align: center; font-size: 0.72rem; color: #64748b;
+    }
+    .id-card .footer span { color: #2563eb; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .id-card .qr-area { margin: 0 auto; }
+    }
+
+    /* ============ PROGRESS BAR ============ */
+    .progress-shimmer {
+      height: 8px; background: #e2e8f0; border-radius: 20px; overflow: hidden;
+    }
+    .progress-shimmer .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 50%, #2563eb 100%);
+      background-size: 200% 100%;
+      animation: shimmerBar 1.6s linear infinite;
+      transition: width 0.3s;
+      border-radius: 20px;
+    }
+    @keyframes shimmerBar {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ============ FOOTER ============ */
+    .footer-modern {
+      font-size: 0.82rem; color: #64748b;
+      margin-top: auto; text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    /* ============ ANIMATIONS ============ */
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 576px) {
+      .hero-scope { padding: 1.15rem 1.25rem; }
+      .hero-scope .value-large { font-size: 1.25rem; }
+      .stat-value { font-size: 1.3rem; }
+      .stat-card-premium { padding: 0.85rem; }
+      .stat-icon-box { width: 40px; height: 40px; font-size: 1.2rem; }
+      .nav-drawer-btn { bottom: 16px; right: 16px; width: 50px; height: 50px; font-size: 1.3rem; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
-  <header class="header-minimal sticky-top shadow-sm">
-    <div class="container d-flex justify-content-between align-items-center py-3">
+  <!-- ================= HEADER ================= -->
+  <header class="header-minimal sticky-top">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center">
+        <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+        <div>
+          <div class="brand-title-mini">Ketua PAC</div>
+          <span class="brand-sub-mini" id="headerKapanewon">Memuat…</span>
+        </div>
+      </a>
       <div class="d-flex align-items-center gap-2">
-        <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
-          <i class="bi bi-arrow-left me-1"></i> Kembali
-        </a>
-        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
-          <div>
-            <div class="brand-title-mini">PKD GP Ansor</div>
-            <span class="brand-sub-mini">Kabupaten Bantul</span>
-          </div>
-        </a>
+        <span class="badge bg-primary-subtle text-primary d-none d-md-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill">
+          <i class="bi bi-shield-fill-check"></i>
+          <span id="headerUsername">—</span>
+        </span>
+        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" id="btnLogout" aria-label="Logout">
+          <i class="bi bi-box-arrow-right"></i>
+          <span class="d-none d-sm-inline ms-1">Logout</span>
+        </button>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
-      <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= WRAPPER ================= -->
-  <div class="wrapper">
-    <!-- Sidebar -->
-    <nav id="sidebar">
-      <div class="sidebar-header">
-        <h5 class="mb-1"><i class="bi bi-person-badge me-2"></i>Ketua PAC</h5>
-        <p class="text-muted small mb-0" id="sidebarUserName">Memuat...</p>
-        <p class="text-muted small mb-0" id="sidebarKapanewon"></p>
-      </div>
-      <ul class="list-unstyled components">
-        <li class="active" id="menu-dashboard"><a href="#" onclick="loadContent('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-        <li id="menu-peserta"><a href="#" onclick="loadContent('peserta')"><i class="bi bi-people-fill"></i> Data Peserta</a></li>
-        <li id="menu-skrining"><a href="#" onclick="loadContent('skrining')"><i class="bi bi-clipboard-check"></i> Hasil Skrining</a></li>
-        <li id="menu-pretest"><a href="#" onclick="loadContent('pretest')"><i class="bi bi-pencil-square"></i> Hasil Pretest</a></li>
-        <li id="menu-posttest"><a href="#" onclick="loadContent('posttest')"><i class="bi bi-trophy"></i> Hasil Posttest</a></li>
-        <li id="menu-absensi"><a href="#" onclick="loadContent('absensi')"><i class="bi bi-calendar-check"></i> Absensi</a></li>
-        <li id="menu-sertifikat"><a href="#" onclick="loadContent('sertifikat')"><i class="bi bi-award"></i> Sertifikat</a></li>
-        <li id="menu-rtl"><a href="#" onclick="loadContent('rtl')"><i class="bi bi-file-earmark-text"></i> RTL & Tugas</a></li>
-        <li id="menu-informasi"><a href="#" onclick="loadContent('informasi')"><i class="bi bi-megaphone"></i> Informasi</a></li>
-        <li><hr class="my-2"></li>
-        <li><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-      </ul>
-    </nav>
+  <!-- ================= MAIN ================= -->
+  <main class="container my-4" style="max-width: 1200px; flex: 1;">
 
-    <!-- Content -->
-    <div id="content">
-      <div id="content-container">
-        <!-- Akan diisi oleh render functions -->
-        <div class="text-center py-5 fade-up">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Memuat...</span>
+    <!-- ============ HERO: SCOPE INFO ============ -->
+    <section class="hero-scope mb-4 fade-up" id="heroScope">
+      <div class="row align-items-center g-3 position-relative">
+        <div class="col-md-8">
+          <div class="label-small">Wewenang Kapanewon</div>
+          <div class="value-large" id="scopeKapanewon">—</div>
+          <div id="scopeLokasiContainer" class="mt-2"></div>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <button type="button" class="btn btn-light btn-sm rounded-pill px-3" id="refreshScopeBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Segarkan Scope
+          </button>
+          <div class="mt-2 small" style="opacity: 0.85;">
+            <i class="bi bi-info-circle me-1"></i>
+            <span id="scopeStatus">Loading…</span>
           </div>
-          <p class="mt-2 text-muted">Memuat dashboard...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STAT CARDS ============ -->
+    <section class="row g-3 mb-4 fade-up" id="statsGrid" aria-live="polite">
+      <!-- Rendered by JS -->
+    </section>
+
+    <!-- ============ SCOPE MODE SWITCHER ============ -->
+    <section class="mb-3 fade-up">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted small fw-semibold me-1">
+          <i class="bi bi-funnel-fill me-1"></i>Mode Tampilan:
+        </span>
+        <button type="button" class="scope-mode-btn active" data-scope-mode="union">
+          <i class="bi bi-people-fill"></i>
+          Gabungan
+          <span class="badge" id="scopeCountUnion">0</span>
+        </button>
+        <button type="button" class="scope-mode-btn" data-scope-mode="utusan">
+          <i class="bi bi-geo-alt-fill"></i>
+          Per Utusan
+          <span class="badge" id="scopeCountUtusan">0</span>
+        </button>
+        <button type="button" class="scope-mode-btn" data-scope-mode="lokasi">
+          <i class="bi bi-building-fill"></i>
+          Per Lokasi PKD
+          <span class="badge" id="scopeCountLokasi">0</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ TAB NAV ============ -->
+    <section class="mb-3 fade-up">
+      <div class="tab-nav-scroll" id="tabNav" role="tablist">
+        <button type="button" class="tab-pill active" data-tab="pending" role="tab">
+          <i class="bi bi-hourglass-split"></i>
+          Pending
+          <span class="tab-badge" id="badgePending">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="approved" role="tab">
+          <i class="bi bi-patch-check-fill"></i>
+          Approved
+          <span class="tab-badge" id="badgeApproved">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="lokasi" role="tab">
+          <i class="bi bi-geo-alt-fill"></i>
+          Per Lokasi PKD
+          <span class="tab-badge" id="badgeLokasi">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="skrining" role="tab">
+          <i class="bi bi-clipboard-check-fill"></i>
+          Skrining
+          <span class="tab-badge" id="badgeSkrining">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="absensi" role="tab">
+          <i class="bi bi-calendar-check-fill"></i>
+          Absensi
+          <span class="tab-badge" id="badgeAbsensi">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="sertifikat" role="tab">
+          <i class="bi bi-award-fill"></i>
+          Sertifikat
+          <span class="tab-badge" id="badgeSertifikat">0</span>
+        </button>
+        <button type="button" class="tab-pill" data-tab="rtl" role="tab">
+          <i class="bi bi-list-check"></i>
+          RTL
+          <span class="tab-badge" id="badgeRTL">0</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ TAB CONTENT ============ -->
+    <section class="fade-up" id="tabContent">
+      <!-- Rendered by JS -->
+    </section>
+
+  </main>
+
+  <!-- ============ FLOATING MENU BUTTON ============ -->
+  <button
+    type="button"
+    class="nav-drawer-btn"
+    data-bs-toggle="offcanvas"
+    data-bs-target="#offcanvasMenu"
+    aria-label="Buka menu navigasi"
+    title="Menu"
+  >
+    <i class="bi bi-grid-3x3-gap-fill"></i>
+  </button>
+
+  <!-- ============ OFFCANVAS MENU ============ -->
+  <div class="offcanvas offcanvas-end offcanvas-menu" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
+    <div class="offcanvas-header border-bottom">
+      <div class="d-flex align-items-center gap-2">
+        <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" style="height:36px;">
+        <div>
+          <h6 class="mb-0 fw-bold" id="offcanvasMenuLabel">Menu Cepat</h6>
+          <small class="text-muted" style="font-size:0.72rem;">PAC <span id="menuKapanewon">—</span></small>
+        </div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
+    </div>
+    <div class="offcanvas-body p-3">
+      <div class="mb-2 text-muted small fw-bold text-uppercase" style="letter-spacing:0.08em;font-size:0.7rem;">Publik</div>
+      <a class="menu-link" href="/bisaa/index.html">
+        <i class="bi bi-house-door-fill"></i> Beranda
+      </a>
+      <a class="menu-link" href="/bisaa/absen.html">
+        <i class="bi bi-qr-code-scan"></i> Absen Digital
+      </a>
+      <a class="menu-link" href="/bisaa/skrining.html">
+        <i class="bi bi-clipboard-check"></i> Skrining
+      </a>
+      <a class="menu-link" href="/bisaa/materi.html">
+        <i class="bi bi-file-earmark-pdf"></i> Materi
+      </a>
+      <a class="menu-link" href="/bisaa/informasi.html">
+        <i class="bi bi-newspaper"></i> Informasi
+      </a>
+      <a class="menu-link" href="/bisaa/kader.html">
+        <i class="bi bi-people-fill"></i> Kader
+      </a>
+
+      <hr class="my-3">
+      <div class="mb-2 text-muted small fw-bold text-uppercase" style="letter-spacing:0.08em;font-size:0.7rem;">Quick Actions</div>
+      <button type="button" class="menu-link w-100 text-start bg-transparent border-0" id="menuBulkApprove">
+        <i class="bi bi-check2-all"></i> Bulk Approve Pending
+        <span class="badge-count" id="menuBadgePending">0</span>
+      </button>
+      <button type="button" class="menu-link w-100 text-start bg-transparent border-0" id="menuBulkIdCard">
+        <i class="bi bi-person-vcard"></i> Download Semua ID Card
+        <span class="badge-count" id="menuBadgeApproved">0</span>
+      </button>
+
+      <hr class="my-3">
+      <button type="button" class="menu-link w-100 text-start bg-transparent border-0 text-danger" id="menuLogout">
+        <i class="bi bi-box-arrow-right text-danger"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: DETAIL PESERTA ============ -->
+  <div class="modal fade" id="modalDetailPeserta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-info text-white border-0 rounded-top-4">
+          <h5 class="modal-title">
+            <i class="bi bi-person-badge me-2"></i>Detail Peserta
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body p-4" id="modalDetailBody" style="max-height:70vh;overflow-y:auto;"></div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ================= SCAN QR FLOATING BUTTON ================= -->
-  <button class="scan-float-btn" id="scanFloatBtn" title="Scan QR">
-    <i class="bi bi-qr-code-scan"></i>
-  </button>
-
-  <!-- ================= MODAL SCANNER QR ================= -->
-  <div class="modal fade" id="scanQrModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-fullscreen">
-      <div class="modal-content">
-        <div class="modal-header border-0">
-          <h5 class="modal-title text-white" id="scanQrModalTitle"><i class="bi bi-qr-code-scan me-2"></i>Scan QR</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  <!-- ============ MODAL: ID CARD ============ -->
+  <div class="modal fade" id="modalIdCard" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-success text-white border-0 rounded-top-4">
+          <h5 class="modal-title">
+            <i class="bi bi-person-vcard me-2"></i>Kartu ID Peserta
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
-        <div class="modal-body position-relative">
-          <div id="scannerVideoContainer"></div>
-          <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
-          <button class="btn btn-danger btn-lg rounded-pill scan-stop-btn" id="scanStopBtn">
-            <i class="bi bi-stop-circle me-2"></i> Hentikan
+        <div class="modal-body p-4 text-center" id="modalIdCardBody"></div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-success rounded-pill px-4" id="btnDownloadIdCard">
+            <i class="bi bi-download me-1"></i> Download PNG
           </button>
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: KONFIRMASI ============ -->
+  <div class="modal fade" id="modalConfirm" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 rounded-top-4" id="modalConfirmHeader">
+          <h5 class="modal-title" id="modalConfirmTitle">
+            <i class="bi bi-question-circle me-2"></i>Konfirmasi
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body p-4 text-center" id="modalConfirmBody">
+          <p class="mb-0">Apakah Anda yakin?</p>
+        </div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn rounded-pill px-4" id="modalConfirmOkBtn">Ya, Lanjutkan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: BATCH PROGRESS ============ -->
+  <div class="modal fade" id="modalBatchProgress" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-0 rounded-top-4 bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-hourglass-split me-2"></i>Memproses...
+          </h5>
+        </div>
+        <div class="modal-body p-4 text-center">
+          <div class="mb-3">
+            <span class="display-6 fw-bold text-primary" id="batchProgressPct">0%</span>
+          </div>
+          <div class="progress-shimmer mb-3">
+            <div class="bar" id="batchProgressBar" style="width:0%"></div>
+          </div>
+          <p class="small text-muted mb-0" id="batchProgressText">Memproses…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div class="toast border-0 shadow-lg" id="pageToast" role="alert" data-bs-delay="3000">
+      <div class="toast-header bg-white border-0">
+        <i class="bi bi-info-circle-fill text-primary me-2" id="pageToastIcon"></i>
+        <strong class="me-auto" id="pageToastTitle">Info</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Tutup"></button>
+      </div>
+      <div class="toast-body" id="pageToastMessage"></div>
     </div>
   </div>
 
   <!-- ================= FOOTER ================= -->
-  <footer class="footer-modern container py-3 mt-auto text-center text-muted small">
-    <i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul
+  <footer class="footer-modern">
+    <div class="container">
+      <i class="bi bi-c-circle me-1"></i>
+      Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul
+    </div>
   </footer>
 
   <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
-    // ==========================================================
-    //   IMPOR DARI CORE API DAN MODUL KETUA PAC
-    // ==========================================================
+    // ============================================================
+    //   IMPORTS
+    // ============================================================
     import {
-      guardPublicAccess,
-      callApi,
-      showToast,
-      escapeHtml,
+      loadAuthState,
       getUserRole,
       getUserData,
       updateNavbarMenu,
-      logout as apiLogout
-    } from '../js/core/api.js';
-    import { KetuaPACModule } from '../js/modules/ketua_pac.js';
+      logout,
+      escapeHtml,
+      showToast as apiShowToast,
+    } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
-    //   SCANNER STATE
-    // ==========================================================
-    let html5QrCode = null;
-    let isScannerRunning = false;
-    let refreshInterval = null;
+    import { KetuaPACModule } from '/bisaa/js/modules/ketua_pac.js';
 
-    function escapeHtmlLocal(str) { return escapeHtml(str); }
-    function showToastLocal(message, type) { showToast(message, type); }
-    function logout() { apiLogout(); }
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const ROLE = 'ketua_pac';
+    const BASE_PATH = '/bisaa/';
+    const ACTIVE_TAB_KEY = 'pkd_ketua_pac_active_tab';
+    const ACTIVE_SCOPE_KEY = 'pkd_ketua_pac_active_scope';
 
-    window.loadContent = loadContent;
-    window.logout = logout;
-    window.toggleSidebar = toggleSidebar;
-    window.closeSidebar = closeSidebar;
+    // ============================================================
+    //   STATE
+    // ============================================================
+    let activeTab = 'pending';
+    let currentModalCleanup = null;
+    let currentIdCardPeserta = null;
+    let batchCancelRequested = false;
+    let pageMounted = false;
 
-    // ==========================================================
-    //   🛡️ PENGAMAN AKSES
-    // ==========================================================
-    (async function boot() {
-      const role = getUserRole();
-      if (role !== 'ketua_pac') {
-        window.location.href = '/bisaa/login.html';
-        return;
-      }
-
-      updateNavbarMenu();
-      const userData = getUserData();
-      const kap = userData?.kapanewon || '';
-      document.getElementById('sidebarUserName').innerText = userData?.nama || 'Ketua PAC';
-      document.getElementById('sidebarKapanewon').innerText = kap ? `Kapanewon ${kap}` : '';
-
-      const scanBtn = document.getElementById('scanFloatBtn');
-      if (scanBtn) {
-        scanBtn.classList.add('show');
-        scanBtn.addEventListener('click', function() {
-          const modal = new bootstrap.Modal(document.getElementById('scanQrModal'));
-          modal.show();
-          startScanner();
-        });
-      }
-
-      // Muat dashboard pertama
-      await loadContent('dashboard');
-
-      // Mulai auto-refresh
-      startAutoRefresh();
-    })();
-
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
-    function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
-
-    // ==========================================================
-    //   🔥 SKELETON RENDER (INSTANT)
-    // ==========================================================
-    function renderSkeletonDashboard(container) {
-      let html = `
-        <h2 class="section-title">Dashboard Kapanewon ${KetuaPACModule.getKapanewon()}</h2>
-        <div class="row g-4">
-          ${Array(6).fill(0).map(() => `
-            <div class="col-md-3">
-              <div class="stat-card skeleton">
-                <div class="skeleton-box stat-number"></div>
-                <div class="skeleton-box stat-label"></div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="alert alert-info mt-3 skeleton-box" style="height:60px;width:100%;"></div>
-      `;
-      container.innerHTML = html;
+    const listeners = [];
+    function on(el, ev, handler, opts) {
+      if (!el) return;
+      el.addEventListener(ev, handler, opts);
+      listeners.push({ el, ev, handler, opts });
     }
 
-    function renderSkeletonTable(container, title, headers, rowCount = 5) {
-      let html = `<h2 class="section-title">${title}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr>`;
-      headers.forEach(h => { html += `<th><div class="skeleton-box" style="height:1.2rem;width:${h.width || '80px'};"></div></th>`; });
-      html += `</tr></thead><tbody>`;
-      for (let i = 0; i < rowCount; i++) {
-        html += `<tr>`;
-        headers.forEach(() => { html += `<td><div class="skeleton-box" style="height:1.2rem;width:80px;"></div></td>`; });
-        html += `</tr>`;
-      }
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
+    // ============================================================
+    //   UTILITY
+    // ============================================================
+    function showPageToast(message, type = 'success') {
+      try { apiShowToast(message, type); } catch (e) { console.log(`[${type}]`, message); }
     }
 
-    function renderSkeletonInformasi(container) {
-      let html = `<h2 class="section-title">Informasi & Pengumuman</h2><div class="row g-4">`;
-      for (let i = 0; i < 4; i++) {
-        html += `
-          <div class="col-md-4">
-            <div class="glass-card p-3">
-              <div class="skeleton-box" style="height:200px;width:100%;border-radius:8px;"></div>
-              <div class="skeleton-box" style="height:1.2rem;width:80%;margin-top:8px;"></div>
-              <div class="skeleton-box" style="height:1rem;width:60%;"></div>
+    function getInitials(nama) {
+      return String(nama || '?').trim().split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
+    }
+
+    function formatDateID(d) {
+      if (!d) return '-';
+      try {
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return String(d);
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch { return '-'; }
+    }
+
+    function getStatusBadgeClass(status) {
+      const s = String(status || 'pending').toLowerCase();
+      return `badge-status ${s}`;
+    }
+
+    function getStatusLabel(status) {
+      const s = String(status || 'pending').toLowerCase();
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function slugify(str) {
+      return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'lokasi';
+    }
+
+    // ============================================================
+    //   HERO SCOPE RENDER
+    // ============================================================
+    function renderHeroScope() {
+      const scope = KetuaPACModule.getScopeInfo();
+      const kapanewon = scope.kapanewon || '—';
+      const lokasiScope = scope.lokasiScope || [];
+
+      const elKapanewon = document.getElementById('scopeKapanewon');
+      const elLokasi = document.getElementById('scopeLokasiContainer');
+      const elStatus = document.getElementById('scopeStatus');
+      const elHeader = document.getElementById('headerKapanewon');
+      const elMenu = document.getElementById('menuKapanewon');
+      const elUsername = document.getElementById('headerUsername');
+
+      if (elKapanewon) elKapanewon.textContent = kapanewon;
+      if (elHeader) elHeader.textContent = `PAC ${kapanewon}`;
+      if (elMenu) elMenu.textContent = kapanewon;
+
+      const userData = getUserData() || {};
+      if (elUsername) elUsername.textContent = userData.username || 'Ketua PAC';
+
+      if (elLokasi) {
+        if (lokasiScope.length > 0) {
+          elLokasi.innerHTML = `
+            <span class="label-small">Lokasi PKD dalam wewenang:</span><br>
+            ${lokasiScope.map(l =>
+              `<span class="scope-chip"><i class="bi bi-geo-alt-fill"></i>${escapeHtml(l)}</span>`
+            ).join('')}
+          `;
+        } else {
+          elLokasi.innerHTML = `
+            <span class="scope-chip" style="opacity:0.7;">
+              <i class="bi bi-info-circle"></i>
+              Belum ada lokasi PKD yang di-set (hubungi admin)
+            </span>
+          `;
+        }
+      }
+
+      if (elStatus) {
+        const mode = KetuaPACModule.getActiveScopeMode();
+        elStatus.innerHTML = `Mode aktif: <strong>${mode}</strong>`;
+      }
+    }
+
+    // ============================================================
+    //   STATS RENDER
+    // ============================================================
+    function renderStats() {
+      const stats = KetuaPACModule.getStats();
+      const grid = document.getElementById('statsGrid');
+      if (!grid) return;
+
+      grid.innerHTML = `
+        <div class="col-6 col-md-3">
+          <div class="stat-card-premium">
+            <div class="stat-icon-box blue"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="stat-value">${stats.totalPeserta}</div>
+              <div class="stat-label">Total Peserta</div>
             </div>
           </div>
-        `;
-      }
-      html += `</div>`;
-      container.innerHTML = html;
-    }
-
-    // ==========================================================
-    //   LOAD CONTENT (Menggunakan KetuaPACModule)
-    // ==========================================================
-    async function loadContent(menu) {
-      document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
-      document.getElementById(`menu-${menu}`)?.classList.add('active');
-      closeSidebar();
-
-      const container = document.getElementById('content-container');
-
-      // Tampilkan skeleton sesuai menu
-      switch (menu) {
-        case 'dashboard': renderSkeletonDashboard(container); break;
-        case 'peserta': renderSkeletonTable(container, 'Data Peserta', [{width:'40px'},{width:'120px'},{width:'100px'},{width:'100px'},{width:'100px'},{width:'120px'}]); break;
-        case 'skrining': renderSkeletonTable(container, 'Hasil Skrining', [{width:'40px'},{width:'100px'},{width:'100px'},{width:'80px'},{width:'80px'},{width:'80px'},{width:'80px'},{width:'100px'}]); break;
-        case 'pretest': renderSkeletonTable(container, 'Hasil Pretest', [{width:'40px'},{width:'100px'},{width:'80px'},{width:'100px'},{width:'100px'}]); break;
-        case 'posttest': renderSkeletonTable(container, 'Hasil Posttest', [{width:'40px'},{width:'100px'},{width:'80px'},{width:'100px'},{width:'100px'}]); break;
-        case 'absensi': renderSkeletonTable(container, 'Absensi', [{width:'40px'},{width:'100px'},{width:'100px'},{width:'120px'},{width:'80px'}]); break;
-        case 'sertifikat': renderSkeletonTable(container, 'Sertifikat', [{width:'40px'},{width:'100px'},{width:'120px'},{width:'80px'}]); break;
-        case 'rtl': renderSkeletonTable(container, 'RTL & Tugas', [{width:'40px'},{width:'100px'},{width:'100px'},{width:'80px'},{width:'80px'},{width:'100px'}]); break;
-        case 'informasi': renderSkeletonInformasi(container); break;
-        default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
-      }
-
-      try {
-        if (!KetuaPACModule.getState().lastSync) {
-          await KetuaPACModule.loadAllData();
-        }
-        switch (menu) {
-          case 'dashboard': await renderDashboard(container); break;
-          case 'peserta': await renderPeserta(container); break;
-          case 'skrining': await renderSkrining(container); break;
-          case 'pretest': await renderPretest(container); break;
-          case 'posttest': await renderPosttest(container); break;
-          case 'absensi': await renderAbsensi(container); break;
-          case 'sertifikat': await renderSertifikat(container); break;
-          case 'rtl': await renderRTL(container); break;
-          case 'informasi': await renderInformasi(container); break;
-          default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
-        }
-      } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Error: ${escapeHtmlLocal(err.message)}</div>`;
-      }
-    }
-
-    // --- Render Functions (Data dari KetuaPACModule) ---
-    async function renderDashboard(container) {
-      const stats = KetuaPACModule.getStats();
-      container.innerHTML = `
-        <h2 class="section-title">Dashboard Kapanewon ${stats.kapanewon}</h2>
-        <div class="row g-4">
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPeserta}</div><div class="stat-label">Total Peserta</div></div></div>
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalSkrining}</div><div class="stat-label">Skrining Terisi</div></div></div>
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPretest}</div><div class="stat-label">Pretest Terisi</div></div></div>
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalPosttest}</div><div class="stat-label">Posttest Terisi</div></div></div>
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalAbsensi}</div><div class="stat-label">Absensi</div></div></div>
-          <div class="col-md-3"><div class="stat-card"><div class="stat-number">${stats.totalSertifikat}</div><div class="stat-label">Sertifikat</div></div></div>
         </div>
-        <div class="alert alert-info mt-3 small">
-          <i class="bi bi-info-circle"></i> Data diperbarui otomatis. <br>
-          <small>Terakhir sinkronisasi: ${stats.lastSync ? new Date(stats.lastSync).toLocaleString() : '-'}</small>
+        <div class="col-6 col-md-3">
+          <div class="stat-card-premium">
+            <div class="stat-icon-box amber"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+              <div class="stat-value">${stats.pendingPeserta}</div>
+              <div class="stat-label">Pending</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card-premium">
+            <div class="stat-icon-box green"><i class="bi bi-patch-check-fill"></i></div>
+            <div>
+              <div class="stat-value">${stats.approvedPeserta}</div>
+              <div class="stat-label">Approved</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card-premium">
+            <div class="stat-icon-box purple"><i class="bi bi-geo-alt-fill"></i></div>
+            <div>
+              <div class="stat-value">${stats.pesertaByLokasi}</div>
+              <div class="stat-label">Per Lokasi</div>
+            </div>
+          </div>
         </div>
       `;
     }
 
-    async function renderPeserta(container) {
-      const data = KetuaPACModule.getFilteredPeserta();
-      let html = `<h2 class="section-title">Data Peserta Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama Lengkap</th><th>Utusan</th><th>Pendidikan</th><th>No HP</th><th>Email</th></tr></thead><tbody>`;
-      data.forEach((p, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(p.nama_lengkap)}</td><td>${escapeHtmlLocal(p.utusan)}</td><td>${escapeHtmlLocal(p.pendidikan_terakhir)}</td><td>${escapeHtmlLocal(p.no_hp)}</td><td>${escapeHtmlLocal(p.email)}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
+    // ============================================================
+    //   SCOPE COUNTS + BADGES
+    // ============================================================
+    function renderCounts() {
+      const stats = KetuaPACModule.getStats();
+
+      const setText = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(v);
+      };
+
+      setText('scopeCountUnion', stats.pesertaByUtusan + stats.pesertaByLokasi);
+      setText('scopeCountUtusan', stats.pesertaByUtusan);
+      setText('scopeCountLokasi', stats.pesertaByLokasi);
+
+      setText('badgePending', stats.pendingPeserta);
+      setText('badgeApproved', stats.approvedPeserta);
+      setText('badgeSkrining', stats.totalSkrining);
+      setText('badgeAbsensi', stats.totalAbsensi);
+      setText('badgeSertifikat', stats.totalSertifikat);
+      setText('badgeRTL', stats.totalRTL);
+
+      // Badge untuk tab "Per Lokasi PKD" = jumlah lokasi unik di scope
+      const uniqueLokasi = new Set(
+        KetuaPACModule.getMyScopePesertaForIdCard()
+          .map(p => String(p.lokasi_pkd || '').trim())
+          .filter(Boolean)
+      );
+      setText('badgeLokasi', uniqueLokasi.size);
+
+      setText('menuBadgePending', stats.pendingPeserta);
+      setText('menuBadgeApproved', stats.approvedPeserta);
     }
 
-    async function renderSkrining(container) {
-      const data = KetuaPACModule.getFilteredSkrining();
-      let html = `<h2 class="section-title">Hasil Skrining Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Alamat</th><th>Info</th><th>Pengetahuan</th><th>Qunut</th><th>Pernah</th><th>Alasan</th></tr></thead><tbody>`;
-      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${escapeHtmlLocal(d.alamat)}</td><td>${escapeHtmlLocal(d.info)}</td><td>${escapeHtmlLocal(d.pengetahuan)}</td><td>${escapeHtmlLocal(d.qunut)}</td><td>${escapeHtmlLocal(d.pernah)}</td><td>${escapeHtmlLocal(d.alasan)}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
+    // ============================================================
+    //   TAB RENDER
+    // ============================================================
+    function renderActiveTab() {
+      const container = document.getElementById('tabContent');
+      if (!container) return;
+
+      switch (activeTab) {
+        case 'pending':     return renderTabPeserta(container, 'pending');
+        case 'approved':    return renderTabPeserta(container, 'approved');
+        case 'lokasi':      return renderTabLokasi(container);
+        case 'skrining':    return renderTabSkrining(container);
+        case 'absensi':     return renderTabAbsensi(container);
+        case 'sertifikat':  return renderTabSertifikat(container);
+        case 'rtl':         return renderTabRTL(container);
+        default:            return renderTabPeserta(container, 'pending');
+      }
     }
 
-    async function renderPretest(container) {
-      const data = KetuaPACModule.getFilteredPretest();
-      let html = `<h2 class="section-title">Hasil Pretest Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
-      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${d.score}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${escapeHtmlLocal(d.nohp)}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    }
+    // ============ TAB: PESERTA (pending / approved) ============
+    function renderTabPeserta(container, kind) {
+      const list = kind === 'pending'
+        ? KetuaPACModule.getPendingPeserta()
+        : KetuaPACModule.getApprovedPeserta();
 
-    async function renderPosttest(container) {
-      const data = KetuaPACModule.getFilteredPosttest();
-      let html = `<h2 class="section-title">Hasil Posttest Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Skor</th><th>Tanggal</th><th>No HP</th></tr></thead><tbody>`;
-      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${d.score}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${escapeHtmlLocal(d.nohp)}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    }
+      const title = kind === 'pending' ? 'Peserta Menunggu Persetujuan' : 'Peserta Disetujui';
+      const icon = kind === 'pending' ? 'bi-hourglass-split' : 'bi-patch-check-fill';
+      const accentColor = kind === 'pending' ? 'text-warning' : 'text-success';
 
-    async function renderAbsensi(container) {
-      const data = KetuaPACModule.getFilteredAbsensi();
-      let html = `<h2 class="section-title">Absensi Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Sesi</th><th>Tanggal</th><th>Tanda Tangan</th></tr></thead><tbody>`;
-      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama)}</td><td>${escapeHtmlLocal(d.namaSesi)}</td><td>${escapeHtmlLocal(d.timestamp)}</td><td>${d.signatureDriveId ? `<a href="https://drive.google.com/file/d/${d.signatureDriveId}/view" target="_blank">Lihat</a>` : '-'}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    }
+      let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 class="fw-bold mb-0">
+            <i class="bi ${icon} ${accentColor} me-2"></i>
+            ${title}
+            <span class="badge bg-primary ms-2">${list.length}</span>
+          </h5>
+          <div class="d-flex gap-2">
+            ${kind === 'pending' && list.length > 0 ? `
+              <button type="button" class="btn btn-success btn-sm rounded-pill px-3" id="btnBulkApproveInline">
+                <i class="bi bi-check2-all me-1"></i>Approve Semua
+              </button>
+            ` : ''}
+            ${kind === 'approved' && list.length > 0 ? `
+              <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" id="btnBulkIdCardInline">
+                <i class="bi bi-download me-1"></i>Download Semua ID Card
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
 
-    async function renderSertifikat(container) {
-      const data = KetuaPACModule.getFilteredSertifikat();
-      let html = `<h2 class="section-title">Sertifikat Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
-      data.forEach((d, i) => { html += `<tr><td>${i+1}</td><td>${escapeHtmlLocal(d.nama_peserta)}</td><td>${escapeHtmlLocal(d.nomor_sertifikat)}</td><td>${d.pdf_url ? `<a href="${escapeHtmlLocal(d.pdf_url)}" target="_blank">Unduh</a>` : '-'}</td></tr>`; });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    }
+      if (list.length === 0) {
+        html += `
+          <div class="empty-state glass-card">
+            <i class="bi bi-inbox"></i>
+            <h6>Tidak ada peserta ${kind === 'pending' ? 'yang pending' : 'approved'}</h6>
+            <p>${kind === 'pending'
+              ? 'Semua peserta di scope Anda sudah di-approve.'
+              : 'Belum ada peserta yang di-approve di scope Anda.'}</p>
+          </div>
+        `;
+        container.innerHTML = html;
+        bindTabPesertaEvents(kind);
+        return;
+      }
 
-    async function renderRTL(container) {
-      const data = KetuaPACModule.getFilteredRTL();
-      let html = `<h2 class="section-title">RTL & Tugas Kapanewon ${KetuaPACModule.getKapanewon()}</h2><div class="table-responsive glass-card p-4"><table class="table table-bordered table-sm"><thead><tr><th>No</th><th>Judul</th><th>Deskripsi</th><th>Deadline</th><th>Status</th><th>Peserta</th></tr></thead><tbody>`;
-      data.forEach((item, i) => {
-        const badge = item.status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
-        html += `<tr><td>${i+1}</td><td><strong>${escapeHtmlLocal(item.judul)}</strong></td><td>${escapeHtmlLocal(item.deskripsi)}</td><td>${escapeHtmlLocal(item.deadline)}</td><td><span class="badge ${badge}">${escapeHtmlLocal(item.status)}</span></td><td>${escapeHtmlLocal(item.namaPeserta || '-')}</td></tr>`;
+      html += '<div id="pesertaList">';
+      list.forEach(p => {
+        html += renderPesertaRow(p, kind);
       });
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    }
-
-    async function renderInformasi(container) {
-      const data = KetuaPACModule.getAllInformasi();
-      let html = `<h2 class="section-title">Informasi & Pengumuman</h2><div class="row g-4">`;
-      if (!data || data.length === 0) {
-        html += '<p class="text-muted">Belum ada informasi.</p>';
-      } else {
-        data.forEach(item => {
-          if (item.jenis === 'flyer' && item.url) {
-            const imgUrl = `https://drive.google.com/thumbnail?id=${item.url}`;
-            html += `<div class="col-md-4"><div class="glass-card p-3"><img src="${imgUrl}" class="img-fluid rounded" alt="${escapeHtmlLocal(item.judul)}"><h6 class="mt-2">${escapeHtmlLocal(item.judul)}</h6><p class="small">${escapeHtmlLocal(item.deskripsi)}</p></div></div>`;
-          } else {
-            html += `<div class="col-md-6"><div class="glass-card p-3"><h5>${escapeHtmlLocal(item.judul)}</h5><p>${escapeHtmlLocal(item.deskripsi)}</p></div></div>`;
-          }
-        });
-      }
       html += '</div>';
+
       container.innerHTML = html;
+      bindTabPesertaEvents(kind);
     }
 
-    // ==========================================================
-    //   SCANNER QR LOGIC (HANYA MODE OTOMATIS)
-    // ==========================================================
-    function startScanner() {
-      const statusEl = document.getElementById('scannerStatus');
-      const readerDiv = document.getElementById('scannerVideoContainer');
-      
-      if (isScannerRunning) {
-        stopScanner();
-        return;
-      }
+    function renderPesertaRow(p, kind) {
+      const status = String(p.status || 'pending').toLowerCase();
+      const safeId = escapeHtml(String(p.id));
+      const nama = escapeHtml(p.nama_lengkap || '-');
+      const utusan = escapeHtml(p.utusan || '-');
+      const lokasi = escapeHtml(p.lokasi_pkd || '-');
+      const hp = escapeHtml(p.no_hp || '-');
 
-      const isDesktop = window.innerWidth >= 992;
-      let qrboxSize = isDesktop ? 400 : 250; 
-
-      statusEl.innerText = 'Mengakses kamera...';
-
-      try {
-        html5QrCode = new Html5Qrcode("scannerVideoContainer");
-        const config = { fps: 30, qrbox: { width: qrboxSize, height: qrboxSize }, aspectRatio: 1.0 };
-
-        html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          (decodedText, decodedResult) => { onQRDetected(decodedText); },
-          (errorMessage) => { /* Abaikan error agar scan tetap berjalan */ }
-        ).then(() => {
-          isScannerRunning = true;
-          statusEl.innerText = 'Memindai QR...';
-        }).catch((err) => {
-          statusEl.innerText = 'Gagal mengakses kamera: ' + err.message;
-          showToastLocal('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
-        });
-
-      } catch (err) {
-        statusEl.innerText = 'Error: ' + err.message;
-        showToastLocal('Terjadi kesalahan saat memuat scanner.', 'error');
-      }
-    }
-
-    function stopScanner() {
-      if (html5QrCode && isScannerRunning) {
-        try {
-          html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-            isScannerRunning = false;
-            document.getElementById('scannerVideoContainer').innerHTML = '';
-            document.getElementById('scannerStatus').innerText = '';
-          });
-        } catch (e) {
-          console.warn('Stop scanner error:', e);
-          isScannerRunning = false;
-        }
+      let actions = '';
+      if (kind === 'pending') {
+        actions = `
+          <button type="button" class="btn btn-success btn-sm rounded-pill" data-action="approve" data-id="${safeId}">
+            <i class="bi bi-check-circle me-1"></i>Setujui
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" data-action="reject" data-id="${safeId}">
+            <i class="bi bi-x-circle me-1"></i>Tolak
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" data-action="detail" data-id="${safeId}" aria-label="Detail">
+            <i class="bi bi-eye"></i>
+          </button>
+        `;
       } else {
-        document.getElementById('scannerVideoContainer').innerHTML = '';
-        document.getElementById('scannerStatus').innerText = '';
-        isScannerRunning = false;
+        actions = `
+          <button type="button" class="btn btn-primary btn-sm rounded-pill" data-action="idcard" data-id="${safeId}">
+            <i class="bi bi-person-vcard me-1"></i>ID Card
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" data-action="detail" data-id="${safeId}" aria-label="Detail">
+            <i class="bi bi-eye"></i>
+          </button>
+        `;
+      }
+
+      return `
+        <div class="peserta-row">
+          <div class="peserta-avatar">${escapeHtml(getInitials(p.nama_lengkap))}</div>
+          <div class="peserta-info">
+            <div class="peserta-nama">${nama}</div>
+            <div class="peserta-meta">
+              <span><i class="bi bi-telephone me-1"></i>${hp}</span>
+              <span class="mx-2">·</span>
+              <span><i class="bi bi-geo-alt me-1"></i>${utusan}</span>
+              <span class="mx-2">·</span>
+              <span><i class="bi bi-building me-1"></i>${lokasi}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-column align-items-end gap-1">
+            <span class="${getStatusBadgeClass(status)}">${getStatusLabel(status)}</span>
+            <div class="peserta-actions">${actions}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindTabPesertaEvents(kind) {
+      const container = document.getElementById('tabContent');
+      if (!container) return;
+
+      // Delegated click for peserta actions
+      container.onclick = (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        e.preventDefault();
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+
+        if (action === 'approve') return handleApproveSingle(id);
+        if (action === 'reject') return handleRejectSingle(id);
+        if (action === 'detail') return handleShowDetail(id);
+        if (action === 'idcard') return handleShowIdCard(id);
+      };
+
+      // Bulk approve inline
+      const bulkApproveBtn = document.getElementById('btnBulkApproveInline');
+      if (bulkApproveBtn) {
+        bulkApproveBtn.onclick = handleBulkApprove;
+      }
+
+      // Bulk ID card inline
+      const bulkIdCardBtn = document.getElementById('btnBulkIdCardInline');
+      if (bulkIdCardBtn) {
+        bulkIdCardBtn.onclick = handleBulkIdCard;
       }
     }
 
-    async function onQRDetected(decodedText) {
-      stopScanner();
+    // ============ TAB: PER LOKASI PKD ============
+    function renderTabLokasi(container) {
+      const allPeserta = KetuaPACModule.getMyScopePesertaForIdCard();
 
-      const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
-      const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
-
-      if (matchSesi) {
-        const sesiId = matchSesi[1];
-        const tokenMatch = decodedText.match(/token=([^&]+)/);
-        const token = tokenMatch ? tokenMatch[1] : '';
-        window.location.href = `/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(token)}`;
+      if (allPeserta.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-geo-alt"></i>
+            <h6>Tidak Ada Peserta</h6>
+            <p>Tidak ada peserta yang disetujui di dalam wewenang Anda.</p>
+          </div>
+        `;
         return;
       }
 
-      if (matchPeserta) {
-        const pesertaId = matchPeserta[1];
-        const res = await callApi('getPesertaById', { id: pesertaId }, 'GET');
-        if (!res.success || !res.data) {
-          showToastLocal('ID Peserta tidak ditemukan.', 'error');
-          return;
-        }
-        if (res.data.status !== 'approved') {
-          showToastLocal('Peserta belum disetujui oleh admin. QR tidak aktif.', 'warning');
-          return;
-        }
+      // Kelompokkan berdasarkan lokasi_pkd
+      const grouped = {};
+      allPeserta.forEach(p => {
+        const lokasi = String(p.lokasi_pkd || '').trim() || 'Tidak diketahui';
+        if (!grouped[lokasi]) grouped[lokasi] = [];
+        grouped[lokasi].push(p);
+      });
 
-        const namaPeserta = res.data.nama_lengkap;
+      // Urutkan lokasi
+      const sortedLokasi = Object.keys(grouped).sort();
 
-        // 🔥 HANYA MODE OTOMATIS: Filter sesi yang submission_open = true
-        const allSesi = await callApi('getSesiAbsen', {}, 'GET');
-        const activeSesi = allSesi.filter(s => s.submission_open === true);
+      let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+            Peserta per Lokasi PKD
+          </h5>
+          <span class="badge bg-primary">${allPeserta.length} Total Peserta · ${sortedLokasi.length} Lokasi</span>
+        </div>
+        <div class="accordion" id="accordionLokasi">
+      `;
 
-        if (activeSesi.length === 0) {
-          showToastLocal('Tidak ada sesi aktif saat ini.', 'info');
-          return;
-        }
+      sortedLokasi.forEach((lokasi, idx) => {
+        const peserta = grouped[lokasi].slice().sort((a, b) =>
+          (a.nama_lengkap || '').localeCompare(b.nama_lengkap || '')
+        );
+        const count = peserta.length;
+        const safeSlug = slugify(lokasi) + '-' + idx;
 
-        let selectedSesi;
-        if (activeSesi.length === 1) {
-          selectedSesi = activeSesi[0];
-        } else {
-          // Tampilkan Modal Pilihan Sesi hanya dari list activeSesi
-          const modalHtml = `
-            <div class="modal fade" id="pacSesiModal" tabindex="-1" data-bs-backdrop="static">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                  <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="bi bi-list-ul me-2"></i>Pilih Sesi Absen</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <p class="mb-3">Peserta: <strong>${escapeHtmlLocal(namaPeserta)}</strong></p>
-                    <label class="form-label fw-bold">Pilih Sesi Aktif:</label>
-                    <select class="form-select" id="pacSesiSelect">
-                      ${activeSesi.map(s => `<option value="${s.id}">${escapeHtmlLocal(s.nama)}</option>`).join('')}
-                    </select>
-                  </div>
-                  <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-success" id="pacSesiSubmit">Absen Sekarang</button>
-                  </div>
+        html += `
+          <div class="accordion-item mb-2">
+            <h2 class="accordion-header" id="heading-${safeSlug}">
+              <button class="accordion-button ${idx === 0 ? '' : 'collapsed'} fw-bold" type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapse-${safeSlug}"
+                      aria-expanded="${idx === 0 ? 'true' : 'false'}"
+                      aria-controls="collapse-${safeSlug}">
+                <i class="bi bi-building me-2 text-primary"></i>
+                ${escapeHtml(lokasi)}
+                <span class="badge bg-primary ms-2">${count} peserta</span>
+              </button>
+            </h2>
+            <div id="collapse-${safeSlug}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}"
+                 aria-labelledby="heading-${safeSlug}"
+                 data-bs-parent="#accordionLokasi">
+              <div class="accordion-body p-2">
+        `;
+
+        peserta.forEach(p => {
+          const status = String(p.status || 'pending').toLowerCase();
+          const badge = getStatusBadgeClass(status);
+          const statusLabel = getStatusLabel(status);
+          const safeId = escapeHtml(String(p.id));
+
+          html += `
+            <div class="peserta-row mb-2">
+              <div class="peserta-avatar">${escapeHtml(getInitials(p.nama_lengkap))}</div>
+              <div class="peserta-info">
+                <div class="peserta-nama">${escapeHtml(p.nama_lengkap || '-')}</div>
+                <div class="peserta-meta">
+                  <span><i class="bi bi-telephone me-1"></i>${escapeHtml(p.no_hp || '-')}</span>
+                  <span class="mx-2">·</span>
+                  <span><i class="bi bi-geo-alt me-1"></i>${escapeHtml(p.utusan || '-')}</span>
+                </div>
+              </div>
+              <div class="d-flex flex-column align-items-end gap-1">
+                <span class="${badge}">${statusLabel}</span>
+                <div class="peserta-actions">
+                  <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill"
+                          data-action="detail" data-id="${safeId}"
+                          aria-label="Detail ${escapeHtml(p.nama_lengkap || '')}">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button type="button" class="btn btn-primary btn-sm rounded-pill"
+                          data-action="idcard" data-id="${safeId}"
+                          aria-label="ID Card ${escapeHtml(p.nama_lengkap || '')}">
+                    <i class="bi bi-person-vcard"></i>
+                  </button>
                 </div>
               </div>
             </div>
           `;
+        });
 
-          const oldModal = document.getElementById('pacSesiModal');
-          if (oldModal) oldModal.remove();
+        html += `
+              </div>
+            </div>
+          </div>
+        `;
+      });
 
-          document.body.insertAdjacentHTML('beforeend', modalHtml);
-          
-          const modalElement = document.getElementById('pacSesiModal');
-          const modal = new bootstrap.Modal(modalElement);
-          modal.show();
+      html += `</div>`;
+      container.innerHTML = html;
 
-          document.getElementById('pacSesiSubmit').addEventListener('click', async function() {
-            const selectedId = document.getElementById('pacSesiSelect').value;
-            selectedSesi = activeSesi.find(s => s.id == selectedId);
-            modal.hide();
+      // Delegation untuk tombol detail dan idcard di dalam accordion
+      container.onclick = (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        e.preventDefault();
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (action === 'detail') handleShowDetail(id);
+        else if (action === 'idcard') handleShowIdCard(id);
+      };
+    }
 
-            try {
-              const result = await callApi('submitAbsen', {
-                nama: namaPeserta,
-                sesiId: selectedSesi.id,
-                tandaTangan: '',
-                password: '',
-                qrToken: null,
-                pesertaId: pesertaId
-              }, 'POST');
-              if (result.success) {
-                showToastLocal(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`, 'success');
-              } else {
-                showToastLocal(`❌ Gagal: ${result.error || 'Unknown error'}`, 'error');
-              }
-            } catch (e) {
-              showToastLocal(`Error: ${e.message}`, 'error');
-            }
-          });
+    // ============ TAB: SKRINING ============
+    function renderTabSkrining(container) {
+      const list = KetuaPACModule.getFilteredSkrining();
 
-          modalElement.addEventListener('hidden.bs.modal', function() {
-            this.remove();
-          });
-          return;
-        }
-
-        // Jika hanya 1 sesi yang aktif, langsung submit tanpa modal
-        try {
-          const result = await callApi('submitAbsen', {
-            nama: namaPeserta,
-            sesiId: selectedSesi.id,
-            tandaTangan: '',
-            password: '',
-            qrToken: null,
-            pesertaId: pesertaId
-          }, 'POST');
-          if (result.success) {
-            showToastLocal(`✅ Absen berhasil untuk ${namaPeserta} pada sesi "${selectedSesi.nama}"`, 'success');
-          } else {
-            showToastLocal(`❌ Gagal: ${result.error || 'Unknown error'}`, 'error');
-          }
-        } catch (e) {
-          showToastLocal(`Error: ${e.message}`, 'error');
-        }
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-clipboard-x"></i>
+            <h6>Belum ada data skrining</h6>
+            <p>Peserta di scope Anda belum mengisi form skrining.</p>
+          </div>
+        `;
         return;
       }
 
-      showToastLocal('Format QR tidak dikenali. Pastikan QR yang benar.', 'warning');
+      let html = `
+        <h5 class="fw-bold mb-3">
+          <i class="bi bi-clipboard-check-fill text-primary me-2"></i>
+          Skrining Peserta
+          <span class="badge bg-primary ms-2">${list.length}</span>
+        </h5>
+        <div class="table-responsive glass-card p-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>Nama</th>
+                <th>Alamat</th>
+                <th>Status</th>
+                <th>Waktu</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      list.slice(0, 100).forEach((s, i) => {
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(s.nama || '-')}</strong></td>
+            <td>${escapeHtml(s.alamat || '-')}</td>
+            <td><span class="badge bg-secondary">${escapeHtml(s.hasil || 'Belum')}</span></td>
+            <td><small>${escapeHtml(formatDateID(s.timestamp))}</small></td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      if (list.length > 100) {
+        html += `<p class="text-muted small mt-2">Menampilkan 100 dari ${list.length} data.</p>`;
+      }
+
+      container.innerHTML = html;
     }
 
-    document.getElementById('scanStopBtn')?.addEventListener('click', function() {
-      stopScanner();
-      bootstrap.Modal.getInstance(document.getElementById('scanQrModal')).hide();
-    });
+    // ============ TAB: ABSENSI ============
+    function renderTabAbsensi(container) {
+      const list = KetuaPACModule.getFilteredAbsensi();
+      const sessions = KetuaPACModule.getAllSesi();
 
-    document.getElementById('scanQrModal')?.addEventListener('hidden.bs.modal', function() {
-      stopScanner();
-    });
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-calendar-x"></i>
+            <h6>Belum ada absensi</h6>
+            <p>Belum ada peserta di scope Anda yang melakukan absen.</p>
+          </div>
+        `;
+        return;
+      }
 
-    // ==========================================================
-    //   AUTO REFRESH (Polling setiap 30 detik)
-    // ==========================================================
-    function startAutoRefresh() {
-      if (refreshInterval) clearInterval(refreshInterval);
-      refreshInterval = setInterval(() => {
-        KetuaPACModule.loadAllData(false).then(() => {
-          // Jika menu saat ini adalah dashboard, refresh dashboard
-          const activeMenu = document.querySelector('#sidebar ul li.active')?.id?.replace('menu-', '') || 'dashboard';
-          loadContent(activeMenu);
-        }).catch(() => {
-          // silent fail
+      const sesiMap = {};
+      sessions.forEach(s => { sesiMap[String(s.id)] = s.nama || '(Sesi)'; });
+
+      let html = `
+        <h5 class="fw-bold mb-3">
+          <i class="bi bi-calendar-check-fill text-success me-2"></i>
+          Riwayat Absensi
+          <span class="badge bg-success ms-2">${list.length}</span>
+        </h5>
+        <div class="table-responsive glass-card p-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>Nama</th>
+                <th>Sesi</th>
+                <th>Waktu</th>
+                <th class="text-center">TTD</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      list.slice(0, 100).forEach((a, i) => {
+        const sig = a.signatureDriveId
+          ? `<a href="https://drive.google.com/file/d/${escapeHtml(a.signatureDriveId)}/view" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" aria-label="Lihat TTD">
+              <i class="bi bi-eye"></i>
+            </a>`
+          : '<span class="text-muted small">-</span>';
+
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(a.nama || '-')}</strong></td>
+            <td>${escapeHtml(sesiMap[String(a.sesiId)] || a.namaSesi || '-')}</td>
+            <td><small>${escapeHtml(formatDateID(a.timestamp))}</small></td>
+            <td class="text-center">${sig}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      if (list.length > 100) {
+        html += `<p class="text-muted small mt-2">Menampilkan 100 dari ${list.length} data.</p>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ============ TAB: SERTIFIKAT ============
+    function renderTabSertifikat(container) {
+      const list = KetuaPACModule.getFilteredSertifikat();
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-award"></i>
+            <h6>Belum ada sertifikat</h6>
+            <p>Belum ada sertifikat yang digenerate untuk peserta di scope Anda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <h5 class="fw-bold mb-3">
+          <i class="bi bi-award-fill text-warning me-2"></i>
+          Sertifikat Peserta
+          <span class="badge bg-warning text-dark ms-2">${list.length}</span>
+        </h5>
+        <div class="table-responsive glass-card p-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>Nama Peserta</th>
+                <th>Nomor</th>
+                <th>Tanggal</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      list.forEach((c, i) => {
+        const verifyUrl = `${BASE_PATH}verifikasi.html?nomor=${encodeURIComponent(c.nomor_sertifikat || '')}`;
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(c.nama_peserta || '-')}</strong></td>
+            <td><code class="small">${escapeHtml(c.nomor_sertifikat || '-')}</code></td>
+            <td><small>${escapeHtml(formatDateID(c.createdAt))}</small></td>
+            <td class="text-center">
+              <a href="${verifyUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary me-1" title="Verifikasi">
+                <i class="bi bi-shield-check"></i>
+              </a>
+              ${c.pdf_url ? `
+                <a href="${escapeHtml(c.pdf_url)}" target="_blank" rel="noopener" class="btn btn-sm btn-success" title="Download PDF">
+                  <i class="bi bi-download"></i>
+                </a>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    // ============ TAB: RTL ============
+    function renderTabRTL(container) {
+      const list = KetuaPACModule.getFilteredRTL();
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-list-check"></i>
+            <h6>Belum ada tugas RTL</h6>
+            <p>Belum ada tugas Rencana Tindak Lanjut untuk peserta di scope Anda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <h5 class="fw-bold mb-3">
+          <i class="bi bi-list-check text-primary me-2"></i>
+          Tugas RTL
+          <span class="badge bg-primary ms-2">${list.length}</span>
+        </h5>
+        <div class="table-responsive glass-card p-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;">#</th>
+                <th>Judul</th>
+                <th>Peserta</th>
+                <th>Deadline</th>
+                <th>Status</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      list.forEach((t, i) => {
+        const done = String(t.status || '').toLowerCase() === 'selesai';
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td><strong>${escapeHtml(t.judul || '-')}</strong></td>
+            <td>${escapeHtml(t.namaPeserta || 'Umum')}</td>
+            <td><small>${escapeHtml(formatDateID(t.deadline))}</small></td>
+            <td>
+              <span class="badge ${done ? 'bg-success' : 'bg-warning text-dark'}">
+                ${done ? '✅ Selesai' : '⏳ Pending'}
+              </span>
+            </td>
+            <td class="text-center">
+              ${!done ? `<button type="button" class="btn btn-sm btn-outline-success" data-action="approve-rtl" data-id="${escapeHtml(String(t.id))}" title="Approve">
+                <i class="bi bi-check-circle"></i>
+              </button>` : ''}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+
+      // Delegated RTL actions
+      container.onclick = async (e) => {
+        const btn = e.target.closest('[data-action="approve-rtl"]');
+        if (!btn) return;
+        e.preventDefault();
+        const id = btn.dataset.id;
+        try {
+          const res = await KetuaPACModule.approveRTLTask(id);
+          if (res && res.success) {
+            showPageToast('Tugas RTL disetujui', 'success');
+            refreshAll();
+          }
+        } catch (err) {
+          showPageToast('Gagal: ' + err.message, 'error');
+        }
+      };
+    }
+
+    // ============================================================
+    //   ACTION HANDLERS
+    // ============================================================
+    async function handleApproveSingle(id) {
+      const p = KetuaPACModule.getPesertaById(id);
+      if (!p) return;
+      if (!confirm(`Setujui peserta "${p.nama_lengkap}"?\nAkun login akan otomatis dibuat.`)) return;
+      try {
+        const res = await KetuaPACModule.approvePeserta(id);
+        if (res.success) {
+          showPageToast('Peserta disetujui', 'success');
+          refreshAll();
+        }
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      }
+    }
+
+    async function handleRejectSingle(id) {
+      const p = KetuaPACModule.getPesertaById(id);
+      if (!p) return;
+      if (!confirm(`Tolak peserta "${p.nama_lengkap}"?`)) return;
+      try {
+        const res = await KetuaPACModule.rejectPeserta(id);
+        if (res.success) {
+          showPageToast('Peserta ditolak', 'success');
+          refreshAll();
+        }
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      }
+    }
+
+    function handleShowDetail(id) {
+      const p = KetuaPACModule.getPesertaById(id);
+      if (!p) { showPageToast('Data tidak ditemukan', 'error'); return; }
+
+      const body = document.getElementById('modalDetailBody');
+      if (!body) return;
+
+      const rows = [
+        ['Nama Lengkap', p.nama_lengkap],
+        ['No HP', p.no_hp],
+        ['Email', p.email],
+        ['Tempat/Tgl Lahir', p.tempat_tgl_lahir],
+        ['Pekerjaan', p.pekerjaan],
+        ['Pendidikan', p.pendidikan_terakhir],
+        ['Alamat', p.alamat],
+        ['Utusan', p.utusan],
+        ['Lokasi PKD', p.lokasi_pkd],
+        ['Pengalaman Organisasi', p.pengalaman_organisasi],
+        ['Status', p.status],
+        ['Tanggal Daftar', formatDateID(p.timestamp)],
+      ];
+
+      body.innerHTML = `
+        <div class="list-group list-group-flush">
+          ${rows.filter(r => r[1]).map(([label, value]) => `
+            <div class="list-group-item py-2 px-0 border-0">
+              <div class="small text-muted text-uppercase" style="font-size:0.68rem;">${escapeHtml(label)}</div>
+              <div class="fw-semibold">${escapeHtml(String(value))}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailPeserta'));
+      modal.show();
+    }
+
+    function handleShowIdCard(id) {
+      const p = KetuaPACModule.getPesertaById(id);
+      if (!p) { showPageToast('Data tidak ditemukan', 'error'); return; }
+
+      const status = String(p.status || '').toLowerCase();
+      if (status !== 'approved' && status !== 'active') {
+        showPageToast('ID Card hanya untuk peserta yang sudah approved', 'warning');
+        return;
+      }
+
+      currentIdCardPeserta = p;
+      renderIdCardModal(p);
+    }
+
+    function renderIdCardModal(p) {
+      const body = document.getElementById('modalIdCardBody');
+      if (!body) return;
+
+      const nama = escapeHtml(p.nama_lengkap || '-');
+      const alamat = escapeHtml(p.alamat || '-');
+      const idPeserta = escapeHtml(String(p.id || '-'));
+
+      body.innerHTML = `
+        <div class="id-card-wrapper">
+          <div id="idCardPreview" class="id-card">
+            <div class="header">
+              <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor">
+              <h5>PKD GP Ansor<small>Kabupaten Bantul</small></h5>
+            </div>
+            <div class="body">
+              <div class="qr-area" id="idCardQrContainer"></div>
+              <div class="data-area">
+                <div>
+                  <span class="label">ID Peserta</span>
+                  <div class="value">${idPeserta}</div>
+                </div>
+                <div>
+                  <span class="label">Nama</span>
+                  <div class="value">${nama}</div>
+                </div>
+                <div>
+                  <span class="label">Alamat</span>
+                  <div class="value" style="font-weight:400;font-size:0.82rem;">${alamat}</div>
+                </div>
+              </div>
+            </div>
+            <div class="footer">Password Login: <span>No HP Terdaftar</span></div>
+          </div>
+        </div>
+      `;
+
+      // Generate QR
+      const qrContainer = document.getElementById('idCardQrContainer');
+      if (qrContainer && typeof qrcode === 'function') {
+        try {
+          const qr = qrcode(0, 'M');
+          qr.addData(`peserta_id=${p.id}`);
+          qr.make();
+
+          const moduleCount = qr.getModuleCount();
+          const cellSize = 6;
+          const margin = 8;
+          const size = moduleCount * cellSize + margin * 2;
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, size, size);
+          for (let r = 0; r < moduleCount; r++) {
+            for (let c = 0; c < moduleCount; c++) {
+              if (qr.isDark(r, c)) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+              }
+            }
+          }
+          qrContainer.appendChild(canvas);
+        } catch (e) {
+          qrContainer.innerHTML = '<div class="text-muted small">QR error</div>';
+        }
+      }
+
+      const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalIdCard'));
+      modal.show();
+    }
+
+    async function handleBulkApprove() {
+      const pending = KetuaPACModule.getPendingPeserta();
+      if (pending.length === 0) {
+        showPageToast('Tidak ada peserta pending', 'info');
+        return;
+      }
+
+      if (!confirm(`Approve ${pending.length} peserta sekaligus?\n\nAkun login akan otomatis dibuat untuk masing-masing peserta.`)) return;
+
+      const ids = pending.map(p => p.id);
+      openBatchProgress('Approve Peserta');
+
+      try {
+        const result = await KetuaPACModule.approveMultiplePeserta(ids, (cur, total, nama) => {
+          updateBatchProgress(cur, total, `Approve ${nama}`);
         });
-      }, 30000);
+
+        closeBatchProgress();
+        showPageToast(`Berhasil: ${result.successCount}/${result.total} peserta disetujui`,
+          result.failCount === 0 ? 'success' : 'warning');
+        refreshAll();
+      } catch (e) {
+        closeBatchProgress();
+        showPageToast('Gagal bulk approve: ' + e.message, 'error');
+      }
     }
 
+    async function handleBulkIdCard() {
+      const list = KetuaPACModule.getMyScopePesertaForIdCard();
+      if (list.length === 0) {
+        showPageToast('Tidak ada peserta approved', 'info');
+        return;
+      }
+
+      if (!confirm(`Download ${list.length} ID Card?\n\nAkan membuka ${list.length} file PNG berurutan.`)) return;
+
+      openBatchProgress('Download ID Card');
+      batchCancelRequested = false;
+
+      try {
+        for (let i = 0; i < list.length; i++) {
+          if (batchCancelRequested) {
+            showPageToast('Dibatalkan', 'warning');
+            break;
+          }
+          const p = list[i];
+          updateBatchProgress(i + 1, list.length, `Download ${p.nama_lengkap}`);
+          await downloadIdCardAsPNG(p);
+          await new Promise(r => setTimeout(r, 400));
+        }
+        closeBatchProgress();
+        showPageToast(`Berhasil download ${list.length} ID Card`, 'success');
+      } catch (e) {
+        closeBatchProgress();
+        showPageToast('Gagal: ' + e.message, 'error');
+      }
+    }
+
+    async function downloadIdCardAsPNG(p) {
+      const holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+      holder.innerHTML = `
+        <div class="id-card" style="width:400px;background:#fff;border-radius:20px;padding:22px;box-shadow:none;">
+          <div class="header" style="display:flex;align-items:center;gap:12px;border-bottom:2px solid #14994c;padding-bottom:10px;margin-bottom:14px;">
+            <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor" style="height:32px;" crossorigin="anonymous">
+            <div>
+              <div style="font-weight:700;color:#0f172a;font-size:1rem;line-height:1.2;">PKD GP Ansor</div>
+              <div style="font-size:0.72rem;color:#64748b;">Kabupaten Bantul</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div id="qrHolder" style="flex-shrink:0;width:110px;height:110px;background:#fff;border-radius:14px;padding:5px;display:flex;justify-content:center;align-items:center;border:1px solid #e2e8f0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">ID Peserta</div>
+              <div style="font-weight:600;color:#0f172a;font-size:0.9rem;word-break:break-word;margin-bottom:4px;">${escapeHtml(String(p.id || '-'))}</div>
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">Nama</div>
+              <div style="font-weight:600;color:#0f172a;font-size:0.9rem;word-break:break-word;margin-bottom:4px;">${escapeHtml(p.nama_lengkap || '-')}</div>
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">Alamat</div>
+              <div style="font-weight:400;color:#0f172a;font-size:0.82rem;word-break:break-word;">${escapeHtml(p.alamat || '-')}</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;border-top:1px solid #e2e8f0;padding-top:8px;text-align:center;font-size:0.72rem;color:#64748b;">
+            Password Login: <span style="color:#2563eb;font-weight:600;">No HP Terdaftar</span>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(holder);
+
+      const qrHolder = holder.querySelector('#qrHolder');
+      try {
+        const qr = qrcode(0, 'M');
+        qr.addData(`peserta_id=${p.id}`);
+        qr.make();
+        const moduleCount = qr.getModuleCount();
+        const cellSize = 6;
+        const margin = 8;
+        const size = moduleCount * cellSize + margin * 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+        for (let r = 0; r < moduleCount; r++) {
+          for (let c = 0; c < moduleCount; c++) {
+            if (qr.isDark(r, c)) {
+              ctx.fillStyle = '#000';
+              ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+        qrHolder.appendChild(canvas);
+      } catch (e) { /* skip QR */ }
+
+      await new Promise(r => setTimeout(r, 200));
+
+      if (typeof html2canvas === 'undefined') throw new Error('html2canvas tidak tersedia');
+      const cardEl = holder.querySelector('.id-card');
+      const canvasImg = await html2canvas(cardEl, { scale: 2, backgroundColor: '#fff', useCORS: true });
+
+      const link = document.createElement('a');
+      const namaFile = String(p.nama_lengkap || 'peserta').replace(/[^\w]+/g, '_');
+      link.download = `Kartu_ID_${namaFile}_${p.id}.png`;
+      link.href = canvasImg.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      holder.remove();
+    }
+
+    // ============================================================
+    //   BATCH PROGRESS MODAL
+    // ============================================================
+    let batchModalInstance = null;
+
+    function openBatchProgress(title) {
+      const modalEl = document.getElementById('modalBatchProgress');
+      if (!modalEl) return;
+      const titleEl = modalEl.querySelector('.modal-title');
+      if (titleEl) titleEl.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>${escapeHtml(title)}`;
+      batchModalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+      batchModalInstance.show();
+      updateBatchProgress(0, 100, 'Memulai...');
+    }
+
+    function updateBatchProgress(current, total, text) {
+      const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+      const bar = document.getElementById('batchProgressBar');
+      const pctEl = document.getElementById('batchProgressPct');
+      const textEl = document.getElementById('batchProgressText');
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (textEl) textEl.textContent = text || `${current}/${total}`;
+    }
+
+    function closeBatchProgress() {
+      if (batchModalInstance) {
+        try { batchModalInstance.hide(); } catch (e) {}
+      }
+    }
+
+    // ============================================================
+    //   CONFIRM MODAL HELPER
+    // ============================================================
+    let confirmModalInstance = null;
+    let confirmCallback = null;
+
+    function openConfirm(opts) {
+      const modalEl = document.getElementById('modalConfirm');
+      if (!modalEl) return;
+
+      document.getElementById('modalConfirmTitle').innerHTML =
+        `<i class="bi ${escapeHtml(opts.icon || 'bi-question-circle')} me-2"></i>${escapeHtml(opts.title || 'Konfirmasi')}`;
+      document.getElementById('modalConfirmBody').innerHTML = opts.body || 'Apakah Anda yakin?';
+
+      const headerEl = document.getElementById('modalConfirmHeader');
+      headerEl.className = 'modal-header border-0 rounded-top-4 ' + (opts.headerClass || 'bg-warning text-dark');
+
+      const okBtn = document.getElementById('modalConfirmOkBtn');
+      okBtn.className = 'btn rounded-pill px-4 ' + (opts.okClass || 'btn-primary');
+      okBtn.textContent = opts.okText || 'Ya, Lanjutkan';
+
+      confirmCallback = opts.onConfirm;
+      confirmModalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+      confirmModalInstance.show();
+    }
+
+    // ============================================================
+    //   DOWNLOAD SINGLE ID CARD
+    // ============================================================
+    async function handleDownloadSingleIdCard() {
+      if (!currentIdCardPeserta) return;
+      const btn = document.getElementById('btnDownloadIdCard');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+      try {
+        await downloadIdCardAsPNG(currentIdCardPeserta);
+        showPageToast('ID Card diunduh', 'success');
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    // ============================================================
+    //   REFRESH ALL
+    // ============================================================
+    function refreshAll() {
+      renderHeroScope();
+      renderStats();
+      renderCounts();
+      renderActiveTab();
+    }
+
+    // ============================================================
+    //   BIND GLOBAL EVENTS
+    // ============================================================
+    function bindGlobalEvents() {
+      // Scope mode switch
+      document.querySelectorAll('[data-scope-mode]').forEach(btn => {
+        on(btn, 'click', () => {
+          const mode = btn.dataset.scopeMode;
+          if (KetuaPACModule.setScopeMode(mode)) {
+            document.querySelectorAll('[data-scope-mode]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            try { localStorage.setItem(ACTIVE_SCOPE_KEY, mode); } catch (e) {}
+            refreshAll();
+          }
+        });
+      });
+
+      // Tab switch
+      document.querySelectorAll('#tabNav [data-tab]').forEach(btn => {
+        on(btn, 'click', () => {
+          const tab = btn.dataset.tab;
+          if (!tab) return;
+          activeTab = tab;
+          document.querySelectorAll('#tabNav [data-tab]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          try { localStorage.setItem(ACTIVE_TAB_KEY, tab); } catch (e) {}
+          renderActiveTab();
+        });
+      });
+
+      // Refresh scope
+      on(document.getElementById('refreshScopeBtn'), 'click', async () => {
+        showPageToast('Menyegarkan scope...', 'info');
+        await KetuaPACModule.loadScopeInfo(true);
+        await KetuaPACModule.loadAllData(true);
+        refreshAll();
+        showPageToast('Scope disegarkan', 'success');
+      });
+
+      // Logout
+      const doLogout = () => {
+        openConfirm({
+          title: 'Logout',
+          body: 'Yakin ingin logout dari sistem?',
+          icon: 'bi-box-arrow-right',
+          headerClass: 'bg-danger text-white',
+          okClass: 'btn-danger',
+          okText: 'Ya, Logout',
+          onConfirm: () => {
+            try { logout(); }
+            catch (e) { window.location.href = BASE_PATH + 'index.html'; }
+          },
+        });
+      };
+      on(document.getElementById('btnLogout'), 'click', doLogout);
+      on(document.getElementById('menuLogout'), 'click', doLogout);
+
+      // Offcanvas quick actions
+      on(document.getElementById('menuBulkApprove'), 'click', () => {
+        bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasMenu'))?.hide();
+        setTimeout(handleBulkApprove, 300);
+      });
+      on(document.getElementById('menuBulkIdCard'), 'click', () => {
+        bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasMenu'))?.hide();
+        setTimeout(handleBulkIdCard, 300);
+      });
+
+      // Confirm OK
+      on(document.getElementById('modalConfirmOkBtn'), 'click', () => {
+        const cb = confirmCallback;
+        confirmCallback = null;
+        try { confirmModalInstance?.hide(); } catch (e) {}
+        if (typeof cb === 'function') cb();
+      });
+
+      // Download single ID Card
+      on(document.getElementById('btnDownloadIdCard'), 'click', handleDownloadSingleIdCard);
+    }
+
+    // ============================================================
+    //   SUBSCRIBE MODULE EVENTS
+    // ============================================================
+    function subscribeModule() {
+      KetuaPACModule.subscribe((type) => {
+        if (!pageMounted) return;
+        if (type === 'cleared') return;
+        refreshAll();
+      });
+    }
+
+    // ============================================================
+    //   BOOT
+    // ============================================================
+    (async function boot() {
+      loadAuthState();
+      const role = getUserRole();
+
+      if (role !== 'ketua_pac') {
+        console.warn('[KetuaPAC] Role bukan ketua_pac:', role);
+        window.location.replace(BASE_PATH + 'login.html');
+        return;
+      }
+
+      pageMounted = true;
+      updateNavbarMenu?.();
+      bindGlobalEvents();
+      subscribeModule();
+
+      // Restore tab & scope mode
+      try {
+        const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+        if (savedTab) {
+          activeTab = savedTab;
+          document.querySelectorAll('#tabNav [data-tab]').forEach(b => {
+            b.classList.toggle('active', b.dataset.tab === savedTab);
+          });
+        }
+        const savedScope = localStorage.getItem(ACTIVE_SCOPE_KEY);
+        if (savedScope) {
+          KetuaPACModule.setScopeMode(savedScope);
+          document.querySelectorAll('[data-scope-mode]').forEach(b => {
+            b.classList.toggle('active', b.dataset.scopeMode === savedScope);
+          });
+        }
+      } catch (e) {}
+
+      // Initial render with skeleton
+      renderStats();
+      const tabContent = document.getElementById('tabContent');
+      if (tabContent) {
+        tabContent.innerHTML = `
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted small">Memuat data...</p>
+          </div>
+        `;
+      }
+
+      // Load data
+      try {
+        await KetuaPACModule.loadAllData(true);
+        refreshAll();
+        console.log('[KetuaPAC] Boot complete');
+      } catch (e) {
+        console.error('[KetuaPAC] Boot error:', e);
+        if (tabContent) {
+          tabContent.innerHTML = `
+            <div class="alert alert-danger text-center">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Gagal memuat data: ${escapeHtml(e.message)}
+              <br>
+              <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+              </button>
+            </div>
+          `;
+        }
+      }
+    })();
+
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      pageMounted = false;
+      listeners.forEach(({ el, ev, handler, opts }) => {
+        try { el.removeEventListener(ev, handler, opts); } catch (e) {}
+      });
+      listeners.length = 0;
+    });
+
+    console.log(
+      '%c Ketua PAC Dashboard — v27.0.0 ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

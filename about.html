@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Tentang & Kontak - PKD GP Ansor Bantul</title>
-  
-  <!-- Favicon & Font -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Tentang & Kontak Tim Instruktur PKD GP Ansor Kabupaten Bantul">
+  <title>Tentang &amp; Kontak · PKD GP Ansor Bantul</title>
+
+  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
     * { font-family: 'Inter', system-ui, sans-serif; }
     body {
       background: #f8fafc;
@@ -24,9 +27,7 @@
       flex-direction: column;
     }
 
-    /* ==========================================================
-       HEADER MINIMALIS ELEGAN (SESUAI SS)
-       ========================================================== */
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -56,15 +57,13 @@
     .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
     .brand-logo-mini:hover { transform: scale(1.05); }
     .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
-    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0px; letter-spacing: 0.02em; }
-    
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; letter-spacing: 0.02em; }
+
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* ==========================================================
-       GLASS CARD & KONTEN UTAMA
-       ========================================================== */
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -91,7 +90,7 @@
       flex: 1;
       position: relative;
     }
-    
+
     .section-title {
       font-weight: 650;
       font-size: 1.75rem;
@@ -101,38 +100,182 @@
       padding-left: 1.2rem;
     }
 
-    /* --- TIM INSTRUKTUR CARDS --- */
+    /* ============ TIM INSTRUKTUR CARDS ============ */
     .instructor-card {
-      background: white;
+      background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 24px;
-      padding: 1.5rem 1rem;
+      padding: 1.75rem 1.25rem 1.5rem;
       text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .instructor-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
     .instructor-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(37, 99, 235, 0.12);
+      border-color: rgba(37, 99, 235, 0.25);
     }
-    .instructor-card .icon-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 10px auto;
-      background: #f8fafc;
-      border-radius: 50%;
-      border: 1px solid #e2e8f0;
-    }
-    .instructor-card .icon-wrapper i { font-size: 1.5rem; color: #64748b; }
-    .instructor-card h6 { font-weight: 600; margin-bottom: 2px; color: #0f172a; }
-    .instructor-card .role-text { font-size: 0.8rem; color: #2563eb; font-weight: 500; }
+    .instructor-card:hover::before { opacity: 1; }
 
-    /* --- FORM KONTAK --- */
+    .instructor-photo-wrapper {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      padding: 4px;
+      background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+    .instructor-photo {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #f1f5f9;
+      border: 4px solid #fff;
+      display: block;
+    }
+    .instructor-photo-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #f1f5f9;
+      border: 4px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #94a3b8;
+    }
+
+    .instructor-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #0f172a;
+      margin: 0 0 0.35rem 0;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .instructor-role {
+      font-size: 0.85rem;
+      color: #2563eb;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+    }
+    .instructor-desc {
+      font-size: 0.82rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      flex-grow: 1;
+      word-break: break-word;
+    }
+    .instructor-contacts {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+    .instructor-contacts .btn {
+      border-radius: 50px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* ============ SKELETON ============ */
+    .instructor-skeleton {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 1.75rem 1.25rem 1.5rem;
+      text-align: center;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .instructor-skeleton .skel-photo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      margin-bottom: 1rem;
+    }
+    .instructor-skeleton .skel-name {
+      height: 18px;
+      width: 70%;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+    .instructor-skeleton .skel-role {
+      height: 14px;
+      width: 55%;
+      margin-bottom: 12px;
+      border-radius: 4px;
+    }
+    .instructor-skeleton .skel-desc {
+      height: 12px;
+      width: 90%;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+    .instructor-skeleton .skel-desc-2 {
+      height: 12px;
+      width: 70%;
+      border-radius: 4px;
+    }
+    .skeleton-box {
+      background: #e2e8f0;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-instructor {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748b;
+      background: #f8fafc;
+      border-radius: 20px;
+      border: 1px dashed #cbd5e1;
+    }
+    .empty-instructor i {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    /* ============ FORM KONTAK ============ */
     .form-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; margin-bottom: 6px; }
-    .form-control, .form-select {
+    .form-control {
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       padding: 0.7rem 1rem;
@@ -140,9 +283,10 @@
       transition: 0.2s;
       font-size: 0.95rem;
     }
-    .form-control:focus, .form-select:focus {
+    .form-control:focus {
       border-color: #2563eb;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      outline: none;
     }
     .input-group-text {
       background: #f8fafc;
@@ -163,14 +307,17 @@
       background: #1e4bb3;
       transform: scale(1.02);
       box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+      color: white;
     }
-    .btn-primary-custom:active { transform: scale(0.98); }
 
-    /* --- ANIMASI --- */
+    /* ============ ANIMASI ============ */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
-    /* --- FOOTER --- */
+    /* ============ FOOTER ============ */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -182,84 +329,93 @@
       backdrop-filter: blur(4px);
     }
 
-    /* --- RESPONSIVE --- */
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
-      .container-card { padding: 1.5rem; }
-      .section-title { font-size: 1.3rem; }
+      .container-card { padding: 1.5rem; border-radius: 24px; }
+      .section-title { font-size: 1.3rem; padding-left: 1rem; border-left-width: 5px; }
       .brand-title-mini { display: none; }
       .brand-sub-mini { display: none; }
+      .instructor-photo-wrapper { width: 90px; height: 90px; }
+      .instructor-card { padding: 1.25rem 1rem; }
+      .instructor-skeleton .skel-photo { width: 90px; height: 90px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ================= HEADER ELEGAN (SESUAI SS) ================= -->
+  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
-    <div class="container d-flex justify-content-between align-items-center">
+    <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
         <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
           <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-2">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
           </div>
         </a>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
+  <!-- ================= KONTEN ================= -->
   <main class="container container-card">
-    
-    <!-- TENTANG KAMI -->
+
+    <!-- ============ TENTANG KAMI ============ -->
     <section class="mb-5 fade-up">
       <div class="d-flex align-items-center mb-3">
         <i class="bi bi-info-circle-fill text-primary fs-4 me-2"></i>
         <h2 class="section-title mb-0">Tentang Kami</h2>
       </div>
       <p class="text-muted">
-        Gerakan Pemuda Ansor Kabupaten Bantul adalah organisasi kepemudaan yang berkhidmat di bawah Nahdlatul Ulama. 
+        Gerakan Pemuda Ansor Kabupaten Bantul adalah organisasi kepemudaan yang berkhidmat di bawah Nahdlatul Ulama.
         Kami berkomitmen mencetak kader-kader pemimpin yang berakhlakul karimah, nasionalis, dan berwawasan kebangsaan.
       </p>
     </section>
 
-    <!-- TIM INSTRUKTUR -->
+    <!-- ============ TIM INSTRUKTUR (DINAMIS) ============ -->
     <section class="mb-5 fade-up">
       <div class="d-flex align-items-center mb-3">
-        <i class="bi bi-people-fill text-primary fs-4 me-2"></i>
+        <i class="bi bi-people-fill text-primary fs-4 me-2" aria-hidden="true"></i>
         <h4 class="fw-bold mb-0">Tim Instruktur PKD</h4>
       </div>
-      <div class="row g-3">
+      <div id="timInstrukturContainer" class="row g-3" aria-live="polite">
+        <!-- Skeleton awal -->
         <div class="col-md-4">
-          <div class="instructor-card">
-            <div class="icon-wrapper"><i class="bi bi-person"></i></div>
-            <h6>Cahyo Galih</h6>
-            <div class="role-text">Ketua Tim Instruktur</div>
+          <div class="instructor-skeleton">
+            <div class="skeleton-box skel-photo"></div>
+            <div class="skeleton-box skel-name"></div>
+            <div class="skeleton-box skel-role"></div>
+            <div class="skeleton-box skel-desc"></div>
+            <div class="skeleton-box skel-desc-2"></div>
           </div>
         </div>
         <div class="col-md-4">
-          <div class="instructor-card">
-            <div class="icon-wrapper"><i class="bi bi-person"></i></div>
-            <h6>Faziri Muhammad</h6>
-            <div class="role-text">Wakil Tim Instruktur</div>
+          <div class="instructor-skeleton">
+            <div class="skeleton-box skel-photo"></div>
+            <div class="skeleton-box skel-name"></div>
+            <div class="skeleton-box skel-role"></div>
+            <div class="skeleton-box skel-desc"></div>
+            <div class="skeleton-box skel-desc-2"></div>
           </div>
         </div>
         <div class="col-md-4">
-          <div class="instructor-card">
-            <div class="icon-wrapper"><i class="bi bi-person"></i></div>
-            <h6>Sucipto</h6>
-            <div class="role-text">Sekretaris</div>
+          <div class="instructor-skeleton">
+            <div class="skeleton-box skel-photo"></div>
+            <div class="skeleton-box skel-name"></div>
+            <div class="skeleton-box skel-role"></div>
+            <div class="skeleton-box skel-desc"></div>
+            <div class="skeleton-box skel-desc-2"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- KONTAK KAMI (SESUAI SS) -->
+    <!-- ============ KONTAK KAMI ============ -->
     <section class="glass-card p-4 fade-up">
       <div class="d-flex align-items-center mb-3">
         <i class="bi bi-envelope-paper-fill text-primary fs-4 me-2"></i>
@@ -269,25 +425,29 @@
         Silakan hubungi kami melalui form di bawah ini. Tim kami akan merespon pesan Anda secepatnya.
       </p>
 
-      <form id="contactForm">
+      <form id="contactForm" autocomplete="off">
         <div class="row g-3">
           <div class="col-md-6">
             <label for="contactName" class="form-label">Nama Lengkap</label>
-            <input type="text" class="form-control" id="contactName" placeholder="admin" required>
+            <input type="text" class="form-control" id="contactName"
+                   placeholder="Nama Anda" required>
           </div>
           <div class="col-md-6">
             <label for="contactEmail" class="form-label">Email</label>
-            <input type="email" class="form-control" id="contactEmail" placeholder="nama@email.com" required>
+            <input type="email" class="form-control" id="contactEmail"
+                   placeholder="nama@email.com" required>
           </div>
           <div class="col-12">
             <label for="contactMessage" class="form-label">Pesan</label>
-            <textarea class="form-control" id="contactMessage" rows="3" placeholder="Tulis pesan Anda di sini..." required></textarea>
+            <textarea class="form-control" id="contactMessage" rows="3"
+                      placeholder="Tulis pesan Anda di sini..." required></textarea>
           </div>
           <div class="col-md-6">
             <label for="captchaAnswer" class="form-label">Verifikasi</label>
             <div class="input-group">
               <span class="input-group-text" id="captchaQuestion">4 + 2 = ?</span>
-              <input type="number" class="form-control" id="captchaAnswer" placeholder="Jawaban" required>
+              <input type="number" class="form-control" id="captchaAnswer"
+                     placeholder="Jawaban" required>
             </div>
           </div>
           <div class="col-12 mt-4">
@@ -315,35 +475,162 @@
 
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API
+    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
     // ==========================================================
-    import { 
-      guardPublicAccess, 
-      callApi, 
-      showToast, 
-      getUserData, 
-      updateNavbarMenu 
-    } from './js/core/api.js';
+    import {
+      guardPublicAccess,
+      callApi,
+      showToast,
+      getUserData,
+      updateNavbarMenu,
+      escapeHtml
+    } from '/bisaa/js/core/api.js';
 
     // ==========================================================
-    //   STATE & LOGIC
+    //   STATE
     // ==========================================================
     let currentCaptchaResult = 0;
 
+    // ==========================================================
+    //   CAPTCHA
+    // ==========================================================
     function generateCaptcha() {
       const a = Math.floor(Math.random() * 9) + 1;
       const b = Math.floor(Math.random() * 9) + 1;
       currentCaptchaResult = a + b;
-      document.getElementById('captchaQuestion').innerText = `${a} + ${b} = ?`;
-      document.getElementById('captchaAnswer').value = '';
+
+      const qEl = document.getElementById('captchaQuestion');
+      const aEl = document.getElementById('captchaAnswer');
+      if (qEl) qEl.innerText = `${a} + ${b} = ?`;
+      if (aEl) aEl.value = '';
     }
 
     // ==========================================================
-    //   HANDLE FORM SUBMIT
+    //   TIM INSTRUKTUR RENDER
+    // ==========================================================
+    function normalizeWaNumber(wa) {
+      if (!wa) return '';
+      const digits = String(wa).replace(/\D/g, '');
+      if (digits.startsWith('0')) return '62' + digits.slice(1);
+      if (digits.startsWith('8')) return '62' + digits;
+      return digits;
+    }
+
+    function getDriveThumb(driveId, size) {
+      if (!driveId) return '';
+      const clean = String(driveId).trim().replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!clean) return '';
+      return `https://drive.google.com/thumbnail?id=${clean}&sz=w${size || 300}`;
+    }
+
+    function renderInstructorCard(m) {
+      const thumb = m.foto_driveId ? getDriveThumb(m.foto_driveId, 300) : '';
+
+      const photoHtml = thumb
+        ? `<img src="${escapeHtml(thumb)}" alt="Foto ${escapeHtml(m.nama)}" class="instructor-photo"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+           <div class="instructor-photo-placeholder" style="display:none;">
+             <i class="bi bi-person-fill"></i>
+           </div>`
+        : `<div class="instructor-photo-placeholder">
+             <i class="bi bi-person-fill"></i>
+           </div>`;
+
+      const waNumber = normalizeWaNumber(m.kontak_wa);
+      const waHtml = waNumber
+        ? `<a href="https://wa.me/${escapeHtml(waNumber)}"
+              target="_blank" rel="noopener noreferrer"
+              class="btn btn-outline-success"
+              title="WhatsApp">
+             <i class="bi bi-whatsapp"></i>
+             <span>WhatsApp</span>
+           </a>`
+        : '';
+      const emailHtml = m.kontak_email
+        ? `<a href="mailto:${escapeHtml(m.kontak_email)}"
+              class="btn btn-outline-secondary"
+              title="Email">
+             <i class="bi bi-envelope"></i>
+             <span>Email</span>
+           </a>`
+        : '';
+
+      const contactsHtml = (waHtml || emailHtml)
+        ? `<div class="instructor-contacts">${waHtml}${emailHtml}</div>`
+        : '';
+
+      return `
+        <div class="col-md-4 col-sm-6">
+          <div class="instructor-card">
+            <div class="instructor-photo-wrapper">
+              ${photoHtml}
+            </div>
+            <h6 class="instructor-name">${escapeHtml(m.nama || '-')}</h6>
+            <div class="instructor-role">${escapeHtml(m.jabatan || '-')}</div>
+            ${m.deskripsi
+              ? `<p class="instructor-desc">${escapeHtml(m.deskripsi)}</p>`
+              : '<div class="instructor-desc"></div>'}
+            ${contactsHtml}
+          </div>
+        </div>`;
+    }
+
+    function renderEmptyInstructor() {
+      const container = document.getElementById('timInstrukturContainer');
+      if (!container) return;
+      container.innerHTML = `
+        <div class="empty-instructor">
+          <i class="bi bi-people" aria-hidden="true"></i>
+          <h6 class="fw-bold mb-2">Data Tim Instruktur Belum Tersedia</h6>
+          <p class="small mb-0">Informasi tim instruktur PKD akan segera ditampilkan di sini.</p>
+        </div>`;
+    }
+
+    function renderErrorInstructor(message) {
+      const container = document.getElementById('timInstrukturContainer');
+      if (!container) return;
+      container.innerHTML = `
+        <div class="empty-instructor">
+          <i class="bi bi-exclamation-triangle text-warning" aria-hidden="true"></i>
+          <h6 class="fw-bold mb-2">Gagal Memuat Data</h6>
+          <p class="small mb-0">${escapeHtml(message || 'Silakan muat ulang halaman.')}</p>
+        </div>`;
+    }
+
+    async function loadTimInstruktur() {
+      const container = document.getElementById('timInstrukturContainer');
+      if (!container) return;
+
+      try {
+        const res = await callApi('getTimInstrukturList', {}, 'GET');
+        const list = (res && res.success && Array.isArray(res.data))
+          ? res.data
+          : (Array.isArray(res) ? res : []);
+
+        if (!list || list.length === 0) {
+          renderEmptyInstructor();
+          return;
+        }
+
+        // Sort by urutan
+        list.sort((a, b) =>
+          (parseInt(a.urutan) || 999) - (parseInt(b.urutan) || 999)
+        );
+
+        container.innerHTML = list.map(renderInstructorCard).join('');
+        console.log(`[About] Rendered ${list.length} tim instruktur`);
+      } catch (e) {
+        console.error('[About] Gagal load tim instruktur:', e);
+        renderErrorInstructor(e.message);
+      }
+    }
+
+    // ==========================================================
+    //   HANDLE CONTACT FORM SUBMIT
     // ==========================================================
     async function handleContactForm(e) {
       e.preventDefault();
-      
+
       const nama = document.getElementById('contactName').value.trim();
       const email = document.getElementById('contactEmail').value.trim();
       const pesan = document.getElementById('contactMessage').value.trim();
@@ -363,36 +650,36 @@
       }
 
       btn.disabled = true;
+      const originalText = btn.innerHTML;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
       statusDiv.innerHTML = '';
 
       try {
-        // Ambil data user jika sudah login
-        const userData = getUserData();
-        const username = userData?.username || '';
-        const role = userData?.role || 'guest';
+        const userData = getUserData() || {};
+        const username = userData.username || '';
+        const role = userData.role || 'guest';
 
         const result = await callApi('submitKontak', {
           nama, email, pesan, username, role
-        }, 'GET'); // Menggunakan GET sesuai dengan api.js
+        }, 'POST');
 
-        if (result.success) {
+        if (result && result.success) {
           statusDiv.innerHTML = '<div class="alert alert-success">Pesan Anda berhasil dikirim. Terima kasih!</div>';
           document.getElementById('contactForm').reset();
           generateCaptcha();
         } else {
-          statusDiv.innerHTML = `<div class="alert alert-danger">Gagal mengirim pesan: ${result.error || 'Unknown error'}</div>`;
+          statusDiv.innerHTML = `<div class="alert alert-danger">Gagal mengirim pesan: ${escapeHtml(result.error || 'Unknown error')}</div>`;
         }
       } catch (err) {
-        statusDiv.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan: ${err.message}</div>`;
+        statusDiv.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan: ${escapeHtml(err.message)}</div>`;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-send me-2"></i> Kirim Pesan';
+        btn.innerHTML = originalText;
       }
     }
 
     // ==========================================================
-    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    //   BOOT
     // ==========================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
@@ -400,8 +687,18 @@
 
       updateNavbarMenu();
       generateCaptcha();
-      document.getElementById('contactForm').addEventListener('submit', handleContactForm);
+      document.getElementById('contactForm')?.addEventListener('submit', handleContactForm);
+
+      // Load tim instruktur (paralel, tidak block)
+      loadTimInstruktur().catch(e => {
+        console.warn('[About] loadTimInstruktur error:', e);
+      });
     })();
+
+    console.log(
+      '%c about.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

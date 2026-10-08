@@ -3,17 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>PKD GP Ansor Kabupaten Bantul · Data Kader per PAC</title>
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Data Kader per PAC — PKD GP Ansor Kabupaten Bantul">
+  <title>Data Kader per PAC · PKD GP Ansor Bantul</title>
+
+  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <style>
-    /* ===== GLOBAL ===== */
-    * { font-family: 'Inter', sans-serif; }
-    body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ===== NAVBAR ELEGAN (HEADER MINIMALIS) ===== */
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============ NAVBAR ELEGAN ============ */
     .navbar {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -27,56 +41,141 @@
       padding-top: 0.75rem;
       padding-bottom: 0.75rem;
     }
-    .navbar-brand img { 
-      height: 40px; 
-      width: auto; 
-      margin-right: 14px; 
+    .navbar-brand img {
+      height: 40px;
+      width: auto;
+      margin-right: 14px;
       transition: transform 0.2s;
     }
     .navbar-brand img:hover { transform: scale(1.05); }
-    .brand-title { 
-      font-size: 1.3rem; 
-      font-weight: 700; 
-      color: #0a3d62; 
-      line-height: 1.2; 
+    .brand-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0a3d62;
+      line-height: 1.2;
       letter-spacing: -0.02em;
     }
-    .brand-sub { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      display: block; 
-      margin-top: 0px; 
+    .brand-sub {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: block;
       letter-spacing: 0.02em;
     }
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* ===== NAV LINK ===== */
-    .nav-link { font-weight: 500; border-radius: 9999px; padding: 0.5rem 1.2rem; margin: 0 0.15rem; color: #334155 !important; transition: all 0.2s; }
-    .nav-link:hover { background: rgba(37,99,235,0.08); color: #2563eb !important; }
-    .nav-link.active { background: #2563eb !important; color: #fff !important; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+    /* ============ NAV LINK ============ */
+    .nav-link {
+      font-weight: 500;
+      border-radius: 9999px;
+      padding: 0.5rem 1.2rem;
+      margin: 0 0.15rem;
+      color: #334155 !important;
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      background: rgba(37,99,235,0.08);
+      color: #2563eb !important;
+    }
+    .nav-link.active {
+      background: #2563eb !important;
+      color: #fff !important;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
 
-    /* ===== KONTEN ===== */
-    .container-card { max-width: 1200px; background: white; border-radius: 32px; padding: 2rem; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid rgba(226,232,240,0.6); flex: 1; }
-    .section-title { font-weight: 650; font-size: 1.75rem; margin-bottom: 1.8rem; color: #0f172a; border-left: 6px solid #2563eb; padding-left: 1.2rem; }
-    .footer-modern { font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center; padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white; }
-    .table-container { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-    .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 0 5px 0; flex-wrap: wrap; gap: 10px; }
+    /* ============ KONTEN ============ */
+    .container-card {
+      max-width: 1200px;
+      background: white;
+      border-radius: 32px;
+      padding: 2rem;
+      margin: 30px auto;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+      border: 1px solid rgba(226,232,240,0.6);
+      flex: 1;
+    }
+    .section-title {
+      font-weight: 650;
+      font-size: 1.75rem;
+      margin-bottom: 1.8rem;
+      color: #0f172a;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+    }
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: auto;
+      text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+    .table-container {
+      background: white;
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0;
+    }
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0 5px 0;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
     .pagination-container .info { font-size: 0.9rem; color: #64748b; }
-    .pagination-container .btn-group .btn { border-radius: 8px; margin: 0 2px; padding: 0.3rem 0.7rem; }
-    .pagination-container .btn-group .btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
-    th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 1.5rem !important; }
+    .pagination-container .btn-group .btn {
+      border-radius: 8px;
+      margin: 0 2px;
+      padding: 0.3rem 0.7rem;
+    }
+    .pagination-container .btn-group .btn.active {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 1.5rem !important;
+    }
     th.sortable:hover { background-color: #f1f5f9; }
-    th.sortable::after { content: '↕'; position: absolute; right: 0.5rem; color: #94a3b8; font-size: 0.7rem; opacity: 0.5; }
+    th.sortable::after {
+      content: '↕';
+      position: absolute;
+      right: 0.5rem;
+      color: #94a3b8;
+      font-size: 0.7rem;
+      opacity: 0.5;
+    }
     th.sortable.asc::after { content: '↑'; opacity: 1; color: #2563eb; }
     th.sortable.desc::after { content: '↓'; opacity: 1; color: #2563eb; }
-    .cache-status { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; display: inline-block; }
+    .cache-status {
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #f1f5f9;
+      display: inline-block;
+    }
     .cache-status.live { background: #dcfce7; color: #16a34a; }
     .cache-status.offline { background: #fee2e2; color: #dc2626; }
-    .stat-badge { display: inline-block; padding: 0.35rem 1rem; border-radius: 50px; background: #2563eb; color: white; font-weight: 600; font-size: 0.9rem; margin-bottom: 1.5rem; }
-    @media (max-width: 576px) { 
-      .container-card { padding: 1rem; } 
+    .stat-badge {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 576px) {
+      .container-card { padding: 1rem; }
       .brand-title { font-size: 1.1rem; }
       .brand-sub { font-size: 0.7rem; }
     }
@@ -84,359 +183,431 @@
 </head>
 <body>
 
-<!-- NAVBAR (ELEGAN) -->
-<nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
-      <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-      <span>
-        <span class="brand-title">PKD GP Ansor</span>
-        <span class="brand-sub">Kabupaten Bantul</span>
-      </span>
-    </a>
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="/bisaa/index.html"><i class="bi bi-house-door"></i>Beranda</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/pretest.html"><i class="bi bi-pencil-square"></i>Pre-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/posttest.html"><i class="bi bi-trophy"></i>Post-test</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/absen.html"><i class="bi bi-qr-code"></i>Absen</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/skrining.html"><i class="bi bi-clipboard-check"></i>Skrining</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/peserta.html"><i class="bi bi-person-badge"></i>Peserta</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/materi.html"><i class="bi bi-file-earmark-pdf"></i>Materi</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/informasi.html"><i class="bi bi-info-circle"></i>Informasi</a></li>
-        <li class="nav-item"><a class="nav-link active" href="/bisaa/kader.html"><i class="bi bi-people-fill"></i>Kader</a></li>
-        <li class="nav-item"><a class="nav-link" href="/bisaa/about.html"><i class="bi bi-info-circle"></i>Tentang</a></li>
-      </ul>
-      <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+  <!-- ================= NAVBAR ================= -->
+  <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
+        <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
+        <span>
+          <span class="brand-title">PKD GP Ansor</span>
+          <span class="brand-sub">Kabupaten Bantul</span>
+        </span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="/bisaa/index.html"><i class="bi bi-house-door"></i>Beranda</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/pretest.html"><i class="bi bi-pencil-square"></i>Pre-test</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/posttest.html"><i class="bi bi-trophy"></i>Post-test</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/absen.html"><i class="bi bi-qr-code"></i>Absen</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/skrining.html"><i class="bi bi-clipboard-check"></i>Skrining</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/peserta.html"><i class="bi bi-person-badge"></i>Peserta</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/materi.html"><i class="bi bi-file-earmark-pdf"></i>Materi</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/informasi.html"><i class="bi bi-info-circle"></i>Informasi</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/bisaa/kader.html"><i class="bi bi-people-fill"></i>Kader</a></li>
+          <li class="nav-item"><a class="nav-link" href="/bisaa/about.html"><i class="bi bi-info-circle"></i>Tentang</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2" id="navbarUserMenu"></div>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
-<!-- KONTEN -->
-<div id="contentArea">
-  <section class="container container-card">
-    <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Data Kader per PAC</h2>
-    
-    <!-- Filter & Pencarian -->
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <div class="input-group" style="max-width:300px; display:inline-flex;">
-          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Cari nama...">
+  <!-- ================= KONTEN ================= -->
+  <div id="contentArea">
+    <section class="container container-card">
+      <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Data Kader per PAC</h2>
+
+      <!-- Filter & Pencarian -->
+      <div class="row mb-4 g-2">
+        <div class="col-md-6">
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <div class="input-group" style="max-width:300px;">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input type="text" class="form-control border-start-0"
+                     id="searchInput" placeholder="Cari nama..." autocomplete="off"
+                     aria-label="Cari kader">
+            </div>
+            <select class="form-select" style="width:auto;" id="filterUtusan" aria-label="Filter PAC">
+              <option value="">Semua PAC</option>
+            </select>
+          </div>
         </div>
-        <select class="form-select d-inline-block ms-2" style="width:auto; display:inline-block !important;" id="filterUtusan">
-          <option value="">Semua PAC</option>
-        </select>
+        <div class="col-md-6 text-md-end">
+          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+          </button>
+          <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
+        </div>
       </div>
-      <div class="col-md-6 text-end">
-        <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
-        <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
+
+      <!-- Total Kader Badge -->
+      <div id="totalBadgeContainer" class="text-center mb-3"></div>
+
+      <!-- Tabel Kader -->
+      <div class="table-container">
+        <div id="kaderTableContainer" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted small">Memuat data kader...</p>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Total Kader per PAC terpilih -->
-    <div id="totalBadgeContainer" class="text-center mb-3"></div>
-
-    <!-- Tabel Kader -->
-    <div class="table-container">
-      <div id="kaderTableContainer">
-        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<!-- FOOTER -->
-<footer class="footer-modern container">
-  <div class="d-flex justify-content-center align-items-center gap-2">
-    <i class="bi bi-c-circle"></i>
-    <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul. Semua Hak Dilindungi</span>
+    </section>
   </div>
-</footer>
 
-<!-- ================= SCRIPTS ================= -->
-<!-- Library Eksternal (tetap sebagai script biasa) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer-modern container">
+    <div class="d-flex justify-content-center align-items-center gap-2">
+      <i class="bi bi-c-circle"></i>
+      <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul. Semua Hak Dilindungi</span>
+    </div>
+  </footer>
 
-<!-- Modul ES Khusus Halaman Ini -->
-<script type="module">
-  // ==========================================================
-  //   IMPOR DARI CORE API (ES Modules)
-  // ==========================================================
-  import {
-    callApi,
-    showToast,
-    escapeHtml,
-    guardPublicAccess,
-    updateNavbarMenu
-  } from './js/core/api.js';
+  <!-- ================= SCRIPTS ================= -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  // ==========================================================
-  //   STATE & UTILITY
-  // ==========================================================
-  let STATE = {
-    pesertaList: [],
-    filteredList: [],
-    searchQuery: '',
-    utusanFilter: '',
-    currentPage: 1,
-    itemsPerPage: 20,
-    sortColumn: null,
-    sortDirection: 'asc'
-  };
+  <script type="module">
+    // ==========================================================
+    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
+    // ==========================================================
+    import {
+      callApi,
+      showToast,
+      escapeHtml,
+      guardPublicAccess,
+      updateNavbarMenu
+    } from '/bisaa/js/core/api.js';
 
-  function updateCacheStatus(status) {
-    const el = document.getElementById('cacheStatus');
-    if (el) {
-      el.textContent = status;
-      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-    }
-  }
-
-  function debounce(fn, delay) {
-    let timer;
-    return function(...args) {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn.apply(this, args), delay);
+    // ==========================================================
+    //   STATE
+    // ==========================================================
+    const STATE = {
+      pesertaList: [],
+      filteredList: [],
+      searchQuery: '',
+      utusanFilter: '',
+      currentPage: 1,
+      itemsPerPage: 20,
+      sortColumn: null,
+      sortDirection: 'asc'
     };
-  }
 
-  // ==========================================================
-  //   LOAD DATA (langsung dari API)
-  // ==========================================================
-  async function loadKaderData(forceRefresh = false) {
-    const container = document.getElementById('kaderTableContainer');
+    let searchDebounceTimer = null;
 
-    // Tampilkan loading
-    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-
-    try {
-      const res = await callApi('getPesertaList', {}, 'GET');
-      const freshData = res?.data || res;
-      if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-        STATE.pesertaList = freshData;
-        renderUtusanFilter();
-        applyFiltersAndSort();
-        updateCacheStatus('Live');
-      } else {
-        container.innerHTML = `<div class="alert alert-info text-center">Belum ada data kader.</div>`;
-        updateCacheStatus('Empty');
+    // ==========================================================
+    //   UTILITY
+    // ==========================================================
+    function updateCacheStatus(status) {
+      const el = document.getElementById('cacheStatus');
+      if (el) {
+        el.textContent = status;
+        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
       }
-    } catch (e) {
-      console.warn('Gagal load kader:', e);
-      container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
-      updateCacheStatus('Error');
     }
-  }
 
-  // ==========================================================
-  //   FILTER, SORT, PAGINATION
-  // ==========================================================
-  function getFilteredPeserta(query = '', utusan = '') {
-    let filtered = STATE.pesertaList;
-    if (query.trim() !== '') {
-      const q = query.toLowerCase().trim();
-      filtered = filtered.filter(item =>
-        (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
-        (item.utusan && item.utusan.toLowerCase().includes(q))
-      );
+    function debounce(fn, delay) {
+      let timer;
+      return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
     }
-    if (utusan !== '' && utusan !== '') {
-      filtered = filtered.filter(item => item.utusan === utusan);
+
+    // ==========================================================
+    //   LOAD DATA
+    // ==========================================================
+    async function loadKaderData(forceRefresh = false) {
+      const container = document.getElementById('kaderTableContainer');
+      if (container) {
+        container.innerHTML = `
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted small">Memuat data kader...</p>
+          </div>
+        `;
+      }
+
+      try {
+        const res = await callApi('getPesertaList', {}, 'GET');
+        const freshData = res?.data || res;
+
+        if (freshData && Array.isArray(freshData) && freshData.length > 0) {
+          STATE.pesertaList = freshData;
+          renderUtusanFilter();
+          applyFiltersAndSort();
+          updateCacheStatus('Live');
+        } else {
+          if (container) {
+            container.innerHTML = `<div class="alert alert-info text-center">Belum ada data kader.</div>`;
+          }
+          updateCacheStatus('Empty');
+        }
+      } catch (e) {
+        console.warn('Gagal load kader:', e);
+        if (container) {
+          container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
+        }
+        updateCacheStatus('Error');
+      }
     }
-    return filtered;
-  }
 
-  function applyFiltersAndSort() {
-    let filtered = getFilteredPeserta(STATE.searchQuery, STATE.utusanFilter);
-    if (STATE.sortColumn) {
-      filtered.sort(function(a, b) {
-        let va = (a[STATE.sortColumn] || '').toString().toLowerCase();
-        let vb = (b[STATE.sortColumn] || '').toString().toLowerCase();
-        if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
-        if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
+    // ==========================================================
+    //   FILTER & SORT
+    // ==========================================================
+    function getFilteredPeserta(query = '', utusan = '') {
+      let filtered = STATE.pesertaList;
+
+      if (query.trim() !== '') {
+        const q = query.toLowerCase().trim();
+        filtered = filtered.filter(item =>
+          (item.nama_lengkap && item.nama_lengkap.toLowerCase().includes(q)) ||
+          (item.utusan && item.utusan.toLowerCase().includes(q))
+        );
+      }
+
+      if (utusan !== '') {
+        filtered = filtered.filter(item => item.utusan === utusan);
+      }
+
+      return filtered;
     }
-    STATE.filteredList = filtered;
-    const totalItems = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-    if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
-    if (STATE.currentPage < 1) STATE.currentPage = 1;
-    const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-    const end = Math.min(start + STATE.itemsPerPage, totalItems);
-    
-    // Render tabel dan badge total
-    renderTable(filtered.slice(start, end), totalItems);
-    renderTotalBadge(totalItems);
-  }
 
-  // ==========================================================
-  //   RENDER TOTAL BADGE
-  // ==========================================================
-  function renderTotalBadge(total) {
-    const container = document.getElementById('totalBadgeContainer');
-    const selectedPAC = STATE.utusanFilter;
-    if (selectedPAC) {
-      container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Kader PAC ${escapeHtml(selectedPAC)} : ${total} orang</span>`;
-    } else {
-      container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Total Kader : ${total} orang</span>`;
+    function applyFiltersAndSort() {
+      let filtered = getFilteredPeserta(STATE.searchQuery, STATE.utusanFilter);
+
+      if (STATE.sortColumn) {
+        filtered.sort(function(a, b) {
+          let va = (a[STATE.sortColumn] || '').toString().toLowerCase();
+          let vb = (b[STATE.sortColumn] || '').toString().toLowerCase();
+          if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+          if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      STATE.filteredList = filtered;
+      const totalItems = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+      if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+      if (STATE.currentPage < 1) STATE.currentPage = 1;
+
+      const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+      const end = Math.min(start + STATE.itemsPerPage, totalItems);
+
+      renderTable(filtered.slice(start, end), totalItems);
+      renderTotalBadge(totalItems);
     }
-  }
 
-  // ==========================================================
-  //   RENDER TABEL
-  // ==========================================================
-  function renderTable(data, totalItems) {
-    const container = document.getElementById('kaderTableContainer');
-    if (!container) return;
+    // ==========================================================
+    //   RENDER TOTAL BADGE
+    // ==========================================================
+    function renderTotalBadge(total) {
+      const container = document.getElementById('totalBadgeContainer');
+      if (!container) return;
+      const selectedPAC = STATE.utusanFilter;
+      if (selectedPAC) {
+        container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Kader PAC ${escapeHtml(selectedPAC)} : ${total} orang</span>`;
+      } else {
+        container.innerHTML = `<span class="stat-badge"><i class="bi bi-people-fill me-2"></i>Total Kader : ${total} orang</span>`;
+      }
+    }
 
-    let html = `
-      <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm">
-          <thead class="table-light">
-            <tr>
-              <th style="width:50px;">#</th>
-              <th class="sortable" onclick="sortTable('nama_lengkap')">Nama</th>
-              <th class="sortable" onclick="sortTable('utusan')">PAC</th>
-              <th class="sortable" onclick="sortTable('pendidikan_terakhir')">Pendidikan</th>
-              <th class="sortable" onclick="sortTable('pekerjaan')">Pekerjaan</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
+    // ==========================================================
+    //   RENDER TABEL
+    // ==========================================================
+    function renderTable(data, totalItems) {
+      const container = document.getElementById('kaderTableContainer');
+      if (!container) return;
 
-    if (data.length === 0) {
-      html += `
-        <tr>
-          <td colspan="5" class="text-center py-3 text-muted">
-            <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-            Tidak ada data kader untuk PAC ini.
-          </td>
-        </tr>
+      let html = `
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:50px;">#</th>
+                <th class="sortable" data-sort="nama_lengkap" role="button" tabindex="0">Nama</th>
+                <th class="sortable" data-sort="utusan" role="button" tabindex="0">PAC</th>
+                <th class="sortable" data-sort="pendidikan_terakhir" role="button" tabindex="0">Pendidikan</th>
+                <th class="sortable" data-sort="pekerjaan" role="button" tabindex="0">Pekerjaan</th>
+              </tr>
+            </thead>
+            <tbody>
       `;
-    } else {
-      data.forEach((item, index) => {
-        const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+
+      if (data.length === 0) {
         html += `
           <tr>
-            <td>${globalIndex}</td>
-            <td><strong>${escapeHtml(item.nama_lengkap || '')}</strong></td>
-            <td>${escapeHtml(item.utusan || '-')}</td>
-            <td>${escapeHtml(item.pendidikan_terakhir || '-')}</td>
-            <td>${escapeHtml(item.pekerjaan || '-')}</td>
+            <td colspan="5" class="text-center py-3 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              Tidak ada data kader untuk PAC ini.
+            </td>
           </tr>
         `;
+      } else {
+        data.forEach((item, index) => {
+          const globalIndex = (STATE.currentPage - 1) * STATE.itemsPerPage + index + 1;
+          html += `
+            <tr>
+              <td>${globalIndex}</td>
+              <td><strong>${escapeHtml(item.nama_lengkap || '')}</strong></td>
+              <td>${escapeHtml(item.utusan || '-')}</td>
+              <td>${escapeHtml(item.pendidikan_terakhir || '-')}</td>
+              <td>${escapeHtml(item.pekerjaan || '-')}</td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `</tbody></table></div>`;
+
+      const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+      html += `
+        <div class="pagination-container">
+          <div class="info">
+            Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} -
+            ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data
+          </div>
+          <div class="btn-group">
+      `;
+
+      // Pagination dengan max 7 tombol
+      const maxButtons = 7;
+      let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
+      let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+      if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
+
+      if (startPage > 1) {
+        html += `<button class="btn btn-sm btn-outline-secondary" onclick="goToPage(1)" aria-label="Halaman 1">1</button>`;
+        if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+      }
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary active' : 'btn-outline-secondary'}"
+                          onclick="goToPage(${i})" aria-label="Halaman ${i}">${i}</button>`;
+      }
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+        html += `<button class="btn btn-sm btn-outline-secondary" onclick="goToPage(${totalPages})" aria-label="Halaman terakhir">${totalPages}</button>`;
+      }
+      html += `</div></div>`;
+
+      container.innerHTML = html;
+
+      // Bind sort
+      container.querySelectorAll('[data-sort]').forEach(th => {
+        th.addEventListener('click', function() {
+          sortTable(this.dataset.sort);
+        });
+        th.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            sortTable(this.dataset.sort);
+          }
+        });
       });
     }
 
-    html += `
-        </tbody>
-      </table>
-    </div>
-    `;
-
-    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-    html += `
-      <div class="pagination-container">
-        <div class="info">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
-        <div class="btn-group">
-    `;
-    for (let i = 1; i <= totalPages; i++) {
-      html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" onclick="goToPage(${i})">${i}</button>`;
-    }
-    html += `</div></div>`;
-
-    container.innerHTML = html;
-    container.classList.add('fade-in');
-  }
-
-  // ==========================================================
-  //   SORT & PAGINATION HELPERS (Diekspos ke global)
-  // ==========================================================
-  window.sortTable = function(col) {
-    if (STATE.sortColumn === col) STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
-    else { STATE.sortColumn = col; STATE.sortDirection = 'asc'; }
-    STATE.currentPage = 1;
-    applyFiltersAndSort();
-  };
-
-  window.goToPage = function(page) {
-    const totalItems = STATE.filteredList.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-    if (page < 1 || page > totalPages) return;
-    STATE.currentPage = page;
-    applyFiltersAndSort();
-  };
-
-  // ==========================================================
-  //   RENDER DROPDOWN FILTER UTUSAN
-  // ==========================================================
-  function renderUtusanFilter() {
-    const select = document.getElementById('filterUtusan');
-    if (!select) return;
-    const utusanSet = new Set();
-    STATE.pesertaList.forEach(item => {
-      if (item.utusan && item.utusan.trim() !== '') {
-        utusanSet.add(item.utusan);
+    // ==========================================================
+    //   SORT & PAGINATION (GLOBAL)
+    // ==========================================================
+    window.sortTable = function(col) {
+      if (STATE.sortColumn === col) {
+        STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        STATE.sortColumn = col;
+        STATE.sortDirection = 'asc';
       }
+      STATE.currentPage = 1;
+      applyFiltersAndSort();
+    };
+
+    window.goToPage = function(page) {
+      const totalItems = STATE.filteredList.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+      if (page < 1 || page > totalPages) return;
+      STATE.currentPage = page;
+      applyFiltersAndSort();
+    };
+
+    // ==========================================================
+    //   RENDER DROPDOWN FILTER UTUSAN
+    // ==========================================================
+    function renderUtusanFilter() {
+      const select = document.getElementById('filterUtusan');
+      if (!select) return;
+
+      const utusanSet = new Set();
+      STATE.pesertaList.forEach(item => {
+        if (item.utusan && String(item.utusan).trim() !== '') {
+          utusanSet.add(item.utusan);
+        }
+      });
+
+      const utusan = Array.from(utusanSet).sort();
+      const currentVal = select.value;
+
+      select.innerHTML = '<option value="">Semua PAC</option>';
+      utusan.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u;
+        opt.textContent = u;
+        if (currentVal === u) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    // ==========================================================
+    //   BIND EVENTS
+    // ==========================================================
+    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
+      const btn = this;
+      const original = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      btn.disabled = true;
+
+      loadKaderData(true)
+        .then(() => {
+          btn.innerHTML = original;
+          btn.disabled = false;
+          showToast('Data berhasil disegarkan', 'success');
+        })
+        .catch(() => {
+          btn.innerHTML = original;
+          btn.disabled = false;
+          showToast('Gagal menyegarkan', 'error');
+        });
     });
-    const utusan = Array.from(utusanSet).sort();
-    select.innerHTML = '<option value="">Semua PAC</option>';
-    utusan.forEach(u => {
-      const opt = document.createElement('option');
-      opt.value = u;
-      opt.textContent = u;
-      select.appendChild(opt);
+
+    document.getElementById('searchInput')?.addEventListener('input', debounce(function(e) {
+      STATE.searchQuery = e.target.value;
+      STATE.currentPage = 1;
+      applyFiltersAndSort();
+    }, 300));
+
+    document.getElementById('filterUtusan')?.addEventListener('change', function() {
+      STATE.utusanFilter = this.value;
+      STATE.currentPage = 1;
+      applyFiltersAndSort();
     });
-  }
 
-  // ==========================================================
-  //   EVENT HANDLERS
-  // ==========================================================
-  document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-    this.disabled = true;
-    loadKaderData(true).then(() => {
-      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-      this.disabled = false;
-      showToast('Data berhasil disegarkan', 'success');
-    }).catch(() => {
-      this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-      this.disabled = false;
-      showToast('Gagal menyegarkan', 'error');
-    });
-  });
+    // ==========================================================
+    //   BOOT
+    // ==========================================================
+    (async function boot() {
+      const canAccess = await guardPublicAccess();
+      if (!canAccess) return;
 
-  document.getElementById('searchInput')?.addEventListener('input', debounce(function(e) {
-    STATE.searchQuery = e.target.value;
-    STATE.currentPage = 1;
-    applyFiltersAndSort();
-  }, 300));
+      updateNavbarMenu();
+      loadKaderData();
+    })();
 
-  document.getElementById('filterUtusan')?.addEventListener('change', function() {
-    STATE.utusanFilter = this.value;
-    STATE.currentPage = 1;
-    applyFiltersAndSort();
-  });
-
-  // ==========================================================
-  //   🛡️ GUARD PUBLIC ACCESS & BOOT
-  // ==========================================================
-  (async function boot() {
-    const canAccess = await guardPublicAccess();
-    if (!canAccess) return;
-
-    // Update navbar user
-    updateNavbarMenu();
-
-    // Load data pertama
-    loadKaderData();
-  })();
-
-</script>
+    console.log(
+      '%c kader.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
+  </script>
 </body>
 </html>

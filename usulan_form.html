@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Form Usulan PKD GP Ansor Kabupaten Bantul">
   <title>Form Usulan PKD · GP Ansor Bantul</title>
 
-  <!-- Favicon & Font -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-  <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
     * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
     body {
       background: #f8fafc;
@@ -23,7 +27,6 @@
       flex-direction: column;
     }
 
-    /* --- HEADER MINIMALIS ELEGAN (SAMA DENGAN INDEX) --- */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -50,33 +53,15 @@
       transform: translateX(-3px);
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
-    .brand-logo-mini { 
-      height: 40px; 
-      width: auto; 
-      margin-right: 14px; 
-      transition: transform 0.2s;
-    }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
     .brand-logo-mini:hover { transform: scale(1.05); }
-    .brand-title-mini { 
-      font-weight: 700; 
-      color: #0a3d62; 
-      font-size: 1.3rem; 
-      line-height: 1.2; 
-      letter-spacing: -0.02em;
-    }
-    .brand-sub-mini { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      display: block; 
-      margin-top: 0px; 
-      letter-spacing: 0.02em;
-    }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; letter-spacing: 0.02em; }
 
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* --- GLASS CARD --- */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -95,7 +80,6 @@
       border-color: rgba(37, 99, 235, 0.2);
     }
 
-    /* --- SECTION TITLE --- */
     .section-title {
       font-weight: 650;
       font-size: 1.75rem;
@@ -105,7 +89,6 @@
       margin-bottom: 1.5rem;
     }
 
-    /* --- FORM ELEMENTS PREMIUM --- */
     .form-label { font-weight: 600; color: #0f172a; margin-bottom: 6px; }
     .form-control, .form-select {
       border-radius: 12px;
@@ -118,10 +101,9 @@
     .form-control:focus, .form-select:focus {
       border-color: #2563eb;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      outline: none;
     }
-    .input-group .form-control {
-      border-radius: 0 12px 12px 0;
-    }
+    .input-group .form-control { border-radius: 0 12px 12px 0; }
     .input-group-text {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -130,7 +112,6 @@
       font-size: 1.1rem;
     }
 
-    /* --- UPLOAD AREA (DRAG & DROP) --- */
     .upload-area {
       border: 2px dashed #cbd5e1;
       border-radius: 16px;
@@ -152,7 +133,6 @@
       display: inline-block;
     }
 
-    /* --- BUTTON PREMIUM --- */
     .btn-primary-custom {
       background: linear-gradient(135deg, #2563eb, #1e4bb3);
       border: none;
@@ -166,8 +146,11 @@
     .btn-primary-custom:hover {
       transform: scale(1.02);
       box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+      color: white;
     }
     .btn-primary-custom:active { transform: scale(0.98); }
+    .btn-primary-custom:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
     .btn-wa {
       background-color: #25D366;
       border-color: #25D366;
@@ -181,13 +164,11 @@
       transform: translateY(-2px);
     }
 
-    /* --- ANIMASI --- */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .delay-1 { animation-delay: 0.05s; }
     .delay-2 { animation-delay: 0.1s; }
 
-    /* --- FOOTER --- */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -198,7 +179,6 @@
       background: white;
     }
 
-    /* --- RESPONSIVE --- */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1.5rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -212,7 +192,7 @@
 </head>
 <body>
 
-  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
+  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -220,104 +200,127 @@
           <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
           </div>
         </a>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
+  <!-- ================= KONTEN ================= -->
   <div id="contentArea" class="container">
     <div class="glass-card fade-up">
       <div class="d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-megaphone-fill text-primary fs-4"></i>
         <h2 class="section-title mb-0">Form Usulan PKD</h2>
       </div>
-      
+
       <div class="bg-primary bg-opacity-10 rounded-4 p-3 mb-4 border border-primary border-opacity-10 fade-up delay-1">
         <h5 class="fw-bold mb-2"><i class="bi bi-send me-2"></i>Ajukan Usulan PKD dari PAC</h5>
         <p class="text-muted small mb-0">Isi data berikut untuk mengajukan usulan kegiatan PKD dari PAC Anda. Data akan diproses oleh admin.</p>
       </div>
 
-      <form id="usulanForm" class="fade-up delay-1">
+      <form id="usulanForm" class="fade-up delay-1" autocomplete="off">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold" for="usulanNama">
+              Nama Lengkap <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-              <input type="text" class="form-control" id="usulanNama" placeholder="Contoh: Ulinnuha" required />
-            </div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">Usulan (Nama PAC) <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-building"></i></span>
-              <input type="text" class="form-control" id="usulanUsulan" placeholder="Contoh: PAC GP Ansor Kapanewon Sewon" required />
+              <input type="text" class="form-control" id="usulanNama"
+                     placeholder="Contoh: Ulinnuha" required>
             </div>
           </div>
 
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold" for="usulanUsulan">
+              Usulan (Nama PAC) <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-calendar2-week"></i></span>
-              <input type="date" class="form-control" id="usulanTanggalMulai" required />
+              <span class="input-group-text"><i class="bi bi-building"></i></span>
+              <input type="text" class="form-control" id="usulanUsulan"
+                     placeholder="Contoh: PAC GP Ansor Kapanewon Sewon" required>
             </div>
           </div>
+
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Tanggal Berakhir <span class="text-muted small">(Opsional)</span></label>
+            <label class="form-label fw-semibold" for="usulanTanggalMulai">
+              Tanggal Mulai <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-calendar2-week"></i></span>
+              <input type="date" class="form-control" id="usulanTanggalMulai" required>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="usulanTanggalAkhir">
+              Tanggal Berakhir <span class="text-muted small">(Opsional)</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-calendar2-day"></i></span>
-              <input type="date" class="form-control" id="usulanTanggalAkhir" />
+              <input type="date" class="form-control" id="usulanTanggalAkhir">
             </div>
             <div class="form-text text-muted small">Kosongkan jika hanya satu hari.</div>
           </div>
 
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Lokasi <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold" for="usulanLokasi">
+              Lokasi <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-              <input type="text" class="form-control" id="usulanLokasi" placeholder="SKB Semail, Bangunharjo" required />
+              <input type="text" class="form-control" id="usulanLokasi"
+                     placeholder="SKB Semail, Bangunharjo" required>
             </div>
           </div>
+
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Nomor HP <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold" for="usulanNoHp">
+              Nomor HP <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-whatsapp text-success"></i></span>
-              <input type="tel" class="form-control" id="usulanNoHp" placeholder="083866675521" required />
+              <input type="tel" class="form-control" id="usulanNoHp"
+                     placeholder="083866675521" required>
             </div>
           </div>
 
           <div class="col-12">
-            <label class="form-label fw-semibold">Upload Flyer <span class="text-muted small">(Opsional)</span></label>
+            <label class="form-label fw-semibold" for="usulanFlyer">
+              Upload Flyer <span class="text-muted small">(Opsional)</span>
+            </label>
             <div class="upload-area" id="uploadDropZone">
               <i class="bi bi-cloud-upload"></i>
-              <p class="mb-1 mt-2 fw-semibold">Klik atau drag & drop file di sini</p>
+              <p class="mb-1 mt-2 fw-semibold">Klik atau drag &amp; drop file di sini</p>
               <p class="text-muted small mb-2">Format: JPG, PNG, WEBP (Max 2MB)</p>
-              <input type="file" class="form-control" id="usulanFlyer" accept="image/*" style="max-width: 300px; margin: 0 auto;" />
+              <input type="file" class="form-control" id="usulanFlyer" accept="image/*"
+                     style="max-width: 300px; margin: 0 auto;">
             </div>
             <div id="flyerPreviewContainer" class="mt-2 text-center" style="display:none;">
-              <img id="flyerPreview" src="#" class="img-thumbnail rounded-3 border-0 shadow-sm" style="max-height: 120px;" alt="Preview Flyer" />
+              <img id="flyerPreview" src="#" class="img-thumbnail rounded-3 border-0 shadow-sm"
+                   style="max-height: 120px;" alt="Preview Flyer">
               <p id="flyerPreviewName" class="small text-muted mt-1"></p>
             </div>
           </div>
 
           <div class="col-md-6 mx-auto">
-            <label class="form-label fw-semibold">Verifikasi Keamanan</label>
+            <label class="form-label fw-semibold" for="captchaAnswer">Verifikasi Keamanan</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-shield-check-fill text-warning"></i></span>
               <span class="input-group-text bg-white" id="captchaQuestion">5 + 3 = ?</span>
-              <input type="number" class="form-control" id="captchaAnswer" placeholder="Masukkan hasil" required />
+              <input type="number" class="form-control" id="captchaAnswer"
+                     placeholder="Masukkan hasil" required>
             </div>
           </div>
 
           <div class="col-12 mt-4">
-            <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-5">
+            <button type="submit" class="btn btn-primary-custom w-100 py-3 fs-5" id="submitUsulanBtn">
               <i class="bi bi-send me-2"></i>Kirim Usulan
             </button>
           </div>
@@ -342,54 +345,47 @@
     </div>
   </footer>
 
-  <!-- ================= TOAST ================= -->
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-      <div class="toast-header bg-white border-0">
-        <i class="bi me-2" id="toastIcon"></i>
-        <strong class="me-auto" id="toastTitle">Berhasil</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-      </div>
-      <div class="toast-body" id="toastMessage"></div>
-    </div>
-  </div>
-
   <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
+    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
     // ==========================================================
     import {
       guardPublicAccess,
       callApi,
       showToast,
       escapeHtml,
-      updateNavbarMenu,
-      getUserRole
-    } from './js/core/api.js';
+      updateNavbarMenu
+    } from '/bisaa/js/core/api.js';
 
     // ==========================================================
-    //   STATE & VARIABLES
+    //   STATE
     // ==========================================================
     let currentCaptchaResult = 0;
-    let lastSubmittedData = null;
+    let isSubmitting = false;
 
-    // ==========================================================
-    //   UTILITY
-    // ==========================================================
     function escapeHtmlLocal(str) { return escapeHtml(str); }
     function showToastLocal(message, type) { showToast(message, type); }
 
+    // ==========================================================
+    //   CAPTCHA
+    // ==========================================================
     function generateCaptcha() {
       const a = Math.floor(Math.random() * 10) + 1;
       const b = Math.floor(Math.random() * 10) + 1;
       currentCaptchaResult = a + b;
-      document.getElementById('captchaQuestion').innerText = `${a} + ${b} = ?`;
-      document.getElementById('captchaAnswer').value = '';
+
+      const qEl = document.getElementById('captchaQuestion');
+      const aEl = document.getElementById('captchaAnswer');
+      if (qEl) qEl.innerText = `${a} + ${b} = ?`;
+      if (aEl) aEl.value = '';
     }
 
+    // ==========================================================
+    //   FILE UTILITIES
+    // ==========================================================
     function readFileAsBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -413,37 +409,43 @@
       const tglAkhir = data.tanggalAkhir ? formatDateForWA(data.tanggalAkhir) : '';
       const periode = tglAkhir ? `${tglMulai} s.d ${tglAkhir}` : tglMulai;
       const lokasi = data.lokasi || '-';
-      const noHp = data.no_hp || '-';
-      let pesan = `*KONFIRMASI USULAN PKD*%0A%0A` +
-                  `Saya mengajukan usulan PKD melalui form online:%0A` +
-                  `Nama: ${nama}%0A` +
-                  `PAC: ${usulan}%0A` +
-                  `Tanggal: ${periode}%0A` +
-                  `Lokasi: ${lokasi}%0A` +
-                  `No. HP: ${noHp}%0A%0A` +
-                  `Mohon segera diproses. Terima kasih.`;
-      return pesan;
+      const noHp = data.no_hp || '';
+
+      return (
+        `*KONFIRMASI USULAN PKD*%0A%0A` +
+        `Saya mengajukan usulan PKD melalui form online:%0A` +
+        `Nama: ${nama}%0A` +
+        `PAC: ${usulan}%0A` +
+        `Tanggal: ${periode}%0A` +
+        `Lokasi: ${lokasi}%0A` +
+        `No. HP: ${noHp}%0A%0A` +
+        `Mohon segera diproses. Terima kasih.`
+      );
     }
 
-    // ==========================================================
-    //   SHOW SUCCESS WITH WA BUTTON
-    // ==========================================================
     function showSuccessWithWaButton(data) {
       const msgDiv = document.getElementById('usulanFormMessage');
+      if (!msgDiv) return;
+
       const waText = generateWhatsAppText(data);
       const waLink = `https://wa.me/6283866675521?text=${waText}`;
 
       msgDiv.innerHTML = `
         <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-4 border-0" role="alert">
-          <i class="bi bi-check-circle-fill me-2"></i> <strong>Usulan berhasil dikirim!</strong> Data Anda sudah tercatat di sistem.
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <strong>Usulan berhasil dikirim!</strong> Data Anda sudah tercatat di sistem.
           <hr class="my-2">
           <div class="d-flex flex-wrap gap-2 mt-2">
-            <a href="${waLink}" target="_blank" class="btn btn-wa btn-sm rounded-pill px-3">
+            <a href="${waLink}" target="_blank" rel="noopener noreferrer"
+               class="btn btn-wa btn-sm rounded-pill px-3">
               <i class="bi bi-whatsapp me-1"></i> Konfirmasi via WhatsApp (Percepatan)
             </a>
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="alert" aria-label="Tutup">Tutup</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                    data-bs-dismiss="alert" aria-label="Tutup">Tutup</button>
           </div>
-          <small class="text-muted d-block mt-2">⚠️ Klik tombol WhatsApp untuk mengirim notifikasi langsung ke admin. Proses akan lebih cepat.</small>
+          <small class="text-muted d-block mt-2">
+            ⚠️ Klik tombol WhatsApp untuk mengirim notifikasi langsung ke admin. Proses akan lebih cepat.
+          </small>
         </div>
       `;
       msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -455,13 +457,13 @@
     function initForm() {
       generateCaptcha();
 
-      // Preview flyer
       const fileInput = document.getElementById('usulanFlyer');
       const previewContainer = document.getElementById('flyerPreviewContainer');
       const previewImg = document.getElementById('flyerPreview');
       const previewName = document.getElementById('flyerPreviewName');
 
-      fileInput.addEventListener('change', function(e) {
+      // Preview flyer
+      fileInput?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
           const reader = new FileReader();
@@ -478,9 +480,10 @@
         }
       });
 
-      // Submit form
-      document.getElementById('usulanForm').addEventListener('submit', async function(e) {
+      // Submit handler
+      document.getElementById('usulanForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (isSubmitting) return;
 
         const nama = document.getElementById('usulanNama').value.trim();
         const usulan = document.getElementById('usulanUsulan').value.trim();
@@ -491,19 +494,30 @@
         const captchaAnswer = parseInt(document.getElementById('captchaAnswer').value.trim(), 10);
         const msgDiv = document.getElementById('usulanFormMessage');
 
-        // Validasi CAPTCHA
+        // Validasi captcha
         if (isNaN(captchaAnswer) || captchaAnswer !== currentCaptchaResult) {
           msgDiv.innerHTML = '<div class="alert alert-danger">Jawaban verifikasi salah.</div>';
           generateCaptcha();
           return;
         }
+
+        // Validasi required
         if (!nama || !usulan || !tanggalMulai || !lokasi || !no_hp) {
           msgDiv.innerHTML = '<div class="alert alert-danger">Semua field wajib diisi.</div>';
           return;
         }
 
-        let flyerData = null, flyerName = null;
+        // Validasi tanggal
+        if (tanggalAkhir && new Date(tanggalAkhir) < new Date(tanggalMulai)) {
+          msgDiv.innerHTML = '<div class="alert alert-danger">Tanggal berakhir tidak boleh sebelum tanggal mulai.</div>';
+          return;
+        }
+
+        // Baca file flyer
+        let flyerData = null;
+        let flyerName = null;
         const flyerFileInput = document.getElementById('usulanFlyer');
+
         if (flyerFileInput.files.length > 0) {
           const file = flyerFileInput.files[0];
           if (file.size > 2 * 1024 * 1024) {
@@ -511,11 +525,18 @@
             return;
           }
           flyerName = file.name;
-          try { flyerData = await readFileAsBase64(file); }
-          catch (err) { msgDiv.innerHTML = '<div class="alert alert-danger">Gagal membaca file flyer</div>'; return; }
+          try {
+            flyerData = await readFileAsBase64(file);
+          } catch (err) {
+            msgDiv.innerHTML = '<div class="alert alert-danger">Gagal membaca file flyer</div>';
+            return;
+          }
         }
 
-        const btn = this.querySelector('button[type="submit"]');
+        const btn = document.getElementById('submitUsulanBtn');
+        const original = btn.innerHTML;
+
+        isSubmitting = true;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
         msgDiv.innerHTML = '';
@@ -532,46 +553,45 @@
             flyerName
           }, 'POST');
 
-          if (res.success) {
-            lastSubmittedData = {
-              nama: nama,
-              usulan: usulan,
-              tanggalMulai: tanggalMulai,
-              tanggalAkhir: tanggalAkhir,
-              lokasi: lokasi,
-              no_hp: no_hp
-            };
+          if (res && res.success) {
+            showSuccessWithWaButton({
+              nama, usulan,
+              tanggalMulai, tanggalAkhir,
+              lokasi, no_hp
+            });
 
+            // Reset form
             document.getElementById('usulanForm').reset();
             document.getElementById('flyerPreviewContainer').style.display = 'none';
             generateCaptcha();
-
-            showSuccessWithWaButton(lastSubmittedData);
           } else {
-            throw new Error(res.error || 'Gagal mengirim usulan');
+            throw new Error((res && res.error) || 'Gagal mengirim usulan');
           }
         } catch (err) {
           msgDiv.innerHTML = `<div class="alert alert-danger">Gagal: ${escapeHtmlLocal(err.message)}</div>`;
         } finally {
+          isSubmitting = false;
           btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-send me-2"></i>Kirim Usulan';
+          btn.innerHTML = original;
         }
       });
     }
 
     // ==========================================================
-    //   🛡️ GUARD PUBLIC ACCESS & BOOT
+    //   BOOT
     // ==========================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      // Update navbar user
       updateNavbarMenu();
-
-      // Inisialisasi form
       initForm();
     })();
+
+    console.log(
+      '%c usulan_form.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

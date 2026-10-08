@@ -1,0 +1,1088 @@
+{
+  "manifest": {
+    "title": "MASTER MANIFEST",
+    "version": "27.0.0",
+    "project": "Platform Digital PKD GP Ansor Kabupaten Bantul",
+    "edition": "GitHub Pages /bisaa/ Edition",
+    "description": "Single file reference untuk semua file project. Copy-paste file ini saja di chat baru, AI akan paham struktur lengkap project tanpa perlu upload semua file.",
+    "lastUpdate": "Januari 2026",
+    "owner": "Tim Instruktur PKD GP Ansor Bantul",
+    "schemaVersion": "1.0.0"
+  },
+
+  "usage": {
+    "forAI": "Paste file ini di chat baru, sebutkan file spesifik yang mau dibahas",
+    "forFullContent": "Sebutkan nama file persis, user akan paste content-nya",
+    "examples": [
+      "Berdasarkan manifest, tolong review file `js/router.js` untuk race condition",
+      "Fix bug di `views/admin/peserta.js` bagian handleSavePeserta",
+      "Optimize chart rendering di `dashboard.js`",
+      "Buatkan unit test untuk `view-helpers.js`",
+      "Update docs/CHANGELOG.md untuk v27.0.0"
+    ]
+  },
+
+  "overview": {
+    "totalHTML": 21,
+    "totalJS": 19,
+    "totalCSS": 2,
+    "totalBackend": 1,
+    "totalLines": 32000,
+    "totalSheets": 32,
+    "totalAPIActions": "100+",
+    "totalSPARoutes": 18,
+    "totalPublicMPA": 16,
+    "totalSignPages": 3,
+    "deployment": "GitHub Pages subfolder /bisaa/",
+    "backendURL": "Google Apps Script",
+    "basePath": "/bisaa/",
+    "versionFrontend": "v27.0.0",
+    "versionBackend": "v27.0.0",
+    "authModel": "Custom SHA-256 + salt + Password TTD",
+    "modeDeployment": "Static SPA + Serverless backend"
+  },
+
+  "architecture": {
+    "layers": [
+      {
+        "name": "Browser (Client)",
+        "components": [
+          {
+            "name": "SPA Shell",
+            "file": "/bisaa/app.html",
+            "contains": [
+              { "name": "Sidebar", "file": "/bisaa/partials/sidebar.html" },
+              { "name": "Bottom Nav", "file": "/bisaa/partials/bottom-nav.html" },
+              { "name": "View Container", "element": "<main id='view-container'>" }
+            ]
+          },
+          {
+            "name": "Router",
+            "file": "js/router.js",
+            "features": ["hash routing", "fragment cache"]
+          },
+          {
+            "name": "Components (mounted at boot)",
+            "items": [
+              { "name": "theme-toggle", "trigger": "Ctrl+Shift+D" },
+              { "name": "command-palette", "trigger": "Ctrl+K" },
+              { "name": "notification-center", "trigger": "bell icon" },
+              { "name": "shortcuts-modal", "trigger": "Shift+?" }
+            ]
+          },
+          {
+            "name": "State Modules",
+            "items": [
+              { "name": "admin.js", "feature": "batch getBootstrapData" },
+              { "name": "ketua_pac.js", "feature": "filtered by kapanewon" },
+              { "name": "member.js", "feature": "personal data" }
+            ]
+          },
+          {
+            "name": "Data Access",
+            "items": [
+              { "name": "api.js", "exports": "137+" },
+              { "name": "config.js", "basePath": "/bisaa/" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Google Apps Script (Serverless Backend)",
+        "file": "code.gs",
+        "version": "v27.0.0",
+        "actions": "100+",
+        "keyFunctions": [
+          "doGet / doPost",
+          "handleRequest → switch(action)",
+          "initializeSystem() → 22 ensure/migrate",
+          "getBootstrapData() → 23 endpoint dalam 1 request",
+          "LockService untuk concurrency",
+          "SHA-256 password hashing + salt",
+          "Drive API untuk file storage"
+        ]
+      },
+      {
+        "name": "Data Layer",
+        "items": [
+          { "name": "Google Sheets", "sheets": 32 },
+          { "name": "Google Drive", "quota": "15 GB" }
+        ]
+      }
+    ]
+  },
+
+  "fileTree": {
+    "root": "bisaa/",
+    "note": "Repo root (deploy ke GitHub Pages)",
+    "categories": [
+      {
+        "category": "ROOT HTML (Public MPA)",
+        "count": 16,
+        "files": [
+          { "name": "index.html", "purpose": "Landing page + menu grid + FAQ chatbot", "version": "v26.1.9" },
+          { "name": "login.html", "purpose": "Login (admin/pac/member)", "version": "v26.3.2" },
+          { "name": "forgot_account.html", "purpose": "Lupa username/password", "version": "v26.1.8" },
+          { "name": "about.html", "purpose": "Tentang + Tim Instruktur dinamis + kontak", "version": "v26.1.8" },
+          { "name": "absen.html", "purpose": "Absen via QR scan / password", "version": "v26.1.9" },
+          { "name": "skrining.html", "purpose": "Form skrining (wizard mode)", "version": "v26.1.8" },
+          { "name": "pretest.html", "purpose": "Pretest (Kahoot-style quiz)", "version": "v26.3.2" },
+          { "name": "posttest.html", "purpose": "Posttest", "version": "v26.3.2" },
+          { "name": "materi.html", "purpose": "Materi pelatihan", "version": "v26.1.8" },
+          { "name": "informasi.html", "purpose": "Info & flyer + timeline + calendar", "version": "v26.1.8" },
+          { "name": "kader.html", "purpose": "Statistik kader publik", "version": "v26.1.8" },
+          { "name": "public_assets.html", "purpose": "Galeri aset publik", "version": "v26.3.2" },
+          { "name": "usulan_form.html", "purpose": "Form usulan PKD dari PAC", "version": "v26.1.8" },
+          { "name": "verifikasi.html", "purpose": "Verifikasi sertifikat via nomor", "version": "v26.1.8" },
+          { "name": "verifikasi_qr.html", "purpose": "Verifikasi via QR scan", "version": "v26.1.8" },
+          { "name": "verifikasi_signature.html", "purpose": "Verifikasi TTD digital", "version": "v26.1.8" }
+        ]
+      },
+      {
+        "category": "SIGN PAGES (Tanpa Login)",
+        "count": 3,
+        "files": [
+          { "name": "sign_ketua_pc.html", "role": "ketua_pc", "orderStep": 1, "welcomeName": "Ahmad Sidik", "icon": "bi-shield-fill-check" },
+          { "name": "sign_sekretaris.html", "role": "sekretaris", "orderStep": 2, "welcomeName": "Fatolani", "icon": "bi-journal-text" },
+          { "name": "sign_instruktur.html", "role": "instruktur", "orderStep": 3, "welcomeName": "Cahyo Galih Saputro", "icon": "bi-mortarboard-fill" }
+        ]
+      },
+      {
+        "category": "SPA SHELL",
+        "count": 1,
+        "files": [
+          { "name": "app.html", "purpose": "SPA shell + bootstrap + shortcuts modal + more menu + toast + error banner + floating shortcut trigger", "version": "v27.0.0" }
+        ]
+      },
+      {
+        "category": "ASSETS",
+        "files": [
+          { "name": "LOGOANSOR.webp", "note": "Logo UPPERCASE (case-sensitive!)" },
+          { "name": "assets/theme.css", "purpose": "v26.3.2 consolidated (70 sections)" }
+        ]
+      },
+      {
+        "category": "PARTIALS",
+        "count": 2,
+        "files": [
+          { "name": "partials/sidebar.html", "purpose": "18 menu + notif + theme toggle" },
+          { "name": "partials/bottom-nav.html", "purpose": "5 nav items (mobile)" }
+        ]
+      },
+      {
+        "category": "VIEWS/ADMIN",
+        "count": 18,
+        "note": "Masing-masing punya .html + .js pair",
+        "views": [
+          { "name": "dashboard", "version": "v26.4.0" },
+          { "name": "peserta", "version": "v27.0.0" },
+          { "name": "alumni", "version": "v27.0.0" },
+          { "name": "kader", "version": "v27.0.0" },
+          { "name": "tim-instruktur", "version": "v27.0.0" },
+          { "name": "sesi-absen", "version": "v27.0.0" },
+          { "name": "data-absensi", "version": "v27.0.0" },
+          { "name": "rekap-absensi", "version": "v27.0.0" },
+          { "name": "skrining", "version": "v27.0.0" },
+          { "name": "sertifikat", "version": "v27.0.0" },
+          { "name": "tanda-tangan", "version": "v27.0.0" },
+          { "name": "rtl", "version": "v27.0.0" },
+          { "name": "pengaturan", "version": "v27.0.0" },
+          { "name": "informasi", "version": "v27.0.0" },
+          { "name": "asset", "version": "v26.4.0" },
+          { "name": "pretest", "version": "v27.0.0", "refactored": true },
+          { "name": "posttest", "version": "v27.0.0", "refactored": true },
+          { "name": "_base-quiz-view.js", "version": "v27.0.0", "shared": true }
+        ]
+      },
+      {
+        "category": "JS/CORE",
+        "files": [
+          { "name": "js/app.js", "purpose": "SPA bootstrap", "version": "v27.0.0" },
+          { "name": "js/router.js", "purpose": "Hash router (pending-queue fix)", "version": "v27.0.0" },
+          { "name": "js/core/api.js", "purpose": "137+ exports (CORS fix)", "version": "v26.4.1" },
+          { "name": "js/core/config.js", "purpose": "BASE_PATH, APP_VERSION", "version": "v26.1.9" },
+          { "name": "js/core/form-defaults.js", "purpose": "Default form fields", "version": "v26.2.1" },
+          { "name": "js/core/view-helpers.js", "purpose": "Shared helpers", "version": "v27.0.0" }
+        ]
+      },
+      {
+        "category": "JS/COMPONENTS",
+        "files": [
+          { "name": "js/components/sidebar.js", "version": "v26.4.0" },
+          { "name": "js/components/bottom-nav.js", "version": "v26.2.1" },
+          { "name": "js/components/theme-toggle.js", "version": "v26.1.9" },
+          { "name": "js/components/command-palette.js", "version": "v26.2.1" },
+          { "name": "js/components/notification-center.js", "version": "v26.1.9" },
+          { "name": "js/components/shortcuts-modal.js", "version": "v26.1.8" },
+          { "name": "js/components/sign-page.js", "version": "v26.4.0" }
+        ]
+      },
+      {
+        "category": "JS/MODULES",
+        "files": [
+          { "name": "js/modules/admin.js", "version": "v26.3.2" },
+          { "name": "js/modules/ketua_pac.js", "version": "v26.3.0" },
+          { "name": "js/modules/member.js", "version": "v26.3.0" }
+        ]
+      },
+      {
+        "category": "BACKEND",
+        "files": [
+          { "name": "code.gs", "purpose": "Google Apps Script", "version": "v27.0.0" }
+        ]
+      },
+      {
+        "category": "DOCS",
+        "count": 7,
+        "files": [
+          "README.md",
+          "PRD.md",
+          "DESIGN.md",
+          "SCHEMA.md",
+          "ARCHITECTURE.md",
+          "RULES.md",
+          "CHANGELOG.md"
+        ]
+      }
+    ]
+  },
+
+  "versionCompatibilityMatrix": [
+    { "layer": "Backend", "file": "code.gs", "version": "v27.0.0", "status": "Latest" },
+    { "layer": "SPA", "file": "js/app.js", "version": "v27.0.0", "status": "Latest" },
+    { "layer": "SPA", "file": "js/router.js", "version": "v27.0.0", "status": "Latest" },
+    { "layer": "Core", "file": "js/core/api.js", "version": "v26.4.1", "status": "Compatible" },
+    { "layer": "Core", "file": "js/core/config.js", "version": "v26.1.9", "status": "Compatible" },
+    { "layer": "Core", "file": "js/core/form-defaults.js", "version": "v26.2.1", "status": "Compatible" },
+    { "layer": "Core", "file": "js/core/view-helpers.js", "version": "v27.0.0", "status": "Latest" },
+    { "layer": "Components", "file": "sidebar.js", "version": "v26.4.0", "status": "Compatible" },
+    { "layer": "Components", "file": "bottom-nav.js", "version": "v26.2.1", "status": "Compatible" },
+    { "layer": "Components", "file": "theme-toggle.js", "version": "v26.1.9", "status": "Compatible" },
+    { "layer": "Components", "file": "command-palette.js", "version": "v26.2.1", "status": "Compatible" },
+    { "layer": "Components", "file": "notification-center.js", "version": "v26.1.9", "status": "Compatible" },
+    { "layer": "Components", "file": "shortcuts-modal.js", "version": "v26.1.8", "status": "Compatible" },
+    { "layer": "Components", "file": "sign-page.js", "version": "v26.4.0", "status": "Compatible" },
+    { "layer": "Modules", "file": "admin.js", "version": "v26.3.2", "status": "Compatible" },
+    { "layer": "Modules", "file": "ketua_pac.js", "version": "v26.3.0", "status": "Compatible" },
+    { "layer": "Modules", "file": "member.js", "version": "v26.3.0", "status": "Compatible" },
+    { "layer": "Views", "file": "17 views", "version": "v27.0.0", "status": "Latest" },
+    { "layer": "Views", "file": "3 quiz views", "version": "v27.0.0", "status": "Refactored" },
+    { "layer": "CSS", "file": "theme.css", "version": "v26.3.2", "status": "theme-extended.css redundant" },
+    { "layer": "Docs", "file": "7 files", "version": "Mixed v26.x", "status": "Behind code" }
+  ],
+
+  "files": {
+    "rootHTML": {
+      "index.html": {
+        "purpose": "Landing page publik dengan hero, menu grid, FAQ chatbot",
+        "version": "v26.1.9",
+        "lines": 700,
+        "keyFeatures": [
+          "Total kader badge (auto-update via getTotalPeserta)",
+          "10 menu cards (pretest, posttest, absen, skrining, peserta, materi, about, informasi, verifikasi, galeri publik)",
+          "Badge notification per menu (admin only, auto-hide jika count ≤ last seen)",
+          "Login prompt jika requireLogin=true dan belum login",
+          "FAQ chatbot floating dengan captcha 5+3=? untuk WA admin",
+          "Modal galeri aset publik"
+        ],
+        "imports": ["callApi", "getLoginMode", "updateNavbarMenu", "showToast", "getUserRole", "escapeHtml"],
+        "constants": { "BASE_PATH": "/bisaa/", "LOGIN_PATH": "/bisaa/login.html", "BG_SYNC_INTERVAL_MS": 60000 }
+      },
+      "login.html": {
+        "purpose": "Login untuk admin/ketua_pac/member",
+        "version": "v26.3.2",
+        "lines": 350,
+        "keyFeatures": [
+          "Auto-redirect jika sudah login (via checkAutoRedirect)",
+          "Username + password + show password toggle",
+          "Sequential verify: verifyAdmin → verifyKetuaPAC → verifyMember",
+          "Error shake animation",
+          "Redirect override via ?redirect= param"
+        ],
+        "imports": ["verifyAdmin", "verifyKetuaPAC", "verifyMember", "setUserRole", "setUserData", "persistAuthState", "getUserRole", "updateNavbarMenu", "escapeHtml"],
+        "roleRedirects": {
+          "admin": "app.html#/admin/dashboard",
+          "ketua_pac": "ketua_pac.html",
+          "member": "member.html"
+        }
+      },
+      "forgot_account.html": {
+        "purpose": "Recovery username/password via verifikasi data profil",
+        "version": "v26.1.8",
+        "lines": 400,
+        "modes": ["Lupa Username", "Lupa Password"],
+        "apis": ["getMemberUsername", "verifyMemberForgot", "resetMemberPassword"]
+      },
+      "about.html": {
+        "purpose": "Info PKD + Tim Instruktur dinamis + form kontak",
+        "version": "v26.1.8",
+        "lines": 600,
+        "sections": ["Tentang Kami", "Tim Instruktur (skeleton → card premium)", "Kontak Kami (form + captcha)"]
+      },
+      "absen.html": {
+        "purpose": "Form absen via QR scan / password sesi",
+        "version": "v26.1.9",
+        "lines": 900,
+        "modes": ["QR mode (?sesi_id=X&token=Y)", "Manual mode (password)"],
+        "features": [
+          "Deteksi QR rusak → renderBrokenQrState()",
+          "Auto-fill nama & HP dari ID peserta",
+          "Tanda tangan digital (Signature Pad)",
+          "Form state persistence via localStorage",
+          "Signature resize handling (debounced)"
+        ],
+        "state": ["sesiList", "daftarPesertaValid", "pesertaById", "isQRMode", "sigPad", "isBrokenQr"]
+      },
+      "skrining.html": {
+        "purpose": "Form skrining peserta (wizard / show all)",
+        "version": "v26.1.8",
+        "lines": 700,
+        "modes": ["Wizard (per pertanyaan)", "Tampil Semua"],
+        "features": [
+          "Wizard indicator dengan dots",
+          "Validasi per step",
+          "Tanda tangan Assessor",
+          "Preview modal sebelum submit",
+          "Draft save: pkd_skrining_draft_v2",
+          "Question cache 30 menit"
+        ]
+      },
+      "pretest.html": {
+        "purpose": "Quiz pretest (Kahoot-style)",
+        "version": "v26.3.2",
+        "lines": 500,
+        "features": [
+          "Form data diri (nama, nohp, alamat) dulu",
+          "Quiz dengan timer per soal",
+          "Kahoot-style warna: red/blue/yellow/green",
+          "Progress bar + resume state",
+          "Cache 10 menit"
+        ],
+        "timer": "30s default, warning 10s",
+        "scoring": "10 point/jawaban benar"
+      },
+      "posttest.html": {
+        "purpose": "Quiz posttest (mirror pretest)",
+        "version": "v26.3.2",
+        "lines": 500
+      },
+      "materi.html": {
+        "purpose": "List materi pelatihan (PDF, PPT, DOC, video)",
+        "version": "v26.1.8",
+        "lines": 450,
+        "features": ["Card grid dengan icon per tipe", "Preview modal via iframe Drive + fullscreen", "Download button", "Cache 30 menit"]
+      },
+      "informasi.html": {
+        "purpose": "Info kegiatan dengan 3 view: Flyer, Timeline, Calendar",
+        "version": "v26.1.8",
+        "lines": 800,
+        "features": [
+          "Flyer carousel dengan navigasi",
+          "Timeline horizontal dengan node",
+          "Interactive calendar (click date → highlight)",
+          "Zoom modal fullscreen dengan drag + wheel zoom",
+          "Timeline click sync ke calendar + flyer highlight"
+        ]
+      },
+      "kader.html": {
+        "purpose": "Data kader per PAC (publik)",
+        "version": "v26.1.8",
+        "lines": 400,
+        "features": ["Search + filter PAC", "Pagination 20 items", "Sort per kolom", "Cache status indicator"],
+        "note": "Berbeda dengan views/admin/kader.html (admin punya chart)"
+      },
+      "public_assets.html": {
+        "purpose": "Galeri aset publik dengan folder + password",
+        "version": "v26.3.2",
+        "lines": 900,
+        "features": [
+          "Folder sidebar dengan lock icon",
+          "Global password overlay",
+          "Folder password overlay",
+          "Preview player (video/audio/PDF)",
+          "Download + share + WhatsApp",
+          "Cache 5 menit + Dark mode support"
+        ]
+      },
+      "usulan_form.html": {
+        "purpose": "Pengajuan usulan kegiatan PKD dari PAC",
+        "version": "v26.1.8",
+        "lines": 450,
+        "features": ["Form: nama, usulan, tanggal, lokasi, no_hp", "Upload flyer (max 2MB)", "Captcha", "WhatsApp confirmation"]
+      },
+      "verifikasi.html": {
+        "purpose": "Cek keaslian sertifikat via nomor",
+        "version": "v26.1.8",
+        "lines": 250,
+        "features": ["Input nomor sertifikat", "Auto-verify dari ?nomor=", "Result: nama, nomor, lokasi, tanggal, PDF"]
+      },
+      "verifikasi_qr.html": {
+        "purpose": "Auto-verify dari QR code",
+        "version": "v26.1.8",
+        "lines": 300,
+        "priority": ["nomor", "id", "nama", "empty state"]
+      },
+      "verifikasi_signature.html": {
+        "purpose": "Verify TTD digital by role + driveId",
+        "version": "v26.1.8",
+        "lines": 350,
+        "query": "?role=ketua_pc&driveId=xxx"
+      }
+    },
+
+    "signPages": {
+      "commonLogic": "js/components/sign-page.js",
+      "files": [
+        { "file": "sign_ketua_pc.html", "role": "ketua_pc", "orderStep": 1, "welcomeName": "Ahmad Sidik" },
+        { "file": "sign_sekretaris.html", "role": "sekretaris", "orderStep": 2, "welcomeName": "Fatolani" },
+        { "file": "sign_instruktur.html", "role": "instruktur", "orderStep": 3, "welcomeName": "Cahyo Galih Saputro" }
+      ],
+      "requiredRoles": {
+        "ketua_pc": [],
+        "sekretaris": ["ketua_pc"],
+        "instruktur": ["ketua_pc", "sekretaris"]
+      },
+      "bulkOptions": ["__ALL__", "__PAC__:PAC_NAME"],
+      "passwordVerify": { "debounce": 600, "tokenGuard": "passwordCheckToken" }
+    },
+
+    "spaShell": {
+      "app.html": {
+        "purpose": "SPA shell + bootstrap + shortcuts modal + more menu + toast + error banner",
+        "version": "v27.0.0"
+      }
+    },
+
+    "css": {
+      "assets/theme.css": {
+        "version": "v26.3.2",
+        "sections": 70,
+        "note": "theme-extended.css REDUNDANT (merged into theme.css)"
+      }
+    },
+
+    "partials": {
+      "partials/sidebar.html": {
+        "purpose": "Universal sidebar + 18 menu + notif + theme toggle",
+        "subMenus": ["Akademik", "Peserta", "Absensi", "Informasi"],
+        "menuItems": [
+          "Dashboard",
+          "Akademik → Pretest, Posttest, Materi",
+          "Peserta → Peserta, Alumni, Kader, Tim Instruktur",
+          "Absensi → Sesi Absen, Data Absensi, Rekap Absensi",
+          "Informasi → Informasi, Aset Digital",
+          "Skrining",
+          "Sertifikat",
+          "Tanda Tangan",
+          "RTL & Tugas",
+          "Pengaturan",
+          "Logout"
+        ],
+        "keyIDs": ["sidebarWrapper", "sidebarMenu", "toggleSidebarBtn", "sidebarThemeToggleBtn", "notif-center-container", "sidebarLogoutBtn"]
+      },
+      "partials/bottom-nav.html": {
+        "purpose": "Bottom nav mobile",
+        "items": ["Dashboard", "Peserta", "Absen", "Sertifikat", "Lainnya (modal)"]
+      }
+    },
+
+    "spaCore": {
+      "js/app.js": {
+        "version": "v27.0.0",
+        "lines": 400,
+        "purpose": "SPA Bootstrap",
+        "changelog": [
+          "Fix APP_VERSION hardcoded",
+          "Fix BUG-004: BFCache guard skip jika app belum loaded",
+          "Hapus dead code (renderShellLoading, pollAppLoaded)",
+          "Hapus escapeHtml duplikat (import dari api.js)",
+          "Boot sequence logging konsisten",
+          "Install shortcuts/beforeunload/bfcache idempotent",
+          "Mount interactive features individual try/catch"
+        ],
+        "routes": [
+          "#/admin/dashboard",
+          "#/admin/peserta",
+          "#/admin/alumni",
+          "#/admin/kader",
+          "#/admin/tim-instruktur",
+          "#/admin/sesi-absen",
+          "#/admin/data-absensi",
+          "#/admin/rekap-absensi",
+          "#/admin/skrining",
+          "#/admin/sertifikat",
+          "#/admin/tanda-tangan",
+          "#/admin/rtl",
+          "#/admin/pengaturan",
+          "#/admin/informasi",
+          "#/admin/asset",
+          "#/admin/pretest",
+          "#/admin/posttest",
+          "#/admin/materi"
+        ],
+        "bootSequence": [
+          "loadAuthState()",
+          "Cek getUserRole() === 'admin' else redirect ke /bisaa/login.html",
+          "updateNavbarMenu()",
+          "loadPartialsWithRetry()",
+          "Create Router instance",
+          "router.start()",
+          "hideInitialLoader() + showAppShell()",
+          "window.__pkdAppLoaded = true",
+          "Dispatch pkd:app-loaded",
+          "mountInteractiveFeatures()",
+          "installKeyboardShortcuts()",
+          "installBeforeUnloadGuard()",
+          "installBfcacheGuard()",
+          "installTitleUpdate()"
+        ],
+        "keyboardShortcuts": {
+          "Alt+D": "Dashboard",
+          "Alt+P": "Peserta",
+          "Alt+A": "Sesi Absen",
+          "Alt+S": "Skrining",
+          "Alt+R": "RTL",
+          "Alt+Q": "Tanda Tangan",
+          "Alt+M": "Materi",
+          "Alt+K": "Kader",
+          "Alt+T": "Tim Instruktur"
+        },
+        "debugAPI": [
+          "window.__pkd.version",
+          "window.__pkd.getRouter()",
+          "window.__pkd.getRoutes()",
+          "window.__pkd.getRouteCount()",
+          "window.__pkd.navigate(hash)",
+          "window.__pkd.reload()",
+          "window.__pkd.destroy()",
+          "window.__pkd.openPalette()",
+          "window.__pkd.toggleTheme()",
+          "window.__pkd.setTheme(t)",
+          "window.__pkd.openShortcuts()"
+        ]
+      },
+      "js/router.js": {
+        "version": "v27.0.0",
+        "lines": 500,
+        "class": "Router",
+        "changelog": [
+          "FIX CRITICAL: Pending render queue",
+          "Fix prefetch pakai cache default",
+          "Race condition token check lebih robust",
+          "hasStarted reset on destroy",
+          "isRendering guard + pending queue + auto-process",
+          "Bootstrap artifact cleanup on navigate away",
+          "Better error UI + fallback route"
+        ],
+        "state": [
+          "currentRoute", "currentHash", "currentCleanup", "currentModule",
+          "navigationToken", "isNavigating", "isRendering", "hasStarted",
+          "fragmentCache", "failedRoutes", "pendingHash", "pendingForce"
+        ],
+        "options": {
+          "defaultRoute": "#/admin/dashboard",
+          "scrollBehavior": "top",
+          "useCacheBuster": true,
+          "showLoadingUI": true,
+          "maxRetries": 1,
+          "debug": false,
+          "prefetchEnabled": true
+        },
+        "prefetchRoutes": [
+          "#/admin/dashboard",
+          "#/admin/peserta",
+          "#/admin/sesi-absen",
+          "#/admin/sertifikat",
+          "#/admin/materi"
+        ],
+        "methods": [
+          "start()", "navigate(hash, opts)", "reload()", "getCurrentRoute()", "destroy()",
+          "_loadFragment(url, force)", "_loadModule(url)", "_resolveRoute(hashPath)",
+          "_parseHash(rawHash)", "_syncActiveState(hashPath)", "_preloadRoutes()"
+        ]
+      }
+    },
+
+    "coreModules": {
+      "js/core/api.js": {
+        "version": "v26.4.1",
+        "lines": 1100,
+        "exports": "137+",
+        "changelog": [
+          "FIX CORS: fetch options redirect:follow + credentials:omit",
+          "FIX CORS: better error message untuk Failed to fetch",
+          "FIX: dedup GET only — POST selalu fresh",
+          "FIX: JSON parse fallback lebih robust",
+          "ADD: getAppVersion() sync dengan config.js",
+          "ADD: healthCheck() + ping() untuk diagnostic"
+        ],
+        "categories": {
+          "utility": ["escapeHtml", "showToast", "fileToBase64", "uploadToDrive", "downloadJSON", "downloadCSV", "getAppVersion"],
+          "dateTime": ["formatDateID", "formatDateTimeID", "getLocalDateOnly", "timeSinceID"],
+          "auth": ["getUserRole", "getUserData", "setUserRole", "setUserData", "persistAuthState", "loadAuthState", "logout", "updateNavbarMenu", "verifyAdmin", "verifyKetuaPAC", "verifyMember", "updateAdminPassword"],
+          "bootstrap": ["callApi", "fetchWithCache"],
+          "guard": ["guardPublicAccess"],
+          "form": ["getDefaultFormFields"],
+          "peserta": 13,
+          "sesiAbsen": 7,
+          "absensi": 6,
+          "materi": 4,
+          "skrining": 8,
+          "quiz": 12,
+          "kader": 4,
+          "informasiUsulan": 8,
+          "asetFolder": 16,
+          "sertifikat": 16,
+          "ttdDigital": 14,
+          "timInstruktur": 5,
+          "rtl": 10,
+          "lokasiPKD": 3,
+          "member": 8,
+          "pengaturan": 14,
+          "kontak": 1,
+          "migration": 1,
+          "passwordDiagnostics": 3
+        },
+        "corsHandling": {
+          "GET": { "method": "GET", "mode": "cors", "redirect": "follow", "credentials": "omit", "cache": "no-store", "headers": { "Accept": "application/json" } },
+          "POST": { "method": "POST", "mode": "cors", "redirect": "follow", "credentials": "omit", "headers": { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" } }
+        },
+        "retry": { "GET": 2, "POST": 0, "backoff": "500 * (attempt + 1) ms", "onlyRetry5xx": true }
+      },
+      "js/core/config.js": {
+        "version": "v26.1.9",
+        "lines": 150,
+        "changelog": [
+          "REMOVE: buildUrl, buildPageUrl, isProduction, isDevelopment (dead code)",
+          "REMOVE dari export: RETRY_BACKOFF_MS, DEFAULT_CACHE_AGE, SESSION_TTL_MS",
+          "Keep: SCRIPT_URL, BASE_PATH, APP_*, DEFAULT_ROUTE, LOGIN_PATH, PUBLIC_PAGES"
+        ],
+        "exports": {
+          "SCRIPT_URL": "https://script.google.com/macros/s/.../exec",
+          "BASE_PATH": "/bisaa/",
+          "ENVIRONMENT": "development|github|netlify|vercel|production",
+          "APP_NAME": "PKD GP Ansor Kabupaten Bantul",
+          "APP_NAME_SHORT": "PKD GP Ansor",
+          "APP_SUBTITLE": "Kabupaten Bantul",
+          "APP_VERSION": "26.1.9",
+          "APP_ICON": "/bisaa/LOGOANSOR.webp",
+          "DEFAULT_TIMEOUT_MS": 30000,
+          "MAX_RETRY": 2,
+          "CACHE_PREFIX": "pkd_cache_",
+          "AUTH_STORAGE_KEY": "pkd_auth",
+          "DEFAULT_ROUTE": "#/admin/dashboard",
+          "LOGIN_PATH": "/bisaa/login.html",
+          "PUBLIC_PAGES": { "LANDING": "index.html", "LOGIN": "login.html" }
+        }
+      },
+      "js/core/form-defaults.js": {
+        "version": "v26.2.1",
+        "lines": 120,
+        "type": "Pure data module",
+        "exports": [
+          "UTUSAN_OPTIONS", "CORE_FIELD_IDS", "DEFAULT_FORM_FIELDS",
+          "getDefaultFormFields()", "isCoreFieldId(id)", "findFieldById(fields, id)",
+          "validateFieldId(id)", "isValidFormStructure(structure)", "normalizeFormStructure(raw)"
+        ],
+        "coreFieldIDs": [
+          "nama_lengkap", "tempat_tgl_lahir", "pekerjaan", "pendidikan_terakhir",
+          "alamat", "no_hp", "email", "utusan", "pengalaman_organisasi",
+          "foto", "surat_rekomendasi"
+        ]
+      },
+      "js/core/view-helpers.js": {
+        "version": "v27.0.0",
+        "lines": 500,
+        "changelog": [
+          "FIX BUG-005: setBtnLoading() restore previous disabled state",
+          "FIX: delegateTableClicks() idempotent",
+          "FIX: createViewContext() cleanup lebih robust",
+          "FIX: debounce() type-safe + preserve this context",
+          "FIX: throttle() trailing edge handled",
+          "FIX: waitFor() reject on invalid predicate",
+          "FIX: ensureChartJS() singleton + retry-safe",
+          "FIX: sortBy() handles null/undefined",
+          "FIX: paginate() safe with size=0"
+        ],
+        "exports": {
+          "constants": ["POLL_INTERVAL_30S", "POLL_INTERVAL_45S", "POLL_INTERVAL_60S", "POLL_INTERVAL_90S", "POLL_INTERVAL_120S", "SEARCH_DEBOUNCE"],
+          "dom": ["getEl", "getEls", "setText", "setHtml", "showEl", "hideEl", "toggleClass"],
+          "async": ["debounce", "throttle", "sleep", "runWhenIdle", "waitFor"],
+          "ui": ["setBtnLoading", "safeHideModal", "safeDisposeModal", "cleanupBootstrapArtifacts", "confirmAsync"],
+          "focus": ["captureFocusState", "restoreFocusState"],
+          "viewContext": ["createViewContext"],
+          "table": ["delegateTableClicks"],
+          "sortPaginate": ["sortBy", "paginate", "renderPagination"],
+          "chart": ["ensureChartJS"],
+          "normalize": ["normalizeResult", "normalizeObject"]
+        }
+      }
+    },
+
+    "components": {
+      "js/components/sidebar.js": { "version": "v26.4.0", "lines": 500, "exports": ["loadSidebar", "updateSidebarActive", "toggleSidebar", "unloadSidebar"] },
+      "js/components/bottom-nav.js": { "version": "v26.2.1", "lines": 250, "exports": ["loadBottomNav", "updateBottomNavActive", "closeMoreMenu", "unloadBottomNav"] },
+      "js/components/theme-toggle.js": { "version": "v26.1.9", "lines": 350, "exports": ["mount", "unmount", "getTheme", "setTheme", "toggleTheme", "applyTheme", "initTheme", "clearSavedTheme"] },
+      "js/components/command-palette.js": { "version": "v26.2.1", "lines": 500, "trigger": "Ctrl+K", "commandsRegistry": 42 },
+      "js/components/notification-center.js": { "version": "v26.1.9", "lines": 450, "sources": ["peserta-pending", "sesi-closed", "ttd-incomplete", "rtl-pending", "cert-recent"] },
+      "js/components/shortcuts-modal.js": { "version": "v26.1.8", "lines": 350, "trigger": "Shift+?" },
+      "js/components/sign-page.js": { "version": "v26.4.0", "lines": 700, "factory": "initSignPage(config)" }
+    },
+
+    "stateModules": {
+      "js/modules/admin.js": {
+        "version": "v26.3.2",
+        "lines": 1100,
+        "stateFields": ["peserta", "sesi", "materi", "skrining", "pretest", "posttest", "alumni", "kader", "informasi", "absensi", "sertifikat", "digitalApprovals", "asset", "folders", "usulan", "rtl", "timInstruktur", "quizSettings", "loginMode", "publicVisibility", "pkdlokasi", "formSettings", "realtimeEnabled", "isLoading", "lastSync", "lastError"],
+        "changelog": [
+          "NEW: getBootstrapData() batch endpoint — 23 req → 1 req",
+          "NEW: Fallback ke parallel fetch",
+          "NEW: Response cache 2s",
+          "FIX: TTL_FRESH_MS 5s → 3s",
+          "FIX: CONCURRENT_WAIT_MS 30s → 15s",
+          "FIX: loadAllData — Promise.allSettled",
+          "FIX: isFresh() pakai lastSync numeric timestamp",
+          "FIX: isLoading guard race condition (wait loop)",
+          "FIX: clearState() — reset ALL flags"
+        ]
+      },
+      "js/modules/ketua_pac.js": {
+        "version": "v26.3.0",
+        "lines": 450,
+        "purpose": "State untuk halaman Ketua PAC dengan auto-filter by kapanewon"
+      },
+      "js/modules/member.js": {
+        "version": "v26.3.0",
+        "lines": 500,
+        "purpose": "State untuk halaman member (peserta)",
+        "cache": "pkd_member_cache_* TTL 5 menit"
+      }
+    },
+
+    "adminViews": [
+      { "name": "dashboard", "html": "views/admin/dashboard.html", "js": "views/admin/dashboard.js", "version": "v26.4.0", "lines": 750 },
+      { "name": "peserta", "html": "views/admin/peserta.html", "js": "views/admin/peserta.js", "version": "v27.0.0", "lines": 1100 },
+      { "name": "alumni", "html": "views/admin/alumni.html", "js": "views/admin/alumni.js", "version": "v27.0.0", "lines": 700 },
+      { "name": "kader", "html": "views/admin/kader.html", "js": "views/admin/kader.js", "version": "v27.0.0", "lines": 600 },
+      { "name": "tim-instruktur", "html": "views/admin/tim-instruktur.html", "js": "views/admin/tim-instruktur.js", "version": "v27.0.0", "lines": 700 },
+      { "name": "sesi-absen", "html": "views/admin/sesi-absen.html", "js": "views/admin/sesi-absen.js", "version": "v27.0.0", "lines": 800 },
+      { "name": "data-absensi", "html": "views/admin/data-absensi.html", "js": "views/admin/data-absensi.js", "version": "v27.0.0", "lines": 600 },
+      { "name": "rekap-absensi", "html": "views/admin/rekap-absensi.html", "js": "views/admin/rekap-absensi.js", "version": "v27.0.0", "lines": 750 },
+      { "name": "skrining", "html": "views/admin/skrining.html", "js": "views/admin/skrining.js", "version": "v27.0.0", "lines": 800 },
+      { "name": "sertifikat", "html": "views/admin/sertifikat.html", "js": "views/admin/sertifikat.js", "version": "v27.0.0", "lines": 900 },
+      { "name": "tanda-tangan", "html": "views/admin/tanda-tangan.html", "js": "views/admin/tanda-tangan.js", "version": "v27.0.0", "lines": 700 },
+      { "name": "rtl", "html": "views/admin/rtl.html", "js": "views/admin/rtl.js", "version": "v27.0.0", "lines": 700 },
+      { "name": "pengaturan", "html": "views/admin/pengaturan.html", "js": "views/admin/pengaturan.js", "version": "v27.0.0", "lines": 700 },
+      { "name": "informasi", "html": "views/admin/informasi.html", "js": "views/admin/informasi.js", "version": "v27.0.0", "lines": 800 },
+      { "name": "asset", "html": "views/admin/asset.html", "js": "views/admin/asset.js", "version": "v26.4.0", "lines": 1300 },
+      { "name": "pretest", "html": "views/admin/pretest.html", "js": "views/admin/pretest.js", "version": "v27.0.0", "lines": 55, "refactored": true },
+      { "name": "posttest", "html": "views/admin/posttest.html", "js": "views/admin/posttest.js", "version": "v27.0.0", "lines": 55, "refactored": true },
+      { "name": "_base-quiz-view", "js": "views/admin/_base-quiz-view.js", "version": "v27.0.0", "lines": 620, "shared": true }
+    ],
+
+    "backend": {
+      "code.gs": {
+        "version": "v27.0.0",
+        "lines": 3500,
+        "changelog": [
+          "NEW: getBootstrapData — batch endpoint (23 req → 1 req), dampak: loadAllData 1.4s → 0.35s (-75%)",
+          "VERIFIED: 100+ actions di router ↔ semua handler defined",
+          "VERIFIED: 22 migration functions",
+          "VERIFIED: semua helper konsisten",
+          "FIX: CORS — no-op setHeader() removed",
+          "FIX: parseBool() apostrophe handling"
+        ],
+        "config": {
+          "SPREADSHEET_ID": "1KUbq9...",
+          "FOLDER_NAME": "TandaTangan_PKD_Ansor",
+          "SERTIFIKAT_FOLDER_NAME": "Sertifikat_Generated",
+          "BASE_URL": "https://pkd-ansorbantul.github.io/bisaa",
+          "DEFAULT_PASSWORD_SALT": "PKD-ANSOR-BANTUL-2026",
+          "LOG_PREFIX": "[v27.0.0]",
+          "APP_VERSION": "27.0.0",
+          "SIGN_ORDER": ["ketua_pc", "sekretaris", "instruktur"],
+          "ROLE_LABELS": { "ketua_pc": "Ketua PC", "sekretaris": "Sekretaris", "instruktur": "Instruktur" }
+        },
+        "actionRouterCategories": {
+          "health": 8,
+          "auth": 4,
+          "peserta": 16,
+          "sesiAbsen": 7,
+          "absen": 6,
+          "materi": 4,
+          "skrining": 9,
+          "pretest": 6,
+          "posttest": 6,
+          "informasi": 5,
+          "usulan": 3,
+          "sertifikat": 18,
+          "ttdDigital": 14,
+          "timInstruktur": 5,
+          "rtl": 10,
+          "kader": 4,
+          "member": 8,
+          "aset": 16,
+          "lokasiPKD": 3,
+          "pengaturan": 14,
+          "migration": 1
+        }
+      }
+    },
+
+    "documentation": {
+      "README.md": { "version": "v26.1.8", "note": "Perlu update ke v27.0.0" },
+      "PRD.md": { "version": "v5.0", "note": "Perlu update ke v27.0.0" },
+      "DESIGN.md": { "version": "v3.3", "note": "Perlu update ke v27.0.0" },
+      "SCHEMA.md": { "version": "v5.0", "note": "Perlu update ke v27.0.0" },
+      "ARCHITECTURE.md": { "version": "v4.4", "note": "Perlu update ke v27.0.0" },
+      "RULES.md": { "version": "v4.0", "note": "Perlu update ke v27.0.0" },
+      "CHANGELOG.md": { "version": "v26.3.0", "note": "Perlu update ke v27.0.0" }
+    }
+  },
+
+  "security": {
+    "defaultCredentials": {
+      "note": "WAJIB GANTI SEBELUM PRODUCTION",
+      "users": [
+        { "role": "Superadmin", "username": "admin", "password": "ansor123" },
+        { "role": "Ketua PAC (17 kapanewon)", "username": "ketua_[kapanewon]", "password": "pac123" },
+        { "role": "Member", "username": "[ID_peserta]", "password": "[no_hp_peserta]" }
+      ]
+    },
+    "defaultTTDPasswords": {
+      "ketua_pc": "ketua123",
+      "sekretaris": "sekretaris123",
+      "instruktur": "instruktur123"
+    },
+    "signPagesSecurityLayers": [
+      "Autentikasi — Password TTD per role",
+      "Otorisasi — Role enum validation",
+      "Order guard — Urutan wajib",
+      "Duplikat guard — Composite unique constraint",
+      "Rate limit — LockService",
+      "Audit — Timestamp + nama"
+    ],
+    "passwordHashing": {
+      "algorithm": "SHA-256",
+      "salt": "PKD-ANSOR-BANTUL-2026",
+      "autoUpgrade": "legacy (unsalted) → salted saat login",
+      "format": "SHA-256(salt::password)"
+    }
+  },
+
+  "dataFlowPatterns": {
+    "adminLoadAllData": [
+      "AdminModule.loadAllData(force)",
+      "TTL check (3s) → skip jika fresh",
+      "Concurrent guard (wait 15s max)",
+      "Coba batch: callApi('getBootstrapData')",
+      "Fallback: loadParallel() — Promise.allSettled 23 endpoint",
+      "Assign ke STATE (18 entities + 5 settings)",
+      "lastSync = Date.now()",
+      "notifySubscribers('all')"
+    ],
+    "viewLifecycle": [
+      "Router._render()",
+      "_cleanupPrevious() → call prevCleanup + cleanupBootstrapArtifacts",
+      "_showLoading()",
+      "_loadFragment() → fetch HTML (retry 1×, cache)",
+      "container.innerHTML = html",
+      "_loadModule() → dynamic import (no cache buster)",
+      "mod.mount({ path, query, outlet, router })",
+      "currentCleanup = unmount"
+    ],
+    "optimisticUpdate": [
+      "Backup current state",
+      "Update local state",
+      "notifySubscribers() → render instan",
+      "API call",
+      "Sukses → await loadAllData(true)",
+      "Gagal → restore dari backup + notifySubscribers()"
+    ],
+    "bulkSign": {
+      "flow": [
+        "Signature 1× → upload → driveId (reuse untuk semua)",
+        "Batch append N rows dengan driveId sama",
+        "LockService 30s",
+        "Response: { success, count, driveId }",
+        "Auto-refresh dropdown"
+      ],
+      "efficiency": "Hemat Drive ~99% (1 file vs N files)",
+      "time": "~3s vs ~2 menit"
+    },
+    "realTimePasswordVerify": [
+      "User ketik password",
+      "Debounce 600ms",
+      "Token guard (++passwordCheckToken)",
+      "callApi('verifySignPassword', { role, password })",
+      "Cek token masih valid",
+      "Jika benar: unlock signature + show welcome banner",
+      "Jika salah: lock + error hint"
+    ]
+  },
+
+  "designSystem": {
+    "colors": {
+      "primary": "#2563eb",
+      "success": "#16a34a",
+      "danger": "#dc2626",
+      "warning": "#f59e0b",
+      "neutral900": "#0f172a",
+      "neutral50": "#f8fafc"
+    },
+    "font": "Inter (Google Fonts)",
+    "radius": {
+      "form": "12px",
+      "card": "20px",
+      "modal": "24px",
+      "pillButton": "9999px"
+    },
+    "patterns": {
+      "glassmorphism": {
+        "glassCard": "rgba(255,255,255,0.85) + backdrop-filter: blur(12px)",
+        "headerMinimal": "rgba(255,255,255,0.72) + blur(20px)",
+        "hover": "translateY(-4px) + border-color berubah"
+      },
+      "skeleton": {
+        "html": "<div class='skeleton-box' style='height:20px;width:70%;'></div>",
+        "animation": "pulse (opacity 0.6→1→0.6, 1.5s)"
+      },
+      "toast": {
+        "position": "fixed top-right",
+        "autoHide": "3s",
+        "progressBar": "di bawah",
+        "types": ["success", "error", "warning", "info"]
+      },
+      "badge": {
+        "pending": "bg-warning text-dark",
+        "approved": "bg-success",
+        "active": "bg-success",
+        "rejected": "bg-danger",
+        "alumni": "bg-secondary",
+        "roleBadgeTTD": "bg-primary"
+      }
+    }
+  },
+
+  "deployment": {
+    "frontend": {
+      "type": "GitHub Pages",
+      "setup": [
+        "Repo: pkd-ansorbantul/bisaa",
+        "Settings → Pages → Source: main branch, / (root) folder",
+        "URL: https://pkd-ansorbantul.github.io/bisaa/"
+      ],
+      "deployCommand": "git add . && git commit -m 'deploy: v27.0.0 ...' && git push origin main",
+      "propagasi": "1-2 menit"
+    },
+    "backend": {
+      "type": "Google Apps Script",
+      "setup": [
+        "Script URL di js/core/config.js → SCRIPT_URL",
+        "Deploy → Manage Deployments: Execute as Me, Who has access: Anyone",
+        "Copy URL → update SCRIPT_URL jika berubah"
+      ]
+    },
+    "preDeployChecklist": [
+      "grep -rn 'href=\"/[^b]' --include='*.html' . | grep -v '/bisaa/'",
+      "grep -rn 'src=\"/[^b]' --include='*.html' . | grep -v '/bisaa/'",
+      "grep -rn \"from '/js/\" --include='*.html' --include='*.js' . | grep -v '/bisaa/js/'",
+      "grep -rn 'LOGO%20ANSOR' --include='*.html' --include='*.js' .",
+      "ls -la LOGOANSOR.webp",
+      "grep -n 'BASE_PATH' js/core/config.js"
+    ],
+    "postDeploy": [
+      "WAJIB ganti password TTD default via app.html#/admin/tanda-tangan",
+      "WAJIB ganti password admin default via app.html#/admin/pengaturan",
+      "Cek console: 0 error 404",
+      "Test semua fitur"
+    ]
+  },
+
+  "knownIssues": {
+    "fixedInV27": [
+      { "id": "BUG-001", "severity": "Critical", "description": "confirmResetPhrase missing di HTML → reset broken", "file": "pengaturan.html" },
+      { "id": "BUG-002", "severity": "Critical", "description": "Redundant API calls (RTL + approvals)", "file": "peserta.js, data-absensi.js" },
+      { "id": "BUG-003", "severity": "Critical", "description": "Mutasi module cache (sort in-place)", "file": "tim-instruktur.js, alumni.js, kader.js" },
+      { "id": "BUG-004", "severity": "Critical", "description": "BFCache guard trigger sebelum app loaded", "file": "app.js" },
+      { "id": "BUG-005", "severity": "Critical", "description": "renderDynamicForm race condition", "file": "peserta.js, view-helpers.js" },
+      { "id": "BUG-006", "severity": "High", "description": "Admin mode absen fallback broken", "file": "dashboard.js" },
+      { "id": "BUG-007", "severity": "High", "description": "Password verify race in sign pages", "file": "sign-page.js" },
+      { "id": "BUG-008", "severity": "Medium", "description": "Default sort direction tidak optimal", "file": "alumni.js" }
+    ],
+    "active": [
+      "Sign pages tanpa rate limit per IP (planned v26.2.0)",
+      "Bulk sign 500+ peserta bisa timeout GAS (bulk per PAC saja)",
+      "Legacy admin/ folder masih ada (planned v26.4.0 hapus)",
+      "Password TTD default harus diganti sebelum production",
+      "Reorder Tim Instruktur belum drag-and-drop",
+      "theme-extended.css redundant (sudah di-merge ke theme.css v26.3.2)"
+    ]
+  },
+
+  "roadmap": {
+    "v26.x": [
+      "v26.3.1 — Bug fix minor",
+      "v26.3.2 — Realtime progress bar bulk sign",
+      "v26.3.3 — Rate limit per IP untuk sign pages",
+      "v26.4.0 — Hapus folder admin/ (breaking)"
+    ],
+    "v27.0.0": {
+      "status": "DONE",
+      "achievements": [
+        "Refactor 3 quiz views ke _base-quiz-view.js",
+        "Fix 8 critical bugs",
+        "Pending queue di router",
+        "Shared view-helpers.js v27"
+      ]
+    },
+    "v27.x": [
+      "v27.1.0 — PWA support (Service Worker, installable)",
+      "v27.2.0 — Push notification via FCM",
+      "v27.3.0 — Dark mode advanced",
+      "v27.4.0 — Multi-angkatan"
+    ],
+    "v28.0.0": [
+      "Firebase real-time",
+      "AI recommendations",
+      "Blockchain e-sertifikat (eksperimental)"
+    ]
+  },
+
+  "techStack": {
+    "markup": { "tech": "HTML5", "version": "—" },
+    "styling": { "tech": "CSS3 + Bootstrap", "version": "5.3" },
+    "icons": { "tech": "Bootstrap Icons", "version": "1.11.3" },
+    "font": { "tech": "Google Fonts (Inter)", "version": "—" },
+    "frontendLogic": { "tech": "Vanilla JS (ES Modules)", "version": "ES2022" },
+    "archFE": { "tech": "HTML Imports SPA (hash router)", "version": "Custom" },
+    "backend": { "tech": "Google Apps Script", "version": "V8" },
+    "database": { "tech": "Google Sheets", "sheets": 32 },
+    "storage": { "tech": "Google Drive", "version": "—" },
+    "auth": { "tech": "Custom SHA-256 + salt + Password TTD", "version": "—" },
+    "chart": { "tech": "Chart.js", "version": "4.4.0" },
+    "qrScan": { "tech": "html5-qrcode", "version": "2.3.8" },
+    "qrGenerate": { "tech": "qrcode-generator", "version": "1.4.4" },
+    "signature": { "tech": "signature_pad", "version": "4.1.7" },
+    "screenshot": { "tech": "html2canvas", "version": "1.4.1" },
+    "hosting": { "tech": "GitHub Pages", "version": "—" },
+    "basePath": { "tech": "/bisaa/", "version": "v26.1.8" },
+    "cdn": { "tech": "Fastly (via GitHub Pages)", "version": "—" }
+  },
+
+  "contact": {
+    "repository": "github.com/pkd-ansorbantul/bisaa",
+    "githubPages": "pkd-ansorbantul.github.io/bisaa/",
+    "whatsappAdmin": "0838-6667-5521",
+    "alamat": "Jl. Imogiri Timur KM 10, Bantul, D.I. Yogyakarta",
+    "owner": "Tim Instruktur PKD GP Ansor Kabupaten Bantul"
+  },
+
+  "copyright": {
+    "year": 2026,
+    "holder": "Tim Instruktur GP Ansor Kabupaten Bantul",
+    "license": "Internal Use Only",
+    "version": "27.0.0",
+    "type": "Master Manifest"
+  }
+}

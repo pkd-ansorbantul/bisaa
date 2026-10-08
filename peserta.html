@@ -1,1239 +1,1401 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>Form Data Peserta · PKD GP Ansor Bantul</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Form Pendaftaran Peserta PKD GP Ansor Kabupaten Bantul">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Form Data Peserta · PKD GP Ansor Bantul</title>
 
-    <!-- Favicon & Font Modern -->
-    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- Font Amiri untuk Kaligrafi Arab -->
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
-    <!-- Bootstrap 5 + Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <!-- Signature Pad -->
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <!-- QR Code Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <!-- 🔥 Library untuk mengubah HTML Kartu menjadi Gambar (Download) -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- ✅ v26.4.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
-    <style>
-        /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
-        * {
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-        body {
-            background: #f8fafc;
-            color: #0f172a;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-        /* --- HEADER MINIMALIS ELEGAN --- */
-        .header-minimal {
-            background: rgba(255, 255, 255, 0.72) !important;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            z-index: 1030;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-        }
-        .header-minimal .container {
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
-        }
-        .btn-back {
-            background: rgba(37, 99, 235, 0.08);
-            color: #2563eb;
-            border: 1px solid rgba(37, 99, 235, 0.2);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .btn-back:hover {
-            background: #2563eb;
-            color: white;
-            transform: translateX(-3px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-        }
-        .brand-logo-mini { 
-            height: 40px; 
-            width: auto; 
-            margin-right: 14px; 
-            transition: transform 0.2s;
-        }
-        .brand-logo-mini:hover { transform: scale(1.05); }
-        .brand-title-mini { 
-            font-weight: 700; 
-            color: #0a3d62; 
-            font-size: 1.3rem; 
-            line-height: 1.2; 
-            letter-spacing: -0.02em;
-        }
-        .brand-sub-mini { 
-            font-size: 0.8rem; 
-            color: #64748b; 
-            display: block; 
-            margin-top: 0px; 
-            letter-spacing: 0.02em;
-        }
+  <!-- ✅ Deferred libraries (load after HTML parse) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-        #navbarUserMenu {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .user-menu-area .dropdown-toggle { 
-            border-radius: 50px; 
-            padding: 0.3rem 1rem; 
-            font-size: 0.9rem; 
-        }
-        .user-menu-area .btn-outline-primary { 
-            border-radius: 50px; 
-            padding: 0.3rem 1.2rem; 
-            font-size: 0.9rem; 
-        }
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-        /* --- GLASS CARD --- */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .glass-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
-            border-color: rgba(37, 99, 235, 0.2);
-        }
+    /* ============ SKIP LINK (Accessibility) ============ */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #2563eb;
+      color: #fff;
+      padding: 8px 16px;
+      text-decoration: none;
+      z-index: 10000;
+      border-radius: 0 0 8px 0;
+      font-weight: 600;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+      color: #fff;
+    }
 
-        /* --- SKELETON LOADING --- */
-        .skeleton-box {
-            background: #e2e8f0;
-            border-radius: 8px;
-            animation: pulse 1.5s infinite ease-in-out;
-            display: inline-block;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
+    /* ============ HEADER ============ */
+    .header-minimal {
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 
-        /* --- SIGNATURE AREA --- */
-        .signature-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .signature-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 20px;
-            background: #fafbfc;
-            padding: 8px;
-            transition: all 0.2s ease;
-            position: relative;
-            cursor: crosshair;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .signature-area:hover {
-            border-color: #94a3b8;
-        }
-        .signature-area:focus-within {
-            border-color: #2563eb;
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-        .signature-area canvas {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 4 / 2;
-            max-width: 100%;
-            background: white;
-            display: block;
-            border-radius: 12px;
-            margin: 0 auto;
-            touch-action: none !important;
-            min-height: 160px;
-            cursor: crosshair;
-            -webkit-touch-callout: none;
-        }
-        
-        /* --- Teks Petunjuk (Placeholder) pada Tanda Tangan --- */
-        .signature-hint {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #94a3b8;
-            font-size: 0.9rem;
-            pointer-events: none;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-            font-weight: 400;
-            background: rgba(255,255,255,0.6);
-            padding: 4px 14px;
-            border-radius: 50px;
-            backdrop-filter: blur(2px);
-        }
-        .signature-area.drawing .signature-hint {
-            opacity: 0;
-            pointer-events: none;
-        }
+    .btn-back {
+      background: rgba(37, 99, 235, 0.08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-back:hover {
+      background: #2563eb;
+      color: white;
+      transform: translateX(-3px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .brand-logo-mini {
+      height: 40px;
+      width: auto;
+      margin-right: 14px;
+      transition: transform 0.2s;
+    }
+    .brand-logo-mini:hover { transform: scale(1.05); }
+    .brand-title-mini {
+      font-weight: 700;
+      color: #0a3d62;
+      font-size: 1.3rem;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    .brand-sub-mini {
+      font-size: 0.8rem;
+      color: #64748b;
+      display: block;
+      letter-spacing: 0.02em;
+    }
 
-        /* ==========================================================
-           🔥 PREMIUM ID CARD STYLES (Untuk Halaman Peserta)
-           ========================================================== */
-        .id-card-wrapper {
-            max-width: 450px;
-            margin: 0 auto;
-            padding: 10px;
-            background: transparent;
-        }
-        .id-card {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-            padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s ease;
-        }
-        .id-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.12); }
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-        /* Header Logo & Judul */
-        .id-card .header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 2px solid #14994c;
-            padding-bottom: 12px;
-            margin-bottom: 16px;
-        }
-        .id-card .header img { height: 35px; width: auto; }
-        .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
-        .id-card .header h5 small { font-weight: 400; font-size: 0.75rem; color: #64748b; display: block; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .glass-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
 
-        /* Body Layout */
-        .id-card .body {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: nowrap;
-        }
-        /* QR Code Area */
-        .id-card .qr-area {
-            flex-shrink: 0;
-            width: 120px;
-            height: 120px;
-            background: white;
-            border-radius: 16px;
-            padding: 6px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid #e2e8f0;
-        }
-        .id-card .qr-area canvas, .id-card .qr-area img { width: 100%; height: auto; max-width: 110px; }
+    .section-title {
+      font-weight: 650;
+      font-size: 1.5rem;
+      color: #0f172a;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.3;
+    }
 
-        /* Data Area */
-        .id-card .data-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
-        .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
+    .skeleton-box {
+      background: #e2e8f0;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
 
-        /* Footer */
-        .id-card .footer {
-            margin-top: 14px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-        .id-card .footer span { color: #2563eb; font-weight: 600; }
+    .signature-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .signature-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      background: #fafbfc;
+      padding: 8px;
+      transition: all 0.2s ease;
+      position: relative;
+      cursor: crosshair;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .signature-area:hover { border-color: #94a3b8; }
+    .signature-area:focus-within {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+    .signature-area canvas {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 2;
+      max-width: 100%;
+      background: white;
+      display: block;
+      border-radius: 12px;
+      margin: 0 auto;
+      touch-action: none !important;
+      min-height: 160px;
+      cursor: crosshair;
+      -webkit-touch-callout: none;
+    }
 
-        /* Responsif Mobile */
-        @media (max-width: 480px) {
-            .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; }
-            .id-card .qr-area { margin: 0 auto 10px auto; }
-        }
+    .signature-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #94a3b8;
+      font-size: 0.9rem;
+      pointer-events: none;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+      font-weight: 400;
+      background: rgba(255,255,255,0.6);
+      padding: 4px 14px;
+      border-radius: 50px;
+      backdrop-filter: blur(2px);
+    }
+    .signature-area.drawing .signature-hint {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-        /* --- ADMIN CONTACT & FORM --- */
-        .admin-contact {
-            background: #eff6ff;
-            border-left: 4px solid #2563eb;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-        }
-        .template-card {
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 1.25rem;
-            transition: background 0.2s;
-        }
-        .template-card:hover {
-            background: #f1f5f9;
-        }
-        .template-card .btn {
-            border-radius: 50px;
-            padding: 0.4rem 1.2rem;
-        }
-        .whatsapp-btn {
-            background-color: #25d366;
-            color: white;
-            border: none;
-        }
-        .whatsapp-btn:hover {
-            background-color: #1da851;
-            color: white;
-        }
+    .id-card-wrapper {
+      max-width: 450px;
+      margin: 0 auto;
+      padding: 10px;
+      background: transparent;
+    }
+    .id-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+    .id-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.12); }
 
-        /* --- ANIMASI --- */
-        .fade-up {
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .id-card .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid #14994c;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .id-card .header img { height: 35px; width: auto; }
+    .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
+    .id-card .header h5 small { font-weight: 400; font-size: 0.75rem; color: #64748b; display: block; }
 
-        /* --- FOOTER --- */
-        .footer-modern {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-top: auto;
-            text-align: center;
-            padding: 1.5rem 0;
-            border-top: 1px solid #e2e8f0;
-            background: white;
-        }
+    .id-card .body {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    .id-card .qr-area {
+      flex-shrink: 0;
+      width: 120px;
+      height: 120px;
+      background: white;
+      border-radius: 16px;
+      padding: 6px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+    }
+    .id-card .qr-area canvas, .id-card .qr-area img { width: 100%; height: auto; max-width: 110px; }
 
-        /* --- RESPONSIF --- */
-        @media (max-width: 576px) {
-            .glass-card {
-                border-radius: 16px;
-                padding: 1rem !important;
-            }
-            .header-minimal .container {
-                padding: 0 0.5rem;
-            }
-            .btn-back {
-                font-size: 0.8rem;
-                padding: 0.2rem 0.8rem;
-            }
-            .brand-title-mini {
-                display: none;
-            }
-            .brand-sub-mini {
-                display: none;
-            }
-            .user-menu-area .dropdown-toggle {
-                font-size: 0.75rem;
-                padding: 0.2rem 0.8rem;
-            }
-            .signature-area canvas {
-                min-height: 140px;
-            }
-        }
-    </style>
+    .id-card .data-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
+    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
+
+    .id-card .footer {
+      margin-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .id-card .footer span { color: #2563eb; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .id-card .qr-area { margin: 0 auto 10px auto; }
+    }
+
+    .admin-contact {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    .template-card {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 1.25rem;
+      transition: background 0.2s;
+    }
+    .template-card:hover { background: #f1f5f9; }
+    .template-card .btn {
+      border-radius: 50px;
+      padding: 0.4rem 1.2rem;
+    }
+    .whatsapp-btn {
+      background-color: #25d366;
+      color: white;
+      border: none;
+    }
+    .whatsapp-btn:hover {
+      background-color: #1da851;
+      color: white;
+    }
+
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .footer-modern {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: auto;
+      text-align: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    /* Camera modal */
+    #cameraModal .modal-body {
+      background: #000;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #cameraVideo {
+      width: 100%;
+      height: auto;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+    .camera-controls {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      right: 0;
+    }
+    .camera-controls .btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: white;
+      color: #0f172a;
+      border: 4px solid #cbd5e1;
+      font-size: 1.6rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      transition: transform 0.15s ease;
+    }
+    .camera-controls .btn:active { transform: scale(0.9); }
+
+    @media (max-width: 576px) {
+      .glass-card { border-radius: 16px; padding: 1rem !important; }
+      .header-minimal .container { padding: 0 0.5rem; }
+      .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
+      .brand-title-mini { display: none; }
+      .brand-sub-mini { display: none; }
+      .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
+      .signature-area canvas { min-height: 140px; }
+      .section-title { font-size: 1.2rem; padding-left: 0.9rem; border-left-width: 5px; }
+    }
+
+    @media print {
+      .header-minimal, .footer-modern, #cameraModal,
+      .btn, .admin-contact { display: none !important; }
+      body { background: #fff; }
+      .glass-card, .id-card { box-shadow: none; border: 1px solid #ccc; }
+    }
+  </style>
 </head>
 <body>
 
-    <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
-    <header class="header-minimal sticky-top shadow-sm">
-        <div class="container d-flex justify-content-between align-items-center py-3">
-            <div class="d-flex align-items-center gap-2">
-                <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
-                    <i class="bi bi-arrow-left me-1"></i> Kembali
-                </a>
-                <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-                    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
-                    <div>
-                        <div class="brand-title-mini">PKD GP Ansor</div>
-                        <span class="brand-sub-mini">Kabupaten Bantul</span>
-                    </div>
-                </a>
-            </div>
-            <!-- Area User Role (diisi oleh api.js) -->
-            <div id="navbarUserMenu" class="user-menu-area"></div>
-        </div>
-    </header>
+  <!-- ============ SKIP LINK ============ -->
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-    <!-- ================= KONTEN UTAMA ================= -->
-    <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 1000px;">
-        <div class="glass-card p-4 fade-up">
-            <h2 class="section-title"><i class="bi bi-person-badge me-2"></i>Form Data Peserta PKD</h2>
-            <div id="pesertaFormContainer">
-                <!-- Akan diisi oleh JS (Skeleton atau Form Asli) -->
-            </div>
-        </div>
+  <!-- ============ HEADER ============ -->
+  <header class="header-minimal sticky-top shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/bisaa/index.html" class="btn btn-back rounded-pill" aria-label="Kembali ke beranda">
+          <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Kembali
+        </a>
+        <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <div>
+            <div class="brand-title-mini">PKD GP Ansor</div>
+            <span class="brand-sub-mini">Kabupaten Bantul</span>
+          </div>
+        </a>
+      </div>
+      <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
+  </header>
 
-    <!-- ================= MODAL KAMERA ================= -->
-    <div class="modal fade" id="cameraModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title text-white" id="cameraModalTitle">Ambil Foto</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body position-relative">
-                    <video id="cameraVideo" autoplay playsinline></video>
-                    <div class="camera-controls text-center">
-                        <button class="btn" id="capturePhotoBtn"><i class="bi bi-camera-fill"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- ============ MAIN CONTENT ============ -->
+  <main id="main-content" class="container" style="padding: 2rem 0; max-width: 1000px; flex: 1;">
+    <div class="glass-card p-4 fade-up">
+      <h1 class="section-title">
+        <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Form Data Peserta PKD
+      </h1>
+
+      <div id="pesertaFormContainer" aria-live="polite" aria-busy="true">
+        <!-- Initial skeleton — akan diisi oleh peserta.js -->
+      </div>
     </div>
+  </main>
 
-    <!-- ================= FOOTER ================= -->
-    <footer class="footer-modern container">
-        <div class="d-flex justify-content-center align-items-center gap-2">
-            <i class="bi bi-c-circle"></i>
-            <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+  <!-- ============ CAMERA MODAL ============ -->
+  <div class="modal fade" id="cameraModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-dark">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-white" id="cameraModalTitle">Ambil Foto</h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Tutup kamera"
+          ></button>
         </div>
-    </footer>
+        <div class="modal-body">
+          <video id="cameraVideo" autoplay playsinline muted aria-label="Preview kamera"></video>
+          <div class="camera-controls text-center">
+            <button
+              type="button"
+              class="btn"
+              id="capturePhotoBtn"
+              aria-label="Ambil foto"
+            >
+              <i class="bi bi-camera-fill" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- ================= SCRIPTS ================= -->
-    <!-- Library Eksternal (tetap sebagai script biasa) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer-modern container">
+    <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+      <i class="bi bi-c-circle" aria-hidden="true"></i>
+      <span>Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul</span>
+    </div>
+  </footer>
 
-    <!-- Modul ES Khusus Halaman Ini -->
-    <script type="module">
-        // ==========================================================
-        //   IMPOR DARI CORE API (ES Modules)
-        // ==========================================================
-        import {
-            guardPublicAccess,
-            callApi,
-            showToast,
-            escapeHtml,
-            submitPeserta,
-            updateNavbarMenu
-        } from './js/core/api.js';
+  <!-- ============ SCRIPTS ============ -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        // ==========================================================
-        //   STATE & VARIABLES
-        // ==========================================================
-        let formStructure = [];
-        let cameraStream = null;
-        let cameraActive = false;
-        let currentCameraTarget = '';
+  <script type="module">
+    // ============================================================
+    //   IMPORTS — v26.4.0 GitHub Pages /bisaa/
+    // ============================================================
+    import {
+      guardPublicAccess,
+      callApi,
+      showToast,
+      escapeHtml,
+      submitPeserta,
+      updateNavbarMenu,
+      fileToBase64,
+    } from '/bisaa/js/core/api.js';
 
-        // ==========================================================
-        //   UTILITY
-        // ==========================================================
-        function escapeHtmlLocal(unsafe) { return escapeHtml(unsafe); }
-        function showToastLocal(message, type) { showToast(message, type); }
+    import {
+      getDefaultFormFields,
+      normalizeFormStructure,
+    } from '/bisaa/js/core/form-defaults.js';
 
-        function savePesertaFormState() {
-            const form = document.getElementById('formPesertaDinamis');
-            if (!form) return;
-            const formData = new FormData(form);
-            const data = {};
-            formData.forEach((v, k) => data[k] = v);
-            try {
-                localStorage.setItem('pesertaFormState', JSON.stringify(data));
-            } catch (e) {
-                console.warn('Storage diblokir browser, state tidak disimpan.');
+    import { BASE_PATH } from '/bisaa/js/core/config.js';
+
+    // ============================================================
+    //   STATE
+    // ============================================================
+    let formStructure = [];
+    let cameraStream = null;
+    let cameraActive = false;
+    let currentCameraTarget = '';
+    let sigPad = null;
+    let resizeTimer = null;
+
+    const FORM_STATE_KEY = 'pkd_peserta_form_state_v2';
+    const MAX_FILE_SIZE_MB = 5;
+
+    // ============================================================
+    //   UTILITY: safe localStorage
+    // ============================================================
+    function safeLS(fn) {
+      try { return fn(); }
+      catch (e) { return null; }
+    }
+
+    // ============================================================
+    //   FORM STATE PERSISTENCE
+    // ============================================================
+    function savePesertaFormState() {
+      const form = document.getElementById('formPesertaDinamis');
+      if (!form) return;
+
+      const formData = new FormData(form);
+      const data = {};
+
+      formData.forEach((v, k) => {
+        if (v instanceof File) return;
+        data[k] = v;
+      });
+
+      safeLS(() => localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data)));
+    }
+
+    function restorePesertaFormState() {
+      const saved = safeLS(() => localStorage.getItem(FORM_STATE_KEY));
+      if (!saved) return;
+
+      try {
+        const data = JSON.parse(saved);
+        const form = document.getElementById('formPesertaDinamis');
+        if (!form) return;
+
+        Object.keys(data).forEach(key => {
+          const fields = form.querySelectorAll(`[name="${key}"]`);
+          if (!fields.length) return;
+
+          fields.forEach(field => {
+            if (field.type === 'radio') {
+              if (field.value === data[key]) field.checked = true;
+            } else if (field.type === 'file') {
+              // Skip file restore
+            } else {
+              field.value = data[key];
             }
+          });
+        });
+
+        // Trigger utusan toggle
+        const utusanSelect = form.querySelector('select[name="utusan"]');
+        if (utusanSelect) utusanSelect.dispatchEvent(new Event('change'));
+      } catch (e) { /* silent */ }
+    }
+
+    function clearPesertaFormState() {
+      safeLS(() => localStorage.removeItem(FORM_STATE_KEY));
+    }
+
+    // ============================================================
+    //   SKELETON
+    // ============================================================
+    function renderSkeletonPeserta(container) {
+      if (!container) return;
+      container.setAttribute('aria-busy', 'true');
+
+      let html = `
+        <h4 class="mb-4">📝 Memuat formulir peserta…</h4>
+        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+          <div class="admin-contact mb-4">
+            <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
+          </div>
+          ${Array(7).fill(0).map(() => `
+            <div class="mb-3">
+              <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+              <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+            </div>
+          `).join('')}
+          <div class="mb-3">
+            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 8px;"></div>
+          </div>
+          <div class="mb-3">
+            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
+          </div>
+          <div class="mt-4">
+            <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    // ============================================================
+    //   QR GENERATION
+    // ============================================================
+    function generateQR(id) {
+      const container = document.getElementById('qrCodeContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!id) {
+        container.innerHTML = '<div class="text-muted small">ID tidak tersedia</div>';
+        return;
+      }
+
+      if (typeof qrcode !== 'function') {
+        container.innerHTML = '<div class="text-muted small">QR library tidak tersedia</div>';
+        return;
+      }
+
+      try {
+        const qr = qrcode(0, 'M');
+        qr.addData(`peserta_id=${id}`);
+        qr.make();
+
+        const moduleCount = qr.getModuleCount();
+        const cellSize = 10;
+        const margin = 20;
+        const qrSize = moduleCount * cellSize;
+        const canvasSize = qrSize + (margin * 2);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+        for (let row = 0; row < moduleCount; row++) {
+          for (let col = 0; col < moduleCount; col++) {
+            if (qr.isDark(row, col)) {
+              ctx.fillStyle = '#000000';
+              ctx.fillRect(
+                margin + col * cellSize,
+                margin + row * cellSize,
+                cellSize,
+                cellSize
+              );
+            }
+          }
         }
 
-        function restorePesertaFormState() {
-            let saved = null;
-            try {
-                saved = localStorage.getItem('pesertaFormState');
-            } catch (e) {
-                return;
-            }
-            if (!saved) return;
-            try {
-                const data = JSON.parse(saved);
-                const form = document.getElementById('formPesertaDinamis');
-                if (!form) return;
-                Object.keys(data).forEach(key => {
-                    const field = form.querySelector(`[name="${key}"]`);
-                    if (field) field.value = data[key];
-                });
-            } catch (e) {}
-        }
+        // Logo overlay
+        const logoSize = 70;
+        const logoX = (canvasSize - logoSize) / 2;
+        const logoY = (canvasSize - logoSize) / 2;
 
-        function clearPesertaFormState() {
-            try {
-                localStorage.removeItem('pesertaFormState');
-            } catch (e) {}
-        }
+        const logoImg = new Image();
+        logoImg.src = `${BASE_PATH}LOGOANSOR.webp`;
 
-        // ==========================================================
-        //   🔥 RENDER SKELETON PESERTA
-        // ==========================================================
-        function renderSkeletonPeserta(container) {
-            if (!container) return;
-            let html = `
-                <h4 class="mb-4">📝 Memuat formulir peserta...</h4>
-                <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
-                    <div class="admin-contact mb-4">
-                        <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-                        <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
-                    </div>
-
-                    <div class="mt-4">
-                        <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML = html;
-            container.classList.add('fade-up');
-        }
-
-        // ==========================================================
-        //   🔥 GENERATE QR DENGAN LOGO GAMBAR ASLI
-        // ==========================================================
-        window.generateQR = function(id) {
-            const container = document.getElementById('qrCodeContainer');
-            container.innerHTML = '';
-            
-            if (!id) {
-                container.innerHTML = '<div class="text-muted small">ID tidak tersedia</div>';
-                return;
-            }
-
-            // 1. Setup QR Code
-            const qr = qrcode(0, 'M');
-            qr.addData(`peserta_id=${id}`);
-            qr.make();
-            
-            const moduleCount = qr.getModuleCount();
-            const cellSize = 10;
-            const margin = 20;
-            const qrSize = moduleCount * cellSize;
-            const canvasSize = qrSize + (margin * 2);
-            
-            // 2. Siapkan Canvas Utama
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasSize;
-            canvas.height = canvasSize;
-            const ctx = canvas.getContext('2d');
-            
-            // Latar belakang putih
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvasSize, canvasSize);
-            
-            // Gambar modul QR
-            for (let row = 0; row < moduleCount; row++) {
-                for (let col = 0; col < moduleCount; col++) {
-                    if (qr.isDark(row, col)) {
-                        ctx.fillStyle = '#000000';
-                        ctx.fillRect(margin + col * cellSize, margin + row * cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-            
-            // ==========================================================
-            //   🔥 3. TAMBAHKAN LOGO ANSOR DI TENGAH DENGAN GAMBAR ASLI
-            // ==========================================================
-            const logoSize = 70;
-            const logoX = (canvasSize - logoSize) / 2;
-            const logoY = (canvasSize - logoSize) / 2;
-
-            const logoImg = new Image();
-            logoImg.src = '/bisaa/LOGO%20ANSOR.webp'; // Path absolut untuk menghindari error cache
-
-            logoImg.onload = function() {
-                ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-            };
-
-            logoImg.onerror = function() {
-                // Fallback: Jika gambar gagal dimuat, gunakan logo segitiga teks
-                const fallbackCanvas = document.createElement('canvas');
-                fallbackCanvas.width = logoSize;
-                fallbackCanvas.height = logoSize;
-                const fCtx = fallbackCanvas.getContext('2d');
-                
-                fCtx.fillStyle = '#14994c';
-                fCtx.beginPath();
-                fCtx.moveTo(logoSize/2, 0);
-                fCtx.lineTo(logoSize, logoSize);
-                fCtx.lineTo(0, logoSize);
-                fCtx.closePath();
-                fCtx.fill();
-
-                fCtx.fillStyle = '#ffffff';
-                fCtx.font = 'bold 22px Inter';
-                fCtx.textAlign = 'center';
-                fCtx.textBaseline = 'middle';
-                fCtx.fillText('ANSOR', logoSize/2, logoSize/2 - 2);
-                
-                ctx.drawImage(fallbackCanvas, logoX, logoY, logoSize, logoSize);
-            };
-            // ==========================================================
-            
-            // 4. Tambahkan Border Putih tipis di sekeliling QR
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(0, 0, canvasSize, canvasSize);
-            
-            container.appendChild(canvas);
+        logoImg.onload = function () {
+          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
         };
 
-        // ==========================================================
-        //   FUNGSI DEFAULT FORM (JIKA API GAGAL/TIDAK VALID)
-        // ==========================================================
-        function getDefaultFormFields() {
-            return [
-                { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', required: true, isCore: true },
-                { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', required: true, isCore: true },
-                { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', required: true, isCore: true },
-                { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', required: true, isCore: true },
-                { id: 'alamat', label: 'Alamat', type: 'textarea', required: true, isCore: true },
-                { id: 'no_hp', label: 'No HP', type: 'text', required: true, isCore: true },
-                { id: 'email', label: 'Email', type: 'text', required: true, isCore: true },
-                { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-                { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', required: true, isCore: true },
-                { id: 'foto', label: 'Foto', type: 'file', required: true, isCore: true },
-                { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', required: false, isCore: true }
-            ];
+        logoImg.onerror = function () {
+          // Fallback: text logo
+          const fallbackCanvas = document.createElement('canvas');
+          fallbackCanvas.width = logoSize;
+          fallbackCanvas.height = logoSize;
+          const fCtx = fallbackCanvas.getContext('2d');
+
+          fCtx.fillStyle = '#14994c';
+          fCtx.beginPath();
+          fCtx.moveTo(logoSize / 2, 0);
+          fCtx.lineTo(logoSize, logoSize);
+          fCtx.lineTo(0, logoSize);
+          fCtx.closePath();
+          fCtx.fill();
+
+          fCtx.fillStyle = '#ffffff';
+          fCtx.font = 'bold 22px Inter';
+          fCtx.textAlign = 'center';
+          fCtx.textBaseline = 'middle';
+          fCtx.fillText('ANSOR', logoSize / 2, logoSize / 2 - 2);
+
+          ctx.drawImage(fallbackCanvas, logoX, logoY, logoSize, logoSize);
+        };
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+        container.appendChild(canvas);
+      } catch (err) {
+        console.error('[PesertaView] QR generate error:', err);
+        container.innerHTML = '<div class="text-muted small">QR error</div>';
+      }
+    }
+
+    // ============================================================
+    //   LOAD FORM
+    // ============================================================
+    async function loadPesertaForm() {
+      const container = document.getElementById('pesertaFormContainer');
+
+      try {
+        let raw = null;
+        const settingsRes = await callApi('getFormSettings', {}, 'GET');
+
+        if (settingsRes && settingsRes.success) {
+          let data = settingsRes.data;
+
+          if (typeof data === 'string') {
+            try { data = JSON.parse(data); }
+            catch (e) { data = null; }
+          }
+
+          raw = data;
         }
 
-        // ==========================================================
-        //   LOAD PESERTA FORM
-        // ==========================================================
-        async function loadPesertaForm() {
-            const container = document.getElementById('pesertaFormContainer');
+        formStructure = normalizeFormStructure(raw);
+        buildForm(container);
+      } catch (e) {
+        console.error('[PesertaView] load form error:', e);
+        container.innerHTML = `
+          <div class="alert alert-danger text-center py-5">
+            <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+            Gagal memuat form dari server.<br>
+            <small>Silakan refresh halaman. Jika tetap error, hubungi Admin.</small>
+            <br>
+            <button class="btn btn-outline-danger mt-3" onclick="window.location.reload()">
+              <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Refresh Halaman
+            </button>
+          </div>`;
+        container.setAttribute('aria-busy', 'false');
+      }
+    }
 
-            try {
-                let rawData = null;
-                const settingsRes = await callApi('getFormSettings', {}, 'GET');
+    // ============================================================
+    //   BUILD FORM
+    // ============================================================
+    function buildForm(container) {
+      if (!Array.isArray(formStructure)) {
+        formStructure = getDefaultFormFields();
+      }
 
-                if (settingsRes && settingsRes.success) {
-                    let data = settingsRes.data;
+      function getRequiredAttr(field) { return field.required ? 'required' : ''; }
+      function getRequiredAsterisk(field) {
+        return field.required ? ' <span class="text-danger" aria-label="wajib diisi">*</span>' : '';
+      }
 
-                    if (typeof data === 'string') {
-                        try { data = JSON.parse(data); } catch (e) { data = null; }
-                    }
+      let html = `
+        <div class="admin-contact">
+          <h6><i class="bi bi-telephone-fill me-2" aria-hidden="true"></i>Konfirmasi Administrasi ke Panitia Lokal</h6>
+          <p class="mb-1">Sebelum mengisi formulir, silakan hubungi panitia untuk memastikan kelengkapan administrasi.</p>
+          <a href="https://wa.me/6283866675521?text=Halo%20Panitia%20PKD%2C%20saya%20ingin%20konfirmasi%20administrasi%20peserta."
+             target="_blank" rel="noopener noreferrer"
+             class="btn btn-success btn-sm rounded-pill mt-2 whatsapp-btn">
+            <i class="bi bi-whatsapp me-1" aria-hidden="true"></i> Hubungi Admin Instruktur (0838-6667-5521)
+          </a>
+          <p class="small text-muted mt-2 mb-0">Nomor kontak sesuai flyer resmi PKD GP Ansor Bantul.</p>
+        </div>
+        <form id="formPesertaDinamis" autocomplete="off" novalidate>
+      `;
 
-                    if (data && Array.isArray(data) && data.length > 0 && Array.isArray(data[0])) {
-                        const correctConfig = data.find(config => {
-                            if (!Array.isArray(config)) return false;
-                            const suratField = config.find(f => f.id === 'surat_rekomendasi');
-                            return suratField && suratField.required === false;
-                        });
-                        rawData = correctConfig || data[0];
-                    } else if (data && Array.isArray(data)) {
-                        rawData = data;
-                    }
-                }
+      formStructure.forEach(field => {
+        const labelHtml = `<label class="form-label fw-bold" for="input_${field.id}">${escapeHtml(field.label)}${getRequiredAsterisk(field)}</label>`;
+        const req = getRequiredAttr(field);
 
-                if (rawData && Array.isArray(rawData) && rawData.length > 0) {
-                    formStructure = rawData;
-                } else {
-                    formStructure = getDefaultFormFields();
-                }
-                buildForm(container);
-
-            } catch (e) {
-                container.innerHTML = `<div class="alert alert-danger text-center py-5">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Gagal memuat form dari server.<br>
-                    <small>Silakan refresh halaman. Jika tetap error, hubungi Admin.</small>
-                    <br><button class="btn btn-outline-danger mt-3" onclick="window.location.reload()">Refresh Halaman</button>
-                </div>`;
-            }
-        }
-
-        // ==========================================================
-        //   BUILD FORM
-        // ==========================================================
-        function buildForm(container) {
-            if (!Array.isArray(formStructure)) {
-                formStructure = getDefaultFormFields();
-            }
-
-            function getRequiredAttr(field) { return field.required ? 'required' : ''; }
-            function getRequiredAsterisk(field) { return field.required ? ' <span class="text-danger">*</span>' : ''; }
-
-            let html = `
-                <div class="admin-contact">
-                    <h6><i class="bi bi-telephone-fill me-2"></i>Konfirmasi Administrasi ke Panitia Lokal</h6>
-                    <p class="mb-1">Sebelum mengisi formulir, silakan hubungi panitia untuk memastikan kelengkapan administrasi.</p>
-                    <a href="https://wa.me/6283866675521?text=Halo%20Panitia%20PKD%2C%20saya%20ingin%20konfirmasi%20administrasi%20peserta." target="_blank" class="btn btn-success btn-sm rounded-pill mt-2 whatsapp-btn">
-                        <i class="bi bi-whatsapp me-1"></i> Hubungi Admin Instruktur (0838-6667-5521)
+        if (field.id === 'foto') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <div class="input-group">
+                <input type="file" class="form-control" name="${field.id}" accept="image/*" id="input_${field.id}" ${req}>
+                <button class="btn btn-outline-secondary" type="button" onclick="openCamera('${field.id}')" title="Ambil dari Kamera" aria-label="Ambil foto dari kamera">
+                  <i class="bi bi-camera-video-fill" aria-hidden="true"></i>
+                </button>
+              </div>
+              <span class="form-text small text-muted"><i class="bi bi-camera me-1" aria-hidden="true"></i>Upload file atau gunakan tombol kamera di samping.</span>
+              <img id="preview_${field.id}" src="#" alt="Preview" style="max-width: 200px; display: none;" class="mt-2 rounded border">
+            </div>
+          `;
+        } else if (field.id === 'surat_rekomendasi') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <div class="template-card mb-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                  <div>
+                    <h6 class="fw-semibold mb-1"><i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i>Download Template Surat Rekomendasi</h6>
+                    <p class="small text-muted mb-0"><strong>Pilih salah satu template</strong> lengkapi, cetak, lalu scan/upload.</p>
+                  </div>
+                  <div class="d-flex gap-2 flex-wrap mt-2 mt-sm-0">
+                    <a href="${BASE_PATH}Surat%20Rekomendasi%20PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                      <i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i> Template PAC
                     </a>
-                    <p class="small text-muted mt-2 mb-0">Nomor kontak sesuai flyer resmi PKD GP Ansor Bantul.</p>
+                    <a href="${BASE_PATH}Surat%20Rekomendasi%20Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
+                      <i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i> Template Masjid
+                    </a>
+                  </div>
                 </div>
-                <form id="formPesertaDinamis">
-            `;
-
-            formStructure.forEach(field => {
-                const labelHtml = `<label class="form-label fw-bold">${escapeHtmlLocal(field.label)}${getRequiredAsterisk(field)}</label>`;
-
-                if (field.id === 'foto') {
-                    html += `
-                        <div class="mb-3">
-                            ${labelHtml}
-                            <div class="input-group">
-                                <input type="file" class="form-control" name="${field.id}" accept="image/*" id="input_${field.id}" ${getRequiredAttr(field)}>
-                                <button class="btn btn-outline-secondary" type="button" onclick="openCamera('${field.id}')" title="Ambil dari Kamera">
-                                    <i class="bi bi-camera-video-fill"></i>
-                                </button>
-                            </div>
-                            <span class="capture-hint"><i class="bi bi-camera me-1"></i>Upload file atau gunakan tombol kamera di samping.</span>
-                            <img id="preview_${field.id}" src="#" alt="Preview" style="max-width: 200px; display: none;" class="mt-2 rounded border">
-                        </div>
-                    `;
-                } else if (field.id === 'surat_rekomendasi') {
-                    html += `
-                        <div class="mb-3">
-                            ${labelHtml}
-                            <div class="template-card mb-3">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between">
-                                    <div>
-                                        <h6 class="fw-semibold mb-1"><i class="bi bi-file-earmark-word me-1"></i>Download Template Surat Rekomendasi</h6>
-                                        <p class="small text-muted mb-0"><strong>Pilih salah satu template</strong> lengkapi, cetak, lalu scan/upload.</p>
-                                    </div>
-                                    <div class="d-flex gap-2 flex-wrap mt-2 mt-sm-0">
-                                        <a href="/bisaa/Surat Rekomendasi PAC.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
-                                            <i class="bi bi-file-earmark-word me-1"></i> Template PAC
-                                        </a>
-                                        <a href="/bisaa/Surat Rekomendasi Masjid.docx" class="btn btn-outline-primary btn-sm rounded-pill" download>
-                                            <i class="bi bi-file-earmark-word me-1"></i> Template Masjid
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="input-group">
-                                <input type="file" class="form-control" name="${field.id}" accept=".pdf,image/*" id="input_${field.id}" ${getRequiredAttr(field)}>
-                                <button class="btn btn-outline-secondary" type="button" onclick="openCamera('${field.id}')" title="Ambil dari Kamera">
-                                    <i class="bi bi-camera-video-fill"></i>
-                                </button>
-                            </div>
-                            <span class="capture-hint"><i class="bi bi-camera me-1"></i>Upload file hasil scan atau gunakan tombol kamera di samping untuk memotret langsung.</span>
-                            <div id="preview_${field.id}" class="mt-2 small text-muted"></div>
-                        </div>
-                    `;
-                } else if (field.type === 'textarea') {
-                    html += `
-                        <div class="mb-3">
-                            ${labelHtml}
-                            <textarea class="form-control" name="${field.id}" rows="3" placeholder="Masukkan jawaban Anda..." ${getRequiredAttr(field)}></textarea>
-                        </div>
-                    `;
-                } else if (field.type === 'radio') {
-                    const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-                    html += `<div class="mb-3">${labelHtml}<div class="radio-group">`;
-                    options.forEach((opt, idx) => {
-                        html += `
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtmlLocal(opt)}" id="${field.id}_${idx}" ${getRequiredAttr(field)}>
-                                <label class="form-check-label" for="${field.id}_${idx}">${escapeHtmlLocal(opt)}</label>
-                            </div>
-                        `;
-                    });
-                    html += `</div></div>`;
-                } else if (field.type === 'select') {
-                    const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
-                    html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" ${getRequiredAttr(field)}>`;
-                    html += `<option value="">-- Pilih --</option>`;
-                    options.forEach(opt => {
-                        html += `<option value="${escapeHtmlLocal(opt)}">${escapeHtmlLocal(opt)}</option>`;
-                    });
-                    html += `</select>`;
-
-                    if (field.id === 'utusan') {
-                        html += `
-                            <div id="utusanLuarContainer" style="display: none; margin-top: 8px;">
-                                <label class="form-label fw-bold">Tulis Asal (Lainnya)</label>
-                                <input type="text" class="form-control" name="utusan_luar" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas, Mushola dll">
-                            </div>
-                        `;
-                    }
-                    html += `</div>`;
-                } else {
-                    html += `
-                        <div class="mb-3">
-                            ${labelHtml}
-                            <input type="text" class="form-control" name="${field.id}" placeholder="Masukkan ${escapeHtmlLocal(field.label)}" ${getRequiredAttr(field)}>
-                        </div>
-                    `;
-                }
-            });
-
-            // ==========================================================
-            //   BAGIAN TANDA TANGAN
-            // ==========================================================
+              </div>
+              <div class="input-group">
+                <input type="file" class="form-control" name="${field.id}" accept=".pdf,image/*" id="input_${field.id}" ${req}>
+                <button class="btn btn-outline-secondary" type="button" onclick="openCamera('${field.id}')" title="Ambil dari Kamera" aria-label="Ambil dari kamera">
+                  <i class="bi bi-camera-video-fill" aria-hidden="true"></i>
+                </button>
+              </div>
+              <span class="form-text small text-muted"><i class="bi bi-camera me-1" aria-hidden="true"></i>Upload file hasil scan atau gunakan tombol kamera di samping untuk memotret langsung.</span>
+              <div id="preview_${field.id}" class="mt-2 small text-muted"></div>
+            </div>
+          `;
+        } else if (field.type === 'textarea') {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <textarea class="form-control" name="${field.id}" id="input_${field.id}" rows="3" placeholder="Masukkan jawaban Anda..." ${req}></textarea>
+            </div>
+          `;
+        } else if (field.type === 'radio') {
+          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+          html += `<div class="mb-3">${labelHtml}<div class="radio-group" role="radiogroup" aria-label="${escapeHtml(field.label)}">`;
+          options.forEach((opt, idx) => {
+            const inputId = `${field.id}_${idx}`;
             html += `
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">✍️ Tanda Tangan Digital</label>
-                        <div class="signature-wrapper">
-                            <div class="signature-area" id="signatureAreaContainer">
-                                <canvas id="signatureCanvas"></canvas>
-                                <div class="signature-hint"><i class="bi bi-pencil me-2"></i>Tanda tangan di sini</div>
-                            </div>
-                            <div class="mt-2 d-flex gap-2 flex-wrap align-items-center">
-                                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature"><i class="bi bi-eraser me-1"></i> Hapus Semua</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="undoSignature"><i class="bi bi-arrow-counterclockwise me-1"></i> Undo</button>
-                                <small class="text-muted ms-1">Gunakan mouse atau jari. Garis tebal/tipis mengikuti kecepatan.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">📤 Kirim Data Peserta</button>
-                </form>
-
-                <!-- ========================================================== -->
-                <!-- 🔥 ID CARD DIGITAL PREMIUM (Menggantikan QR Sederhana) -->
-                <!-- ========================================================== -->
-                <div id="qrResult" style="display: none;">
-                    <h5 class="mt-4 mb-3 fw-bold text-center"><i class="bi bi-person-vcard me-2"></i>Kartu ID Digital</h5>
-                    
-                    <div class="id-card-wrapper">
-                        <div id="idCard" class="id-card">
-                            <div class="header">
-                                <img src="/bisaa/LOGO%20ANSOR.webp" alt="Ansor">
-                                <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
-                            </div>
-                            <div class="body">
-                                <div class="qr-area" id="qrCodeContainer">
-                                    <!-- QR Code akan digenerate di sini -->
-                                </div>
-                                <div class="data-area">
-                                    <div>
-                                        <span class="label">ID Peserta</span>
-                                        <div class="value" id="pesertaIdDisplay">-</div>
-                                    </div>
-                                    <div>
-                                        <span class="label">Nama Lengkap</span>
-                                        <div class="value" id="idCardNama">-</div>
-                                    </div>
-                                    <div>
-                                        <span class="label">Alamat</span>
-                                        <div class="value" id="idCardAlamat" style="font-weight:400;">-</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="footer">
-                                Password Login: <span>No HP Terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tombol Aksi -->
-                    <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
-                        <button class="btn btn-primary rounded-pill px-4" id="downloadIdCardBtn">
-                            <i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)
-                        </button>
-                        <button class="btn btn-outline-secondary rounded-pill px-4" onclick="window.print()">
-                            <i class="bi bi-printer me-1"></i> Cetak
-                        </button>
-                    </div>
-
-                    <div class="alert alert-info mt-3 small text-center rounded-4 border-0 shadow-sm bg-light">
-                        <i class="bi bi-info-circle me-1"></i> Data Anda sedang diverifikasi oleh admin. QR Code ini akan aktif setelah disetujui.
-                    </div>
-                </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="${field.id}" value="${escapeHtml(opt)}" id="${inputId}" ${req}>
+                <label class="form-check-label" for="${inputId}">${escapeHtml(opt)}</label>
+              </div>
             `;
+          });
+          html += `</div></div>`;
+        } else if (field.type === 'select') {
+          const options = (field.options || '').split(',').map(s => s.trim()).filter(s => s);
+          html += `<div class="mb-3">${labelHtml}<select class="form-select" name="${field.id}" id="input_${field.id}" ${req}>`;
+          html += `<option value="">-- Pilih --</option>`;
+          options.forEach(opt => {
+            html += `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`;
+          });
+          html += `</select>`;
 
-            container.innerHTML = html;
-            container.classList.add('fade-up');
-
-            // Event listener file inputs
-            document.querySelectorAll('#formPesertaDinamis input[type="file"]').forEach(input => {
-                input.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    const previewId = `preview_${this.name}`;
-                    const previewEl = document.getElementById(previewId);
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(ev) {
-                            if (this.name === 'foto') {
-                                previewEl.src = ev.target.result;
-                                previewEl.style.display = 'block';
-                            } else {
-                                previewEl.innerHTML = `File dipilih: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
-                            }
-                        }.bind(this);
-                        reader.readAsDataURL(file);
-                    } else {
-                        if (this.name === 'foto') {
-                            previewEl.style.display = 'none';
-                        } else {
-                            previewEl.innerHTML = '';
-                        }
-                    }
-                });
-            });
-
-            const canvas = document.getElementById('signatureCanvas');
-            const containerSignature = document.getElementById('signatureAreaContainer');
-            if (canvas) {
-                if (window.sigPad) { window.sigPad.clear(); window.sigPad = null; }
-                
-                window.sigPad = new SignaturePad(canvas, { 
-                    backgroundColor: 'rgb(255,255,255)', 
-                    penColor: 'rgb(0,0,0)', 
-                    minWidth: 0.5,
-                    maxWidth: 3.5,
-                    velocityFilterWeight: 0.7,
-                    throttle: 16
-                });
-
-                function resizeCanvas() {
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    canvas.getContext("2d").scale(ratio, ratio);
-                    if (window.sigPad) window.sigPad.clear();
-                }
-                window.addEventListener("resize", resizeCanvas);
-                resizeCanvas();
-
-                window.sigPad.addEventListener('beginStroke', () => {
-                    containerSignature.classList.add('drawing');
-                });
-                window.sigPad.addEventListener('endStroke', () => {
-                    if (window.sigPad.isEmpty()) {
-                        containerSignature.classList.remove('drawing');
-                    }
-                    savePesertaFormState();
-                });
-
-                document.getElementById('clearSignature').addEventListener('click', () => {
-                    if (window.sigPad) window.sigPad.clear();
-                    containerSignature.classList.remove('drawing');
-                    savePesertaFormState();
-                });
-
-                document.getElementById('undoSignature').addEventListener('click', () => {
-                    if (window.sigPad) {
-                        const data = window.sigPad.toData();
-                        if (data && data.length > 0) {
-                            data.pop();
-                            window.sigPad.fromData(data);
-                            if (window.sigPad.isEmpty()) {
-                                containerSignature.classList.remove('drawing');
-                            }
-                            savePesertaFormState();
-                        }
-                    }
-                });
-
-                window.sigPad.addEventListener('endStroke', savePesertaFormState);
-            }
-
-            const utusanSelect = document.querySelector('select[name="utusan"]');
-            const luarContainer = document.getElementById('utusanLuarContainer');
-            if (utusanSelect && luarContainer) {
-                utusanSelect.addEventListener('change', function() {
-                    if (this.value === 'Lainnya') {
-                        luarContainer.style.display = 'block';
-                    } else {
-                        luarContainer.style.display = 'none';
-                        const inputLuar = document.querySelector('input[name="utusan_luar"]');
-                        if (inputLuar) inputLuar.value = '';
-                    }
-                });
-            }
-
-            document.querySelectorAll('#formPesertaDinamis input:not([type="file"]), #formPesertaDinamis textarea, #formPesertaDinamis select')
-                .forEach(el => {
-                    el.addEventListener('input', savePesertaFormState);
-                    el.addEventListener('change', savePesertaFormState);
-                });
-
-            restorePesertaFormState();
-
-            document.getElementById('formPesertaDinamis').addEventListener('submit', submitPesertaForm);
+          if (field.id === 'utusan') {
+            html += `
+              <div id="utusanLuarContainer" style="display: none; margin-top: 8px;">
+                <label class="form-label fw-bold" for="utusan_luar_input">Tulis Asal (Lainnya)</label>
+                <input type="text" class="form-control" id="utusan_luar_input" name="utusan_luar" placeholder="Contoh: PC Sleman, Luar DIY, Masjid Al-Ikhlas, Mushola dll">
+              </div>
+            `;
+          }
+          html += `</div>`;
+        } else {
+          html += `
+            <div class="mb-3">
+              ${labelHtml}
+              <input type="text" class="form-control" name="${field.id}" id="input_${field.id}" placeholder="Masukkan ${escapeHtml(field.label)}" ${req}>
+            </div>
+          `;
         }
+      });
 
-        // ==========================================================
-        //   KAMERA (Webcam)
-        // ==========================================================
-        window.openCamera = async function(targetId) {
-            if (cameraActive) return;
-            currentCameraTarget = targetId;
-            const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
-            const video = document.getElementById('cameraVideo');
-            const title = document.getElementById('cameraModalTitle');
-            title.innerText = targetId === 'foto' ? 'Ambil Foto Diri' : 'Ambil Foto / Scan Surat Rekomendasi';
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                cameraStream = stream;
-                video.srcObject = stream;
-                video.play();
-                cameraActive = true;
-                modal.show();
-            } catch (err) {
-                showToastLocal('Gagal mengakses kamera: ' + err.message, 'error');
+      html += `
+          <div class="mb-3">
+            <label class="form-label fw-bold">✍️ Tanda Tangan Digital <span class="text-danger">*</span></label>
+            <div class="signature-wrapper">
+              <div class="signature-area" id="signatureAreaContainer" tabindex="0">
+                <canvas id="signatureCanvas" aria-label="Area tanda tangan"></canvas>
+                <div class="signature-hint"><i class="bi bi-pencil me-2" aria-hidden="true"></i>Tanda tangan di sini</div>
+              </div>
+              <div class="mt-2 d-flex gap-2 flex-wrap align-items-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSignature">
+                  <i class="bi bi-eraser me-1" aria-hidden="true"></i> Hapus Semua
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="undoSignature">
+                  <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Undo
+                </button>
+                <small class="text-muted ms-1">Gunakan mouse atau jari.</small>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">
+            <i class="bi bi-send me-2" aria-hidden="true"></i>Kirim Data Peserta
+          </button>
+        </form>
+
+        <div id="qrResult" style="display: none;">
+          <h5 class="mt-4 mb-3 fw-bold text-center">
+            <i class="bi bi-person-vcard me-2" aria-hidden="true"></i>Kartu ID Digital
+          </h5>
+
+          <div class="id-card-wrapper">
+            <div id="idCard" class="id-card">
+              <div class="header">
+                <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor">
+                <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
+              </div>
+              <div class="body">
+                <div class="qr-area" id="qrCodeContainer"></div>
+                <div class="data-area">
+                  <div>
+                    <span class="label">ID Peserta</span>
+                    <div class="value" id="pesertaIdDisplay">-</div>
+                  </div>
+                  <div>
+                    <span class="label">Nama Lengkap</span>
+                    <div class="value" id="idCardNama">-</div>
+                  </div>
+                  <div>
+                    <span class="label">Alamat</span>
+                    <div class="value" id="idCardAlamat" style="font-weight:400;">-</div>
+                  </div>
+                </div>
+              </div>
+              <div class="footer">Password Login: <span>No HP Terdaftar</span></div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+            <button class="btn btn-primary rounded-pill px-4" id="downloadIdCardBtn">
+              <i class="bi bi-download me-1" aria-hidden="true"></i> Unduh Kartu ID (PNG)
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill px-4" onclick="window.print()">
+              <i class="bi bi-printer me-1" aria-hidden="true"></i> Cetak
+            </button>
+          </div>
+
+          <div class="alert alert-info mt-3 small text-center rounded-4 border-0 shadow-sm bg-light">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            Data Anda sedang diverifikasi oleh admin. QR Code ini akan aktif setelah disetujui.
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+      container.setAttribute('aria-busy', 'false');
+      container.classList.add('fade-up');
+
+      // Bind file previews
+      document.querySelectorAll('#formPesertaDinamis input[type="file"]').forEach(input => {
+        input.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          const previewId = `preview_${this.name}`;
+          const previewEl = document.getElementById(previewId);
+          if (!previewEl) return;
+
+          if (file) {
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+              showToast(`Ukuran file maksimal ${MAX_FILE_SIZE_MB} MB`, 'error');
+              this.value = '';
+              previewEl.innerHTML = '';
+              if (previewEl.tagName === 'IMG') previewEl.style.display = 'none';
+              return;
             }
-        };
 
-        document.getElementById('capturePhotoBtn').addEventListener('click', function() {
-            const video = document.getElementById('cameraVideo');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            canvas.toBlob(function(blob) {
-                if (!blob) return;
-                const file = new File([blob], `capture_${currentCameraTarget}_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                const input = document.getElementById(`input_${currentCameraTarget}`);
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                input.files = dataTransfer.files;
-                input.dispatchEvent(new Event('change'));
-                bootstrap.Modal.getInstance(document.getElementById('cameraModal')).hide();
-                closeCamera();
-            }, 'image/jpeg', 0.8);
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              if (this.name === 'foto' && previewEl.tagName === 'IMG') {
+                previewEl.src = ev.target.result;
+                previewEl.style.display = 'block';
+              } else if (previewEl.tagName !== 'IMG') {
+                previewEl.innerHTML = `File dipilih: ${escapeHtml(file.name)} (${(file.size / 1024).toFixed(2)} KB)`;
+              }
+            }.bind(this);
+            reader.readAsDataURL(file);
+          } else {
+            if (previewEl.tagName === 'IMG') {
+              previewEl.style.display = 'none';
+            } else {
+              previewEl.innerHTML = '';
+            }
+          }
+        });
+      });
+
+      // Signature Pad
+      initSignaturePad();
+
+      // Utusan "Lainnya" toggle
+      const utusanSelect = document.querySelector('select[name="utusan"]');
+      const luarContainer = document.getElementById('utusanLuarContainer');
+      if (utusanSelect && luarContainer) {
+        utusanSelect.addEventListener('change', function () {
+          if (this.value === 'Lainnya') {
+            luarContainer.style.display = 'block';
+          } else {
+            luarContainer.style.display = 'none';
+            const inputLuar = document.querySelector('input[name="utusan_luar"]');
+            if (inputLuar) inputLuar.value = '';
+          }
+        });
+      }
+
+      // Auto-save on input
+      document.querySelectorAll('#formPesertaDinamis input:not([type="file"]), #formPesertaDinamis textarea, #formPesertaDinamis select')
+        .forEach(el => {
+          el.addEventListener('input', savePesertaFormState);
+          el.addEventListener('change', savePesertaFormState);
         });
 
-        function closeCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-            cameraActive = false;
-            const video = document.getElementById('cameraVideo');
-            if (video) video.srcObject = null;
+      // Restore state
+      restorePesertaFormState();
+
+      // Submit
+      document.getElementById('formPesertaDinamis')
+        ?.addEventListener('submit', submitPesertaForm);
+    }
+
+    // ============================================================
+    //   SIGNATURE PAD
+    // ============================================================
+    function initSignaturePad() {
+      const canvas = document.getElementById('signatureCanvas');
+      const containerSignature = document.getElementById('signatureAreaContainer');
+      if (!canvas || !containerSignature) return;
+
+      if (typeof SignaturePad === 'undefined') {
+        showToast('Library tanda tangan belum siap. Refresh halaman.', 'warning');
+        return;
+      }
+
+      if (sigPad) {
+        try { sigPad.off(); }
+        catch (e) { /* silent */ }
+        sigPad = null;
+      }
+
+      function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const w = Math.max(rect.width - 16, 280);
+        const h = 160;
+
+        canvas.width = w * ratio;
+        canvas.height = h * ratio;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(ratio, ratio);
+      }
+
+      resizeCanvas();
+
+      sigPad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255,255,255)',
+        penColor: 'rgb(0,0,0)',
+        minWidth: 0.5,
+        maxWidth: 3.5,
+        velocityFilterWeight: 0.7,
+        throttle: 16,
+      });
+
+      sigPad.addEventListener('beginStroke', () => {
+        containerSignature.classList.add('drawing');
+      });
+      sigPad.addEventListener('endStroke', () => {
+        if (sigPad.isEmpty()) {
+          containerSignature.classList.remove('drawing');
+        }
+        savePesertaFormState();
+      });
+
+      document.getElementById('clearSignature')?.addEventListener('click', () => {
+        sigPad.clear();
+        containerSignature.classList.remove('drawing');
+        savePesertaFormState();
+      });
+
+      document.getElementById('undoSignature')?.addEventListener('click', () => {
+        const data = sigPad.toData();
+        if (data && data.length > 0) {
+          data.pop();
+          sigPad.fromData(data);
+          if (sigPad.isEmpty()) {
+            containerSignature.classList.remove('drawing');
+          }
+          savePesertaFormState();
+        }
+      });
+
+      // Resize handler — debounced
+      window.removeEventListener('resize', window._pesertaResizeHandler);
+      window._pesertaResizeHandler = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (!sigPad) return;
+          const data = sigPad.toData();
+          const isEmpty = sigPad.isEmpty();
+
+          resizeCanvas();
+          sigPad.clear();
+          if (!isEmpty && data.length) {
+            try { sigPad.fromData(data); }
+            catch (e) { /* silent */ }
+          }
+        }, 200);
+      };
+      window.addEventListener('resize', window._pesertaResizeHandler);
+    }
+
+    // ============================================================
+    //   CAMERA
+    // ============================================================
+    window.openCamera = async function (targetId) {
+      if (cameraActive) return;
+      currentCameraTarget = targetId;
+
+      const modalEl = document.getElementById('cameraModal');
+      const video = document.getElementById('cameraVideo');
+      const title = document.getElementById('cameraModalTitle');
+
+      if (title) {
+        title.innerText = targetId === 'foto'
+          ? 'Ambil Foto Diri'
+          : 'Ambil Foto / Scan Surat Rekomendasi';
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        cameraStream = stream;
+        if (video) {
+          video.srcObject = stream;
+          video.play();
+        }
+        cameraActive = true;
+        if (modalEl) {
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }
+      } catch (err) {
+        showToast('Gagal mengakses kamera: ' + err.message, 'error');
+      }
+    };
+
+    document.getElementById('capturePhotoBtn')?.addEventListener('click', function () {
+      const video = document.getElementById('cameraVideo');
+      if (!video) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+
+      canvas.toBlob(function (blob) {
+        if (!blob) return;
+        const file = new File(
+          [blob],
+          `capture_${currentCameraTarget}_${Date.now()}.jpg`,
+          { type: 'image/jpeg' }
+        );
+
+        const input = document.getElementById(`input_${currentCameraTarget}`);
+        if (!input) return;
+
+        try {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          input.files = dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        } catch (e) {
+          console.warn('[Camera] DataTransfer not supported:', e);
         }
 
-        document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
-            closeCamera();
-        });
+        const modalEl = document.getElementById('cameraModal');
+        if (modalEl) {
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }
+        closeCamera();
+      }, 'image/jpeg', 0.8);
+    });
 
-        // ==========================================================
-        //   🔥 SUBMIT FORM (MENGISI KARTU ID & DOWNLOAD)
-        // ==========================================================
-        async function submitPesertaForm(e) {
-            e.preventDefault();
-            const form = document.getElementById('formPesertaDinamis');
-            const formData = new FormData(form);
-            const data = { action: 'submitPeserta', custom_data: {} };
+    function closeCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraActive = false;
+      const video = document.getElementById('cameraVideo');
+      if (video) video.srcObject = null;
+    }
 
-            const missingFields = [];
-            formStructure.forEach(field => {
-                if (field.required) {
-                    const val = formData.get(field.id);
-                    const isFile = field.type === 'file';
-                    let isEmpty = true;
-                    if (isFile) {
-                        const fileInput = document.getElementById(`input_${field.id}`);
-                        isEmpty = !fileInput || !fileInput.files.length;
-                    } else {
-                        isEmpty = !val || val.trim() === '';
-                    }
-                    if (isEmpty) {
-                        missingFields.push(field.label);
-                    }
-                }
-            });
+    document.getElementById('cameraModal')?.addEventListener('hidden.bs.modal', function () {
+      closeCamera();
+    });
 
-            if (missingFields.length > 0) {
-                showToastLocal('Harap isi: ' + missingFields.join(', '), 'error');
-                return;
-            }
+    // ============================================================
+    //   SUBMIT FORM
+    // ============================================================
+    async function submitPesertaForm(e) {
+      e.preventDefault();
 
-            const fotoFile = formData.get('foto');
-            if (fotoFile && fotoFile.size > 5 * 1024 * 1024) {
-                showToastLocal('Ukuran foto maksimal 5 MB', 'danger');
-                return;
-            }
-            const suratFile = formData.get('surat_rekomendasi');
-            if (suratFile && suratFile.size > 5 * 1024 * 1024) {
-                showToastLocal('Ukuran surat rekomendasi maksimal 5 MB', 'danger');
-                return;
-            }
-            
-            document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
-                .forEach(el => el.disabled = true);
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+      const form = document.getElementById('formPesertaDinamis');
+      if (!form) return;
 
-            try {
-                if (fotoFile && fotoFile.size > 0) {
-                    data.foto = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(fotoFile);
-                    });
-                }
-                if (suratFile && suratFile.size > 0) {
-                    data.surat_rekomendasi = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(suratFile);
-                    });
-                }
+      const formData = new FormData(form);
+      const data = { action: 'submitPeserta', custom_data: {} };
 
-                if (window.sigPad && !window.sigPad.isEmpty()) {
-                    data.tanda_tangan = window.sigPad.toDataURL('image/jpeg', 0.2);
-                }
+      // Required validation
+      const missingFields = [];
+      formStructure.forEach(field => {
+        if (field.required) {
+          const val = formData.get(field.id);
+          const isFile = field.type === 'file';
+          let isEmpty = true;
 
-                formStructure.forEach(field => {
-                    const val = formData.get(field.id);
-                    if (field.type === 'file') return;
-                    const coreFields = ['nama_lengkap','tempat_tgl_lahir','pekerjaan','pendidikan_terakhir','alamat','no_hp','email','utusan','pengalaman_organisasi','status','tanggal','catatan'];
-                    if (coreFields.includes(field.id)) {
-                        data[field.id] = val || '';
-                    } else {
-                        data.custom_data[field.id] = val || '';
-                    }
-                });
+          if (isFile) {
+            const fileInput = document.getElementById(`input_${field.id}`);
+            isEmpty = !fileInput || !fileInput.files.length;
+          } else {
+            isEmpty = !val || val.trim() === '';
+          }
 
-                if (data.utusan === 'Lainnya') {
-                    const luarValue = formData.get('utusan_luar');
-                    const luarInput = typeof luarValue === 'string' ? luarValue.trim() : '';
-                    data.utusan = luarInput ? `Lainnya - ${luarInput}` : 'Lainnya (tidak diisi)';
-                }
-                delete data.utusan_luar;
+          if (isEmpty) missingFields.push(field.label);
+        }
+      });
 
-                const result = await submitPeserta(data);
-                if (!result.success) throw new Error(result.error || 'Gagal mengirim');
+      if (missingFields.length > 0) {
+        showToast('Harap isi: ' + missingFields.join(', '), 'error');
+        return;
+      }
 
-                showToastLocal('✅ Data peserta berhasil dikirim!', 'success');
+      // File size validation
+      const fotoFile = formData.get('foto');
+      if (fotoFile && fotoFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        showToast(`Ukuran foto maksimal ${MAX_FILE_SIZE_MB} MB`, 'error');
+        return;
+      }
+      const suratFile = formData.get('surat_rekomendasi');
+      if (suratFile && suratFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        showToast(`Ukuran surat rekomendasi maksimal ${MAX_FILE_SIZE_MB} MB`, 'error');
+        return;
+      }
 
-                // 🔥 Tampilkan Kartu ID Premium & Isi Data
-                const qrResult = document.getElementById('qrResult');
-                qrResult.style.display = 'block';
-                
-                document.getElementById('pesertaIdDisplay').textContent = result.id || '-';
-                document.getElementById('idCardNama').textContent = data.nama_lengkap || '-';
-                document.getElementById('idCardAlamat').textContent = data.alamat || '-';
-                window.generateQR(result.id);
-                
-                document.querySelector('#qrResult .alert-info').innerHTML = `
-                    <i class="bi bi-info-circle me-1"></i> Data Anda sedang diverifikasi oleh admin. 
-                    QR Code ini akan aktif setelah disetujui. Silakan cek kembali nanti.
-                `;
-                form.reset();
-                document.querySelectorAll('#formPesertaDinamis img[id^="preview_"]').forEach(el => el.style.display = 'none');
-                document.querySelectorAll('#formPesertaDinamis div[id^="preview_"]').forEach(el => el.innerHTML = '');
-                if (window.sigPad) window.sigPad.clear();
-                clearPesertaFormState();
-                const utusanLuar = document.getElementById('utusanLuarContainer');
-                if (utusanLuar) utusanLuar.style.display = 'none';
+      // Signature validation
+      if (!sigPad || sigPad.isEmpty()) {
+        showToast('Tanda tangan digital wajib diisi', 'warning');
+        const sigArea = document.getElementById('signatureAreaContainer');
+        sigArea?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
 
-                // 🔥 Event Listener Tombol Unduh Kartu ID
-                document.getElementById('downloadIdCardBtn')?.addEventListener('click', function() {
-                    const cardElement = document.getElementById('idCard');
-                    if (!cardElement) return;
-                    const downloadBtn = this;
-                    downloadBtn.disabled = true;
-                    downloadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      // Disable form
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
 
-                    html2canvas(cardElement, { 
-                        scale: 2, 
-                        useCORS: true, 
-                        backgroundColor: '#ffffff' 
-                    }).then(canvasImg => {
-                        const link = document.createElement('a');
-                        const namaFile = data.nama_lengkap.replace(/\s+/g, '_');
-                        link.download = `Kartu_ID_${namaFile}.png`;
-                        link.href = canvasImg.toDataURL('image/png');
-                        link.click();
-                        showToast('Kartu ID berhasil diunduh!', 'success');
-                    }).catch(err => {
-                        showToast('Gagal mengunduh kartu ID: ' + err.message, 'error');
-                    }).finally(() => {
-                        downloadBtn.disabled = false;
-                        downloadBtn.innerHTML = '<i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)';
-                    });
-                });
+      document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
+        .forEach(el => el.disabled = true);
 
-            } catch (err) {
-                showToastLocal('❌ Gagal mengirim: ' + err.message, 'danger');
-            } finally {
-                document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
-                    .forEach(el => el.disabled = false);
-                btn.disabled = false;
-                btn.innerHTML = '📤 Kirim Data Peserta';
-            }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Mengirim...';
+      }
+
+      try {
+        // Read files as base64
+        if (fotoFile && fotoFile.size > 0) {
+          data.foto = await fileToBase64(fotoFile);
+        }
+        if (suratFile && suratFile.size > 0) {
+          data.surat_rekomendasi = await fileToBase64(suratFile);
         }
 
-        // ==========================================================
-        //   🛡️ GUARD PUBLIC ACCESS & BOOT
-        // ==========================================================
-        (async function boot() {
-            const canAccess = await guardPublicAccess();
-            if (!canAccess) return;
-            updateNavbarMenu();
-            await loadPesertaForm();
-        })();
+        // Signature
+        data.tanda_tangan = sigPad.toDataURL('image/jpeg', 0.2);
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('pesertaFormContainer');
-            if (container) {
-                renderSkeletonPeserta(container);
-            }
+        // Map form structure
+        const coreFields = [
+          'nama_lengkap', 'tempat_tgl_lahir', 'pekerjaan',
+          'pendidikan_terakhir', 'alamat', 'no_hp', 'email',
+          'utusan', 'pengalaman_organisasi', 'status', 'tanggal', 'catatan'
+        ];
+
+        formStructure.forEach(field => {
+          const val = formData.get(field.id);
+          if (field.type === 'file') return;
+
+          if (coreFields.includes(field.id)) {
+            data[field.id] = val || '';
+          } else {
+            data.custom_data[field.id] = val || '';
+          }
         });
 
-    </script>
+        // Handle utusan "Lainnya"
+        if (data.utusan === 'Lainnya') {
+          const luarValue = formData.get('utusan_luar');
+          const luarInput = typeof luarValue === 'string' ? luarValue.trim() : '';
+          data.utusan = luarInput ? `Lainnya - ${luarInput}` : 'Lainnya (tidak diisi)';
+        }
+        delete data.utusan_luar;
+
+        // Submit
+        const result = await submitPeserta(data);
+        if (!result || !result.success) {
+          throw new Error((result && result.error) || 'Gagal mengirim');
+        }
+
+        showToast('✅ Data peserta berhasil dikirim!', 'success');
+
+        // Show ID card
+        const qrResult = document.getElementById('qrResult');
+        if (qrResult) qrResult.style.display = 'block';
+
+        const idDisplay = document.getElementById('pesertaIdDisplay');
+        const nameDisplay = document.getElementById('idCardNama');
+        const alamatDisplay = document.getElementById('idCardAlamat');
+
+        if (idDisplay) idDisplay.textContent = result.id || '-';
+        if (nameDisplay) nameDisplay.textContent = data.nama_lengkap || '-';
+        if (alamatDisplay) alamatDisplay.textContent = data.alamat || '-';
+
+        generateQR(result.id);
+
+        // Reset form
+        form.reset();
+        document.querySelectorAll('#formPesertaDinamis img[id^="preview_"]')
+          .forEach(el => el.style.display = 'none');
+        document.querySelectorAll('#formPesertaDinamis div[id^="preview_"]')
+          .forEach(el => el.innerHTML = '');
+
+        if (sigPad) sigPad.clear();
+        document.getElementById('signatureAreaContainer')?.classList.remove('drawing');
+        clearPesertaFormState();
+
+        const utusanLuar = document.getElementById('utusanLuarContainer');
+        if (utusanLuar) utusanLuar.style.display = 'none';
+
+        // Scroll ke kartu ID
+        qrResult?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Bind download ID card
+        bindDownloadIdCard(data.nama_lengkap);
+      } catch (err) {
+        showToast('❌ Gagal mengirim: ' + err.message, 'error');
+      } finally {
+        document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
+          .forEach(el => el.disabled = false);
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+        }
+      }
+    }
+
+    function bindDownloadIdCard(namaLengkap) {
+      const downloadBtn = document.getElementById('downloadIdCardBtn');
+      if (!downloadBtn) return;
+
+      downloadBtn.onclick = function () {
+        const cardElement = document.getElementById('idCard');
+        if (!cardElement) return;
+
+        if (typeof html2canvas === 'undefined') {
+          showToast('Fitur download tidak tersedia', 'error');
+          return;
+        }
+
+        const btnEl = this;
+        const original = btnEl.innerHTML;
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Memuat...';
+
+        html2canvas(cardElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        }).then(canvasImg => {
+          const link = document.createElement('a');
+          const namaFile = (namaLengkap || 'peserta').replace(/\s+/g, '_');
+          link.download = `Kartu_ID_${namaFile}.png`;
+          link.href = canvasImg.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showToast('Kartu ID berhasil diunduh!', 'success');
+        }).catch(err => {
+          showToast('Gagal mengunduh kartu ID: ' + err.message, 'error');
+        }).finally(() => {
+          btnEl.disabled = false;
+          btnEl.innerHTML = original;
+        });
+      };
+    }
+
+    // ============================================================
+    //   BOOT
+    // ============================================================
+    (async function boot() {
+      const canAccess = await guardPublicAccess();
+      if (!canAccess) return;
+
+      updateNavbarMenu();
+
+      const container = document.getElementById('pesertaFormContainer');
+      if (container) {
+        renderSkeletonPeserta(container);
+      }
+
+      await loadPesertaForm();
+    })();
+
+    console.log(
+      '%c peserta.html v26.4.0 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
+  </script>
 </body>
 </html>

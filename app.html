@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Admin Panel PKD GP Ansor Kabupaten Bantul — Kelola peserta, absensi, skrining, sertifikat, dan RTL.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <title>Admin Panel · PKD GP Ansor Bantul</title>
+
+  <!-- FAVICON -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <!-- PRECONNECT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://drive.google.com">
+
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+
+  <!-- BOOTSTRAP 5 + ICONS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- GLOBAL THEME -->
+  <link rel="stylesheet" href="/bisaa/assets/theme.css">
+
+  <!-- LIBRARIES (deferred) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <!-- EARLY THEME APPLY (anti-FOUC) -->
+  <script>
+    (function earlyThemeApply() {
+      try {
+        var saved = localStorage.getItem('pkd_theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else {
+          var prefersDark = window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        }
+      } catch (e) { /* silent */ }
+    })();
+  </script>
+
+  <!-- CRITICAL INLINE STYLES -->
+  <style>
+    /* Initial Loader */
+    #initialLoader {
+      position: fixed;
+      inset: 0;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 9999;
+      transition: opacity 0.35s ease;
+    }
+    [data-theme="dark"] #initialLoader { background: #020617; }
+    #initialLoader.hidden { opacity: 0; pointer-events: none; }
+    #initialLoader .logo {
+      height: 64px;
+      margin-bottom: 24px;
+      animation: pkdPulse 1.5s ease-in-out infinite;
+    }
+    #initialLoader .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(37, 99, 235, 0.15);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: pkdSpin 0.8s linear infinite;
+    }
+    #initialLoader .text {
+      margin-top: 16px;
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    #initialLoader .preload-progress {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-family: 'Courier New', monospace;
+      min-height: 18px;
+    }
+    @keyframes pkdSpin { to { transform: rotate(360deg); } }
+    @keyframes pkdPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+    /* Skip Link */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #2563eb;
+      color: #fff;
+      padding: 8px 16px;
+      text-decoration: none;
+      z-index: 10000;
+      border-radius: 0 0 8px 0;
+      font-weight: 600;
+      transition: top 0.2s ease;
+      cursor: pointer;
+      border: 0;
+    }
+    .skip-link:focus { top: 0; outline: 2px solid #fff; outline-offset: 2px; }
+
+    /* App Shell visibility */
+    #appShell { visibility: hidden; }
+    #appShell.is-ready { visibility: visible; }
+
+    /* View container */
+    #view-container:focus { outline: none; }
+    #view-container { min-height: 60vh; }
+
+    /* More menu modal */
+    #moreMenuModal .modal-body .btn {
+      font-size: 0.8rem;
+      padding: 0.55rem 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    #moreMenuModal .modal-body .btn i { flex-shrink: 0; }
+    #moreMenuModal .modal-body .btn span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 400px) {
+      #moreMenuModal .modal-body .btn {
+        font-size: 0.72rem;
+        padding: 0.5rem 0.35rem;
+        gap: 0.25rem;
+      }
+      #moreMenuModal .modal-body .btn i { font-size: 0.9rem; }
+    }
+
+    /* Shortcuts Modal */
+    .shortcut-group { margin-bottom: 1.25rem; }
+    .shortcut-group:last-child { margin-bottom: 0; }
+    .shortcut-group-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      margin-bottom: 0.65rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    [data-theme="dark"] .shortcut-group-title {
+      color: #94a3b8;
+      border-color: #1e293b;
+    }
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+    }
+    .shortcut-row:hover { background: #f8fafc; }
+    [data-theme="dark"] .shortcut-row:hover { background: #1e293b; }
+    .shortcut-row .shortcut-label {
+      font-size: 0.87rem;
+      font-weight: 500;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    [data-theme="dark"] .shortcut-row .shortcut-label { color: #cbd5e1; }
+    .shortcut-row .shortcut-label i {
+      color: #64748b;
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+    [data-theme="dark"] .shortcut-row .shortcut-label i { color: #94a3b8; }
+    .shortcut-keys { display: inline-flex; gap: 4px; flex-shrink: 0; }
+    .shortcut-keys kbd {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #475569;
+      min-width: 26px;
+      text-align: center;
+      display: inline-block;
+      line-height: 1;
+    }
+    [data-theme="dark"] .shortcut-keys kbd {
+      background: #1e293b;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+
+    /* Floating shortcut trigger button */
+    .shortcut-trigger-btn {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 1035;
+      opacity: 0.7;
+    }
+    .shortcut-trigger-btn:hover {
+      opacity: 1;
+      background: #2563eb;
+      transform: translateY(-2px) scale(1.05);
+    }
+    .shortcut-trigger-btn:active { transform: scale(0.95); }
+    .shortcut-trigger-btn:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 3px;
+    }
+    @media (max-width: 991px) {
+      .shortcut-trigger-btn {
+        bottom: 80px;
+        left: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SKIP LINK -->
+  <button
+    type="button"
+    class="skip-link"
+    id="skipToContent"
+    aria-label="Lewati ke konten utama"
+  >Lewati ke konten utama</button>
+
+  <!-- INITIAL LOADER -->
+  <div id="initialLoader" role="status" aria-live="polite">
+    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="logo">
+    <div class="spinner"></div>
+    <div class="text">Memuat aplikasi…</div>
+    <div class="preload-progress" aria-live="polite"></div>
+  </div>
+
+  <!-- SPA SHELL -->
+  <div class="admin-wrapper" id="appShell">
+    <div id="sidebar-container" aria-label="Navigasi utama"></div>
+    <div id="bottom-nav-container" aria-label="Navigasi mobile"></div>
+
+    <main
+      class="content-wrapper"
+      id="view-container"
+      role="main"
+      tabindex="-1"
+      aria-label="Konten halaman"
+    >
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Memuat halaman...</span>
+        </div>
+        <p class="mt-3 text-muted">Menyiapkan halaman...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- TOAST GLOBAL -->
+  <div
+    class="toast-container position-fixed top-0 end-0 p-3"
+    id="toastContainer"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <div
+      id="notificationToast"
+      class="toast border-0 shadow-lg"
+      role="alert"
+      data-bs-delay="3000"
+      data-bs-autohide="true"
+    >
+      <div class="toast-header bg-white border-0">
+        <i class="bi bi-info-circle-fill me-2" id="toastIcon" aria-hidden="true"></i>
+        <strong class="me-auto" id="toastTitle">Informasi</strong>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="toast"
+          aria-label="Tutup notifikasi"
+        ></button>
+      </div>
+      <div class="toast-body" id="toastMessage"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: MENU LAINNYA (MOBILE) -->
+  <div class="modal fade" id="moreMenuModal" tabindex="-1" aria-labelledby="moreMenuModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title" id="moreMenuModalLabel">
+            <i class="bi bi-grid me-2" aria-hidden="true"></i>Menu Lainnya
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-2">
+            <div class="col-6">
+              <a href="#/admin/dashboard" class="btn btn-outline-primary w-100" data-route="#/admin/dashboard">
+                <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                <span>Dashboard</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/peserta" class="btn btn-outline-primary w-100" data-route="#/admin/peserta">
+                <i class="bi bi-person-badge" aria-hidden="true"></i>
+                <span>Peserta</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/alumni" class="btn btn-outline-primary w-100" data-route="#/admin/alumni">
+                <i class="bi bi-award" aria-hidden="true"></i>
+                <span>Alumni</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/kader" class="btn btn-outline-primary w-100" data-route="#/admin/kader">
+                <i class="bi bi-people-fill" aria-hidden="true"></i>
+                <span>Kader</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/tim-instruktur" class="btn btn-outline-primary w-100" data-route="#/admin/tim-instruktur">
+                <i class="bi bi-person-vcard" aria-hidden="true"></i>
+                <span>Tim Instruktur</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/sesi-absen" class="btn btn-outline-primary w-100" data-route="#/admin/sesi-absen">
+                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                <span>Sesi Absen</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/data-absensi" class="btn btn-outline-primary w-100" data-route="#/admin/data-absensi">
+                <i class="bi bi-table" aria-hidden="true"></i>
+                <span>Data Absensi</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/rekap-absensi" class="btn btn-outline-primary w-100" data-route="#/admin/rekap-absensi">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i>
+                <span>Rekap Absensi</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/skrining" class="btn btn-outline-primary w-100" data-route="#/admin/skrining">
+                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                <span>Skrining</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/pretest" class="btn btn-outline-primary w-100" data-route="#/admin/pretest">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                <span>Pre-test</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/posttest" class="btn btn-outline-primary w-100" data-route="#/admin/posttest">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <span>Post-test</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/materi" class="btn btn-outline-primary w-100" data-route="#/admin/materi">
+                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                <span>Materi</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/informasi" class="btn btn-outline-primary w-100" data-route="#/admin/informasi">
+                <i class="bi bi-newspaper" aria-hidden="true"></i>
+                <span>Informasi</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/asset" class="btn btn-outline-primary w-100" data-route="#/admin/asset">
+                <i class="bi bi-image" aria-hidden="true"></i>
+                <span>Aset Digital</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/sertifikat" class="btn btn-outline-primary w-100" data-route="#/admin/sertifikat">
+                <i class="bi bi-patch-check" aria-hidden="true"></i>
+                <span>Sertifikat</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/tanda-tangan" class="btn btn-outline-primary w-100" data-route="#/admin/tanda-tangan">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                <span>Tanda Tangan</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/rtl" class="btn btn-outline-primary w-100" data-route="#/admin/rtl">
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                <span>RTL &amp; Tugas</span>
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="#/admin/pengaturan" class="btn btn-outline-primary w-100" data-route="#/admin/pengaturan">
+                <i class="bi bi-gear" aria-hidden="true"></i>
+                <span>Pengaturan</span>
+              </a>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <div class="row g-2">
+            <div class="col-6">
+              <button
+                type="button"
+                class="btn btn-outline-info w-100"
+                id="shortcutTriggerBtnMobile"
+                data-shortcuts-trigger
+              >
+                <i class="bi bi-keyboard me-1" aria-hidden="true"></i>
+                <span>Shortcuts</span>
+              </button>
+            </div>
+            <div class="col-6">
+              <button
+                type="button"
+                class="btn btn-outline-danger w-100"
+                id="mobileLogoutBtn"
+              >
+                <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: KEYBOARD SHORTCUTS -->
+  <div class="modal fade" id="shortcutsModal" tabindex="-1"
+       aria-labelledby="shortcutsModalLabel" aria-hidden="true"
+       data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="shortcutsModalLabel">
+            <i class="bi bi-keyboard" aria-hidden="true"></i>
+            Keyboard Shortcuts
+          </h5>
+          <button type="button" class="btn-close btn-close-white"
+                  data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+
+        <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-compass" aria-hidden="true"></i> Navigasi Cepat
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-speedometer2"></i>Dashboard</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>D</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-person-badge"></i>Peserta</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>P</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-calendar-event"></i>Sesi Absen</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>A</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-clipboard-check"></i>Skrining</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>S</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-file-earmark-text"></i>RTL &amp; Tugas</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>R</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-pencil-square"></i>Tanda Tangan</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>Q</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-file-earmark-pdf"></i>Materi</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>M</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-people-fill"></i>Kader</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>K</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-person-vcard"></i>Tim Instruktur</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>T</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Fitur Interaktif
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-search"></i>Command Palette</span>
+              <span class="shortcut-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-keyboard"></i>Buka Shortcuts (ini)</span>
+              <span class="shortcut-keys"><kbd>Shift</kbd><kbd>?</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-moon-stars"></i>Toggle Dark Mode</span>
+              <span class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>D</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-terminal" aria-hidden="true"></i> Di Command Palette
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-up"></i>Item Sebelumnya</span>
+              <span class="shortcut-keys"><kbd>↑</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-down"></i>Item Selanjutnya</span>
+              <span class="shortcut-keys"><kbd>↓</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-return-left"></i>Pilih Item</span>
+              <span class="shortcut-keys"><kbd>Enter</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-x-circle"></i>Tutup</span>
+              <span class="shortcut-keys"><kbd>Esc</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-signpost-2" aria-hidden="true"></i> Navigasi Umum
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-left"></i>Halaman Sebelumnya</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>←</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-right"></i>Halaman Selanjutnya</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>→</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-clockwise"></i>Refresh Halaman</span>
+              <span class="shortcut-keys"><kbd>F5</kbd></span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 justify-content-between">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            Tips: Tekan <kbd style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.7rem;border:1px solid #e2e8f0;">Shift</kbd>+<kbd style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.7rem;border:1px solid #e2e8f0;">?</kbd> kapan saja
+          </small>
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+            Tutup
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING SHORTCUT TRIGGER -->
+  <button
+    type="button"
+    class="shortcut-trigger-btn"
+    id="shortcutTriggerBtn"
+    data-shortcuts-trigger
+    title="Keyboard Shortcuts (Shift + ?)"
+    aria-label="Buka daftar keyboard shortcuts"
+  >
+    <i class="bi bi-keyboard" aria-hidden="true"></i>
+  </button>
+
+  <!-- GLOBAL ERROR BANNER -->
+  <div
+    id="globalErrorBanner"
+    class="alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg border-0"
+    style="display: none; z-index: 10001; max-width: 500px;"
+    role="alert"
+  >
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill fs-4" aria-hidden="true"></i>
+      <div class="flex-grow-1">
+        <strong>Terjadi Kesalahan</strong>
+        <div class="small" id="globalErrorMsg">Silakan muat ulang halaman.</div>
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        onclick="document.getElementById('globalErrorBanner').style.display='none'"
+        aria-label="Tutup"
+      ></button>
+    </div>
+  </div>
+
+  <!-- ==================== ENTRY POINT SPA ==================== -->
+  <script type="module" src="/bisaa/js/app.js"></script>
+
+  <!-- ==================== INLINE FALLBACK v27.2.1 ==================== -->
+  <script type="module">
+    'use strict';
+
+    // ============================================================
+    //   FALLBACK MOUNT: SHORTCUTS MODAL
+    // ============================================================
+    (async function mountShortcutsModalFallback() {
+      try {
+        const mod = await import('/bisaa/js/components/shortcuts-modal.js');
+        if (mod && typeof mod.mount === 'function') {
+          mod.mount();
+          console.log('[app.html] ✅ Shortcuts Modal mounted via fallback');
+        }
+      } catch (e) {
+        console.warn('[app.html] Gagal mount shortcuts-modal:', e);
+      }
+    })();
+
+    // ============================================================
+    //   SKIP LINK
+    // ============================================================
+    document.getElementById('skipToContent')?.addEventListener('click', function (e) {
+      e.preventDefault();
+      const main = document.getElementById('view-container');
+      if (!main) return;
+      main.focus({ preventScroll: true });
+      main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // ============================================================
+    //   ⚡ v27.2.1: FALLBACK TIMER 20s (toleransi cold start GAS)
+    // ============================================================
+    const fallbackTimer = setTimeout(function () {
+      if (window.__pkdAppLoaded) return;
+      const loader = document.getElementById('initialLoader');
+      if (!loader || loader.classList.contains('hidden')) return;
+
+      loader.innerHTML = ''
+        + '<div style="text-align:center;max-width:400px;padding:24px;font-family:Inter,system-ui,sans-serif;">'
+        +   '<i class="bi bi-exclamation-triangle-fill" style="font-size:3rem;color:#f59e0b;"></i>'
+        +   '<h4 style="margin-top:16px;color:#0f172a;font-weight:700;">Gagal Memuat Aplikasi</h4>'
+        +   '<p style="color:#64748b;margin-top:8px;font-size:0.9rem;">'
+        +     'Aplikasi tidak dapat dimuat. Periksa koneksi internet &amp; coba muat ulang.'
+        +   '</p>'
+        +   '<button onclick="location.reload()" '
+        +     'style="margin-top:16px;background:#2563eb;color:white;border:none;padding:10px 24px;border-radius:50px;font-weight:600;cursor:pointer;font-family:inherit;">'
+        +     '<i class="bi bi-arrow-clockwise"></i> Muat Ulang'
+        +   '</button>'
+        + '</div>';
+    }, 20000); // ✅ 20 detik
+
+    window.addEventListener('pkd:app-loaded', () => {
+      clearTimeout(fallbackTimer);
+    }, { once: true });
+
+    // ============================================================
+    //   GLOBAL ERROR HANDLER
+    // ============================================================
+    let errorBannerTimer = null;
+
+    function showErrorBanner(msg) {
+      const banner = document.getElementById('globalErrorBanner');
+      const msgEl = document.getElementById('globalErrorMsg');
+      if (!banner || !msgEl) return;
+      msgEl.textContent = msg || 'Terjadi kesalahan';
+      banner.style.display = 'block';
+      clearTimeout(errorBannerTimer);
+      errorBannerTimer = setTimeout(function () {
+        banner.style.display = 'none';
+      }, 8000);
+    }
+
+    window.addEventListener('error', function (e) {
+      if (!e.filename) return;
+      if (e.filename.indexOf('chrome-extension') !== -1) return;
+      if (e.filename.indexOf('moz-extension') !== -1) return;
+      console.error('[Global Error]', e.message, e.filename, e.lineno);
+      showErrorBanner(e.message);
+    });
+
+    window.addEventListener('unhandledrejection', function (e) {
+      const reason = e && e.reason;
+      const msg = (reason && reason.message) || String(reason || '');
+      console.error('[Unhandled Promise]', reason);
+
+      if (msg.includes('Failed to fetch dynamically')) return;
+      if (msg.includes('AbortError')) return;
+      if (msg.includes('Request timeout')) return;
+
+      showErrorBanner(msg);
+    });
+
+    // ============================================================
+    //   TITLE UPDATE ON ROUTE CHANGE
+    // ============================================================
+    window.addEventListener('routeChanged', function (e) {
+      const detail = e && e.detail;
+      if (!detail || !detail.path) return;
+      const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
+      const title = path.charAt(0).toUpperCase() + path.slice(1);
+      document.title = title + ' · PKD GP Ansor Bantul';
+    });
+
+    // ============================================================
+    //   GLOBAL KEYBOARD: Ctrl+Shift+D → dark mode fallback
+    // ============================================================
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && String(e.key).toLowerCase() === 'd') {
+        if (window.__themeToggleMounted) return;
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('theme:toggle'));
+      }
+    });
+
+    // ============================================================
+    //   POLL APP LOADED FLAG (max 40 attempts × 500ms = 20s)
+    // ============================================================
+    (function pollAppLoaded() {
+      let attempts = 0;
+      const maxAttempts = 40;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.__pkdAppLoaded) {
+          clearTimeout(fallbackTimer);
+          clearInterval(interval);
+          return;
+        }
+        if (attempts >= maxAttempts) clearInterval(interval);
+      }, 500);
+    })();
+
+    console.log(
+      '%c app.html inline v27.2.1 — Fallback + Shortcuts Mount ',
+      'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+    );
+  </script>
+
+</body>
+</html>

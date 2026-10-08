@@ -3,17 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Pre-test PKD GP Ansor Kabupaten Bantul">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Pre-test · PKD GP Ansor Bantul</title>
 
-  <!-- Favicon & Font -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <!-- ✅ v26.3.2 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
     * { font-family: 'Inter', system-ui, sans-serif; }
     body {
       background: #f8fafc;
@@ -23,7 +29,7 @@
       flex-direction: column;
     }
 
-    /* --- HEADER MINIMALIS ELEGAN (DIPERBESAR) --- */
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -31,13 +37,9 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
       z-index: 1030;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
+      padding: 0 !important;
     }
-    .header-minimal .container {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
     .btn-back {
       background: rgba(37, 99, 235, 0.08);
       color: #2563eb;
@@ -50,33 +52,16 @@
       transform: translateX(-3px);
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
-    .brand-logo-mini { 
-      height: 40px; 
-      width: auto; 
-      margin-right: 14px; 
-      transition: transform 0.2s;
-    }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
     .brand-logo-mini:hover { transform: scale(1.05); }
-    .brand-title-mini { 
-      font-weight: 700; 
-      color: #0a3d62; 
-      font-size: 1.3rem; 
-      line-height: 1.2; 
-      letter-spacing: -0.02em;
-    }
-    .brand-sub-mini { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      display: block; 
-      margin-top: 0px; 
-      letter-spacing: 0.02em;
-    }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0; letter-spacing: 0.02em; }
 
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* --- GLASS CARD --- */
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -86,26 +71,30 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .glass-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
-      border-color: rgba(37, 99, 235, 0.2);
+
+    .section-title {
+      font-weight: 650;
+      font-size: 1.5rem;
+      border-left: 6px solid #2563eb;
+      padding-left: 1rem;
+      margin-bottom: 1rem;
+      color: #0f172a;
     }
 
-    /* --- SKELETON LOADING INSTANT (BARU) --- */
+    /* ============ SKELETON ============ */
     .skeleton-box {
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
       border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
+      animation: shimmer 1.5s infinite linear;
       display: inline-block;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
 
-    /* --- KAHOOT STYLE --- */
+    /* ============ QUIZ UI ============ */
     .quiz-header {
       display: flex;
       justify-content: space-between;
@@ -124,6 +113,12 @@
       border-radius: 40px;
       font-weight: 600;
       font-size: 1.25rem;
+      transition: all 0.3s ease;
+    }
+    .timer-box.warning { background: #dc2626; animation: pulse-timer 1s ease-in-out infinite; }
+    @keyframes pulse-timer {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
     .score-box {
       background: #fbbf24;
@@ -165,22 +160,28 @@
     .opt-blue { background-color: #2563eb; }
     .opt-yellow { background-color: #eab308; color: #0f172a !important; }
     .opt-green { background-color: #16a34a; }
-    .kahoot-option.correct { box-shadow: 0 0 0 4px #22c55e; transform: scale(1.02); }
-    .kahoot-option.wrong { box-shadow: 0 0 0 4px #ef4444; transform: scale(0.95); }
-    .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
+    .kahoot-option.correct { box-shadow: 0 0 0 4px #22c55e !important; transform: scale(1.02); }
+    .kahoot-option.wrong { box-shadow: 0 0 0 4px #ef4444 !important; transform: scale(0.95); }
+    .kahoot-option .opt-letter { font-weight: 700; margin-right: 0.75rem; flex-shrink: 0; }
 
-    /* --- PROGRESS BAR --- */
-    .progress-thin { height: 6px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+    .progress-thin {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
     .progress-thin .progress-bar {
       background: linear-gradient(90deg, #2563eb, #7dd3fc);
       transition: width 0.5s ease;
     }
 
-    /* --- ANIMASI --- */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-    /* --- FOOTER --- */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -191,13 +192,11 @@
       background: white;
     }
 
-    /* --- RESPONSIF --- */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
       .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
-      .brand-title-mini { display: none; }
-      .brand-sub-mini { display: none; }
+      .brand-title-mini, .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
       .kahoot-options-grid { grid-template-columns: 1fr; }
       .quiz-header { flex-direction: column; align-items: stretch; text-align: center; }
@@ -207,461 +206,575 @@
 </head>
 <body>
 
-  <!-- ================= HEADER MINIMALIS ELEGAN ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
         <a href="/bisaa/index.html" class="btn btn-back rounded-pill">
-          <i class="bi bi-arrow-left me-1"></i> Kembali
+          <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Kembali
         </a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
           </div>
         </a>
       </div>
-      <!-- Area User Role (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= KONTEN UTAMA ================= -->
   <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 900px;">
     <div class="glass-card p-4 fade-up">
-      <h2 class="section-title"><i class="bi bi-arrow-repeat me-2"></i>Pre‑test – Kahoot Style</h2>
-      <div id="pretestContainer"></div>
+      <h2 class="section-title"><i class="bi bi-arrow-repeat me-2"></i>Pre-test — Kahoot Style</h2>
+      <div id="pretestContainer" aria-live="polite"></div>
     </div>
   </div>
 
-  <!-- ================= FOOTER ================= -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
-      <i class="bi bi-c-circle"></i>
-      <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
+      <i class="bi bi-c-circle" aria-hidden="true"></i>
+      <span>Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul</span>
     </div>
   </footer>
 
-  <!-- ================= TOAST ================= -->
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
-      <div class="toast-header bg-white border-0">
-        <i class="bi me-2" id="toastIcon"></i>
-        <strong class="me-auto" id="toastTitle">Berhasil</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-      </div>
-      <div class="toast-body" id="toastMessage"></div>
-    </div>
-  </div>
-
-  <!-- ================= SCRIPTS ================= -->
-  <!-- Library Eksternal (tetap sebagai script biasa) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Modul ES Khusus Halaman Ini -->
   <script type="module">
-    // ==========================================================
-    //   IMPOR DARI CORE API (ES Modules)
-    // ==========================================================
+    // ============================================================
+    //   IMPORTS
+    // ============================================================
     import {
       guardPublicAccess,
       getPretestQuestions,
-      getPretestResponses,
       submitPretest,
-      getQuizSettings,
       showToast,
       escapeHtml,
-      updateNavbarMenu
-    } from './js/core/api.js';
+      updateNavbarMenu,
+    } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
-    //   STATE & VARIABLES
-    // ==========================================================
-    const FORM_STATE_KEY = 'pretestQuiz';
-    let questions = [],
-        quizSettings = {},
-        pretestQuiz = null,
-        pretestTimer = null;
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const FORM_STATE_KEY = 'pkd_pretest_state_v1';
+    const CACHE_KEY = 'pkd_cache_pretest_data_v1';
+    const CACHE_AGE_MIN = 10;
+    const TIMER_WARNING_THRESHOLD = 10;
 
-    // ==========================================================
-    //   UTILITY & CACHE LOCAL
-    // ==========================================================
-    function escapeHtmlLocal(str) {
-      return escapeHtml(str);
+    // ============================================================
+    //   STATE
+    // ============================================================
+    const STATE = {
+      questions: [],
+      quiz: null,
+      timer: null,
+      isMounted: false,
+      isSubmitting: false,
+    };
+
+    // ============================================================
+    //   UTILITY — Safe localStorage
+    // ============================================================
+    function safeLS(fn) {
+      try { return fn(); } catch (e) { return null; }
     }
 
-    function showToastLocal(message, type) {
-      showToast(message, type);
+    function saveState() {
+      if (!STATE.quiz) return;
+      const snapshot = {
+        currentIndex: STATE.quiz.currentIndex,
+        score: STATE.quiz.score,
+        answers: STATE.quiz.answers,
+        nama: STATE.quiz.nama,
+        nohp: STATE.quiz.nohp,
+        alamat: STATE.quiz.alamat,
+        started: STATE.quiz.started,
+        isFinished: STATE.quiz.isFinished,
+        ts: Date.now(),
+      };
+      safeLS(() => localStorage.setItem(FORM_STATE_KEY, JSON.stringify(snapshot)));
     }
 
-    function getCache(key, maxAgeMinutes) {
+    function loadState() {
+      const raw = safeLS(() => localStorage.getItem(FORM_STATE_KEY));
+      if (!raw) return null;
       try {
-        const item = localStorage.getItem('pkd_cache_' + key);
-        if (!item) return null;
-        const { data, timestamp } = JSON.parse(item);
-        if ((Date.now() - timestamp) > maxAgeMinutes * 60 * 1000) {
-          localStorage.removeItem('pkd_cache_' + key);
+        const s = JSON.parse(raw);
+        // Expire after 24h
+        if (s.ts && (Date.now() - s.ts) > 24 * 60 * 60 * 1000) {
+          clearState();
+          return null;
+        }
+        return s;
+      } catch { return null; }
+    }
+
+    function clearState() {
+      safeLS(() => localStorage.removeItem(FORM_STATE_KEY));
+    }
+
+    // ============================================================
+    //   UTILITY — Cache
+    // ============================================================
+    function getCache() {
+      const raw = safeLS(() => localStorage.getItem(CACHE_KEY));
+      if (!raw) return null;
+      try {
+        const { data, ts } = JSON.parse(raw);
+        if ((Date.now() - ts) > CACHE_AGE_MIN * 60 * 1000) {
+          safeLS(() => localStorage.removeItem(CACHE_KEY));
           return null;
         }
         return data;
-      } catch (e) { return null; }
+      } catch { return null; }
     }
 
-    function setCache(key, data) {
-      try {
-        localStorage.setItem('pkd_cache_' + key, JSON.stringify({ data, timestamp: Date.now() }));
-      } catch (e) { /* ignore */ }
+    function setCache(data) {
+      safeLS(() => localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })));
     }
 
-    function saveQuizState(state) {
-      try { localStorage.setItem(FORM_STATE_KEY, JSON.stringify(state)); } catch (e) {}
-    }
-
-    function loadQuizState() {
-      try { const saved = localStorage.getItem(FORM_STATE_KEY); return saved ? JSON.parse(saved) : null; } catch (e) {
-        return null; }
-    }
-
-    function clearQuizState() {
-      try { localStorage.removeItem(FORM_STATE_KEY); } catch (e) {}
-    }
-
-    // ==========================================================
-    //   🔥 RENDER SKELETON FORM (Tampilan INSTAN saat DOM siap)
-    // ==========================================================
-    function renderSkeletonForm(container) {
-      if (!container) return;
-      console.log("🟡 Menampilkan SKELETON Pretest...");
-      let html = `
-        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
-          <h4 class="mb-4">📝 Memuat data pretest...</h4>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="text-center mt-4">
-            <div class="skeleton-box" style="height: 48px; width: 180px; border-radius: 50px;"></div>
-          </div>
+    // ============================================================
+    //   SKELETON
+    // ============================================================
+    function renderSkeleton() {
+      const c = document.getElementById('pretestContainer');
+      if (!c) return;
+      c.innerHTML = `
+        <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
+          <div class="skeleton-box" style="height:24px;width:60%;margin-bottom:16px;"></div>
+          <div class="skeleton-box" style="height:16px;width:80%;margin-bottom:10px;"></div>
+          <div class="skeleton-box" style="height:16px;width:50%;margin-bottom:24px;"></div>
+          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;margin-bottom:12px;"></div>
+          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;"></div>
         </div>
       `;
-      container.innerHTML = html;
-      container.classList.add('fade-up');
     }
 
-    // ==========================================================
-    //   RENDER FORM DATA DIRI
-    // ==========================================================
+    // ============================================================
+    //   TIMER CLEANUP
+    // ============================================================
+    function stopTimer() {
+      if (STATE.timer) {
+        clearInterval(STATE.timer);
+        STATE.timer = null;
+      }
+    }
+
+    window.addEventListener('beforeunload', stopTimer);
+    window.addEventListener('pagehide', stopTimer);
+
+    // ============================================================
+    //   RENDER — Form Data Diri
+    // ============================================================
     function renderFormDataDiri() {
-      const container = document.getElementById('pretestContainer');
-      if (!questions || questions.length === 0) {
-        container.innerHTML = `
-          <div class="alert alert-warning text-center glass-card">
-            <i class="bi bi-exclamation-triangle fs-4"></i>
-            <p class="mt-2 mb-0">Belum ada soal pretest yang tersedia.</p>
+      const c = document.getElementById('pretestContainer');
+      if (!c) return;
+
+      if (!STATE.questions || STATE.questions.length === 0) {
+        c.innerHTML = `
+          <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle fs-4 d-block mb-2" aria-hidden="true"></i>
+            Belum ada soal pretest yang tersedia.
           </div>
         `;
         return;
       }
 
-      const saved = loadQuizState();
-      let nama = saved?.nama || '',
-          nohp = saved?.nohp || '',
-          alamat = saved?.alamat || '';
+      const saved = loadState();
+      const nama = saved?.nama || '';
+      const nohp = saved?.nohp || '';
+      const alamat = saved?.alamat || '';
 
-      let html = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div><span class="text-muted small">Status: </span><span class="badge bg-success text-white">✅ ${questions.length} soal siap</span></div>
-          <button class="btn btn-sm btn-outline-secondary" id="inlineRefreshBtn"><i class="bi bi-arrow-clockwise me-1"></i> Segarkan</button>
+      c.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <span class="badge bg-success text-white">
+            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
+            ${STATE.questions.length} soal siap
+          </span>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill" id="refreshBtn" type="button">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Segarkan
+          </button>
         </div>
-        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+
+        <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
           <h4 class="mb-4">📝 Isi Data Diri untuk Memulai Pretest</h4>
-          <div class="mb-3"><label class="form-label fw-bold">Nama Lengkap</label><input type="text" class="form-control" id="pretestNama" value="${escapeHtmlLocal(nama)}" placeholder="Masukkan nama lengkap" required></div>
-          <div class="mb-3"><label class="form-label fw-bold">Nomor HP</label><input type="tel" class="form-control" id="pretestNohp" value="${escapeHtmlLocal(nohp)}" placeholder="Masukkan nomor HP" required></div>
-          <div class="mb-3"><label class="form-label fw-bold">Alamat</label><textarea class="form-control" id="pretestAlamat" rows="2" placeholder="Masukkan alamat" required>${escapeHtmlLocal(alamat)}</textarea></div>
-          <div class="text-center mt-4"><button id="startPretestBtn" class="btn btn-success btn-lg rounded-pill px-5">🚀 Mulai Pretest</button></div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold" for="pretestNama">Nama Lengkap <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="pretestNama" value="${escapeHtml(nama)}"
+                   placeholder="Masukkan nama lengkap" autocomplete="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold" for="pretestNohp">Nomor HP <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control" id="pretestNohp" value="${escapeHtml(nohp)}"
+                   placeholder="Masukkan nomor HP" autocomplete="tel" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold" for="pretestAlamat">Alamat <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="pretestAlamat" rows="2"
+                      placeholder="Masukkan alamat" required>${escapeHtml(alamat)}</textarea>
+          </div>
+
+          <div class="text-center mt-4">
+            <button id="startBtn" type="button" class="btn btn-success btn-lg rounded-pill px-5">
+              🚀 Mulai Pretest
+            </button>
+          </div>
         </div>
       `;
-      container.innerHTML = html;
-      container.classList.add('fade-up');
 
-      document.getElementById('startPretestBtn').addEventListener('click', function() {
+      // Start
+      document.getElementById('startBtn')?.addEventListener('click', () => {
         const nama = document.getElementById('pretestNama').value.trim();
         const nohp = document.getElementById('pretestNohp').value.trim();
         const alamat = document.getElementById('pretestAlamat').value.trim();
-        if (!nama || !nohp || !alamat) { showToastLocal('Nama, No HP, dan Alamat wajib diisi!', 'danger'); return; }
-        pretestQuiz = {
-          questions,
+
+        if (!nama || !nohp || !alamat) {
+          showToast('Nama, No HP, dan Alamat wajib diisi!', 'warning');
+          return;
+        }
+
+        STATE.quiz = {
+          questions: STATE.questions,
           currentIndex: 0,
           score: 0,
           answers: [],
-          timer: null,
-          timerDuration: 30,
-          timeLeft: 0,
-          nama,
-          nohp,
-          alamat,
+          nama, nohp, alamat,
           started: true,
           isFinished: false,
-          settings: quizSettings
         };
-        saveQuizState(pretestQuiz);
-        renderPretestQuestion();
+        saveState();
+        renderQuestion();
       });
 
-      document.getElementById('inlineRefreshBtn')?.addEventListener('click', function() {
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...';
-        this.disabled = true;
-        getPretestQuestions().then(freshQuestions => {
-          if (freshQuestions && Array.isArray(freshQuestions) && freshQuestions.length > 0) {
-            questions = freshQuestions;
+      // Refresh
+      document.getElementById('refreshBtn')?.addEventListener('click', async function () {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+        try {
+          safeLS(() => localStorage.removeItem(CACHE_KEY));
+          const fresh = await getPretestQuestions();
+          const arr = Array.isArray(fresh) ? fresh : (fresh?.data || []);
+          if (arr.length > 0) {
+            STATE.questions = arr;
+            setCache(arr);
             renderFormDataDiri();
-            showToastLocal('Data berhasil diperbarui', 'success');
+            showToast('Data diperbarui', 'success');
           } else {
-            showToastLocal('Data di API kosong, mempertahankan data lokal', 'info');
+            showToast('Tidak ada soal baru dari server', 'info');
           }
-        }).catch(e => showToastLocal('Gagal refresh data: ' + e.message, 'error')).finally(() => {
-          this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-          this.disabled = false;
-        });
+        } catch (e) {
+          showToast('Gagal refresh: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
+        }
       });
 
+      // Resume
       if (saved && !saved.isFinished && saved.started) {
         if (confirm('Anda memiliki Pretest yang belum selesai. Lanjutkan?')) {
-          pretestQuiz = saved;
-          pretestQuiz.settings = quizSettings;
-          pretestQuiz.questions = questions;
-          renderPretestQuestion();
+          STATE.quiz = {
+            questions: STATE.questions,
+            currentIndex: saved.currentIndex || 0,
+            score: saved.score || 0,
+            answers: saved.answers || [],
+            nama: saved.nama,
+            nohp: saved.nohp,
+            alamat: saved.alamat,
+            started: true,
+            isFinished: false,
+          };
+          renderQuestion();
           return;
-        } else { clearQuizState(); }
+        } else {
+          clearState();
+        }
       }
     }
 
-    // ==========================================================
-    //   RENDER PERTANYAAN
-    // ==========================================================
-    function renderPretestQuestion() {
-      const container = document.getElementById('pretestContainer');
-      const quiz = pretestQuiz;
-      if (!quiz) return;
+    // ============================================================
+    //   RENDER — Question
+    // ============================================================
+    function renderQuestion() {
+      const c = document.getElementById('pretestContainer');
+      const quiz = STATE.quiz;
+      if (!c || !quiz) return;
+
       if (!quiz.started) { renderFormDataDiri(); return; }
-      if (quiz.currentIndex >= quiz.questions.length) { renderPretestSummary(); return; }
+      if (quiz.currentIndex >= quiz.questions.length) { renderSummary(); return; }
 
       const q = quiz.questions[quiz.currentIndex];
-      const timerValue = (q.timer_enabled ? q.timer_duration : 30) || 30;
+      const timerDuration = (q.timer_enabled ? (parseInt(q.timer_duration) || 30) : 30);
+      const answered = quiz.answers[quiz.currentIndex] !== undefined;
 
-      let html = `
-        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+      const options = Array.isArray(q.opsi)
+        ? q.opsi
+        : String(q.opsi || '').split(',').map(s => s.trim()).filter(Boolean);
+
+      const colors = ['opt-red', 'opt-blue', 'opt-yellow', 'opt-green'];
+      const optionBtns = options.map((opt, i) => {
+        const isCorrect = i === q.jawaban;
+        const isSelected = answered && quiz.answers[quiz.currentIndex].selectedOption === i;
+        let extra = '';
+        if (answered) {
+          if (isCorrect) extra = ' correct';
+          else if (isSelected) extra = ' wrong';
+        }
+        return `
+          <button type="button" class="kahoot-option ${colors[i % 4]}${extra}"
+                  data-opt-index="${i}" ${answered ? 'disabled' : ''}>
+            <span class="opt-letter">${String.fromCharCode(65 + i)}.</span>
+            <span class="opt-text">${escapeHtml(opt)}</span>
+          </button>
+        `;
+      }).join('');
+
+      c.innerHTML = `
+        <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
           <div class="quiz-header">
-            <div class="timer-box"><i class="bi bi-hourglass-split"></i> <span id="timerDisplay">${timerValue}</span> detik</div>
-            <div class="score-box"><i class="bi bi-star-fill"></i> Skor: ${quiz.score}</div>
-            <div class="progress-box"><i class="bi bi-list-ol"></i> ${quiz.currentIndex + 1}/${quiz.questions.length}</div>
+            <div class="timer-box" id="timerBox">
+              <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+              <span id="timerDisplay" aria-live="polite">${timerDuration}</span> detik
+            </div>
+            <div class="score-box"><i class="bi bi-star-fill" aria-hidden="true"></i> Skor: ${quiz.score}</div>
+            <div class="progress-box"><i class="bi bi-list-ol" aria-hidden="true"></i> ${quiz.currentIndex + 1}/${quiz.questions.length}</div>
           </div>
-          <div class="mb-3 small text-muted">Nama: ${escapeHtmlLocal(quiz.nama)} | No HP: ${escapeHtmlLocal(quiz.nohp)} | Alamat: ${escapeHtmlLocal(quiz.alamat)}</div>
-          <div class="question-text">${quiz.currentIndex + 1}. ${q.teks}</div>
-          <div class="kahoot-options-grid">
-      `;
-      (q.opsi || []).forEach((ops, i) => {
-        const colors = ['opt-red', 'opt-blue', 'opt-yellow', 'opt-green'];
-        const isAnswered = quiz.answers[quiz.currentIndex] !== undefined;
-        const disabled = isAnswered ? 'disabled' : '';
-        html += `<button type="button" class="option-btn kahoot-option ${colors[i % 4]}" data-qid="${q.id}" data-opt-index="${i}" ${disabled}><span class="opt-letter">${String.fromCharCode(65 + i)}.</span> <span class="opt-text">${ops}</span></button>`;
-      });
-      html += `</div>`;
-      if (quiz.answers[quiz.currentIndex] !== undefined) {
-        html += `<div class="mt-4 text-center"><button id="nextPretestBtn" class="btn btn-primary btn-lg rounded-pill px-5">Selanjutnya ➡️</button></div>`;
-      }
-      html += `</div>
-      <div class="progress-thin mt-3"><div class="progress-bar" style="width: ${((quiz.currentIndex + 1) / quiz.questions.length) * 100}%;"></div></div>
-      `;
-      container.innerHTML = html;
-      container.classList.add('fade-up');
 
-      document.querySelectorAll('.kahoot-option').forEach(btn => {
-        btn.addEventListener('click', function() {
+          <div class="mb-3 small text-muted">
+            Nama: ${escapeHtml(quiz.nama)} | No HP: ${escapeHtml(quiz.nohp)}
+          </div>
+
+          <div class="question-text">${quiz.currentIndex + 1}. ${escapeHtml(q.teks)}</div>
+
+          <div class="kahoot-options-grid">${optionBtns}</div>
+
+          ${answered ? `
+            <div class="mt-4 text-center">
+              <button id="nextBtn" type="button" class="btn btn-primary btn-lg rounded-pill px-5">
+                ${quiz.currentIndex === quiz.questions.length - 1 ? 'Lihat Hasil' : 'Selanjutnya'} <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+              </button>
+            </div>
+          ` : ''}
+
+          <div class="progress-thin mt-3">
+            <div class="progress-bar" style="width: ${((quiz.currentIndex + 1) / quiz.questions.length) * 100}%;"></div>
+          </div>
+        </div>
+      `;
+
+      // Bind option clicks
+      c.querySelectorAll('.kahoot-option').forEach(btn => {
+        btn.addEventListener('click', function () {
           if (quiz.answers[quiz.currentIndex] !== undefined) return;
-          const qid = parseInt(this.dataset.qid);
-          const optIdx = parseInt(this.dataset.optIndex);
+          const optIdx = parseInt(this.dataset.optIndex, 10);
           const isCorrect = (optIdx === q.jawaban);
-          if (isCorrect) {
-            quiz.score += 10;
-            this.classList.add('correct');
-          } else {
-            this.classList.add('wrong');
-            const correctBtn = document.querySelector(
-              `.kahoot-option[data-qid="${qid}"][data-opt-index="${q.jawaban}"]`);
-            if (correctBtn) correctBtn.classList.add('correct');
-          }
-          quiz.answers[quiz.currentIndex] = { questionId: qid, selectedOption: optIdx, isCorrect };
-          saveQuizState(quiz);
-          setTimeout(() => {
-            renderPretestQuestion();
-          }, 1000);
+          if (isCorrect) quiz.score += 10;
+          quiz.answers[quiz.currentIndex] = {
+            questionId: q.id,
+            selectedOption: optIdx,
+            isCorrect,
+          };
+          saveState();
+          stopTimer();
+          setTimeout(renderQuestion, 800);
         });
       });
 
-      const nextBtn = document.getElementById('nextPretestBtn');
-      if (nextBtn) nextBtn.addEventListener('click', nextPretestQuestion);
+      // Next button
+      document.getElementById('nextBtn')?.addEventListener('click', () => {
+        stopTimer();
+        STATE.quiz.currentIndex++;
+        saveState();
+        renderQuestion();
+      });
 
-      if (quiz.answers[quiz.currentIndex] === undefined) {
-        let timeLeft = timerValue;
-        updateTimerDisplay(timeLeft);
-        if (pretestTimer) clearInterval(pretestTimer);
-        pretestTimer = setInterval(() => {
-          timeLeft -= 1;
-          updateTimerDisplay(timeLeft);
+      // Timer — only if not answered
+      stopTimer();
+      if (!answered) {
+        let timeLeft = timerDuration;
+        const timerBox = document.getElementById('timerBox');
+        const timerDisplay = document.getElementById('timerDisplay');
+
+        STATE.timer = setInterval(() => {
+          timeLeft--;
+          if (timerDisplay) timerDisplay.textContent = timeLeft;
+          if (timerBox && timeLeft <= TIMER_WARNING_THRESHOLD) {
+            timerBox.classList.add('warning');
+          }
           if (timeLeft <= 0) {
-            clearInterval(pretestTimer);
-            pretestTimer = null;
+            stopTimer();
             if (quiz.answers[quiz.currentIndex] === undefined) {
-              quiz.answers[quiz.currentIndex] = { questionId: q.id, selectedOption: null, isCorrect: false };
-              saveQuizState(quiz);
-              renderPretestQuestion();
+              quiz.answers[quiz.currentIndex] = {
+                questionId: q.id,
+                selectedOption: null,
+                isCorrect: false,
+              };
+              saveState();
+              renderQuestion();
             }
           }
         }, 1000);
       }
     }
 
-    function updateTimerDisplay(seconds) {
-      const el = document.getElementById('timerDisplay');
-      if (el) el.innerText = seconds;
-    }
+    // ============================================================
+    //   RENDER — Summary
+    // ============================================================
+    function renderSummary() {
+      const c = document.getElementById('pretestContainer');
+      const quiz = STATE.quiz;
+      if (!c || !quiz) return;
 
-    function nextPretestQuestion() {
-      if (!pretestQuiz) return;
-      pretestQuiz.currentIndex++;
-      saveQuizState(pretestQuiz);
-      renderPretestQuestion();
-    }
-
-    // ==========================================================
-    //   RENDER SUMMARY
-    // ==========================================================
-    function renderPretestSummary() {
-      const quiz = pretestQuiz;
-      if (!quiz) return;
+      stopTimer();
       quiz.isFinished = true;
-      saveQuizState(quiz);
+      saveState();
 
       const total = quiz.questions.length;
       const correct = quiz.answers.filter(a => a && a.isCorrect).length;
       const score = quiz.score;
+      const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-      let html = `
-        <div class="glass-card text-center" style="background: #f8fafc; padding: 1.5rem;">
+      c.innerHTML = `
+        <div class="glass-card text-center" style="background:#f8fafc;padding:1.5rem;">
           <h3 class="mb-4">🎉 Pretest Selesai! 🎉</h3>
-          <div class="display-1 mb-3">${score}</div>
-          <p class="lead">Jawaban benar: ${correct} dari ${total}</p>
-          <p><strong>Nama:</strong> ${escapeHtmlLocal(quiz.nama || '')}</p>
-          <p><strong>No HP:</strong> ${escapeHtmlLocal(quiz.nohp || '')}</p>
-          <p><strong>Alamat:</strong> ${escapeHtmlLocal(quiz.alamat || '')}</p>
+          <div class="display-1 mb-3 fw-bold text-primary">${score}</div>
+          <p class="lead">Jawaban benar: <strong>${correct}</strong> dari ${total} (${pct}%)</p>
           <hr>
-          <button id="submitPretestResultBtn" class="btn btn-success btn-lg rounded-pill px-5 mt-3">✅ Kumpulkan Pretest</button>
-          <button id="restartPretestBtn" class="btn btn-outline-secondary btn-lg rounded-pill px-5 mt-3 ms-2">🔄 Ulangi</button>
+          <div class="text-start small mb-3">
+            <div class="row g-2">
+              <div class="col-sm-6"><strong>Nama:</strong> ${escapeHtml(quiz.nama || '')}</div>
+              <div class="col-sm-6"><strong>No HP:</strong> ${escapeHtml(quiz.nohp || '')}</div>
+              <div class="col-12"><strong>Alamat:</strong> ${escapeHtml(quiz.alamat || '')}</div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+            <button id="submitBtn" type="button" class="btn btn-success btn-lg rounded-pill px-5">
+              <i class="bi bi-check-circle me-1" aria-hidden="true"></i> Kumpulkan Pretest
+            </button>
+            <button id="restartBtn" type="button" class="btn btn-outline-secondary btn-lg rounded-pill px-5">
+              <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Ulangi
+            </button>
+          </div>
         </div>
       `;
-      document.getElementById('pretestContainer').innerHTML = html;
 
-      document.getElementById('submitPretestResultBtn').addEventListener('click', async function() {
-        try {
-          const answers = JSON.stringify(quiz.answers.map(a => ({ qid: a.questionId, selected: a.selectedOption, correct: a.isCorrect })));
-          await submitPretest(quiz.nama, quiz.nohp, quiz.alamat, answers, quiz.score);
-          showToastLocal('✅ Pretest berhasil dikirim!', 'success');
-          clearQuizState();
-          location.reload();
-        } catch (e) { showToastLocal('❌ Gagal mengirim: ' + e.message, 'danger'); }
-      });
-
-      document.getElementById('restartPretestBtn').addEventListener('click', function() {
-        clearQuizState();
+      document.getElementById('submitBtn')?.addEventListener('click', submitResult);
+      document.getElementById('restartBtn')?.addEventListener('click', () => {
+        clearState();
         location.reload();
       });
     }
 
-    // ==========================================================
-    //   LOAD MAIN DATA (CACHE INSTAN + BACKGROUND SYNC)
-    // ==========================================================
-    async function loadMainData() {
-      const container = document.getElementById('pretestContainer');
-      const CACHE_KEY = 'pretest_data';
-      const CACHE_AGE = 10; // menit
+    // ============================================================
+    //   SUBMIT
+    // ============================================================
+    async function submitResult(e) {
+      if (STATE.isSubmitting) return;
+      STATE.isSubmitting = true;
 
-      // 1. Cek cache lokal
-      let cachedData = getCache(CACHE_KEY, CACHE_AGE);
+      const btn = e.currentTarget;
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
 
-      // 2. Jika ada cache, langsung render data asli (menimpa skeleton)
-      if (cachedData) {
-        questions = cachedData.questions;
-        quizSettings = cachedData.settings;
+      const quiz = STATE.quiz;
+      try {
+        const answers = JSON.stringify(
+          quiz.answers.map(a => ({
+            qid: a.questionId,
+            selected: a.selectedOption,
+            correct: a.isCorrect,
+          }))
+        );
+        const res = await submitPretest(quiz.nama, quiz.nohp, quiz.alamat, answers, quiz.score);
+
+        if (res && res.success) {
+          showToast('✅ Pretest berhasil dikirim!', 'success');
+          clearState();
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          throw new Error((res && res.error) || 'Gagal mengirim');
+        }
+      } catch (err) {
+        showToast('❌ Gagal mengirim: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = original;
+      } finally {
+        STATE.isSubmitting = false;
+      }
+    }
+
+    // ============================================================
+    //   LOAD DATA
+    // ============================================================
+    async function loadData() {
+      renderSkeleton();
+
+      // 1. Show cache first (instant)
+      const cached = getCache();
+      if (cached && cached.length > 0) {
+        STATE.questions = cached;
         renderFormDataDiri();
       }
 
-      // 3. Fetch data dari API di LATAR BELAKANG (tidak menghalangi render di atas)
-      (async function refreshData() {
-        try {
-          const [freshQuestions, freshSettings] = await Promise.all([
-            getPretestQuestions(),
-            getQuizSettings()
-          ]);
-          const q = Array.isArray(freshQuestions) ? freshQuestions : (freshQuestions?.data || []);
-          const s = freshSettings?.data || {};
+      // 2. Fetch fresh
+      try {
+        const res = await getPretestQuestions();
+        const arr = Array.isArray(res) ? res : (res?.data || []);
 
-          if (q.length > 0) {
-            setCache(CACHE_KEY, { questions: q, settings: s });
-            if (JSON.stringify(questions) !== JSON.stringify(q)) {
-              questions = q;
-              quizSettings = s;
-              if (!pretestQuiz || !pretestQuiz.started) {
-                renderFormDataDiri();
-              }
-            }
-          } else {
-            if (!cachedData || cachedData.questions.length === 0) {
-              renderFormDataDiri();
-            }
-          }
-        } catch (e) {
-          console.warn('Gagal fetch pretest di background:', e);
-          if (!cachedData || cachedData.questions.length === 0) {
+        if (arr.length > 0) {
+          const changed = JSON.stringify(arr) !== JSON.stringify(STATE.questions);
+          STATE.questions = arr;
+          setCache(arr);
+          if (changed || !cached || cached.length === 0) {
             renderFormDataDiri();
           }
+        } else if (!cached || cached.length === 0) {
+          renderFormDataDiri();
         }
-      })();
+      } catch (e) {
+        console.warn('[Pretest] fetch error:', e);
+        if (!cached || cached.length === 0) {
+          const c = document.getElementById('pretestContainer');
+          if (c) {
+            c.innerHTML = `
+              <div class="alert alert-danger text-center">
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                Gagal memuat soal: ${escapeHtml(e.message)}
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-danger" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
     }
 
-    // ==========================================================
-    //   🛡️ GUARD PUBLIC ACCESS & BOOT
-    // ==========================================================
+    // ============================================================
+    //   BOOT
+    // ============================================================
     (async function boot() {
+      if (STATE.isMounted) return;
+      STATE.isMounted = true;
+
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      // Update navbar user
       updateNavbarMenu();
-
-      await loadMainData();
+      await loadData();
     })();
 
-    // ==========================================================
-    //   🔥 PERBAIKAN UTAMA: SKELETON MUNCUL SEBELUM KODE LAIN
-    // ==========================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      // Render skeleton secara instan (sinkron) saat DOM siap
-      const container = document.getElementById('pretestContainer');
-      if (container) {
-        renderSkeletonForm(container);
-      }
-    });
-
+    console.log(
+      '%c Pretest v26.3.2 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

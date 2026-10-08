@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <meta name="theme-color" content="#2563eb">
-  <meta name="description" content="Verifikasi QR sertifikat PKD GP Ansor Kabupaten Bantul">
+  <meta name="description" content="Verifikasi tanda tangan digital PKD GP Ansor Kabupaten Bantul">
   <meta name="robots" content="noindex, nofollow">
 
-  <title>Verifikasi QR · PKD GP Ansor Bantul</title>
+  <title>Verifikasi TTD Digital · PKD GP Ansor Bantul</title>
 
   <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
@@ -89,6 +89,37 @@
     }
 
     /* ============================================================
+       TTD PREVIEW
+       ============================================================ */
+    .ttd-preview {
+      text-align: center;
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      margin-bottom: 1rem;
+    }
+    .ttd-preview img {
+      max-width: 180px;
+      max-height: 180px;
+      width: auto;
+      height: auto;
+      background: #fff;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .ttd-preview .no-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    /* ============================================================
        RESULT BOX
        ============================================================ */
     .result-box {
@@ -130,6 +161,18 @@
       font-size: 1.4rem;
     }
 
+    .role-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
+    }
+
     .result-detail {
       background: rgba(255, 255, 255, 0.6);
       border-radius: 12px;
@@ -160,11 +203,12 @@
       color: #0f172a;
     }
     .result-detail code {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       background: rgba(15, 23, 42, 0.06);
       padding: 2px 6px;
       border-radius: 4px;
       color: #0f172a;
+      word-break: break-all;
     }
 
     .result-action {
@@ -326,10 +370,9 @@
         padding: 0.7rem 0.85rem;
         font-size: 0.8rem;
       }
-      .empty-state .icon-wrap {
-        width: 60px;
-        height: 60px;
-        font-size: 1.75rem;
+      .ttd-preview img {
+        max-width: 140px;
+        max-height: 140px;
       }
     }
   </style>
@@ -343,8 +386,8 @@
     <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
     <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
     <h1>
-      <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
-      Verifikasi QR
+      <i class="bi bi-vector-pen" aria-hidden="true"></i>
+      Verifikasi TTD Digital
     </h1>
     <p>PKD GP Ansor Kabupaten Bantul</p>
   </div>
@@ -360,7 +403,7 @@
       <p>Memproses verifikasi…</p>
     </div>
 
-    <!-- Result area (diisi oleh JS) -->
+    <!-- Result area -->
     <div id="resultArea" aria-live="polite" aria-atomic="true" style="display:none;"></div>
 
   </div>
@@ -388,6 +431,15 @@
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
     // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const ROLE_LABELS = {
+      ketua_pc: 'Ketua PC',
+      sekretaris: 'Sekretaris',
+      instruktur: 'Instruktur',
+    };
+
+    // ============================================================
     //   DOM REFS
     // ============================================================
     const loadingStateEl = document.getElementById('loadingState');
@@ -406,64 +458,94 @@
       resultAreaEl.style.display = 'block';
     }
 
-    function renderSuccess(data) {
-      const nama = escapeHtml(data.nama_peserta || '-');
-      const nomor = escapeHtml(data.nomor_sertifikat || '-');
-      const lokasi = escapeHtml(data.lokasi || 'Kabupaten Bantul');
-      const tanggal = data.createdAt
-        ? new Date(data.createdAt).toLocaleDateString('id-ID', {
-            day: '2-digit', month: 'long', year: 'numeric'
-          })
-        : '-';
-      const pdfUrl = data.pdf_url ? escapeHtml(data.pdf_url) : '';
+    function renderSuccess(data, role, driveId) {
+      const roleLabel = ROLE_LABELS[role] || role || 'Penanda Tangan';
+      const nama = escapeHtml(data.nama || '-');
+      const pesertaNama = escapeHtml(data.peserta_nama || '-');
+      const kegunaan = escapeHtml(data.kegunaan || 'Verifikasi Sertifikat PKD');
+      const ttdUrl = `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w400`;
+      const openUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/view`;
+
+      let tanggal = '-';
+      if (data.timestamp) {
+        try {
+          const d = new Date(data.timestamp);
+          if (!isNaN(d.getTime())) {
+            tanggal = d.toLocaleString('id-ID', {
+              day: '2-digit', month: 'long', year: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+            });
+          }
+        } catch (e) { /* silent */ }
+      }
 
       resultAreaEl.innerHTML = `
         <div class="result-box success">
           <div class="result-title">
             <i class="bi bi-patch-check-fill"></i>
-            Sertifikat Valid
+            Tanda Tangan Valid
           </div>
-          <p class="mb-0 small">Sertifikat ini terdaftar dan sah dikeluarkan oleh PKD GP Ansor Kabupaten Bantul.</p>
+          <p class="mb-2 small">
+            Tanda tangan digital ini terdaftar dan sah sebagai bagian dari
+            dokumen resmi PKD GP Ansor Kabupaten Bantul.
+          </p>
+          <span class="role-badge">${escapeHtml(roleLabel)}</span>
+
+          <div class="ttd-preview mt-2">
+            <img src="${ttdUrl}" alt="Tanda tangan ${nama}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="no-preview" style="display:none;">
+              <i class="bi bi-eye-slash fs-3 mb-2"></i>
+              Preview tidak tersedia
+            </div>
+          </div>
 
           <div class="result-detail">
             <div class="row-line">
-              <span class="label">Nama Peserta</span>
+              <span class="label">Penanda Tangan</span>
               <span class="value">${nama}</span>
             </div>
             <div class="row-line">
-              <span class="label">Nomor Sertifikat</span>
-              <span class="value"><code>${nomor}</code></span>
+              <span class="label">Role</span>
+              <span class="value">${escapeHtml(roleLabel)}</span>
             </div>
             <div class="row-line">
-              <span class="label">Lokasi PKD</span>
-              <span class="value">${lokasi}</span>
+              <span class="label">Untuk Peserta</span>
+              <span class="value">${pesertaNama}</span>
             </div>
             <div class="row-line">
-              <span class="label">Tanggal Terbit</span>
+              <span class="label">Kegunaan</span>
+              <span class="value">${kegunaan}</span>
+            </div>
+            <div class="row-line">
+              <span class="label">Tanggal</span>
               <span class="value">${escapeHtml(tanggal)}</span>
+            </div>
+            <div class="row-line">
+              <span class="label">Drive ID</span>
+              <span class="value"><code>${escapeHtml(driveId)}</code></span>
             </div>
           </div>
 
-          ${pdfUrl ? `
-            <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" class="result-action primary">
-              <i class="bi bi-download"></i> Unduh Sertifikat PDF
-            </a>
-          ` : ''}
+          <a href="${openUrl}" target="_blank" rel="noopener noreferrer" class="result-action primary">
+            <i class="bi bi-box-arrow-up-right"></i> Buka TTD Asli
+          </a>
         </div>
       `;
       showResult();
     }
 
-    function renderNotFound(nomor) {
+    function renderNotFound(roleLabel) {
       resultAreaEl.innerHTML = `
         <div class="result-box danger">
           <div class="result-title">
             <i class="bi bi-x-circle-fill"></i>
-            Sertifikat Tidak Ditemukan
+            Tanda Tangan Tidak Valid
           </div>
           <p class="mb-0 small">
-            Nomor <strong><code>${escapeHtml(nomor)}</code></strong> tidak terdaftar
-            di sistem kami. Periksa kembali atau hubungi panitia PKD.
+            Data tanda tangan digital ${roleLabel ? `<strong>${escapeHtml(roleLabel)}</strong>` : ''}
+            tidak terdaftar di sistem kami. Pastikan QR code berasal dari
+            dokumen resmi PKD GP Ansor Bantul.
           </p>
         </div>
       `;
@@ -483,27 +565,21 @@
       showResult();
     }
 
-    function renderEmptyState(params) {
-      const hasNama = params.get('nama');
-      const nomorHint = hasNama
-        ? `Verifikasi untuk <strong>${escapeHtml(hasNama)}</strong> memerlukan nomor sertifikat.`
-        : 'QR code tidak memuat data sertifikat yang valid.';
-
+    function renderEmptyState() {
       resultAreaEl.innerHTML = `
         <div class="empty-state">
           <div class="icon-wrap">
-            <i class="bi bi-qr-code"></i>
+            <i class="bi bi-vector-pen"></i>
           </div>
-          <h3>Scan QR Code Sertifikat</h3>
+          <h3>Scan QR Tanda Tangan</h3>
           <p>
-            ${nomorHint}<br><br>
-            Silakan scan ulang QR code di sertifikat, atau verifikasi
-            manual dengan memasukkan nomor sertifikat.
+            QR code pada dokumen tidak memuat data tanda tangan digital yang valid.
+            Silakan scan ulang QR code dari dokumen resmi PKD.
           </p>
-          <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/verifikasi.html -->
-          <a href="/bisaa/verifikasi.html" class="btn-manual">
-            <i class="bi bi-keyboard"></i>
-            Verifikasi Manual
+          <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/index.html -->
+          <a href="/bisaa/index.html" class="btn-manual">
+            <i class="bi bi-house-door"></i>
+            Kembali ke Beranda
           </a>
         </div>
       `;
@@ -513,24 +589,35 @@
     // ============================================================
     //   VERIFY LOGIC
     // ============================================================
-    async function verifyByNomor(nomor) {
+    async function verifySignature(role, driveId) {
       if (isVerifying) return;
       isVerifying = true;
 
       try {
-        const res = await callApi('verifyCertificate', { nomor: nomor.trim() }, 'GET');
+        const res = await callApi('getAllDigitalApprovals', {}, 'GET');
+        const list = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
 
-        if (res && res.success === true) {
-          if (res.data && res.data.nomor_sertifikat) {
-            renderSuccess(res.data);
-          } else {
-            renderNotFound(nomor);
-          }
+        if (!Array.isArray(list) || list.length === 0) {
+          renderNotFound(ROLE_LABELS[role] || role);
+          return;
+        }
+
+        const cleanRole = String(role || '').toLowerCase().trim();
+        const cleanDriveId = String(driveId || '').trim();
+
+        const found = list.find(a => {
+          const rowRole = String(a.role || '').toLowerCase().trim();
+          const rowDrive = String(a.driveId || '').trim();
+          return rowRole === cleanRole && rowDrive === cleanDriveId;
+        });
+
+        if (found) {
+          renderSuccess(found, role, driveId);
         } else {
-          renderError((res && res.error) || 'Respons tidak valid dari server.');
+          renderNotFound(ROLE_LABELS[role] || role);
         }
       } catch (e) {
-        console.error('[VerifikasiQR] error:', e);
+        console.error('[VerifikasiSignature] error:', e);
         renderError(e.message || 'Network error. Coba lagi.');
       } finally {
         isVerifying = false;
@@ -538,9 +625,9 @@
     }
 
     // ============================================================
-    //   MAIN: Parse query string & verify
+    //   MAIN: Parse query string
     // ============================================================
-    (async function main() {
+    (function main() {
       let params;
       try {
         params = new URLSearchParams(window.location.search);
@@ -549,53 +636,28 @@
         return;
       }
 
-      const nomor = params.get('nomor');
-      const id    = params.get('id');       // fallback: peserta ID
-      const nama  = params.get('nama');     // fallback: nama peserta
+      const role = params.get('role');
+      const driveId = params.get('driveId');
+      // Fallback alternatif nama param
+      const altDriveId = params.get('driveid') || params.get('id');
 
-      // Priority 1: verify by nomor
-      if (nomor) {
-        console.log('[VerifikasiQR] Nomor ditemukan:', nomor);
-        return verifyByNomor(nomor);
-      }
+      const finalDriveId = driveId || altDriveId;
 
-      // Priority 2: verify by ID (lookup dulu via getUploadedCertificates)
-      if (id) {
-        console.log('[VerifikasiQR] ID peserta ditemukan:', id);
-        isVerifying = true;
-        try {
-          const res = await callApi('getUploadedCertificates', {}, 'GET');
-          const list = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
-          const found = list.find(c => String(c.peserta_id) === String(id));
-          if (found && found.nomor_sertifikat) {
-            isVerifying = false;
-            return verifyByNomor(found.nomor_sertifikat);
-          }
-          isVerifying = false;
-          renderNotFound('Peserta ID: ' + id);
-        } catch (e) {
-          isVerifying = false;
-          renderError('Gagal mencari sertifikat: ' + e.message);
-        }
+      if (!role || !finalDriveId) {
+        console.log('[VerifikasiSignature] Parameter tidak lengkap:', { role, driveId: finalDriveId });
+        renderEmptyState();
         return;
       }
 
-      // Priority 3: nama only — show empty state
-      if (nama) {
-        console.log('[VerifikasiQR] Hanya nama, tidak bisa auto-verify:', nama);
-        return renderEmptyState(params);
-      }
-
-      // No params at all
-      console.log('[VerifikasiQR] Tidak ada parameter verifikasi di URL');
-      return renderEmptyState(params);
+      console.log('[VerifikasiSignature] Verifying:', { role, driveId: finalDriveId });
+      verifySignature(role, finalDriveId);
     })();
 
     // ============================================================
     //   CONSOLE BANNER
     // ============================================================
     console.log(
-      '%c Verifikasi QR v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      '%c Verifikasi TTD Digital v26.1.8 — GitHub Pages /bisaa/ Edition ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>

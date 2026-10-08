@@ -3,711 +3,1392 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Member Area · PKD GP Ansor Bantul</title>
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Dashboard Member — PKD GP Ansor Kabupaten Bantul">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dashboard Member · PKD GP Ansor Bantul</title>
+
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-  <!-- 🔥 Tambahkan html2canvas untuk download -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <style>
-    /* --- SIDEBAR & GLOBAL (Sesuai file asli) --- */
-    * { font-family: 'Inter', sans-serif; }
-    body { background: #f1f5f9; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
-    .navbar { background: rgba(255,255,255,0.72) !important; backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 30px rgba(0,0,0,0.05); padding: 0 !important; }
-    .navbar .container-fluid { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-    .navbar-brand img { height: 40px; width: auto; margin-right: 14px; transition: 0.2s; }
-    .brand-title { font-size: 1.3rem; font-weight: 700; color: #0a3d62; }
-    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
-    .wrapper { display: flex; width: 100%; align-items: stretch; }
-    #sidebar { min-width: 280px; max-width: 280px; background: white; border-right: 1px solid #e2e8f0; transition: 0.3s; }
-    #sidebar .sidebar-header { padding: 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-    #sidebar ul.components { padding: 20px 0; }
-    #sidebar ul li a { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #334155; text-decoration: none; font-weight: 500; transition: 0.2s; border-left: 4px solid transparent; }
-    #sidebar ul li a i { width: 24px; font-size: 1.2rem; color: #64748b; }
-    #sidebar ul li a:hover { background: #f1f5f9; border-left-color: #2563eb; }
-    #sidebar ul li.active a { background: #e6f0ff; border-left-color: #2563eb; color: #2563eb; font-weight: 600; }
-    #content { width: 100%; padding: 30px; min-height: 100vh; background: #f8fafc; }
-    .card-dashboard { background: white; border-radius: 24px; padding: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #e9eef2; margin-bottom: 24px; }
-    .section-title { font-size: 1.6rem; font-weight: 650; border-left: 6px solid #2563eb; padding-left: 1.2rem; margin-bottom: 1.5rem; }
-    .profile-photo { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 3px solid #2563eb; margin-bottom: 1rem; }
-    .btn-rounded { border-radius: 9999px; padding: 0.6rem 2rem; font-weight: 600; }
-    .footer-modern { font-size: 0.85rem; color: #64748b; text-align: center; padding: 1.5rem; background: white; border-top: 1px solid #e2e8f0; }
-    @media (max-width: 991px) {
-      #sidebar { min-width: 100%; max-width: 100%; position: fixed; top: 0; left: 0; z-index: 1050; height: 100vh; overflow-y: auto; transform: translateX(-100%); transition: 0.3s; }
-      #sidebar.show { transform: translateX(0); }
-      #content { padding: 1rem; padding-bottom: 80px; }
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ==========================================================
-       🔥 STYLE ID CARD DIGITAL PREMIUM (DIADAPTASI DARI PESERTA_ADMIN)
-       ========================================================== */
-    .id-card-wrapper { max-width: 450px; margin: 0 auto; padding: 10px; background: transparent; }
-    .id-card { background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); border-radius: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); padding: 24px; border: 1px solid rgba(255, 255, 255, 0.8); position: relative; overflow: hidden; transition: transform 0.2s ease; }
-    .id-card .header { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #14994c; padding-bottom: 12px; margin-bottom: 16px; }
-    .id-card .header img { height: 35px; width: auto; }
-    .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.1rem; line-height: 1.2; }
-    .id-card .header h5 small { font-weight: 400; font-size: 0.75rem; color: #64748b; display: block; }
-    .id-card .body { display: flex; gap: 20px; align-items: center; flex-wrap: nowrap; }
-    .id-card .qr-area { flex-shrink: 0; width: 120px; height: 120px; background: white; border-radius: 16px; padding: 6px; display: flex; justify-content: center; align-items: center; border: 1px solid #e2e8f0; }
-    .id-card .qr-area canvas, .id-card .qr-area img { width: 100%; height: auto; max-width: 110px; }
-    .id-card .data-area { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-    .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
-    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
-    .id-card .footer { margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 10px; text-align: center; font-size: 0.75rem; color: #64748b; }
+    /* ============ HEADER ============ */
+    .header-minimal {
+      background: rgba(255, 255, 255, 0.72) !important;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1030;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+    }
+    .header-minimal .container {
+      padding-top: 0.75rem; padding-bottom: 0.75rem;
+    }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.2rem; line-height: 1.2; }
+    .brand-sub-mini { font-size: 0.78rem; color: #64748b; display: block; }
+
+    /* ============ HERO / GREETING ============ */
+    .hero-greeting {
+      background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
+      color: #fff;
+      border-radius: 24px;
+      padding: 1.5rem 1.75rem;
+      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-greeting::after {
+      content: '';
+      position: absolute;
+      top: -40%; right: -10%;
+      width: 60%; height: 180%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-avatar {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700;
+      backdrop-filter: blur(4px);
+      flex-shrink: 0;
+    }
+    .hero-label { font-size: 0.75rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.06em; }
+    .hero-name { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+    .hero-meta {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.3rem 0.75rem;
+      background: rgba(255,255,255,0.18);
+      border-radius: 50px;
+      font-size: 0.78rem; font-weight: 500;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ============ GLASS CARD ============ */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 20px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s;
+    }
+    .glass-card:hover {
+      box-shadow: 0 16px 40px rgba(37, 99, 235, 0.06);
+      border-color: rgba(37, 99, 235, 0.15);
+    }
+
+    /* ============ PROGRESS RING ============ */
+    .progress-ring-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1rem;
+    }
+    .progress-ring {
+      position: relative;
+      width: 130px; height: 130px;
+    }
+    .progress-ring svg { transform: rotate(-90deg); }
+    .progress-ring .ring-bg { stroke: #e2e8f0; }
+    .progress-ring .ring-fg {
+      stroke: url(#ringGradient);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s ease;
+    }
+    .progress-ring .ring-inner {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .progress-ring .ring-value { font-size: 1.75rem; font-weight: 800; color: #0f172a; line-height: 1; }
+    .progress-ring .ring-label { font-size: 0.68rem; color: #64748b; text-transform: uppercase; margin-top: 3px; letter-spacing: 0.04em; }
+
+    /* ============ QUICK ACTIONS ============ */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 0.65rem;
+    }
+    .quick-tile {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      text-decoration: none;
+      color: #0f172a;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+    .quick-tile:hover {
+      transform: translateY(-3px);
+      border-color: rgba(37, 99, 235, 0.3);
+      color: #0f172a;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.08);
+    }
+    .quick-tile .tile-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      transition: all 0.25s;
+    }
+    .quick-tile:hover .tile-icon { transform: scale(1.08); }
+    .quick-tile .tile-label {
+      font-size: 0.78rem; font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .tile-icon.blue   { background: rgba(37, 99, 235, 0.1);  color: #2563eb; }
+    .tile-icon.green  { background: rgba(22, 163, 74, 0.1);  color: #16a34a; }
+    .tile-icon.amber  { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .tile-icon.purple { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
+    .tile-icon.pink   { background: rgba(236, 72, 153, 0.1); color: #db2777; }
+    .tile-icon.cyan   { background: rgba(6, 182, 212, 0.1);  color: #0891b2; }
+
+    /* ============ TTD PROGRESS ============ */
+    .ttd-track {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .ttd-step {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.35rem;
+      position: relative;
+    }
+    .ttd-step .circle {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #cbd5e1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      transition: all 0.35s;
+    }
+    .ttd-step.done .circle {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border-color: #16a34a; color: #fff;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+    .ttd-step .label {
+      font-size: 0.68rem; color: #64748b; font-weight: 600;
+      text-align: center; white-space: nowrap;
+    }
+    .ttd-step.done .label { color: #16a34a; }
+    .ttd-connector {
+      flex: 0 0 12px; height: 2px; background: #cbd5e1; border-radius: 2px;
+      margin-bottom: 22px;
+    }
+    .ttd-connector.done { background: #16a34a; }
+
+    /* ============ PROGRESS LIST ============ */
+    .progress-item {
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 0.55rem;
+      transition: all 0.2s;
+    }
+    .progress-item:hover { border-color: rgba(37, 99, 235, 0.2); }
+    .progress-item .check {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: #94a3b8;
+    }
+    .progress-item.done .check {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #fff;
+    }
+    .progress-item .title { font-weight: 600; font-size: 0.9rem; }
+    .progress-item .subtitle { font-size: 0.78rem; color: #64748b; }
+
+    /* ============ ID CARD ============ */
+    .id-card-wrapper {
+      max-width: 420px; margin: 0 auto; padding: 8px;
+    }
+    .id-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      padding: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    .id-card .header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #14994c; padding-bottom: 10px; margin-bottom: 14px;
+    }
+    .id-card .header img { height: 32px; }
+    .id-card .header h5 { margin: 0; font-weight: 700; color: #0f172a; font-size: 1.05rem; line-height: 1.2; }
+    .id-card .header h5 small { font-weight: 400; font-size: 0.72rem; color: #64748b; display: block; }
+    .id-card .body { display: flex; gap: 16px; align-items: center; }
+    .id-card .qr-area {
+      flex-shrink: 0; width: 110px; height: 110px;
+      background: white; border-radius: 14px; padding: 5px;
+      display: flex; justify-content: center; align-items: center;
+      border: 1px solid #e2e8f0;
+    }
+    .id-card .data-area { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .id-card .data-area .label { font-size: 0.62rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.9rem; line-height: 1.3; word-break: break-word; }
+    .id-card .footer {
+      margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 8px;
+      text-align: center; font-size: 0.72rem; color: #64748b;
+    }
     .id-card .footer span { color: #2563eb; font-weight: 600; }
-    @media (max-width: 480px) { .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; } .id-card .qr-area { margin: 0 auto 10px auto; } }
-    
-    .skeleton-box { background: #e2e8f0; border-radius: 8px; animation: pulse 1.5s infinite ease-in-out; display: inline-block; }
-    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+    @media (max-width: 480px) {
+      .id-card .body { flex-wrap: wrap; justify-content: center; text-align: center; }
+      .id-card .qr-area { margin: 0 auto; }
+    }
+
+    /* ============ TAB NAV ============ */
+    .tab-nav-scroll {
+      display: flex; gap: 0.4rem;
+      overflow-x: auto; padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+    }
+    .tab-nav-scroll::-webkit-scrollbar { height: 4px; }
+    .tab-nav-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .tab-pill {
+      flex-shrink: 0; border: none; background: #f1f5f9;
+      color: #475569; border-radius: 50px; padding: 0.5rem 1.1rem;
+      font-size: 0.85rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: all 0.2s; cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-pill:hover { background: #e2e8f0; color: #0f172a; }
+    .tab-pill.active { background: #0f172a; color: #fff; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+
+    /* ============ SKELETON ============ */
+    .skeleton-box {
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite linear;
+      border-radius: 8px; display: inline-block;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      text-align: center; padding: 3rem 1rem; color: #64748b;
+    }
+    .empty-state i {
+      font-size: 3rem; color: #cbd5e1;
+      display: block; margin-bottom: 0.85rem;
+    }
+    .empty-state h6 { font-weight: 700; color: #334155; margin-bottom: 0.35rem; }
+    .empty-state p { font-size: 0.85rem; margin: 0; }
+
+    /* ============ FOOTER ============ */
+    .footer-modern {
+      font-size: 0.82rem; color: #64748b;
+      margin-top: auto; text-align: center;
+      padding: 1.5rem 0; border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    /* ============ ANIMATIONS ============ */
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 576px) {
+      .hero-greeting { padding: 1.15rem 1.25rem; }
+      .hero-name { font-size: 1.15rem; }
+      .hero-avatar { width: 46px; height: 46px; font-size: 1.1rem; }
+      .progress-ring { width: 110px; height: 110px; }
+      .progress-ring .ring-value { font-size: 1.5rem; }
+      .quick-grid { grid-template-columns: repeat(3, 1fr); }
+    }
   </style>
 </head>
 <body>
-  <!-- ================= NAVBAR ================= -->
-  <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="/bisaa/index.html">
-        <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
-        <span><span class="brand-title">PKD GP Ansor</span><span class="brand-sub" style="font-size:0.8rem;color:#64748b;display:block;">Kabupaten Bantul</span></span>
+
+  <!-- ================= HEADER ================= -->
+  <header class="header-minimal sticky-top">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center">
+        <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+        <div>
+          <div class="brand-title-mini">Member PKD</div>
+          <span class="brand-sub-mini">PKD GP Ansor Bantul</span>
+        </div>
       </a>
-      <div class="d-flex align-items-center" id="navbarUserMenu"></div>
+      <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" id="btnLogout" aria-label="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="d-none d-sm-inline ms-1">Logout</span>
+      </button>
     </div>
-  </nav>
+  </header>
 
-  <!-- ================= WRAPPER ================= -->
-  <div class="wrapper">
-    <!-- Sidebar -->
-    <nav id="sidebar">
-      <div class="sidebar-header">
-        <h5 class="mb-1"><i class="bi bi-person-circle me-2"></i>Member Area</h5>
-        <p class="text-muted small mb-0" id="sidebarUserName">Memuat...</p>
+  <!-- ================= MAIN ================= -->
+  <main class="container my-4" style="max-width: 1100px; flex: 1;">
+
+    <!-- ============ HERO GREETING ============ -->
+    <section class="hero-greeting mb-4 fade-up" id="heroGreeting">
+      <div class="d-flex align-items-center gap-3 position-relative flex-wrap">
+        <div class="hero-avatar" id="heroAvatar">?</div>
+        <div class="flex-grow-1" style="min-width:200px;">
+          <div class="hero-label">Assalamu'alaikum,</div>
+          <div class="hero-name" id="heroName">—</div>
+          <div class="hero-meta" id="heroMeta"></div>
+        </div>
       </div>
-      <ul class="list-unstyled components">
-        <li class="active" id="menu-dashboard"><a href="#" onclick="loadContent('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-        <li id="menu-profil"><a href="#" onclick="loadContent('profil')"><i class="bi bi-person-badge"></i> Profil Saya</a></li>
-        <li id="menu-idcard"><a href="#" onclick="loadContent('idcard')"><i class="bi bi-person-vcard"></i> ID Card Digital</a></li>
-        <li id="menu-materi"><a href="#" onclick="loadContent('materi')"><i class="bi bi-file-earmark-pdf"></i> Materi</a></li>
-        <li id="menu-skrining"><a href="#" onclick="loadContent('skrining')"><i class="bi bi-clipboard-check"></i> Skrining</a></li>
-        <li id="menu-pretest"><a href="#" onclick="loadContent('pretest')"><i class="bi bi-pencil-square"></i> Pretest</a></li>
-        <li id="menu-posttest"><a href="#" onclick="loadContent('posttest')"><i class="bi bi-trophy"></i> Posttest</a></li>
-        <li id="menu-absensi"><a href="#" onclick="loadContent('absensi')"><i class="bi bi-calendar-check"></i> Absensi</a></li>
-        <li id="menu-sertifikat"><a href="#" onclick="loadContent('sertifikat')"><i class="bi bi-award"></i> Sertifikat</a></li>
-        <li id="menu-informasi"><a href="#" onclick="loadContent('informasi')"><i class="bi bi-megaphone"></i> Informasi</a></li>
-        <li><hr class="my-2"></li>
-        <li><a href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-      </ul>
-    </nav>
+    </section>
 
-    <!-- Konten -->
-    <div id="content">
-      <div id="content-container">
-        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+    <!-- ============ PROGRESS RING + TTD TRACK ============ -->
+    <section class="row g-3 mb-4 fade-up">
+      <div class="col-md-5">
+        <div class="glass-card progress-ring-wrap h-100">
+          <div class="progress-ring">
+            <svg width="130" height="130" viewBox="0 0 130 130">
+              <defs>
+                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2563eb"/>
+                  <stop offset="100%" stop-color="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="65" cy="65" r="56" fill="none" stroke-width="10"/>
+              <circle class="ring-fg" cx="65" cy="65" r="56" fill="none" stroke-width="10"
+                      stroke-dasharray="351.86" stroke-dashoffset="351.86" id="ringProgress"/>
+            </svg>
+            <div class="ring-inner">
+              <div class="ring-value" id="ringValue">0%</div>
+              <div class="ring-label">Progres</div>
+            </div>
+          </div>
+          <p class="mt-3 mb-0 small text-muted text-center" id="ringSubtitle">—</p>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="glass-card p-3 h-100">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-pencil-square text-primary me-2"></i>Status Tanda Tangan Digital
+          </h6>
+          <div class="ttd-track" id="ttdTrack">
+            <div class="ttd-step" data-role="ketua_pc">
+              <div class="circle"><i class="bi bi-shield-fill-check"></i></div>
+              <div class="label">Ketua PC</div>
+            </div>
+            <div class="ttd-connector" data-conn="1"></div>
+            <div class="ttd-step" data-role="sekretaris">
+              <div class="circle"><i class="bi bi-journal-text"></i></div>
+              <div class="label">Sekretaris</div>
+            </div>
+            <div class="ttd-connector" data-conn="2"></div>
+            <div class="ttd-step" data-role="instruktur">
+              <div class="circle"><i class="bi bi-mortarboard-fill"></i></div>
+              <div class="label">Instruktur</div>
+            </div>
+          </div>
+          <div class="mt-3 small" id="ttdStatusText">
+            <i class="bi bi-hourglass-split text-muted"></i>
+            <span class="text-muted">Memuat status TTD...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ QUICK ACTIONS ============ -->
+    <section class="mb-4 fade-up">
+      <h6 class="fw-bold mb-3">
+        <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Aksi Cepat
+      </h6>
+      <div class="quick-grid">
+        <a class="quick-tile" href="/bisaa/skrining.html">
+          <div class="tile-icon blue"><i class="bi bi-clipboard-check"></i></div>
+          <span class="tile-label">Skrining</span>
+        </a>
+        <a class="quick-tile" href="/bisaa/pretest.html">
+          <div class="tile-icon purple"><i class="bi bi-pencil-square"></i></div>
+          <span class="tile-label">Pre-test</span>
+        </a>
+        <a class="quick-tile" href="/bisaa/posttest.html">
+          <div class="tile-icon amber"><i class="bi bi-trophy"></i></div>
+          <span class="tile-label">Post-test</span>
+        </a>
+        <a class="quick-tile" href="/bisaa/absen.html">
+          <div class="tile-icon green"><i class="bi bi-qr-code"></i></div>
+          <span class="tile-label">Absen</span>
+        </a>
+        <a class="quick-tile" href="/bisaa/materi.html">
+          <div class="tile-icon cyan"><i class="bi bi-file-earmark-pdf"></i></div>
+          <span class="tile-label">Materi</span>
+        </a>
+        <a class="quick-tile" href="/bisaa/informasi.html">
+          <div class="tile-icon pink"><i class="bi bi-newspaper"></i></div>
+          <span class="tile-label">Informasi</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============ TAB NAV ============ -->
+    <section class="mb-3 fade-up">
+      <div class="tab-nav-scroll" id="tabNav" role="tablist">
+        <button type="button" class="tab-pill active" data-tab="profil" role="tab">
+          <i class="bi bi-person-badge-fill"></i>Profil Saya
+        </button>
+        <button type="button" class="tab-pill" data-tab="progress" role="tab">
+          <i class="bi bi-graph-up-arrow"></i>Progres Belajar
+        </button>
+        <button type="button" class="tab-pill" data-tab="idcard" role="tab">
+          <i class="bi bi-person-vcard"></i>ID Card
+        </button>
+        <button type="button" class="tab-pill" data-tab="sertifikat" role="tab">
+          <i class="bi bi-award-fill"></i>Sertifikat
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ TAB CONTENT ============ -->
+    <section class="fade-up" id="tabContent">
+      <!-- Rendered by JS -->
+    </section>
+
+  </main>
+
+  <!-- ============ MODAL: UPDATE PROFIL ============ -->
+  <div class="modal fade" id="modalEditProfil" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Update Profil</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Nama Lengkap</label>
+            <input type="text" class="form-control" id="editNama">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Email</label>
+            <input type="email" class="form-control" id="editEmail">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">No HP</label>
+            <input type="tel" class="form-control" id="editHp">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Alamat</label>
+            <textarea class="form-control" id="editAlamat" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary rounded-pill px-4" id="btnSaveProfil">
+            <i class="bi bi-save me-1"></i>Simpan
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- ============ MODAL: CHANGE PASSWORD ============ -->
+  <div class="modal fade" id="modalChangePwd" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+          <h5 class="modal-title"><i class="bi bi-key-fill me-2"></i>Ganti Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Password Baru</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="newPwd" placeholder="Min 6 karakter">
+              <button class="btn btn-outline-secondary" type="button" id="toggleNewPwd">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Konfirmasi Password</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="confirmPwd" placeholder="Ketik ulang">
+              <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPwd">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-warning rounded-pill px-4" id="btnSavePwd">
+            <i class="bi bi-save me-1"></i>Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div class="toast border-0 shadow-lg" id="pageToast" role="alert" data-bs-delay="3000">
+      <div class="toast-header bg-white border-0">
+        <i class="bi bi-info-circle-fill text-primary me-2" id="pageToastIcon"></i>
+        <strong class="me-auto" id="pageToastTitle">Info</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Tutup"></button>
+      </div>
+      <div class="toast-body" id="pageToastMessage"></div>
+    </div>
+  </div>
+
   <!-- ================= FOOTER ================= -->
-  <footer class="footer-modern"><i class="bi bi-c-circle"></i> Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</footer>
+  <footer class="footer-modern">
+    <div class="container">
+      <i class="bi bi-c-circle me-1"></i>
+      Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script type="module">
-    // ==========================================================
-    //   IMPOR DARI CORE API & MODUL MEMBER
-    // ==========================================================
-    import { getUserRole, getUserData, showToast, escapeHtml, callApi, updateNavbarMenu, logout as apiLogout } from './js/core/api.js';
-    import { MemberModule } from './js/modules/member.js';
+    // ============================================================
+    //   IMPORTS
+    // ============================================================
+    import {
+      loadAuthState,
+      getUserRole,
+      getUserData,
+      logout,
+      escapeHtml,
+      showToast as apiShowToast,
+      updateMemberProfile as apiUpdateMemberProfile,
+      resetMemberPassword as apiResetMemberPassword,
+    } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
-    //   UTILITY & GLOBAL FUNCTIONS
-    // ==========================================================
-    let refreshInterval = null;
+    import { MemberModule } from '/bisaa/js/modules/member.js';
 
-    function escapeHtmlLocal(str) { return escapeHtml(str); }
-    function logout() { apiLogout(); }
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const ROLE = 'member';
+    const BASE_PATH = '/bisaa/';
+    const ACTIVE_TAB_KEY = 'pkd_member_active_tab';
 
-    // Expose loadContent ke global agar onclick sidebar berfungsi
-    window.loadContent = loadContent;
-    window.logout = logout;
+    // ============================================================
+    //   STATE
+    // ============================================================
+    let activeTab = 'profil';
+    let pageMounted = false;
+    let currentIdCardData = null;
 
-    // ==========================================================
-    //   PENGAMAN AKSES
-    // ==========================================================
-    async function checkMemberAccess() {
-      if (getUserRole() !== 'member') {
-        window.location.href = '/bisaa/login.html';
-        return false;
-      }
-      document.getElementById('sidebarUserName').innerText = getUserData().nama || 'Member';
-      return true;
+    const listeners = [];
+    function on(el, ev, handler, opts) {
+      if (!el) return;
+      el.addEventListener(ev, handler, opts);
+      listeners.push({ el, ev, handler, opts });
     }
 
-    // ==========================================================
-    //   🔥 SKELETON RENDER (INSTANT)
-    // ==========================================================
-    function renderSkeletonDashboard(container) {
-      let html = `
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title">Dashboard</h2>
-          <span class="skeleton-box" style="height:2rem;width:120px;"></span>
-        </div>
-        <div class="row g-4">
-          ${Array(6).fill(0).map(() => `
-            <div class="col-md-3">
-              <div class="stat-card skeleton">
-                <div class="skeleton-box stat-number"></div>
-                <div class="skeleton-box stat-label"></div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="row mt-4">
-          <div class="col-md-6"><div class="skeleton-box" style="height:80px;width:100%;"></div></div>
-          <div class="col-md-6"><div class="skeleton-box" style="height:80px;width:100%;"></div></div>
-        </div>
-      `;
-      container.innerHTML = html;
+    // ============================================================
+    //   UTILITY
+    // ============================================================
+    function showPageToast(message, type = 'success') {
+      try { apiShowToast(message, type); } catch (e) { console.log(`[${type}]`, message); }
     }
 
-    function renderSkeletonProfil(container) {
-      let html = `
-        <h2 class="section-title">Profil Saya</h2>
-        <div class="card-dashboard">
-          <div class="row">
-            <div class="col-md-4 text-center">
-              <div class="skeleton-box" style="width:140px;height:140px;border-radius:50%;margin:0 auto 1rem;"></div>
-              <div class="skeleton-box" style="height:1.5rem;width:80%;margin:0 auto;"></div>
-              <div class="skeleton-box" style="height:1rem;width:60%;margin:0.5rem auto;"></div>
-              <div class="skeleton-box" style="height:1rem;width:60%;margin:0 auto;"></div>
-            </div>
-            <div class="col-md-8">
-              ${Array(5).fill(0).map(() => `
-                <div class="mb-3">
-                  <div class="skeleton-box" style="height:1rem;width:80px;margin-bottom:0.3rem;"></div>
-                  <div class="skeleton-box" style="height:2.5rem;width:100%;"></div>
-                </div>
-              `).join('')}
-              <div class="skeleton-box" style="height:2.5rem;width:150px;"></div>
-            </div>
-          </div>
-        </div>
-      `;
-      container.innerHTML = html;
+    function getInitials(nama) {
+      return String(nama || '?').trim().split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
     }
 
-    function renderSkeletonList(container, title, count = 4) {
-      let html = `<h2 class="section-title">${title}</h2><div class="card-dashboard">`;
-      for (let i = 0; i < count; i++) {
-        html += `<div class="skeleton-box" style="height:3rem;width:100%;margin-bottom:0.5rem;"></div>`;
-      }
-      html += `</div>`;
-      container.innerHTML = html;
-    }
-
-    // ==========================================================
-    //   LOAD CONTENT (Menggunakan MemberModule)
-    // ==========================================================
-    async function loadContent(menu) {
-      document.querySelectorAll('#sidebar ul li').forEach(li => li.classList.remove('active'));
-      document.getElementById(`menu-${menu}`)?.classList.add('active');
-
-      const container = document.getElementById('content-container');
-
-      // Tampilkan skeleton sesuai menu
-      switch (menu) {
-        case 'dashboard': renderSkeletonDashboard(container); break;
-        case 'profil': renderSkeletonProfil(container); break;
-        case 'materi': renderSkeletonList(container, 'Materi Pembelajaran', 4); break;
-        case 'skrining': renderSkeletonList(container, 'Hasil Skrining', 6); break;
-        case 'pretest': renderSkeletonList(container, 'Riwayat Pretest', 3); break;
-        case 'posttest': renderSkeletonList(container, 'Riwayat Posttest', 3); break;
-        case 'absensi': renderSkeletonList(container, 'Riwayat Kehadiran', 4); break;
-        case 'sertifikat': renderSkeletonList(container, 'Sertifikat Saya', 3); break;
-        case 'informasi': renderSkeletonList(container, 'Informasi & Pengumuman', 4); break;
-        case 'idcard': renderSkeletonProfil(container); break;
-        default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
-      }
-
+    function formatDateID(d) {
+      if (!d) return '-';
       try {
-        // Pastikan data member sudah dimuat
-        if (!MemberModule.getState().lastSync) {
-          await MemberModule.loadAllData();
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return String(d);
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch { return '-'; }
+    }
+
+    function formatDateTimeID(d) {
+      if (!d) return '-';
+      try {
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return String(d);
+        return date.toLocaleString('id-ID', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        });
+      } catch { return '-'; }
+    }
+
+    // ============================================================
+    //   HERO GREETING
+    // ============================================================
+    function renderHeroGreeting() {
+      const member = MemberModule.getMemberData() || {};
+      const peserta = MemberModule.getPesertaData() || {};
+      const scope = MemberModule.getScopeContext();
+
+      const nama = member.nama_lengkap || peserta.nama_lengkap || 'Peserta PKD';
+      const avatar = document.getElementById('heroAvatar');
+      const name = document.getElementById('heroName');
+      const meta = document.getElementById('heroMeta');
+
+      if (avatar) avatar.textContent = getInitials(nama);
+      if (name) name.textContent = nama;
+
+      if (meta) {
+        const chips = [];
+        if (scope.utusan) {
+          chips.push(`<span class="hero-chip"><i class="bi bi-geo-alt-fill"></i>${escapeHtml(scope.utusan)}</span>`);
         }
-        switch (menu) {
-          case 'dashboard': await renderDashboard(container); break;
-          case 'profil': await renderProfil(container); break;
-          case 'idcard': await renderIdCard(container); break;
-          case 'materi': await renderMateri(container); break;
-          case 'skrining': await renderSkrining(container); break;
-          case 'pretest': await renderPretest(container); break;
-          case 'posttest': await renderPosttest(container); break;
-          case 'absensi': await renderAbsensi(container); break;
-          case 'sertifikat': await renderSertifikat(container); break;
-          case 'informasi': await renderInformasi(container); break;
-          default: container.innerHTML = '<h3>Menu tidak ditemukan</h3>';
+        if (scope.lokasiPkd) {
+          chips.push(`<span class="hero-chip"><i class="bi bi-building-fill"></i>${escapeHtml(scope.lokasiPkd)}</span>`);
         }
-      } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Error: ${escapeHtmlLocal(err.message)}</div>`;
+        const status = String(peserta.status || 'pending').toLowerCase();
+        chips.push(`<span class="hero-chip"><i class="bi bi-person-badge-fill"></i>${escapeHtml(status.charAt(0).toUpperCase() + status.slice(1))}</span>`);
+        meta.innerHTML = chips.join('');
       }
     }
 
-    // ==========================================================
-    //   🔥 RENDER FUNCTIONS (Menggunakan MemberModule)
-    // ==========================================================
-
-    // --- Dashboard ---
-    async function renderDashboard(container) {
-      const member = MemberModule.getMemberData();
+    // ============================================================
+    //   PROGRESS RING
+    // ============================================================
+    function renderProgressRing() {
       const stats = MemberModule.getStats();
-      const totalRes = await callApi('getTotalPeserta', {}, 'GET');
-      const totalPeserta = totalRes.total || 0;
-      const pretestCount = stats.pretestCount || 0;
-      const posttestCount = stats.posttestCount || 0;
-      const absenCount = stats.absenCount || 0;
-      const sertifikatCount = stats.sertifikatCount || 0;
+      const progress = MemberModule.getProgressSummary();
 
-      let html = `
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2 class="section-title">Dashboard</h2>
-          <span class="badge bg-primary px-3 py-2">Selamat datang, ${escapeHtmlLocal(member?.nama_lengkap || 'Member')}</span>
-        </div>
-        <div class="row g-4">
-          <div class="col-md-3">
-            <div class="card-dashboard text-center"><i class="bi bi-people fs-1 text-primary"></i><h3 class="mt-2">${totalPeserta}</h3><p class="text-muted">Total Peserta</p></div>
+      const pct = Math.round((progress.total / progress.max) * 100);
+      const circumference = 2 * Math.PI * 56; // r=56
+      const offset = circumference - (pct / 100) * circumference;
+
+      const ring = document.getElementById('ringProgress');
+      if (ring) {
+        ring.setAttribute('stroke-dasharray', String(circumference.toFixed(2)));
+        ring.setAttribute('stroke-dashoffset', String(offset.toFixed(2)));
+      }
+
+      const val = document.getElementById('ringValue');
+      if (val) val.textContent = pct + '%';
+
+      const subtitle = document.getElementById('ringSubtitle');
+      if (subtitle) {
+        subtitle.textContent = `${progress.total} dari ${progress.max} tahapan selesai`;
+      }
+    }
+
+    // ============================================================
+    //   TTD TRACK
+    // ============================================================
+    function renderTTDTrack() {
+      const ttd = MemberModule.getTTDStatus();
+
+      const steps = document.querySelectorAll('#ttdTrack .ttd-step');
+      steps.forEach(step => {
+        const role = step.dataset.role;
+        step.classList.toggle('done', !!ttd[role]);
+      });
+
+      const conn1 = document.querySelector('#ttdTrack [data-conn="1"]');
+      const conn2 = document.querySelector('#ttdTrack [data-conn="2"]');
+      if (conn1) conn1.classList.toggle('done', !!ttd.ketua_pc);
+      if (conn2) conn2.classList.toggle('done', !!(ttd.ketua_pc && ttd.sekretaris));
+
+      const statusEl = document.getElementById('ttdStatusText');
+      if (statusEl) {
+        if (ttd.complete) {
+          statusEl.innerHTML = `
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span class="text-success fw-semibold">Semua TTD lengkap — sertifikat siap digenerate!</span>
+          `;
+        } else if (ttd.progress > 0) {
+          statusEl.innerHTML = `
+            <i class="bi bi-hourglass-split text-warning"></i>
+            <span class="text-muted">Menunggu ${3 - ttd.progress} role lagi (${ttd.progress}/3 selesai)</span>
+          `;
+        } else {
+          statusEl.innerHTML = `
+            <i class="bi bi-hourglass-split text-muted"></i>
+            <span class="text-muted">Belum ada TTD. Menunggu Ketua PC.</span>
+          `;
+        }
+      }
+    }
+
+    // ============================================================
+    //   TAB RENDER
+    // ============================================================
+    function renderActiveTab() {
+      const container = document.getElementById('tabContent');
+      if (!container) return;
+
+      switch (activeTab) {
+        case 'profil':     return renderTabProfil(container);
+        case 'progress':   return renderTabProgress(container);
+        case 'idcard':     return renderTabIdCard(container);
+        case 'sertifikat': return renderTabSertifikat(container);
+        default:           return renderTabProfil(container);
+      }
+    }
+
+    // ============ TAB: PROFIL ============
+    function renderTabProfil(container) {
+      const member = MemberModule.getMemberData() || {};
+      const peserta = MemberModule.getPesertaData() || {};
+      const scope = MemberModule.getScopeContext();
+      const completeness = MemberModule.getProfileCompleteness();
+
+      const fields = [
+        ['Nama Lengkap',       member.nama_lengkap || peserta.nama_lengkap],
+        ['Email',              member.email || peserta.email],
+        ['No HP',              member.no_hp || peserta.no_hp],
+        ['Tempat/Tgl Lahir',   peserta.tempat_tgl_lahir],
+        ['Pekerjaan',          peserta.pekerjaan],
+        ['Pendidikan',         peserta.pendidikan_terakhir],
+        ['Alamat',             peserta.alamat],
+        ['Utusan (PAC)',       peserta.utusan || scope.utusan],
+        ['Lokasi PKD',         peserta.lokasi_pkd || scope.lokasiPkd],
+        ['Pengalaman Org.',    peserta.pengalaman_organisasi],
+        ['Status',             peserta.status],
+      ];
+
+      container.innerHTML = `
+        <div class="glass-card p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+              <h6 class="fw-bold mb-0">
+                <i class="bi bi-person-badge-fill text-primary me-2"></i>Data Profil
+              </h6>
+              <small class="text-muted">Kelengkapan: <strong>${completeness}%</strong></small>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" id="btnEditProfil">
+                <i class="bi bi-pencil me-1"></i>Edit Profil
+              </button>
+              <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" id="btnChangePwd">
+                <i class="bi bi-key me-1"></i>Ganti Password
+              </button>
+            </div>
           </div>
-          <div class="col-md-3">
-            <div class="card-dashboard text-center"><i class="bi bi-pencil-square fs-1 text-success"></i><h3 class="mt-2">${pretestCount}</h3><p class="text-muted">Pretest Dikerjakan</p></div>
+
+          <div class="progress-shimmer mb-3">
+            <div class="bar" style="width:${completeness}%; background: linear-gradient(90deg, #2563eb, #60a5fa);"></div>
           </div>
-          <div class="col-md-3">
-            <div class="card-dashboard text-center"><i class="bi bi-trophy fs-1 text-warning"></i><h3 class="mt-2">${posttestCount}</h3><p class="text-muted">Posttest Dikerjakan</p></div>
-          </div>
-          <div class="col-md-3">
-            <div class="card-dashboard text-center"><i class="bi bi-calendar-check fs-1 text-info"></i><h3 class="mt-2">${absenCount}</h3><p class="text-muted">Kehadiran</p></div>
-          </div>
-          <div class="col-md-3">
-            <div class="card-dashboard text-center"><i class="bi bi-award fs-1 text-danger"></i><h3 class="mt-2">${sertifikatCount}</h3><p class="text-muted">Sertifikat</p></div>
+
+          <div class="row g-2">
+            ${fields.filter(f => f[1]).map(([label, value]) => `
+              <div class="col-md-6">
+                <div class="p-2 px-3 rounded-3" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                  <div class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
+                  <div class="fw-semibold" style="font-size:0.9rem;word-break:break-word;">${escapeHtml(String(value))}</div>
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
       `;
-      container.innerHTML = html;
+
+      // Bind events
+      on(document.getElementById('btnEditProfil'), 'click', openEditProfilModal);
+      on(document.getElementById('btnChangePwd'), 'click', openChangePwdModal);
     }
 
-    // --- Profil ---
-    async function renderProfil(container) {
-      const member = MemberModule.getMemberData();
-      const peserta = MemberModule.getPesertaData();
-      const fotoDriveId = peserta?.fotoDriveId || null;
-      const fotoUrl = fotoDriveId ? `https://drive.google.com/thumbnail?id=${fotoDriveId}` : null;
+    // ============ TAB: PROGRESS ============
+    function renderTabProgress(container) {
+      const progress = MemberModule.getProgressSummary();
+      const stats = MemberModule.getStats();
 
-      let html = `
-        <h2 class="section-title">Profil Saya</h2>
-        <div class="card-dashboard">
-          <div class="row">
-            <div class="col-md-4 text-center">
-              ${fotoUrl ? `<img src="${fotoUrl}" class="profile-photo" alt="Foto">` : `<div class="photo-placeholder"><i class="bi bi-person-fill"></i></div>`}
-              <h4>${escapeHtmlLocal(member?.nama_lengkap || '-')}</h4>
-              <p class="text-muted"><i class="bi bi-envelope"></i> ${escapeHtmlLocal(member?.email || '-')}</p>
-              <p class="text-muted"><i class="bi bi-telephone"></i> ${escapeHtmlLocal(member?.no_hp || '-')}</p>
-            </div>
-            <div class="col-md-8">
-              <form id="profilForm">
-                <div class="mb-3"><label class="form-label fw-semibold">Nama Lengkap</label><input type="text" class="form-control" id="profilNama" value="${escapeHtmlLocal(member?.nama_lengkap || '')}" required></div>
-                <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="profilEmail" value="${escapeHtmlLocal(member?.email || '')}" required></div>
-                <div class="mb-3"><label class="form-label fw-semibold">No. HP</label><input type="text" class="form-control" id="profilNohp" value="${escapeHtmlLocal(member?.no_hp || '')}"></div>
-                <div class="mb-3"><label class="form-label fw-semibold">Foto Profil</label><input type="file" class="form-control" id="profilFoto" accept="image/*"><small class="text-muted">Maksimal 2MB</small><div class="mt-2"><img id="profilFotoPreview" src="${fotoUrl || '#'}" class="photo-preview" style="${fotoUrl ? '' : 'display: none;'}"></div></div>
-                <div class="mb-3"><label class="form-label fw-semibold">Password Baru <span class="text-muted small">(kosongkan jika tidak ingin mengubah)</span></label><input type="password" class="form-control" id="profilPassword" placeholder="Minimal 6 karakter"></div>
-                <button type="submit" class="btn btn-primary btn-rounded px-5">Simpan Perubahan</button>
-              </form>
-            </div>
-          </div>
+      const items = [
+        { key: 'hasSkrining',   icon: 'bi-clipboard-check',  title: 'Skrining',    subtitle: progress.hasSkrining ? 'Sudah diisi' : 'Belum diisi', link: '/bisaa/skrining.html' },
+        { key: 'hasPretest',    icon: 'bi-pencil-square',    title: 'Pre-test',    subtitle: progress.hasPretest ? `${stats.pretestCount} jawaban` : 'Belum diikuti', link: '/bisaa/pretest.html' },
+        { key: 'hasPosttest',   icon: 'bi-trophy',           title: 'Post-test',   subtitle: progress.hasPosttest ? `${stats.posttestCount} jawaban` : 'Belum diikuti', link: '/bisaa/posttest.html' },
+        { key: 'hasAbsen',      icon: 'bi-qr-code',          title: 'Absensi',     subtitle: progress.hasAbsen ? `${stats.absenCount} kehadiran` : 'Belum ada absen', link: '/bisaa/absen.html' },
+        { key: 'hasSertifikat', icon: 'bi-award-fill',       title: 'Sertifikat',  subtitle: progress.hasSertifikat ? `${stats.sertifikatCount} sertifikat` : 'Belum diterbitkan', link: '#sertifikat', action: 'goto-sertifikat' },
+      ];
+
+      container.innerHTML = `
+        <div class="glass-card p-3">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-graph-up-arrow text-primary me-2"></i>Progres Pembelajaran
+          </h6>
+          ${items.map(it => {
+            const done = progress[it.key];
+            const isBtn = it.action === 'goto-sertifikat';
+            const tag = isBtn ? 'button' : 'a';
+            const attrs = isBtn ? `type="button" data-goto="sertifikat"` : `href="${it.link}"`;
+            return `
+              <${tag} ${attrs} class="progress-item w-100 text-decoration-none text-reset ${done ? 'done' : ''}" style="border:none;cursor:pointer;">
+                <div class="check">
+                  <i class="bi ${done ? 'bi-check-lg' : it.icon}"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="title">${escapeHtml(it.title)}</div>
+                  <div class="subtitle">${escapeHtml(it.subtitle)}</div>
+                </div>
+                <i class="bi bi-chevron-right text-muted"></i>
+              </${tag}>
+            `;
+          }).join('')}
         </div>
       `;
-      container.innerHTML = html;
 
-      // Preview foto
-      document.getElementById('profilFoto').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran file maksimal 2MB');
-            this.value = '';
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = ev => {
-            document.getElementById('profilFotoPreview').src = ev.target.result;
-            document.getElementById('profilFotoPreview').style.display = 'inline';
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      // Submit form
-      document.getElementById('profilForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const nama = document.getElementById('profilNama').value.trim();
-        const email = document.getElementById('profilEmail').value.trim();
-        const nohp = document.getElementById('profilNohp').value.trim();
-        const password = document.getElementById('profilPassword').value;
-        const fotoFile = document.getElementById('profilFoto').files[0];
-
-        if (!nama || !email) { alert('Nama dan email wajib diisi'); return; }
-
-        let fotoBase64 = null;
-        if (fotoFile && fotoFile.size > 0) {
-          fotoBase64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(fotoFile);
-          });
-        }
-
-        try {
-          const res = await MemberModule.updateMemberProfile({
-            nama_lengkap: nama,
-            email: email,
-            no_hp: nohp,
-            password: password,
-            foto: fotoBase64
-          });
-          if (res.success) {
-            alert('Profil berhasil diperbarui');
-            // Update local storage data
-            const userData = getUserData();
-            setUserData({ ...userData, nama, email, nohp });
-            persistAuthState();
-            document.getElementById('sidebarUserName').innerText = nama;
-            renderProfil(container);
-          } else {
-            alert('Gagal memperbarui profil');
-          }
-        } catch (err) {
-          alert('Error: ' + err.message);
-        }
+      container.querySelectorAll('[data-goto="sertifikat"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeTab = 'sertifikat';
+          document.querySelectorAll('#tabNav [data-tab]').forEach(b =>
+            b.classList.toggle('active', b.dataset.tab === 'sertifikat'));
+          try { localStorage.setItem(ACTIVE_TAB_KEY, 'sertifikat'); } catch (e) {}
+          renderActiveTab();
+        });
       });
     }
 
-    // --- ID Card ---
-    async function renderIdCard(container) {
-      const member = MemberModule.getMemberData();
-      const peserta = MemberModule.getPesertaData();
-      const status = peserta?.status || 'pending';
+    // ============ TAB: ID CARD ============
+    function renderTabIdCard(container) {
+      const canAccess = MemberModule.canAccessIdCard();
+      const member = MemberModule.getMemberData() || {};
+      const peserta = MemberModule.getPesertaData() || {};
 
-      if (status !== 'approved' && status !== 'active') {
+      if (!canAccess) {
         container.innerHTML = `
-          <h2 class="section-title">ID Card Digital</h2>
-          <div class="card-dashboard text-center p-5">
-            <i class="bi bi-lock-fill fs-1 text-muted mb-3"></i>
-            <h5>Akun Belum Disetujui</h5>
-            <p class="text-muted">ID Card hanya dapat diakses setelah data disetujui oleh Admin.</p>
+          <div class="empty-state glass-card">
+            <i class="bi bi-hourglass-split text-warning"></i>
+            <h6>ID Card Belum Tersedia</h6>
+            <p>ID Card aktif setelah akun Anda disetujui oleh admin. Status saat ini: <strong>${escapeHtml(peserta.status || 'pending')}</strong></p>
           </div>
         `;
         return;
       }
 
-      const id = peserta?.id || '';
-      const nama = member?.nama_lengkap || peserta?.nama_lengkap || '-';
-      const alamat = peserta?.alamat || '-';
+      currentIdCardData = {
+        id: peserta.id,
+        nama_lengkap: member.nama_lengkap || peserta.nama_lengkap,
+        alamat: peserta.alamat,
+      };
 
-      // Generate QR Code
-      const containerQR = document.createElement('div');
-      if (id) {
-        const qr = qrcode(0, 'M'); qr.addData(`peserta_id=${id}`); qr.make();
-        const size = qr.getModuleCount() * 8;
-        const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        for (let r=0; r<qr.getModuleCount(); r++) {
-          for (let c=0; c<qr.getModuleCount(); c++) {
-            ctx.fillStyle = qr.isDark(r,c) ? '#000000' : '#ffffff';
-            ctx.fillRect(c*8, r*8, 8, 8);
+      container.innerHTML = `
+        <div class="glass-card p-3">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-person-vcard text-success me-2"></i>Kartu ID Digital
+          </h6>
+          <div class="id-card-wrapper">
+            <div id="idCardPreview" class="id-card">
+              <div class="header">
+                <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor">
+                <h5>PKD GP Ansor<small>Kabupaten Bantul</small></h5>
+              </div>
+              <div class="body">
+                <div class="qr-area" id="idCardQrContainer"></div>
+                <div class="data-area">
+                  <div>
+                    <span class="label">ID Peserta</span>
+                    <div class="value">${escapeHtml(String(peserta.id || '-'))}</div>
+                  </div>
+                  <div>
+                    <span class="label">Nama</span>
+                    <div class="value">${escapeHtml(member.nama_lengkap || peserta.nama_lengkap || '-')}</div>
+                  </div>
+                  <div>
+                    <span class="label">Alamat</span>
+                    <div class="value" style="font-weight:400;font-size:0.82rem;">${escapeHtml(peserta.alamat || '-')}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="footer">Password Login: <span>No HP Terdaftar</span></div>
+            </div>
+          </div>
+          <div class="text-center mt-3">
+            <button type="button" class="btn btn-success rounded-pill px-4" id="btnDownloadMyIdCard">
+              <i class="bi bi-download me-1"></i>Download ID Card (PNG)
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Generate QR
+      const qrContainer = document.getElementById('idCardQrContainer');
+      if (qrContainer && typeof qrcode === 'function' && peserta.id) {
+        try {
+          const qr = qrcode(0, 'M');
+          qr.addData(`peserta_id=${peserta.id}`);
+          qr.make();
+          const moduleCount = qr.getModuleCount();
+          const cellSize = 6, margin = 8;
+          const size = moduleCount * cellSize + margin * 2;
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+          for (let r = 0; r < moduleCount; r++) {
+            for (let c = 0; c < moduleCount; c++) {
+              if (qr.isDark(r, c)) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+              }
+            }
           }
-        }
-        containerQR.appendChild(canvas);
+          qrContainer.appendChild(canvas);
+        } catch (e) { console.warn('QR gen error', e); }
+      }
+
+      // Bind download
+      on(document.getElementById('btnDownloadMyIdCard'), 'click', handleDownloadIdCard);
+    }
+
+    // ============ TAB: SERTIFIKAT ============
+    function renderTabSertifikat(container) {
+      const list = MemberModule.getSertifikat();
+
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state glass-card">
+            <i class="bi bi-award"></i>
+            <h6>Belum Ada Sertifikat</h6>
+            <p>Sertifikat akan muncul di sini setelah Anda menyelesaikan semua tahapan PKD dan admin menerbitkannya.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-dark me-1">
+                <i class="bi bi-check-circle ${MemberModule.hasSkrining() ? 'text-success' : 'text-secondary'}"></i> Skrining
+              </span>
+              <span class="badge bg-light text-dark me-1">
+                <i class="bi bi-check-circle ${MemberModule.getStats().pretestCount > 0 ? 'text-success' : 'text-secondary'}"></i> Pre-test
+              </span>
+              <span class="badge bg-light text-dark me-1">
+                <i class="bi bi-check-circle ${MemberModule.getStats().posttestCount > 0 ? 'text-success' : 'text-secondary'}"></i> Post-test
+              </span>
+              <span class="badge bg-light text-dark">
+                <i class="bi bi-check-circle ${MemberModule.getTTDStatus().complete ? 'text-success' : 'text-secondary'}"></i> TTD
+              </span>
+            </div>
+          </div>
+        `;
+        return;
       }
 
       let html = `
-        <h2 class="section-title">ID Card Digital</h2>
-        <div class="id-card-wrapper">
-          <div id="idCard" class="id-card">
-            <div class="header">
-              <img src="/bisaa/LOGO%20ANSOR.webp" alt="Ansor">
-              <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
-            </div>
-            <div class="body">
-              <div class="qr-area">
-                ${containerQR.innerHTML || '<div class="text-muted">-</div>'}
+        <div class="glass-card p-3">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-award-fill text-warning me-2"></i>Sertifikat Saya
+          </h6>
+          <div class="row g-3">
+      `;
+
+      list.forEach(cert => {
+        const verifyUrl = `${BASE_PATH}verifikasi.html?nomor=${encodeURIComponent(cert.nomor_sertifikat || '')}`;
+        html += `
+          <div class="col-md-6">
+            <div class="p-3 rounded-4 border h-100" style="background:#f8fafc;">
+              <div class="d-flex align-items-start gap-3 mb-3">
+                <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;flex-shrink:0;">
+                  <i class="bi bi-award-fill"></i>
+                </div>
+                <div style="min-width:0;flex:1;">
+                  <h6 class="fw-bold mb-1" style="word-break:break-word;">${escapeHtml(cert.nama_peserta || '-')}</h6>
+                  <div class="small text-muted">Nomor:</div>
+                  <code class="small" style="word-break:break-all;">${escapeHtml(cert.nomor_sertifikat || '-')}</code>
+                </div>
               </div>
-              <div class="data-area">
-                <div><span class="label">ID Peserta</span><div class="value">#${escapeHtmlLocal(id)}</div></div>
-                <div><span class="label">Nama Lengkap</span><div class="value">${escapeHtmlLocal(nama)}</div></div>
-                <div><span class="label">Alamat</span><div class="value" style="font-weight:400;">${escapeHtmlLocal(alamat)}</div></div>
+              <div class="small text-muted mb-3">
+                <i class="bi bi-calendar3 me-1"></i>${escapeHtml(formatDateID(cert.createdAt))}
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                ${cert.pdf_url ? `
+                  <a href="${escapeHtml(cert.pdf_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm rounded-pill px-3 flex-grow-1">
+                    <i class="bi bi-download me-1"></i>Download PDF
+                  </a>
+                ` : ''}
+                <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                  <i class="bi bi-shield-check me-1"></i>Verifikasi
+                </a>
               </div>
             </div>
-            <div class="footer">Password Login: <span>No HP Terdaftar</span></div>
+          </div>
+        `;
+      });
+
+      html += `</div></div>`;
+      container.innerHTML = html;
+    }
+
+    // ============================================================
+    //   ID CARD DOWNLOAD
+    // ============================================================
+    async function handleDownloadIdCard() {
+      if (!currentIdCardData) return;
+      const btn = document.getElementById('btnDownloadMyIdCard');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+
+      try {
+        await downloadMemberIdCardAsPNG(currentIdCardData);
+        showPageToast('ID Card berhasil diunduh', 'success');
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    async function downloadMemberIdCardAsPNG(p) {
+      const holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+      holder.innerHTML = `
+        <div class="id-card" style="width:400px;background:#fff;border-radius:20px;padding:22px;">
+          <div class="header" style="display:flex;align-items:center;gap:12px;border-bottom:2px solid #14994c;padding-bottom:10px;margin-bottom:14px;">
+            <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor" style="height:32px;" crossorigin="anonymous">
+            <div>
+              <div style="font-weight:700;color:#0f172a;font-size:1rem;line-height:1.2;">PKD GP Ansor</div>
+              <div style="font-size:0.72rem;color:#64748b;">Kabupaten Bantul</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div id="qrHolder" style="flex-shrink:0;width:110px;height:110px;background:#fff;border-radius:14px;padding:5px;display:flex;justify-content:center;align-items:center;border:1px solid #e2e8f0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">ID Peserta</div>
+              <div style="font-weight:600;color:#0f172a;font-size:0.9rem;margin-bottom:4px;">${escapeHtml(String(p.id || '-'))}</div>
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">Nama</div>
+              <div style="font-weight:600;color:#0f172a;font-size:0.9rem;word-break:break-word;margin-bottom:4px;">${escapeHtml(p.nama_lengkap || '-')}</div>
+              <div style="font-size:0.62rem;color:#94a3b8;text-transform:uppercase;">Alamat</div>
+              <div style="font-weight:400;color:#0f172a;font-size:0.82rem;word-break:break-word;">${escapeHtml(p.alamat || '-')}</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;border-top:1px solid #e2e8f0;padding-top:8px;text-align:center;font-size:0.72rem;color:#64748b;">
+            Password Login: <span style="color:#2563eb;font-weight:600;">No HP Terdaftar</span>
           </div>
         </div>
-        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
-          <button class="btn btn-primary rounded-pill px-4" id="downloadIdCardBtn">
-            <i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)
-          </button>
-          <button class="btn btn-outline-secondary rounded-pill px-4" onclick="window.print()">
-            <i class="bi bi-printer me-1"></i> Cetak
-          </button>
-        </div>
       `;
-      container.innerHTML = html;
+      document.body.appendChild(holder);
 
-      // Event listener download
-      document.getElementById('downloadIdCardBtn')?.addEventListener('click', function() {
-        const cardElement = document.getElementById('idCard');
-        if (!cardElement) return;
-        const btn = this;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+      const qrHolder = holder.querySelector('#qrHolder');
+      try {
+        const qr = qrcode(0, 'M');
+        qr.addData(`peserta_id=${p.id}`);
+        qr.make();
+        const moduleCount = qr.getModuleCount();
+        const cellSize = 6, margin = 8;
+        const size = moduleCount * cellSize + margin * 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+        for (let r = 0; r < moduleCount; r++) {
+          for (let c = 0; c < moduleCount; c++) {
+            if (qr.isDark(r, c)) {
+              ctx.fillStyle = '#000';
+              ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+        qrHolder.appendChild(canvas);
+      } catch (e) { /* skip */ }
 
-        html2canvas(cardElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-          .then(canvasImg => {
-            const link = document.createElement('a');
-            link.download = `Kartu_ID_${nama.replace(/\s+/g, '_')}.png`;
-            link.href = canvasImg.toDataURL('image/png');
-            link.click();
-            showToast('Kartu ID berhasil diunduh!', 'success');
-          })
-          .catch(err => {
-            showToast('Gagal mengunduh kartu ID: ' + err.message, 'error');
-          })
-          .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-download me-1"></i> Unduh Kartu ID (PNG)';
-          });
+      await new Promise(r => setTimeout(r, 200));
+
+      if (typeof html2canvas === 'undefined') throw new Error('html2canvas tidak tersedia');
+      const cardEl = holder.querySelector('.id-card');
+      const canvasImg = await html2canvas(cardEl, { scale: 2, backgroundColor: '#fff', useCORS: true });
+
+      const link = document.createElement('a');
+      const namaFile = String(p.nama_lengkap || 'peserta').replace(/[^\w]+/g, '_');
+      link.download = `Kartu_ID_${namaFile}.png`;
+      link.href = canvasImg.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      holder.remove();
+    }
+
+    // ============================================================
+    //   EDIT PROFIL MODAL
+    // ============================================================
+    function openEditProfilModal() {
+      const member = MemberModule.getMemberData() || {};
+      const peserta = MemberModule.getPesertaData() || {};
+
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+      setVal('editNama', member.nama_lengkap || peserta.nama_lengkap);
+      setVal('editEmail', member.email || peserta.email);
+      setVal('editHp', member.no_hp || peserta.no_hp);
+      setVal('editAlamat', peserta.alamat);
+
+      const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditProfil'));
+      modal.show();
+    }
+
+    async function handleSaveProfil() {
+      const btn = document.getElementById('btnSaveProfil');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+
+      const data = {
+        nama_lengkap: document.getElementById('editNama').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        no_hp: document.getElementById('editHp').value.trim(),
+        alamat: document.getElementById('editAlamat').value.trim(),
+      };
+
+      if (!data.nama_lengkap) {
+        showPageToast('Nama wajib diisi', 'warning');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+        return;
+      }
+
+      try {
+        const res = await MemberModule.updateMemberProfile(data);
+        if (res && res.success) {
+          showPageToast('Profil diperbarui', 'success');
+          try { bootstrap.Modal.getInstance(document.getElementById('modalEditProfil'))?.hide(); } catch (e) {}
+          refreshAll();
+        } else {
+          throw new Error((res && res.error) || 'Gagal');
+        }
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    // ============================================================
+    //   CHANGE PASSWORD MODAL
+    // ============================================================
+    function openChangePwdModal() {
+      document.getElementById('newPwd').value = '';
+      document.getElementById('confirmPwd').value = '';
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChangePwd')).show();
+    }
+
+    async function handleSavePwd() {
+      const newPwd = document.getElementById('newPwd').value;
+      const confirmPwd = document.getElementById('confirmPwd').value;
+      const username = (getUserData() || {}).username;
+
+      if (!newPwd || newPwd.length < 6) {
+        showPageToast('Password minimal 6 karakter', 'warning');
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        showPageToast('Konfirmasi password tidak cocok', 'warning');
+        return;
+      }
+      if (!username) {
+        showPageToast('Username tidak ditemukan', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSavePwd');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+
+      try {
+        const res = await apiResetMemberPassword({ username, newPassword: newPwd });
+        if (res && res.success) {
+          showPageToast('Password berhasil diubah. Silakan login ulang.', 'success');
+          try { bootstrap.Modal.getInstance(document.getElementById('modalChangePwd'))?.hide(); } catch (e) {}
+          setTimeout(() => logout(), 2000);
+        } else {
+          throw new Error((res && res.error) || 'Gagal');
+        }
+      } catch (e) {
+        showPageToast('Gagal: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+
+    // ============================================================
+    //   TOGGLE PASSWORD VISIBILITY
+    // ============================================================
+    function bindPasswordToggles() {
+      on(document.getElementById('toggleNewPwd'), 'click', function () {
+        const input = document.getElementById('newPwd');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        const i = this.querySelector('i');
+        i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+      });
+      on(document.getElementById('toggleConfirmPwd'), 'click', function () {
+        const input = document.getElementById('confirmPwd');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        const i = this.querySelector('i');
+        i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
       });
     }
 
-    // --- Materi ---
-    async function renderMateri(container) {
-      const materi = MemberModule.getMateri();
-      let html = `<h2 class="section-title">Materi Pembelajaran</h2><div class="row g-4">`;
-      if (!materi || materi.length === 0) {
-        html += '<p class="text-muted">Belum ada materi.</p>';
-      } else {
-        materi.forEach(m => {
-          const fileUrl = `https://drive.google.com/file/d/${m.fileId}/preview`;
-          html += `
-            <div class="col-md-6">
-              <div class="card-dashboard">
-                <h5><i class="bi bi-file-earmark-${m.tipe === 'pdf' ? 'pdf' : 'ppt'} me-2"></i>${escapeHtmlLocal(m.judul)}</h5>
-                <p class="small text-muted">${escapeHtmlLocal(m.deskripsi || '')}</p>
-                <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat Materi</a>
-              </div>
+    // ============================================================
+    //   REFRESH ALL
+    // ============================================================
+    function refreshAll() {
+      renderHeroGreeting();
+      renderProgressRing();
+      renderTTDTrack();
+      renderActiveTab();
+    }
+
+    // ============================================================
+    //   BIND GLOBAL EVENTS
+    // ============================================================
+    function bindGlobalEvents() {
+      // Tab switch
+      document.querySelectorAll('#tabNav [data-tab]').forEach(btn => {
+        on(btn, 'click', () => {
+          const tab = btn.dataset.tab;
+          if (!tab) return;
+          activeTab = tab;
+          document.querySelectorAll('#tabNav [data-tab]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          try { localStorage.setItem(ACTIVE_TAB_KEY, tab); } catch (e) {}
+          renderActiveTab();
+        });
+      });
+
+      // Logout
+      on(document.getElementById('btnLogout'), 'click', () => {
+        if (!confirm('Yakin ingin logout?')) return;
+        try { logout(); }
+        catch (e) { window.location.href = BASE_PATH + 'index.html'; }
+      });
+
+      // Save Profil & Password
+      on(document.getElementById('btnSaveProfil'), 'click', handleSaveProfil);
+      on(document.getElementById('btnSavePwd'), 'click', handleSavePwd);
+
+      bindPasswordToggles();
+    }
+
+    // ============================================================
+    //   SUBSCRIBE
+    // ============================================================
+    function subscribeModule() {
+      MemberModule.subscribe((type) => {
+        if (!pageMounted) return;
+        if (type === 'cleared') return;
+        refreshAll();
+      });
+    }
+
+    // ============================================================
+    //   BOOT
+    // ============================================================
+    (async function boot() {
+      loadAuthState();
+      const role = getUserRole();
+
+      if (role !== 'member') {
+        console.warn('[Member] Role bukan member:', role);
+        window.location.replace(BASE_PATH + 'login.html');
+        return;
+      }
+
+      pageMounted = true;
+      bindGlobalEvents();
+      subscribeModule();
+
+      // Restore tab
+      try {
+        const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+        if (savedTab) {
+          activeTab = savedTab;
+          document.querySelectorAll('#tabNav [data-tab]').forEach(b =>
+            b.classList.toggle('active', b.dataset.tab === savedTab));
+        }
+      } catch (e) {}
+
+      // Skeleton
+      const tabContent = document.getElementById('tabContent');
+      if (tabContent) {
+        tabContent.innerHTML = `
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted small">Memuat data...</p>
+          </div>
+        `;
+      }
+
+      // Initial cache load (instant)
+      try {
+        const loadedFromCache = MemberModule.loadFromCache();
+        if (loadedFromCache) refreshAll();
+      } catch (e) {}
+
+      // Full load
+      try {
+        await MemberModule.loadAllData(true);
+        refreshAll();
+        console.log('[Member] Boot complete');
+      } catch (e) {
+        console.error('[Member] Boot error:', e);
+        if (tabContent) {
+          tabContent.innerHTML = `
+            <div class="alert alert-danger text-center">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Gagal memuat data: ${escapeHtml(e.message)}
+              <br>
+              <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+              </button>
             </div>
           `;
-        });
+        }
       }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // --- Skrining ---
-    async function renderSkrining(container) {
-      const data = MemberModule.getSkrining();
-      if (!data) {
-        container.innerHTML = `
-          <h2 class="section-title">Skrining</h2>
-          <div class="card-dashboard">
-            <p>Anda belum mengisi skrining. Silakan <a href="/bisaa/skrining.html">klik di sini</a> untuk mengisi.</p>
-          </div>`;
-      } else {
-        container.innerHTML = `
-          <h2 class="section-title">Hasil Skrining</h2>
-          <div class="card-dashboard">
-            <p><strong>Tanggal:</strong> ${escapeHtmlLocal(data.timestamp)}</p>
-            <p><strong>Nama:</strong> ${escapeHtmlLocal(data.nama)}</p>
-            <p><strong>Alamat:</strong> ${escapeHtmlLocal(data.alamat)}</p>
-            <p><strong>Info:</strong> ${escapeHtmlLocal(data.info)}</p>
-            <p><strong>Pengetahuan:</strong> ${escapeHtmlLocal(data.pengetahuan)}</p>
-            <p><strong>Qunut:</strong> ${escapeHtmlLocal(data.qunut)}</p>
-            <p><strong>Penyakit:</strong> ${escapeHtmlLocal(data.penyakit)}</p>
-            <p><strong>Pernah:</strong> ${escapeHtmlLocal(data.pernah)}</p>
-            <p><strong>Alasan:</strong> ${escapeHtmlLocal(data.alasan)}</p>
-            <p><strong>Catatan:</strong> ${escapeHtmlLocal(data.catatan)}</p>
-          </div>`;
-      }
-    }
-
-    // --- Pretest ---
-    async function renderPretest(container) {
-      const pretest = MemberModule.getPretest();
-      let html = `<h2 class="section-title">Riwayat Pretest</h2><div class="card-dashboard">`;
-      if (!pretest || pretest.length === 0) {
-        html += '<p>Belum mengerjakan pretest. <a href="/bisaa/pretest.html">Mulai Pretest</a></p>';
-      } else {
-        html += '<div class="list-group">';
-        pretest.forEach(p => {
-          html += `<div class="list-group-item d-flex justify-content-between align-items-center">
-            <span>${escapeHtmlLocal(new Date(p.timestamp).toLocaleString())}</span>
-            <span class="badge bg-primary rounded-pill">Skor: ${p.score}</span></div>`;
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // --- Posttest ---
-    async function renderPosttest(container) {
-      const posttest = MemberModule.getPosttest();
-      let html = `<h2 class="section-title">Riwayat Posttest</h2><div class="card-dashboard">`;
-      if (!posttest || posttest.length === 0) {
-        html += '<p>Belum mengerjakan posttest. <a href="/bisaa/posttest.html">Mulai Posttest</a></p>';
-      } else {
-        html += '<div class="list-group">';
-        posttest.forEach(p => {
-          html += `<div class="list-group-item d-flex justify-content-between align-items-center">
-            <span>${escapeHtmlLocal(new Date(p.timestamp).toLocaleString())}</span>
-            <span class="badge bg-warning text-dark rounded-pill">Skor: ${p.score}</span></div>`;
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // --- Absensi ---
-    async function renderAbsensi(container) {
-      const absen = MemberModule.getAbsensi();
-      let html = `<h2 class="section-title">Riwayat Kehadiran</h2><div class="card-dashboard">`;
-      if (!absen || absen.length === 0) {
-        html += '<p>Belum ada riwayat absensi.</p>';
-      } else {
-        html += '<table class="table"><thead><tr><th>Tanggal</th><th>Sesi</th></tr></thead><tbody>';
-        absen.forEach(a => {
-          html += `<tr><td>${escapeHtmlLocal(new Date(a.timestamp).toLocaleString())}</td><td>${escapeHtmlLocal(a.sesiNama)}</td></tr>`;
-        });
-        html += '</tbody></table>';
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // --- Sertifikat ---
-    async function renderSertifikat(container) {
-      const sertifikat = MemberModule.getSertifikat();
-      let html = `<h2 class="section-title">Sertifikat Saya</h2><div class="card-dashboard">`;
-      if (!sertifikat || sertifikat.length === 0) {
-        html += '<p>Belum ada sertifikat yang tersedia. Pastikan Anda telah menyelesaikan seluruh rangkaian kegiatan.</p>';
-      } else {
-        html += '<div class="row">';
-        sertifikat.forEach(s => {
-          html += `
-            <div class="col-md-6">
-              <div class="certificate-card d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>${escapeHtmlLocal(s.nomor_sertifikat)}</strong><br>
-                  <small>${escapeHtmlLocal(s.nama_peserta)}</small>
-                </div>
-                <a href="${escapeHtmlLocal(s.pdf_url)}" target="_blank" class="btn btn-sm btn-success">
-                  <i class="bi bi-download"></i> Unduh
-                </a>
-              </div>
-            </div>`;
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // --- Informasi ---
-    async function renderInformasi(container) {
-      const info = MemberModule.getInformasi();
-      let html = `<h2 class="section-title">Informasi & Pengumuman</h2><div class="row g-4">`;
-      if (!info || info.length === 0) {
-        html += '<p class="text-muted">Belum ada informasi.</p>';
-      } else {
-        info.sort((a,b) => (a.urutan || 0) - (b.urutan || 0));
-        info.forEach(item => {
-          if (item.jenis === 'video') {
-            html += `
-              <div class="col-md-6">
-                <div class="card-dashboard">
-                  <h5>${escapeHtmlLocal(item.judul)}</h5>
-                  <p>${escapeHtmlLocal(item.deskripsi)}</p>
-                  <div class="ratio ratio-16x9">
-                    <iframe src="${escapeHtmlLocal(item.url)}" allowfullscreen></iframe>
-                  </div>
-                </div>
-              </div>`;
-          } else if (item.jenis === 'flyer' || item.jenis === 'galeri') {
-            const imgUrl = item.url ? `https://drive.google.com/thumbnail?id=${item.url}` : '#';
-            html += `
-              <div class="col-md-4">
-                <div class="card-dashboard">
-                  <img src="${imgUrl}" class="img-fluid rounded" alt="${escapeHtmlLocal(item.judul)}">
-                  <h6 class="mt-2">${escapeHtmlLocal(item.judul)}</h6>
-                  <p class="small">${escapeHtmlLocal(item.deskripsi)}</p>
-                </div>
-              </div>`;
-          } else if (item.jenis === 'sertifikat') {
-            html += `
-              <div class="col-md-6">
-                <div class="card-dashboard d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5>${escapeHtmlLocal(item.judul)}</h5>
-                    <p class="small">${escapeHtmlLocal(item.deskripsi)}</p>
-                  </div>
-                  <a href="${escapeHtmlLocal(item.url)}" target="_blank" class="btn btn-sm btn-success">
-                    <i class="bi bi-download"></i> Unduh
-                  </a>
-                </div>
-              </div>`;
-          } else {
-            html += `
-              <div class="col-md-6">
-                <div class="card-dashboard">
-                  <h5>${escapeHtmlLocal(item.judul)}</h5>
-                  <p>${escapeHtmlLocal(item.deskripsi)}</p>
-                </div>
-              </div>`;
-          }
-        });
-      }
-      html += '</div>';
-      container.innerHTML = html;
-    }
-
-    // ==========================================================
-    //   AUTO REFRESH (POLLING 30 DETIK)
-    // ==========================================================
-    function startAutoRefresh() {
-      if (refreshInterval) clearInterval(refreshInterval);
-      refreshInterval = setInterval(() => {
-        MemberModule.loadAllData(false).then(() => {
-          const activeMenu = document.querySelector('#sidebar ul li.active')?.id?.replace('menu-', '') || 'dashboard';
-          loadContent(activeMenu);
-        }).catch(() => {
-          // silent fail
-        });
-      }, 30000);
-    }
-
-    // ==========================================================
-    //   BOOT APP
-    // ==========================================================
-    (async function boot() {
-      if (!await checkMemberAccess()) return;
-
-      // Update navbar user
-      updateNavbarMenu();
-
-      // Load default menu (dashboard) dengan skeleton
-      await loadContent('dashboard');
-
-      // Mulai auto-refresh
-      startAutoRefresh();
     })();
 
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      pageMounted = false;
+      listeners.forEach(({ el, ev, handler, opts }) => {
+        try { el.removeEventListener(ev, handler, opts); } catch (e) {}
+      });
+      listeners.length = 0;
+    });
+
+    console.log(
+      '%c Member Dashboard — v27.0.0 ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

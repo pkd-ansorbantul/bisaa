@@ -3,27 +3,34 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Lupa akun — PKD GP Ansor Kabupaten Bantul">
+    <meta name="robots" content="noindex, nofollow">
     <title>Lupa Akun · PKD GP Ansor Bantul</title>
 
-    <!-- Favicon & Font -->
-    <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
+    <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+    <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp" />
+    <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- Bootstrap 5 + Icons -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
     <style>
         /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
-        * { font-family: 'Inter', system-ui, sans-serif; }
+        * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
         body {
             background: #f8fafc;
             color: #0f172a;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            margin: 0;
         }
 
-        /* --- HEADER MINIMALIS (SAMA DENGAN INDEX) --- */
         .header-minimal {
             background: rgba(255, 255, 255, 0.72) !important;
             backdrop-filter: blur(20px) saturate(180%);
@@ -59,7 +66,6 @@
         .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
         .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-        /* --- GLASS CARD --- */
         .glass-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px) saturate(180%);
@@ -75,7 +81,6 @@
             border-color: rgba(37, 99, 235, 0.2);
         }
 
-        /* --- OPTION CARDS --- */
         .option-card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(8px);
@@ -101,23 +106,30 @@
         .option-card h6 { font-weight: 600; margin-top: 0.75rem; }
         .option-card p { font-size: 0.85rem; color: #64748b; margin-bottom: 0; }
 
-        /* --- FORM ELEMENTS --- */
         .form-control {
             border-radius: 12px;
             border: 1.5px solid #e2e8f0;
             padding: 0.6rem 1rem;
             transition: 0.2s;
+            font-size: 0.95rem;
         }
         .form-control:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
+        .form-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; }
+        .input-group .btn-outline-secondary {
+            border: 1.5px solid #e2e8f0;
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+        }
+        .input-group .form-control {
+            border-radius: 12px 0 0 12px;
+        }
 
-        /* --- ANIMASI --- */
         .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- FOOTER --- */
         .footer-modern {
             font-size: 0.85rem;
             color: #64748b;
@@ -128,7 +140,6 @@
             background: white;
         }
 
-        /* --- RESPONSIF --- */
         @media (max-width: 576px) {
             .glass-card { border-radius: 16px; padding: 1rem !important; }
             .header-minimal .container { padding: 0 0.5rem; }
@@ -137,48 +148,48 @@
             .brand-sub-mini { display: none; }
             .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
             .option-card { padding: 1rem; }
+            .option-card i { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ================= HEADER MINIMALIS ================= -->
     <header class="header-minimal sticky-top shadow-sm">
         <div class="container d-flex justify-content-between align-items-center py-3">
             <div class="d-flex align-items-center gap-2">
                 <a href="/bisaa/login.html" class="btn btn-back rounded-pill">
-                    <i class="bi bi-arrow-left me-1"></i> Kembali
+                    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Kembali
                 </a>
                 <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-                    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+                    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
                     <div>
                         <div class="brand-title-mini">PKD GP Ansor</div>
                         <span class="brand-sub-mini">Kabupaten Bantul</span>
                     </div>
                 </a>
             </div>
-            <!-- Area User Role (diisi oleh api.js) -->
             <div id="navbarUserMenu" class="user-menu-area"></div>
         </div>
     </header>
 
-    <!-- ================= KONTEN UTAMA ================= -->
     <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 700px;">
         <div class="glass-card p-4 fade-up">
-            <h2 class="section-title mb-4"><i class="bi bi-key me-2"></i>Lupa Akun</h2>
+            <h2 class="section-title mb-4" style="font-weight:650;font-size:1.5rem;border-left:6px solid #2563eb;padding-left:1rem;">
+                <i class="bi bi-key me-2" aria-hidden="true"></i>Lupa Akun
+            </h2>
             <p class="text-muted mb-4">Pilih opsi pemulihan di bawah, lalu isi data yang diminta untuk verifikasi.</p>
 
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
-                    <div class="option-card" id="optUsername" data-mode="username">
-                        <i class="bi bi-person text-primary"></i>
+                    <div class="option-card" id="optUsername" data-mode="username" role="button" tabindex="0" aria-label="Lupa username">
+                        <i class="bi bi-person text-primary" aria-hidden="true"></i>
                         <h6>Lupa Username</h6>
                         <p>Dapatkan username Anda dengan verifikasi data profil.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="option-card" id="optPassword" data-mode="password">
-                        <i class="bi bi-lock text-warning"></i>
+                    <div class="option-card" id="optPassword" data-mode="password" role="button" tabindex="0" aria-label="Lupa password">
+                        <i class="bi bi-lock text-warning" aria-hidden="true"></i>
                         <h6>Lupa Password</h6>
                         <p>Reset password dengan verifikasi data profil.</p>
                     </div>
@@ -186,89 +197,114 @@
             </div>
 
             <!-- ===== FORM ===== -->
-            <form id="forgotForm" style="display: none;">
+            <form id="forgotForm" style="display: none;" autocomplete="off" novalidate>
                 <input type="hidden" id="mode" value="" />
 
                 <!-- Field umum -->
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="fullName" placeholder="Contoh: Ahmad Fauzi" required />
+                    <label class="form-label fw-semibold" for="fullName">
+                        Nama Lengkap <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="fullName"
+                           placeholder="Contoh: Ahmad Fauzi" autocomplete="name" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" id="email" placeholder="email@example.com" required />
+                    <label class="form-label fw-semibold" for="email">
+                        Email <span class="text-danger">*</span>
+                    </label>
+                    <input type="email" class="form-control" id="email"
+                           placeholder="email@example.com" autocomplete="email" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">No. HP <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" id="phone" placeholder="081234567890" required />
+                    <label class="form-label fw-semibold" for="phone">
+                        No. HP <span class="text-danger">*</span>
+                    </label>
+                    <input type="tel" class="form-control" id="phone"
+                           placeholder="081234567890" autocomplete="tel" required />
                 </div>
 
                 <!-- Field untuk Reset Password -->
                 <div id="resetPasswordFields" style="display: none;">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="username" placeholder="Masukkan username Anda" required />
+                        <label class="form-label fw-semibold" for="username">
+                            Username <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="username"
+                               placeholder="Masukkan username Anda" autocomplete="username" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Password Baru (minimal 6 karakter) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold" for="newPassword">
+                            Password Baru (minimal 6 karakter) <span class="text-danger">*</span>
+                        </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="newPassword" placeholder="Password baru" minlength="6" required />
-                            <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
-                                <i class="bi bi-eye"></i>
+                            <input type="password" class="form-control" id="newPassword"
+                                   placeholder="Password baru" minlength="6"
+                                   autocomplete="new-password" required />
+                            <button class="btn btn-outline-secondary" type="button"
+                                    id="toggleNewPassword" aria-label="Tampilkan password baru">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Konfirmasi Password Baru <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold" for="confirmPassword">
+                            Konfirmasi Password Baru <span class="text-danger">*</span>
+                        </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password baru" required />
-                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
-                                <i class="bi bi-eye"></i>
+                            <input type="password" class="form-control" id="confirmPassword"
+                                   placeholder="Konfirmasi password baru"
+                                   autocomplete="new-password" required />
+                            <button class="btn btn-outline-secondary" type="button"
+                                    id="toggleConfirmPassword" aria-label="Tampilkan konfirmasi password">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-semibold shadow-sm mt-3" id="submitBtn">
-                    <i class="bi bi-check-circle me-2"></i> Kirim
+                <button type="submit"
+                        class="btn btn-primary btn-lg w-100 rounded-pill fw-semibold shadow-sm mt-3"
+                        id="submitBtn">
+                    <i class="bi bi-check-circle me-2" aria-hidden="true"></i> Kirim
                 </button>
-                <div id="formStatus" class="mt-3"></div>
+                <div id="formStatus" class="mt-3" aria-live="polite"></div>
             </form>
 
             <div class="text-center mt-4">
-                <a href="/bisaa/login.html" class="text-decoration-none small text-muted">Kembali ke halaman login</a>
+                <a href="/bisaa/login.html" class="text-decoration-none small text-muted">
+                    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Kembali ke halaman login
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- ================= FOOTER ================= -->
     <footer class="footer-modern container">
         <div class="d-flex justify-content-center align-items-center gap-2">
-            <i class="bi bi-c-circle"></i>
+            <i class="bi bi-c-circle" aria-hidden="true"></i>
             <span>Hak Cipta 2026 — Tim Instruktur GP Ansor Kabupaten Bantul</span>
         </div>
     </footer>
 
     <!-- ================= TOAST ================= -->
-    <div class="toast-container position-fixed top-0 end-0 p-3">
-        <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"
+         aria-live="polite" aria-atomic="true">
+        <div id="notificationToast" class="toast border-0 shadow-lg" role="alert"
+             data-bs-delay="3000" data-bs-autohide="true">
             <div class="toast-header bg-white border-0">
-                <i class="bi me-2" id="toastIcon"></i>
+                <i class="bi me-2" id="toastIcon" aria-hidden="true"></i>
                 <strong class="me-auto" id="toastTitle">Berhasil</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"
+                        aria-label="Tutup notifikasi"></button>
             </div>
             <div class="toast-body" id="toastMessage"></div>
         </div>
     </div>
 
-    <!-- ================= SCRIPTS ================= -->
-    <!-- Library Eksternal (tetap sebagai script biasa) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Modul ES Khusus Halaman Ini -->
     <script type="module">
         // ==========================================================
-        //   IMPOR DARI CORE API (ES Modules)
+        //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
         // ==========================================================
         import {
             callApi,
@@ -276,21 +312,38 @@
             escapeHtml,
             getUserRole,
             updateNavbarMenu
-        } from './js/core/api.js';
+        } from '/bisaa/js/core/api.js';
 
         // ==========================================================
-        //   STATE & UTILITY
+        //   CONSTANTS
+        // ==========================================================
+        const BASE_PATH = '/bisaa/';
+
+        // ==========================================================
+        //   STATE
         // ==========================================================
         let selectedMode = null;
+        let isSubmitting = false;
 
         // ==========================================================
-        //   TOGGLE PASSWORD (fungsi lokal, diekspos ke window untuk onclick)
+        //   TOGGLE PASSWORD VISIBILITY
         // ==========================================================
-        function togglePassword(id) {
+        function togglePassword(id, btn) {
             const el = document.getElementById(id);
-            if (el) el.type = el.type === 'password' ? 'text' : 'password';
+            if (!el) return;
+
+            if (el.type === 'password') {
+                el.type = 'text';
+                const icon = btn?.querySelector('i');
+                if (icon) icon.className = 'bi bi-eye-slash';
+                btn?.setAttribute('aria-label', 'Sembunyikan password');
+            } else {
+                el.type = 'password';
+                const icon = btn?.querySelector('i');
+                if (icon) icon.className = 'bi bi-eye';
+                btn?.setAttribute('aria-label', 'Tampilkan password');
+            }
         }
-        window.togglePassword = togglePassword;
 
         // ==========================================================
         //   INIT FORM
@@ -305,147 +358,270 @@
             const toggleNew = document.getElementById('toggleNewPassword');
             const toggleConfirm = document.getElementById('toggleConfirmPassword');
 
-            // Event listener untuk toggle password
-            toggleNew.addEventListener('click', () => togglePassword('newPassword'));
-            toggleConfirm.addEventListener('click', () => togglePassword('confirmPassword'));
+            if (toggleNew) {
+                toggleNew.addEventListener('click', () => togglePassword('newPassword', toggleNew));
+            }
+            if (toggleConfirm) {
+                toggleConfirm.addEventListener('click', () => togglePassword('confirmPassword', toggleConfirm));
+            }
 
             function setMode(mode) {
                 selectedMode = mode;
                 document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
-                if (mode === 'username') optUsername.classList.add('active');
-                else optPassword.classList.add('active');
+                if (mode === 'username' && optUsername) optUsername.classList.add('active');
+                if (mode === 'password' && optPassword) optPassword.classList.add('active');
 
-                forgotForm.style.display = 'block';
-                modeInput.value = mode;
-                resetPasswordFields.style.display = (mode === 'password') ? 'block' : 'none';
-
-                // Atur required field
-                document.querySelectorAll('#forgotForm input').forEach(el => el.required = false);
-                document.getElementById('fullName').required = true;
-                document.getElementById('email').required = true;
-                document.getElementById('phone').required = true;
-                if (mode === 'password') {
-                    document.getElementById('username').required = true;
-                    document.getElementById('newPassword').required = true;
-                    document.getElementById('confirmPassword').required = true;
+                if (forgotForm) forgotForm.style.display = 'block';
+                if (modeInput) modeInput.value = mode;
+                if (resetPasswordFields) {
+                    resetPasswordFields.style.display = (mode === 'password') ? 'block' : 'none';
                 }
-                formStatus.innerHTML = '';
+
+                document.querySelectorAll('#forgotForm input').forEach(el => {
+                    el.required = false;
+                });
+
+                const fullNameEl = document.getElementById('fullName');
+                const emailEl = document.getElementById('email');
+                const phoneEl = document.getElementById('phone');
+                const usernameEl = document.getElementById('username');
+                const newPassEl = document.getElementById('newPassword');
+                const confirmPassEl = document.getElementById('confirmPassword');
+
+                if (fullNameEl) fullNameEl.required = true;
+                if (emailEl) emailEl.required = true;
+                if (phoneEl) phoneEl.required = true;
+
+                if (mode === 'password') {
+                    if (usernameEl) usernameEl.required = true;
+                    if (newPassEl) newPassEl.required = true;
+                    if (confirmPassEl) confirmPassEl.required = true;
+                }
+
+                if (formStatus) formStatus.innerHTML = '';
             }
 
-            optUsername.addEventListener('click', function() { setMode('username'); });
-            optPassword.addEventListener('click', function() { setMode('password'); });
-
-            forgotForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const mode = modeInput.value;
-                const fullName = document.getElementById('fullName').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const phone = document.getElementById('phone').value.trim();
-                const username = document.getElementById('username').value.trim();
-                const newPassword = document.getElementById('newPassword').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-
-                formStatus.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
-                document.getElementById('submitBtn').disabled = true;
-
-                try {
-                    if (mode === 'username') {
-                        // Cari username
-                        const res = await callApi('getMemberUsername', {
-                            nama_lengkap: fullName,
-                            email: email,
-                            no_hp: phone
-                        }, 'GET');
-                        if (res.success && res.username) {
-                            formStatus.innerHTML = `
-                                <div class="alert alert-success">
-                                    Username Anda adalah: <strong>${escapeHtml(res.username)}</strong>
-                                </div>`;
-                            showToast('Username ditemukan!', 'success');
-                        } else {
-                            formStatus.innerHTML = `
-                                <div class="alert alert-danger">
-                                    Data tidak ditemukan. Pastikan nama, email, dan no HP sesuai dengan data peserta.
-                                </div>`;
-                        }
-                    } else if (mode === 'password') {
-                        // Verifikasi data + reset password
-                        if (newPassword !== confirmPassword) {
-                            formStatus.innerHTML = `<div class="alert alert-danger">Konfirmasi password tidak cocok.</div>`;
-                            document.getElementById('submitBtn').disabled = false;
-                            return;
-                        }
-                        if (newPassword.length < 6) {
-                            formStatus.innerHTML = `<div class="alert alert-danger">Password minimal 6 karakter.</div>`;
-                            document.getElementById('submitBtn').disabled = false;
-                            return;
-                        }
-                        const verifyRes = await callApi('verifyMemberForgot', {
-                            username: username,
-                            nama_lengkap: fullName,
-                            email: email,
-                            no_hp: phone
-                        }, 'GET');
-                        if (verifyRes.success) {
-                            const resetRes = await callApi('resetMemberPassword', {
-                                username: username,
-                                newPassword: newPassword
-                            }, 'POST');
-                            if (resetRes.success) {
-                                formStatus.innerHTML = `
-                                    <div class="alert alert-success">
-                                        Password berhasil direset. Silakan login dengan password baru.
-                                    </div>`;
-                                showToast('Password berhasil direset!', 'success');
-                                setTimeout(() => window.location.href = '/bisaa/login.html', 3000);
-                            } else {
-                                formStatus.innerHTML = `
-                                    <div class="alert alert-danger">
-                                        Gagal mereset password: ${escapeHtml(resetRes.error || 'Unknown error')}
-                                    </div>`;
-                            }
-                        } else {
-                            formStatus.innerHTML = `
-                                <div class="alert alert-danger">
-                                    Data verifikasi tidak cocok. Pastikan data yang Anda masukkan sesuai dengan data profil Anda.
-                                </div>`;
-                        }
+            if (optUsername) {
+                optUsername.addEventListener('click', () => setMode('username'));
+                optUsername.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setMode('username');
                     }
-                } catch (err) {
-                    formStatus.innerHTML = `
-                        <div class="alert alert-danger">
-                            Terjadi kesalahan: ${escapeHtml(err.message)}
-                        </div>`;
-                } finally {
-                    document.getElementById('submitBtn').disabled = false;
-                }
-            });
+                });
+            }
+            if (optPassword) {
+                optPassword.addEventListener('click', () => setMode('password'));
+                optPassword.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setMode('password');
+                    }
+                });
+            }
+
+            // ==========================================================
+            //   SUBMIT HANDLER
+            // ==========================================================
+            if (forgotForm) {
+                forgotForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    if (isSubmitting) return;
+
+                    const mode = modeInput?.value || '';
+                    const fullName = document.getElementById('fullName')?.value.trim() || '';
+                    const email = document.getElementById('email')?.value.trim() || '';
+                    const phone = document.getElementById('phone')?.value.trim() || '';
+                    const username = document.getElementById('username')?.value.trim() || '';
+                    const newPassword = document.getElementById('newPassword')?.value || '';
+                    const confirmPassword = document.getElementById('confirmPassword')?.value || '';
+
+                    if (!mode) {
+                        showToast('Pilih metode pemulihan terlebih dahulu', 'warning');
+                        return;
+                    }
+                    if (!fullName || !email || !phone) {
+                        showToast('Nama, email, dan no HP wajib diisi', 'warning');
+                        return;
+                    }
+
+                    if (formStatus) {
+                        formStatus.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memproses...</span></div></div>';
+                    }
+                    const submitBtn = document.getElementById('submitBtn');
+                    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+                    }
+                    isSubmitting = true;
+
+                    try {
+                        // ==========================================================
+                        //   MODE: LUPA USERNAME
+                        // ==========================================================
+                        if (mode === 'username') {
+                            const res = await callApi('getMemberUsername', {
+                                nama_lengkap: fullName,
+                                email: email,
+                                no_hp: phone
+                            }, 'GET');
+
+                            if (res && res.success && res.username) {
+                                if (formStatus) {
+                                    formStatus.innerHTML = `
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>
+                                            Username Anda adalah:
+                                            <strong class="text-primary">${escapeHtml(res.username)}</strong>
+                                        </div>`;
+                                }
+                                showToast('Username ditemukan!', 'success');
+                            } else {
+                                if (formStatus) {
+                                    formStatus.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+                                            Data tidak ditemukan. Pastikan nama, email, dan no HP sesuai dengan data peserta.
+                                        </div>`;
+                                }
+                                showToast('Data tidak ditemukan', 'error');
+                            }
+                        }
+                        // ==========================================================
+                        //   MODE: LUPA PASSWORD
+                        // ==========================================================
+                        else if (mode === 'password') {
+                            if (!username) {
+                                showToast('Username wajib diisi', 'warning');
+                                return;
+                            }
+                            if (newPassword !== confirmPassword) {
+                                if (formStatus) {
+                                    formStatus.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+                                            Konfirmasi password tidak cocok.
+                                        </div>`;
+                                }
+                                showToast('Konfirmasi password tidak cocok', 'error');
+                                return;
+                            }
+                            if (newPassword.length < 6) {
+                                if (formStatus) {
+                                    formStatus.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+                                            Password minimal 6 karakter.
+                                        </div>`;
+                                }
+                                showToast('Password minimal 6 karakter', 'error');
+                                return;
+                            }
+
+                            const verifyRes = await callApi('verifyMemberForgot', {
+                                username: username,
+                                nama_lengkap: fullName,
+                                email: email,
+                                no_hp: phone
+                            }, 'GET');
+
+                            if (verifyRes && verifyRes.success) {
+                                const resetRes = await callApi('resetMemberPassword', {
+                                    username: username,
+                                    newPassword: newPassword
+                                }, 'POST');
+
+                                if (resetRes && resetRes.success) {
+                                    if (formStatus) {
+                                        formStatus.innerHTML = `
+                                            <div class="alert alert-success">
+                                                <i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>
+                                                Password berhasil direset. Silakan login dengan password baru.<br>
+                                                <small class="text-muted">Anda akan diarahkan ke halaman login dalam 3 detik…</small>
+                                            </div>`;
+                                    }
+                                    showToast('Password berhasil direset!', 'success');
+
+                                    // ✅ v26.1.8 GITHUB PAGES: redirect ke /bisaa/login.html
+                                    setTimeout(() => {
+                                        window.location.href = BASE_PATH + 'login.html';
+                                    }, 3000);
+                                } else {
+                                    const errMsg = (resetRes && resetRes.error) || 'Gagal mereset password';
+                                    if (formStatus) {
+                                        formStatus.innerHTML = `
+                                            <div class="alert alert-danger">
+                                                <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+                                                ${escapeHtml(errMsg)}
+                                            </div>`;
+                                    }
+                                    showToast('Gagal: ' + errMsg, 'error');
+                                }
+                            } else {
+                                if (formStatus) {
+                                    formStatus.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-x-circle-fill me-2" aria-hidden="true"></i>
+                                            Data verifikasi tidak cocok. Pastikan data yang Anda masukkan sesuai dengan data profil Anda.
+                                        </div>`;
+                                }
+                                showToast('Data verifikasi tidak cocok', 'error');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('[ForgotAccount] Error:', err);
+                        if (formStatus) {
+                            formStatus.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+                                    Terjadi kesalahan: ${escapeHtml(err.message || 'Network error')}
+                                </div>`;
+                        }
+                        showToast('Terjadi kesalahan: ' + (err.message || 'Unknown error'), 'error');
+                    } finally {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnHtml;
+                        }
+                        isSubmitting = false;
+                    }
+                });
+            }
         }
 
         // ==========================================================
-        //   🛡️ GUARD PUBLIC ACCESS & BOOT
+        //   BOOT — Cek Login State & Init
         // ==========================================================
         (async function boot() {
-            // Jika sudah login, redirect ke dashboard masing-masing
+            // ✅ v26.1.8 GITHUB PAGES: redirect ke /bisaa/
             const role = getUserRole();
             if (role === 'admin') {
-                window.location.href = '/bisaa/admin/dashboard_admin.html';
+                window.location.href = BASE_PATH + 'app.html#/admin/dashboard';
                 return;
             } else if (role === 'ketua_pac') {
-                window.location.href = '/bisaa/ketua_pac.html';
+                window.location.href = BASE_PATH + 'ketua_pac.html';
                 return;
             } else if (role === 'member') {
-                window.location.href = '/bisaa/member.html';
+                window.location.href = BASE_PATH + 'member.html';
                 return;
             }
 
-            // Update menu user (guest)
             updateNavbarMenu();
-
-            // Inisialisasi form
             initForgotForm();
+
+            setTimeout(() => {
+                document.getElementById('optUsername')?.focus?.();
+            }, 300);
         })();
 
+        // ==========================================================
+        //   CONSOLE BANNER
+        // ==========================================================
+        console.log(
+            '%c forgot_account.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+            'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+        );
     </script>
 </body>
 </html>
