@@ -1,22 +1,23 @@
 // ============================================================
-// js/core/api.js — v26.4.1 PRODUCTION FULL FIX
+// js/core/api.js — v27.2.3 PRODUCTION FULL FIX
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v26.4.1:
-//   ✅ FIX CORS: fetch options redirect:'follow' + credentials:'omit'
-//   ✅ FIX CORS: better error message untuk Failed to fetch
-//   ✅ FIX: dedup GET only — POST selalu fresh
-//   ✅ FIX: JSON parse fallback lebih robust
-//   ✅ ADD: getAppVersion() sync dengan config.js
-//   ✅ ADD: healthCheck() + ping() untuk diagnostic
-//   ✅ ADD: 137+ named exports (semua view terpenuhi)
-//   ✅ ADD: setUserRole / setUserData / persistAuthState
-//   ✅ ADD: logout() dengan cleanup cache
-//   ✅ ADD: updateNavbarMenu() lengkap semua role
-//   ✅ ADD: guardPublicAccess() dengan cache 30s
-//   ✅ ADD: formatDateID, formatDateTimeID, getLocalDateOnly, timeSinceID
-//   ✅ ADD: fileToBase64, uploadToDrive, downloadJSON, downloadCSV
-//   ✅ KEEP: 100% backward compatible dengan v26.4.0
+// CHANGELOG v27.2.3 (dari v26.4.1):
+//   ✅ FIX CRITICAL: Tambah export normalizeResult + normalizeObject
+//     → fix error "does not provide an export named 'normalizeResult'"
+//     → dibutuhkan oleh views/admin/sertifikat.js
+//   ✅ FIX: Semua named exports diverifikasi
+//   ✅ KEEP: CORS handling redirect:follow + credentials:omit
+//   ✅ KEEP: 137+ named exports (semua view terpenuhi)
+//   ✅ KEEP: dedup GET only — POST selalu fresh
+//   ✅ KEEP: JSON parse fallback robust
+//   ✅ KEEP: healthCheck() + ping() untuk diagnostic
+//   ✅ KEEP: setUserRole / setUserData / persistAuthState
+//   ✅ KEEP: logout() dengan cleanup cache
+//   ✅ KEEP: updateNavbarMenu() lengkap semua role
+//   ✅ KEEP: guardPublicAccess() dengan cache 30s
+//   ✅ KEEP: formatDateID, formatDateTimeID, getLocalDateOnly, timeSinceID
+//   ✅ KEEP: fileToBase64, uploadToDrive, downloadJSON, downloadCSV
 // ============================================================
 
 import {
@@ -52,6 +53,31 @@ export function escapeHtml(unsafe) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// ============================================================
+//   UTILITY: normalizeResult (BARU v27.2.3)
+//   Extrak array dari berbagai bentuk respons API
+// ============================================================
+export function normalizeResult(res) {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (res.data && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
+// ============================================================
+//   UTILITY: normalizeObject (BARU v27.2.3)
+// ============================================================
+export function normalizeObject(res, fallback = null) {
+  if (res === null || res === undefined) return fallback;
+  if (Array.isArray(res)) return res[0] || fallback;
+  if (typeof res === 'object') {
+    if (res.success === false) return fallback;
+    if (res.data !== undefined) return res.data;
+    return res;
+  }
+  return fallback;
 }
 
 // ============================================================
@@ -185,7 +211,6 @@ export function logout() {
   safeSessionRemove(AUTH_STORAGE_KEY);
   safeLocalRemove(AUTH_STORAGE_KEY);
 
-  // Clear semua cache pkd_*
   try {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -288,17 +313,15 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   CORE API CALL — v26.4.1 CORS FIX
+//   CORE API CALL — v27.2.3 CORS FIX
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
-  // Strip cache-buster dari dedup key
   const dedupParams = { ...params };
   delete dedupParams._t;
   delete dedupParams._nocache;
 
-  // ⚠️ Dedup GET only — POST jangan (cegah stale write)
   const useDedup = (method === 'GET');
   const dedupeKey = useDedup
     ? `${method}:${action}:${JSON.stringify(dedupParams)}`
@@ -310,7 +333,6 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
 
   const promise = new Promise((resolve) => {
     try {
-      // Build clean params
       const cleanParams = {};
       Object.keys(params || {}).forEach(key => {
         const val = params[key];
@@ -334,22 +356,18 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         fetchOptions = {
           method: 'GET',
           mode: 'cors',
-          redirect: 'follow',           // ✅ FIX v26.4.1: ikuti redirect GAS
-          credentials: 'omit',          // ✅ FIX v26.4.1: GAS tidak pakai cookies
-          cache: 'no-store',            // ✅ FIX v26.4.1: hindari cache stale
-          headers: {
-            'Accept': 'application/json',
-          },
+          redirect: 'follow',
+          credentials: 'omit',
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' },
         };
       } else {
         const body = new URLSearchParams({ action, ...cleanParams }).toString();
         fetchOptions = {
           method: 'POST',
           mode: 'cors',
-          redirect: 'follow',           // ✅ FIX v26.4.1
-          credentials: 'omit',          // ✅ FIX v26.4.1
-          // ⚠️ Content-Type HARUS safelisted (x-www-form-urlencoded atau text/plain)
-          // supaya tidak trigger CORS preflight OPTIONS
+          redirect: 'follow',
+          credentials: 'omit',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
           },
@@ -387,7 +405,6 @@ async function _fetchWithRetry(url, options, timeout, maxRetry) {
     try {
       const result = await _fetchOnce(url, options, timeout);
 
-      // Retry hanya untuk HTTP 5xx
       if (result && result._httpError && attempt < maxRetry && result._retryable) {
         lastError = new Error(result.error);
         await _sleep(500 * (attempt + 1));
@@ -460,7 +477,6 @@ function _fetchOnce(url, options, timeout) {
         if (err.name === 'AbortError') {
           reject(new Error('Request timeout'));
         } else if (err.name === 'TypeError' && err.message && err.message.includes('Failed to fetch')) {
-          // ✅ FIX v26.4.1: CORS error hint
           reject(new Error(
             'Gagal terhubung ke server. Kemungkinan penyebab:\n' +
             '1. Deployment GAS belum "Anyone" — cek Deploy → Manage Deployments\n' +
@@ -740,7 +756,7 @@ export function unreadNotifCount() {
 }
 
 // ============================================================
-//   DIAGNOSTIC HELPERS — v26.4.1
+//   DIAGNOSTIC HELPERS
 // ============================================================
 export async function healthCheck() {
   return await callApi('health', {}, 'GET');
@@ -1039,7 +1055,7 @@ export function submitKontak(nama, email, pesan, username, role, ip) {
 export function migrateSettingsBooleans()          { return callApi('migrateSettingsBooleans', {}, 'POST'); }
 
 // ============================================================
-//   PASSWORD DIAGNOSTICS (v26.1.8.2+)
+//   PASSWORD DIAGNOSTICS
 // ============================================================
 export function debugVerifyPassword(username, password) {
   return callApi('debugVerifyPassword', { username, password }, 'GET');
