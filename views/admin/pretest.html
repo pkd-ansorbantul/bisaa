@@ -1,0 +1,129 @@
+<!-- views/admin/pretest.html — konten saja -->
+
+<h2 class="section-title"><i class="bi bi-pencil-square me-2"></i>Manajemen Pre-test</h2>
+
+<!-- TABS -->
+<ul class="nav nav-tabs mb-3" id="pretestTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="soal-tab" data-bs-toggle="tab"
+            data-bs-target="#tabSoal" type="button" role="tab">
+      <i class="bi bi-question-circle me-1"></i> Soal Pretest
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="data-tab" data-bs-toggle="tab"
+            data-bs-target="#tabData" type="button" role="tab">
+      <i class="bi bi-table me-1"></i> Data Pretest
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="pretestTabContent">
+  <!-- ============ TAB: SOAL ============ -->
+  <div class="tab-pane fade show active" id="tabSoal" role="tabpanel">
+    <div id="soalContainer">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Memuat soal…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: DATA ============ -->
+  <div class="tab-pane fade" id="tabData" role="tabpanel">
+    <div id="dataContainer">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Memuat data…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL SOAL (TAMBAH/EDIT) ==================== -->
+<div class="modal fade" id="pretestModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="pretestModalLabel">
+          <i class="bi bi-question-circle me-2"></i>
+          <span id="pretestModalTitle">Tambah Soal Pretest</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="pretestId">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Teks Soal <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="pretestTeks" rows="2"
+                    placeholder="Masukkan teks soal" required></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Opsi (pisahkan dengan koma) <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="pretestOpsi"
+                 placeholder="Contoh: Jakarta,Bandung,Surabaya" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Jawaban Benar <span class="text-danger">*</span></label>
+          <div id="pretestOptionsContainer" class="d-flex flex-wrap gap-2"></div>
+          <input type="hidden" id="pretestJawaban" value="0">
+          <small class="text-muted d-block mt-1">Klik opsi yang benar untuk menandainya.</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Urutan</label>
+          <input type="number" class="form-control" id="pretestUrutan"
+                 placeholder="Urutan (opsional)" min="0">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Timer per Soal</label>
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="pretestTimerEnabled">
+              <label class="form-check-label" for="pretestTimerEnabled">
+                Aktifkan timer
+              </label>
+            </div>
+            <div id="pretestTimerDurationGroup" style="display:none;">
+              <label class="form-label mb-0">Durasi (detik)</label>
+              <input type="number" class="form-control d-inline-block"
+                     id="pretestTimerDuration" value="30" min="5" style="width:100px;">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="simpanPretestBtn">
+          <i class="bi bi-save me-1"></i> Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL DETAIL JAWABAN ==================== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Pretest</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4" id="detailModalBody">
+        <div class="text-center">
+          <div class="spinner-border text-primary"></div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>

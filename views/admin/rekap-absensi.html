@@ -1,0 +1,105 @@
+<!-- views/admin/rekap-absensi.html — konten saja -->
+
+<h2 class="section-title"><i class="bi bi-bar-chart me-2"></i>Rekap Absensi</h2>
+
+<!-- TOOLBAR FILTER -->
+<div class="row g-2 mb-3 align-items-end">
+  <div class="col-lg-4 col-md-6">
+    <label class="form-label small fw-semibold mb-1">Filter Sesi</label>
+    <select class="form-select" id="filterSesi">
+      <option value="">Semua Sesi</option>
+    </select>
+  </div>
+  <div class="col-lg-3 col-md-6">
+    <label class="form-label small fw-semibold mb-1">Filter Tanggal</label>
+    <input type="date" class="form-control" id="filterTanggal">
+  </div>
+  <div class="col-lg-5 col-md-12">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <button class="btn btn-primary" id="applyFilterBtn">
+        <i class="bi bi-funnel me-1"></i> Terapkan
+      </button>
+      <button class="btn btn-outline-secondary" id="resetFilterBtn">
+        <i class="bi bi-x-circle me-1"></i> Reset
+      </button>
+      <button class="btn btn-outline-success" id="exportDataBtn">
+        <i class="bi bi-download me-1"></i> Ekspor
+      </button>
+      <button class="btn btn-outline-secondary" id="refreshDataBtn">
+        <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+      </button>
+      <span id="cacheStatus" class="cache-status">Memuat…</span>
+    </div>
+  </div>
+</div>
+
+<!-- STATISTIK -->
+<div id="statsContainer" class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statHadir" style="font-size:2rem;font-weight:700;color:#16a34a;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Hadir</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statIzin" style="font-size:2rem;font-weight:700;color:#f59e0b;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Izin</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statSakit" style="font-size:2rem;font-weight:700;color:#0891b2;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Sakit</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statAlpha" style="font-size:2rem;font-weight:700;color:#dc2626;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Alpha</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm" style="border-radius:16px;">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Distribusi Status Absensi</h6>
+        <div style="position:relative;height:250px;"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm" style="border-radius:16px;">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Rekap per Sesi</h6>
+        <div style="position:relative;height:250px;"><canvas id="sesiChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE DETAIL -->
+<div class="table-container">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h6 class="fw-bold mb-0"><i class="bi bi-list-ul me-2"></i>Detail Rekap Absensi</h6>
+    <div class="d-flex gap-2">
+      <div class="input-group" style="max-width:260px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control border-start-0" id="searchInput"
+               placeholder="Cari peserta…" autocomplete="off">
+      </div>
+      <button class="btn btn-outline-secondary btn-sm rounded-pill" id="printBtn">
+        <i class="bi bi-printer me-1"></i> Cetak
+      </button>
+    </div>
+  </div>
+  <div id="rekapTableContainer">
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2 text-muted">Memuat rekap absensi…</p>
+    </div>
+  </div>
+</div>

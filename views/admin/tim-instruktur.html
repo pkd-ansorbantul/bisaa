@@ -1,0 +1,245 @@
+<!-- ============================================================
+     TIM INSTRUKTUR VIEW — Fragment HTML
+     Dimuat oleh: js/router.js
+     Logic: views/admin/tim-instruktur.js
+     Versi: 26.1.6
+     Tidak ada <html>, <head>, <body> — hanya konten fragment
+     ============================================================ -->
+
+<!-- Page Title -->
+<h2 class="section-title">
+  <i class="bi bi-people-fill me-2" aria-hidden="true"></i>Manajemen Tim Instruktur
+</h2>
+
+<!-- ============================================================
+     STATS ROW
+     ============================================================ -->
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statTotalAnggota">-</div>
+      <div class="lbl">Total Anggota</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statAdaFoto">-</div>
+      <div class="lbl">Berfoto</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statJabatan">-</div>
+      <div class="lbl">Jabatan Unik</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statKontak">-</div>
+      <div class="lbl">Punya Kontak</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOOLBAR
+     ============================================================ -->
+<div class="row mb-3 g-2 align-items-center">
+  <div class="col-lg-7">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <button type="button" class="btn btn-primary" id="addTimBtn" aria-label="Tambah anggota tim">
+        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tambah Anggota
+      </button>
+      <button type="button" class="btn btn-outline-success" id="exportTimBtn" aria-label="Ekspor data">
+        <i class="bi bi-download me-1" aria-hidden="true"></i>Ekspor
+      </button>
+      <button type="button" class="btn btn-outline-secondary" id="refreshTimBtn" aria-label="Segarkan data">
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Segarkan
+      </button>
+      <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat…</span>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="input-group">
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted" aria-hidden="true"></i>
+      </span>
+      <input type="text" class="form-control border-start-0" id="searchTimInput"
+             placeholder="Cari nama atau jabatan…" autocomplete="off"
+             aria-label="Cari anggota tim">
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TABLE CONTAINER — diisi oleh tim-instruktur.js
+     ============================================================ -->
+<div id="timTableContainer" class="table-container" aria-live="polite">
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Memuat…</span>
+    </div>
+    <p class="mt-2 text-muted small mb-0">Memuat data tim instruktur…</p>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: FORM TAMBAH / EDIT ANGGOTA
+     ============================================================ -->
+<div class="modal fade" id="timFormModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-person-badge me-2" aria-hidden="true"></i>
+          <span id="timFormTitle">Tambah Anggota Tim</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height:75vh;overflow-y:auto;">
+        <input type="hidden" id="editTimId">
+
+        <div class="row g-3">
+          <!-- Nama -->
+          <div class="col-md-8">
+            <label class="form-label fw-semibold" for="timNama">
+              Nama Lengkap <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="timNama" required
+                   placeholder="Contoh: Cahyo Galih" autocomplete="name">
+          </div>
+
+          <!-- Urutan -->
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="timUrutan">Urutan Tampil</label>
+            <input type="number" class="form-control" id="timUrutan" min="1"
+                   placeholder="1 = paling atas" inputmode="numeric">
+            <div class="form-text text-muted small">Urutan lebih kecil muncul lebih atas.</div>
+          </div>
+
+          <!-- Jabatan -->
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="timJabatan">
+              Jabatan <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="timJabatan" required
+                   placeholder="Contoh: Ketua Tim Instruktur">
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="timDeskripsi">Deskripsi / Tugas</label>
+            <textarea class="form-control" id="timDeskripsi" rows="3"
+                      placeholder="Deskripsi singkat peran dalam tim…"></textarea>
+          </div>
+
+          <!-- WA -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="timKontakWa">Kontak WhatsApp</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-whatsapp text-success" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="timKontakWa"
+                     placeholder="6283866675521 (tanpa +, tanpa spasi)" inputmode="numeric">
+            </div>
+            <div class="form-text text-muted small">Format internasional: <code>628xxx</code></div>
+          </div>
+
+          <!-- Email -->
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="timKontakEmail">Kontak Email</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope text-primary" aria-hidden="true"></i></span>
+              <input type="email" class="form-control" id="timKontakEmail"
+                     placeholder="nama@email.com" autocomplete="email">
+            </div>
+          </div>
+
+          <!-- Foto -->
+          <div class="col-12">
+            <label class="form-label fw-semibold">Foto Anggota</label>
+            <div class="d-flex gap-3 align-items-start flex-wrap">
+              <div id="timFotoPreviewBox" style="width:110px;height:110px;border-radius:20px;border:2px dashed #cbd5e1;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                <img id="timFotoPreview" src="" alt="Preview" style="display:none;width:100%;height:100%;object-fit:cover;">
+                <i class="bi bi-person-fill text-muted" id="timFotoPlaceholder" style="font-size:2.5rem;" aria-hidden="true"></i>
+              </div>
+              <div class="flex-grow-1" style="min-width:200px;">
+                <input type="file" class="form-control" id="timFotoInput"
+                       accept="image/jpeg,image/png,image/webp"
+                       aria-label="Upload foto">
+                <div class="form-text text-muted small">
+                  Max 2 MB. Format: JPG, PNG, WEBP. Rasio 1:1 disarankan.
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="clearTimFotoBtn">
+                  <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Hapus Foto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveTimBtn">
+          <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: DETAIL ANGGOTA
+     ============================================================ -->
+<div class="modal fade" id="detailTimModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-eye me-2" aria-hidden="true"></i>Detail Anggota Tim
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height:75vh;overflow-y:auto;">
+        <div id="detailTimContent"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: KONFIRMASI HAPUS
+     ============================================================ -->
+<div class="modal fade" id="deleteTimModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-trash me-2" aria-hidden="true"></i>Konfirmasi Hapus
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block" aria-hidden="true"></i>
+        <p>Hapus anggota tim ini?</p>
+        <p class="fw-bold text-primary mb-2" id="deleteTimName">—</p>
+        <div class="alert alert-warning small mb-0">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Foto akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
+        </div>
+        <input type="hidden" id="deleteTimId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteTimBtn">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

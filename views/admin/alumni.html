@@ -1,0 +1,148 @@
+<!-- ============================================================
+     ALUMNI VIEW — Fragment HTML
+     Dimuat oleh: js/router.js
+     Logic: views/admin/alumni.js
+     ============================================================ -->
+
+<!-- Page Title -->
+<h2 class="section-title">
+  <i class="bi bi-award me-2" aria-hidden="true"></i>Manajemen Alumni
+</h2>
+
+<!-- Stats Row -->
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statTotalAlumni">-</div>
+      <div class="lbl">Total Alumni</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statAlumniTahunIni">-</div>
+      <div class="lbl">Tahun Ini</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statAngkatan">-</div>
+      <div class="lbl">Angkatan</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statRataRata">-</div>
+      <div class="lbl">Rata-rata/Tahun</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="row mb-3 g-2 align-items-center">
+  <div class="col-lg-6">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <button type="button" class="btn btn-outline-success" id="exportAlumniBtn" aria-label="Ekspor data alumni">
+        <i class="bi bi-download" aria-hidden="true"></i> Ekspor
+      </button>
+      <button type="button" class="btn btn-outline-primary" id="refreshAlumniBtn" aria-label="Segarkan data">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Segarkan
+      </button>
+      <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat...</span>
+    </div>
+  </div>
+  <div class="col-lg-6 d-flex gap-2 justify-content-lg-end flex-wrap">
+    <div class="input-group" style="max-width: 260px;">
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted" aria-hidden="true"></i>
+      </span>
+      <input 
+        type="text" 
+        class="form-control border-start-0" 
+        id="searchAlumniInput" 
+        placeholder="Cari nama alumni..." 
+        autocomplete="off"
+        aria-label="Cari alumni"
+      >
+    </div>
+    <select class="form-select" style="width: 160px;" id="filterAngkatan" aria-label="Filter angkatan">
+      <option value="">Semua Angkatan</option>
+    </select>
+  </div>
+</div>
+
+<!-- Table Container — diisi oleh alumni.js -->
+<div id="alumniTableContainer" class="table-container" aria-live="polite">
+  <!-- Skeleton initial -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 50px;"><div class="skeleton-box" style="height: 20px; width: 20px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th style="width: 200px;"><div class="skeleton-box" style="height: 20px; width: 120px;"></div></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="7" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat data alumni...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat data alumni...</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETAIL ALUMNI
+     ============================================================ -->
+<div class="modal fade" id="detailAlumniModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-eye me-2" aria-hidden="true"></i>Detail Alumni
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+        <div id="detailContent"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: KONFIRMASI KEMBALIKAN KE PESERTA
+     ============================================================ -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>Konfirmasi
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-question-circle fs-1 text-warning mb-3" aria-hidden="true"></i>
+        <p>Kembalikan alumni ini ke daftar peserta aktif?</p>
+        <p class="text-muted small">Status akan berubah menjadi <strong>active</strong>.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-warning px-4" id="confirmRestoreBtn">Kembalikan</button>
+      </div>
+    </div>
+  </div>
+</div>

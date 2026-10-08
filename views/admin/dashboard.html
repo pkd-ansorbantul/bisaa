@@ -1,0 +1,223 @@
+<!-- ============================================================
+     DASHBOARD VIEW — Fragment HTML
+     Dimuat oleh: js/router.js
+     Logic: views/admin/dashboard.js
+     Tidak ada <html>, <head>, <body> — hanya konten
+     ============================================================ -->
+
+<!-- Page Header -->
+<h2 class="section-title">
+  <i class="bi bi-speedometer2 me-2" aria-hidden="true"></i>Admin Dashboard
+</h2>
+
+<!-- Toolbar: Search + Cache + Refresh -->
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-md-6">
+    <div class="global-search-wrapper">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input 
+        type="text" 
+        id="globalSearchInput" 
+        placeholder="Cari peserta, materi, sesi..." 
+        autocomplete="off"
+        aria-label="Pencarian global"
+      >
+      <div 
+        class="global-search-results" 
+        id="globalSearchResults"
+        role="listbox"
+        aria-label="Hasil pencarian"
+      >
+        <div class="empty">Ketik untuk mencari...</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 d-flex gap-2 justify-content-md-end align-items-center flex-wrap">
+    <span id="cacheStatus" class="cache-status">Memuat...</span>
+    <button 
+      type="button" 
+      class="btn btn-outline-secondary btn-sm" 
+      id="refreshDataBtn"
+      aria-label="Segarkan data"
+    >
+      <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Segarkan
+    </button>
+  </div>
+</div>
+
+<!-- Dashboard Content Container — diisi oleh dashboard.js -->
+<div id="dashboardContent" aria-live="polite">
+  <!-- Skeleton placeholder -->
+  <div class="row g-2 g-sm-3">
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="stat-card skeleton">
+        <div class="stat-number"></div>
+        <div class="stat-label"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: SCAN QR (dibuka dari floating button / scan nav)
+     ============================================================ -->
+<div class="modal fade" id="scanQrModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white">
+          <i class="bi bi-qr-code-scan me-2" aria-hidden="true"></i>Scan QR
+        </h5>
+        <div class="ms-auto text-center" id="modeSelectionContainer">
+          <span class="text-white small me-2">Mode:</span>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Mode scan">
+            <input type="radio" class="btn-check" name="scanMode" id="modeOtomatis" value="otomatis" checked>
+            <label class="btn btn-outline-light" for="modeOtomatis">Otomatis</label>
+            <input type="radio" class="btn-check" name="scanMode" id="modeManual" value="manual">
+            <label class="btn btn-outline-light" for="modeManual">Manual</label>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          class="btn-close btn-close-white" 
+          data-bs-dismiss="modal"
+          aria-label="Tutup scanner"
+        ></button>
+      </div>
+      <div class="modal-body position-relative">
+        <div id="manualSessionContainer">
+          <label for="manualSessionSelect">
+            <i class="bi bi-list-ul me-2" aria-hidden="true"></i>Pilih Sesi Manual:
+          </label>
+          <select id="manualSessionSelect" aria-label="Pilih sesi manual">
+            <option value="">-- Memuat sesi... --</option>
+          </select>
+          <small class="d-block mt-1" style="color: #94a3b8;">* Scan QR setelah memilih sesi.</small>
+        </div>
+        <div id="scannerVideoContainer"></div>
+        <div class="scanner-status" id="scannerStatus">Memulai kamera...</div>
+        <button 
+          type="button" 
+          class="btn btn-danger btn-lg rounded-pill scan-stop-btn" 
+          id="scanStopBtn"
+          aria-label="Hentikan scanner"
+        >
+          <i class="bi bi-stop-circle me-2" aria-hidden="true"></i>Hentikan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: HASIL SCAN QR (pilihan aksi)
+     ============================================================ -->
+<div class="modal fade" id="scanResultModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-person-check-fill me-2" aria-hidden="true"></i>Peserta Ditemukan
+        </h5>
+        <button 
+          type="button" 
+          class="btn-close btn-close-white" 
+          data-bs-dismiss="modal"
+          aria-label="Tutup"
+        ></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div class="mb-4">
+          <h4 class="fw-bold" id="resultNamaPeserta">-</h4>
+          <p class="text-muted">
+            Status: <span class="badge bg-success" id="resultStatusPeserta">Disetujui</span>
+          </p>
+          <hr>
+          <p class="fw-bold mb-3">Apa yang ingin Anda lakukan?</p>
+        </div>
+        <div class="row g-3 justify-content-center">
+          <div class="col-md-5">
+            <button 
+              type="button" 
+              class="btn btn-success btn-lg w-100 option-btn rounded-4 py-4" 
+              id="btnAbsenSekarang"
+              aria-label="Absen sekarang"
+            >
+              <div class="btn-icon bg-success text-white mb-2">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              </div>
+              <span class="d-block fw-bold">Absen Sekarang</span>
+              <small class="text-muted">Catat kehadiran</small>
+            </button>
+          </div>
+          <div class="col-md-5">
+            <button 
+              type="button" 
+              class="btn btn-outline-primary btn-lg w-100 option-btn rounded-4 py-4" 
+              id="btnBukaSesi"
+              aria-label="Buka sesi absen"
+            >
+              <div class="btn-icon bg-primary text-white mb-2">
+                <i class="bi bi-calendar-event-fill" aria-hidden="true"></i>
+              </div>
+              <span class="d-block fw-bold">Buka Sesi Absen</span>
+              <small class="text-muted">Kelola sesi</small>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button 
+          type="button" 
+          class="btn btn-secondary rounded-pill px-4" 
+          data-bs-dismiss="modal"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FLOATING BUTTON: SCAN QR (Desktop only)
+     ============================================================ -->
+<button 
+  type="button" 
+  class="scan-float-btn" 
+  id="scanFloatBtn" 
+  title="Scan QR"
+  aria-label="Buka scanner QR"
+>
+  <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
+</button>

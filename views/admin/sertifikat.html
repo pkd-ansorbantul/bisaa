@@ -1,0 +1,187 @@
+<!-- views/admin/sertifikat.html — konten saja -->
+
+<h2 class="section-title"><i class="bi bi-patch-check me-2"></i>Manajemen Sertifikat</h2>
+
+<!-- TOOLBAR -->
+<div class="row mb-3 g-2">
+  <div class="col-md-6 d-flex gap-2 flex-wrap">
+    <button class="btn btn-primary rounded-pill" id="generateCertBtn">
+      <i class="bi bi-plus-circle me-1"></i> Generate Sertifikat
+    </button>
+    <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
+      <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+    </button>
+    <span id="cacheStatus" class="cache-status ms-2">Memuat…</span>
+  </div>
+  <div class="col-md-6 text-md-end">
+    <div class="input-group" style="max-width:300px;display:inline-flex;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control border-start-0" id="searchInput"
+             placeholder="Cari nama peserta…" autocomplete="off">
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<ul class="nav nav-tabs mb-3" id="certTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button">
+      <i class="bi bi-list-ul me-1"></i> Daftar Sertifikat
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button">
+      <i class="bi bi-file-earmark me-1"></i> Template
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="certTabsContent">
+
+  <!-- TAB: DAFTAR SERTIFIKAT -->
+  <div class="tab-pane fade show active" id="list" role="tabpanel">
+    <div id="certListContainer" class="table-container">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Memuat daftar sertifikat…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: TEMPLATE -->
+  <div class="tab-pane fade" id="templates" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark me-2"></i>Daftar Template</h5>
+      <button class="btn btn-primary rounded-pill btn-sm" id="addTemplateBtn">
+        <i class="bi bi-plus-circle me-1"></i> Tambah Template
+      </button>
+    </div>
+    <div id="templateContainer" class="table-container">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL GENERATE SERTIFIKAT ==================== -->
+<div class="modal fade" id="generateCertModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-pdf me-2"></i>Generate Sertifikat</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Pilih Template <span class="text-danger">*</span></label>
+          <select class="form-select" id="genTemplateSelect">
+            <option value="">-- Pilih Template --</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Pilih Peserta (bisa multiple) <span class="text-danger">*</span></label>
+          <select class="form-select" id="genPesertaSelect" multiple size="8" style="height:200px;"></select>
+          <div class="form-text text-muted">Tahan Ctrl / Cmd untuk memilih lebih dari satu.</div>
+        </div>
+        <div id="genValidationStatus" class="small text-muted mt-2"></div>
+        <div id="genProgress" style="display:none;" class="mt-3">
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
+          </div>
+          <p class="small text-muted mt-1 mb-0" id="genProgressText">Memproses…</p>
+        </div>
+        <div id="genResultArea" class="mt-3"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-success rounded-pill px-4" id="genSubmitBtn">
+          <i class="bi bi-file-earmark-pdf me-1"></i> Generate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL FORM TEMPLATE ==================== -->
+<div class="modal fade" id="templateFormModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-file-earmark me-2"></i>
+          <span id="templateFormTitle">Tambah Template</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editTemplateId">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nama Template <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="templateNama" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">ID Template Google Docs (opsional)</label>
+          <input type="text" class="form-control" id="templateDocId"
+                 placeholder="ID Google Docs (jika kosong, gunakan fallback HTML)">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Konfigurasi (JSON, opsional)</label>
+          <textarea class="form-control" id="templateConfig" rows="3"
+                    placeholder='{"key":"value"}'></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveTemplateBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL HAPUS TEMPLATE ==================== -->
+<div class="modal fade" id="deleteTemplateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
+        <p>Yakin ingin menghapus template ini?</p>
+        <input type="hidden" id="deleteTemplateId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteTemplateBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL HAPUS SERTIFIKAT ==================== -->
+<div class="modal fade" id="deleteCertModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
+        <p>Yakin ingin menghapus sertifikat ini?</p>
+        <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+        <input type="hidden" id="deleteCertId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteCertBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>

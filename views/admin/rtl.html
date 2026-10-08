@@ -1,0 +1,161 @@
+<!-- views/admin/rtl.html — konten saja -->
+
+<h2 class="section-title"><i class="bi bi-file-earmark-text me-2"></i>Manajemen RTL & Tugas</h2>
+
+<!-- TOOLBAR -->
+<div class="row mb-3 g-2">
+  <div class="col-md-6">
+    <button class="btn btn-primary rounded-pill" id="addRTLBtn">
+      <i class="bi bi-plus-circle me-1"></i> Tambah Tugas
+    </button>
+    <button class="btn btn-outline-success rounded-pill ms-2" id="bulkApproveBtn">
+      <i class="bi bi-check-all me-1"></i> ACC Semua
+    </button>
+    <button class="btn btn-outline-secondary rounded-pill ms-2" id="refreshDataBtn">
+      <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+    </button>
+    <span id="cacheStatus" class="cache-status ms-2">Memuat…</span>
+  </div>
+  <div class="col-md-6 text-md-end">
+    <div class="input-group" style="max-width:280px;display:inline-flex;">
+      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control border-start-0" id="searchInput"
+             placeholder="Cari judul tugas…" autocomplete="off">
+    </div>
+    <select class="form-select d-inline-block ms-2" style="width:auto;display:inline-block !important;" id="filterStatus">
+      <option value="">Semua Status</option>
+      <option value="pending">Pending</option>
+      <option value="selesai">Selesai</option>
+    </select>
+    <select class="form-select d-inline-block ms-2" style="width:auto;display:inline-block !important;" id="filterPeserta">
+      <option value="">Semua Peserta</option>
+    </select>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div id="rtlTableContainer" class="table-container">
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2 text-muted">Memuat data RTL…</p>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL FORM (TAMBAH/EDIT) ==================== -->
+<div class="modal fade" id="rtlFormModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <span id="formModalTitle">Tambah Tugas RTL</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editRTLId">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Judul Tugas <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="rtlJudul"
+                 placeholder="Contoh: Membuat laporan kegiatan" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Deskripsi</label>
+          <textarea class="form-control" id="rtlDeskripsi" rows="3"
+                    placeholder="Deskripsi tugas (opsional)"></textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Deadline <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="rtlDeadline" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Status</label>
+            <select class="form-select" id="rtlStatus">
+              <option value="pending">Pending</option>
+              <option value="selesai">Selesai</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Peserta (opsional)</label>
+          <select class="form-select" id="rtlPeserta">
+            <option value="">-- Tugas Umum (semua peserta) --</option>
+          </select>
+          <div class="form-text text-muted">Kosongkan jika tugas bersifat umum.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Upload File (opsional)</label>
+          <input type="file" class="form-control" id="rtlFile"
+                 accept=".pdf,.docx,.doc,.jpg,.jpeg,.png">
+          <div class="form-text text-muted">Format: PDF, DOCX, JPG, PNG (Maks 5MB)</div>
+          <div id="rtlFilePreview" class="mt-2 small text-muted"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Catatan</label>
+          <textarea class="form-control" id="rtlCatatan" rows="2"
+                    placeholder="Catatan tambahan (opsional)"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveRTLBtn">
+          <i class="bi bi-save me-1"></i> Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL DETAIL ==================== -->
+<div class="modal fade" id="detailRTLModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Tugas RTL</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="detailContent">
+          <div class="text-center"><div class="spinner-border text-primary"></div></div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL KONFIRMASI HAPUS ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
+        <p>Apakah Anda yakin ingin menghapus tugas RTL ini?</p>
+        <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+        <input type="hidden" id="deleteRTLId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i> Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

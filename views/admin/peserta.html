@@ -1,0 +1,447 @@
+<!-- ============================================================
+     PESERTA VIEW — Fragment HTML
+     Dimuat oleh: js/router.js
+     Logic: views/admin/peserta.js
+     Versi: 26.4.0 — Production Full Fix
+     Tidak ada <html>, <head>, <body> — hanya konten fragment
+     ============================================================ -->
+
+<h2 class="section-title">
+  <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Manajemen Peserta
+</h2>
+
+<!-- Stats Row -->
+<div class="row g-2 mb-3">
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statTotal">-</div>
+      <div class="lbl">Total Peserta</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statPending">-</div>
+      <div class="lbl">Pending</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statApproved">-</div>
+      <div class="lbl">Disetujui</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini">
+      <div class="num" id="statAlumni">-</div>
+      <div class="lbl">Alumni</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toolbar -->
+<div class="row mb-3 g-2 align-items-center">
+  <div class="col-lg-8">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <button type="button" class="btn btn-primary" id="addPesertaBtn" aria-label="Tambah peserta">
+        <i class="bi bi-plus-circle" aria-hidden="true"></i> Tambah
+      </button>
+      <button type="button" class="btn btn-outline-success" id="exportDataBtn" aria-label="Ekspor data">
+        <i class="bi bi-download" aria-hidden="true"></i> Ekspor
+      </button>
+      <button type="button" class="btn btn-outline-warning" id="moveToAlumniBtn" disabled aria-label="Pindah ke alumni">
+        <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Ke Alumni
+      </button>
+      <button type="button" class="btn btn-outline-secondary" id="refreshDataBtn" aria-label="Segarkan data">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Segarkan
+      </button>
+      <button type="button" class="btn btn-warning" id="bulkGenerateTTDBtn" aria-label="Generate TTD massal">
+        <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Generate TTD
+      </button>
+      <button type="button" class="btn btn-success" id="generateCertificateBtn" aria-label="Buat sertifikat">
+        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Buat Sertifikat
+      </button>
+      <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat...</span>
+    </div>
+  </div>
+  <div class="col-lg-4 d-flex gap-2 justify-content-lg-end flex-wrap">
+    <div class="input-group" style="max-width: 220px;">
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted" aria-hidden="true"></i>
+      </span>
+      <input
+        type="text"
+        class="form-control border-start-0"
+        id="searchInput"
+        placeholder="Cari nama..."
+        autocomplete="off"
+        aria-label="Cari peserta"
+      >
+    </div>
+    <select class="form-select" style="width: 130px;" id="filterStatus" aria-label="Filter status">
+      <option value="">Semua Status</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Disetujui</option>
+      <option value="active">Aktif</option>
+      <option value="rejected">Ditolak</option>
+    </select>
+  </div>
+</div>
+
+<!-- Table Container — diisi oleh peserta.js -->
+<div id="pesertaTableContainer" class="table-container" aria-live="polite">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 40px;"><div class="skeleton-box" style="height: 20px; width: 20px;"></div></th>
+          <th style="width: 50px;"><div class="skeleton-box" style="height: 20px; width: 20px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
+          <th><div class="skeleton-box" style="height: 20px; width: 80px;"></div></th>
+          <th style="width: 60px;"><div class="skeleton-box" style="height: 20px; width: 30px;"></div></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="9" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat data peserta...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat data peserta...</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================
+     FORM BUILDER SECTION
+     ============================================================ -->
+<div class="mt-5 pt-4 border-top">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-gear me-2" aria-hidden="true"></i>Form Builder - Field Isian Peserta
+    </h4>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="addFieldBtn" aria-label="Tambah field">
+      <i class="bi bi-plus-circle" aria-hidden="true"></i> Tambah Field
+    </button>
+  </div>
+  <p class="text-muted small">Field Core tidak bisa dihapus. Field tambahan bisa diedit/dihapus.</p>
+  <div id="formBuilderContainer" class="row g-3"></div>
+  <div class="mt-3 text-end">
+    <button type="button" class="btn btn-success px-4" id="saveFormStructureBtn">
+      <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan Struktur
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     LOKASI PKD SECTION
+     ============================================================ -->
+<div class="mt-5 pt-4 border-top">
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-geo-alt-fill text-primary fs-4" aria-hidden="true"></i>
+        <h5 class="fw-bold mb-0">Lokasi PKD</h5>
+      </div>
+      <p class="text-muted small">Kelola daftar lokasi PKD dan filter lokasi aktif.</p>
+
+      <div class="row g-2 align-items-end mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold mb-1" for="newLokasiInput">Tambah Lokasi Baru</label>
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              id="newLokasiInput"
+              placeholder="Contoh: Gedung Serbaguna A"
+              aria-label="Nama lokasi baru"
+            >
+            <button type="button" class="btn btn-success" id="addLokasiBtn" aria-label="Tambah lokasi">
+              <i class="bi bi-plus-circle" aria-hidden="true"></i> Tambah
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="lokasiPKDListContainer" class="mb-4"></div>
+
+      <hr class="my-3">
+
+      <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold mb-1" for="pkdLokasiSelect">Filter Lokasi PKD Aktif</label>
+          <select class="form-select" id="pkdLokasiSelect" aria-label="Filter lokasi PKD">
+            <option value="">-- Semua Lokasi --</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="button" class="btn btn-primary w-100" id="savePkdLokasiBtn">
+            <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan Filter
+          </button>
+        </div>
+      </div>
+      <div id="pkdLokasiStatus" class="mt-2 small text-muted" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: FORM PESERTA (Tambah/Edit)
+     ============================================================ -->
+<div class="modal fade" id="pesertaFormModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-person-badge me-2" aria-hidden="true"></i>
+          <span id="formModalTitle">Tambah Peserta</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+        <input type="hidden" id="editPesertaId">
+        <div id="dynamicAdminFormContainer"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary px-4" id="savePesertaBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: FIELD EDITOR
+     ============================================================ -->
+<div class="modal fade" id="fieldEditorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>
+          <span id="fieldModalTitle">Tambah Field</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editFieldId">
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="fieldLabel">Label Field</label>
+          <input type="text" class="form-control" id="fieldLabel">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="fieldType">Tipe Input</label>
+          <select class="form-select" id="fieldType">
+            <option value="text">Text</option>
+            <option value="textarea">Textarea</option>
+            <option value="radio">Radio</option>
+            <option value="select">Select</option>
+            <option value="file">File</option>
+          </select>
+        </div>
+        <div class="mb-3" id="fieldOptionsGroup" style="display: none;">
+          <label class="form-label fw-semibold" for="fieldOptions">Opsi (pisahkan dengan koma)</label>
+          <input type="text" class="form-control" id="fieldOptions" placeholder="Ya,Tidak">
+        </div>
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="fieldRequired">
+            <label class="form-check-label" for="fieldRequired">Wajib diisi</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary px-4" id="saveFieldBtn">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETAIL PESERTA
+     ============================================================ -->
+<div class="modal fade" id="detailPesertaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-eye me-2" aria-hidden="true"></i>Detail Peserta
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+        <div id="detailContent"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: KONFIRMASI HAPUS
+     ============================================================ -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-trash me-2" aria-hidden="true"></i>Konfirmasi Hapus
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3" aria-hidden="true"></i>
+        <p>Yakin ingin menghapus peserta ini?</p>
+        <p class="text-muted small">Tindakan tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: KREDENSIAL LOGIN
+     ============================================================ -->
+<div class="modal fade" id="credentialModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-key-fill me-2" aria-hidden="true"></i>Kredensial Login Peserta
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div style="background: #f8fafc; border-radius: 16px; padding: 1.5rem; border: 1px solid #e2e8f0;">
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+            <span class="small text-muted text-uppercase">Nama</span>
+            <span class="fw-semibold" id="credentialNama">-</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+            <span class="small text-muted text-uppercase">Username</span>
+            <span class="fw-semibold text-primary" id="credentialUsername">-</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2">
+            <span class="small text-muted text-uppercase">Password Hint</span>
+            <span class="fw-semibold text-danger" id="credentialPasswordHint">-</span>
+          </div>
+        </div>
+        <p class="small text-muted mt-3 mb-0">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Password default peserta adalah <strong>No. HP</strong> yang terdaftar.
+          Jika lupa, gunakan tombol <strong>Reset Password</strong>.
+        </p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-warning px-4" id="resetCredentialPasswordBtn">
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Reset ke No HP
+        </button>
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: TTD DIGITAL
+     ============================================================ -->
+<div class="modal fade" id="ttdModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Tanda Tangan Digital (QR)
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="ttdCardsContainer" class="row g-4"></div>
+        <div id="ttdEmptyMessage" class="text-center text-muted py-4" style="display: none;">
+          <i class="bi bi-pencil-square fs-2" aria-hidden="true"></i>
+          <p class="mt-2 mb-0">Belum ada tanda tangan digital untuk peserta ini.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: ID CARD DIGITAL
+     ============================================================ -->
+<div class="modal fade" id="adminIdCardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-person-vcard me-2" aria-hidden="true"></i>Kartu ID Digital
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <div id="idCardModalContent"></div>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: GENERATE SERTIFIKAT
+     ============================================================ -->
+<div class="modal fade" id="generateCertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white border-0 rounded-top-4">
+        <h5 class="modal-title">
+          <i class="bi bi-file-earmark-pdf me-2" aria-hidden="true"></i>Buat Sertifikat
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="certTemplateSelect">Template Sertifikat</label>
+          <select class="form-select" id="certTemplateSelect">
+            <option value="">-- Pilih Template --</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Peserta yang akan dibuatkan sertifikat</label>
+          <div id="selectedParticipantsList" class="small text-muted"></div>
+        </div>
+        <div class="alert alert-info small" id="generateStatusMsg">
+          <i class="bi bi-info-circle" aria-hidden="true"></i> Semua peserta akan divalidasi otomatis.
+        </div>
+        <div id="generateProgress" style="display: none;">
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
+          </div>
+          <p class="small text-muted mt-1" id="generateProgressText">Memproses...</p>
+        </div>
+        <div id="generateResultArea" class="mt-3"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-success px-4" id="generateCertSubmit">
+          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>Generate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

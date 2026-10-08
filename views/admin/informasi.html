@@ -1,0 +1,188 @@
+<!-- views/admin/informasi.html — konten saja -->
+
+<h2 class="section-title"><i class="bi bi-newspaper me-2"></i>Manajemen Informasi & Flyer</h2>
+
+<!-- ========================================================== -->
+<!-- FORM TAMBAH / EDIT                                          -->
+<!-- ========================================================== -->
+<div class="settings-card">
+  <div class="card-title">
+    <i class="bi bi-plus-circle"></i>
+    <span id="formTitle">Tambah Jadwal / Flyer</span>
+  </div>
+
+  <form id="infoForm" autocomplete="off">
+    <input type="hidden" id="editId" value="">
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Judul <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="judulItem"
+               placeholder="Contoh: PKD Angkatan 2026" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Deskripsi</label>
+        <input type="text" class="form-control" id="deskripsiItem"
+               placeholder="Keterangan singkat">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Urutan</label>
+        <input type="number" class="form-control" id="urutanItem" value="0">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" id="tanggalMulaiItem" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Tanggal Akhir</label>
+        <input type="date" class="form-control" id="tanggalAkhirItem">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Lokasi</label>
+        <input type="text" class="form-control" id="lokasiItem"
+               placeholder="SKB Semail, Bangunharjo">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Upload Flyer</label>
+        <input type="file" class="form-control" id="fileItem" accept="image/*">
+        <div class="form-text text-muted">Max 2 MB. Kosongkan untuk timeline.</div>
+      </div>
+
+      <div id="fileEditPreview" class="col-12" style="display:none;">
+        <div class="alert alert-info small mb-0">
+          <i class="bi bi-image me-1"></i> <strong>Flyer saat ini:</strong>
+          <span id="fileEditPreviewName"></span>
+        </div>
+      </div>
+
+      <div class="col-12 d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary rounded-pill px-4" id="saveBtn">
+          <i class="bi bi-save me-1"></i> Simpan
+        </button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="cancelEditBtn">
+          <i class="bi bi-x-circle me-1"></i> Batal
+        </button>
+      </div>
+    </div>
+
+    <div id="formMessage" class="mt-3 small"></div>
+  </form>
+</div>
+
+<!-- ========================================================== -->
+<!-- TABEL INFORMASI                                             -->
+<!-- ========================================================== -->
+<div class="table-container mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h6 class="fw-bold mb-0"><i class="bi bi-table me-2"></i>Daftar Jadwal & Flyer</h6>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-success rounded-pill btn-sm" id="exportDataBtn">
+        <i class="bi bi-download me-1"></i> Ekspor
+      </button>
+      <button class="btn btn-outline-secondary rounded-pill btn-sm" id="refreshDataBtn">
+        <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+      </button>
+      <span id="cacheStatus" class="cache-status ms-2">Memuat…</span>
+    </div>
+  </div>
+
+  <div class="row mb-3 g-2">
+    <div class="col-md-6">
+      <div class="input-group" style="max-width:320px;">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control border-start-0" id="searchInput"
+               placeholder="Cari judul…" autocomplete="off">
+      </div>
+    </div>
+    <div class="col-md-6 text-md-end">
+      <select class="form-select d-inline-block" style="width:auto;display:inline-block !important;" id="filterJenis">
+        <option value="">Semua Jenis</option>
+        <option value="timeline">Timeline</option>
+        <option value="flyer">Flyer</option>
+      </select>
+      <select class="form-select d-inline-block ms-2" style="width:auto;display:inline-block !important;" id="filterStatus">
+        <option value="">Semua Status</option>
+        <option value="aktif">Aktif</option>
+        <option value="selesai">Selesai</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="informasiTableContainer">
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2 text-muted">Memuat data informasi…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================== -->
+<!-- USULAN PAC                                                  -->
+<!-- ========================================================== -->
+<div class="table-container">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-envelope-paper me-2"></i>Usulan PKD dari PAC (Menunggu Persetujuan)
+    </h6>
+    <button class="btn btn-outline-secondary rounded-pill btn-sm" id="refreshUsulanBtn">
+      <i class="bi bi-arrow-repeat me-1"></i> Refresh
+    </button>
+  </div>
+  <div id="usulanTableContainer">
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL KONFIRMASI HAPUS ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
+        <p>Apakah Anda yakin ingin menghapus informasi ini?</p>
+        <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+        <input type="hidden" id="deleteInformasiId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1"></i> Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ==================== MODAL KONFIRMASI USULAN ==================== -->
+<div class="modal fade" id="usulanActionModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="usulanActionTitle">
+          <i class="bi bi-question-circle me-2"></i>Konfirmasi
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <p id="usulanActionMessage">Apakah Anda yakin?</p>
+        <input type="hidden" id="usulanActionId">
+        <input type="hidden" id="usulanActionType">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="usulanActionBtn">
+          <i class="bi bi-check-circle me-1"></i> Ya, Lanjutkan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
