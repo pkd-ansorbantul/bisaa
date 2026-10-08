@@ -1,16 +1,16 @@
 // ============================================================
-// js/app.js — v27.4.0 BLOCKING BOOT + CIRCUIT-BREAKER AWARE
+// js/app.js — v27.5.0 ROUTE-NORMALIZER + CIRCUIT-BREAKER AWARE
 // ============================================================
-// CHANGELOG v27.4.0 (dari v27.3.3):
-//   ✅ FIX CRITICAL: Auto-sync interval 60s → 180s (hindari GAS throttle)
-//   ✅ FIX CRITICAL: MIN_SYNC_GAP_MS = 60s (cegah sync storm)
-//   ✅ FIX: Idle threshold — skip sync jika user tidak aktif
+// CHANGELOG v27.5.0 (dari v27.4.0):
+//   ✅ FIX CRITICAL: Route alias — typo "skriining" auto-redirect ke "skrining"
+//   ✅ FIX CRITICAL: normalizeRoute() — hapus karakter aneh, trailing slash
+//   ✅ FIX: Preload fragment + JS tidak fail kan route salah
+//   ✅ FIX: Auto-sync 180s + MIN_SYNC_GAP 60s (anti GAS throttle)
 //   ✅ FIX: Circuit breaker status check sebelum trigger sync
-//   ✅ FIX: Exponential backoff saat circuit open
-//   ✅ FIX: Better logging — emoji + status jelas
-//   ✅ NEW: window.__pkd.healthReport() untuk debugging
-//   ✅ NEW: Handle CORS error gracefully — toast sekali, no spam
-//   ✅ KEEP: Semua fitur v27.3.3
+//   ✅ NEW: ALL_ROUTES constant untuk debug
+//   ✅ NEW: validateRoutes() saat boot — log route yang file-nya 404
+//   ✅ NEW: window.__pkd.diagnose() untuk health check lengkap
+//   ✅ KEEP: Semua fitur v27.4.0
 // ============================================================
 
 import {
@@ -19,7 +19,7 @@ import {
   loadAuthState,
   escapeHtml,
   showToast,
-  getCircuitState,      // ⬅️ NEW export dari api.js
+  getCircuitState,
 } from './core/api.js';
 
 import {
@@ -38,20 +38,19 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '27.4.0';
+const APP_VERSION = '27.5.0';
 
-const DATA_PRELOAD_TIMEOUT_MS       = 20000;   // 20s
-const ENSURE_READY_TIMEOUT_MS       = 10000;   // 10s
-const AUTO_SYNC_INTERVAL_MS         = 180000;  // ⬅️ UBAH: 60s → 180s (3 menit)
-const MIN_SYNC_GAP_MS               = 60000;   // ⬅️ NEW: min gap 60s antar sync
-const IDLE_THRESHOLD_MS             = 5 * 60 * 1000; // 5 menit
-const CIRCUIT_BACKOFF_MS            = 30000;   // ⬅️ NEW: backoff saat circuit open
+const DATA_PRELOAD_TIMEOUT_MS       = 20000;
+const ENSURE_READY_TIMEOUT_MS       = 10000;
+const AUTO_SYNC_INTERVAL_MS         = 180000;  // 3 menit
+const MIN_SYNC_GAP_MS               = 60000;   // 1 menit
+const IDLE_THRESHOLD_MS             = 5 * 60 * 1000;
 const FAILED_MODULE_RETRY_DELAY_MS  = 3000;
 const FAILED_MODULE_MAX_RETRY       = 3;
 const QUIZ_PRELOAD_DELAY_MS         = 2000;
 
 // ============================================================
-//   ROUTES — 18 Views
+//   ROUTES — 18 Views (dengan alias support)
 // ============================================================
 const ROUTES = {
   '#/admin/dashboard':      { html: BASE_PATH + 'views/admin/dashboard.html',      js: BASE_PATH + 'views/admin/dashboard.js' },
@@ -75,6 +74,93 @@ const ROUTES = {
 };
 
 // ============================================================
+//   ⚡ ROUTE ALIASES — auto-fix typo
+// ============================================================
+const ROUTE_ALIASES = {
+  // Typo umum
+  '#/admin/skriining':       '#/admin/skrining',
+  '#/admin/skrinng':         '#/admin/skrining',
+  '#/admin/skrinig':         '#/admin/skrining',
+  '#/admin/skining':         '#/admin/skrining',
+
+  '#/admin/sertifkat':       '#/admin/sertifikat',
+  '#/admin/sertifikat':      '#/admin/sertifikat',
+  '#/admin/certifikat':      '#/admin/sertifikat',
+
+  '#/admin/tandatangan':     '#/admin/tanda-tangan',
+  '#/admin/tanda_tangan':    '#/admin/tanda-tangan',
+  '#/admin/ttd':             '#/admin/tanda-tangan',
+
+  '#/admin/dataabsensi':     '#/admin/data-absensi',
+  '#/admin/data_absensi':    '#/admin/data-absensi',
+
+  '#/admin/rekapabsensi':    '#/admin/rekap-absensi',
+  '#/admin/rekap_absensi':   '#/admin/rekap-absensi',
+
+  '#/admin/sesiabsen':       '#/admin/sesi-absen',
+  '#/admin/sesi_absen':      '#/admin/sesi-absen',
+
+  '#/admin/timinstruktur':   '#/admin/tim-instruktur',
+  '#/admin/tim_instruktur':  '#/admin/tim-instruktur',
+
+  '#/admin/pretest':         '#/admin/pretest',
+  '#/admin/pre-test':        '#/admin/pretest',
+  '#/admin/pre_test':        '#/admin/pretest',
+  '#/admin/prestest':        '#/admin/pretest',
+
+  '#/admin/postest':         '#/admin/posttest',
+  '#/admin/post-test':       '#/admin/posttest',
+  '#/admin/post_test':       '#/admin/posttest',
+
+  // Trailing slash variants
+  '#/admin/dashboard/':      '#/admin/dashboard',
+  '#/admin/peserta/':        '#/admin/peserta',
+  '#/admin/alumni/':         '#/admin/alumni',
+  '#/admin/kader/':          '#/admin/kader',
+  '#/admin/materi/':         '#/admin/materi',
+};
+
+// ============================================================
+//   ⚡ NEW: NORMALIZE ROUTE HASH
+// ============================================================
+/**
+ * Normalisasi hash supaya route selalu match.
+ * - Trim whitespace
+ * - Hapus trailing slash (kecuali root)
+ * - Hapus karakter zero-width & unicode aneh
+ * - Apply ROUTE_ALIASES
+ */
+function normalizeRoute(hash) {
+  if (!hash || typeof hash !== 'string') return '#/admin/dashboard';
+
+  let h = hash.trim();
+
+  // Hapus zero-width & karakter kontrol
+  h = h.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  // Pastikan mulai dengan '#/'
+  if (!h.startsWith('#')) h = '#' + h;
+  if (h === '#' || h === '#/') return '#/admin/dashboard';
+  if (!h.startsWith('#/')) h = '#/' + h.slice(1);
+
+  // Hapus trailing slash (kecuali root)
+  if (h.length > 3 && h.endsWith('/')) {
+    h = h.slice(0, -1);
+  }
+
+  // Apply alias
+  if (ROUTE_ALIASES[h]) {
+    console.log(`[Route] 🔄 Aliased "${h}" → "${ROUTE_ALIASES[h]}"`);
+    h = ROUTE_ALIASES[h];
+  }
+
+  // Case-normalize (lowercase)
+  h = h.toLowerCase();
+
+  return h;
+}
+
+// ============================================================
 //   MODULE STATE
 // ============================================================
 let router = null;
@@ -85,7 +171,7 @@ let adminModule = null;
 let lastUserActivity = Date.now();
 let lastSyncAt = 0;
 let dataReady = false;
-let corsErrorShown = false;   // ⬅️ NEW: cegah toast spam
+let corsErrorShown = false;
 
 window.__pkdFailedModules = new Map();
 
@@ -129,7 +215,7 @@ function sleep(ms) {
 }
 
 // ============================================================
-//   ⚡ SAFE DYNAMIC IMPORT
+//   SAFE DYNAMIC IMPORT
 // ============================================================
 async function safeImport(url, options = {}) {
   const { silent = false, maxRetry = 2 } = options;
@@ -176,6 +262,44 @@ async function safeImport(url, options = {}) {
 }
 
 // ============================================================
+//   ⚡ NEW: VALIDATE ROUTE FILES (saat boot)
+// ============================================================
+async function validateRouteFiles() {
+  console.log('[Boot] 🔍 Validating route files...');
+  const results = [];
+  const entries = Object.entries(ROUTES);
+
+  const checks = entries.map(async ([route, cfg]) => {
+    try {
+      const [htmlRes, jsRes] = await Promise.all([
+        fetch(cfg.html, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+        fetch(cfg.js, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+      ]);
+
+      results.push({
+        route,
+        html: htmlRes.status,
+        js: jsRes.status,
+        ok: htmlRes.ok && jsRes.ok,
+      });
+    } catch (e) {
+      results.push({ route, html: 0, js: 0, ok: false, error: e.message });
+    }
+  });
+
+  await Promise.allSettled(checks);
+
+  const failed = results.filter(r => !r.ok);
+  if (failed.length > 0) {
+    console.warn('[Boot] ⚠️ Route file issues detected:');
+    console.table(failed);
+  } else {
+    console.log('[Boot] ✅ All 18 route files verified');
+  }
+  return results;
+}
+
+// ============================================================
 //   WAIT FOR DATA READY
 // ============================================================
 async function waitForDataReady(maxAttempts = 50) {
@@ -218,7 +342,7 @@ async function waitForDataReady(maxAttempts = 50) {
         console.log(`[Boot] ✅ Data ready (via getStats) after ${i * 200}ms — ${total} entities`);
         return true;
       }
-    } catch (e) { /* continue polling */ }
+    } catch (e) { /* continue */ }
     await sleep(200);
   }
 
@@ -342,7 +466,7 @@ async function loadPartialsWithRetry() {
 }
 
 // ============================================================
-//   PRELOAD DATA (BLOCKING)
+//   PRELOAD DATA
 // ============================================================
 async function preloadAllData() {
   console.log('[Boot] ⚡ Preloading data (blocking, timeout 20s)...');
@@ -496,7 +620,7 @@ function scheduleFailedModuleRetry() {
 })();
 
 // ============================================================
-//   ⚡ AUTO-SYNC v27.4.0 — Anti-throttle
+//   AUTO-SYNC — Anti-throttle
 // ============================================================
 function startAutoSync() {
   if (autoSyncInterval) return;
@@ -507,30 +631,25 @@ function startAutoSync() {
   );
 
   autoSyncInterval = setInterval(async () => {
-    // ⬇️ Guard 1: tab hidden
+    // Guard 1: tab hidden
     if (document.hidden) return;
-
-    // ⬇️ Guard 2: sudah syncing
+    // Guard 2: already syncing
     if (isSyncing) return;
-
-    // ⬇️ Guard 3: user idle
+    // Guard 3: user idle
     const idleMs = Date.now() - lastUserActivity;
     if (idleMs > IDLE_THRESHOLD_MS) {
       console.log(`[AutoSync] ⏸️ Skip — user idle ${Math.round(idleMs/60000)}min`);
       return;
     }
-
-    // ⬇️ Guard 4: module belum siap
+    // Guard 4: adminModule not ready
     if (!adminModule) return;
-
-    // ⬇️ Guard 5: min gap sejak sync terakhir
+    // Guard 5: min gap
     const sinceLast = Date.now() - lastSyncAt;
     if (sinceLast < MIN_SYNC_GAP_MS) {
       console.log(`[AutoSync] ⏸️ Skip — ${Math.round(sinceLast/1000)}s < ${MIN_SYNC_GAP_MS/1000}s gap`);
       return;
     }
-
-    // ⬇️ Guard 6: circuit breaker open
+    // Guard 6: circuit breaker
     try {
       const circuit = getCircuitState();
       if (circuit && circuit.isOpen) {
@@ -540,9 +659,9 @@ function startAutoSync() {
         );
         return;
       }
-    } catch (e) { /* silent — function might not exist */ }
+    } catch (e) { /* silent */ }
 
-    // ===== LULUS SEMUA GUARD, LAKUKAN SYNC =====
+    // LULUS SEMUA GUARD
     isSyncing = true;
     lastSyncAt = Date.now();
 
@@ -557,17 +676,11 @@ function startAutoSync() {
 
       console.warn(`[AutoSync] ⚠️ Failed: ${e.message}`);
 
-      // ⬇️ Tampilkan toast HANYA SEKALI saat CORS error
       if (isCors && !corsErrorShown) {
         corsErrorShown = true;
         try {
-          showToast(
-            'Server sedang sibuk. Data lama tetap ditampilkan.',
-            'warning'
-          );
+          showToast('Server sedang sibuk. Data lama tetap ditampilkan.', 'warning');
         } catch (err) { /* silent */ }
-
-        // Reset flag setelah 5 menit
         setTimeout(() => { corsErrorShown = false; }, 5 * 60 * 1000);
       }
     } finally {
@@ -658,6 +771,7 @@ async function boot() {
     });
     window.__router = router;
     window.__routes = ROUTES;
+    window.__routeAliases = ROUTE_ALIASES;
     window.__pkdAppVersion = APP_VERSION;
   } catch (e) {
     console.error('[Boot] Failed to create router:', e);
@@ -665,15 +779,30 @@ async function boot() {
     return;
   }
 
-  // 7. PARALLEL PRELOAD: fragments + data
+  // ⚡ 6b. NORMALIZE initial hash
+  const currentHash = window.location.hash;
+  if (currentHash) {
+    const normalized = normalizeRoute(currentHash);
+    if (normalized !== currentHash) {
+      console.log(`[Boot] 🔄 Normalizing initial hash: "${currentHash}" → "${normalized}"`);
+      try {
+        history.replaceState(null, '', normalized);
+      } catch (e) {
+        window.location.hash = normalized;
+      }
+    }
+  }
+
+  // 7. PARALLEL PRELOAD
   updateLoaderText('Memuat menu & data...');
 
   const fragmentsPromise = preloadAllFragmentsAndModules();
   const dataPromise = preloadAllData();
+  const validatePromise = validateRouteFiles();
 
-  await Promise.allSettled([fragmentsPromise, dataPromise]);
+  await Promise.allSettled([fragmentsPromise, dataPromise, validatePromise]);
 
-  console.log('[Boot] ✅ Preload complete (fragments + data)');
+  console.log('[Boot] ✅ Preload complete (fragments + data + validation)');
 
   // 7b. Verify data ready
   updateLoaderText('Memverifikasi data...');
@@ -697,14 +826,20 @@ async function boot() {
     console.warn('[Boot] ⚠️ Data not verified — dashboard may show skeleton first');
   }
 
-  // Preload quiz di background
+  // Preload quiz
   preloadQuizQuestions();
   scheduleFailedModuleRetry();
 
-  // 8. Set default hash
+  // 8. Set default hash (with normalization)
   const hash = window.location.hash;
   if (!hash || hash === '#' || hash === '#/') {
     window.location.hash = DEFAULT_ROUTE;
+  } else {
+    const normalized = normalizeRoute(hash);
+    if (normalized !== hash) {
+      console.log(`[Boot] 🔄 Normalizing hash before router.start()`);
+      window.location.hash = normalized;
+    }
   }
 
   // 9. Start SPA
@@ -736,14 +871,43 @@ async function boot() {
   installBeforeUnloadGuard();
   installBfcacheGuard();
   installTitleUpdate();
+  installHashChangeNormalizer();  // ⬅️ NEW
 
   // 14. Done
   const totalBoot = Date.now() - bootStart;
   console.log(
     `%c PKD GP Ansor Bantul — SPA v${APP_VERSION} `,
     'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;',
-    `Routes: ${getRouteCount()} | Boot: ${totalBoot}ms | Data: ${dataReady ? '✅ Ready' : '⚠️ Skeleton'}`
+    `Routes: ${getRouteCount()} | Aliases: ${Object.keys(ROUTE_ALIASES).length} | Boot: ${totalBoot}ms | Data: ${dataReady ? '✅ Ready' : '⚠️ Skeleton'}`
   );
+}
+
+// ============================================================
+//   ⚡ NEW: HASH CHANGE NORMALIZER
+//   Auto-normalize typo saat user klik link (tanpa reload)
+// ============================================================
+function installHashChangeNormalizer() {
+  if (window.__pkdHashNormalizerInstalled) return;
+  window.__pkdHashNormalizerInstalled = true;
+
+  window.addEventListener('hashchange', function () {
+    const raw = window.location.hash;
+    if (!raw) return;
+
+    const normalized = normalizeRoute(raw);
+    if (normalized === raw) return;
+
+    console.log(`[HashNormalizer] 🔄 Auto-fix: "${raw}" → "${normalized}"`);
+    try {
+      history.replaceState(null, '', normalized);
+      // Trigger router manual
+      if (router && typeof router.navigate === 'function') {
+        router.navigate(normalized);
+      }
+    } catch (e) {
+      window.location.hash = normalized;
+    }
+  });
 }
 
 // ============================================================
@@ -761,11 +925,20 @@ function installKeyboardShortcuts() {
 
     const key = String(e.key || '').toLowerCase();
     const routes = {
-      'd': '#/admin/dashboard', 'p': '#/admin/peserta', 'a': '#/admin/sesi-absen',
-      's': '#/admin/skrining', 'r': '#/admin/rtl', 'q': '#/admin/tanda-tangan',
-      'm': '#/admin/materi', 'k': '#/admin/kader', 't': '#/admin/tim-instruktur',
+      'd': '#/admin/dashboard',
+      'p': '#/admin/peserta',
+      'a': '#/admin/sesi-absen',
+      's': '#/admin/skrining',
+      'r': '#/admin/rtl',
+      'q': '#/admin/tanda-tangan',
+      'm': '#/admin/materi',
+      'k': '#/admin/kader',
+      't': '#/admin/tim-instruktur',
     };
-    if (routes[key]) { e.preventDefault(); if (router) router.navigate(routes[key]); }
+    if (routes[key]) {
+      e.preventDefault();
+      if (router) router.navigate(routes[key]);
+    }
   });
 }
 
@@ -838,7 +1011,12 @@ window.__pkd = {
   getRouter: () => router,
   getRoutes: () => ROUTES,
   getRouteCount: getRouteCount,
-  navigate: (hash) => router && router.navigate(hash),
+  getAliases: () => ROUTE_ALIASES,
+  navigate: (hash) => {
+    const normalized = normalizeRoute(hash);
+    if (router) router.navigate(normalized);
+  },
+  normalizeRoute: normalizeRoute,   // ⬅️ NEW public API
   reload: () => router && router.reload(),
   destroy: () => router && router.destroy(),
 
@@ -881,8 +1059,8 @@ window.__pkd = {
     ? adminModule.getStats()
     : null,
 
-  // ⬇️ NEW: Health report untuk debugging
-  healthReport: () => {
+  // ⬇️ NEW: Full diagnostic
+  diagnose: async () => {
     const report = {
       version: APP_VERSION,
       dataReady,
@@ -891,24 +1069,45 @@ window.__pkd = {
       lastUserActivityAgo: `${Math.round((Date.now() - lastUserActivity)/1000)}s`,
       autoSyncRunning: !!autoSyncInterval,
       failedModules: window.__pkdFailedModules.size,
+      routeCount: Object.keys(ROUTES).length,
+      aliasCount: Object.keys(ROUTE_ALIASES).length,
     };
-    try {
-      const circuit = getCircuitState();
-      report.circuit = circuit;
-    } catch (e) {
-      report.circuit = 'unavailable';
-    }
-    try {
-      report.stats = adminModule?.getStats?.() || null;
-    } catch (e) {
-      report.stats = null;
-    }
+    try { report.circuit = getCircuitState(); }
+    catch (e) { report.circuit = 'unavailable'; }
+    try { report.stats = adminModule?.getStats?.() || null; }
+    catch (e) { report.stats = null; }
+    try { report.routeFiles = await validateRouteFiles(); }
+    catch (e) { report.routeFiles = 'check failed'; }
+
     console.table(report);
     return report;
+  },
+
+  // ⬇️ NEW: Quick route check
+  checkRoutes: async () => {
+    const results = [];
+    for (const [route, config] of Object.entries(ROUTES)) {
+      try {
+        const [htmlRes, jsRes] = await Promise.all([
+          fetch(config.html, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+          fetch(config.js, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+        ]);
+        results.push({
+          route: route.replace('#/admin/', ''),
+          html: htmlRes.status,
+          js: jsRes.status,
+          ok: htmlRes.ok && jsRes.ok ? '✅' : '❌',
+        });
+      } catch (e) {
+        results.push({ route, error: e.message, ok: '❌' });
+      }
+    }
+    console.table(results);
+    return results;
   },
 };
 
 console.log(
-  '%c App v27.4.0 — Blocking Boot + Circuit-Breaker Aware ',
+  '%c App v27.5.0 — Route Normalizer + Circuit-Breaker Aware ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
