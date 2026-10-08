@@ -1,18 +1,19 @@
 // ============================================================
-// VIEW: pretest.js — v27.2.3 STANDALONE EDITION
+// VIEW: pretest.js — v27.3.0 PRELOAD + SUBSCRIPTION EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/pretest.html
 // ============================================================
-// CHANGELOG v27.2.3:
-//   ✅ REMOVED: dependency ke _base-quiz-view.js (standalone total)
-//   ✅ NEW: Subscription ke AdminModule (auto re-render responses)
-//   ✅ NEW: Instant render responses dari preload cache
+// CHANGELOG v27.3.0 (dari v27.2.3):
+//   ✅ NEW: preloadData() — dipanggil app.js saat boot
+//   ✅ NEW: Instant render questions dari localStorage cache
+//   ✅ NEW: bindRefreshButton() → window.__pkd.forceSync()
+//   ✅ NEW: Cache status badge terintegrasi
+//   ✅ NEW: Auto-sync background via AdminModule subscription
+//   ✅ FIX: Separated refresh handler (questions vs responses)
 //   ✅ FIX: isMounted guard di semua async callbacks
 //   ✅ FIX: Modal dispose + cleanup on unmount
-//   ✅ FIX: Focus preservation saat subscription re-render
-//   ✅ FIX: Null-safe element access (zero crash)
-//   ✅ KEEP: Semua fitur (questions CRUD, responses table, CSV export)
-//   ✅ Zero memory leak
+//   ✅ FIX: Focus preservation saat re-render
+//   ✅ KEEP: All features (CRUD, responses table, CSV export)
 // ============================================================
 
 import {
@@ -30,6 +31,7 @@ import {
   restoreFocusState,
   cleanupBootstrapArtifacts,
   computeListHash,
+  setCacheStatus as setCacheStatusHelper,
   SEARCH_DEBOUNCE,
 } from '../../js/core/view-helpers.js';
 
@@ -38,7 +40,7 @@ import {
 // ============================================================
 const KIND = 'pretest';
 const TITLE = 'Pre-test';
-const CACHE_KEY = 'pkd_cache_pretest_questions_v2';
+const CACHE_KEY = 'pkd_cache_pretest_questions_v3';
 const EXPORT_FILENAME = 'pretest_data';
 const QUESTION_CACHE_AGE_MS = 5 * 60 * 1000; // 5 menit
 
@@ -88,30 +90,31 @@ function getResponses() {
 }
 
 // ============================================================
-//   CONTEXT (Subscription ke AdminModule)
+//   ⚡ PRELOAD API — dipanggil oleh app.js saat boot
 // ============================================================
-const ctx = createViewContext(
-  {
-    questions: [],
-    responses: [],
-    filteredResponses: [],
-    selectedAnswerIndex: 0,
-    searchQuery: '',
-    responseHash: '',
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'pretest'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[${TITLE}View] ⚡ Data changed (${type}) → refresh from cache`);
-      try {
-        refreshResponsesFromCache();
-      } catch (e) {
-        console.warn(`[${TITLE}View] Re-render error:`, e);
-      }
-    },
+export async function preloadData() {
+  const cached = cacheGet();
+  if (cached && Array.isArray(cached) && cached.length > 0) {
+    console.log(`[${TITLE}Preload] ✅ Cache hit (${cached.length} questions)`);
+    return { success: true, source: 'cache', count: cached.length };
   }
-);
+
+  try {
+    console.log(`[${TITLE}Preload] ⚡ Fetching questions from server...`);
+    const res = await callApi(API.getQuestions, {}, 'GET');
+    const list = Array.isArray(res) ? res : (res?.data || []);
+
+    if (list.length > 0) {
+      cacheSet(list);
+      console.log(`[${TITLE}Preload] ✅ Loaded ${list.length} questions`);
+      return { success: true, source: 'network', count: list.length };
+    }
+    return { success: true, source: 'network', count: 0 };
+  } catch (e) {
+    console.warn(`[${TITLE}Preload] ⚠️ Failed:`, e.message);
+    return { success: false, error: e.message };
+  }
+}
 
 // ============================================================
 //   CACHE HELPERS (questions — localStorage)
@@ -138,6 +141,40 @@ function cacheSet(data) {
 function cacheClear() {
   try { localStorage.removeItem(CACHE_KEY); } catch (e) { /* silent */ }
 }
+
+// ============================================================
+//   SET CACHE STATUS (konsisten dengan view lain)
+// ============================================================
+function setCacheStatus(status) {
+  setCacheStatusHelper(status, 'cacheStatus');
+}
+
+// ============================================================
+//   CONTEXT (Subscription ke AdminModule)
+// ============================================================
+const ctx = createViewContext(
+  {
+    questions: [],
+    responses: [],
+    filteredResponses: [],
+    selectedAnswerIndex: 0,
+    searchQuery: '',
+    responseHash: '',
+    questionHash: '',
+  },
+  {
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'pretest'],
+    onDataChange: (type) => {
+      if (!ctx.mounted) return;
+      console.log(`[${TITLE}View] ⚡ Data changed (${type}) → refresh from cache`);
+      try {
+        refreshResponsesFromCache();
+      } catch (e) {
+        console.warn(`[${TITLE}View] Re-render error:`, e);
+      }
+    },
+  }
+);
 
 // ============================================================
 //   REFRESH RESPONSES FROM CACHE
@@ -177,11 +214,12 @@ export async function mount() {
     selectedAnswerIndex: 0,
     searchQuery: '',
     responseHash: '',
+    questionHash: '',
   });
 
   bindEvents();
 
-  // ⚡ Instant render responses dari preload cache
+  // ===== ⚡ INSTANT RENDER RESPONSES dari AdminModule cache =====
   const cachedResponses = getResponses() || [];
   if (cachedResponses.length > 0) {
     console.log(`[${TITLE}View] ⚡ Rendering responses from preload cache`);
@@ -192,11 +230,30 @@ export async function mount() {
     renderSkeletonData();
   }
 
-  // ⚡ Subscribe ke perubahan data AdminModule
+  // ===== ⚡ INSTANT RENDER QUESTIONS dari localStorage cache =====
+  const cachedQuestions = cacheGet();
+  if (cachedQuestions && Array.isArray(cachedQuestions) && cachedQuestions.length > 0) {
+    console.log(`[${TITLE}View] ⚡ Rendering questions from cache (${cachedQuestions.length})`);
+    ctx.state.questions = cachedQuestions;
+    ctx.state.questionHash = computeListHash(cachedQuestions);
+    renderSoal();
+    setCacheStatus('Cache');
+  } else {
+    console.log(`[${TITLE}View] ⚠️ No question cache, showing skeleton`);
+    renderSkeletonSoal();
+    // Lazy load di background
+    loadQuestions(false).catch(e =>
+      console.warn(`[${TITLE}View] Lazy load questions:`, e)
+    );
+  }
+
+  // ===== ⚡ Subscribe ke AdminModule =====
   await ctx.subscribeToData();
 
-  // Load questions (paralel, tidak blocking UI)
-  await loadQuestions(false);
+  // ===== ⚡ Bind refresh button ke global forceSync =====
+  ctx.bindRefreshButton('refreshDataBtn', 'Data disegarkan');
+
+  // ⚡ NO POLLING — auto-sync global di app.js (60s interval)
 
   return unmount;
 }
@@ -214,7 +271,7 @@ export function unmount() {
 }
 
 // ============================================================
-//   BIND EVENTS (idempotent — once per mount)
+//   BIND EVENTS
 // ============================================================
 function bindEvents() {
   // Modal form save
@@ -247,8 +304,7 @@ function bindEvents() {
       } else if (action === 'delete-q') {
         deleteQuestion(id);
       } else if (action === 'refresh') {
-        cacheClear();
-        loadQuestions(true);
+        handleRefreshQuestions(btn);
       } else if (action === 'add') {
         showModal(null);
       }
@@ -265,7 +321,7 @@ function bindEvents() {
       const action = btn.dataset.action;
 
       if (action === 'refresh') {
-        handleRefreshResponses();
+        handleRefreshResponses(btn);
       } else if (action === 'export') {
         exportCSV();
       } else if (action === 'detail') {
@@ -288,18 +344,49 @@ function bindEvents() {
 }
 
 // ============================================================
-//   MANUAL REFRESH RESPONSES
+//   MANUAL REFRESH — QUESTIONS (force re-fetch)
 // ============================================================
-async function handleRefreshResponses() {
+async function handleRefreshQuestions(btn) {
   if (ctx.saving) return;
+
+  const restore = btn ? setBtnLoading(btn, true, '') : () => {};
   ctx.saving = true;
+  setCacheStatus('Memuat...');
+
+  try {
+    cacheClear();
+    await loadQuestions(true);
+    setCacheStatus('Live');
+    showToast('Soal disegarkan', 'success');
+  } catch (err) {
+    setCacheStatus('Error');
+    showToast('Gagal menyegarkan soal', 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+  }
+}
+
+// ============================================================
+//   MANUAL REFRESH — RESPONSES (via AdminModule)
+// ============================================================
+async function handleRefreshResponses(btn) {
+  if (ctx.saving) return;
+
+  const restore = btn ? setBtnLoading(btn, true, '') : () => {};
+  ctx.saving = true;
+  setCacheStatus('Memuat...');
+
   try {
     await AdminModule.loadAllData(true);
     refreshResponsesFromCache();
+    setCacheStatus('Live');
     showToast('Data disegarkan', 'success');
   } catch (e) {
+    setCacheStatus('Error');
     showToast('Gagal menyegarkan: ' + e.message, 'error');
   } finally {
+    restore();
     ctx.saving = false;
   }
 }
@@ -311,11 +398,20 @@ async function loadQuestions(forceRefresh = false) {
   const container = getEl(IDS.soalContainer);
   if (!container) return;
 
-  const cached = forceRefresh ? null : cacheGet();
-  if (cached && Array.isArray(cached) && cached.length > 0) {
-    ctx.state.questions = cached;
-    renderSoal();
-  } else {
+  // Kalau tidak force, cek cache dulu
+  if (!forceRefresh) {
+    const cached = cacheGet();
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      ctx.state.questions = cached;
+      ctx.state.questionHash = computeListHash(cached);
+      renderSoal();
+      setCacheStatus('Cache');
+      return;
+    }
+  }
+
+  // Skeleton kalau belum ada data
+  if (ctx.state.questions.length === 0) {
     renderSkeletonSoal();
   }
 
@@ -326,20 +422,27 @@ async function loadQuestions(forceRefresh = false) {
     const list = Array.isArray(res) ? res : (res?.data || []);
     if (list.length > 0) {
       ctx.state.questions = list;
+      ctx.state.questionHash = computeListHash(list);
       cacheSet(list);
       renderSoal();
-    } else if (!cached || cached.length === 0) {
+      setCacheStatus('Live');
+    } else {
+      ctx.state.questions = [];
+      ctx.state.questionHash = '';
+      cacheSet([]);
       container.innerHTML = `<div class="alert alert-info text-center">
         Belum ada soal ${TITLE.toLowerCase()}. Klik <strong>Tambah Soal</strong> untuk memulai.
       </div>`;
+      setCacheStatus('Live');
     }
   } catch (e) {
     console.warn(`[${TITLE}View] loadQuestions:`, e);
-    if (!cached || cached.length === 0) {
+    if (ctx.state.questions.length === 0) {
       container.innerHTML = `<div class="alert alert-danger text-center">
         Gagal memuat soal: ${escapeHtml(e.message)}
       </div>`;
     }
+    setCacheStatus('Error');
   }
 }
 
@@ -374,7 +477,6 @@ function renderData() {
   const container = getEl(IDS.dataContainer);
   if (!container) return;
 
-  // Focus preservation BEFORE innerHTML replace
   const savedFocus = captureFocusState('filterDataInput');
   const data = ctx.state.filteredResponses;
 
@@ -818,11 +920,11 @@ function exportCSV() {
 }
 
 // ============================================================
-//   EXPORT DEFAULT (kompatibel dengan router.js)
+//   EXPORT DEFAULT
 // ============================================================
-export default { mount, unmount };
+export default { mount, unmount, preloadData };
 
 console.log(
-  '%c Pretest View v27.2.3 — Standalone Edition ',
+  '%c Pretest View v27.3.0 — Preload + Subscription Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
