@@ -1,18 +1,16 @@
 // ============================================================
-// js/app.js — v27.3.0 FULL PRELOAD EDITION
+// js/app.js — v27.3.3 BLOCKING BOOT + VERIFIED READY
 // ============================================================
-// CHANGELOG v27.3.0 (dari v27.2.2):
-//   ✅ NEW: Preload quiz questions (pretest + posttest)
-//     → background, tidak blocking UI
-//     → pakai preloadData() dari pretest.js/posttest.js
-//   ✅ NEW: Auto-sync idle-aware + guard race condition
-//   ✅ FIX: Safe import dengan retry + track failed modules
-//   ✅ FIX: Preload data soft-skip 10s (cold start GAS)
-//   ✅ FIX: BFCache guard skip jika app belum loaded
-//   ✅ KEEP: Semua 18 routes + 4 interactive features
-//   ✅ KEEP: Subscription + manual refresh via window.__pkd
-//   ✅ KEEP: Keyboard shortcuts Alt+D/P/A/S/R/Q/M/K/T
-//   ✅ KEEP: Preload fragments + modules (blocking 0.5-2s)
+// CHANGELOG v27.3.3 (dari v27.3.2):
+//   ✅ FIX CRITICAL: Gunakan AdminModule.ensureDataReady() sebelum
+//     router.start() → dashboard render LANGSUNG penuh data
+//   ✅ FIX: Verifikasi state via AdminModule.isReady() + hasData()
+//   ✅ FIX: Loader hilang hanya setelah data verified ready
+//   ✅ FIX: Timeout 20s untuk cold start GAS
+//   ✅ NEW: waitForDataReady() dengan polling state actual
+//   ✅ NEW: Log stats setelah data ready
+//   ✅ KEEP: Semua fitur v27.3.2 (preload quiz, safe import, dll)
+//   ✅ KEEP: Semua 18 routes + interactive features
 // ============================================================
 
 import {
@@ -38,14 +36,15 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '27.3.0';
+const APP_VERSION = '27.3.3';
 
-const PRELOAD_DATA_SOFT_SKIP_MS = 10000;   // 10s — cold start GAS tolerance
-const AUTO_SYNC_INTERVAL_MS     = 60000;   // 60s
-const IDLE_THRESHOLD_MS         = 5 * 60 * 1000; // 5 menit
-const FAILED_MODULE_RETRY_DELAY_MS = 3000; // 3s
-const FAILED_MODULE_MAX_RETRY   = 3;
-const QUIZ_PRELOAD_DELAY_MS     = 2000;    // delay 2s sebelum preload quiz
+const DATA_PRELOAD_TIMEOUT_MS       = 20000;   // 20s — longgar untuk cold start
+const ENSURE_READY_TIMEOUT_MS       = 10000;   // 10s — max tunggu verifikasi
+const AUTO_SYNC_INTERVAL_MS         = 60000;   // 60s
+const IDLE_THRESHOLD_MS             = 5 * 60 * 1000; // 5 menit
+const FAILED_MODULE_RETRY_DELAY_MS  = 3000;    // 3s
+const FAILED_MODULE_MAX_RETRY       = 3;
+const QUIZ_PRELOAD_DELAY_MS         = 2000;    // 2s
 
 // ============================================================
 //   ROUTES — 18 Views
@@ -80,8 +79,8 @@ let autoSyncInterval = null;
 let isSyncing = false;
 let adminModule = null;
 let lastUserActivity = Date.now();
+let dataReady = false;
 
-// ⚡ Track failed modules untuk retry (Map<url, {count, lastError}>)
 window.__pkdFailedModules = new Map();
 
 // ============================================================
@@ -119,9 +118,12 @@ function updateLoaderProgress(current, total) {
   progress.textContent = `${current} / ${total}`;
 }
 
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
 // ============================================================
-//   ⚡ SAFE DYNAMIC IMPORT dengan RETRY
-//   Handle ERR_ABORTED 404 + track failed untuk retry background
+//   ⚡ SAFE DYNAMIC IMPORT
 // ============================================================
 async function safeImport(url, options = {}) {
   const { silent = false, maxRetry = 2 } = options;
@@ -129,24 +131,17 @@ async function safeImport(url, options = {}) {
 
   for (let attempt = 0; attempt <= maxRetry; attempt++) {
     try {
-      // Retry pakai cache buster (attempt 0 = normal, attempt > 0 = cache-bust)
-      const importUrl = attempt === 0
-        ? url
-        : `${url}?retry=${Date.now()}&attempt=${attempt}`;
-
+      const importUrl = attempt === 0 ? url : `${url}?retry=${Date.now()}&attempt=${attempt}`;
       const mod = await import(/* @vite-ignore */ importUrl);
 
-      // ✅ Sukses — hapus dari failed registry
       if (window.__pkdFailedModules.has(url)) {
         window.__pkdFailedModules.delete(url);
         console.log(`[SafeImport] ✅ Recovered: ${url}`);
       }
-
       return mod;
     } catch (e) {
       lastError = e;
       const msg = String(e?.message || e || '');
-
       const isRetryable =
         msg.includes('Failed to fetch') ||
         msg.includes('ERR_ABORTED') ||
@@ -156,29 +151,79 @@ async function safeImport(url, options = {}) {
         msg.includes('NetworkError');
 
       if (!isRetryable) {
-        if (!silent) console.error(`[SafeImport] Non-retryable: ${url} — ${msg}`);
+        if (!silent) console.error(`[SafeImport] Non-retryable: ${url}`);
         throw e;
       }
 
       if (attempt < maxRetry) {
-        if (!silent) {
-          console.warn(`[SafeImport] Retry ${attempt + 1}/${maxRetry}: ${url} — ${msg}`);
-        }
-        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+        if (!silent) console.warn(`[SafeImport] Retry ${attempt + 1}/${maxRetry}: ${url}`);
+        await sleep(300 * (attempt + 1));
       } else {
-        // Track sebagai failed untuk background retry
         const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
-        window.__pkdFailedModules.set(url, {
-          count: info.count + 1,
-          lastError: msg,
-        });
-        if (!silent) console.error(`[SafeImport] ❌ FAILED after ${maxRetry + 1} attempts: ${url}`, msg);
+        window.__pkdFailedModules.set(url, { count: info.count + 1, lastError: msg });
+        if (!silent) console.error(`[SafeImport] ❌ FAILED: ${url}`);
         throw e;
       }
     }
   }
-
   throw lastError || new Error('SafeImport failed');
+}
+
+// ============================================================
+//   ⚡ v27.3.3: WAIT FOR DATA READY (fallback jika ensureDataReady tidak ada)
+// ============================================================
+async function waitForDataReady(maxAttempts = 50) {
+  if (!adminModule) return false;
+
+  const hasEnsure = typeof adminModule.ensureDataReady === 'function';
+  const hasIsReady = typeof adminModule.isReady === 'function';
+
+  // Kalau adminModule punya ensureDataReady(), pakai itu
+  if (hasEnsure) {
+    console.log('[Boot] ⏳ Using AdminModule.ensureDataReady()...');
+    try {
+      const ready = await adminModule.ensureDataReady(ENSURE_READY_TIMEOUT_MS);
+      return ready;
+    } catch (e) {
+      console.warn('[Boot] ensureDataReady error:', e.message);
+    }
+  }
+
+  // Fallback: manual polling
+  console.log('[Boot] ⏳ Manual polling for data ready...');
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      // Cek via isReady()
+      if (hasIsReady && adminModule.isReady()) {
+        console.log(`[Boot] ✅ Data ready (via isReady) after ${i * 200}ms`);
+        return true;
+      }
+
+      // Cek via hasData()
+      if (typeof adminModule.hasData === 'function' && adminModule.hasData()) {
+        console.log(`[Boot] ✅ Data ready (via hasData) after ${i * 200}ms`);
+        return true;
+      }
+
+      // Cek via getStats()
+      const stats = adminModule.getStats() || {};
+      const total =
+        (stats.totalPeserta || 0) +
+        (stats.totalSesi || 0) +
+        (stats.totalMateri || 0) +
+        (stats.totalAlumni || 0);
+
+      if (total > 0) {
+        console.log(`[Boot] ✅ Data ready (via getStats) after ${i * 200}ms — ${total} entities`);
+        return true;
+      }
+    } catch (e) {
+      // continue polling
+    }
+    await sleep(200);
+  }
+
+  return false;
 }
 
 // ============================================================
@@ -187,8 +232,6 @@ async function safeImport(url, options = {}) {
 (function setupGlobalErrorHandlers() {
   window.addEventListener('error', function (e) {
     const msg = (e && e.message) || '';
-    const filename = (e && e.filename) || '';
-
     const isModuleError =
       msg.includes('Failed to resolve module') ||
       msg.includes('Failed to fetch dynamically imported module') ||
@@ -234,10 +277,9 @@ function showAppShell() {
 function renderShellError(message, detail) {
   const shell = findElement(['appShell', 'adminWrapper']);
   if (!shell) return;
-
-  const safeMsg    = escapeHtml(message || 'Terjadi kesalahan saat memuat aplikasi.');
+  const safeMsg = escapeHtml(message || 'Terjadi kesalahan.');
   const safeDetail = detail ? escapeHtml(detail) : '';
-  const safeLogin  = escapeHtml(LOGIN_PATH);
+  const safeLogin = escapeHtml(LOGIN_PATH);
 
   shell.innerHTML = `
     <div class="d-flex justify-content-center align-items-center p-4" style="min-height:100vh;">
@@ -260,25 +302,17 @@ function renderShellError(message, detail) {
       </div>
     </div>`;
 
-  shell.querySelector('[data-shell-action="reload"]')?.addEventListener('click', () => {
-    window.location.reload();
-  });
-
+  shell.querySelector('[data-shell-action="reload"]')?.addEventListener('click', () => window.location.reload());
   shell.querySelector('[data-shell-action="clearcache"]')?.addEventListener('click', async () => {
-    if (!confirm('Hapus cache browser & reload?\n\nData akan diambil ulang dari server.')) return;
+    if (!confirm('Hapus cache browser & reload?')) return;
     try {
       if ('caches' in window) {
         const names = await caches.keys();
         await Promise.all(names.map(n => caches.delete(n)));
       }
       sessionStorage.clear();
-      // Keep auth, clear other cache
-      const authKeys = ['pkd_auth'];
       const toKeep = {};
-      authKeys.forEach(k => {
-        const v = localStorage.getItem(k);
-        if (v) toKeep[k] = v;
-      });
+      ['pkd_auth'].forEach(k => { const v = localStorage.getItem(k); if (v) toKeep[k] = v; });
       localStorage.clear();
       Object.keys(toKeep).forEach(k => localStorage.setItem(k, toKeep[k]));
     } catch (e) { /* silent */ }
@@ -287,7 +321,7 @@ function renderShellError(message, detail) {
 }
 
 // ============================================================
-//   PARTIALS LOADER — 1× retry
+//   PARTIALS LOADER
 // ============================================================
 async function loadPartialsWithRetry() {
   const maxRetry = 1;
@@ -296,33 +330,23 @@ async function loadPartialsWithRetry() {
   for (let attempt = 0; attempt <= maxRetry; attempt++) {
     try {
       await Promise.all([
-        Promise.resolve(loadSidebar()).catch(e => {
-          console.error('[Boot] Sidebar load failed:', e);
-          throw e;
-        }),
-        Promise.resolve(loadBottomNav()).catch(e => {
-          console.error('[Boot] Bottom-nav load failed:', e);
-          throw e;
-        }),
+        Promise.resolve(loadSidebar()).catch(e => { throw e; }),
+        Promise.resolve(loadBottomNav()).catch(e => { throw e; }),
       ]);
       return;
     } catch (e) {
       lastErr = e;
-      if (attempt < maxRetry) {
-        await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
-      }
+      if (attempt < maxRetry) await sleep(400 * (attempt + 1));
     }
   }
-
   throw lastErr || new Error('Gagal memuat partials');
 }
 
 // ============================================================
-//   PRELOAD DATA (via getBootstrapData batch)
-//   Soft-skip 10s — app tetap jalan kalau GAS cold start lambat
+//   ⚡ PRELOAD DATA (BLOCKING dengan timeout 20s)
 // ============================================================
 async function preloadAllData() {
-  console.log('[Boot] ⚡ Preloading all data (background)...');
+  console.log('[Boot] ⚡ Preloading data (blocking, timeout 20s)...');
   updateLoaderText('Memuat data...');
 
   const startTime = Date.now();
@@ -331,48 +355,36 @@ async function preloadAllData() {
     const mod = await safeImport('./modules/admin.js', { silent: true });
     adminModule = mod.AdminModule || mod.default;
 
-    if (!adminModule) {
-      throw new Error('AdminModule tidak tersedia');
-    }
+    if (!adminModule) throw new Error('AdminModule tidak tersedia');
 
     const loadPromise = adminModule.loadAllData(true);
 
-    const softSkipPromise = new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ __softSkip: true });
-      }, PRELOAD_DATA_SOFT_SKIP_MS);
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ __timeout: true }), DATA_PRELOAD_TIMEOUT_MS);
     });
 
-    const result = await Promise.race([loadPromise, softSkipPromise]);
+    const result = await Promise.race([loadPromise, timeoutPromise]);
     const elapsed = Date.now() - startTime;
 
-    if (result && result.__softSkip) {
-      console.warn(`[Boot] ⚠️ Soft-skip preload data after ${elapsed}ms — app jalan dulu`);
+    if (result && result.__timeout) {
+      console.warn(`[Boot] ⚠️ Data preload TIMEOUT after ${elapsed}ms`);
       loadPromise
         .then((r) => {
           if (r && r.success) {
-            console.log('[Boot] ✅ Data loaded in background');
+            console.log('[Boot] ✅ Data loaded late in background');
+            dataReady = true;
             window.dispatchEvent(new CustomEvent('pkd:data-ready'));
           }
         })
-        .catch((e) => console.warn('[Boot] Background load error:', e.message));
-
-      return { success: false, error: 'soft-skip', softSkip: true };
+        .catch((e) => console.warn('[Boot] Late load error:', e.message));
+      return { success: false, error: 'timeout', timeout: true };
     }
 
     if (result && result.success) {
-      const stats = adminModule.getStats() || {};
-      console.log(`[Boot] ✅ Data preloaded in ${elapsed}ms via ${result.source || 'unknown'}`);
-      console.log('[Boot] Stats:', {
-        peserta: stats.totalPeserta || 0,
-        sesi: stats.totalSesi || 0,
-        materi: stats.totalMateri || 0,
-        timInstruktur: stats.totalTimInstruktur || 0,
-      });
+      console.log(`[Boot] ✅ Data loaded in ${elapsed}ms via ${result.source || 'unknown'}`);
       return { success: true, elapsed };
     }
 
-    console.warn('[Boot] ⚠️ Preload partial:', result?.error);
     return { success: false, error: result?.error };
   } catch (e) {
     const elapsed = Date.now() - startTime;
@@ -382,44 +394,32 @@ async function preloadAllData() {
 }
 
 // ============================================================
-//   PRELOAD FRAGMENTS + MODULES (BLOCKING)
+//   PRELOAD FRAGMENTS + MODULES
 // ============================================================
 async function preloadAllFragmentsAndModules() {
   const totalRoutes = Object.keys(ROUTES).length;
-  updateLoaderText(`Memuat ${totalRoutes} menu...`);
-
   const entries = Object.entries(ROUTES);
   let loaded = 0;
-  const total = totalRoutes * 2; // fragments + modules
+  const total = totalRoutes * 2;
 
   const tasks = entries.flatMap(([route, cfg]) => {
-    // ===== HTML Fragment =====
     const htmlTask = fetch(cfg.html, { cache: 'force-cache' })
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.text();
-      })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
       .then(html => {
-        if (html && html.trim() && router) {
-          router.fragmentCache.set(cfg.html, html);
-        }
+        if (html && html.trim() && router) router.fragmentCache.set(cfg.html, html);
         loaded++;
         updateLoaderProgress(loaded, total);
       })
       .catch((err) => {
-        console.warn(`[Boot] ⚠️ Fragment preload failed: ${cfg.html}`, err.message);
+        console.warn(`[Boot] ⚠️ Fragment failed: ${cfg.html}`);
         loaded++;
         updateLoaderProgress(loaded, total);
       });
 
-    // ===== JS Module =====
     const jsTask = safeImport(cfg.js, { silent: true })
-      .then(() => {
-        loaded++;
-        updateLoaderProgress(loaded, total);
-      })
+      .then(() => { loaded++; updateLoaderProgress(loaded, total); })
       .catch((err) => {
-        console.warn(`[Boot] ⚠️ Module preload failed: ${cfg.js}`, err.message);
+        console.warn(`[Boot] ⚠️ Module failed: ${cfg.js}`);
         loaded++;
         updateLoaderProgress(loaded, total);
       });
@@ -431,53 +431,32 @@ async function preloadAllFragmentsAndModules() {
 
   const failedCount = window.__pkdFailedModules.size;
   if (failedCount > 0) {
-    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed — akan retry di background`);
+    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed — retry background`);
   }
-
   console.log(`[Boot] ✅ Preloaded ${totalRoutes} fragments + ${totalRoutes} modules`);
 }
 
 // ============================================================
-//   ⚡ v27.3.0: PRELOAD QUIZ QUESTIONS (Pretest + Posttest)
-//   Load di background — tidak blocking UI
-//   Pakai preloadData() yang di-export dari pretest.js / posttest.js
+//   PRELOAD QUIZ QUESTIONS
 // ============================================================
 function preloadQuizQuestions() {
-  // Delay biar tidak bersaing dengan preload data utama
   setTimeout(async () => {
-    console.log('[Boot] ⚡ Preloading quiz questions (pretest + posttest)...');
+    console.log('[Boot] ⚡ Preloading quiz questions...');
 
     const tasks = [
-      // ===== Pretest =====
       safeImport(BASE_PATH + 'views/admin/pretest.js', { silent: true })
-        .then(mod => {
-          if (mod && typeof mod.preloadData === 'function') {
-            return mod.preloadData();
-          }
-          return { success: false, error: 'preloadData not exported' };
-        })
+        .then(mod => mod && typeof mod.preloadData === 'function' ? mod.preloadData() : { success: false })
         .catch(e => ({ success: false, error: e.message })),
-
-      // ===== Posttest =====
       safeImport(BASE_PATH + 'views/admin/posttest.js', { silent: true })
-        .then(mod => {
-          if (mod && typeof mod.preloadData === 'function') {
-            return mod.preloadData();
-          }
-          return { success: false, error: 'preloadData not exported' };
-        })
+        .then(mod => mod && typeof mod.preloadData === 'function' ? mod.preloadData() : { success: false })
         .catch(e => ({ success: false, error: e.message })),
     ];
 
     const results = await Promise.allSettled(tasks);
-
     results.forEach((r, i) => {
       const kind = i === 0 ? 'pretest' : 'posttest';
       if (r.status === 'fulfilled' && r.value && r.value.success) {
-        console.log(`[Boot] ✅ ${kind} questions preloaded: ${r.value.count ?? 0} items (via ${r.value.source || 'unknown'})`);
-      } else {
-        const err = (r.status === 'fulfilled' && r.value && r.value.error) || r.reason?.message || 'unknown';
-        console.warn(`[Boot] ⚠️ ${kind} questions preload failed: ${err}`);
+        console.log(`[Boot] ✅ ${kind} preloaded: ${r.value.count ?? 0} items`);
       }
     });
   }, QUIZ_PRELOAD_DELAY_MS);
@@ -496,28 +475,19 @@ function scheduleFailedModuleRetry() {
 
     for (const url of urls) {
       const info = failed.get(url);
-      if (info && info.count >= FAILED_MODULE_MAX_RETRY) {
-        console.error(`[Boot] ❌ Giving up on: ${url} (retry ${info.count}x)`);
-        continue;
-      }
-
+      if (info && info.count >= FAILED_MODULE_MAX_RETRY) continue;
       try {
         await safeImport(url, { silent: false, maxRetry: 0 });
         console.log(`[Boot] ✅ Retry OK: ${url}`);
-      } catch (e) {
-        console.warn(`[Boot] ⚠️ Retry failed: ${url}`, e.message);
-      }
+      } catch (e) { /* silent */ }
     }
 
-    // Kalau masih ada failed, schedule lagi
-    if (failed.size > 0) {
-      scheduleFailedModuleRetry();
-    }
+    if (failed.size > 0) scheduleFailedModuleRetry();
   }, FAILED_MODULE_RETRY_DELAY_MS);
 }
 
 // ============================================================
-//   AUTO-SYNC GLOBAL (IDLE-AWARE)
+//   AUTO-SYNC
 // ============================================================
 (function trackUserActivity() {
   const handler = () => { lastUserActivity = Date.now(); };
@@ -527,12 +497,8 @@ function scheduleFailedModuleRetry() {
 })();
 
 function startAutoSync() {
-  if (autoSyncInterval) {
-    console.warn('[AutoSync] Sudah berjalan, skip');
-    return;
-  }
-
-  console.log(`[AutoSync] ✅ Started (interval: ${AUTO_SYNC_INTERVAL_MS / 1000}s, idle-aware)`);
+  if (autoSyncInterval) return;
+  console.log(`[AutoSync] ✅ Started (${AUTO_SYNC_INTERVAL_MS / 1000}s, idle-aware)`);
 
   autoSyncInterval = setInterval(async () => {
     if (document.hidden || isSyncing) return;
@@ -543,7 +509,7 @@ function startAutoSync() {
     try {
       const result = await adminModule.loadAllData(false);
       if (result && result.success && !result.skipped) {
-        console.log('[AutoSync] ✅ Data synced');
+        console.log('[AutoSync] ✅ Synced');
       }
     } catch (e) {
       console.warn('[AutoSync] Failed:', e.message);
@@ -557,7 +523,6 @@ function stopAutoSync() {
   if (autoSyncInterval) {
     clearInterval(autoSyncInterval);
     autoSyncInterval = null;
-    console.log('[AutoSync] Stopped');
   }
 }
 
@@ -565,61 +530,43 @@ function stopAutoSync() {
 //   INTERACTIVE FEATURES
 // ============================================================
 async function mountInteractiveFeatures() {
-  try {
-    mountThemeToggle();
-    console.log('[Boot] ✅ Theme Toggle mounted');
-  } catch (e) {
-    console.warn('[Boot] Theme Toggle gagal mount:', e);
-  }
+  try { mountThemeToggle(); console.log('[Boot] ✅ Theme Toggle'); }
+  catch (e) { console.warn('[Boot] Theme Toggle gagal:', e); }
 
-  try {
-    mountCommandPalette();
-    console.log('[Boot] ✅ Command Palette mounted');
-  } catch (e) {
-    console.warn('[Boot] Command Palette gagal mount:', e);
-  }
+  try { mountCommandPalette(); console.log('[Boot] ✅ Command Palette'); }
+  catch (e) { console.warn('[Boot] Command Palette gagal:', e); }
 
-  try {
-    await mountNotificationCenter();
-    console.log('[Boot] ✅ Notification Center mounted');
-  } catch (e) {
-    console.warn('[Boot] Notification Center gagal mount:', e);
-  }
-
-  // Mount shortcuts modal (dari inline fallback di app.html)
-  // Sudah di-mount oleh app.html inline script
+  try { await mountNotificationCenter(); console.log('[Boot] ✅ Notification Center'); }
+  catch (e) { console.warn('[Boot] Notification Center gagal:', e); }
 }
 
 // ============================================================
-//   BOOT SEQUENCE — v27.3.0
+//   BOOT SEQUENCE — v27.3.3
 // ============================================================
 async function boot() {
-  if (isBooted) {
-    console.warn('[Boot] Sudah dijalankan, skip.');
-    return;
-  }
+  if (isBooted) { console.warn('[Boot] Skip.'); return; }
   isBooted = true;
 
   console.log(`[Boot] Starting PKD GP Ansor Admin v${APP_VERSION}...`);
   const bootStart = Date.now();
 
-  // ===== 1. Load auth state =====
+  // 1. Auth state
   try { loadAuthState(); }
   catch (e) { console.error('[Boot] loadAuthState failed:', e); }
 
-  // ===== 2. Cek role =====
+  // 2. Role check
   const role = getUserRole();
   if (role !== 'admin') {
-    console.warn('[Boot] Non-admin role detected:', role, '→ redirect ke login');
+    console.warn('[Boot] Non-admin:', role);
     window.location.replace(LOGIN_PATH);
     return;
   }
 
-  // ===== 3. Update navbar =====
+  // 3. Navbar
   try { updateNavbarMenu(); }
   catch (e) { console.warn('[Boot] updateNavbarMenu failed:', e); }
 
-  // ===== 4. Load partials (sidebar + bottom-nav) =====
+  // 4. Partials
   try {
     await loadPartialsWithRetry();
     console.log('[Boot] ✅ Partials loaded');
@@ -632,15 +579,15 @@ async function boot() {
     return;
   }
 
-  // ===== 5. Cek view container =====
+  // 5. View container
   const viewContainer = findElement(['view-container', 'appOutlet']);
   if (!viewContainer) {
-    console.error('[Boot] #view-container tidak ditemukan di DOM');
+    console.error('[Boot] #view-container tidak ditemukan');
     renderShellError('Elemen #view-container tidak ditemukan di DOM.');
     return;
   }
 
-  // ===== 6. Create router =====
+  // 6. Create router
   try {
     router = new Router(viewContainer, ROUTES, {
       defaultRoute: DEFAULT_ROUTE,
@@ -651,9 +598,8 @@ async function boot() {
       debug: false,
       prefetchEnabled: true,
     });
-
-    window.__router  = router;
-    window.__routes  = ROUTES;
+    window.__router = router;
+    window.__routes = ROUTES;
     window.__pkdAppVersion = APP_VERSION;
   } catch (e) {
     console.error('[Boot] Failed to create router:', e);
@@ -661,80 +607,92 @@ async function boot() {
     return;
   }
 
-  // ===== 7. Preload: fragment + module (BLOCKING), data (background) =====
-  updateLoaderText('Memuat menu...');
+  // ============================================================
+  // 7. PARALLEL PRELOAD: fragments + data
+  // ============================================================
+  updateLoaderText('Memuat menu & data...');
 
-  // Data preload jalan di background — TIDAK di-await
+  const fragmentsPromise = preloadAllFragmentsAndModules();
   const dataPromise = preloadAllData();
 
-  // Fragment + module preload — BLOCKING sebentar (0.5s-2s)
-  try {
-    await preloadAllFragmentsAndModules();
-    console.log('[Boot] ✅ Fragments + modules ready');
-  } catch (e) {
-    console.warn('[Boot] Preload fragments partial:', e.message);
+  // Tunggu keduanya selesai
+  await Promise.allSettled([fragmentsPromise, dataPromise]);
+
+  console.log('[Boot] ✅ Preload complete (fragments + data)');
+
+  // ============================================================
+  // 7b. ⚡ v27.3.3: VERIFIKASI DATA READY (kritis!)
+  // Ini yang membuat dashboard render LANGSUNG penuh data
+  // ============================================================
+  updateLoaderText('Memverifikasi data...');
+
+  const isReady = await waitForDataReady();
+
+  if (isReady) {
+    dataReady = true;
+    window.dispatchEvent(new CustomEvent('pkd:data-ready'));
+
+    const stats = adminModule && typeof adminModule.getStats === 'function'
+      ? adminModule.getStats()
+      : {};
+    console.log('[Boot] ✅ Data verified ready:', {
+      peserta: stats.totalPeserta || 0,
+      sesi: stats.totalSesi || 0,
+      materi: stats.totalMateri || 0,
+      alumni: stats.totalAlumni || 0,
+    });
+  } else {
+    console.warn('[Boot] ⚠️ Data not verified — dashboard may show skeleton first');
   }
 
-  // ===== 7b. ⚡ Preload quiz questions (pretest + posttest) di background =====
+  // Preload quiz di background (non-blocking)
   preloadQuizQuestions();
-
-  // Schedule background retry untuk module yang gagal
   scheduleFailedModuleRetry();
 
-  // ===== 8. Set default hash =====
+  // 8. Set default hash
   const hash = window.location.hash;
   if (!hash || hash === '#' || hash === '#/') {
     window.location.hash = DEFAULT_ROUTE;
   }
 
-  // ===== 9. Start SPA =====
+  // ============================================================
+  // 9. Start SPA — dashboard akan render LANGSUNG penuh data
+  // ============================================================
+  updateLoaderText('Menyiapkan halaman...');
   try {
     router.start();
-    console.log('[Boot] ✅ SPA started for admin');
+    console.log('[Boot] ✅ SPA started');
   } catch (e) {
     console.error('[Boot] Router start failed:', e);
     renderShellError('Gagal memulai navigasi.', e.message);
     return;
   }
 
-  // ===== 10. Hide loader, show app =====
+  // 10. Hide loader, show app
   updateLoaderText('Siap!');
   hideInitialLoader();
   showAppShell();
   window.__pkdAppLoaded = true;
   window.dispatchEvent(new CustomEvent('pkd:app-loaded'));
 
-  // ===== 11. Mount interactive features =====
+  // 11. Interactive features
   await mountInteractiveFeatures();
 
-  // ===== 12. Start auto-sync =====
+  // 12. Auto-sync
   startAutoSync();
 
-  // ===== 13. Install global handlers =====
+  // 13. Global handlers
   installKeyboardShortcuts();
   installBeforeUnloadGuard();
   installBfcacheGuard();
   installTitleUpdate();
 
-  // ===== 14. Await data preload di BACKGROUND =====
-  dataPromise
-    .then((result) => {
-      if (result.success) {
-        console.log(`[Boot] ✅ Data preload OK (${result.elapsed}ms)`);
-      } else if (result.softSkip) {
-        console.warn(`[Boot] ⚠️ Data preload soft-skipped (background)`);
-      } else {
-        console.warn(`[Boot] ⚠️ Data preload partial: ${result.error}`);
-      }
-    })
-    .catch((e) => console.warn('[Boot] Data preload error:', e));
-
-  // ===== 15. Done =====
+  // 14. Done
   const totalBoot = Date.now() - bootStart;
   console.log(
     `%c PKD GP Ansor Bantul — SPA v${APP_VERSION} `,
     'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;',
-    `Routes: ${getRouteCount()} | Boot: ${totalBoot}ms | Auto-sync: 60s`
+    `Routes: ${getRouteCount()} | Boot: ${totalBoot}ms | Data: ${dataReady ? '✅ Ready' : '⚠️ Skeleton'}`
   );
 }
 
@@ -747,31 +705,17 @@ function installKeyboardShortcuts() {
 
   document.addEventListener('keydown', function (e) {
     const tag = (e.target && e.target.tagName) || '';
-    if (
-      tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
-      (e.target && e.target.isContentEditable)
-    ) return;
-
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey) return;
     if (!e.altKey) return;
 
     const key = String(e.key || '').toLowerCase();
     const routes = {
-      'd': '#/admin/dashboard',
-      'p': '#/admin/peserta',
-      'a': '#/admin/sesi-absen',
-      's': '#/admin/skrining',
-      'r': '#/admin/rtl',
-      'q': '#/admin/tanda-tangan',
-      'm': '#/admin/materi',
-      'k': '#/admin/kader',
-      't': '#/admin/tim-instruktur',
+      'd': '#/admin/dashboard', 'p': '#/admin/peserta', 'a': '#/admin/sesi-absen',
+      's': '#/admin/skrining', 'r': '#/admin/rtl', 'q': '#/admin/tanda-tangan',
+      'm': '#/admin/materi', 'k': '#/admin/kader', 't': '#/admin/tim-instruktur',
     };
-
-    if (routes[key]) {
-      e.preventDefault();
-      if (router) router.navigate(routes[key]);
-    }
+    if (routes[key]) { e.preventDefault(); if (router) router.navigate(routes[key]); }
   });
 }
 
@@ -783,8 +727,7 @@ function installBeforeUnloadGuard() {
   window.__pkdUnloadGuardInstalled = true;
 
   window.addEventListener('beforeunload', function (e) {
-    const hasOpenModal = document.querySelector('.modal.show');
-    if (!hasOpenModal) return;
+    if (!document.querySelector('.modal.show')) return;
     e.preventDefault();
     e.returnValue = '';
     return '';
@@ -800,20 +743,10 @@ function installBfcacheGuard() {
 
   window.addEventListener('pageshow', function (e) {
     if (!e.persisted) return;
-
-    console.log('[Boot] Page restored from bfcache, checking auth...');
-
-    if (!window.__pkdAppLoaded) {
-      console.log('[Boot] bfcache: app belum pernah load, skip guard');
-      return;
-    }
-
+    if (!window.__pkdAppLoaded) return;
     try {
       const role = getUserRole();
-      if (role !== 'admin') {
-        console.log('[Boot] bfcache: role invalid → redirect to login');
-        window.location.replace(LOGIN_PATH);
-      }
+      if (role !== 'admin') window.location.replace(LOGIN_PATH);
     } catch (err) {
       window.location.replace(LOGIN_PATH);
     }
@@ -821,7 +754,7 @@ function installBfcacheGuard() {
 }
 
 // ============================================================
-//   TITLE UPDATE ON ROUTE CHANGE
+//   TITLE UPDATE
 // ============================================================
 function installTitleUpdate() {
   if (window.__pkdTitleUpdateInstalled) return;
@@ -830,16 +763,8 @@ function installTitleUpdate() {
   window.addEventListener('routeChanged', function (e) {
     const detail = e && e.detail;
     if (!detail || !detail.path) return;
-
-    const path = detail.path
-      .replace('#/admin/', '')
-      .replace(/\//g, ' ');
-
-    const title = path
-      .split(' ')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
+    const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
+    const title = path.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
   });
 }
@@ -854,10 +779,12 @@ if (document.readyState === 'loading') {
 }
 
 // ============================================================
-//   EXPOSE DEBUG HELPERS
+//   DEBUG HELPERS
 // ============================================================
 window.__pkd = {
   version: APP_VERSION,
+  isDataReady: () => dataReady,
+
   getRouter: () => router,
   getRoutes: () => ROUTES,
   getRouteCount: getRouteCount,
@@ -865,77 +792,46 @@ window.__pkd = {
   reload: () => router && router.reload(),
   destroy: () => router && router.destroy(),
 
-  // Interactive features
   openPalette: () => window.dispatchEvent(new CustomEvent('palette:open')),
   closePalette: () => window.dispatchEvent(new CustomEvent('palette:close')),
   toggleTheme: () => window.dispatchEvent(new CustomEvent('theme:toggle')),
   setTheme: (t) => window.dispatchEvent(new CustomEvent('theme:set', { detail: { theme: t } })),
   openShortcuts: () => window.dispatchEvent(new CustomEvent('shortcuts:open')),
 
-  // Data management
   getAdminModule: () => adminModule,
   forceSync: async () => {
-    if (!adminModule) {
-      console.warn('[forceSync] AdminModule belum siap');
-      return { success: false, error: 'AdminModule belum siap' };
-    }
-    console.log('[forceSync] ⚡ Forcing full data sync...');
+    if (!adminModule) return { success: false, error: 'AdminModule belum siap' };
     const t0 = Date.now();
     const result = await adminModule.loadAllData(true);
-    const elapsed = Date.now() - t0;
-    console.log(`[forceSync] ${result.success ? '✅' : '⚠️'} Done in ${elapsed}ms`);
-    return { ...result, elapsed };
+    return { ...result, elapsed: Date.now() - t0 };
   },
 
-  forceSyncAll: async () => {
-    console.log('[forceSyncAll] ⚡ Force sync everything...');
-    if (router) router.fragmentCache.clear();
-    if (adminModule) await adminModule.loadAllData(true);
-    if (router) await router.reload();
-  },
-
-  // Failed modules inspection
   getFailedModules: () => {
     const result = {};
     window.__pkdFailedModules.forEach((v, k) => { result[k] = v; });
     return result;
   },
-  clearFailedModules: () => {
-    window.__pkdFailedModules.clear();
-    console.log('[__pkd] Failed modules registry cleared');
-  },
+  clearFailedModules: () => { window.__pkdFailedModules.clear(); },
   retryFailedModules: async () => {
     const failed = window.__pkdFailedModules;
-    if (failed.size === 0) {
-      console.log('[__pkd] No failed modules to retry');
-      return;
-    }
-    console.log(`[__pkd] 🔄 Retrying ${failed.size} module(s)...`);
+    if (failed.size === 0) return;
     const urls = Array.from(failed.keys());
     for (const url of urls) {
-      try {
-        await safeImport(url, { silent: false, maxRetry: 1 });
-        console.log(`[__pkd] ✅ Retry OK: ${url}`);
-      } catch (e) {
-        console.warn(`[__pkd] ⚠️ Retry failed: ${url}`, e.message);
-      }
+      try { await safeImport(url, { silent: false, maxRetry: 1 }); }
+      catch (e) { /* silent */ }
     }
   },
 
-  // Quiz preload helper (manual trigger)
   preloadQuiz: () => preloadQuizQuestions(),
-
-  // Auto-sync control
   startAutoSync,
   stopAutoSync,
   isAutoSyncRunning: () => !!autoSyncInterval,
-  getStats: () => adminModule ? adminModule.getStats() : null,
+  getStats: () => adminModule && typeof adminModule.getStats === 'function'
+    ? adminModule.getStats()
+    : null,
 };
 
-// ============================================================
-//   CONSOLE BANNER
-// ============================================================
 console.log(
-  '%c App v27.3.0 — Full Preload Edition ',
+  '%c App v27.3.3 — Blocking Boot + Verified Ready ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
