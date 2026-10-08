@@ -1,0 +1,75 @@
+<!-- ============================================================
+     BOTTOM NAV PARTIAL — PKD GP Ansor Bantul
+     Dimuat oleh: js/components/bottom-nav.js
+     Tampil hanya di mobile (< 992px)
+     Tidak ada <html>, <head>, <body> — hanya konten fragment
+     ============================================================ -->
+
+<nav class="bottom-nav" role="navigation" aria-label="Navigasi mobile">
+
+  <!-- ============ Dashboard ============ -->
+  <a
+    href="#/admin/dashboard"
+    class="nav-item"
+    data-route="#/admin/dashboard"
+    title="Dashboard"
+    aria-label="Buka Dashboard"
+  >
+    <i class="bi bi-speedometer2" aria-hidden="true"></i>
+    <span>Dashboard</span>
+  </a>
+
+  <!-- ============ Peserta ============ -->
+  <a
+    href="#/admin/peserta"
+    class="nav-item"
+    data-route="#/admin/peserta"
+    title="Peserta"
+    aria-label="Buka Manajemen Peserta"
+  >
+    <i class="bi bi-person-badge" aria-hidden="true"></i>
+    <span>Peserta</span>
+  </a>
+
+  <!-- ============ Sesi Absen ============ -->
+  <a
+    href="#/admin/sesi-absen"
+    class="nav-item"
+    data-route="#/admin/sesi-absen"
+    title="Sesi Absen"
+    aria-label="Buka Sesi Absen"
+  >
+    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+    <span>Absen</span>
+  </a>
+
+  <!-- ============ Sertifikat ============ -->
+  <a
+    href="#/admin/sertifikat"
+    class="nav-item"
+    data-route="#/admin/sertifikat"
+    title="Sertifikat"
+    aria-label="Buka Sertifikat"
+  >
+    <i class="bi bi-patch-check" aria-hidden="true"></i>
+    <span>Sertifikat</span>
+  </a>
+
+  <!-- ============ Lainnya (opens modal) ============
+       Tidak ada data-route — ini tombol, bukan link navigasi.
+       Modal lebihMenuModal ada di app.html.
+       Handler ada di bottom-nav.js via id="moreMenuBtn".
+  ==================================================== -->
+  <button
+    type="button"
+    class="nav-item"
+    id="moreMenuBtn"
+    title="Menu Lainnya"
+    aria-label="Buka menu lainnya"
+    aria-haspopup="dialog"
+  >
+    <i class="bi bi-grid" aria-hidden="true"></i>
+    <span>Lainnya</span>
+  </button>
+
+</nav>

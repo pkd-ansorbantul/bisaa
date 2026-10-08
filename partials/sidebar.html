@@ -1,0 +1,474 @@
+<!-- ============================================================
+     SIDEBAR PARTIAL — PKD GP Ansor Bantul
+     Versi: 27.0.0 — NOTIF PANEL OVERFLOW FIX EDITION
+     Dimuat oleh: js/components/sidebar.js
+     ============================================================
+     v27.0.0 CHANGES (dari v26.1.8):
+     ✅ FIX: .sidebar-header & .sidebar-header-notif overflow: visible
+        → Notif panel 380px bisa overflow keluar sidebar 260px
+     ✅ FIX: Notif panel default position → buka ke KANAN bell
+        (sebelumnya buka ke bawah → tertutup brand area)
+     ✅ FIX: Minimized mode — panel tetap buka ke kanan
+     ✅ KEEP: Semua 18 menu + 4 submenu + brand + logout
+     ✅ VERIFIED: Semua navigasi + notif + theme toggle berfungsi
+     ============================================================ -->
+
+<!-- ===== v27.0.0: Inline styles untuk sidebar header ===== -->
+<style>
+  /* ============================================================
+     SIDEBAR HEADER — theme toggle + notif bell + minimize
+     ✅ FIX v27.0.0: overflow: visible agar notif panel bisa
+        overflow keluar dari sidebar (260px → 380px panel)
+     ============================================================ */
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    transition: padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    /* ✅ FIX v27.0.0: notif panel tidak boleh ter-clip */
+    overflow: visible;
+  }
+
+  .sidebar-header-notif {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    /* ✅ FIX v27.0.0: notif panel tidak boleh ter-clip */
+    overflow: visible;
+    /* ✅ Prevent stacking-context isolation */
+    position: relative;
+    z-index: 1;
+  }
+
+  .sidebar-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  /* Mini buttons */
+  .sidebar-mini-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .sidebar-mini-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+  }
+
+  .sidebar-mini-btn:active {
+    transform: scale(0.94);
+  }
+
+  .sidebar-mini-btn:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+  }
+
+  /* Theme toggle button — icon swap */
+  #sidebarThemeToggleBtn .theme-icon-light,
+  #sidebarThemeToggleBtn .theme-icon-dark {
+    position: absolute;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  #sidebarThemeToggleBtn .theme-icon-dark {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+
+  [data-theme="dark"] #sidebarThemeToggleBtn .theme-icon-light {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+  }
+
+  [data-theme="dark"] #sidebarThemeToggleBtn .theme-icon-dark {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+    color: #fbbf24;
+  }
+
+  /* Notif bell override — agar cocok di dark sidebar */
+  .sidebar-header-notif .notif-bell-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #cbd5e1;
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+  }
+
+  .sidebar-header-notif .notif-bell-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+  }
+
+  .sidebar-header-notif .notif-bell-btn.has-unread {
+    color: #fbbf24;
+  }
+
+  /* Notif badge — border sesuai sidebar dark */
+  .sidebar-header-notif .notif-badge {
+    border-color: #0f172a;
+    font-size: 0.62rem;
+    min-width: 18px;
+    height: 18px;
+    top: -3px;
+    right: -3px;
+  }
+
+  /* ============================================================
+     ✅ FIX v27.0.0: Notif Panel Positioning
+     Default: buka ke KANAN bell (bukan ke bawah)
+     → Tidak tertutup brand area di bawahnya
+     → Bisa overflow keluar sidebar (parent overflow: visible)
+     ============================================================ */
+  .sidebar-header-notif .notif-panel {
+    top: 0;
+    left: calc(100% + 10px);
+    right: auto;
+    /* ✅ Override arrow pointer — panel bukan anchor ke bawah bell */
+    --notif-arrow-hidden: 1;
+  }
+
+  /* Sembunyikan arrow pointer karena panel bukan anchor ke bawah */
+  .sidebar-header-notif .notif-panel::before {
+    /* Arrow menunjuk ke kiri (dari bell di kanan) */
+    top: 16px;
+    left: -7px;
+    right: auto;
+    transform: rotate(-45deg);
+    /* Border menunjuk ke kiri */
+    border-left: 1px solid var(--color-slate-200);
+    border-top: none;
+    border-right: none;
+    border-bottom: 1px solid var(--color-slate-200);
+  }
+
+  [data-theme="dark"] .sidebar-header-notif .notif-panel::before {
+    background: #0f172a;
+    border-color: #1e293b;
+  }
+
+  /* Minimized mode: stack vertical, compact */
+  .sidebar-wrapper.minimized .sidebar-header {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.5rem 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .sidebar-wrapper.minimized .sidebar-header-notif {
+    width: 100%;
+    justify-content: center;
+    /* ✅ Keep overflow visible di minimized mode */
+    overflow: visible;
+  }
+
+  .sidebar-wrapper.minimized .sidebar-header-controls {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .sidebar-wrapper.minimized .sidebar-mini-btn,
+  .sidebar-wrapper.minimized .sidebar-header-notif .notif-bell-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Minimized: notif panel tetap muncul ke kanan */
+  .sidebar-wrapper.minimized .sidebar-header-notif .notif-panel {
+    top: 0;
+    left: calc(100% + 8px);
+    right: auto;
+  }
+
+  /* ============================================================
+     RESPONSIVE — Mobile (<992px)
+     Sidebar hidden, notif panel ikut disembunyikan atau fullwidth
+     ============================================================ */
+  @media (max-width: 991px) {
+    .sidebar-header {
+      padding: 0.75rem 1rem;
+    }
+
+    /* Mobile: notif panel fullwidth (handled by theme.css @media) */
+    .sidebar-header-notif .notif-panel {
+      position: fixed;
+      top: 64px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+      max-width: none;
+    }
+
+    /* Sembunyikan arrow pointer di mobile */
+    .sidebar-header-notif .notif-panel::before {
+      display: none;
+    }
+  }
+
+  /* ============================================================
+     ACCESSIBILITY — Reduced motion
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar-header,
+    .sidebar-mini-btn,
+    #sidebarThemeToggleBtn .theme-icon-light,
+    #sidebarThemeToggleBtn .theme-icon-dark {
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+
+<div class="sidebar-wrapper" id="sidebarWrapper" role="navigation" aria-label="Navigasi utama">
+
+  <!-- ==========================================================
+       v27.0.0: SIDEBAR HEADER — Theme Toggle + Notif Bell + Minimize
+       ✅ overflow: visible agar notif panel bisa overflow keluar
+       ========================================================== -->
+  <div class="sidebar-header">
+
+    <!-- Notif Center Container — diisi oleh notification-center.js -->
+    <div id="notif-center-container" class="sidebar-header-notif" aria-label="Notifikasi"></div>
+
+    <!-- Kontrol: theme toggle + minimize -->
+    <div class="sidebar-header-controls">
+
+      <!-- Theme Toggle (dark/light) — di-bind oleh theme-toggle.js -->
+      <button
+        type="button"
+        id="sidebarThemeToggleBtn"
+        class="sidebar-mini-btn theme-toggle-btn"
+        title="Toggle Tema (Dark / Light)"
+        aria-label="Toggle tema gelap atau terang"
+        aria-pressed="false"
+      >
+        <i class="bi bi-sun-fill theme-icon-light" aria-hidden="true"></i>
+        <i class="bi bi-moon-stars-fill theme-icon-dark" aria-hidden="true"></i>
+      </button>
+
+      <!-- Minimize Toggle — di-bind oleh sidebar.js v26.1.7 -->
+      <button
+        type="button"
+        id="toggleSidebarBtn"
+        class="sidebar-mini-btn"
+        title="Minimize / Maximize Sidebar"
+        aria-label="Minimize atau maximize sidebar"
+      >
+        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============ BRAND AREA ============ -->
+  <!-- ⭐ Logo & nama aplikasi → link ke halaman publik (/bisaa/index.html) -->
+  <div class="sidebar-brand-area">
+    <a
+      class="brand-sidebar"
+      href="/bisaa/index.html"
+      title="Kunjungi Beranda Publik"
+      target="_self"
+    >
+      <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+      <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
+      <div>
+        <div class="brand-sidebar-title">PKD GP Ansor</div>
+        <span class="brand-sidebar-sub">Kabupaten Bantul</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- ============ MENU AREA ============ -->
+  <div class="sidebar-menu-area">
+
+    <!-- ⚠️ PENTING: id="sidebarMenu" dipakai oleh sidebar.js untuk query -->
+    <div class="nav flex-column nav-pills" id="sidebarMenu" role="tablist">
+
+      <!-- ============ Dashboard ============ -->
+      <a
+        class="nav-link"
+        href="#/admin/dashboard"
+        data-route="#/admin/dashboard"
+        title="Dashboard"
+      >
+        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- ============ Akademik (parent) ============ -->
+      <div
+        class="nav-link"
+        data-target="akademik"
+        title="Akademik"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+      >
+        <i class="bi bi-book" aria-hidden="true"></i>
+        <span>Akademik</span>
+      </div>
+      <div class="submenu" id="submenu-akademik">
+        <a class="nav-link" href="#/admin/pretest" data-route="#/admin/pretest" title="Pre-test">
+          <i class="bi bi-pencil-square" aria-hidden="true"></i>
+          <span>Pre-test</span>
+        </a>
+        <a class="nav-link" href="#/admin/posttest" data-route="#/admin/posttest" title="Post-test">
+          <i class="bi bi-trophy" aria-hidden="true"></i>
+          <span>Post-test</span>
+        </a>
+        <a class="nav-link" href="#/admin/materi" data-route="#/admin/materi" title="Materi">
+          <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+          <span>Materi</span>
+        </a>
+      </div>
+
+      <!-- ============ Peserta (parent) ============ -->
+      <div
+        class="nav-link"
+        data-target="peserta"
+        title="Peserta"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+      >
+        <i class="bi bi-people" aria-hidden="true"></i>
+        <span>Peserta</span>
+      </div>
+      <div class="submenu" id="submenu-peserta">
+        <a class="nav-link" href="#/admin/peserta" data-route="#/admin/peserta" title="Peserta">
+          <i class="bi bi-person-badge" aria-hidden="true"></i>
+          <span>Peserta</span>
+        </a>
+        <a class="nav-link" href="#/admin/alumni" data-route="#/admin/alumni" title="Alumni">
+          <i class="bi bi-award" aria-hidden="true"></i>
+          <span>Alumni</span>
+        </a>
+        <a class="nav-link" href="#/admin/kader" data-route="#/admin/kader" title="Kader">
+          <i class="bi bi-people-fill" aria-hidden="true"></i>
+          <span>Kader</span>
+        </a>
+        <!-- ⭐ Tim Instruktur (v26.1.6) -->
+        <a class="nav-link" href="#/admin/tim-instruktur" data-route="#/admin/tim-instruktur" title="Tim Instruktur">
+          <i class="bi bi-person-vcard" aria-hidden="true"></i>
+          <span>Tim Instruktur</span>
+        </a>
+      </div>
+
+      <!-- ============ Absensi (parent) ============ -->
+      <div
+        class="nav-link"
+        data-target="absensi"
+        title="Absensi"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+      >
+        <i class="bi bi-calendar-check" aria-hidden="true"></i>
+        <span>Absensi</span>
+      </div>
+      <div class="submenu" id="submenu-absensi">
+        <a class="nav-link" href="#/admin/sesi-absen" data-route="#/admin/sesi-absen" title="Sesi Absen">
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>
+          <span>Sesi Absen</span>
+        </a>
+        <a class="nav-link" href="#/admin/data-absensi" data-route="#/admin/data-absensi" title="Data Absensi">
+          <i class="bi bi-table" aria-hidden="true"></i>
+          <span>Data Absensi</span>
+        </a>
+        <a class="nav-link" href="#/admin/rekap-absensi" data-route="#/admin/rekap-absensi" title="Rekap Absensi">
+          <i class="bi bi-bar-chart" aria-hidden="true"></i>
+          <span>Rekap Absensi</span>
+        </a>
+      </div>
+
+      <!-- ============ Informasi (parent) ============ -->
+      <div
+        class="nav-link"
+        data-target="informasi"
+        title="Informasi"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+      >
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        <span>Informasi</span>
+      </div>
+      <div class="submenu" id="submenu-informasi">
+        <a class="nav-link" href="#/admin/informasi" data-route="#/admin/informasi" title="Informasi">
+          <i class="bi bi-newspaper" aria-hidden="true"></i>
+          <span>Informasi</span>
+        </a>
+        <a class="nav-link" href="#/admin/asset" data-route="#/admin/asset" title="Aset Digital">
+          <i class="bi bi-image" aria-hidden="true"></i>
+          <span>Aset Digital</span>
+        </a>
+      </div>
+
+      <!-- ============ Standalone Menu ============ -->
+      <a class="nav-link" href="#/admin/skrining" data-route="#/admin/skriining" title="Skrining">
+        <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+        <span>Skrining</span>
+      </a>
+
+      <a class="nav-link" href="#/admin/sertifikat" data-route="#/admin/sertifikat" title="Sertifikat">
+        <i class="bi bi-patch-check" aria-hidden="true"></i>
+        <span>Sertifikat</span>
+      </a>
+
+      <a class="nav-link" href="#/admin/tanda-tangan" data-route="#/admin/tanda-tangan" title="Tanda Tangan">
+        <i class="bi bi-pencil-square" aria-hidden="true"></i>
+        <span>Tanda Tangan</span>
+      </a>
+
+      <a class="nav-link" href="#/admin/rtl" data-route="#/admin/rtl" title="RTL & Tugas">
+        <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+        <span>RTL &amp; Tugas</span>
+      </a>
+
+      <a class="nav-link" href="#/admin/pengaturan" data-route="#/admin/pengaturan" title="Pengaturan">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+        <span>Pengaturan</span>
+      </a>
+
+      <!-- ============ Logout ============ -->
+      <div class="sidebar-logout"></div>
+      <a
+        class="nav-link text-danger"
+        href="#"
+        id="sidebarLogoutBtn"
+        title="Logout"
+        role="button"
+        tabindex="0"
+      >
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+        <span>Logout</span>
+      </a>
+
+    </div>
+  </div>
+</div>
