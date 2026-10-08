@@ -1,118 +1,134 @@
-// js/modules/admin.js
-// Modul State Admin PKD GP Ansor Bantul - Versi Lengkap & Stabil
+// ============================================================
+// js/modules/admin.js — v27.2.1 NON-BLOCKING LOAD EDITION
+// State manager untuk admin panel
+// ============================================================
+// CHANGELOG v27.2.1 (dari v27.2.0):
+//   ✅ FIX CRITICAL: Timeout 25s di batch (naik dari 15s)
+//   ✅ FIX CRITICAL: Timeout 30s di parallel (naik dari 20s)
+//   ✅ FIX: Silent error saat preload (tidak crash UI)
+//   ✅ FIX: pendingLoadPromise — race-safe + timeout guard
+//   ✅ FIX: loadAllData() tidak blocking lebih dari soft-skip
+//   ✅ FIX: Semua CRUD methods rollback konsisten
+//   ✅ PERF: getPublicState() pakai clone murah untuk array besar
+//   ✅ KEEP: Semua 137+ methods + subscription pattern
+//   ✅ KEEP: getBootstrapData batch + fallback parallel
+//   ✅ VERIFIED: Semua view v27.2.0/v27.2.1 kompatibel
 // ============================================================
 
 import {
   callApi,
   showToast,
-  escapeHtml,
-  // Autentikasi & Peserta
-  getPesertaList,
-  submitPeserta,
-  updatePeserta,
+  getPesertaList as apiGetPesertaList,
+  submitPeserta as apiSubmitPeserta,
+  updatePeserta as apiUpdatePeserta,
   deletePeserta as apiDeletePeserta,
   approvePeserta as apiApprovePeserta,
   rejectPeserta as apiRejectPeserta,
-  getPesertaById,
-  getTotalPeserta,
-  getAlumniList,
+  getPesertaById as apiGetPesertaById,
+  getTotalPeserta as apiGetTotalPeserta,
+  getAlumniList as apiGetAlumniList,
   moveToAlumni as apiMoveToAlumni,
   moveMultipleToAlumni as apiMoveMultipleToAlumni,
   moveBackToActive as apiMoveBackToActive,
-  getPesertaCredentials,
-  
-  // Sesi Absen
-  getSesiAbsen,
+
+  getSesiAbsen as apiGetSesiAbsen,
   addSesiAbsen as apiAddSesiAbsen,
   updateSesiAbsen as apiUpdateSesiAbsen,
   deleteSesiAbsen as apiDeleteSesiAbsen,
   regenerateQRSesi as apiRegenerateQRSesi,
-  toggleAttendanceSession as apiToggleAttendance,
-  getAttendanceSessionStatus,
-  
-  // Materi
-  getMateriList,
+  toggleAttendanceSession as apiToggleAttendanceSession,
+  getAttendanceSessionStatus as apiGetAttendanceSessionStatus,
+
+  getMateriList as apiGetMateriList,
   addMateri as apiAddMateri,
   deleteMateri as apiDeleteMateri,
-  
-  // Skrining, Pretest, Posttest
-  getSkriningResponses,
-  getPretestResponses,
-  getPosttestResponses,
-  getAbsensiResponses,
-  getUploadedCertificates,
-  
-  // Kader
-  getKaderList,
+
+  getSkriningResponses as apiGetSkriningResponses,
+  getPretestResponses as apiGetPretestResponses,
+  getPosttestResponses as apiGetPosttestResponses,
+  getAbsensiResponses as apiGetAbsensiResponses,
+
+  getKaderList as apiGetKaderList,
   addKader as apiAddKader,
   updateKader as apiUpdateKader,
   deleteKader as apiDeleteKader,
-  
-  // Informasi & Usulan
-  getInfoList,
+
+  getInfoList as apiGetInfoList,
   addInfo as apiAddInfo,
   updateInfo as apiUpdateInfo,
   deleteInfo as apiDeleteInfo,
-  toggleInfoStatus as apiToggleInfo,
-  getUsulanList,
+  toggleInfoStatus as apiToggleInfoStatus,
+  getUsulanList as apiGetUsulanList,
   updateUsulanStatus as apiUpdateUsulanStatus,
-  
-  // Asset & Folder
-  getAssetList,
+
+  getAssetList as apiGetAssetList,
   addAsset as apiAddAsset,
   updateAsset as apiUpdateAsset,
   deleteAsset as apiDeleteAsset,
-  getFolders,
+  getFolders as apiGetFolders,
   addFolder as apiAddFolder,
   deleteFolder as apiDeleteFolder,
   toggleFolderPublic as apiToggleFolderPublic,
   toggleFolderHideFromGallery as apiToggleFolderHideFromGallery,
   setFolderPassword as apiSetFolderPassword,
   clearFolderPassword as apiClearFolderPassword,
-  
-  // RTL & Tugas
-  getRTLTasks,
-  addRTLTask as apiAddRTL,
-  updateRTLTask as apiUpdateRTL,
-  deleteRTLTask as apiDeleteRTL,
+
+  getRTLTasks as apiGetRTLTasks,
+  addRTLTask as apiAddRTLTask,
+  updateRTLTask as apiUpdateRTLTask,
+  deleteRTLTask as apiDeleteRTLTask,
   approveRTLTask as apiApproveRTLTask,
   approveAllRTL as apiApproveAllRTL,
   getRTLStatus as apiGetRTLStatus,
   submitRTLAttachment as apiSubmitRTLAttachment,
-  
-  // Sertifikat
+
   getCertificateTemplates as apiGetCertificateTemplates,
   addCertificateTemplateManual as apiAddCertificateTemplateManual,
   updateCertificateTemplate as apiUpdateCertificateTemplate,
   deleteCertificateTemplate as apiDeleteCertificateTemplate,
   generateCertificateForParticipant as apiGenerateCertificateForParticipant,
-  getCertPresets,
+  getCertPresets as apiGetCertPresets,
   listCertificateLayouts as apiListCertificateLayouts,
   saveCertificateLayout as apiSaveCertificateLayout,
-  
-  // Tanda Tangan Digital
-  getAllDigitalApprovals,
+  getUploadedCertificates as apiGetUploadedCertificates,
+
+  getAllDigitalApprovals as apiGetAllDigitalApprovals,
   bulkGenerateTTD as apiBulkGenerateTTD,
-  
-  // Pengaturan
-  getQuizSettings,
+
+  getTimInstrukturList as apiGetTimInstrukturList,
+  addTimInstruktur as apiAddTimInstruktur,
+  updateTimInstruktur as apiUpdateTimInstruktur,
+  deleteTimInstruktur as apiDeleteTimInstruktur,
+  reorderTimInstruktur as apiReorderTimInstruktur,
+
+  getQuizSettings as apiGetQuizSettings,
   setQuizSettings as apiSetQuizSettings,
-  getLoginMode,
+  getLoginMode as apiGetLoginMode,
   setLoginMode as apiSetLoginMode,
-  getPublicVisibility,
+  getPublicVisibility as apiGetPublicVisibility,
   setPublicVisibility as apiSetPublicVisibility,
-  getPKDLokasi,
+  getPKDLokasi as apiGetPKDLokasi,
   setPKDLokasi as apiSetPKDLokasi,
-  getFormSettings,
+  getFormSettings as apiGetFormSettings,
   setFormSettings as apiSetFormSettings,
-  getRealtimeSetting,
+  getRealtimeSetting as apiGetRealtimeSetting,
   setRealtimeSetting as apiSetRealtimeSetting,
-  getDefaultFormFields
+  getDefaultFormFields,
 } from '../core/api.js';
 
-// =============================== STATE UTAMA ===============================
+// ============================================================
+//   CONSTANTS
+// ============================================================
+const TTL_FRESH_MS = 3000;               // 3s — skip reload jika fresh
+const CONCURRENT_WAIT_MS = 25000;        // 25s max wait pending
+const NOTIFY_DEBOUNCE_MS = 50;           // Debounce notify
+const BATCH_TIMEOUT_MS = 25000;          // ✅ v27.2.1: 25s — cold start GAS
+const PARALLEL_TIMEOUT_MS = 30000;       // ✅ v27.2.1: 30s — fallback paralel
+
+// ============================================================
+//   STATE
+// ============================================================
 const STATE = {
-  // Data Arrays
   peserta: [],
   sesi: [],
   materi: [],
@@ -129,32 +145,261 @@ const STATE = {
   folders: [],
   usulan: [],
   rtl: [],
-  // Settings Data
+  timInstruktur: [],
+
   quizSettings: {},
   loginMode: false,
   publicVisibility: {},
   pkdlokasi: '',
   formSettings: [],
   realtimeEnabled: false,
-  // State Flags
+
   isLoading: false,
-  lastSync: null
+  lastSync: 0,
+  lastError: null,
 };
 
-// =============================== UTILITY HELPERS ===============================
+// ============================================================
+//   SUBSCRIBERS REGISTRY
+// ============================================================
+const subscribers = new Set();
+let notifyDebounceTimer = null;
+let pendingNotifyTypes = new Set();
 
-// Generate ID lokal sementara untuk Optimistic UI
-function generateId() {
-  return 'tmp_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+// Pending promise untuk race-safe loadAllData
+let pendingLoadPromise = null;
+
+// ============================================================
+//   UTILITY
+// ============================================================
+function generateTempId(prefix = 'tmp') {
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 }
 
-// =============================== EXPORTED MODULE ===============================
+function normalizeData(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.data)) return data.data;
+  if (data && data.success && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
+function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  try {
+    if (typeof structuredClone === 'function') {
+      return structuredClone(obj);
+    }
+  } catch (e) { /* fallback */ }
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (e) {
+    return obj;
+  }
+}
+
+/**
+ * ✅ v27.2.1: Shallow clone arrays (lebih cepat untuk array besar).
+ * Cukup untuk cegah mutasi external pada wrapper array.
+ */
+function shallowCloneArray(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(item => {
+    if (item && typeof item === 'object') return { ...item };
+    return item;
+  });
+}
+
+function getPublicState() {
+  return {
+    peserta:          shallowCloneArray(STATE.peserta),
+    sesi:             shallowCloneArray(STATE.sesi),
+    materi:           shallowCloneArray(STATE.materi),
+    skrining:         shallowCloneArray(STATE.skrining),
+    pretest:          shallowCloneArray(STATE.pretest),
+    posttest:         shallowCloneArray(STATE.posttest),
+    alumni:           shallowCloneArray(STATE.alumni),
+    kader:            shallowCloneArray(STATE.kader),
+    informasi:        shallowCloneArray(STATE.informasi),
+    absensi:          shallowCloneArray(STATE.absensi),
+    sertifikat:       shallowCloneArray(STATE.sertifikat),
+    digitalApprovals: shallowCloneArray(STATE.digitalApprovals),
+    asset:            shallowCloneArray(STATE.asset),
+    folders:          shallowCloneArray(STATE.folders),
+    usulan:           shallowCloneArray(STATE.usulan),
+    rtl:              shallowCloneArray(STATE.rtl),
+    timInstruktur:    shallowCloneArray(STATE.timInstruktur),
+    quizSettings:     { ...STATE.quizSettings },
+    loginMode:        STATE.loginMode,
+    publicVisibility: { ...STATE.publicVisibility },
+    pkdlokasi:        STATE.pkdlokasi,
+    formSettings:     shallowCloneArray(STATE.formSettings),
+    realtimeEnabled:  STATE.realtimeEnabled,
+    isLoading:        STATE.isLoading,
+    lastSync:         STATE.lastSync,
+    lastError:        STATE.lastError,
+  };
+}
+
+function isFresh() {
+  if (!STATE.lastSync) return false;
+  return (Date.now() - STATE.lastSync) < TTL_FRESH_MS;
+}
+
+/**
+ * ✅ v27.2.1: Timeout wrapper — reject kalau promise tidak selesai dalam X ms.
+ */
+function withTimeout(promise, timeoutMs, label) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label || 'Operation'} timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
+// ============================================================
+//   SUBSCRIPTION PATTERN
+// ============================================================
+
+export function subscribe(callback) {
+  if (typeof callback !== 'function') {
+    console.warn('[AdminModule] subscribe: callback harus function');
+    return () => {};
+  }
+  subscribers.add(callback);
+  return () => subscribers.delete(callback);
+}
+
+export function unsubscribe(callback) {
+  subscribers.delete(callback);
+}
+
+function notifySubscribers(type) {
+  pendingNotifyTypes.add(type || 'all');
+
+  if (notifyDebounceTimer) clearTimeout(notifyDebounceTimer);
+  notifyDebounceTimer = setTimeout(() => {
+    const types = Array.from(pendingNotifyTypes);
+    pendingNotifyTypes.clear();
+    notifyDebounceTimer = null;
+
+    const state = getPublicState();
+
+    subscribers.forEach(fn => {
+      try {
+        fn(types.length === 1 ? types[0] : 'multiple', state);
+      } catch (e) {
+        console.warn('[AdminModule] Subscriber error:', e);
+      }
+    });
+
+    try {
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { type: types[0] || 'all', state },
+      }));
+    } catch (e) { /* silent */ }
+  }, NOTIFY_DEBOUNCE_MS);
+}
+
+export function emitUpdate(type = 'all') {
+  notifySubscribers(type);
+}
+
+export function getSubscriberCount() {
+  return subscribers.size;
+}
+
+// ============================================================
+//   LOAD HELPERS
+// ============================================================
+
+async function loadBatch() {
+  const res = await callApi('getBootstrapData', {}, 'GET');
+  if (!res || !res.success || !res.data) {
+    throw new Error((res && res.error) || 'Batch endpoint failed');
+  }
+  return res.data;
+}
+
+async function loadParallel() {
+  const results = await Promise.allSettled([
+    apiGetPesertaList(),
+    apiGetSesiAbsen(),
+    apiGetMateriList(),
+    apiGetSkriningResponses(),
+    apiGetPretestResponses(),
+    apiGetPosttestResponses(),
+    apiGetAlumniList(),
+    apiGetKaderList(),
+    apiGetInfoList(),
+    apiGetAbsensiResponses(),
+    apiGetUploadedCertificates(),
+    apiGetAllDigitalApprovals(),
+    apiGetAssetList(),
+    apiGetFolders({ all: 'true' }),
+    apiGetUsulanList(),
+    apiGetRTLTasks(),
+    apiGetQuizSettings(),
+    apiGetLoginMode(),
+    apiGetPublicVisibility(),
+    apiGetPKDLokasi(),
+    apiGetFormSettings(),
+    apiGetRealtimeSetting(),
+    apiGetTimInstrukturList(),
+  ]);
+
+  const get = (idx) => {
+    const r = results[idx];
+    return (r.status === 'fulfilled') ? r.value : { success: false, data: [] };
+  };
+
+  return {
+    peserta:           normalizeData(get(0)),
+    sesi:              normalizeData(get(1)),
+    materi:            normalizeData(get(2)),
+    skrining:          normalizeData(get(3)),
+    pretest:           normalizeData(get(4)),
+    posttest:          normalizeData(get(5)),
+    alumni:            normalizeData(get(6)),
+    kader:             normalizeData(get(7)),
+    informasi:         normalizeData(get(8)),
+    absensi:           normalizeData(get(9)),
+    sertifikat:        normalizeData(get(10)),
+    digitalApprovals:  normalizeData(get(11)),
+    asset:             normalizeData(get(12)),
+    folders:           normalizeData(get(13)),
+    usulan:            normalizeData(get(14)),
+    rtl:               normalizeData(get(15)),
+    quizSettings:      (get(16) && get(16).data) || {},
+    loginMode:         (get(17) && get(17).data) || { enabled: false },
+    publicVisibility:  (get(18) && get(18).data) || {},
+    pkdLokasi:         (get(19) && get(19).data) || '',
+    formSettings:      (get(20) && get(20).data) || [],
+    realtime:          (get(21) && get(21).data) || { enabled: false },
+    timInstruktur:     normalizeData(get(22)),
+  };
+}
+
+// ============================================================
+//   EXPORTED MODULE
+// ============================================================
 export const AdminModule = {
 
-  // --- STATE ACCESSORS ---
-  getState() {
-    return { ...STATE };
-  },
+  // ==========================================================
+  //   SUBSCRIPTION API
+  // ==========================================================
+  subscribe,
+  unsubscribe,
+  emitUpdate,
+  getSubscriberCount,
+
+  // ==========================================================
+  //   STATE ACCESSORS
+  // ==========================================================
+  getState() { return getPublicState(); },
 
   getStats() {
     return {
@@ -168,224 +413,207 @@ export const AdminModule = {
       totalKader: STATE.kader.length,
       totalAbsensi: STATE.absensi.length,
       totalSertifikat: STATE.sertifikat.length,
-      lastSync: STATE.lastSync
+      totalTimInstruktur: STATE.timInstruktur.length,
+      totalRTL: STATE.rtl.length,
+      totalDigitalApprovals: STATE.digitalApprovals.length,
+      lastSync: STATE.lastSync ? new Date(STATE.lastSync).toISOString() : null,
+      isLoading: STATE.isLoading,
+      subscriberCount: subscribers.size,
     };
   },
 
-  // --- DATA GETTERS (READ) ---
+  isFresh() { return isFresh(); },
+
+  getLastSync() { return STATE.lastSync; },
+
+  // ==========================================================
+  //   GETTERS (return clone — cegah mutasi external)
+  // ==========================================================
   getPesertaList(status = null) {
-    if (status) return STATE.peserta.filter(p => p.status === status);
-    return STATE.peserta;
+    if (status) {
+      const s = String(status).toLowerCase();
+      return STATE.peserta
+        .filter(p => String(p.status || '').toLowerCase() === s)
+        .map(p => ({ ...p }));
+    }
+    return STATE.peserta.map(p => ({ ...p }));
   },
 
   getPesertaById(id) {
-    return STATE.peserta.find(p => String(p.id) === String(id));
+    const p = STATE.peserta.find(p => String(p.id) === String(id));
+    return p ? { ...p } : null;
   },
 
-  getSesiList() {
-    return STATE.sesi;
-  },
-
+  getSesiList() { return STATE.sesi.map(s => ({ ...s })); },
   getSesiById(id) {
-    return STATE.sesi.find(s => String(s.id) === String(id));
+    const s = STATE.sesi.find(s => String(s.id) === String(id));
+    return s ? { ...s } : null;
   },
-
-  getMateriList() {
-    return STATE.materi;
-  },
-
-  getSkriningList() {
-    return STATE.skrining;
-  },
-
-  getPretestList() {
-    return STATE.pretest;
-  },
-
-  getPosttestList() {
-    return STATE.posttest;
-  },
-
-  getAlumniList() {
-    return STATE.alumni;
-  },
-
-  getKaderList() {
-    return STATE.kader;
-  },
-
-  getInformasiList() {
-    return STATE.informasi;
-  },
-
-  getAbsensiList() {
-    return STATE.absensi;
-  },
-
-  getSertifikatList() {
-    return STATE.sertifikat;
-  },
-
-  getDigitalApprovals() {
-    return STATE.digitalApprovals;
-  },
-
-  getAssetList() {
-    return STATE.asset;
-  },
-
-  getFolders() {
-    return STATE.folders;
-  },
-
-  getUsulanList() {
-    return STATE.usulan;
-  },
-
-  getRTLList() {
-    return STATE.rtl;
-  },
-
-  getQuizSettings() {
-    return STATE.quizSettings;
-  },
-
-  getLoginMode() {
-    return STATE.loginMode;
-  },
-
-  getPublicVisibility() {
-    return STATE.publicVisibility;
-  },
-
-  getPKDLokasi() {
-    return STATE.pkdlokasi;
-  },
-
-  getRealtimeSetting() {
-    return STATE.realtimeEnabled;
-  },
+  getMateriList() { return STATE.materi.map(m => ({ ...m })); },
+  getSkriningList() { return STATE.skrining.map(s => ({ ...s })); },
+  getPretestList() { return STATE.pretest.map(p => ({ ...p })); },
+  getPosttestList() { return STATE.posttest.map(p => ({ ...p })); },
+  getAlumniList() { return STATE.alumni.map(a => ({ ...a })); },
+  getKaderList() { return STATE.kader.map(k => ({ ...k })); },
+  getInformasiList() { return STATE.informasi.map(i => ({ ...i })); },
+  getAbsensiList() { return STATE.absensi.map(a => ({ ...a })); },
+  getSertifikatList() { return STATE.sertifikat.map(s => ({ ...s })); },
+  getDigitalApprovals() { return STATE.digitalApprovals.map(d => ({ ...d })); },
+  getAssetList() { return STATE.asset.map(a => ({ ...a })); },
+  getFolders() { return STATE.folders.map(f => ({ ...f })); },
+  getUsulanList() { return STATE.usulan.map(u => ({ ...u })); },
+  getRTLList() { return STATE.rtl.map(r => ({ ...r })); },
+  getTimInstruktur() { return STATE.timInstruktur.map(t => ({ ...t })); },
+  getQuizSettings() { return { ...STATE.quizSettings }; },
+  getLoginMode() { return STATE.loginMode; },
+  getPublicVisibility() { return { ...STATE.publicVisibility }; },
+  getPKDLokasi() { return STATE.pkdlokasi; },
+  getRealtimeSetting() { return STATE.realtimeEnabled; },
 
   getFormSettings() {
     if (!STATE.formSettings || STATE.formSettings.length === 0) {
       return getDefaultFormFields();
     }
-    return STATE.formSettings;
+    return STATE.formSettings.map(f => ({ ...f }));
   },
 
-  // --- SERTIFIKAT TEMPLATE GETTERS ---
-  async getCertificateTemplates() {
-    return await apiGetCertificateTemplates();
-  },
-
-  async getCertPresets() {
-    return await getCertPresets();
-  },
-
-  async getCertificateLayouts() {
-    return await apiListCertificateLayouts();
-  },
-
-  // --- RTL UTILITIES ---
-  async getRTLStatus(pesertaId) {
-    return await apiGetRTLStatus({ pesertaId });
-  },
-
-  // ==================================================================
-  //   LOAD ALL DATA (SINGLE SOURCE OF TRUTH)
-  // ==================================================================
+  // ==========================================================
+  //   LOAD ALL DATA — v27.2.1
+  //   ⚡ Race-safe + timeout guard (25s batch, 30s parallel) + silent error
+  // ==========================================================
   async loadAllData(forceRefresh = false) {
-    if (STATE.isLoading && !forceRefresh) return;
-    STATE.isLoading = true;
-
-    try {
-      const [
-        pesertaData, sesiData, materiData, skriningData, pretestData, posttestData,
-        alumniData, kaderData, informasiData, absensiData, sertifikatData, approvalsData,
-        assetData, foldersData, usulanData, rtlData,
-        quizSettingsData, loginModeData, visibilityData, pkdLokasiData, formSettingsData, realtimeData
-      ] = await Promise.all([
-        getPesertaList(), getSesiAbsen(), getMateriList(), getSkriningResponses(),
-        getPretestResponses(), getPosttestResponses(), getAlumniList(), getKaderList(),
-        getInfoList(), getAbsensiResponses(), getUploadedCertificates(), getAllDigitalApprovals(),
-        getAssetList(), getFolders(), getUsulanList(), getRTLTasks(),
-        getQuizSettings(), getLoginMode(), getPublicVisibility(), getPKDLokasi(), getFormSettings(), getRealtimeSetting()
-      ]);
-
-      // Parsing Data
-      STATE.peserta = Array.isArray(pesertaData) ? pesertaData : (pesertaData?.data || []);
-      STATE.sesi = Array.isArray(sesiData) ? sesiData : (sesiData?.data || []);
-      STATE.materi = Array.isArray(materiData) ? materiData : (materiData?.data || []);
-      STATE.skrining = Array.isArray(skriningData) ? skriningData : (skriningData?.data || []);
-      STATE.pretest = Array.isArray(pretestData) ? pretestData : (pretestData?.data || []);
-      STATE.posttest = Array.isArray(posttestData) ? posttestData : (posttestData?.data || []);
-      STATE.alumni = Array.isArray(alumniData) ? alumniData : (alumniData?.data || []);
-      STATE.kader = Array.isArray(kaderData) ? kaderData : (kaderData?.data || []);
-      STATE.informasi = Array.isArray(informasiData) ? informasiData : (informasiData?.data || []);
-      STATE.absensi = Array.isArray(absensiData) ? absensiData : (absensiData?.data || []);
-      STATE.sertifikat = Array.isArray(sertifikatData) ? sertifikatData : (sertifikatData?.data || []);
-      STATE.digitalApprovals = Array.isArray(approvalsData) ? approvalsData : (approvalsData?.data || []);
-      STATE.asset = Array.isArray(assetData) ? assetData : (assetData?.data || []);
-      STATE.folders = Array.isArray(foldersData) ? foldersData : (foldersData?.data || []);
-      STATE.usulan = Array.isArray(usulanData) ? usulanData : (usulanData?.data || []);
-      STATE.rtl = Array.isArray(rtlData) ? rtlData : (rtlData?.data || []);
-
-      // Parsing Settings
-      STATE.quizSettings = quizSettingsData?.data || {};
-      STATE.loginMode = loginModeData?.enabled || false;
-      STATE.publicVisibility = visibilityData?.data || {};
-      STATE.pkdlokasi = pkdLokasiData?.data || 'Kabupaten Bantul';
-      STATE.realtimeEnabled = realtimeData?.enabled || false;
-
-      let rawFormSettings = Array.isArray(formSettingsData?.data) ? formSettingsData.data : [];
-      STATE.formSettings = (rawFormSettings.length > 0) ? rawFormSettings : getDefaultFormFields();
-
-      STATE.lastSync = new Date().toISOString();
-
-      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
-        detail: { state: STATE }
-      }));
-      console.log('✅ AdminModule: Semua data dimuat.');
-
-    } catch (error) {
-      console.error('❌ AdminModule: Gagal memuat data:', error);
-      showToast('Gagal memuat data: ' + error.message, 'error');
-    } finally {
-      STATE.isLoading = false;
+    // ⚡ TTL guard
+    if (!forceRefresh && isFresh()) {
+      return { success: true, skipped: true, reason: 'fresh' };
     }
+
+    // ⚡ Race-safe: jika sudah ada pending load, tunggu
+    if (pendingLoadPromise) {
+      console.log('[AdminModule] Waiting for pending load...');
+      try {
+        const result = await withTimeout(pendingLoadPromise, CONCURRENT_WAIT_MS, 'Wait pending');
+        if (result && result.success) return result;
+      } catch (e) {
+        console.warn('[AdminModule] Pending wait timeout, starting fresh load');
+      }
+    }
+
+    // Buat promise baru
+    pendingLoadPromise = (async () => {
+      STATE.isLoading = true;
+      STATE.lastError = null;
+
+      try {
+        // ===== 1. Coba batch endpoint (dengan timeout guard 25s) =====
+        let data;
+        let source = 'batch';
+
+        try {
+          data = await withTimeout(loadBatch(), BATCH_TIMEOUT_MS, 'Batch');
+        } catch (batchErr) {
+          console.warn('[AdminModule] Batch failed/timeout, fallback paralel:', batchErr.message);
+          data = await withTimeout(loadParallel(), PARALLEL_TIMEOUT_MS, 'Parallel');
+          source = 'parallel';
+        }
+
+        // ===== 2. Assign ke STATE =====
+        STATE.peserta          = normalizeData(data.peserta);
+        STATE.sesi             = normalizeData(data.sesi);
+        STATE.materi           = normalizeData(data.materi);
+        STATE.skrining         = normalizeData(data.skrining);
+        STATE.pretest          = normalizeData(data.pretest);
+        STATE.posttest         = normalizeData(data.posttest);
+        STATE.alumni           = normalizeData(data.alumni);
+        STATE.kader            = normalizeData(data.kader);
+        STATE.informasi        = normalizeData(data.informasi);
+        STATE.absensi          = normalizeData(data.absensi);
+        STATE.sertifikat       = normalizeData(data.sertifikat);
+        STATE.digitalApprovals = normalizeData(data.digitalApprovals);
+        STATE.asset            = normalizeData(data.asset);
+        STATE.folders          = normalizeData(data.folders);
+        STATE.usulan           = normalizeData(data.usulan);
+        STATE.rtl              = normalizeData(data.rtl);
+        STATE.timInstruktur    = normalizeData(data.timInstruktur);
+
+        STATE.quizSettings     = (data.quizSettings && data.quizSettings.data) || data.quizSettings || {};
+        STATE.loginMode        = !!(data.loginMode && (data.loginMode.enabled !== undefined ? data.loginMode.enabled : data.loginMode));
+        STATE.publicVisibility = (data.publicVisibility && data.publicVisibility.data) || data.publicVisibility || {};
+        STATE.pkdlokasi        = (data.pkdLokasi && data.pkdLokasi.data) || data.pkdLokasi || 'Kabupaten Bantul';
+        STATE.realtimeEnabled  = !!(data.realtime && (data.realtime.enabled !== undefined ? data.realtime.enabled : data.realtime));
+
+        let rawForm = (data.formSettings && data.formSettings.data) ? data.formSettings.data : data.formSettings;
+        if (!Array.isArray(rawForm) || rawForm.length === 0) {
+          rawForm = getDefaultFormFields();
+        }
+        STATE.formSettings = rawForm;
+
+        STATE.lastSync = Date.now();
+        STATE.isLoading = false;
+
+        // Notify semua subscribers
+        notifySubscribers('all');
+
+        console.log(`✅ [AdminModule] Loaded via ${source}:`, {
+          peserta: STATE.peserta.length,
+          sesi: STATE.sesi.length,
+          materi: STATE.materi.length,
+          alumni: STATE.alumni.length,
+          rtl: STATE.rtl.length,
+          timInstruktur: STATE.timInstruktur.length,
+          subscribers: subscribers.size,
+        });
+
+        return { success: true, source };
+
+      } catch (e) {
+        STATE.isLoading = false;
+        STATE.lastError = e.message;
+        console.error('❌ [AdminModule] loadAllData error:', e);
+
+        // ✅ v27.2.1: Silent error saat preload (sebelum app loaded)
+        if (!window.__pkdAppLoaded) {
+          console.warn('[AdminModule] Preload failed but app continues:', e.message);
+        } else {
+          showToast('Gagal memuat data: ' + e.message, 'error');
+        }
+
+        return { success: false, error: e.message };
+      } finally {
+        pendingLoadPromise = null;
+      }
+    })();
+
+    return pendingLoadPromise;
   },
 
-  // --- TRIGGER RENDER ---
-  triggerRender(type = 'all') {
-    window.dispatchEvent(new CustomEvent('adminDataUpdated', {
-      detail: { type, state: STATE }
-    }));
-  },
+  // ==========================================================
+  //   TRIGGER RENDER MANUAL
+  // ==========================================================
+  triggerRender(type = 'all') { notifySubscribers(type); },
+  emitUpdate,
 
-  // ==================================================================
-  //   CRUD PESERTA (Optimistic UI)
-  // ==================================================================
+  // ==========================================================
+  //   PESERTA CRUD
+  // ==========================================================
   async addPeserta(data) {
-    const tempId = generateId();
-    const newItem = { id: tempId, ...data, status: 'pending' };
+    const tempId = generateTempId('peserta');
+    const newItem = { id: tempId, ...data, status: data.status || 'pending', timestamp: new Date().toISOString() };
     STATE.peserta.unshift(newItem);
-    this.triggerRender('peserta');
-    showToast('Mengirim data...', 'info');
+    notifySubscribers('peserta');
 
     try {
-      const result = await submitPeserta(data);
-      if (result.success) {
-        const index = STATE.peserta.findIndex(p => p.id === tempId);
-        if (index !== -1) STATE.peserta[index].id = result.id;
-        showToast('Peserta berhasil ditambahkan!', 'success');
+      const res = await apiSubmitPeserta(data);
+      if (res && res.success) {
+        const idx = STATE.peserta.findIndex(p => p.id === tempId);
+        if (idx !== -1) STATE.peserta[idx].id = res.id;
+        showToast('Peserta berhasil ditambahkan', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
     } catch (e) {
       STATE.peserta = STATE.peserta.filter(p => p.id !== tempId);
-      this.triggerRender('peserta');
+      notifySubscribers('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
     }
@@ -393,807 +621,936 @@ export const AdminModule = {
 
   async updatePeserta(data) {
     const id = data.id;
-    const original = STATE.peserta.find(p => String(p.id) === String(id));
-    if (!original) return { success: false, error: 'Data tidak ditemukan' };
-    const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index !== -1) STATE.peserta[index] = { ...STATE.peserta[index], ...data };
-    this.triggerRender('peserta');
-    showToast('Memperbarui data...', 'info');
+    const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = { ...STATE.peserta[idx] };
+    STATE.peserta[idx] = { ...STATE.peserta[idx], ...data };
+    notifySubscribers('peserta');
 
     try {
-      const result = await updatePeserta(data);
-      if (result.success) {
-        showToast('Peserta berhasil diperbarui!', 'success');
+      const res = await apiUpdatePeserta(data);
+      if (res && res.success) {
+        showToast('Peserta berhasil diperbarui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
     } catch (e) {
-      if (index !== -1) STATE.peserta[index] = original;
-      this.triggerRender('peserta');
+      STATE.peserta[idx] = backup;
+      notifySubscribers('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
     }
   },
 
   async deletePeserta(id) {
-    const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index === -1) return { success: false, error: 'Data tidak ditemukan' };
-    const backup = STATE.peserta[index];
-    STATE.peserta.splice(index, 1);
-    this.triggerRender('peserta');
-    showToast('Menghapus...', 'info');
+    const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.peserta[idx];
+    STATE.peserta.splice(idx, 1);
+    notifySubscribers('peserta');
 
     try {
-      const result = await apiDeletePeserta(id);
-      if (result.success) {
-        showToast('Peserta berhasil dihapus!', 'success');
+      const res = await apiDeletePeserta(id);
+      if (res && res.success) {
+        showToast('Peserta berhasil dihapus', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menghapus');
     } catch (e) {
-      STATE.peserta.splice(index, 0, backup);
-      this.triggerRender('peserta');
+      STATE.peserta.splice(idx, 0, backup);
+      notifySubscribers('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
     }
   },
 
   async approvePeserta(id) {
-    const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = { ...STATE.peserta[index] };
-    STATE.peserta[index].status = 'approved';
-    this.triggerRender('peserta');
-    showToast('Menyetujui...', 'info');
+    const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = { ...STATE.peserta[idx] };
+    STATE.peserta[idx].status = 'approved';
+    notifySubscribers('peserta');
 
     try {
-      const result = await apiApprovePeserta(id);
-      if (result.success) {
-        showToast('Peserta disetujui!', 'success');
+      const res = await apiApprovePeserta(id);
+      if (res && res.success) {
+        showToast('Peserta disetujui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menyetujui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menyetujui');
     } catch (e) {
-      STATE.peserta[index] = backup;
-      this.triggerRender('peserta');
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async rejectPeserta(id) {
-    const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = { ...STATE.peserta[index] };
-    STATE.peserta[index].status = 'rejected';
-    this.triggerRender('peserta');
-    showToast('Menolak...', 'info');
-
-    try {
-      const result = await apiRejectPeserta(id);
-      if (result.success) {
-        showToast('Peserta ditolak!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menolak');
-      }
-    } catch (e) {
-      STATE.peserta[index] = backup;
-      this.triggerRender('peserta');
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async moveToAlumni(id) {
-    const index = STATE.peserta.findIndex(p => String(p.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = STATE.peserta[index];
-    STATE.peserta.splice(index, 1);
-    this.triggerRender('peserta');
-    showToast('Memindahkan ke alumni...', 'info');
-
-    try {
-      const result = await apiMoveToAlumni(id);
-      if (result.success) {
-        showToast('Berhasil dipindahkan ke alumni!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memindahkan');
-      }
-    } catch (e) {
-      STATE.peserta.splice(index, 0, backup);
-      this.triggerRender('peserta');
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async moveMultipleToAlumni(ids) {
-    const cleanedIds = ids.map(id => String(id).trim()).filter(id => id !== '');
-    if (cleanedIds.length === 0) return { success: false, error: 'Tidak ada ID valid' };
-    const itemsToRemove = [];
-    cleanedIds.forEach(id => {
-      const idx = STATE.peserta.findIndex(p => String(p.id).trim() === id);
-      if (idx !== -1) itemsToRemove.push({ index: idx, data: STATE.peserta[idx] });
-    });
-    itemsToRemove.sort((a, b) => b.index - a.index);
-    itemsToRemove.forEach(item => STATE.peserta.splice(item.index, 1));
-    this.triggerRender('peserta');
-    showToast('Memindahkan ' + cleanedIds.length + ' peserta...', 'info');
-
-    try {
-      const result = await apiMoveMultipleToAlumni(cleanedIds);
-      if (result.success) {
-        showToast('Berhasil memindahkan ' + (result.moved || cleanedIds.length) + ' peserta!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memindahkan');
-      }
-    } catch (e) {
-      itemsToRemove.sort((a, b) => a.index - b.index);
-      itemsToRemove.forEach(item => STATE.peserta.splice(item.index, 0, item.data));
-      this.triggerRender('peserta');
+      STATE.peserta[idx] = backup;
+      notifySubscribers('peserta');
       showToast('Gagal: ' + e.message, 'error');
       return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   CRUD SESI ABSEN
-  // ==================================================================
-  async addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) {
-    const tempId = generateId();
-    const newItem = { id: tempId, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, submission_open: aktif !== false };
-    STATE.sesi.unshift(newItem);
-    this.triggerRender('sesi');
-    showToast('Menambahkan sesi...', 'info');
+  async rejectPeserta(id) {
+    const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = { ...STATE.peserta[idx] };
+    STATE.peserta[idx].status = 'rejected';
+    notifySubscribers('peserta');
 
     try {
-      const result = await apiAddSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password);
-      if (result.success) {
-        const index = STATE.sesi.findIndex(s => s.id === tempId);
-        if (index !== -1) { STATE.sesi[index].id = result.id; STATE.sesi[index].qrToken = result.qrToken; }
-        showToast('Sesi absen berhasil ditambahkan!', 'success');
+      const res = await apiRejectPeserta(id);
+      if (res && res.success) {
+        showToast('Peserta ditolak', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menolak');
+    } catch (e) {
+      STATE.peserta[idx] = backup;
+      notifySubscribers('peserta');
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async moveToAlumni(id) {
+    const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.peserta[idx];
+    STATE.peserta.splice(idx, 1);
+    notifySubscribers('peserta');
+
+    try {
+      const res = await apiMoveToAlumni(id);
+      if (res && res.success) {
+        showToast('Dipindahkan ke alumni', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal memindahkan');
+    } catch (e) {
+      STATE.peserta.splice(idx, 0, backup);
+      notifySubscribers('peserta');
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async moveMultipleToAlumni(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { success: false, error: 'Tidak ada ID valid' };
+    }
+
+    const cleaned = ids.map(id => String(id).trim()).filter(Boolean);
+    const toRemove = [];
+    cleaned.forEach(id => {
+      const idx = STATE.peserta.findIndex(p => String(p.id) === String(id));
+      if (idx !== -1) toRemove.push({ idx, data: STATE.peserta[idx] });
+    });
+
+    toRemove.sort((a, b) => b.idx - a.idx);
+    toRemove.forEach(item => STATE.peserta.splice(item.idx, 1));
+    notifySubscribers('peserta');
+
+    try {
+      const res = await apiMoveMultipleToAlumni(cleaned);
+      if (res && res.success) {
+        showToast(`Berhasil memindahkan ${res.moved || cleaned.length} peserta`, 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal memindahkan');
+    } catch (e) {
+      toRemove.sort((a, b) => a.idx - b.idx);
+      toRemove.forEach(item => STATE.peserta.splice(item.idx, 0, item.data));
+      notifySubscribers('peserta');
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  // ==========================================================
+  //   SESI ABSEN CRUD
+  // ==========================================================
+  async addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) {
+    const tempId = generateTempId('sesi');
+    const newItem = {
+      id: tempId, nama,
+      waktu_mulai: waktuMulai,
+      waktu_selesai: waktuSelesai,
+      submission_open: aktif !== false,
+    };
+    STATE.sesi.unshift(newItem);
+    notifySubscribers('sesi');
+
+    try {
+      const res = await apiAddSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password);
+      if (res && res.success) {
+        const idx = STATE.sesi.findIndex(s => s.id === tempId);
+        if (idx !== -1) {
+          STATE.sesi[idx].id = res.id;
+          STATE.sesi[idx].qrToken = res.qrToken;
+        }
+        showToast('Sesi absen berhasil ditambahkan', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
     } catch (e) {
       STATE.sesi = STATE.sesi.filter(s => s.id !== tempId);
-      this.triggerRender('sesi');
+      notifySubscribers('sesi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) {
-    const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = { ...STATE.sesi[index] };
-    STATE.sesi[index].nama = nama; STATE.sesi[index].waktu_mulai = waktuMulai; STATE.sesi[index].waktu_selesai = waktuSelesai; STATE.sesi[index].submission_open = aktif !== false;
-    this.triggerRender('sesi');
-    showToast('Memperbarui sesi...', 'info');
+    const idx = STATE.sesi.findIndex(s => String(s.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = { ...STATE.sesi[idx] };
+    STATE.sesi[idx] = {
+      ...STATE.sesi[idx],
+      nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai,
+      submission_open: aktif !== false,
+    };
+    notifySubscribers('sesi');
 
     try {
-      const result = await apiUpdateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password);
-      if (result.success) {
-        showToast('Sesi absen berhasil diperbarui!', 'success');
+      const res = await apiUpdateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password);
+      if (res && res.success) {
+        showToast('Sesi absen berhasil diperbarui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
     } catch (e) {
-      STATE.sesi[index] = backup;
-      this.triggerRender('sesi');
+      STATE.sesi[idx] = backup;
+      notifySubscribers('sesi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async deleteSesiAbsen(id) {
-    const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = STATE.sesi[index];
-    STATE.sesi.splice(index, 1);
-    this.triggerRender('sesi');
-    showToast('Menghapus sesi...', 'info');
+    const idx = STATE.sesi.findIndex(s => String(s.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.sesi[idx];
+    STATE.sesi.splice(idx, 1);
+    notifySubscribers('sesi');
 
     try {
-      const result = await apiDeleteSesiAbsen(id);
-      if (result.success) {
-        showToast('Sesi absen berhasil dihapus!', 'success');
+      const res = await apiDeleteSesiAbsen(id);
+      if (res && res.success) {
+        showToast('Sesi absen berhasil dihapus', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menghapus');
     } catch (e) {
-      STATE.sesi.splice(index, 0, backup);
-      this.triggerRender('sesi');
+      STATE.sesi.splice(idx, 0, backup);
+      notifySubscribers('sesi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async regenerateQRSesi(id) {
     try {
-      const result = await apiRegenerateQRSesi(id);
-      if (result.success) {
-        const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-        if (index !== -1) STATE.sesi[index].qrToken = result.qrToken;
-        showToast('QR berhasil diregenerasi!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal meregenerasi');
+      const res = await apiRegenerateQRSesi(id);
+      if (res && res.success) {
+        const idx = STATE.sesi.findIndex(s => String(s.id) === String(id));
+        if (idx !== -1) STATE.sesi[idx].qrToken = res.qrToken;
+        notifySubscribers('sesi');
+        showToast('QR berhasil diregenerasi', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal regenerate QR');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async toggleAttendanceSession(id, open) {
+    const idx = STATE.sesi.findIndex(s => String(s.id) === String(id));
+    const backup = idx !== -1 ? { ...STATE.sesi[idx] } : null;
+
+    if (idx !== -1) {
+      STATE.sesi[idx].submission_open = !!open;
+      notifySubscribers('sesi');
+    }
+
     try {
-      const result = await apiToggleAttendance(id, open);
-      if (result.success) {
-        const index = STATE.sesi.findIndex(s => String(s.id) === String(id));
-        if (index !== -1) STATE.sesi[index].submission_open = open;
-        this.triggerRender('sesi');
-        showToast('Status sesi berhasil diubah!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah status');
+      const res = await apiToggleAttendanceSession(id, open);
+      if (res && res.success) {
+        showToast(`Sesi ${open ? 'dibuka' : 'ditutup'}`, 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah status');
     } catch (e) {
+      if (idx !== -1 && backup) {
+        STATE.sesi[idx] = backup;
+        notifySubscribers('sesi');
+      }
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   CRUD MATERI
-  // ==================================================================
+  // ==========================================================
+  //   MATERI CRUD
+  // ==========================================================
   async addMateri(judul, deskripsi, file, fileName, uploadBy) {
-    const tempId = generateId();
-    const newItem = { id: tempId, judul, deskripsi, fileId: 'uploading', tipe: fileName.split('.').pop(), kategori: 'Umum', timestamp: new Date().toISOString(), uploadBy };
-    STATE.materi.unshift(newItem);
-    this.triggerRender('materi');
-    showToast('Mengunggah materi...', 'info');
-
+    showToast('Mengunggah materi…', 'info');
     try {
-      const result = await apiAddMateri(judul, deskripsi, file, fileName, uploadBy);
-      if (result.success) {
-        const index = STATE.materi.findIndex(m => m.id === tempId);
-        if (index !== -1) { STATE.materi[index].id = result.id; STATE.materi[index].fileId = result.fileId; }
-        showToast('Materi berhasil ditambahkan!', 'success');
+      const res = await apiAddMateri(judul, deskripsi, file, fileName, uploadBy);
+      if (res && res.success) {
+        showToast('Materi berhasil ditambahkan', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menambahkan materi');
     } catch (e) {
-      STATE.materi = STATE.materi.filter(m => m.id !== tempId);
-      this.triggerRender('materi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async deleteMateri(id, fileId) {
-    const index = STATE.materi.findIndex(m => String(m.id) === String(id));
-    if (index === -1) return { success: false };
-    const backup = STATE.materi[index];
-    STATE.materi.splice(index, 1);
-    this.triggerRender('materi');
-    showToast('Menghapus materi...', 'info');
+    const idx = STATE.materi.findIndex(m => String(m.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.materi[idx];
+    STATE.materi.splice(idx, 1);
+    notifySubscribers('materi');
 
     try {
-      const result = await apiDeleteMateri(id, fileId);
-      if (result.success) {
-        showToast('Materi berhasil dihapus!', 'success');
+      const res = await apiDeleteMateri(id, fileId);
+      if (res && res.success) {
+        showToast('Materi berhasil dihapus', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menghapus materi');
     } catch (e) {
-      STATE.materi.splice(index, 0, backup);
-      this.triggerRender('materi');
+      STATE.materi.splice(idx, 0, backup);
+      notifySubscribers('materi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   CRUD ASET DIGITAL & FOLDERS
-  // ==================================================================
-  async addAsset(params) {
-    try {
-      const result = await apiAddAsset(params);
-      if (result.success) {
-        showToast('Aset berhasil diupload!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal upload aset');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async updateAsset(params) {
-    try {
-      const result = await apiUpdateAsset(params);
-      if (result.success) {
-        showToast('Aset berhasil diperbarui!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui aset');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteAsset(id) {
-    try {
-      const result = await apiDeleteAsset(id);
-      if (result.success) {
-        showToast('Aset berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async addFolder(nama, parentId) {
-    try {
-      const result = await apiAddFolder(nama, parentId);
-      if (result.success) {
-        showToast('Folder berhasil dibuat!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal membuat folder');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteFolder(id) {
-    try {
-      const result = await apiDeleteFolder(id);
-      if (result.success) {
-        showToast('Folder berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus folder');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async toggleFolderPublic(id, isPublic) {
-    try {
-      const result = await apiToggleFolderPublic({ id, isPublic });
-      if (result.success) {
-        showToast(`Folder ${isPublic ? 'dipublikasikan' : 'ditarik'}`, 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal toggle publik');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async toggleFolderHideFromGallery(id, isHidden) {
-    try {
-      const result = await apiToggleFolderHideFromGallery({ id, isHidden });
-      if (result.success) {
-        showToast(`Folder ${isHidden ? 'disembunyikan' : 'ditampilkan'}`, 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal toggle sembunyi');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async setFolderPassword(id, password) {
-    try {
-      const result = await apiSetFolderPassword({ id, password });
-      if (result.success) {
-        showToast('Password folder berhasil disimpan', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menyimpan password');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async clearFolderPassword(id) {
-    try {
-      const result = await apiClearFolderPassword({ id });
-      if (result.success) {
-        showToast('Password folder dihapus', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus password');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  // ==================================================================
-  //   CRUD KADER
-  // ==================================================================
-  async addKader(params) {
-    try {
-      const result = await apiAddKader(params);
-      if (result.success) {
-        showToast('Kader berhasil ditambahkan!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async updateKader(params) {
-    try {
-      const result = await apiUpdateKader(params);
-      if (result.success) {
-        showToast('Kader berhasil diperbarui!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  async deleteKader(id) {
-    try {
-      const result = await apiDeleteKader(id);
-      if (result.success) {
-        showToast('Kader berhasil dihapus!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
-      }
-    } catch (e) {
-      showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
-    }
-  },
-
-  // ==================================================================
-  //   CRUD INFORMASI
-  // ==================================================================
+  // ==========================================================
+  //   INFORMASI CRUD
+  // ==========================================================
   async addInfo(params) {
     try {
-      const result = await apiAddInfo(params);
-      if (result.success) {
-        showToast('Informasi berhasil ditambahkan!', 'success');
+      const res = await apiAddInfo(params);
+      if (res && res.success) {
+        showToast('Informasi berhasil ditambahkan', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async updateInfo(params) {
     try {
-      const result = await apiUpdateInfo(params);
-      if (result.success) {
-        showToast('Informasi berhasil diperbarui!', 'success');
+      const res = await apiUpdateInfo(params);
+      if (res && res.success) {
+        showToast('Informasi berhasil diperbarui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async deleteInfo(id) {
+    const idx = STATE.informasi.findIndex(i => String(i.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.informasi[idx];
+    STATE.informasi.splice(idx, 1);
+    notifySubscribers('informasi');
+
     try {
-      const result = await apiDeleteInfo(id);
-      if (result.success) {
-        showToast('Informasi berhasil dihapus!', 'success');
+      const res = await apiDeleteInfo(id);
+      if (res && res.success) {
+        showToast('Informasi berhasil dihapus', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menghapus');
     } catch (e) {
+      STATE.informasi.splice(idx, 0, backup);
+      notifySubscribers('informasi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async toggleInfoStatus(id) {
+    const idx = STATE.informasi.findIndex(i => String(i.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const current = String(STATE.informasi[idx].status || 'aktif').toLowerCase();
+    const newStatus = current === 'selesai' ? 'aktif' : 'selesai';
+    STATE.informasi[idx].status = newStatus;
+    notifySubscribers('informasi');
+
     try {
-      const result = await apiToggleInfo(id);
-      if (result.success) {
-        showToast('Status informasi berhasil diubah!', 'success');
-        await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah status');
+      const res = await apiToggleInfoStatus(id);
+      if (res && res.success) {
+        showToast('Status informasi diubah', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah status');
     } catch (e) {
+      STATE.informasi[idx].status = current;
+      notifySubscribers('informasi');
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   CRUD RTL & TUGAS
-  // ==================================================================
-  async addRTLTask(params) {
+  // ==========================================================
+  //   USULAN
+  // ==========================================================
+  async updateUsulanStatus(id, status) {
     try {
-      const result = await apiAddRTL(params);
-      if (result.success) {
-        showToast('Tugas RTL berhasil ditambahkan!', 'success');
+      const res = await apiUpdateUsulanStatus(id, status);
+      if (res && res.success) {
+        showToast(`Usulan ${status === 'approved' ? 'disetujui' : 'ditolak'}`, 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menambahkan');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal memproses usulan');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
+    }
+  },
+
+  // ==========================================================
+  //   KADER CRUD
+  // ==========================================================
+  async addKader(params) {
+    try {
+      const res = await apiAddKader(params);
+      if (res && res.success) {
+        showToast('Kader berhasil ditambahkan', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async updateKader(params) {
+    try {
+      const res = await apiUpdateKader(params);
+      if (res && res.success) {
+        showToast('Kader berhasil diperbarui', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async deleteKader(id) {
+    try {
+      const res = await apiDeleteKader(id);
+      if (res && res.success) {
+        showToast('Kader berhasil dihapus', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menghapus');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  // ==========================================================
+  //   TIM INSTRUKTUR CRUD
+  // ==========================================================
+  async addTimInstruktur(params) {
+    try {
+      const res = await apiAddTimInstruktur(params);
+      if (res && res.success) {
+        showToast('Anggota tim berhasil ditambahkan', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async updateTimInstruktur(params) {
+    try {
+      const res = await apiUpdateTimInstruktur(params);
+      if (res && res.success) {
+        showToast('Data anggota tim berhasil diperbarui', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async deleteTimInstruktur(id) {
+    const idx = STATE.timInstruktur.findIndex(x => String(x.id) === String(id));
+    if (idx === -1) return { success: false, error: 'Data tidak ditemukan' };
+
+    const backup = STATE.timInstruktur[idx];
+    STATE.timInstruktur.splice(idx, 1);
+    notifySubscribers('timInstruktur');
+
+    try {
+      const res = await apiDeleteTimInstruktur(id);
+      if (res && res.success) {
+        showToast('Anggota tim berhasil dihapus', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menghapus');
+    } catch (e) {
+      STATE.timInstruktur.splice(idx, 0, backup);
+      notifySubscribers('timInstruktur');
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async reorderTimInstruktur(orders) {
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return { success: false, error: 'Tidak ada order valid' };
+    }
+    try {
+      const res = await apiReorderTimInstruktur(orders);
+      if (res && res.success) {
+        orders.forEach(item => {
+          const idx = STATE.timInstruktur.findIndex(x => String(x.id) === String(item.id));
+          if (idx !== -1) STATE.timInstruktur[idx].urutan = parseInt(item.urutan) || 0;
+        });
+        STATE.timInstruktur.sort((a, b) => (a.urutan || 999) - (b.urutan || 999));
+        notifySubscribers('timInstruktur');
+        showToast('Urutan berhasil disimpan', 'success');
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menyimpan urutan');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  // ==========================================================
+  //   ASSET & FOLDER
+  // ==========================================================
+  async addAsset(params) {
+    try {
+      const res = await apiAddAsset(params);
+      if (res && res.success) {
+        showToast('Aset berhasil diupload', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal upload aset');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async updateAsset(params) {
+    try {
+      const res = await apiUpdateAsset(params);
+      if (res && res.success) {
+        showToast('Aset berhasil diperbarui', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal memperbarui aset');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async deleteAsset(id) {
+    try {
+      const res = await apiDeleteAsset(id);
+      if (res && res.success) {
+        showToast('Aset berhasil dihapus', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menghapus');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async addFolder(nama, parentId) {
+    try {
+      const res = await apiAddFolder(nama, parentId);
+      if (res && res.success) {
+        showToast('Folder berhasil dibuat', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal membuat folder');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async deleteFolder(id) {
+    try {
+      const res = await apiDeleteFolder(id);
+      if (res && res.success) {
+        showToast('Folder berhasil dihapus', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menghapus folder');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async toggleFolderPublic(id, isPublic) {
+    try {
+      const res = await apiToggleFolderPublic({ id, isPublic });
+      if (res && res.success) {
+        showToast(`Folder ${isPublic ? 'dipublikasikan' : 'ditarik'}`, 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal toggle publik');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async toggleFolderHideFromGallery(id, isHidden) {
+    try {
+      const res = await apiToggleFolderHideFromGallery({ id, isHidden });
+      if (res && res.success) {
+        showToast(`Folder ${isHidden ? 'disembunyikan' : 'ditampilkan'}`, 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal toggle sembunyi');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async setFolderPassword(id, password) {
+    try {
+      const res = await apiSetFolderPassword({ id, password });
+      if (res && res.success) {
+        showToast('Password folder disimpan', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menyimpan password');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  async clearFolderPassword(id) {
+    try {
+      const res = await apiClearFolderPassword({ id });
+      if (res && res.success) {
+        showToast('Password folder dihapus', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menghapus password');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+
+  // ==========================================================
+  //   RTL CRUD
+  // ==========================================================
+  async addRTLTask(params) {
+    try {
+      const res = await apiAddRTLTask(params);
+      if (res && res.success) {
+        showToast('Tugas RTL ditambahkan', 'success');
+        await this.loadAllData(true);
+        return res;
+      }
+      throw new Error((res && res.error) || 'Gagal menambahkan');
+    } catch (e) {
+      showToast('Gagal: ' + e.message, 'error');
+      return { success: false, error: e.message };
     }
   },
 
   async updateRTLTask(params) {
     try {
-      const result = await apiUpdateRTL(params);
-      if (result.success) {
-        showToast('Tugas RTL berhasil diperbarui!', 'success');
+      const res = await apiUpdateRTLTask(params);
+      if (res && res.success) {
+        showToast('Tugas RTL diperbarui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal memperbarui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal memperbarui');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async deleteRTLTask(id) {
     try {
-      const result = await apiDeleteRTL({ id });
-      if (result.success) {
-        showToast('Tugas RTL berhasil dihapus!', 'success');
+      const res = await apiDeleteRTLTask(id);
+      if (res && res.success) {
+        showToast('Tugas RTL dihapus', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menghapus');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menghapus');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async approveRTLTask(id) {
     try {
-      const result = await apiApproveRTLTask({ id });
-      if (result.success) {
-        showToast('Tugas disetujui!', 'success');
+      const res = await apiApproveRTLTask(id);
+      if (res && res.success) {
+        showToast('Tugas RTL disetujui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menyetujui');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menyetujui');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async approveAllRTL(pesertaId) {
     try {
-      const result = await apiApproveAllRTL({ pesertaId });
-      if (result.success) {
-        showToast('Semua tugas RTL disetujui!', 'success');
+      const res = await apiApproveAllRTL({ pesertaId });
+      if (res && res.success) {
+        showToast('Semua tugas RTL disetujui', 'success');
         await this.loadAllData(true);
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menyetujui semua');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menyetujui semua');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   CRUD SERTIFIKAT & TEMPLATE
-  // ==================================================================
-  async addCertificateTemplate(params) {
-    return await apiAddCertificateTemplateManual(params);
+  async getRTLStatus(pesertaId) {
+    return await apiGetRTLStatus({ pesertaId });
   },
 
-  async updateCertificateTemplate(params) {
-    return await apiUpdateCertificateTemplate(params);
-  },
-
-  async deleteCertificateTemplate(id) {
-    return await apiDeleteCertificateTemplate({ id });
-  },
-
+  // ==========================================================
+  //   SERTIFIKAT
+  // ==========================================================
+  async getCertificateTemplates() { return await apiGetCertificateTemplates(); },
+  async addCertificateTemplate(params) { return await apiAddCertificateTemplateManual(params); },
+  async updateCertificateTemplate(params) { return await apiUpdateCertificateTemplate(params); },
+  async deleteCertificateTemplate(id) { return await apiDeleteCertificateTemplate({ id }); },
   async generateCertificateForParticipant(templateId, pesertaId) {
     return await apiGenerateCertificateForParticipant({ templateId, pesertaId });
   },
-
+  async getCertPresets() { return await apiGetCertPresets(); },
+  async getCertificateLayouts() { return await apiListCertificateLayouts(); },
   async saveCertificateLayout(nama, data_json, id = null) {
     return await apiSaveCertificateLayout({ nama, data_json, id });
   },
+  async bulkGenerateTTD(params) { return await apiBulkGenerateTTD(params); },
 
-  async bulkGenerateTTD(params) {
-    return await apiBulkGenerateTTD(params);
-  },
-
-  // ==================================================================
-  //   CRUD PENGATURAN (SETTINGS)
-  // ==================================================================
+  // ==========================================================
+  //   PENGATURAN
+  // ==========================================================
   async setLoginMode(enabled) {
     try {
-      const result = await apiSetLoginMode(enabled);
-      if (result.success) {
+      const res = await apiSetLoginMode(enabled);
+      if (res && res.success) {
         STATE.loginMode = enabled;
-        await this.loadAllData(true);
-        showToast('Mode login berhasil diubah!', 'success');
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah mode');
+        notifySubscribers('settings');
+        showToast('Mode login diubah', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah mode');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async setPublicVisibility(data) {
     try {
-      const result = await apiSetPublicVisibility(data);
-      if (result.success) {
+      const res = await apiSetPublicVisibility(data);
+      if (res && res.success) {
         STATE.publicVisibility = data;
-        await this.loadAllData(true);
-        showToast('Visibilitas berhasil diubah!', 'success');
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah visibilitas');
+        notifySubscribers('settings');
+        showToast('Visibilitas diubah', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah visibilitas');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async setPKDLokasi(lokasi) {
     try {
-      const result = await apiSetPKDLokasi(lokasi);
-      if (result.success) {
+      const res = await apiSetPKDLokasi(lokasi);
+      if (res && res.success) {
         STATE.pkdlokasi = lokasi;
-        await this.loadAllData(true);
-        showToast('Lokasi PKD berhasil diubah!', 'success');
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah lokasi');
+        notifySubscribers('settings');
+        showToast('Lokasi PKD diubah', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah lokasi');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async setFormSettings(fields) {
     try {
-      const result = await apiSetFormSettings(fields);
-      if (result.success) {
+      const res = await apiSetFormSettings(fields);
+      if (res && res.success) {
         STATE.formSettings = fields;
-        await this.loadAllData(true);
-        showToast('Struktur form berhasil disimpan!', 'success');
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal menyimpan struktur');
+        notifySubscribers('settings');
+        showToast('Struktur form disimpan', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal menyimpan struktur form');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
   async setRealtimeSetting(enabled) {
     try {
-      const result = await apiSetRealtimeSetting(enabled);
-      if (result.success) {
+      const res = await apiSetRealtimeSetting(enabled);
+      if (res && res.success) {
         STATE.realtimeEnabled = enabled;
-        await this.loadAllData(true);
-        showToast('Pengaturan realtime berhasil diubah!', 'success');
-        return result;
-      } else {
-        throw new Error(result.error || 'Gagal mengubah realtime');
+        notifySubscribers('settings');
+        showToast('Pengaturan realtime diubah', 'success');
+        return res;
       }
+      throw new Error((res && res.error) || 'Gagal mengubah realtime');
     } catch (e) {
       showToast('Gagal: ' + e.message, 'error');
-      return { success: false };
+      return { success: false, error: e.message };
     }
   },
 
-  // ==================================================================
-  //   UTILITY CLEAR STATE
-  // ==================================================================
+  // ==========================================================
+  //   CLEAR STATE
+  // ==========================================================
   clearState() {
-    Object.keys(STATE).forEach(key => {
-      if (Array.isArray(STATE[key])) {
-        STATE[key] = [];
-      } else if (typeof STATE[key] === 'object' && STATE[key] !== null && key !== 'pkdlokasi') {
-        STATE[key] = {};
-      }
-    });
-    STATE.lastSync = null;
+    STATE.peserta = [];
+    STATE.sesi = [];
+    STATE.materi = [];
+    STATE.skrining = [];
+    STATE.pretest = [];
+    STATE.posttest = [];
+    STATE.alumni = [];
+    STATE.kader = [];
+    STATE.informasi = [];
+    STATE.absensi = [];
+    STATE.sertifikat = [];
+    STATE.digitalApprovals = [];
+    STATE.asset = [];
+    STATE.folders = [];
+    STATE.usulan = [];
+    STATE.rtl = [];
+    STATE.timInstruktur = [];
+    STATE.quizSettings = {};
+    STATE.loginMode = false;
+    STATE.publicVisibility = {};
+    STATE.pkdlokasi = '';
+    STATE.formSettings = [];
+    STATE.realtimeEnabled = false;
+    STATE.lastSync = 0;
+    STATE.lastError = null;
     STATE.isLoading = false;
-    window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-  }
+
+    if (notifyDebounceTimer) {
+      clearTimeout(notifyDebounceTimer);
+      notifyDebounceTimer = null;
+    }
+    pendingNotifyTypes.clear();
+    pendingLoadPromise = null;
+
+    notifySubscribers('cleared');
+    console.log('[AdminModule] State cleared');
+  },
+
+  clearSubscribers() {
+    const count = subscribers.size;
+    subscribers.clear();
+    console.log(`[AdminModule] Cleared ${count} subscribers`);
+  },
 };
+
+// ============================================================
+//   DEFAULT EXPORT
+// ============================================================
+export default AdminModule;
+
+// ============================================================
+//   CONSOLE BANNER
+// ============================================================
+console.log(
+  '%c AdminModule v27.2.1 — Non-Blocking Load Edition ',
+  'background:#f59e0b;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);
