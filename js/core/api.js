@@ -1,23 +1,16 @@
 // ============================================================
-// js/core/api.js — v27.2.3 PRODUCTION FULL FIX
+// js/core/api.js — v27.4.0 CIRCUIT BREAKER + CORS SAFE
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.2.3 (dari v26.4.1):
-//   ✅ FIX CRITICAL: Tambah export normalizeResult + normalizeObject
-//     → fix error "does not provide an export named 'normalizeResult'"
-//     → dibutuhkan oleh views/admin/sertifikat.js
-//   ✅ FIX: Semua named exports diverifikasi
-//   ✅ KEEP: CORS handling redirect:follow + credentials:omit
-//   ✅ KEEP: 137+ named exports (semua view terpenuhi)
-//   ✅ KEEP: dedup GET only — POST selalu fresh
-//   ✅ KEEP: JSON parse fallback robust
-//   ✅ KEEP: healthCheck() + ping() untuk diagnostic
-//   ✅ KEEP: setUserRole / setUserData / persistAuthState
-//   ✅ KEEP: logout() dengan cleanup cache
-//   ✅ KEEP: updateNavbarMenu() lengkap semua role
-//   ✅ KEEP: guardPublicAccess() dengan cache 30s
-//   ✅ KEEP: formatDateID, formatDateTimeID, getLocalDateOnly, timeSinceID
-//   ✅ KEEP: fileToBase64, uploadToDrive, downloadJSON, downloadCSV
+// CHANGELOG v27.4.0 (dari v27.2.3):
+//   ✅ NEW: Circuit breaker — stop request storm saat GAS throttle
+//   ✅ NEW: getCircuitState() — untuk monitoring dari app.js
+//   ✅ NEW: resetCircuit() — manual reset via debug
+//   ✅ FIX: Retry logic — hanya untuk health/ping (hindari amplify)
+//   ✅ FIX: Better CORS error detection & classification
+//   ✅ FIX: Dedup window diperpanjang 100ms → 500ms
+//   ✅ FIX: Circuit breaker hanya untuk CORS/network error
+//   ✅ KEEP: Semua export v27.2.3 (137+ named exports)
 // ============================================================
 
 import {
@@ -41,6 +34,122 @@ let userData = {};
 //   REQUEST DEDUPLICATION
 // ============================================================
 const pendingRequests = new Map();
+const DEDUP_WINDOW_MS = 500;  // ⬅️ UBAH: 100ms → 500ms
+
+// ============================================================
+//   ⚡ NEW: CIRCUIT BREAKER
+// ============================================================
+const _circuit = {
+  failures: 0,
+  openedAt: 0,
+  successSinceOpen: 0,
+  lastFailureType: null,
+
+  THRESHOLD: 3,           // 3 failures → open
+  COOLDOWN_MS: 30000,     // 30s cooldown
+  HALF_OPEN_SUCCESS: 2,   // 2 success → close
+};
+
+function _isCircuitOpen() {
+  if (_circuit.failures < _circuit.THRESHOLD) return false;
+
+  const elapsed = Date.now() - _circuit.openedAt;
+  if (elapsed > _circuit.COOLDOWN_MS) {
+    // Half-open state
+    if (_circuit.successSinceOpen === 0) {
+      console.log(
+        `[API] 🟡 Circuit HALF-OPEN — testing (failures=${_circuit.failures})`
+      );
+    }
+    return false;
+  }
+  return true;
+}
+
+function _recordSuccess() {
+  if (_circuit.failures > 0) {
+    _circuit.successSinceOpen++;
+    if (_circuit.successSinceOpen >= _circuit.HALF_OPEN_SUCCESS) {
+      console.log(`[API] 🟢 Circuit CLOSED — server recovered (${_circuit.successSinceOpen} OK)`);
+      _circuit.failures = 0;
+      _circuit.openedAt = 0;
+      _circuit.successSinceOpen = 0;
+      _circuit.lastFailureType = null;
+    }
+  }
+}
+
+function _recordFailure(errorType) {
+  // Hanya untuk CORS/network error
+  const isBreakable =
+    errorType === 'cors' ||
+    errorType === 'network' ||
+    errorType === 'timeout';
+
+  if (!isBreakable) return;
+
+  _circuit.failures++;
+  _circuit.lastFailureType = errorType;
+  _circuit.successSinceOpen = 0;
+
+  if (_circuit.failures >= _circuit.THRESHOLD) {
+    if (_circuit.openedAt === 0) {
+      _circuit.openedAt = Date.now();
+      console.warn(
+        `[API] 🔴 Circuit OPEN — ${_circuit.failures} ${errorType} failures. ` +
+        `Pausing ${_circuit.COOLDOWN_MS/1000}s.`
+      );
+    }
+  }
+}
+
+/**
+ * Get current circuit state — untuk monitoring dari app.js.
+ * @returns {Object} { isOpen, failures, remainingMs, cooldownMs, lastFailureType }
+ */
+export function getCircuitState() {
+  const isOpen = _isCircuitOpen();
+  const remainingMs = isOpen
+    ? Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt))
+    : 0;
+
+  return {
+    isOpen,
+    failures: _circuit.failures,
+    remainingMs,
+    cooldownMs: _circuit.COOLDOWN_MS,
+    threshold: _circuit.THRESHOLD,
+    lastFailureType: _circuit.lastFailureType,
+  };
+}
+
+/**
+ * Manual reset circuit breaker — untuk debug.
+ */
+export function resetCircuit() {
+  _circuit.failures = 0;
+  _circuit.openedAt = 0;
+  _circuit.successSinceOpen = 0;
+  _circuit.lastFailureType = null;
+  console.log('[API] 🔄 Circuit reset manually');
+}
+
+/**
+ * Classify error type untuk circuit breaker.
+ */
+function _classifyError(message) {
+  const msg = String(message || '').toLowerCase();
+  if (msg.includes('failed to fetch') || msg.includes('cors') || msg.includes('access-control')) {
+    return 'cors';
+  }
+  if (msg.includes('network') || msg.includes('err_failed') || msg.includes('err_network')) {
+    return 'network';
+  }
+  if (msg.includes('timeout') || msg.includes('abort')) {
+    return 'timeout';
+  }
+  return 'other';
+}
 
 // ============================================================
 //   UTILITY: escapeHtml
@@ -56,8 +165,7 @@ export function escapeHtml(unsafe) {
 }
 
 // ============================================================
-//   UTILITY: normalizeResult (BARU v27.2.3)
-//   Extrak array dari berbagai bentuk respons API
+//   UTILITY: normalizeResult
 // ============================================================
 export function normalizeResult(res) {
   if (!res) return [];
@@ -67,7 +175,7 @@ export function normalizeResult(res) {
 }
 
 // ============================================================
-//   UTILITY: normalizeObject (BARU v27.2.3)
+//   UTILITY: normalizeObject
 // ============================================================
 export function normalizeObject(res, fallback = null) {
   if (res === null || res === undefined) return fallback;
@@ -81,7 +189,7 @@ export function normalizeObject(res, fallback = null) {
 }
 
 // ============================================================
-//   UTILITY: toParams (convenience)
+//   UTILITY: toParams
 // ============================================================
 function toParams(arg, key) {
   if (arg === undefined || arg === null) return {};
@@ -313,10 +421,21 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   CORE API CALL — v27.2.3 CORS FIX
+//   CORE API CALL — v27.4.0 CIRCUIT BREAKER AWARE
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
+
+  // ⬇️ GUARD 1: Circuit breaker
+  if (_isCircuitOpen()) {
+    const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
+    return Promise.resolve({
+      success: false,
+      error: `Server sibuk — coba lagi dalam ${Math.ceil(remaining/1000)}s`,
+      _circuitOpen: true,
+      _retryAfterMs: remaining,
+    });
+  }
 
   const dedupParams = { ...params };
   delete dedupParams._t;
@@ -375,11 +494,31 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         };
       }
 
-      const retries = (method === 'GET') ? MAX_RETRY : 0;
+      // ⬇️ UBAH: Retry HANYA untuk endpoint kritikal (health/ping)
+      // Endpoint lain = 0 retry (hindari amplify throttle)
+      const RETRYABLE_ACTIONS = new Set(['health', 'ping', 'getBootstrapData']);
+      const retries = (method === 'GET' && RETRYABLE_ACTIONS.has(action)) ? MAX_RETRY : 0;
 
       _fetchWithRetry(url, fetchOptions, timeout, retries)
-        .then(response => resolve(response))
-        .catch(err => resolve({ success: false, error: err.message || 'Unknown error' }));
+        .then(response => {
+          // ⬇️ Update circuit breaker berdasarkan response
+          if (response && response.success) {
+            _recordSuccess();
+          } else if (response && response.error) {
+            const errorType = _classifyError(response.error);
+            _recordFailure(errorType);
+          }
+          resolve(response);
+        })
+        .catch(err => {
+          const errorType = _classifyError(err.message);
+          _recordFailure(errorType);
+          resolve({
+            success: false,
+            error: err.message || 'Unknown error',
+            _errorType: errorType,
+          });
+        });
     } catch (e) {
       resolve({ success: false, error: e.message });
     }
@@ -388,7 +527,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
   if (useDedup) {
     pendingRequests.set(dedupeKey, promise);
     promise.finally(() => {
-      setTimeout(() => pendingRequests.delete(dedupeKey), 100);
+      setTimeout(() => pendingRequests.delete(dedupeKey), DEDUP_WINDOW_MS);
     });
   }
 
@@ -478,11 +617,9 @@ function _fetchOnce(url, options, timeout) {
           reject(new Error('Request timeout'));
         } else if (err.name === 'TypeError' && err.message && err.message.includes('Failed to fetch')) {
           reject(new Error(
-            'Gagal terhubung ke server. Kemungkinan penyebab:\n' +
-            '1. Deployment GAS belum "Anyone" — cek Deploy → Manage Deployments\n' +
-            '2. SCRIPT_URL di config.js salah\n' +
-            '3. Coba refresh halaman (Ctrl+Shift+R)\n' +
-            'Detail: ' + err.message
+            'CORS_ERROR: Gagal terhubung ke server. ' +
+            'Kemungkinan penyebab: (1) Deployment GAS belum "Anyone", ' +
+            '(2) SCRIPT_URL salah, (3) Server sedang throttle.'
           ));
         } else {
           reject(new Error(err.message || 'Network error'));
@@ -1075,10 +1212,10 @@ if (typeof document !== 'undefined') {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v${APP_VERSION} — GitHub Pages /bisaa/ Edition `,
+  `%c API v${APP_VERSION} — Circuit Breaker + CORS Safe Edition `,
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
 );
 console.log(
-  `%c 💡 Diagnostic: api.healthCheck() atau api.ping() `,
+  `%c 💡 Diagnostic: getCircuitState() | resetCircuit() | healthCheck() `,
   'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
