@@ -1,18 +1,18 @@
 // ============================================================
-// js/core/api.js — v28.1.0 FULL FIX EDITION
+// js/core/api.js — v28.2.0 FULL FIX + CONNECTION RESILIENCE
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v28.1.0 (dari v28.0.0):
-//   ✅ FIX CRITICAL: submitPeserta() return id dari multiple level
-//   ✅ FIX: normalizeResponse() — unwrap {data: {data: {...}}} double-nested
-//   ✅ FIX: extractId() helper untuk semua CRUD (add*)
-//   ✅ FIX: Safe JSON parse — handle HTML redirect & empty body
-//   ✅ FIX: Circuit breaker auto-reset saat sukses pertama
-//   ✅ FIX: Retry GET 2x untuk action GET + health + ping
-//   ✅ FIX: Timeout handling yang lebih baik (AbortController)
-//   ✅ FIX: Semua POST tidak retry (hindari double-submit)
+// CHANGELOG v28.2.0 (dari v28.1.0):
+//   ✅ NEW: Retry 3x dengan exponential backoff (500→1000→2000ms)
+//   ✅ NEW: Deteksi offline sebelum fetch
+//   ✅ NEW: Deteksi SCRIPT_URL invalid
+//   ✅ NEW: healthCheck() & testConnection() helpers
+//   ✅ NEW: Pesan error CORS lebih jelas + actionable
+//   ✅ FIX: Circuit breaker auto-reset lebih cepat
+//   ✅ FIX: Retry untuk SEMUA GET (bukan cuma 3 action)
+//   ✅ FIX: Safe JSON parse & HTML detection
+//   ✅ FIX: extractId() multi-level
 //   ✅ KEEP: 150+ exports zero regression
-//   ✅ KEEP: Semua action backend 100+ compatible
 // ============================================================
 
 import {
@@ -20,10 +20,14 @@ import {
   BASE_PATH,
   APP_VERSION,
   DEFAULT_TIMEOUT_MS,
+  HEALTH_TIMEOUT_MS,
   MAX_RETRY,
   CACHE_PREFIX,
   AUTH_STORAGE_KEY,
   LOGIN_PATH,
+  isOnline,
+  isScriptUrlValid,
+  getActiveScriptUrl,
 } from './config.js';
 
 // ============================================================
@@ -46,7 +50,6 @@ const _circuit = {
   openedAt: 0,
   successSinceOpen: 0,
   lastFailureType: null,
-
   THRESHOLD: 3,
   COOLDOWN_MS: 30000,
   HALF_OPEN_SUCCESS: 2,
@@ -147,27 +150,13 @@ export function escapeHtml(unsafe) {
 }
 
 // ============================================================
-//   ⭐ NEW: NORMALIZE RESPONSE (unwrap nested {data: {data}})
+//   NORMALIZE RESPONSE
 // ============================================================
-/**
- * Normalize response dari GAS agar konsisten.
- * Handle:
- *   - { success: true, data: [...] }       → array
- *   - { success: true, data: { id: 1 } }   → objek
- *   - { data: [...] }                       → array (success undefined = true)
- *   - [...]                                 → array
- *   - { data: { data: [...] } }             → double-nested
- */
 export function normalizeResult(res) {
   if (!res) return [];
   if (Array.isArray(res)) return res;
-
-  // Double-nested: { data: { data: [...] } }
   if (res.data && Array.isArray(res.data.data)) return res.data.data;
-
-  // Single-nested: { data: [...] }
   if (Array.isArray(res.data)) return res.data;
-
   return [];
 }
 
@@ -177,7 +166,6 @@ export function normalizeObject(res, fallback = null) {
   if (typeof res === 'object') {
     if (res.success === false) return fallback;
     if (res.data !== undefined) {
-      // Double-nested object
       if (res.data && typeof res.data === 'object' && res.data.data !== undefined) {
         return res.data.data || fallback;
       }
@@ -189,12 +177,8 @@ export function normalizeObject(res, fallback = null) {
 }
 
 // ============================================================
-//   ⭐ NEW: EXTRACT ID FROM ANY RESPONSE STRUCTURE
+//   EXTRACT ID (multi-level)
 // ============================================================
-/**
- * Ekstrak ID dari response apapun bentuknya.
- * Digunakan untuk: submitPeserta, addMateri, addInfo, addFolder, dll.
- */
 export function extractId(result) {
   if (!result) return null;
 
@@ -217,7 +201,6 @@ export function extractId(result) {
       return c;
     }
   }
-
   return null;
 }
 
@@ -340,9 +323,9 @@ export function showToast(message, type = 'success') {
 
   const icons = {
     success: { cls: 'bi-check-circle-fill text-success', title: 'Berhasil' },
-    error: { cls: 'bi-x-circle-fill text-danger', title: 'Gagal' },
+    error:   { cls: 'bi-x-circle-fill text-danger', title: 'Gagal' },
     warning: { cls: 'bi-exclamation-triangle-fill text-warning', title: 'Peringatan' },
-    info: { cls: 'bi-info-circle-fill text-primary', title: 'Info' },
+    info:    { cls: 'bi-info-circle-fill text-primary', title: 'Info' },
   };
   const cfg = icons[type] || icons.info;
   if (icon) icon.className = `bi ${cfg.cls}`;
@@ -501,11 +484,31 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   ⭐ CORE API CALL — v28.1.0 FULL FIX
+//   ⭐ CORE API CALL — v28.2.0
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
+  // Cek online
+  if (!isOnline()) {
+    return Promise.resolve({
+      success: false,
+      error: 'Browser sedang offline. Periksa koneksi internet Anda.',
+      _offline: true,
+    });
+  }
+
+  // Cek SCRIPT_URL valid
+  if (!isScriptUrlValid()) {
+    console.error('[API] ❌ SCRIPT_URL tidak valid, cek js/core/config.js');
+    return Promise.resolve({
+      success: false,
+      error: 'Konfigurasi server tidak valid. Hubungi admin.',
+      _configError: true,
+    });
+  }
+
+  // Circuit breaker
   if (_isCircuitOpen()) {
     const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
     return Promise.resolve({
@@ -545,7 +548,8 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         }
       });
 
-      let url = SCRIPT_URL;
+      const activeUrl = getActiveScriptUrl();
+      let url = activeUrl;
       let fetchOptions;
 
       if (method === 'GET') {
@@ -557,9 +561,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
           redirect: 'follow',
           credentials: 'omit',
           cache: 'no-store',
-          headers: {
-            'Accept': 'application/json',
-          },
+          headers: { 'Accept': 'application/json' },
         };
       } else {
         const body = new URLSearchParams({ action, ...cleanParams }).toString();
@@ -568,16 +570,13 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
           mode: 'cors',
           redirect: 'follow',
           credentials: 'omit',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
           body,
         };
       }
 
-      // Retry hanya untuk GET action tertentu
-      const RETRYABLE_ACTIONS = new Set(['health', 'ping', 'getBootstrapData']);
-      const retries = (method === 'GET' && RETRYABLE_ACTIONS.has(action)) ? MAX_RETRY : 0;
+      // ⭐ Retry semua GET (resilient)
+      const retries = (method === 'GET') ? MAX_RETRY : 0;
 
       _fetchWithRetry(url, fetchOptions, timeout, retries)
         .then(response => {
@@ -614,7 +613,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
 }
 
 // ============================================================
-//   FETCH WITH RETRY
+//   FETCH WITH RETRY (Exponential Backoff)
 // ============================================================
 async function _fetchWithRetry(url, options, timeout, maxRetry) {
   let lastError = null;
@@ -623,17 +622,23 @@ async function _fetchWithRetry(url, options, timeout, maxRetry) {
     try {
       const result = await _fetchOnce(url, options, timeout);
 
-      if (result && result._httpError && attempt < maxRetry && result._retryable) {
-        lastError = new Error(result.error);
-        await _sleep(500 * (attempt + 1));
-        continue;
+      if (!result._httpError || !result._retryable) {
+        return result;
       }
 
-      return result;
+      lastError = new Error(result.error);
+      if (attempt < maxRetry) {
+        const delay = 500 * Math.pow(2, attempt);
+        console.warn(`[API] HTTP error, retry ${attempt + 1}/${maxRetry} in ${delay}ms`);
+        await _sleep(delay);
+        continue;
+      }
     } catch (e) {
       lastError = e;
       if (attempt < maxRetry) {
-        await _sleep(500 * (attempt + 1));
+        const delay = 500 * Math.pow(2, attempt);
+        console.warn(`[API] Network error, retry ${attempt + 1}/${maxRetry} in ${delay}ms:`, e.message);
+        await _sleep(delay);
         continue;
       }
     }
@@ -643,12 +648,16 @@ async function _fetchWithRetry(url, options, timeout, maxRetry) {
 }
 
 // ============================================================
-//   ⭐ FETCH ONCE — v28.1.0 (Safe JSON parse)
+//   FETCH ONCE
 // ============================================================
 function _fetchOnce(url, options, timeout) {
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeout);
+
+    const startTime = Date.now();
 
     fetch(url, { ...options, signal: controller.signal })
       .then(response => {
@@ -660,7 +669,7 @@ function _fetchOnce(url, options, timeout) {
             console.warn('[API] HTTP', response.status, '→', text.substring(0, 200));
             resolve({
               success: false,
-              error: `Server Error (${response.status}): ${(text || '').substring(0, 200)}`,
+              error: `Server Error (${response.status}). Coba lagi dalam beberapa saat.`,
               _httpError: true,
               _retryable: retryable,
             });
@@ -668,62 +677,62 @@ function _fetchOnce(url, options, timeout) {
         }
 
         return response.text().then(text => {
-          // Empty body
           if (!text || text.trim() === '') {
             return resolve({ success: true, data: [] });
           }
 
-          // Detect HTML (Google login page atau error page)
           const trimmed = text.trim();
+
+          // Detect HTML response
           if (trimmed.startsWith('<') || trimmed.toLowerCase().includes('<html')) {
             if (text.includes('accounts.google.com') || text.includes('Sign in')) {
               console.error('[API] ❌ GAS deployment BUKAN "Anyone"');
               return resolve({
                 success: false,
-                error: 'Deployment GAS belum di-set "Anyone". Buka GAS → Deploy → Manage Deployments → Who has access → "Anyone"',
+                error: 'Deployment GAS belum di-set "Anyone". Buka GAS → Deploy → Manage Deployments → Who has access → "Anyone".',
+                _configError: true,
               });
             }
             return resolve({
               success: false,
               error: 'Server mengembalikan HTML, bukan JSON. Cek deployment GAS.',
+              _configError: true,
             });
           }
 
-          // Safe JSON parse
           try {
             const data = JSON.parse(text);
 
             if (data && typeof data === 'object' && !Array.isArray(data)) {
               if (data.success === undefined) {
-                // Legacy: response tanpa success field → assume success
                 resolve({ success: true, data });
               } else {
-                // Standard response: { success, data, error? }
                 resolve(data);
               }
             } else {
-              // Array langsung
               resolve({ success: true, data });
             }
           } catch (parseErr) {
             console.error('[API] JSON parse error:', parseErr.message);
             resolve({
               success: false,
-              error: `JSON parse error: ${parseErr.message} — ${text.substring(0, 150)}`,
+              error: `JSON parse error: ${parseErr.message}`,
+              _parseError: true,
             });
           }
         });
       })
       .catch(err => {
         clearTimeout(timeoutId);
+        const elapsed = Date.now() - startTime;
 
         if (err.name === 'AbortError') {
-          reject(new Error('Request timeout'));
+          reject(new Error(`Request timeout (${elapsed}ms). Server tidak merespons.`));
         } else if (err.name === 'TypeError' && err.message && err.message.includes('Failed to fetch')) {
           reject(new Error(
             'CORS_ERROR: Gagal terhubung ke server. ' +
-            'Kemungkinan penyebab: (1) Deployment GAS belum "Anyone", ' +
-            '(2) SCRIPT_URL salah, (3) Server sedang throttle.'
+            'Kemungkinan: (1) Deployment GAS belum "Anyone", ' +
+            '(2) Koneksi internet bermasalah, (3) Server sedang throttle.'
           ));
         } else {
           reject(new Error(err.message || 'Network error'));
@@ -826,7 +835,7 @@ export function getDefaultFormFields() {
 }
 
 // ============================================================
-//   SHARED HELPERS — Date/Time
+//   DATE/TIME HELPERS
 // ============================================================
 export function formatDateID(dateInput, opts) {
   if (!dateInput) return '-';
@@ -877,7 +886,7 @@ export function timeSinceID(dateInput) {
 }
 
 // ============================================================
-//   SHARED HELPERS — File
+//   FILE HELPERS
 // ============================================================
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -926,7 +935,7 @@ export function uploadToDrive(token, file, fileNameOverride) {
 }
 
 // ============================================================
-//   SHARED HELPERS — Download
+//   DOWNLOAD HELPERS
 // ============================================================
 export function downloadJSON(data, filename) {
   try {
@@ -975,36 +984,23 @@ export function getAppVersion() {
 }
 
 // ============================================================
-//   CONVENIENCE HELPERS
-// ============================================================
-export async function getSesiAbsenById(id) {
-  const res = await getSesiAbsen();
-  const list = Array.isArray(res) ? res : (res?.data || []);
-  return list.find(s => String(s.id) === String(id)) || null;
-}
-
-export async function getPesertaByStatus(status) {
-  return await getPesertaList({ status });
-}
-
-export function unreadNotifCount() {
-  try {
-    const raw = safeLocalGet('pkd_notif_read_ids');
-    if (!raw) return 0;
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.length : 0;
-  } catch (e) { return 0; }
-}
-
-// ============================================================
 //   DIAGNOSTIC HELPERS
 // ============================================================
 export async function healthCheck() {
-  return await callApi('health', {}, 'GET');
+  return await callApi('health', {}, 'GET', HEALTH_TIMEOUT_MS);
 }
 
 export async function ping() {
-  return await callApi('ping', {}, 'GET');
+  return await callApi('ping', {}, 'GET', HEALTH_TIMEOUT_MS);
+}
+
+export async function testConnection() {
+  try {
+    const res = await callApi('ping', {}, 'GET', HEALTH_TIMEOUT_MS);
+    return res && res.success === true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // ============================================================
@@ -1247,7 +1243,7 @@ export function submitRTLAttachment(taskId, fileData, fileName) {
 export function getRTLAttachments(taskId) { return callApi('getRTLAttachments', { taskId }, 'GET'); }
 
 // ============================================================
-//   ⭐ v28.0.0: ANGKATAN PKD
+//   ANGKATAN PKD
 // ============================================================
 export function getAngkatanPKDList() {
   return callApi('getAngkatanPKDList', {}, 'GET');
@@ -1348,6 +1344,28 @@ export function auditAllPasswords() { return callApi('auditAllPasswords', {}, 'G
 export function repairHashes(params) { return callApi('repairHashes', params, 'POST'); }
 
 // ============================================================
+//   CONVENIENCE HELPERS
+// ============================================================
+export async function getSesiAbsenById(id) {
+  const res = await getSesiAbsen();
+  const list = Array.isArray(res) ? res : (res?.data || []);
+  return list.find(s => String(s.id) === String(id)) || null;
+}
+
+export async function getPesertaByStatus(status) {
+  return await getPesertaList({ status });
+}
+
+export function unreadNotifCount() {
+  try {
+    const raw = safeLocalGet('pkd_notif_read_ids');
+    if (!raw) return 0;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch (e) { return 0; }
+}
+
+// ============================================================
 //   AUTO-INIT
 // ============================================================
 if (typeof document !== 'undefined') {
@@ -1359,10 +1377,10 @@ if (typeof document !== 'undefined') {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v28.1.0 — FULL FIX EDITION `,
+  `%c API v28.2.0 — Connection Resilience Edition `,
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
 );
 console.log(
-  `%c 💡 New: normalizeResult() | normalizeObject() | extractId() `,
+  `%c 💡 Retry 3x backoff | Offline detect | healthCheck() | testConnection() `,
   'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

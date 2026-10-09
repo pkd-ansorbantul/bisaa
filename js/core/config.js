@@ -1,20 +1,22 @@
 // ============================================================
-// js/core/config.js — v26.1.9 GITHUB PAGES /bisaa/ EDITION
+// js/core/config.js — v26.2.0 CONNECTION RESILIENCE EDITION
 // ============================================================
-// CHANGELOG v26.1.9:
-//   ✅ REMOVE: buildUrl, buildPageUrl, isProduction, isDevelopment
-//      (dead code — tidak dipakai di codebase)
-//   ✅ REMOVE dari export: RETRY_BACKOFF_MS, DEFAULT_CACHE_AGE,
-//      SESSION_TTL_MS (unused)
-//   ✅ Keep: SCRIPT_URL, BASE_PATH, APP_*, DEFAULT_ROUTE, LOGIN_PATH,
-//      PUBLIC_PAGES (dipakai atau referensi dokumentasi)
-//   ✅ Safe storage wrapper untuk environment check
+// CHANGELOG v26.2.0 (dari v26.1.9):
+//   ✅ NEW: isScriptUrlValid(), isOnline(), getActiveScriptUrl()
+//   ✅ NEW: FALLBACK_SCRIPT_URL untuk redundancy
+//   ✅ NEW: STARTUP_TIMEOUT_MS (15s) & HEALTH_TIMEOUT_MS (8s)
+//   ✅ FIX: Validasi config saat boot dengan logging jelas
+//   ✅ FIX: MAX_RETRY 2 → 3 untuk resiliency
+//   ✅ KEEP: Semua config dari v26.1.9
 // ============================================================
 
 // ============================================================
 //   BACKEND URL
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuVzK1obgk9PDmP4hxr8CDpNcegoFlpAt9D0FI-sQxM1FQVCZCqHcfTAIa_FGwIf7Z-w/exec';
+
+// Fallback URL (opsional — isi kalau ada deployment backup)
+const FALLBACK_SCRIPT_URL = '';
 
 // ============================================================
 //   BASE PATH — FIXED /bisaa/ (GitHub Pages)
@@ -27,7 +29,7 @@ const BASE_PATH = '/bisaa/';
 const APP_NAME        = 'PKD GP Ansor Kabupaten Bantul';
 const APP_NAME_SHORT  = 'PKD GP Ansor';
 const APP_SUBTITLE    = 'Kabupaten Bantul';
-const APP_VERSION     = '26.1.9';
+const APP_VERSION     = '26.2.0';
 const APP_ICON        = '/bisaa/LOGOANSOR.webp';
 
 // ============================================================
@@ -55,7 +57,9 @@ const ENVIRONMENT = detectEnvironment();
 //   TIMEOUT & RETRY
 // ============================================================
 const DEFAULT_TIMEOUT_MS = 30000;
-const MAX_RETRY          = 2;
+const STARTUP_TIMEOUT_MS = 15000;
+const HEALTH_TIMEOUT_MS  = 8000;
+const MAX_RETRY          = 3;
 
 // ============================================================
 //   CACHE
@@ -95,29 +99,62 @@ const PUBLIC_PAGES = {
 };
 
 // ============================================================
+//   CONNECTION HEALTH HELPERS
+// ============================================================
+
+export function isScriptUrlValid() {
+  if (!SCRIPT_URL || typeof SCRIPT_URL !== 'string') return false;
+  if (!SCRIPT_URL.startsWith('https://script.google.com/')) return false;
+  if (!SCRIPT_URL.endsWith('/exec')) return false;
+  return true;
+}
+
+export function isOnline() {
+  if (typeof navigator === 'undefined') return true;
+  return navigator.onLine !== false;
+}
+
+export function getActiveScriptUrl() {
+  if (isScriptUrlValid()) return SCRIPT_URL;
+  if (FALLBACK_SCRIPT_URL && FALLBACK_SCRIPT_URL.startsWith('https://')) {
+    console.warn('[Config] ⚠️ Primary URL invalid, using fallback');
+    return FALLBACK_SCRIPT_URL;
+  }
+  return SCRIPT_URL;
+}
+
+// ============================================================
 //   BOOT VALIDATION & LOG
 // ============================================================
 (function validateConfig() {
-  if (!SCRIPT_URL || !SCRIPT_URL.startsWith('https://script.google.com/')) {
-    console.error('[Config] ⚠️ SCRIPT_URL tidak valid:', SCRIPT_URL);
+  const style  = 'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;';
+  const style2 = 'color:#0f172a;font-weight:500;';
+
+  if (!isScriptUrlValid()) {
+    console.error('[Config] ❌ SCRIPT_URL tidak valid:', SCRIPT_URL);
+    console.error('[Config] URL harus dimulai "https://script.google.com/" dan berakhir "/exec"');
   }
+
   if (BASE_PATH !== '/bisaa/') {
     console.warn('[Config] ⚠️ BASE_PATH bukan "/bisaa/" — cek deploy GitHub Pages');
   }
 
-  const style  = 'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;';
-  const style2 = 'color:#0f172a;font-weight:500;';
+  if (!isOnline()) {
+    console.warn('[Config] ⚠️ Browser sedang offline');
+  }
+
   console.log(
-    `%c[Config]%c ENV: ${ENVIRONMENT} | BASE_PATH: ${BASE_PATH} | v${APP_VERSION}`,
+    `%c[Config]%c ENV: ${ENVIRONMENT} | BASE_PATH: ${BASE_PATH} | v${APP_VERSION} | Online: ${isOnline() ? '✅' : '❌'}`,
     style, style2
   );
 })();
 
 // ============================================================
-//   EXPORTS (named) — v26.1.9 pruned
+//   EXPORTS
 // ============================================================
 export {
   SCRIPT_URL,
+  FALLBACK_SCRIPT_URL,
   BASE_PATH,
   ENVIRONMENT,
   APP_NAME,
@@ -126,6 +163,8 @@ export {
   APP_VERSION,
   APP_ICON,
   DEFAULT_TIMEOUT_MS,
+  STARTUP_TIMEOUT_MS,
+  HEALTH_TIMEOUT_MS,
   MAX_RETRY,
   CACHE_PREFIX,
   AUTH_STORAGE_KEY,
@@ -134,11 +173,9 @@ export {
   PUBLIC_PAGES,
 };
 
-// ============================================================
-//   DEFAULT EXPORT
-// ============================================================
 export default {
   SCRIPT_URL,
+  FALLBACK_SCRIPT_URL,
   BASE_PATH,
   ENVIRONMENT,
   APP_NAME,
@@ -147,10 +184,15 @@ export default {
   APP_VERSION,
   APP_ICON,
   DEFAULT_TIMEOUT_MS,
+  STARTUP_TIMEOUT_MS,
+  HEALTH_TIMEOUT_MS,
   MAX_RETRY,
   CACHE_PREFIX,
   AUTH_STORAGE_KEY,
   DEFAULT_ROUTE,
   LOGIN_PATH,
   PUBLIC_PAGES,
+  isScriptUrlValid,
+  isOnline,
+  getActiveScriptUrl,
 };
