@@ -1,23 +1,21 @@
 <!-- ============================================================
      SIDEBAR PARTIAL — PKD GP Ansor Bantul
-     Versi: 27.3.0 — LOKASI PKD DYNAMIC MENU EDITION
+     Versi: 28.0.0 — ANGKATAN PKD EDITION
      Dimuat oleh: js/components/sidebar.js
      ============================================================
-     v27.3.0 CHANGES (dari v27.1.0):
-     ✅ NEW: Menu "Lokasi PKD" (parent + submenu dinamis)
-        - Submenu diisi oleh sidebar.js dari getLokasiPKDWithCount()
-        - Setiap lokasi jadi tombol filter
-        - Auto-count peserta per lokasi
-        - Ada "Semua Lokasi" untuk reset
-     ✅ KEEP: Semua 18 menu + 4 submenu + brand + logout
+     v28.0.0 CHANGES (dari v27.3.0):
+     ✅ NEW: Menu "Angkatan PKD" (menggantikan Alumni)
+     ✅ REMOVED: Menu "Lokasi PKD" (digantikan Angkatan PKD)
+     ✅ REMOVED: Link "Alumni" di submenu Peserta
+     ✅ KEEP: Semua menu + submenu + brand + logout
      ✅ KEEP: Mobile drawer (backdrop + close btn)
-     ✅ VERIFIED: Desktop + Mobile + Filter Lokasi PKD
+     ✅ KEEP: Theme toggle + notif + minimize
      ============================================================ -->
 
 <div class="sidebar-wrapper" id="sidebarWrapper" role="navigation" aria-label="Navigasi utama">
 
   <!-- ==========================================================
-       SIDEBAR HEADER — Notif Bell + Theme Toggle + Minimize + Close
+       SIDEBAR HEADER — Notif + Theme + Minimize + Close
        ========================================================== -->
   <div class="sidebar-header">
 
@@ -141,10 +139,6 @@
           <i class="bi bi-person-badge" aria-hidden="true"></i>
           <span>Peserta</span>
         </a>
-        <a class="nav-link" href="#/admin/alumni" data-route="#/admin/alumni" title="Alumni">
-          <i class="bi bi-award" aria-hidden="true"></i>
-          <span>Alumni</span>
-        </a>
         <a class="nav-link" href="#/admin/kader" data-route="#/admin/kader" title="Kader">
           <i class="bi bi-people-fill" aria-hidden="true"></i>
           <span>Kader</span>
@@ -154,6 +148,19 @@
           <span>Tim Instruktur</span>
         </a>
       </div>
+
+      <!-- ============================================================
+           ⭐ NEW v28.0.0: Angkatan PKD (menggantikan Alumni + Lokasi PKD)
+           ============================================================ -->
+      <a
+        class="nav-link"
+        href="#/admin/angkatan-pkd"
+        data-route="#/admin/angkatan-pkd"
+        title="Angkatan PKD"
+      >
+        <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+        <span>Angkatan PKD</span>
+      </a>
 
       <!-- ============ Absensi (parent) ============ -->
       <div
@@ -215,37 +222,6 @@
         <i class="bi bi-clipboard-check" aria-hidden="true"></i>
         <span>Skrining</span>
       </a>
-
-      <!-- ============================================================
-           ⭐ NEW v27.3.0: Lokasi PKD (Parent + Dinamis Submenu)
-           ============================================================
-           Submenu diisi oleh sidebar.js → loadLokasiPKDSubmenu()
-           Isi:
-             - "Semua Lokasi" → reset filter
-             - "<nama lokasi>" (N) → filter ke lokasi ini
-             - dst. auto-generate dari server
-
-           Klik item → simpan filter ke sessionStorage → navigate ke
-           #/admin/peserta dengan banner filter.
-           ============================================================ -->
-      <div
-        class="nav-link"
-        data-target="lokasi-pkd"
-        title="Lokasi PKD"
-        role="button"
-        tabindex="0"
-        aria-expanded="false"
-      >
-        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-        <span>Lokasi PKD</span>
-      </div>
-      <div class="submenu" id="submenu-lokasi-pkd">
-        <!-- Loading skeleton — akan diganti oleh sidebar.js -->
-        <div class="text-muted small px-3 py-2 d-flex align-items-center gap-2">
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          <span>Memuat lokasi…</span>
-        </div>
-      </div>
 
       <!-- ============ Sertifikat ============ -->
       <a
