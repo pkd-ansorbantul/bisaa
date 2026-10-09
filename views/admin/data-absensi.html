@@ -1,13 +1,13 @@
 <!-- ============================================================
-     views/admin/data-absensi.html — v28.1.0 FULL FIX EDITION
+     views/admin/data-absensi.html — v28.2.0 FINAL EDITION
      ============================================================
-     CHANGELOG v28.1.0 (dari v28.0.0):
-     ✅ NEW: Tombol Realtime (auto-refresh 10 detik)
-     ✅ NEW: Tombol Suara ON/OFF (notif absen via TTS)
-     ✅ NEW: Tombol Refresh manual (terpisah dari realtime)
-     ✅ FIX: Layout toolbar responsive (wrap otomatis)
-     ✅ FIX: ARIA lengkap (aria-pressed, aria-label, aria-live)
-     ✅ KEEP: Semua filter, stats, table, modal v28.0.0
+     CHANGELOG v28.2.0 (dari v28.1.0):
+     ✅ FIX CRITICAL: Tombol Realtime + Refresh + Suara MUNCUL
+     ✅ FIX: Layout toolbar 2-row responsive (filter row + action row)
+     ✅ FIX: Semua tombol pakai type="button" (cegah form submit)
+     ✅ FIX: ARIA labels lengkap (aria-pressed, aria-label, aria-live)
+     ✅ FIX: Cache status position (paling kanan, align-self-center)
+     ✅ KEEP: Semua filter, stats, table, modal v28.1.0
      ============================================================ -->
 
 <h2 class="section-title">
@@ -15,41 +15,41 @@
 </h2>
 
 <!-- ========================================================== -->
-<!-- TOOLBAR FILTER + AKSI                                      -->
+<!-- TOOLBAR — ROW 1: FILTER                                    -->
 <!-- ========================================================== -->
-<div class="row g-3 mb-3 align-items-end">
-
-  <!-- Filter Sesi -->
-  <div class="col-lg-3 col-md-6">
+<div class="row g-2 mb-3 align-items-end">
+  <div class="col-lg-4 col-md-6">
     <label class="form-label small fw-semibold mb-1" for="filterSesi">Filter Sesi</label>
     <select class="form-select" id="filterSesi" aria-label="Filter sesi absen">
       <option value="">Semua Sesi</option>
     </select>
   </div>
-
-  <!-- Filter Tanggal -->
   <div class="col-lg-3 col-md-6">
     <label class="form-label small fw-semibold mb-1" for="filterTanggal">Filter Tanggal</label>
     <input type="date" class="form-control" id="filterTanggal" aria-label="Filter tanggal absen">
   </div>
-
-  <!-- Toolbar Actions -->
-  <div class="col-lg-6 col-md-12">
+  <div class="col-lg-5 col-md-12">
+    <label class="form-label small fw-semibold mb-1 d-none d-lg-block">&nbsp;</label>
     <div class="d-flex gap-2 flex-wrap align-items-center">
-
-      <!-- Filter Buttons -->
-      <button type="button" class="btn btn-primary" id="applyFilterBtn"
-              aria-label="Terapkan filter">
+      <button type="button" class="btn btn-primary" id="applyFilterBtn" aria-label="Terapkan filter">
         <i class="bi bi-funnel" aria-hidden="true"></i> Terapkan
       </button>
-      <button type="button" class="btn btn-outline-secondary" id="resetFilterBtn"
-              aria-label="Reset filter">
+      <button type="button" class="btn btn-outline-secondary" id="resetFilterBtn" aria-label="Reset filter">
         <i class="bi bi-x-circle" aria-hidden="true"></i> Reset
       </button>
+    </div>
+  </div>
+</div>
 
-      <!-- Export -->
-      <button type="button" class="btn btn-outline-success" id="exportDataBtn"
-              aria-label="Ekspor CSV">
+<!-- ========================================================== -->
+<!-- TOOLBAR — ROW 2: ACTIONS (Realtime, Refresh, Suara, Export) -->
+<!-- ========================================================== -->
+<div class="row g-2 mb-3">
+  <div class="col-12">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+
+      <!-- Export CSV -->
+      <button type="button" class="btn btn-outline-success" id="exportDataBtn" aria-label="Ekspor CSV">
         <i class="bi bi-download" aria-hidden="true"></i> Ekspor CSV
       </button>
 
@@ -79,7 +79,7 @@
       </button>
 
       <!-- Cache Status -->
-      <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat…</span>
+      <span id="cacheStatus" class="cache-status ms-auto" aria-live="polite">Memuat…</span>
     </div>
   </div>
 </div>
