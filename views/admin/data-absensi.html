@@ -1,105 +1,162 @@
-<!-- views/admin/data-absensi.html — konten saja -->
+<!-- views/admin/data-absensi.html — v28.0.0 VOICE NOTIF EDITION -->
+
 <h2 class="section-title"><i class="bi bi-table me-2"></i>Manajemen Data Absensi</h2>
 
-<!-- TOOLBAR FILTER -->
+<!-- ========================================================== -->
+<!-- TOOLBAR FILTER                                             -->
+<!-- ========================================================== -->
 <div class="row g-2 mb-3 align-items-end">
   <div class="col-lg-4 col-md-6">
-    <label class="form-label small fw-semibold mb-1">Filter Sesi</label>
+    <label class="form-label small fw-semibold mb-1" for="filterSesi">Filter Sesi</label>
     <select class="form-select" id="filterSesi">
       <option value="">Semua Sesi</option>
     </select>
   </div>
   <div class="col-lg-3 col-md-6">
-    <label class="form-label small fw-semibold mb-1">Filter Tanggal</label>
+    <label class="form-label small fw-semibold mb-1" for="filterTanggal">Filter Tanggal</label>
     <input type="date" class="form-control" id="filterTanggal">
   </div>
   <div class="col-lg-5 col-md-12">
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      <button class="btn btn-primary" id="applyFilterBtn"><i class="bi bi-funnel"></i> Terapkan</button>
-      <button class="btn btn-outline-secondary" id="resetFilterBtn"><i class="bi bi-x-circle"></i> Reset</button>
-      <button class="btn btn-outline-success" id="exportDataBtn"><i class="bi bi-download"></i> Ekspor CSV</button>
-      <button class="btn btn-outline-secondary" id="refreshDataBtn"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
-      <span id="cacheStatus" class="cache-status">Memuat…</span>
+      <button class="btn btn-primary" id="applyFilterBtn" aria-label="Terapkan filter">
+        <i class="bi bi-funnel"></i> Terapkan
+      </button>
+      <button class="btn btn-outline-secondary" id="resetFilterBtn" aria-label="Reset filter">
+        <i class="bi bi-x-circle"></i> Reset
+      </button>
+      <button class="btn btn-outline-success" id="exportDataBtn" aria-label="Ekspor CSV">
+        <i class="bi bi-download"></i> Ekspor CSV
+      </button>
+      <button class="btn btn-outline-secondary" id="refreshDataBtn" aria-label="Segarkan data">
+        <i class="bi bi-arrow-clockwise"></i> Segarkan
+      </button>
+
+      <!-- ⭐ Tombol ON/OFF Suara Notif Absen -->
+      <button class="btn btn-success" id="toggleVoiceBtn"
+              title="Notifikasi suara saat peserta absen"
+              aria-label="Toggle notifikasi suara"
+              aria-pressed="true"
+              type="button">
+        <i class="bi bi-volume-up-fill" id="toggleVoiceIcon" aria-hidden="true"></i>
+        <span id="toggleVoiceLabel" class="ms-1">Suara ON</span>
+      </button>
+
+      <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat…</span>
     </div>
   </div>
 </div>
 
-<!-- SEARCH -->
+<!-- ========================================================== -->
+<!-- SEARCH                                                     -->
+<!-- ========================================================== -->
 <div class="row mb-3">
   <div class="col-md-6">
     <div class="input-group">
-      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search"></i>
+      </span>
       <input type="text" class="form-control border-start-0" id="searchInput"
-             placeholder="Cari nama peserta atau sesi…" autocomplete="off">
+             placeholder="Cari nama peserta atau sesi…" autocomplete="off"
+             aria-label="Cari data absensi">
     </div>
   </div>
 </div>
 
-<!-- STATISTIK -->
+<!-- ========================================================== -->
+<!-- STATISTIK                                                  -->
+<!-- ========================================================== -->
 <div class="row g-2 mb-4" id="statsRow">
-  <div class="col-6 col-md-3"><div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
-    <div class="num" id="statTotal" style="font-size:1.8rem;font-weight:700;color:#2563eb;">-</div>
-    <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Total Kehadiran</div>
-  </div></div>
-  <div class="col-6 col-md-3"><div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
-    <div class="num" id="statPeserta" style="font-size:1.8rem;font-weight:700;color:#16a34a;">-</div>
-    <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Peserta Unik</div>
-  </div></div>
-  <div class="col-6 col-md-3"><div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
-    <div class="num" id="statSesi" style="font-size:1.8rem;font-weight:700;color:#f59e0b;">-</div>
-    <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Sesi Terpakai</div>
-  </div></div>
-  <div class="col-6 col-md-3"><div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
-    <div class="num" id="statHariIni" style="font-size:1.8rem;font-weight:700;color:#8b5cf6;">-</div>
-    <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Absen Hari Ini</div>
-  </div></div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statTotal" style="font-size:1.8rem;font-weight:700;color:#2563eb;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Total Kehadiran</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statPeserta" style="font-size:1.8rem;font-weight:700;color:#16a34a;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Peserta Unik</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statSesi" style="font-size:1.8rem;font-weight:700;color:#f59e0b;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Sesi Terpakai</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
+      <div class="num" id="statHariIni" style="font-size:1.8rem;font-weight:700;color:#8b5cf6;">-</div>
+      <div class="lbl" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;">Absen Hari Ini</div>
+    </div>
+  </div>
 </div>
 
-<!-- TABLE -->
-<div id="absensiTableContainer" class="table-container">
+<!-- ========================================================== -->
+<!-- TABLE CONTAINER                                            -->
+<!-- ========================================================== -->
+<div id="absensiTableContainer" class="table-container" aria-live="polite">
   <div class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
-    <p class="mt-2 text-muted">Memuat data absensi…</p>
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Memuat data absensi…</span>
+    </div>
+    <p class="mt-2 text-muted small">Memuat data absensi…</p>
   </div>
 </div>
 
 
-<!-- ==================== MODAL DETAIL ==================== -->
-<div class="modal fade" id="detailAbsensiModal" tabindex="-1">
+<!-- ========================================================== -->
+<!-- MODAL: DETAIL ABSENSI                                      -->
+<!-- ========================================================== -->
+<div class="modal fade" id="detailAbsensiModal" tabindex="-1"
+     aria-labelledby="detailAbsensiModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Detail Absensi</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="detailAbsensiModalLabel">
+          <i class="bi bi-eye me-2" aria-hidden="true"></i>Detail Absensi
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
-      <div class="modal-body p-4">
+      <div class="modal-body p-4" style="max-height:70vh;overflow-y:auto;">
         <div id="detailAbsensiContent"></div>
       </div>
       <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-secondary rounded-pill px-4"
+                data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
   </div>
 </div>
 
 
-<!-- ==================== MODAL HAPUS ==================== -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+<!-- ========================================================== -->
+<!-- MODAL: KONFIRMASI HAPUS                                    -->
+<!-- ========================================================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1"
+     data-bs-backdrop="static" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-danger text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Konfirmasi Hapus</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="deleteConfirmModalLabel">
+          <i class="bi bi-trash me-2" aria-hidden="true"></i>Konfirmasi Hapus
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
       <div class="modal-body p-4 text-center">
-        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block"></i>
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block" aria-hidden="true"></i>
         <p>Apakah Anda yakin ingin menghapus data absensi ini?</p>
         <p class="text-muted small mb-0">Data akan dihapus permanen dari Google Sheet.</p>
         <input type="hidden" id="deleteAbsensiId">
       </div>
       <div class="modal-footer border-0 justify-content-center">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">Hapus</button>
+        <button type="button" class="btn btn-secondary rounded-pill px-4"
+                data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>Hapus
+        </button>
       </div>
     </div>
   </div>

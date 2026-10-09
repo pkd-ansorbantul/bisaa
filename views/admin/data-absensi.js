@@ -1,17 +1,23 @@
 // ============================================================
-// VIEW: data-absensi.js — v27.2.0 PRELOAD + SUBSCRIPTION
+// VIEW: data-absensi.js — v28.1.0 FULL FIX + VOICE NOTIF EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/data-absensi.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.0.0):
-//   ✅ NEW: Subscription ke AdminModule (auto re-render)
-//   ✅ NEW: Instant render dari preload cache
-//   ✅ REMOVED: Per-view polling 30s
-//   ✅ FIX: isMounted guard di semua async callbacks
+// CHANGELOG v28.1.0 (dari v28.0.0):
+//   ✅ FIX CRITICAL: Tombol toggle suara — null-safe & idempotent
+//   ✅ FIX: VoiceNotifier integration lebih robust
+//   ✅ FIX: Skip first scan — biar tidak speak data lama
+//   ✅ FIX: Sort new absen by timestamp ASC (urut sesuai masuk)
+//   ✅ FIX: Dedup notif — hindari speak 2x untuk absen sama
+//   ✅ FIX: Handle race condition — token guard
+//   ✅ FIX: Modal cleanup + dispose on unmount
 //   ✅ FIX: Focus preservation saat re-render
-//   ✅ FIX: Modal cleanup (delete confirm)
-//   ✅ KEEP: Filter sesi + tanggal, search, sort, CSV export
-//   ✅ Zero memory leak
+//   ✅ FIX: Semua filter (sesi, tanggal, search) berfungsi
+//   ✅ FIX: Sort & pagination berfungsi
+//   ✅ FIX: Export CSV, refresh, delete, detail
+//   ✅ NEW: Update UI tombol suara otomatis (ON/OFF state)
+//   ✅ NEW: Test suara saat user toggle ON
+//   ✅ KEEP: Semua fitur v27.2.0
 // ============================================================
 
 import {
@@ -22,6 +28,7 @@ import {
   downloadCSV,
 } from '../../js/core/api.js';
 import { AdminModule } from '../../js/modules/admin.js';
+import { VoiceNotifier } from '../../js/core/voice-notifier.js';
 import {
   getEl,
   debounce,
@@ -51,6 +58,43 @@ function setCacheStatus(status) {
 function getNamaSesi(sesiId, sesiList) {
   const s = (sesiList || []).find(x => String(x.id) === String(sesiId));
   return s ? (s.nama || '(Sesi)') : '(Sesi tidak diketahui)';
+}
+
+// ⭐ Update tampilan tombol suara
+function updateVoiceButtonUI() {
+  const btn = getEl('toggleVoiceBtn');
+  const icon = getEl('toggleVoiceIcon');
+  const label = getEl('toggleVoiceLabel');
+  if (!btn || !icon || !label) return;
+
+  const isSupported = VoiceNotifier.isSupported();
+  const isEnabled = VoiceNotifier.isEnabled();
+
+  if (!isSupported) {
+    btn.disabled = true;
+    btn.className = 'btn btn-outline-secondary';
+    btn.title = 'Browser tidak mendukung notifikasi suara';
+    icon.className = 'bi bi-volume-mute-fill';
+    label.textContent = 'N/A';
+    btn.setAttribute('aria-pressed', 'false');
+    return;
+  }
+
+  btn.disabled = false;
+
+  if (isEnabled) {
+    btn.className = 'btn btn-success';
+    btn.title = 'Notifikasi suara AKTIF — klik untuk matikan';
+    icon.className = 'bi bi-volume-up-fill';
+    label.textContent = 'Suara ON';
+    btn.setAttribute('aria-pressed', 'true');
+  } else {
+    btn.className = 'btn btn-outline-secondary';
+    btn.title = 'Notifikasi suara NONAKTIF — klik untuk aktifkan';
+    icon.className = 'bi bi-volume-mute-fill';
+    label.textContent = 'Suara OFF';
+    btn.setAttribute('aria-pressed', 'false');
+  }
 }
 
 // ============================================================
@@ -124,6 +168,12 @@ export async function mount() {
   if (filterTanggalEl) filterTanggalEl.value = '';
   if (searchEl) searchEl.value = '';
 
+  // ⭐ Reset voice notifier (skip first scan)
+  VoiceNotifier.reset();
+
+  // ⭐ Update tombol suara UI
+  updateVoiceButtonUI();
+
   // ⚡ Instant render dari preload cache
   const cachedAbsen = AdminModule.getAbsensiList() || [];
   const cachedSesi = AdminModule.getSesiList() || [];
@@ -134,6 +184,10 @@ export async function mount() {
     ctx.state.sesiList = cachedSesi.map(s => ({ ...s }));
     ctx.state.lastAbsensiHash = computeListHash(ctx.state.absensiList);
     ctx.state.lastSesiHash = computeListHash(ctx.state.sesiList, ['id', 'nama']);
+
+    // ⭐ Track all existing IDs (biar skip first scan)
+    VoiceNotifier.detectNewAbsen(ctx.state.absensiList, true);
+
     renderSesiFilter();
     applyFiltersAndSort();
     setCacheStatus('Live');
@@ -173,7 +227,7 @@ export function unmount() {
 }
 
 // ============================================================
-//   REFRESH FROM CACHE
+//   REFRESH FROM CACHE + ⭐ VOICE NOTIF DETECTION
 // ============================================================
 function refreshFromCache() {
   const freshAbsen = AdminModule.getAbsensiList() || [];
@@ -190,10 +244,39 @@ function refreshFromCache() {
     return;
   }
 
+  // ⭐ DETEKSI ABSEN BARU — announce via suara
   if (absenChanged) {
+    const newAbsen = VoiceNotifier.detectNewAbsen(freshAbsen, false);
+
+    if (newAbsen.length > 0) {
+      console.log(`[DataAbsensiView] 🎙️ ${newAbsen.length} absen baru terdeteksi`);
+
+      // Sesi list untuk lookup nama sesi
+      const sesiLookup = freshSesi;
+
+      // Announce satu per satu (sudah urut by timestamp ASC)
+      newAbsen.forEach(item => {
+        const nama = String(item.nama || 'Peserta').trim();
+        const sesiNama = item.namaSesi ||
+                         getNamaSesi(item.sesiId, sesiLookup);
+
+        VoiceNotifier.announceAbsen(nama, sesiNama);
+      });
+
+      // Show toast visual juga
+      if (newAbsen.length === 1) {
+        const item = newAbsen[0];
+        const sesiNama = item.namaSesi || getNamaSesi(item.sesiId, sesiLookup);
+        showToast(`✅ ${item.nama} — ${sesiNama}`, 'success');
+      } else {
+        showToast(`✅ ${newAbsen.length} absen baru masuk`, 'success');
+      }
+    }
+
     ctx.state.absensiList = freshAbsen.map(a => ({ ...a }));
     ctx.state.lastAbsensiHash = absenHash;
   }
+
   if (sesiChanged) {
     ctx.state.sesiList = freshSesi.map(s => ({ ...s }));
     ctx.state.lastSesiHash = sesiHash;
@@ -211,6 +294,27 @@ function bindEvents() {
   const filterSesiEl = getEl('filterSesi');
   const filterTanggalEl = getEl('filterTanggal');
   const searchEl = getEl('searchInput');
+
+  // ⭐ Toggle suara
+  ctx.on(getEl('toggleVoiceBtn'), 'click', () => {
+    if (!VoiceNotifier.isSupported()) {
+      showToast('Browser Anda tidak mendukung notifikasi suara', 'warning');
+      return;
+    }
+
+    const newState = VoiceNotifier.toggle();
+    updateVoiceButtonUI();
+
+    if (newState) {
+      showToast('🔊 Notifikasi suara AKTIF', 'success');
+      // Test suara sekali (setelah delay biar tidak overlap dengan toast)
+      setTimeout(() => {
+        VoiceNotifier.testVoice();
+      }, 400);
+    } else {
+      showToast('🔇 Notifikasi suara NONAKTIF', 'info');
+    }
+  });
 
   // Filter apply
   ctx.on(getEl('applyFilterBtn'), 'click', () => {
@@ -405,9 +509,9 @@ function getFiltered() {
 
 function applyFiltersAndSort() {
   ctx.state.filteredList = getFiltered();
-  if (ctx.state.currentPage > Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage))) {
-    ctx.state.currentPage = 1;
-  }
+  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
+  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
   renderTable();
   renderStats();
 }
@@ -419,7 +523,6 @@ function renderTable() {
   const c = getEl('absensiTableContainer');
   if (!c) return;
 
-  // Focus preservation
   const savedFocus = captureFocusState('searchInput');
 
   const totalItems = ctx.state.filteredList.length;
@@ -439,9 +542,9 @@ function renderTable() {
   let html = `<div class="table-responsive"><table class="table table-bordered table-hover table-sm align-middle">
     <thead class="table-light"><tr>
       <th style="width:50px;">#</th>
-      <th style="cursor:pointer;" data-sort="nama">Nama Peserta ${arrow('nama')}</th>
-      <th style="cursor:pointer;" data-sort="namaSesi">Sesi ${arrow('namaSesi')}</th>
-      <th style="cursor:pointer;" data-sort="timestamp">Waktu Absen ${arrow('timestamp')}</th>
+      <th style="cursor:pointer;" data-sort="nama" role="button" tabindex="0">Nama Peserta ${arrow('nama')}</th>
+      <th style="cursor:pointer;" data-sort="namaSesi" role="button" tabindex="0">Sesi ${arrow('namaSesi')}</th>
+      <th style="cursor:pointer;" data-sort="timestamp" role="button" tabindex="0">Waktu Absen ${arrow('timestamp')}</th>
       <th style="width:130px;" class="text-center">Tanda Tangan</th>
       <th style="width:110px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
@@ -449,7 +552,7 @@ function renderTable() {
   if (pageData.length === 0) {
     const hasFilter = ctx.state.filterSesi || ctx.state.filterTanggal || ctx.state.searchQuery;
     html += `<tr><td colspan="6" class="text-center py-5 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+      <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
       Tidak ada data absensi${hasFilter ? ' untuk filter ini' : ''}.
     </td></tr>`;
   } else {
@@ -458,9 +561,11 @@ function renderTable() {
       const namaSesi = item.namaSesi || getNamaSesi(item.sesiId, ctx.state.sesiList);
       const safeId = escapeHtml(String(item.id || ''));
       const ttd = item.signatureDriveId
-        ? `<a href="https://drive.google.com/file/d/${escapeHtml(item.signatureDriveId)}/view" target="_blank" rel="noopener"
-             class="btn btn-sm btn-outline-primary">
-             <i class="bi bi-eye"></i> Lihat
+        ? `<a href="https://drive.google.com/file/d/${escapeHtml(item.signatureDriveId)}/view"
+             target="_blank" rel="noopener noreferrer"
+             class="btn btn-sm btn-outline-primary"
+             aria-label="Lihat tanda tangan ${escapeHtml(item.nama || '')}">
+             <i class="bi bi-eye" aria-hidden="true"></i> Lihat
            </a>`
         : '<span class="text-muted small">-</span>';
 
@@ -471,11 +576,15 @@ function renderTable() {
         <td><small>${escapeHtml(formatDateTimeID(item.timestamp))}</small></td>
         <td class="text-center">${ttd}</td>
         <td class="text-center">
-          <button class="btn btn-sm btn-outline-info me-1" data-action="detail" data-id="${safeId}" title="Detail">
-            <i class="bi bi-info-circle"></i>
+          <button type="button" class="btn btn-sm btn-outline-info me-1"
+                  data-action="detail" data-id="${safeId}"
+                  title="Detail" aria-label="Lihat detail">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
           </button>
-          <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus">
-            <i class="bi bi-trash"></i>
+          <button type="button" class="btn btn-sm btn-outline-danger"
+                  data-action="delete" data-id="${safeId}"
+                  title="Hapus" aria-label="Hapus data">
+            <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
         </td>
       </tr>`;
@@ -494,16 +603,16 @@ function renderTable() {
   if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
   if (startPage > 1) {
-    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
-    if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
+    if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
+    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
               data-action="goto" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
-    if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
+    if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
@@ -543,7 +652,7 @@ function handleTableAction(action, id) {
 }
 
 // ============================================================
-//   DETAIL & DELETE
+//   DETAIL
 // ============================================================
 function viewAbsensiDetail(id) {
   const item = ctx.state.absensiList.find(x => String(x.id) === String(id));
@@ -551,8 +660,11 @@ function viewAbsensiDetail(id) {
 
   const namaSesi = item.namaSesi || getNamaSesi(item.sesiId, ctx.state.sesiList);
   const ttdLink = item.signatureDriveId
-    ? `<a href="https://drive.google.com/file/d/${escapeHtml(item.signatureDriveId)}/view" target="_blank" rel="noopener"
-         class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> Buka TTD</a>`
+    ? `<a href="https://drive.google.com/file/d/${escapeHtml(item.signatureDriveId)}/view"
+         target="_blank" rel="noopener noreferrer"
+         class="btn btn-sm btn-outline-primary">
+         <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Buka TTD
+       </a>`
     : '<span class="text-muted">Tidak ada tanda tangan</span>';
 
   const content = getEl('detailAbsensiContent');
@@ -570,6 +682,9 @@ function viewAbsensiDetail(id) {
   ctx.getModal('detailAbsensiModal')?.show();
 }
 
+// ============================================================
+//   DELETE
+// ============================================================
 function confirmDeleteAbsensi(id) {
   const item = ctx.state.absensiList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
@@ -656,6 +771,6 @@ function exportCSV() {
 export default { mount, unmount };
 
 console.log(
-  '%c Data Absensi View v27.2.0 — Preload + Subscription Edition ',
+  '%c Data Absensi View v28.1.0 — Full Fix + Voice Notif Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
