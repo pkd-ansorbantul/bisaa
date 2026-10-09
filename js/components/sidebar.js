@@ -1,20 +1,15 @@
 // ============================================================
-// js/components/sidebar.js — v27.3.0 LOKASI PKD DYNAMIC + MOBILE DRAWER
+// js/components/sidebar.js — v28.0.0 ANGKATAN PKD EDITION
 // ============================================================
-// CHANGELOG v27.3.0 (dari v27.1.0):
-//   ✅ NEW: Submenu "Lokasi PKD" dinamis dari getLokasiPKDWithCount()
-//   ✅ NEW: Auto-count peserta per lokasi (badge)
-//   ✅ NEW: Klik lokasi → set sessionStorage + navigate ke #/admin/peserta
-//   ✅ NEW: Auto-refresh submenu saat event 'pkd:data-ready'
-//   ✅ NEW: Auto-refresh submenu saat 'pkd:lokasi-updated'
-//   ✅ NEW: Badge warna berbeda (warning jika ada pending)
-//   ✅ FIX: Race-safe load lokasi (loading state)
-//   ✅ FIX: Auto-close drawer di mobile saat klik lokasi
-//   ✅ FIX: Idempotent — aman dipanggil berkali-kali
-//   ✅ FIX: Cleanup listener saat unload
-//   ✅ KEEP: Mobile drawer + swipe-to-close + backdrop
+// CHANGELOG v28.0.0 (dari v27.3.0):
+//   ✅ REMOVED: loadLokasiPKDSubmenu() (tidak dipakai lagi)
+//   ✅ REMOVED: Submenu dinamis Lokasi PKD
+//   ✅ KEEP: Menu statis "Angkatan PKD" di sidebar.html
+//   ✅ KEEP: Mobile drawer + swipe-close + backdrop
 //   ✅ KEEP: Submenu accordion + route navigation + logout
 //   ✅ KEEP: Minimize/maximize (desktop)
+//   ✅ KEEP: Theme toggle binding
+//   ✅ FIX: Cleanup listener saat unload
 //   ✅ Zero memory leak
 // ============================================================
 
@@ -22,7 +17,6 @@ import {
   logout as apiLogout,
   escapeHtml,
   getUserRole,
-  getLokasiPKDWithCount,
 } from '../core/api.js';
 import { BASE_PATH } from '../core/config.js';
 import {
@@ -36,13 +30,12 @@ import {
 const SIDEBAR_CONTAINER_ID  = 'sidebar-container';
 const SIDEBAR_WRAPPER_ID    = 'sidebarWrapper';
 const MINIMIZED_STORAGE_KEY = 'pkd_sidebar_minimized';
-const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';
 const PUBLIC_INDEX_URL      = BASE_PATH + 'index.html';
 const LOGO_URL              = BASE_PATH + 'LOGOANSOR.webp';
 const MOBILE_BREAKPOINT     = 992;
 
 // ============================================================
-//   FALLBACK HTML (jika fetch partial gagal)
+//   FALLBACK HTML
 // ============================================================
 const FALLBACK_SIDEBAR_HTML = `
 <div class="sidebar-wrapper" id="sidebarWrapper" role="navigation" aria-label="Navigasi utama">
@@ -128,10 +121,6 @@ const FALLBACK_SIDEBAR_HTML = `
           <i class="bi bi-person-badge" aria-hidden="true"></i>
           <span>Peserta</span>
         </a>
-        <a class="nav-link" href="#/admin/alumni" data-route="#/admin/alumni" title="Alumni">
-          <i class="bi bi-award" aria-hidden="true"></i>
-          <span>Alumni</span>
-        </a>
         <a class="nav-link" href="#/admin/kader" data-route="#/admin/kader" title="Kader">
           <i class="bi bi-people-fill" aria-hidden="true"></i>
           <span>Kader</span>
@@ -141,6 +130,11 @@ const FALLBACK_SIDEBAR_HTML = `
           <span>Tim Instruktur</span>
         </a>
       </div>
+
+      <a class="nav-link" href="#/admin/angkatan-pkd" data-route="#/admin/angkatan-pkd" title="Angkatan PKD">
+        <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+        <span>Angkatan PKD</span>
+      </a>
 
       <div class="nav-link" data-target="absensi" title="Absensi" role="button" tabindex="0" aria-expanded="false">
         <i class="bi bi-calendar-check" aria-hidden="true"></i>
@@ -180,18 +174,6 @@ const FALLBACK_SIDEBAR_HTML = `
         <i class="bi bi-clipboard-check" aria-hidden="true"></i>
         <span>Skrining</span>
       </a>
-
-      <!-- ⭐ NEW: Lokasi PKD -->
-      <div class="nav-link" data-target="lokasi-pkd" title="Lokasi PKD" role="button" tabindex="0" aria-expanded="false">
-        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-        <span>Lokasi PKD</span>
-      </div>
-      <div class="submenu" id="submenu-lokasi-pkd">
-        <div class="text-muted small px-3 py-2 d-flex align-items-center gap-2">
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          <span>Memuat lokasi…</span>
-        </div>
-      </div>
 
       <a class="nav-link" href="#/admin/sertifikat" data-route="#/admin/sertifikat" title="Sertifikat">
         <i class="bi bi-patch-check" aria-hidden="true"></i>
@@ -243,10 +225,6 @@ let touchStartHandler = null;
 let touchMoveHandler = null;
 let touchEndHandler = null;
 
-// Lokasi PKD state
-let lokasiPKDLoaded = false;
-let lokasiPKDLoading = false;
-
 // ============================================================
 //   UTILITY
 // ============================================================
@@ -264,16 +242,6 @@ function safeLocalGet(key) {
 
 function safeLocalSet(key, value) {
   try { localStorage.setItem(key, value); return true; }
-  catch (e) { return false; }
-}
-
-function safeSessionSet(key, value) {
-  try { sessionStorage.setItem(key, value); return true; }
-  catch (e) { return false; }
-}
-
-function safeSessionRemove(key) {
-  try { sessionStorage.removeItem(key); return true; }
   catch (e) { return false; }
 }
 
@@ -409,146 +377,6 @@ function attachSwipeGesture(sidebar) {
 }
 
 // ============================================================
-//   ⭐ NEW v27.3.0: LOAD LOKASI PKD SUBMENU
-// ============================================================
-export async function loadLokasiPKDSubmenu(forceRefresh = false) {
-  const submenu = document.getElementById('submenu-lokasi-pkd');
-  if (!submenu) return;
-
-  // Guard: sedang loading
-  if (lokasiPKDLoading && !forceRefresh) return;
-  // Guard: sudah loaded (skip kalau tidak force)
-  if (lokasiPKDLoaded && !forceRefresh) return;
-
-  lokasiPKDLoading = true;
-
-  // Loading state (hanya kalau belum pernah load)
-  if (!lokasiPKDLoaded) {
-    submenu.innerHTML = `
-      <div class="text-muted small px-3 py-2 d-flex align-items-center gap-2">
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <span>Memuat lokasi…</span>
-      </div>`;
-  }
-
-  try {
-    const res = await getLokasiPKDWithCount();
-    const list = (res && res.success && Array.isArray(res.data))
-      ? res.data
-      : (Array.isArray(res) ? res : []);
-
-    if (!list || list.length === 0) {
-      submenu.innerHTML = `
-        <div class="text-muted small px-3 py-2">
-          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-          Belum ada Lokasi PKD
-        </div>`;
-      lokasiPKDLoaded = true;
-      lokasiPKDLoading = false;
-      return;
-    }
-
-    let html = '';
-
-    // Opsi "Semua Lokasi"
-    html += `
-      <a class="nav-link" href="#/admin/peserta"
-         data-route="#/admin/peserta"
-         data-pkd-filter=""
-         title="Semua Lokasi PKD">
-        <i class="bi bi-collection" aria-hidden="true"></i>
-        <span>Semua Lokasi</span>
-      </a>`;
-
-    // Setiap lokasi
-    list.forEach(function (lokasi) {
-      const totalPeserta = parseInt(lokasi.totalPeserta) || 0;
-      const approvedCount = parseInt(lokasi.totalApproved) || 0;
-      const pendingCount = parseInt(lokasi.totalPending) || 0;
-
-      const badgeClass = pendingCount > 0 ? 'bg-warning text-dark' : 'bg-primary';
-      const tooltipTitle = `${lokasi.nama} — Total: ${totalPeserta}, Approved: ${approvedCount}, Pending: ${pendingCount}`;
-
-      html += `
-        <a class="nav-link"
-           href="#/admin/peserta"
-           data-route="#/admin/peserta"
-           data-pkd-filter="${escapeHtml(lokasi.nama)}"
-           title="${escapeHtml(tooltipTitle)}">
-          <i class="bi bi-geo-alt" aria-hidden="true"></i>
-          <span class="text-truncate">${escapeHtml(lokasi.nama)}</span>
-          <span class="badge ${badgeClass} ms-auto">${totalPeserta}</span>
-        </a>`;
-    });
-
-    submenu.innerHTML = html;
-    lokasiPKDLoaded = true;
-
-    // Bind click handlers
-    submenu.querySelectorAll('[data-pkd-filter]').forEach(function (link) {
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const route = link.dataset.route || '#/admin/peserta';
-        const pkdFilter = link.dataset.pkdFilter || '';
-
-        // Simpan filter ke sessionStorage
-        if (pkdFilter) {
-          safeSessionSet(PKD_FILTER_STORAGE_KEY, pkdFilter);
-        } else {
-          safeSessionRemove(PKD_FILTER_STORAGE_KEY);
-        }
-
-        console.log('[Sidebar] 🎯 Filter Lokasi PKD:', pkdFilter || '(semua)');
-
-        // Highlight active
-        submenu.querySelectorAll('[data-pkd-filter]').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-
-        // Navigate
-        window.dispatchEvent(new CustomEvent('router:navigate', {
-          detail: { hash: route },
-        }));
-
-        // Auto-close drawer di mobile
-        if (isMobile() && isMobileDrawerOpen) {
-          closeMobileDrawer();
-        }
-      });
-    });
-
-    // Highlight item yang sedang aktif (dari sessionStorage)
-    const currentFilter = (function () {
-      try { return sessionStorage.getItem(PKD_FILTER_STORAGE_KEY) || ''; }
-      catch (e) { return ''; }
-    })();
-
-    submenu.querySelectorAll('[data-pkd-filter]').forEach(l => {
-      const isActive = l.dataset.pkdFilter === currentFilter;
-      l.classList.toggle('active', isActive);
-    });
-
-    console.log(`[Sidebar] ✅ Loaded ${list.length} Lokasi PKD`);
-
-  } catch (e) {
-    console.warn('[Sidebar] loadLokasiPKDSubmenu error:', e);
-    submenu.innerHTML = `
-      <div class="text-danger small px-3 py-2">
-        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-        Gagal memuat. <a href="#" data-retry-lokasi class="text-decoration-underline">Coba lagi</a>
-      </div>`;
-
-    submenu.querySelector('[data-retry-lokasi]')?.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      loadLokasiPKDSubmenu(true);
-    });
-  } finally {
-    lokasiPKDLoading = false;
-  }
-}
-
-// ============================================================
 //   LOAD SIDEBAR
 // ============================================================
 export async function loadSidebar() {
@@ -656,7 +484,7 @@ function initSidebarBehavior() {
   on(window, 'sidebar:mobile-close', () => closeMobileDrawer());
 
   // ==========================================================
-  //   THEME TOGGLE — hanya set ARIA (theme-toggle.js yang handle click)
+  //   THEME TOGGLE — hanya set ARIA (theme-toggle.js handle click)
   // ==========================================================
   const themeBtn = getEl('sidebarThemeToggleBtn');
   if (themeBtn && !themeBtn.dataset.sidebarBound) {
@@ -688,15 +516,11 @@ function initSidebarBehavior() {
   }
 
   // ==========================================================
-  //   ROUTE NAVIGATION — Event Delegation (untuk link dengan data-route)
-  //   ⚠️ Skip yang punya data-pkd-filter (ditangani khusus)
+  //   ROUTE NAVIGATION — Event Delegation
   // ==========================================================
   on(sidebar, 'click', (e) => {
     const link = e.target.closest('[data-route]');
     if (!link) return;
-    // Skip yang punya data-pkd-filter (ditangani loadLokasiPKDSubmenu)
-    if (link.hasAttribute('data-pkd-filter')) return;
-
     e.preventDefault();
 
     const route = link.dataset.route;
@@ -728,7 +552,7 @@ function initSidebarBehavior() {
   });
 
   // ==========================================================
-  //   ESC KEY — Close submenus + mobile drawer
+  //   ESC KEY
   // ==========================================================
   escKeyHandler = (e) => {
     if (e.key !== 'Escape') return;
@@ -767,7 +591,7 @@ function initSidebarBehavior() {
   on(document, 'click', outsideClickHandler);
 
   // ==========================================================
-  //   RESIZE HANDLER (debounced 200ms)
+  //   RESIZE HANDLER (debounced)
   // ==========================================================
   const handleResize = debounce(() => {
     if (!isMobile()) {
@@ -806,27 +630,9 @@ function initSidebarBehavior() {
   const currentHash = window.location.hash || '#/admin/dashboard';
   updateSidebarActive(currentHash);
 
-  const routeChangedHandler = (e) => {
+  on(window, 'routeChanged', (e) => {
     const path = e?.detail?.path;
     if (path) updateSidebarActive(path);
-  };
-  on(window, 'routeChanged', routeChangedHandler);
-
-  // ==========================================================
-  //   ⭐ NEW: LOAD LOKASI PKD SUBMENU (async, non-blocking)
-  // ==========================================================
-  loadLokasiPKDSubmenu(false).catch(function (e) {
-    console.warn('[Sidebar] loadLokasiPKDSubmenu gagal:', e);
-  });
-
-  // Reload submenu saat data ready (kalau add lokasi baru)
-  on(window, 'pkd:data-ready', () => {
-    loadLokasiPKDSubmenu(true).catch(() => {});
-  });
-
-  // Reload submenu saat lokasi PKD berubah (custom event)
-  on(window, 'pkd:lokasi-updated', () => {
-    loadLokasiPKDSubmenu(true).catch(() => {});
   });
 
   // ==========================================================
@@ -881,9 +687,6 @@ export function updateSidebarActive(route) {
   let hasActive = false;
 
   allRoutes.forEach(link => {
-    // Skip yang data-pkd-filter (active state-nya di-handle loadLokasiPKDSubmenu)
-    if (link.hasAttribute('data-pkd-filter')) return;
-
     const isActive = link.dataset.route === route;
     link.classList.toggle('active', isActive);
     link.toggleAttribute('aria-current', isActive);
@@ -953,8 +756,6 @@ export function unloadSidebar() {
   isSidebarLoaded = false;
   isBehaviorInitialized = false;
   isMobileDrawerOpen = false;
-  lokasiPKDLoaded = false;
-  lokasiPKDLoading = false;
 
   if (resizeTimer) {
     clearTimeout(resizeTimer);
@@ -978,13 +779,12 @@ export default {
   openMobileDrawer,
   closeMobileDrawer,
   toggleMobileDrawer,
-  loadLokasiPKDSubmenu,
 };
 
 // ============================================================
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c Sidebar v27.3.0 — Lokasi PKD Dynamic Edition ',
+  '%c Sidebar v28.0.0 — Angkatan PKD Edition ',
   'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
