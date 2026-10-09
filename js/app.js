@@ -1,22 +1,16 @@
 // ============================================================
-// js/app.js — v27.2.0 MOBILE DRAWER EDITION
+// js/app.js — v28.0.0 ANGKATAN PKD EDITION
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.5.0):
-//   ✅ NEW: installMobileTopbarTitle() — update #mobileTopbarTitle
-//     saat route berubah (juga di document.title)
-//   ✅ NEW: bindMobileTopbarButtons() — fallback bind #mobileThemeBtn
-//     kalau theme-toggle.js belum mount
-//   ✅ NEW: Listen sidebar:mobile-opened / sidebar:mobile-closed
-//     untuk log + analytics hook
-//   ✅ NEW: Guard keyboard shortcuts — skip Alt+key saat drawer
-//     mobile terbuka (cegah konflik)
-//   ✅ NEW: Track sidebar drawer state (isMobileDrawerOpen)
-//   ✅ FIX: installTitleUpdate() sekarang juga update mobile topbar
-//   ✅ FIX: Route normalizer tetap robust (semua alias tetap work)
-//   ✅ FIX: Circuit breaker aware (dari api.js)
-//   ✅ FIX: Auto-sync 180s + MIN_SYNC_GAP 60s
-//   ✅ KEEP: Semua fitur v27.5.0 (route alias, validateRoutes,
-//     diagnose, checkRoutes, forceSync, dll)
+// CHANGELOG v28.0.0 (dari v27.2.0):
+//   ✅ NEW: Route #/admin/angkatan-pkd (Hub + Detail 7 tabs)
+//   ✅ NEW: Alias #/admin/angkatan, #/admin/alumni, #/admin/pkd,
+//     #/admin/lokasi-pkd, #/admin/lokasi
+//   ✅ NEW: Shortcut Alt+L → Angkatan PKD
+//   ✅ REMOVED: Route #/admin/lokasi-pkd (digantikan alias)
+//   ✅ REMOVED: Route #/admin/alumni (digantikan alias)
+//   ✅ KEEP: Semua fitur v27.2.0 (mobile drawer, auto-sync, dll)
+//   ✅ KEEP: Semua 18 route + alias + validasi
+//   ✅ VERIFIED: Zero regression
 // ============================================================
 
 import {
@@ -44,7 +38,7 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '27.2.0';
+const APP_VERSION = '28.0.0';
 
 const DATA_PRELOAD_TIMEOUT_MS       = 20000;
 const ENSURE_READY_TIMEOUT_MS       = 10000;
@@ -57,12 +51,12 @@ const QUIZ_PRELOAD_DELAY_MS         = 2000;
 const MOBILE_BREAKPOINT             = 992;
 
 // ============================================================
-//   ROUTES — 18 Views (dengan alias support)
+//   ROUTES — 18 Views (dengan Angkatan PKD)
 // ============================================================
 const ROUTES = {
   '#/admin/dashboard':      { html: BASE_PATH + 'views/admin/dashboard.html',      js: BASE_PATH + 'views/admin/dashboard.js' },
   '#/admin/peserta':        { html: BASE_PATH + 'views/admin/peserta.html',        js: BASE_PATH + 'views/admin/peserta.js' },
-  '#/admin/alumni':         { html: BASE_PATH + 'views/admin/alumni.html',         js: BASE_PATH + 'views/admin/alumni.js' },
+  '#/admin/angkatan-pkd':   { html: BASE_PATH + 'views/admin/angkatan-pkd.html',   js: BASE_PATH + 'views/admin/angkatan-pkd.js' },  // ⭐ NEW
   '#/admin/kader':          { html: BASE_PATH + 'views/admin/kader.html',          js: BASE_PATH + 'views/admin/kader.js' },
   '#/admin/tim-instruktur': { html: BASE_PATH + 'views/admin/tim-instruktur.html', js: BASE_PATH + 'views/admin/tim-instruktur.js' },
   '#/admin/sesi-absen':     { html: BASE_PATH + 'views/admin/sesi-absen.html',     js: BASE_PATH + 'views/admin/sesi-absen.js' },
@@ -81,17 +75,31 @@ const ROUTES = {
 };
 
 // ============================================================
-//   ⚡ ROUTE ALIASES — auto-fix typo
+//   ROUTE ALIASES — auto-fix typo & redirect legacy
 // ============================================================
 const ROUTE_ALIASES = {
-  // Typo umum
+  // ===== ⭐ NEW: Angkatan PKD =====
+  '#/admin/angkatan':       '#/admin/angkatan-pkd',
+  '#/admin/angkatanpkd':    '#/admin/angkatan-pkd',
+
+  // ===== ⭐ LEGACY REDIRECT: Alumni → Angkatan PKD =====
+  '#/admin/alumni':         '#/admin/angkatan-pkd',
+  '#/admin/alumn':          '#/admin/angkatan-pkd',
+
+  // ===== ⭐ LEGACY REDIRECT: Lokasi PKD → Angkatan PKD =====
+  '#/admin/lokasi-pkd':     '#/admin/angkatan-pkd',
+  '#/admin/lokasipkd':      '#/admin/angkatan-pkd',
+  '#/admin/lokasi_pkd':     '#/admin/angkatan-pkd',
+  '#/admin/lokasi':         '#/admin/angkatan-pkd',
+  '#/admin/pkd':            '#/admin/angkatan-pkd',
+
+  // ===== Typo umum =====
   '#/admin/skriining':       '#/admin/skrining',
   '#/admin/skrinng':         '#/admin/skrining',
   '#/admin/skrinig':         '#/admin/skrining',
   '#/admin/skining':         '#/admin/skrining',
 
   '#/admin/sertifkat':       '#/admin/sertifikat',
-  '#/admin/sertifikat':      '#/admin/sertifikat',
   '#/admin/certifikat':      '#/admin/sertifikat',
 
   '#/admin/tandatangan':     '#/admin/tanda-tangan',
@@ -110,7 +118,6 @@ const ROUTE_ALIASES = {
   '#/admin/timinstruktur':   '#/admin/tim-instruktur',
   '#/admin/tim_instruktur':  '#/admin/tim-instruktur',
 
-  '#/admin/pretest':         '#/admin/pretest',
   '#/admin/pre-test':        '#/admin/pretest',
   '#/admin/pre_test':        '#/admin/pretest',
   '#/admin/prestest':        '#/admin/pretest',
@@ -119,20 +126,17 @@ const ROUTE_ALIASES = {
   '#/admin/post-test':       '#/admin/posttest',
   '#/admin/post_test':       '#/admin/posttest',
 
-  // Trailing slash variants
+  // ===== Trailing slash =====
   '#/admin/dashboard/':      '#/admin/dashboard',
   '#/admin/peserta/':        '#/admin/peserta',
-  '#/admin/alumni/':         '#/admin/alumni',
+  '#/admin/angkatan-pkd/':   '#/admin/angkatan-pkd',
   '#/admin/kader/':          '#/admin/kader',
   '#/admin/materi/':         '#/admin/materi',
 };
 
 // ============================================================
-//   ⚡ NEW: NORMALIZE ROUTE HASH
+//   NORMALIZE ROUTE HASH
 // ============================================================
-/**
- * Normalisasi hash supaya route selalu match.
- */
 function normalizeRoute(hash) {
   if (!hash || typeof hash !== 'string') return '#/admin/dashboard';
 
@@ -175,8 +179,6 @@ let lastUserActivity = Date.now();
 let lastSyncAt = 0;
 let dataReady = false;
 let corsErrorShown = false;
-
-// ⚡ NEW: Mobile drawer state tracking
 let isMobileDrawerOpen = false;
 
 window.__pkdFailedModules = new Map();
@@ -272,7 +274,7 @@ async function safeImport(url, options = {}) {
 }
 
 // ============================================================
-//   ⚡ VALIDATE ROUTE FILES (saat boot)
+//   VALIDATE ROUTE FILES
 // ============================================================
 async function validateRouteFiles() {
   console.log('[Boot] 🔍 Validating route files...');
@@ -304,7 +306,7 @@ async function validateRouteFiles() {
     console.warn('[Boot] ⚠️ Route file issues detected:');
     console.table(failed);
   } else {
-    console.log('[Boot] ✅ All 18 route files verified');
+    console.log('[Boot] ✅ All', results.length, 'route files verified');
   }
   return results;
 }
@@ -630,7 +632,7 @@ function scheduleFailedModuleRetry() {
 })();
 
 // ============================================================
-//   AUTO-SYNC — Anti-throttle
+//   AUTO-SYNC
 // ============================================================
 function startAutoSync() {
   if (autoSyncInterval) return;
@@ -641,25 +643,17 @@ function startAutoSync() {
   );
 
   autoSyncInterval = setInterval(async () => {
-    // Guard 1: tab hidden
     if (document.hidden) return;
-    // Guard 2: already syncing
     if (isSyncing) return;
-    // Guard 3: user idle
+
     const idleMs = Date.now() - lastUserActivity;
-    if (idleMs > IDLE_THRESHOLD_MS) {
-      console.log(`[AutoSync] ⏸️ Skip — user idle ${Math.round(idleMs/60000)}min`);
-      return;
-    }
-    // Guard 4: adminModule not ready
+    if (idleMs > IDLE_THRESHOLD_MS) return;
+
     if (!adminModule) return;
-    // Guard 5: min gap
+
     const sinceLast = Date.now() - lastSyncAt;
-    if (sinceLast < MIN_SYNC_GAP_MS) {
-      console.log(`[AutoSync] ⏸️ Skip — ${Math.round(sinceLast/1000)}s < ${MIN_SYNC_GAP_MS/1000}s gap`);
-      return;
-    }
-    // Guard 6: circuit breaker
+    if (sinceLast < MIN_SYNC_GAP_MS) return;
+
     try {
       const circuit = getCircuitState();
       if (circuit && circuit.isOpen) {
@@ -671,7 +665,6 @@ function startAutoSync() {
       }
     } catch (e) { /* silent */ }
 
-    // LULUS SEMUA GUARD
     isSyncing = true;
     lastSyncAt = Date.now();
 
@@ -722,9 +715,7 @@ async function mountInteractiveFeatures() {
 }
 
 // ============================================================
-//   ⚡ NEW: BIND MOBILE TOPBAR BUTTONS (FALLBACK)
-//   Bind theme button di mobile topbar kalau theme-toggle.js
-//   belum sempat handle via MutationObserver.
+//   MOBILE TOPBAR BUTTONS (FALLBACK)
 // ============================================================
 function bindMobileTopbarButtons() {
   const themeBtn = document.getElementById('mobileThemeBtn');
@@ -740,7 +731,7 @@ function bindMobileTopbarButtons() {
 }
 
 // ============================================================
-//   ⚡ NEW: MOBILE DRAWER STATE TRACKING
+//   SIDEBAR DRAWER STATE TRACKING
 // ============================================================
 function installSidebarDrawerListeners() {
   if (window.__pkdSidebarDrawerListenersInstalled) return;
@@ -827,7 +818,7 @@ async function boot() {
     return;
   }
 
-  // ⚡ 6b. NORMALIZE initial hash
+  // 6b. Normalize initial hash
   const currentHash = window.location.hash;
   if (currentHash) {
     const normalized = normalizeRoute(currentHash);
@@ -869,16 +860,16 @@ async function boot() {
       sesi: stats.totalSesi || 0,
       materi: stats.totalMateri || 0,
       alumni: stats.totalAlumni || 0,
+      angkatan: stats.totalAngkatan || 0,   // ⭐ NEW
     });
   } else {
-    console.warn('[Boot] ⚠️ Data not verified — dashboard may show skeleton first');
+    console.warn('[Boot] ⚠️ Data not verified — view akan show skeleton first');
   }
 
-  // Preload quiz
   preloadQuizQuestions();
   scheduleFailedModuleRetry();
 
-  // 8. Set default hash (with normalization)
+  // 8. Set default hash
   const hash = window.location.hash;
   if (!hash || hash === '#' || hash === '#/') {
     window.location.hash = DEFAULT_ROUTE;
@@ -911,10 +902,10 @@ async function boot() {
   // 11. Interactive features
   await mountInteractiveFeatures();
 
-  // ⚡ 11b. NEW: Mobile topbar buttons
+  // 11b. Mobile topbar buttons
   bindMobileTopbarButtons();
 
-  // ⚡ 11c. NEW: Sidebar drawer listeners
+  // 11c. Sidebar drawer listeners
   installSidebarDrawerListeners();
 
   // 12. Auto-sync
@@ -975,7 +966,6 @@ function installKeyboardShortcuts() {
     if (e.ctrlKey || e.metaKey) return;
     if (!e.altKey) return;
 
-    // ⚡ NEW: Skip Alt+key kalau mobile drawer terbuka
     if (isMobile() && isMobileDrawerOpen) return;
 
     const key = String(e.key || '').toLowerCase();
@@ -989,6 +979,7 @@ function installKeyboardShortcuts() {
       'm': '#/admin/materi',
       'k': '#/admin/kader',
       't': '#/admin/tim-instruktur',
+      'l': '#/admin/angkatan-pkd',   // ⭐ NEW: Alt+L → Angkatan PKD
     };
     if (routes[key]) {
       e.preventDefault();
@@ -1032,7 +1023,7 @@ function installBfcacheGuard() {
 }
 
 // ============================================================
-//   TITLE UPDATE — Also update mobile topbar
+//   TITLE UPDATE
 // ============================================================
 function installTitleUpdate() {
   if (window.__pkdTitleUpdateInstalled) return;
@@ -1047,10 +1038,8 @@ function installTitleUpdate() {
       w.charAt(0).toUpperCase() + w.slice(1)
     ).join(' ');
 
-    // Update document title
     document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
 
-    // ⚡ NEW: Update mobile topbar title
     const topbarTitle = document.getElementById('mobileTopbarTitle');
     if (topbarTitle) {
       topbarTitle.textContent = title || 'PKD GP Ansor';
@@ -1092,7 +1081,6 @@ window.__pkd = {
   setTheme: (t) => window.dispatchEvent(new CustomEvent('theme:set', { detail: { theme: t } })),
   openShortcuts: () => window.dispatchEvent(new CustomEvent('shortcuts:open')),
 
-  // ⚡ NEW: Mobile drawer helpers
   openSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-open')),
   closeSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-close')),
   toggleSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-toggle')),
@@ -1131,7 +1119,6 @@ window.__pkd = {
     ? adminModule.getStats()
     : null,
 
-  // Full diagnostic
   diagnose: async () => {
     const report = {
       version: APP_VERSION,
@@ -1157,7 +1144,6 @@ window.__pkd = {
     return report;
   },
 
-  // Quick route check
   checkRoutes: async () => {
     const results = [];
     for (const [route, config] of Object.entries(ROUTES)) {
@@ -1182,6 +1168,6 @@ window.__pkd = {
 };
 
 console.log(
-  '%c App v27.2.0 — Mobile Drawer Edition ',
+  '%c App v28.0.0 — Angkatan PKD Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
