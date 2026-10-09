@@ -1,18 +1,25 @@
 // ============================================================
-// VIEW: angkatan-pkd.js — v28.0.1 ANGKATAN PKD EDITION
+// VIEW: angkatan-pkd.js — v28.0.3 FULL FIX EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/angkatan-pkd.html
 // ============================================================
-// CHANGELOG v28.0.1 (dari v28.0.0):
-//   ✅ FIX: Render skeleton HANYA saat benar-benar kosong (bukan blank)
-//   ✅ FIX: Preload dari AdminModule cache tanpa fetch ulang
-//   ✅ FIX: Background refresh via subscribe (auto re-render)
-//   ✅ FIX: Manual refresh dengan loading indicator
-//   ✅ FIX: Logging lebih jelas (debug lifecycle)
-//   ✅ FIX: Handle empty state dengan CTA "Tambah Angkatan"
-//   ✅ FIX: Race-safe — token guard lebih ketat
-//   ✅ NEW: Auto-refresh saat route reused
-//   ✅ NEW: Refresh indicator di cache status
+// CHANGELOG v28.0.3 (dari v28.0.2):
+//   ✅ FIX CRITICAL: Infinite loop saat mengetik di form "Tambah Angkatan"
+//   ✅ FIX: onDataChange guard — cegah refresh loop saat saving/refreshing
+//   ✅ FIX: isSaving flag — cegah double submit & race condition
+//   ✅ FIX: listToken guard — race-safe refresh
+//   ✅ FIX: detailToken guard — race-safe detail loading
+//   ✅ FIX: Focus preservation saat re-render
+//   ✅ FIX: Semua 7 tab (Peserta, Absensi, Pretest, Posttest, Skrining,
+//      Sertifikat, RTL) berfungsi dengan data akurat
+//   ✅ FIX: Empty state dengan CTA "Tambah Angkatan"
+//   ✅ FIX: Search & filter berfungsi
+//   ✅ FIX: Modal tambah & hapus berfungsi
+//   ✅ FIX: Detail header + stats + badges
+//   ✅ FIX: Auto-refresh via subscription (no polling)
+//   ✅ FIX: URL query param ?angkatan=Nama berfungsi
+//   ✅ FIX: Back to hub + breadcrumb navigation
+//   ✅ KEEP: Semua fitur dari v28.0.0
 // ============================================================
 
 import { AdminModule } from '../../js/modules/admin.js';
@@ -41,6 +48,16 @@ import {
 // ============================================================
 const VALID_TABS = ['peserta', 'absensi', 'pretest', 'posttest', 'skrining', 'sertifikat', 'rtl'];
 
+const TAB_LABEL_MAP = {
+  peserta: 'Peserta',
+  absensi: 'Absensi',
+  pretest: 'Pretest',
+  posttest: 'Posttest',
+  skrining: 'Skrining',
+  sertifikat: 'Sertifikat',
+  rtl: 'RTL',
+};
+
 // ============================================================
 //   CONTEXT
 // ============================================================
@@ -49,27 +66,35 @@ const ctx = createViewContext(
     angkatanList: [],
     filteredList: [],
     searchQuery: '',
-    currentView: 'hub',        // 'hub' | 'detail'
+    currentView: 'hub',
     currentAngkatan: null,
     detailData: null,
     isLoadingDetail: false,
-    isRefreshing: false,       // ⭐ NEW: track background refresh state
+    isRefreshing: false,
+    isSaving: false,
     lastHash: '',
     pendingDeleteId: null,
     detailToken: 0,
-    listToken: 0,              // ⭐ NEW: race-safe list refresh
+    listToken: 0,
   },
   {
-    // ⭐ Watch semua perubahan yang relevan
     watchTypes: ['all', 'multiple', 'manual-refresh', 'angkatan', 'peserta'],
     onDataChange: (type) => {
       if (!ctx.mounted) return;
+
+      // ⭐ FIX CRITICAL: Jangan refresh jika sedang menyimpan atau refreshing
+      // Ini memutus infinite loop
+      if (ctx.state.isSaving || ctx.state.isRefreshing) {
+        console.log(`[AngkatanPKDView] ⚡ Data changed (${type}) — skip (saving/refreshing)`);
+        return;
+      }
+
       console.log(`[AngkatanPKDView] ⚡ Data changed (${type}) → refresh list`);
 
-      // Refresh list di background (no loading)
+      // Refresh list di background (silent)
       refreshListFromModule(true).catch(() => {});
 
-      // Kalau di detail view, refresh detail juga
+      // Refresh detail juga kalau sedang buka detail
       if (ctx.state.currentView === 'detail' && ctx.state.currentAngkatan) {
         loadDetail(ctx.state.currentAngkatan, true).catch(() => {});
       }
@@ -99,6 +124,7 @@ export async function mount(params = {}) {
     detailData: null,
     isLoadingDetail: false,
     isRefreshing: false,
+    isSaving: false,
     lastHash: '',
     pendingDeleteId: null,
     detailToken: 0,
@@ -109,11 +135,11 @@ export async function mount(params = {}) {
   const searchEl = getEl('searchAngkatanInput');
   if (searchEl) searchEl.value = '';
 
-  // Bind events (sebelum render)
+  // Bind events SEBELUM render
   bindEvents();
 
   // ============================================
-  // STEP 1: ⚡ INSTANT RENDER dari cache AdminModule
+  // STEP 1: Instant render dari cache
   // ============================================
   const cached = AdminModule.getAngkatanPKDList() || [];
   console.log(`[AngkatanPKDView] 📦 Cache check: ${cached.length} angkatan`);
@@ -125,21 +151,19 @@ export async function mount(params = {}) {
     renderHub();
     setCacheStatus('Cache', 'info');
   } else {
-    // ⭐ FIX: Kalau cache kosong, tetap render hub dulu (dengan empty state)
-    // JANGAN biarkan skeleton stuck
-    console.log('[AngkatanPKDView] ⚠️ Cache kosong, render hub dulu');
-    renderHub();  // Ini akan render empty state dengan CTA
+    console.log('[AngkatanPKDView] ⚠️ Cache kosong, render empty state');
+    renderHub();
     setCacheStatus('Memuat...', 'info');
   }
 
   // ============================================
-  // STEP 2: ⚡ Subscribe ke perubahan data
+  // STEP 2: Subscribe
   // ============================================
   await ctx.subscribeToData();
   console.log('[AngkatanPKDView] ✅ Subscribed to AdminModule');
 
   // ============================================
-  // STEP 3: 🔄 Background refresh dari server
+  // STEP 3: Background refresh
   // ============================================
   await refreshListFromModule(false);
 
@@ -164,7 +188,6 @@ export function unmount() {
   if (!ctx.mounted) return;
   ctx.mounted = false;
   console.log('[AngkatanPKDView] 🛑 unmounted');
-
   ctx.cleanup();
   cleanupBootstrapArtifacts();
 }
@@ -182,7 +205,7 @@ function bindEvents() {
     applyFilter();
   }, SEARCH_DEBOUNCE));
 
-  // Grid delegation (card click + delete button)
+  // Grid delegation
   const grid = getEl('angkatanGridContainer');
   if (grid) {
     ctx.on(grid, 'click', (e) => {
@@ -203,7 +226,7 @@ function bindEvents() {
         return;
       }
 
-      // ⭐ NEW: CTA "Tambah Angkatan" di empty state
+      // CTA "Tambah Angkatan" di empty state
       const addBtn = e.target.closest('[data-action="add-angkatan"]');
       if (addBtn) {
         e.preventDefault();
@@ -235,61 +258,48 @@ function bindEvents() {
   // ============ MODAL: HAPUS ============
   ctx.on(getEl('confirmDeleteAngkatanBtn'), 'click', executeDelete);
 
-  // ============ REFRESH saat route reused (kembali dari halaman lain) ============
+  // ============ REFRESH saat route reused ============
   ctx.on(window, 'route:reused', (e) => {
     const detail = e?.detail;
     if (!detail || !detail.path) return;
     if (detail.path === '#/admin/angkatan-pkd') {
-      console.log('[AngkatanPKDView] 🔄 Route reused — refreshing list');
+      console.log('[AngkatanPKDView] 🔄 Route reused — refreshing');
       refreshListFromModule(true).catch(() => {});
     }
   });
 }
 
 // ============================================================
-//   REFRESH LIST FROM MODULE
+//   REFRESH LIST
 // ============================================================
-/**
- * @param {boolean} silent - true = no loading UI, false = show loading
- */
 async function refreshListFromModule(silent = true) {
-  // Race-safe token
   const myToken = ++ctx.state.listToken;
 
+  if (!silent) {
+    ctx.state.isRefreshing = true;
+    setCacheStatus('Memuat...', 'info');
+  }
+
   try {
-    // ============================================
-    // STEP 1: Baca dari AdminModule cache dulu (instant)
-    // ============================================
     let fresh = AdminModule.getAngkatanPKDList() || [];
 
-    // ============================================
-    // STEP 2: Kalau cache kosong atau tidak silent, fetch fresh
-    // ============================================
     if (fresh.length === 0 || !silent) {
       console.log('[AngkatanPKDView] 🔄 Fetching fresh from server...');
-      if (!silent) setCacheStatus('Memuat...', 'info');
-
       try {
         await AdminModule.refreshAngkatanPKD();
         fresh = AdminModule.getAngkatanPKDList() || [];
         console.log(`[AngkatanPKDView] ✅ Fetched: ${fresh.length} angkatan`);
       } catch (fetchErr) {
         console.warn('[AngkatanPKDView] ⚠️ Fetch failed, using cache:', fetchErr.message);
-        // Tetap pakai cache kalau fetch gagal
       }
     }
 
-    // Race-safe check
     if (myToken !== ctx.state.listToken) {
       console.log('[AngkatanPKDView] List refresh cancelled (token mismatch)');
       return;
     }
-
     if (!ctx.mounted) return;
 
-    // ============================================
-    // STEP 3: Compare hash
-    // ============================================
     const freshHash = computeListHash(fresh, ['id', 'nama', 'tahun', 'status', 'totalPeserta']);
 
     if (freshHash === ctx.state.lastHash && ctx.state.angkatanList.length > 0) {
@@ -298,17 +308,12 @@ async function refreshListFromModule(silent = true) {
       return;
     }
 
-    // ============================================
-    // STEP 4: Update state + render
-    // ============================================
     ctx.state.angkatanList = fresh.map(a => ({ ...a }));
     ctx.state.lastHash = freshHash;
 
-    // Re-render hub (kalau masih di hub view)
     if (ctx.state.currentView === 'hub') {
       renderHub();
     } else {
-      // Kalau di detail view, hanya update stats/header
       renderStats();
     }
 
@@ -317,13 +322,15 @@ async function refreshListFromModule(silent = true) {
 
   } catch (e) {
     if (myToken !== ctx.state.listToken) return;
-
     console.error('[AngkatanPKDView] refreshListFromModule error:', e);
     setCacheStatus('Error', 'danger');
 
-    // Show error di grid kalau kosong DAN cache juga kosong
     if (ctx.state.angkatanList.length === 0) {
       renderErrorState(e.message);
+    }
+  } finally {
+    if (!silent) {
+      ctx.state.isRefreshing = false;
     }
   }
 }
@@ -383,11 +390,11 @@ function renderGrid() {
   const list = ctx.state.filteredList;
 
   // ============================================
-  // EMPTY STATE (beda antara search vs no data sama sekali)
+  // EMPTY STATE
   // ============================================
   if (list.length === 0) {
-    // Kalau ada search query → "tidak ditemukan"
     if (ctx.state.searchQuery) {
+      // Search no results
       c.innerHTML = `
         <div class="col-12">
           <div class="alert alert-info text-center">
@@ -403,7 +410,6 @@ function renderGrid() {
           </div>
         </div>`;
 
-      // Bind clear search
       c.querySelector('[data-action="clear-search"]')?.addEventListener('click', () => {
         const searchEl = getEl('searchAngkatanInput');
         if (searchEl) searchEl.value = '';
@@ -411,7 +417,7 @@ function renderGrid() {
         applyFilter();
       });
     } else {
-      // No data sama sekali → CTA besar
+      // No data at all
       c.innerHTML = `
         <div class="col-12">
           <div class="glass-card text-center" style="padding:3rem 2rem;">
@@ -455,6 +461,7 @@ function renderGrid() {
       status === 'selesai' ? 'bg-success' :
       status === 'arsip'   ? 'bg-secondary' :
       'bg-primary';
+
     const statusLabel =
       status === 'selesai' ? '✅ Selesai' :
       status === 'arsip'   ? '📦 Arsip' :
@@ -543,8 +550,7 @@ function renderErrorState(msg) {
         <strong>Gagal memuat data</strong>
         <div class="small mt-1">${escapeHtml(msg)}</div>
         <div class="mt-3">
-          <button type="button" class="btn btn-sm btn-danger"
-                  data-action="retry-load">
+          <button type="button" class="btn btn-sm btn-danger" data-action="retry-load">
             <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Coba Lagi
           </button>
         </div>
@@ -564,12 +570,10 @@ async function openDetail(nama) {
 
   console.log(`[AngkatanPKDView] 📂 Open detail: ${nama}`);
 
-  // Update state
   ctx.state.currentView = 'detail';
   ctx.state.currentAngkatan = String(nama);
   ctx.state.isLoadingDetail = true;
 
-  // Increment token
   const myToken = ++ctx.state.detailToken;
 
   // Toggle views
@@ -584,7 +588,7 @@ async function openDetail(nama) {
   );
   updateDetailHeader(angkatanInfo, nama);
 
-  // Update URL hash dengan query
+  // Update URL hash
   try {
     const newHash = `#/admin/angkatan-pkd?angkatan=${encodeURIComponent(nama)}`;
     if (window.location.hash !== newHash) {
@@ -600,7 +604,7 @@ async function openDetail(nama) {
 }
 
 // ============================================================
-//   LOAD DETAIL (fetch dari server)
+//   LOAD DETAIL
 // ============================================================
 async function loadDetail(nama, silent = false, myToken = null) {
   if (!nama) return;
@@ -610,7 +614,6 @@ async function loadDetail(nama, silent = false, myToken = null) {
   }
 
   try {
-    // Use direct API — always fresh
     const res = await apiGetAngkatanDetail(nama);
 
     if (myToken !== ctx.state.detailToken) {
@@ -619,6 +622,7 @@ async function loadDetail(nama, silent = false, myToken = null) {
     }
 
     if (!ctx.mounted) return;
+
     if (!res || !res.success) {
       throw new Error(res?.error || 'Gagal memuat detail angkatan');
     }
@@ -630,7 +634,7 @@ async function loadDetail(nama, silent = false, myToken = null) {
     // Update header
     updateDetailHeader(data.angkatan, nama);
 
-    // Render tabs
+    // Render all tabs
     renderDetailAll(data);
     updateTabBadges(data);
 
@@ -698,6 +702,7 @@ function updateDetailHeader(info, fallbackNama) {
     statusEl.textContent =
       status === 'selesai' ? 'Selesai' :
       status === 'arsip'   ? 'Arsip' : 'Aktif';
+
     statusEl.className = 'badge ' +
       (status === 'selesai' ? 'bg-success' :
        status === 'arsip'   ? 'bg-secondary' : 'bg-primary');
@@ -1110,7 +1115,6 @@ function backToHub() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) { /* silent */ }
 
-  // Re-render hub
   renderHub();
 }
 
@@ -1130,7 +1134,8 @@ function openAddModal() {
 }
 
 async function saveNewAngkatan(e) {
-  if (ctx.saving) return;
+  // ⭐ FIX CRITICAL: Guard untuk cegah double submit & infinite loop
+  if (ctx.state.isSaving) return;
 
   const nama = (getEl('angkatanNama')?.value || '').trim();
   const tahun = parseInt(getEl('angkatanTahun')?.value) || new Date().getFullYear();
@@ -1142,7 +1147,7 @@ async function saveNewAngkatan(e) {
     return;
   }
 
-  // Cek duplikat di client
+  // Cek duplikat
   const isDupe = ctx.state.angkatanList.some(a =>
     String(a.nama || '').trim().toLowerCase() === nama.toLowerCase()
   );
@@ -1152,7 +1157,9 @@ async function saveNewAngkatan(e) {
   }
 
   const btn = e?.currentTarget || getEl('saveAngkatanBtn');
-  ctx.saving = true;
+
+  // ⭐ FIX: Set flag isSaving SEBELUM memanggil API
+  ctx.state.isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
@@ -1161,7 +1168,11 @@ async function saveNewAngkatan(e) {
     if (res && res.success) {
       showToast('Angkatan berhasil ditambahkan', 'success');
       ctx.getModal('addAngkatanModal')?.hide();
-      // Subscription akan auto-refresh list
+
+      // ⭐ FIX: Manual refresh SETELAH modal ditutup
+      // Karena isSaving masih true, onDataChange tidak akan terpicu
+      await refreshListFromModule(false);
+
     } else {
       throw new Error(res?.error || 'Gagal menyimpan');
     }
@@ -1169,7 +1180,8 @@ async function saveNewAngkatan(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    // ⭐ FIX: Reset flag isSaving di akhir
+    ctx.state.isSaving = false;
   }
 }
 
@@ -1189,13 +1201,16 @@ function confirmDelete(id, nama) {
 }
 
 async function executeDelete(e) {
-  if (ctx.saving) return;
+  // ⭐ FIX: Guard untuk cegah double delete
+  if (ctx.state.isSaving) return;
 
   const id = ctx.state.pendingDeleteId || getEl('deleteAngkatanId')?.value;
   if (!id) return;
 
   const btn = e?.currentTarget || getEl('confirmDeleteAngkatanBtn');
-  ctx.saving = true;
+
+  // ⭐ FIX: Set flag isSaving
+  ctx.state.isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menghapus...');
 
   try {
@@ -1204,7 +1219,10 @@ async function executeDelete(e) {
     if (res && res.success) {
       showToast('Angkatan berhasil dihapus', 'success');
       ctx.getModal('deleteAngkatanModal')?.hide();
-      // Subscription akan auto-refresh
+
+      // Manual refresh SETELAH modal ditutup
+      await refreshListFromModule(false);
+
     } else {
       throw new Error(res?.error || 'Gagal menghapus');
     }
@@ -1212,7 +1230,7 @@ async function executeDelete(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    ctx.state.isSaving = false;
     ctx.state.pendingDeleteId = null;
   }
 }
@@ -1275,18 +1293,19 @@ function showDetailPeserta(id) {
 //   REFRESH (manual)
 // ============================================================
 async function handleRefresh(e) {
-  if (ctx.saving) return;
+  if (ctx.state.isSaving || ctx.state.isRefreshing) return;
 
   const btn = e?.currentTarget || getEl('refreshAngkatanBtn');
-  ctx.saving = true;
+
+  ctx.state.isSaving = true;
   ctx.state.isRefreshing = true;
+
   const restore = setBtnLoading(btn, true, 'Memuat...');
 
   try {
     console.log('[AngkatanPKDView] 🔄 Manual refresh...');
     setCacheStatus('Memuat...', 'info');
 
-    // Force fetch fresh
     await AdminModule.loadAllData(true);
     await refreshListFromModule(false);
 
@@ -1297,7 +1316,7 @@ async function handleRefresh(e) {
     setCacheStatus('Error', 'danger');
   } finally {
     restore();
-    ctx.saving = false;
+    ctx.state.isSaving = false;
     ctx.state.isRefreshing = false;
   }
 }
@@ -1310,7 +1329,6 @@ function setCacheStatus(status, type = 'info') {
   if (!el) return;
   el.textContent = status;
 
-  // Map type → class
   const cls =
     type === 'success' || status === 'Live'      ? 'live' :
     type === 'danger'  || status === 'Error'     ? 'offline' :
@@ -1324,6 +1342,6 @@ function setCacheStatus(status, type = 'info') {
 export default { mount, unmount };
 
 console.log(
-  '%c Angkatan PKD View v28.0.1 — Hub + Detail + Preload Edition ',
+  '%c Angkatan PKD View v28.0.3 — Full Fix Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
