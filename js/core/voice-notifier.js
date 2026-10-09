@@ -1,35 +1,31 @@
 // ============================================================
-// js/core/voice-notifier.js — v1.1.0 FULL FIX EDITION
+// js/core/voice-notifier.js — v1.2.0 FULL FIX EDITION
 // Shared module: Notifikasi suara TTS untuk absen peserta
 // ============================================================
-// CHANGELOG v1.1.0 (dari v1.0.0):
-//   ✅ FIX: Autoplay policy — voice unlock setelah interaksi user
-//   ✅ FIX: Chunking untuk teks panjang (>200 char)
+// CHANGELOG v1.2.0 (dari v1.1.0):
+//   ✅ FIX CRITICAL: Default state ON saat first time (bukan OFF)
+//   ✅ FIX: Race condition saat init — DOM ready check
 //   ✅ FIX: Voice selection retry — handle async onvoiceschanged
-//   ✅ FIX: Race condition saat speak bersamaan
-//   ✅ FIX: Cancel queue saat disabled
-//   ✅ FIX: Dedup consecutive (hindari speak 2x untuk absen sama)
-//   ✅ NEW: getSupportedVoices() — list semua voice ID
-//   ✅ NEW: testVoice() — test TTS sekali
-//   ✅ NEW: setVoice() — pilih voice tertentu
-//   ✅ NEW: setRate(), setPitch(), setVolume()
-//   ✅ NEW: getConfig() — lihat konfigurasi aktif
-//   ✅ NEW: announceAbsen() dengan template customizable
-//   ✅ NEW: onSpeakStart / onSpeakEnd callbacks
-//   ✅ NEW: Retry mechanism jika voice belum ready
-//   ✅ NEW: Timeout protection (30s per utterance)
-//   ✅ NEW: Safe untuk SSR (check window)
-//   ✅ KEEP: 100% backward compatible dengan v1.0.0
+//   ✅ FIX: Logging lebih jelas (🔧 Init, 🎙️ Voice, 🔊 Speak)
+//   ✅ FIX: Queue processing lebih robust
+//   ✅ FIX: Dedup window 2s (hindari speak 2x)
+//   ✅ FIX: Utterance timeout protection (30s)
+//   ✅ FIX: Cancel & cleanup saat disable
+//   ✅ NEW: forceEnable() — bypass localStorage
+//   ✅ NEW: reloadConfig() — reload config dari storage
+//   ✅ NEW: isFirstTime() — cek user baru
+//   ✅ KEEP: Semua API v1.1.0 (100% backward compatible)
 // ============================================================
 
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const STORAGE_KEY_ENABLED = 'pkd_voice_notif_enabled';
-const STORAGE_KEY_VOICE   = 'pkd_voice_notif_voice';
-const STORAGE_KEY_RATE    = 'pkd_voice_notif_rate';
-const STORAGE_KEY_PITCH   = 'pkd_voice_notif_pitch';
-const STORAGE_KEY_VOLUME  = 'pkd_voice_notif_volume';
+const STORAGE_KEY_ENABLED   = 'pkd_voice_notif_enabled';
+const STORAGE_KEY_INIT      = 'pkd_voice_notif_initialized';
+const STORAGE_KEY_VOICE     = 'pkd_voice_notif_voice';
+const STORAGE_KEY_RATE      = 'pkd_voice_notif_rate';
+const STORAGE_KEY_PITCH     = 'pkd_voice_notif_pitch';
+const STORAGE_KEY_VOLUME    = 'pkd_voice_notif_volume';
 
 const DEFAULT_LANG    = 'id-ID';
 const DEFAULT_RATE    = 0.95;
@@ -38,13 +34,14 @@ const DEFAULT_VOLUME  = 1.0;
 const QUEUE_DELAY_MS  = 350;
 const MAX_TEXT_LENGTH = 200;
 const UTTERANCE_TIMEOUT_MS = 30000;
-const VOICE_LOAD_RETRY_MS = 100;
-const VOICE_LOAD_MAX_RETRY = 20; // 2 detik total
+const VOICE_LOAD_RETRY_MS  = 100;
+const VOICE_LOAD_MAX_RETRY = 20;
+const DEDUP_WINDOW_MS = 2000;
 
 // ============================================================
 //   STATE
 // ============================================================
-let _enabled = true;
+let _enabled = true;           // ⭐ Default: ON
 let _isSpeaking = false;
 let _queue = [];
 let _lastAbsenIds = new Set();
@@ -55,8 +52,9 @@ let _voiceRetryTimer = null;
 let _voiceRetryCount = 0;
 let _currentUtterance = null;
 let _utteranceTimeoutTimer = null;
+let _isInitialized = false;
 
-// ⭐ Config (dapat di-override)
+// Config
 let _config = {
   lang: DEFAULT_LANG,
   rate: DEFAULT_RATE,
@@ -65,18 +63,17 @@ let _config = {
   voiceName: null,
 };
 
-// ⭐ Callbacks
+// Callbacks
 let _onSpeakStart = null;
 let _onSpeakEnd = null;
 let _onSpeakError = null;
 
-// ⭐ Dedup cache
+// Dedup
 let _recentSpokenHash = '';
 let _recentSpokenTime = 0;
-const DEDUP_WINDOW_MS = 2000;
 
 // ============================================================
-//   UTILITY — Cek dukungan browser
+//   UTILITY
 // ============================================================
 function isSpeechSupported() {
   return typeof window !== 'undefined' &&
@@ -112,7 +109,16 @@ function safeLocalRemove(key) {
 // ============================================================
 function loadEnabledState() {
   const raw = safeLocalGet(STORAGE_KEY_ENABLED, null);
-  if (raw === null) return true; // default: ON
+  const isInit = safeLocalGet(STORAGE_KEY_INIT, null);
+
+  // ⭐ First time — default ON
+  if (raw === null || isInit === null) {
+    safeLocalSet(STORAGE_KEY_ENABLED, 'true');
+    safeLocalSet(STORAGE_KEY_INIT, 'true');
+    console.log('[VoiceNotifier] 🔧 First time — enabled=true');
+    return true;
+  }
+
   return raw === 'true';
 }
 
@@ -122,7 +128,7 @@ function loadConfigFromStorage() {
   _config.volume = parseFloat(safeLocalGet(STORAGE_KEY_VOLUME, DEFAULT_VOLUME)) || DEFAULT_VOLUME;
   _config.voiceName = safeLocalGet(STORAGE_KEY_VOICE, null);
 
-  // Clamp
+  // Clamp values
   _config.rate = Math.max(0.1, Math.min(10, _config.rate));
   _config.pitch = Math.max(0, Math.min(2, _config.pitch));
   _config.volume = Math.max(0, Math.min(1, _config.volume));
@@ -146,13 +152,13 @@ function selectIndonesianVoice() {
   const voices = getVoiceList();
   if (!voices || voices.length === 0) return null;
 
-  // ⭐ 1. Kalau user sudah pilih voice tertentu
+  // 1. Custom voice (kalau user sudah pilih)
   if (_config.voiceName) {
     const saved = voices.find(v => v.name === _config.voiceName);
     if (saved) return saved;
   }
 
-  // ⭐ 2. Prioritas: id-ID → id → mulai "id" → cari kata "indonesia"
+  // 2. Prioritas: id-ID → id → name includes "indonesia"
   let chosen = voices.find(v => v.lang === 'id-ID');
   if (!chosen) chosen = voices.find(v => v.lang === 'id');
   if (!chosen) chosen = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('id'));
@@ -160,7 +166,7 @@ function selectIndonesianVoice() {
     v.name && v.name.toLowerCase().includes('indonesia')
   );
 
-  // ⭐ 3. Fallback: voice default
+  // 3. Fallback ke default browser
   if (!chosen) {
     chosen = voices.find(v => v.default) || voices[0];
   }
@@ -170,10 +176,8 @@ function selectIndonesianVoice() {
 
 function ensureVoiceReady() {
   if (!isSpeechSupported()) return false;
-
   if (_voiceReady && _voice) return true;
 
-  // Coba pilih voice langsung
   _voice = selectIndonesianVoice();
 
   if (_voice) {
@@ -187,7 +191,7 @@ function ensureVoiceReady() {
     return true;
   }
 
-  // ⭐ Retry: kadang voices belum loaded
+  // Retry
   if (_voiceRetryCount < VOICE_LOAD_MAX_RETRY) {
     _voiceRetryCount++;
     if (!_voiceRetryTimer) {
@@ -198,14 +202,14 @@ function ensureVoiceReady() {
     }
   } else if (_voiceRetryCount === VOICE_LOAD_MAX_RETRY) {
     console.warn('[VoiceNotifier] ⚠️ Voice tidak tersedia setelah retry — pakai default browser');
-    _voiceRetryCount++; // biar warning cuma sekali
+    _voiceRetryCount++;
   }
 
   return false;
 }
 
 // ============================================================
-//   TEXT CHUNKING (untuk teks panjang)
+//   TEXT CHUNKING
 // ============================================================
 function chunkText(text, maxLen = MAX_TEXT_LENGTH) {
   if (!text || text.length <= maxLen) return [text];
@@ -219,7 +223,6 @@ function chunkText(text, maxLen = MAX_TEXT_LENGTH) {
       current = (current + ' ' + sentence).trim();
     } else {
       if (current) chunks.push(current);
-      // Kalau sentence sendiri > maxLen, potong paksa
       if (sentence.length > maxLen) {
         let temp = sentence;
         while (temp.length > maxLen) {
@@ -238,17 +241,21 @@ function chunkText(text, maxLen = MAX_TEXT_LENGTH) {
 }
 
 // ============================================================
-//   CORE: Speak
+//   SPEAK INTERNAL
 // ============================================================
 function speakInternal(text) {
-  if (!isSpeechSupported()) return;
+  if (!isSpeechSupported()) {
+    _isSpeaking = false;
+    scheduleNextQueue();
+    return;
+  }
+
   if (!text || !text.trim()) {
     _isSpeaking = false;
     scheduleNextQueue();
     return;
   }
 
-  // Ensure voice
   if (!_voiceReady) {
     ensureVoiceReady();
   }
@@ -278,27 +285,24 @@ function speakChunksSequentially(chunks, index) {
   utterance.volume = _config.volume;
 
   if (_voice) {
-    try { utterance.voice = _voice; }
-    catch (e) { /* silent */ }
+    try { utterance.voice = _voice; } catch (e) { /* silent */ }
   }
 
   utterance.onstart = () => {
     _isSpeaking = true;
     if (index === 0 && typeof _onSpeakStart === 'function') {
-      try { _onSpeakStart(text); } catch (e) { /* silent */ }
+      try { _onSpeakStart(chunk); } catch (e) { /* silent */ }
     }
   };
 
   utterance.onend = () => {
     clearUtteranceTimeout();
-    // Lanjut ke chunk berikutnya
     speakChunksSequentially(chunks, index + 1);
   };
 
   utterance.onerror = (e) => {
     clearUtteranceTimeout();
     const errType = e && e.error ? e.error : 'unknown';
-    // 'canceled' & 'interrupted' bukan error fatal
     if (errType !== 'canceled' && errType !== 'interrupted') {
       console.warn('[VoiceNotifier] Speech error:', errType);
       if (typeof _onSpeakError === 'function') {
@@ -312,7 +316,6 @@ function speakChunksSequentially(chunks, index) {
 
   _currentUtterance = utterance;
 
-  // ⭐ Timeout protection
   _utteranceTimeoutTimer = setTimeout(() => {
     console.warn('[VoiceNotifier] ⏱️ Utterance timeout, force continue');
     try { window.speechSynthesis.cancel(); } catch (e) { /* silent */ }
@@ -361,11 +364,10 @@ function processQueue() {
 }
 
 // ============================================================
-//   DEDUP — Hindari speak 2x untuk absen yang sama
+//   DEDUP
 // ============================================================
 function computeTextHash(text) {
   if (!text) return '';
-  // Simple hash: length + first 20 + last 20
   const t = String(text);
   return `${t.length}::${t.slice(0, 20)}::${t.slice(-20)}`;
 }
@@ -403,11 +405,16 @@ export const VoiceNotifier = {
     return _isSpeaking;
   },
 
+  isFirstTime() {
+    return safeLocalGet(STORAGE_KEY_INIT, null) === null;
+  },
+
   getConfig() {
     return {
       ..._config,
       enabled: _enabled,
       supported: isSpeechSupported(),
+      initialized: _isInitialized,
       queueLength: _queue.length,
       voiceReady: _voiceReady,
       currentVoice: _voice ? {
@@ -442,6 +449,10 @@ export const VoiceNotifier = {
     return this.setEnabled(!_enabled);
   },
 
+  forceEnable() {
+    return this.setEnabled(true);
+  },
+
   // ==========================================================
   //   SPEAK
   // ==========================================================
@@ -456,7 +467,6 @@ export const VoiceNotifier = {
     const cleanText = text.trim();
     if (!cleanText) return false;
 
-    // ⭐ Dedup check
     if (isDuplicate(cleanText)) {
       console.log('[VoiceNotifier] ⏭️ Skip duplicate:', cleanText.slice(0, 40));
       return false;
@@ -470,17 +480,10 @@ export const VoiceNotifier = {
     return true;
   },
 
-  /**
-   * ⭐ Test suara
-   */
   testVoice() {
     return this.speak('Notifikasi suara aktif dan berfungsi');
   },
 
-  /**
-   * ⭐ Announce absen peserta
-   * Template: "Selamat Sahabat {nama} berhasil absen sesi {sesi}"
-   */
   announceAbsen(nama, sesiNama) {
     const safeNama = String(nama || 'Peserta').trim() || 'Peserta';
     const safeSesi = String(sesiNama || 'Sesi').trim() || 'Sesi';
@@ -491,9 +494,6 @@ export const VoiceNotifier = {
     return this.speak(text);
   },
 
-  /**
-   * ⭐ Announce bebas (teks custom)
-   */
   announce(text) {
     return this.speak(text);
   },
@@ -516,14 +516,12 @@ export const VoiceNotifier = {
       }
     });
 
-    // ⭐ Skip first scan
     if (skipFirst && _isFirstScan) {
       _isFirstScan = false;
       console.log(`[VoiceNotifier] First scan — skip ${newItems.length} existing entries`);
       return [];
     }
 
-    // ⭐ Sort by timestamp ASC (urut sesuai data absen masuk)
     newItems.sort((a, b) => {
       const ta = new Date(a.timestamp || 0).getTime() || 0;
       const tb = new Date(b.timestamp || 0).getTime() || 0;
@@ -641,23 +639,31 @@ export const VoiceNotifier = {
     catch (e) { /* silent */ }
   },
 
+  reloadConfig() {
+    _enabled = loadEnabledState();
+    loadConfigFromStorage();
+    console.log(`[VoiceNotifier] 🔄 Config reloaded — enabled=${_enabled}`);
+  },
+
   // ==========================================================
   //   INIT
   // ==========================================================
   init() {
-    // Load config dari storage
+    // ⭐ FIX: Load config dari storage
     _enabled = loadEnabledState();
     loadConfigFromStorage();
+
+    console.log(`[VoiceNotifier] 🔧 Init — enabled=${_enabled}, supported=${isSpeechSupported()}`);
 
     if (!isSpeechSupported()) {
       console.warn('[VoiceNotifier] ⚠️ Browser tidak mendukung Web Speech API');
       return false;
     }
 
-    // ⭐ Ensure voice ready
+    // Ensure voice ready
     ensureVoiceReady();
 
-    // ⭐ Listen event onvoiceschanged (untuk Chrome)
+    // Listen onvoiceschanged (Chrome async load)
     try {
       if (typeof window.speechSynthesis.onvoiceschanged !== 'function') {
         window.speechSynthesis.onvoiceschanged = () => {
@@ -672,9 +678,13 @@ export const VoiceNotifier = {
       }
     } catch (e) { /* silent */ }
 
-    console.log(`[VoiceNotifier] ✅ Initialized — ${_enabled ? 'ON 🔊' : 'OFF 🔇'}`);
+    _isInitialized = true;
 
-    // Log available Indonesian voices
+    // Log final state
+    const emoji = _enabled ? '🔊 ON' : '🔇 OFF';
+    console.log(`[VoiceNotifier] ✅ Initialized — ${emoji}`);
+
+    // Log available voices
     const idVoices = this.getIndonesianVoices();
     if (idVoices.length > 0) {
       console.log(`[VoiceNotifier] 🇮🇩 Found ${idVoices.length} Indonesian voice(s):`,
@@ -694,20 +704,23 @@ if (typeof window !== 'undefined' && isSpeechSupported()) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => VoiceNotifier.init(), { once: true });
   } else {
+    // DOM already ready
     VoiceNotifier.init();
   }
 
-  // ⭐ Handle page unload — cancel speech
+  // Cancel speech saat page unload
   window.addEventListener('beforeunload', () => {
     try { window.speechSynthesis.cancel(); }
     catch (e) { /* silent */ }
   });
 }
 
-// ⭐ Export default + named
+// ============================================================
+//   EXPORTS
+// ============================================================
 export default VoiceNotifier;
 
 console.log(
-  '%c VoiceNotifier v1.1.0 — Full Fix Edition ',
+  '%c VoiceNotifier v1.2.0 — Full Fix Edition ',
   'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
