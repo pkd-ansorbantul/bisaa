@@ -1,59 +1,97 @@
-<!-- views/admin/data-absensi.html — v28.0.0 VOICE NOTIF EDITION -->
+<!-- ============================================================
+     views/admin/data-absensi.html — v28.1.0 FULL FIX EDITION
+     ============================================================
+     CHANGELOG v28.1.0 (dari v28.0.0):
+     ✅ NEW: Tombol Realtime (auto-refresh 10 detik)
+     ✅ NEW: Tombol Suara ON/OFF (notif absen via TTS)
+     ✅ NEW: Tombol Refresh manual (terpisah dari realtime)
+     ✅ FIX: Layout toolbar responsive (wrap otomatis)
+     ✅ FIX: ARIA lengkap (aria-pressed, aria-label, aria-live)
+     ✅ KEEP: Semua filter, stats, table, modal v28.0.0
+     ============================================================ -->
 
-<h2 class="section-title"><i class="bi bi-table me-2"></i>Manajemen Data Absensi</h2>
+<h2 class="section-title">
+  <i class="bi bi-table me-2" aria-hidden="true"></i>Manajemen Data Absensi
+</h2>
 
 <!-- ========================================================== -->
-<!-- TOOLBAR FILTER                                             -->
+<!-- TOOLBAR FILTER + AKSI                                      -->
 <!-- ========================================================== -->
-<div class="row g-2 mb-3 align-items-end">
-  <div class="col-lg-4 col-md-6">
+<div class="row g-3 mb-3 align-items-end">
+
+  <!-- Filter Sesi -->
+  <div class="col-lg-3 col-md-6">
     <label class="form-label small fw-semibold mb-1" for="filterSesi">Filter Sesi</label>
-    <select class="form-select" id="filterSesi">
+    <select class="form-select" id="filterSesi" aria-label="Filter sesi absen">
       <option value="">Semua Sesi</option>
     </select>
   </div>
+
+  <!-- Filter Tanggal -->
   <div class="col-lg-3 col-md-6">
     <label class="form-label small fw-semibold mb-1" for="filterTanggal">Filter Tanggal</label>
-    <input type="date" class="form-control" id="filterTanggal">
+    <input type="date" class="form-control" id="filterTanggal" aria-label="Filter tanggal absen">
   </div>
-  <div class="col-lg-5 col-md-12">
+
+  <!-- Toolbar Actions -->
+  <div class="col-lg-6 col-md-12">
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      <button class="btn btn-primary" id="applyFilterBtn" aria-label="Terapkan filter">
-        <i class="bi bi-funnel"></i> Terapkan
+
+      <!-- Filter Buttons -->
+      <button type="button" class="btn btn-primary" id="applyFilterBtn"
+              aria-label="Terapkan filter">
+        <i class="bi bi-funnel" aria-hidden="true"></i> Terapkan
       </button>
-      <button class="btn btn-outline-secondary" id="resetFilterBtn" aria-label="Reset filter">
-        <i class="bi bi-x-circle"></i> Reset
-      </button>
-      <button class="btn btn-outline-success" id="exportDataBtn" aria-label="Ekspor CSV">
-        <i class="bi bi-download"></i> Ekspor CSV
-      </button>
-      <button class="btn btn-outline-secondary" id="refreshDataBtn" aria-label="Segarkan data">
-        <i class="bi bi-arrow-clockwise"></i> Segarkan
+      <button type="button" class="btn btn-outline-secondary" id="resetFilterBtn"
+              aria-label="Reset filter">
+        <i class="bi bi-x-circle" aria-hidden="true"></i> Reset
       </button>
 
-      <!-- ⭐ Tombol ON/OFF Suara Notif Absen -->
-      <button class="btn btn-success" id="toggleVoiceBtn"
+      <!-- Export -->
+      <button type="button" class="btn btn-outline-success" id="exportDataBtn"
+              aria-label="Ekspor CSV">
+        <i class="bi bi-download" aria-hidden="true"></i> Ekspor CSV
+      </button>
+
+      <!-- ⭐ REALTIME toggle -->
+      <button type="button" class="btn btn-outline-info" id="toggleRealtimeBtn"
+              title="Mode realtime — auto refresh tiap 10 detik"
+              aria-label="Toggle realtime mode"
+              aria-pressed="false">
+        <i class="bi bi-broadcast" id="toggleRealtimeIcon" aria-hidden="true"></i>
+        <span id="toggleRealtimeLabel" class="ms-1">Realtime OFF</span>
+      </button>
+
+      <!-- Refresh Manual -->
+      <button type="button" class="btn btn-outline-secondary" id="refreshDataBtn"
+              title="Segarkan data sekali"
+              aria-label="Refresh data manual">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+      </button>
+
+      <!-- ⭐ SUARA ON/OFF -->
+      <button type="button" class="btn btn-success" id="toggleVoiceBtn"
               title="Notifikasi suara saat peserta absen"
               aria-label="Toggle notifikasi suara"
-              aria-pressed="true"
-              type="button">
+              aria-pressed="true">
         <i class="bi bi-volume-up-fill" id="toggleVoiceIcon" aria-hidden="true"></i>
         <span id="toggleVoiceLabel" class="ms-1">Suara ON</span>
       </button>
 
+      <!-- Cache Status -->
       <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat…</span>
     </div>
   </div>
 </div>
 
 <!-- ========================================================== -->
-<!-- SEARCH                                                     -->
+<!-- SEARCH BAR                                                 -->
 <!-- ========================================================== -->
 <div class="row mb-3">
   <div class="col-md-6">
     <div class="input-group">
       <span class="input-group-text bg-white border-end-0">
-        <i class="bi bi-search"></i>
+        <i class="bi bi-search text-muted" aria-hidden="true"></i>
       </span>
       <input type="text" class="form-control border-start-0" id="searchInput"
              placeholder="Cari nama peserta atau sesi…" autocomplete="off"
@@ -63,9 +101,9 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- STATISTIK                                                  -->
+<!-- STATISTIK ROW                                              -->
 <!-- ========================================================== -->
-<div class="row g-2 mb-4" id="statsRow">
+<div class="row g-2 mb-4" id="statsRow" aria-live="polite">
   <div class="col-6 col-md-3">
     <div class="stat-mini" style="background:#fff;border-radius:16px;padding:1rem;text-align:center;border:1px solid #e2e8f0;">
       <div class="num" id="statTotal" style="font-size:1.8rem;font-weight:700;color:#2563eb;">-</div>
@@ -96,11 +134,34 @@
 <!-- TABLE CONTAINER                                            -->
 <!-- ========================================================== -->
 <div id="absensiTableContainer" class="table-container" aria-live="polite">
-  <div class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Memuat data absensi…</span>
-    </div>
-    <p class="mt-2 text-muted small">Memuat data absensi…</p>
+  <!-- Skeleton initial -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:50px;">
+            <div class="skeleton-box" style="height:20px;width:20px;"></div>
+          </th>
+          <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+          <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+          <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+          <th><div class="skeleton-box" style="height:20px;width:100px;"></div></th>
+          <th style="width:110px;">
+            <div class="skeleton-box" style="height:20px;width:80px;"></div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="6" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat data absensi…</span>
+            </div>
+            <p class="mt-2 text-muted small mb-0">Memuat data absensi…</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
@@ -110,7 +171,7 @@
 <!-- ========================================================== -->
 <div class="modal fade" id="detailAbsensiModal" tabindex="-1"
      aria-labelledby="detailAbsensiModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-info text-white border-0 rounded-top-4">
         <h5 class="modal-title" id="detailAbsensiModalLabel">
@@ -147,7 +208,7 @@
       </div>
       <div class="modal-body p-4 text-center">
         <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block" aria-hidden="true"></i>
-        <p>Apakah Anda yakin ingin menghapus data absensi ini?</p>
+        <p class="mb-2">Apakah Anda yakin ingin menghapus data absensi ini?</p>
         <p class="text-muted small mb-0">Data akan dihapus permanen dari Google Sheet.</p>
         <input type="hidden" id="deleteAbsensiId">
       </div>

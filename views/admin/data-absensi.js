@@ -1,23 +1,18 @@
 // ============================================================
-// VIEW: data-absensi.js — v28.1.0 FULL FIX + VOICE NOTIF EDITION
+// VIEW: data-absensi.js — v28.2.0 FULL FIX + REALTIME EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/data-absensi.html
 // ============================================================
-// CHANGELOG v28.1.0 (dari v28.0.0):
-//   ✅ FIX CRITICAL: Tombol toggle suara — null-safe & idempotent
-//   ✅ FIX: VoiceNotifier integration lebih robust
-//   ✅ FIX: Skip first scan — biar tidak speak data lama
-//   ✅ FIX: Sort new absen by timestamp ASC (urut sesuai masuk)
-//   ✅ FIX: Dedup notif — hindari speak 2x untuk absen sama
-//   ✅ FIX: Handle race condition — token guard
-//   ✅ FIX: Modal cleanup + dispose on unmount
+// CHANGELOG v28.2.0 (dari v28.1.0):
+//   ✅ NEW: Tombol Realtime toggle (auto-refresh 10 detik)
+//   ✅ NEW: Tombol Refresh manual (terpisah dari realtime)
+//   ✅ NEW: Pause realtime saat tab hidden (hemat resource)
+//   ✅ NEW: Update UI tombol realtime dinamis (ON/OFF state)
+//   ✅ FIX CRITICAL: Cleanup realtime timer on unmount
+//   ✅ FIX: Tombol suara null-safe & idempotent
+//   ✅ FIX: Modal dispose + cleanup
 //   ✅ FIX: Focus preservation saat re-render
-//   ✅ FIX: Semua filter (sesi, tanggal, search) berfungsi
-//   ✅ FIX: Sort & pagination berfungsi
-//   ✅ FIX: Export CSV, refresh, delete, detail
-//   ✅ NEW: Update UI tombol suara otomatis (ON/OFF state)
-//   ✅ NEW: Test suara saat user toggle ON
-//   ✅ KEEP: Semua fitur v27.2.0
+//   ✅ KEEP: Semua fitur v28.1.0 (voice notif, filter, sort, dll)
 // ============================================================
 
 import {
@@ -41,6 +36,11 @@ import {
   computeListHash,
   SEARCH_DEBOUNCE,
 } from '../../js/core/view-helpers.js';
+
+// ============================================================
+//   CONSTANTS
+// ============================================================
+const REALTIME_INTERVAL_MS = 10000; // 10 detik
 
 // ============================================================
 //   LOCAL HELPERS
@@ -97,6 +97,28 @@ function updateVoiceButtonUI() {
   }
 }
 
+// ⭐ Update tampilan tombol realtime
+function updateRealtimeButtonUI() {
+  const btn = getEl('toggleRealtimeBtn');
+  const icon = getEl('toggleRealtimeIcon');
+  const label = getEl('toggleRealtimeLabel');
+  if (!btn || !icon || !label) return;
+
+  if (ctx.state.isRealtimeActive) {
+    btn.className = 'btn btn-info';
+    btn.title = 'Realtime AKTIF — auto refresh tiap 10 detik. Klik untuk matikan.';
+    icon.className = 'bi bi-broadcast';
+    label.textContent = 'Realtime ON';
+    btn.setAttribute('aria-pressed', 'true');
+  } else {
+    btn.className = 'btn btn-outline-info';
+    btn.title = 'Realtime NONAKTIF — klik untuk aktifkan (auto refresh 10 detik)';
+    icon.className = 'bi bi-broadcast';
+    label.textContent = 'Realtime OFF';
+    btn.setAttribute('aria-pressed', 'false');
+  }
+}
+
 // ============================================================
 //   CONTEXT
 // ============================================================
@@ -115,6 +137,9 @@ const ctx = createViewContext(
     pendingDeleteId: null,
     lastAbsensiHash: '',
     lastSesiHash: '',
+    // ⭐ Realtime state
+    isRealtimeActive: false,
+    realtimeTimer: null,
   },
   {
     watchTypes: ['all', 'multiple', 'manual-refresh', 'absensi'],
@@ -159,6 +184,8 @@ export async function mount() {
     pendingDeleteId: null,
     lastAbsensiHash: '',
     lastSesiHash: '',
+    isRealtimeActive: false,
+    realtimeTimer: null,
   });
 
   const filterSesiEl = getEl('filterSesi');
@@ -171,8 +198,9 @@ export async function mount() {
   // ⭐ Reset voice notifier (skip first scan)
   VoiceNotifier.reset();
 
-  // ⭐ Update tombol suara UI
+  // ⭐ Update UI tombol
   updateVoiceButtonUI();
+  updateRealtimeButtonUI();
 
   // ⚡ Instant render dari preload cache
   const cachedAbsen = AdminModule.getAbsensiList() || [];
@@ -185,7 +213,7 @@ export async function mount() {
     ctx.state.lastAbsensiHash = computeListHash(ctx.state.absensiList);
     ctx.state.lastSesiHash = computeListHash(ctx.state.sesiList, ['id', 'nama']);
 
-    // ⭐ Track all existing IDs (biar skip first scan)
+    // ⭐ Track existing IDs (skip first scan)
     VoiceNotifier.detectNewAbsen(ctx.state.absensiList, true);
 
     renderSesiFilter();
@@ -217,6 +245,9 @@ export function unmount() {
   ctx.mounted = false;
   console.log('[DataAbsensiView] unmounted');
 
+  // ⭐ Stop realtime timer
+  stopRealtimeMode();
+
   if (tableDelegationCleanup) {
     try { tableDelegationCleanup(); } catch (e) { /* silent */ }
     tableDelegationCleanup = null;
@@ -227,7 +258,57 @@ export function unmount() {
 }
 
 // ============================================================
-//   REFRESH FROM CACHE + ⭐ VOICE NOTIF DETECTION
+//   REALTIME MODE
+// ============================================================
+function startRealtimeMode() {
+  // Bersihkan timer lama kalau ada
+  if (ctx.state.realtimeTimer) {
+    clearInterval(ctx.state.realtimeTimer);
+    ctx.state.realtimeTimer = null;
+  }
+
+  ctx.state.isRealtimeActive = true;
+
+  ctx.state.realtimeTimer = setInterval(async () => {
+    if (!ctx.mounted) return;
+    if (document.hidden) return; // ⭐ Pause saat tab tidak aktif
+    if (ctx.saving) return;
+
+    try {
+      console.log('[DataAbsensi] 📡 Realtime polling...');
+      await AdminModule.loadAllData(true);
+      refreshFromCache();
+    } catch (e) {
+      console.warn('[DataAbsensi] Realtime poll error:', e.message);
+    }
+  }, REALTIME_INTERVAL_MS);
+
+  console.log('[DataAbsensi] ▶️ Realtime mode started (interval: 10s)');
+}
+
+function stopRealtimeMode() {
+  if (ctx.state.realtimeTimer) {
+    clearInterval(ctx.state.realtimeTimer);
+    ctx.state.realtimeTimer = null;
+  }
+  ctx.state.isRealtimeActive = false;
+  console.log('[DataAbsensi] ⏹️ Realtime mode stopped');
+}
+
+function handleToggleRealtime() {
+  if (ctx.state.isRealtimeActive) {
+    stopRealtimeMode();
+    updateRealtimeButtonUI();
+    showToast('📡 Realtime mode NONAKTIF', 'info');
+  } else {
+    startRealtimeMode();
+    updateRealtimeButtonUI();
+    showToast('📡 Realtime AKTIF — auto refresh tiap 10 detik', 'success');
+  }
+}
+
+// ============================================================
+//   REFRESH FROM CACHE + VOICE NOTIF DETECTION
 // ============================================================
 function refreshFromCache() {
   const freshAbsen = AdminModule.getAbsensiList() || [];
@@ -251,15 +332,12 @@ function refreshFromCache() {
     if (newAbsen.length > 0) {
       console.log(`[DataAbsensiView] 🎙️ ${newAbsen.length} absen baru terdeteksi`);
 
-      // Sesi list untuk lookup nama sesi
       const sesiLookup = freshSesi;
 
       // Announce satu per satu (sudah urut by timestamp ASC)
       newAbsen.forEach(item => {
         const nama = String(item.nama || 'Peserta').trim();
-        const sesiNama = item.namaSesi ||
-                         getNamaSesi(item.sesiId, sesiLookup);
-
+        const sesiNama = item.namaSesi || getNamaSesi(item.sesiId, sesiLookup);
         VoiceNotifier.announceAbsen(nama, sesiNama);
       });
 
@@ -307,14 +385,14 @@ function bindEvents() {
 
     if (newState) {
       showToast('🔊 Notifikasi suara AKTIF', 'success');
-      // Test suara sekali (setelah delay biar tidak overlap dengan toast)
-      setTimeout(() => {
-        VoiceNotifier.testVoice();
-      }, 400);
+      setTimeout(() => VoiceNotifier.testVoice(), 400);
     } else {
       showToast('🔇 Notifikasi suara NONAKTIF', 'info');
     }
   });
+
+  // ⭐ Toggle realtime
+  ctx.on(getEl('toggleRealtimeBtn'), 'click', handleToggleRealtime);
 
   // Filter apply
   ctx.on(getEl('applyFilterBtn'), 'click', () => {
@@ -343,9 +421,13 @@ function bindEvents() {
     applyFiltersAndSort();
   }, SEARCH_DEBOUNCE));
 
-  // Toolbar
+  // Toolbar — Refresh manual
   ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
+
+  // Export CSV
   ctx.on(getEl('exportDataBtn'), 'click', exportCSV);
+
+  // Delete confirm
   ctx.on(getEl('confirmDeleteBtn'), 'click', executeDelete);
 
   // ✅ DELEGATION — table
@@ -383,16 +465,18 @@ async function loadData(forceRefresh = false) {
 
 async function handleRefresh(e) {
   if (ctx.saving) return;
-  const btn = e.currentTarget || getEl('refreshDataBtn');
+  const btn = e?.currentTarget || getEl('refreshDataBtn');
   ctx.saving = true;
   const restore = setBtnLoading(btn, true, '');
 
   try {
+    console.log('[DataAbsensi] 🔄 Manual refresh...');
     await AdminModule.loadAllData(true);
     refreshFromCache();
     showToast('Data disegarkan', 'success');
+    console.log('[DataAbsensi] ✅ Manual refresh complete');
   } catch (err) {
-    showToast('Gagal menyegarkan', 'error');
+    showToast('Gagal menyegarkan: ' + err.message, 'error');
   } finally {
     restore();
     ctx.saving = false;
@@ -771,6 +855,6 @@ function exportCSV() {
 export default { mount, unmount };
 
 console.log(
-  '%c Data Absensi View v28.1.0 — Full Fix + Voice Notif Edition ',
+  '%c Data Absensi View v28.2.0 — Full Fix + Realtime Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
