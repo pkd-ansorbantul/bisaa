@@ -9,7 +9,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Form Data Peserta · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.4.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <!-- ✅ v28.0.1 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -19,7 +19,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <!-- ✅ Deferred libraries (load after HTML parse) -->
+  <!-- ✅ Deferred libraries -->
   <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -34,7 +34,7 @@
       flex-direction: column;
     }
 
-    /* ============ SKIP LINK (Accessibility) ============ */
+    /* ============ SKIP LINK ============ */
     .skip-link {
       position: absolute;
       top: -40px;
@@ -105,6 +105,7 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -130,6 +131,7 @@
       line-height: 1.3;
     }
 
+    /* ============ SKELETON ============ */
     .skeleton-box {
       background: #e2e8f0;
       border-radius: 8px;
@@ -142,6 +144,7 @@
       100% { opacity: 0.6; }
     }
 
+    /* ============ SIGNATURE ============ */
     .signature-wrapper {
       position: relative;
       width: 100%;
@@ -202,6 +205,7 @@
       pointer-events: none;
     }
 
+    /* ============ ID CARD ============ */
     .id-card-wrapper {
       max-width: 450px;
       margin: 0 auto;
@@ -259,7 +263,7 @@
       gap: 6px;
     }
     .id-card .data-area .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: block; }
-    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; }
+    .id-card .data-area .value { font-weight: 600; color: #0f172a; font-size: 0.95rem; line-height: 1.3; word-break: break-word; }
 
     .id-card .footer {
       margin-top: 14px;
@@ -276,6 +280,7 @@
       .id-card .qr-area { margin: 0 auto 10px auto; }
     }
 
+    /* ============ ADMIN CONTACT ============ */
     .admin-contact {
       background: #eff6ff;
       border-left: 4px solid #2563eb;
@@ -305,12 +310,14 @@
       color: white;
     }
 
+    /* ============ ANIMASI ============ */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* ============ FOOTER ============ */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -321,7 +328,7 @@
       background: white;
     }
 
-    /* Camera modal */
+    /* ============ CAMERA MODAL ============ */
     #cameraModal .modal-body {
       background: #000;
       padding: 0;
@@ -358,6 +365,7 @@
     }
     .camera-controls .btn:active { transform: scale(0.9); }
 
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -409,7 +417,7 @@
       </h1>
 
       <div id="pesertaFormContainer" aria-live="polite" aria-busy="true">
-        <!-- Initial skeleton — akan diisi oleh peserta.js -->
+        <!-- Initial skeleton — akan diisi oleh JS -->
       </div>
     </div>
   </main>
@@ -457,7 +465,7 @@
 
   <script type="module">
     // ============================================================
-    //   IMPORTS — v26.4.0 GitHub Pages /bisaa/
+    //   IMPORTS — v28.0.1
     // ============================================================
     import {
       guardPublicAccess,
@@ -467,6 +475,7 @@
       submitPeserta,
       updateNavbarMenu,
       fileToBase64,
+      getAngkatanPKDList,
     } from '/bisaa/js/core/api.js';
 
     import {
@@ -480,17 +489,18 @@
     //   STATE
     // ============================================================
     let formStructure = [];
+    let angkatanPKDList = [];
     let cameraStream = null;
     let cameraActive = false;
     let currentCameraTarget = '';
     let sigPad = null;
     let resizeTimer = null;
 
-    const FORM_STATE_KEY = 'pkd_peserta_form_state_v2';
+    const FORM_STATE_KEY = 'pkd_peserta_form_state_v3';
     const MAX_FILE_SIZE_MB = 5;
 
     // ============================================================
-    //   UTILITY: safe localStorage
+    //   UTILITY
     // ============================================================
     function safeLS(fn) {
       try { return fn(); }
@@ -586,27 +596,27 @@
     }
 
     // ============================================================
-    //   QR GENERATION
+    //   ⭐ QR GENERATION (FIXED)
     // ============================================================
-    function generateQR(id) {
+    function generateQR(pesertaId) {
       const container = document.getElementById('qrCodeContainer');
       if (!container) return;
 
       container.innerHTML = '';
 
-      if (!id) {
-        container.innerHTML = '<div class="text-muted small">ID tidak tersedia</div>';
+      if (!pesertaId) {
+        container.innerHTML = '<div class="text-muted small text-center p-3">ID tidak tersedia</div>';
         return;
       }
 
       if (typeof qrcode !== 'function') {
-        container.innerHTML = '<div class="text-muted small">QR library tidak tersedia</div>';
+        container.innerHTML = '<div class="text-muted small text-center p-3">QR library tidak tersedia</div>';
         return;
       }
 
       try {
         const qr = qrcode(0, 'M');
-        qr.addData(`peserta_id=${id}`);
+        qr.addData(`peserta_id=${pesertaId}`);
         qr.make();
 
         const moduleCount = qr.getModuleCount();
@@ -646,7 +656,8 @@
         logoImg.src = `${BASE_PATH}LOGOANSOR.webp`;
 
         logoImg.onload = function () {
-          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+          try { ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize); }
+          catch (e) { /* silent */ }
         };
 
         logoImg.onerror = function () {
@@ -680,7 +691,27 @@
         container.appendChild(canvas);
       } catch (err) {
         console.error('[PesertaView] QR generate error:', err);
-        container.innerHTML = '<div class="text-muted small">QR error</div>';
+        container.innerHTML = '<div class="text-muted small text-center p-3">QR error</div>';
+      }
+    }
+
+    // ============================================================
+    //   LOAD ANGKATAN PKD (untuk dropdown)
+    // ============================================================
+    async function loadAngkatanPKDList() {
+      try {
+        const res = await getAngkatanPKDList();
+        let list = [];
+        if (res && res.success && Array.isArray(res.data)) list = res.data;
+        else if (Array.isArray(res)) list = res;
+
+        angkatanPKDList = list;
+        console.log(`[PesertaView] Loaded ${list.length} angkatan PKD`);
+        return list;
+      } catch (e) {
+        console.warn('[PesertaView] loadAngkatanPKDList error:', e);
+        angkatanPKDList = [];
+        return [];
       }
     }
 
@@ -691,17 +722,19 @@
       const container = document.getElementById('pesertaFormContainer');
 
       try {
+        // Load angkatan + form settings parallel
+        const [angkatanResult, settingsRes] = await Promise.allSettled([
+          loadAngkatanPKDList(),
+          callApi('getFormSettings', {}, 'GET'),
+        ]);
+
         let raw = null;
-        const settingsRes = await callApi('getFormSettings', {}, 'GET');
-
-        if (settingsRes && settingsRes.success) {
-          let data = settingsRes.data;
-
+        if (settingsRes.status === 'fulfilled' && settingsRes.value && settingsRes.value.success) {
+          let data = settingsRes.value.data;
           if (typeof data === 'string') {
             try { data = JSON.parse(data); }
             catch (e) { data = null; }
           }
-
           raw = data;
         }
 
@@ -846,6 +879,29 @@
         }
       });
 
+      // ============ Angkatan PKD field (jika tidak ada di formStructure) ============
+      const hasAngkatanField = formStructure.some(f => f.id === 'lokasi_pkd');
+      if (!hasAngkatanField) {
+        html += `
+          <div class="mb-3">
+            <label class="form-label fw-bold" for="input_lokasi_pkd">
+              Angkatan PKD <span class="text-danger" aria-label="wajib diisi">*</span>
+            </label>
+            <select class="form-select" name="lokasi_pkd" id="input_lokasi_pkd" required>
+              <option value="">-- Pilih Angkatan --</option>
+              ${angkatanPKDList.map(a =>
+                `<option value="${escapeHtml(a.nama)}">${escapeHtml(a.nama)}${a.tahun ? ` (${a.tahun})` : ''}</option>`
+              ).join('')}
+            </select>
+            <div class="form-text small text-muted">
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+              Angkatan PKD menentukan lokasi & periode pelatihan Anda.
+            </div>
+          </div>
+        `;
+      }
+
+      // ============ Signature ============
       html += `
           <div class="mb-3">
             <label class="form-label fw-bold">✍️ Tanda Tangan Digital <span class="text-danger">*</span></label>
@@ -1176,7 +1232,7 @@
     });
 
     // ============================================================
-    //   SUBMIT FORM
+    //   ⭐ SUBMIT FORM — FIXED v28.0.1
     // ============================================================
     async function submitPesertaForm(e) {
       e.preventDefault();
@@ -1199,12 +1255,21 @@
             const fileInput = document.getElementById(`input_${field.id}`);
             isEmpty = !fileInput || !fileInput.files.length;
           } else {
-            isEmpty = !val || val.trim() === '';
+            isEmpty = !val || String(val).trim() === '';
           }
 
           if (isEmpty) missingFields.push(field.label);
         }
       });
+
+      // Validasi Angkatan PKD (kalau tidak ada di formStructure)
+      const hasAngkatanField = formStructure.some(f => f.id === 'lokasi_pkd');
+      if (!hasAngkatanField) {
+        const angkatanVal = formData.get('lokasi_pkd');
+        if (!angkatanVal || String(angkatanVal).trim() === '') {
+          missingFields.push('Angkatan PKD');
+        }
+      }
 
       if (missingFields.length > 0) {
         showToast('Harap isi: ' + missingFields.join(', '), 'error');
@@ -1273,6 +1338,16 @@
           }
         });
 
+        // Angkatan PKD — dari field dinamis
+        if (hasAngkatanField) {
+          const angkatanVal = formData.get('lokasi_pkd');
+          if (angkatanVal) data.lokasi_pkd = String(angkatanVal).trim();
+        } else {
+          // Dari field tambahan
+          const angkatanVal = formData.get('lokasi_pkd');
+          if (angkatanVal) data.lokasi_pkd = String(angkatanVal).trim();
+        }
+
         // Handle utusan "Lainnya"
         if (data.utusan === 'Lainnya') {
           const luarValue = formData.get('utusan_luar');
@@ -1283,8 +1358,20 @@
 
         // Submit
         const result = await submitPeserta(data);
+        console.log('[DEBUG] Submit response:', result);
+
         if (!result || !result.success) {
           throw new Error((result && result.error) || 'Gagal mengirim');
+        }
+
+        // ⭐ FIX v28.0.1: Ambil ID dari result.id ATAU result.data.id
+        const newId = result.id
+          || (result.data && result.data.id)
+          || (result.data && result.data.pesertaId)
+          || null;
+
+        if (!newId) {
+          console.warn('[PesertaView] ID tidak ditemukan di response:', result);
         }
 
         showToast('✅ Data peserta berhasil dikirim!', 'success');
@@ -1297,11 +1384,22 @@
         const nameDisplay = document.getElementById('idCardNama');
         const alamatDisplay = document.getElementById('idCardAlamat');
 
-        if (idDisplay) idDisplay.textContent = result.id || '-';
+        // ⭐ FIX: pakai newId (fallback ke 'Menunggu...')
+        if (idDisplay) {
+          idDisplay.textContent = newId ? String(newId) : 'Menunggu...';
+        }
         if (nameDisplay) nameDisplay.textContent = data.nama_lengkap || '-';
         if (alamatDisplay) alamatDisplay.textContent = data.alamat || '-';
 
-        generateQR(result.id);
+        // ⭐ FIX: generate QR dengan newId (kalau ada)
+        if (newId) {
+          generateQR(newId);
+        } else {
+          const qrContainer = document.getElementById('qrCodeContainer');
+          if (qrContainer) {
+            qrContainer.innerHTML = '<div class="text-muted small text-center p-3">QR akan muncul setelah admin approve</div>';
+          }
+        }
 
         // Reset form
         form.reset();
@@ -1323,6 +1421,7 @@
         // Bind download ID card
         bindDownloadIdCard(data.nama_lengkap);
       } catch (err) {
+        console.error('[PesertaView] Submit error:', err);
         showToast('❌ Gagal mengirim: ' + err.message, 'error');
       } finally {
         document.querySelectorAll('#formPesertaDinamis input, #formPesertaDinamis textarea, #formPesertaDinamis select')
@@ -1335,6 +1434,9 @@
       }
     }
 
+    // ============================================================
+    //   BIND DOWNLOAD ID CARD
+    // ============================================================
     function bindDownloadIdCard(namaLengkap) {
       const downloadBtn = document.getElementById('downloadIdCardBtn');
       if (!downloadBtn) return;
@@ -1393,7 +1495,7 @@
     })();
 
     console.log(
-      '%c peserta.html v26.4.0 — GitHub Pages /bisaa/ Edition ',
+      '%c peserta.html v28.0.1 — Public Form + Angkatan PKD Edition ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
