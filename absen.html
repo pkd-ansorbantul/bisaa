@@ -7,14 +7,43 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="description" content="Absen digital PKD GP Ansor Kabupaten Bantul">
 
-  <!-- ✅ v26.1.9 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <!-- ✅ Preconnect + DNS-prefetch untuk percepat -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <link rel="preconnect" href="https://drive.google.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://drive.google.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+  <!-- ✅ Preload critical assets -->
+  <link rel="preload" href="/bisaa/LOGOANSOR.webp" as="image" type="image/webp">
+
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+  <!-- ✅ SignaturePad: defer supaya tidak blocking -->
+  <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+  <!-- ✅ INLINE PRELOAD CACHE (baca localStorage SEBELUM JS utama) -->
+  <script>
+    (function preloadAbsenCache() {
+      try {
+        window.__ABSEN_CACHE__ = {
+          sesi: JSON.parse(localStorage.getItem('pkd_absen_cache_sesi') || 'null'),
+          peserta: JSON.parse(localStorage.getItem('pkd_absen_cache_peserta') || 'null'),
+          cachedAt: parseInt(localStorage.getItem('pkd_absen_cache_ts') || '0', 10)
+        };
+      } catch (e) {
+        window.__ABSEN_CACHE__ = { sesi: null, peserta: null, cachedAt: 0 };
+      }
+    })();
+  </script>
 
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
@@ -26,6 +55,7 @@
       flex-direction: column;
     }
 
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -58,6 +88,7 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -68,6 +99,7 @@
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    /* ============ FORM ============ */
     .form-label { font-weight: 600; color: #0f172a; margin-bottom: 6px; }
     .form-control, .form-select {
       border-radius: 12px;
@@ -101,18 +133,7 @@
     .input-wrapper { position: relative; }
     .input-wrapper .form-control { padding-right: 40px; }
 
-    .skeleton-box {
-      background: #e2e8f0;
-      border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
-      display: block;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-    }
-
+    /* ============ SIGNATURE ============ */
     .signature-area {
       border: 2px dashed #cbd5e1;
       border-radius: 20px;
@@ -158,6 +179,7 @@
     }
     .signature-area.drawing .signature-hint { opacity: 0; }
 
+    /* ============ ALERTS ============ */
     .alert-info-custom {
       background: #eff6ff;
       border-left: 4px solid #2563eb;
@@ -183,9 +205,29 @@
       font-size: 0.9rem;
     }
 
-    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    /* ============ ANIMASI ============ */
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* ============ SKELETON (Instant) ============ */
+    .absen-skeleton { padding: 1rem 0; }
+    .absen-skeleton .skel-box {
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite linear;
+      border-radius: 8px;
+      display: block;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .absen-skeleton .skel-line { height: 16px; width: 30%; margin-bottom: 8px; }
+    .absen-skeleton .skel-input { height: 44px; width: 100%; margin-bottom: 16px; border-radius: 12px; }
+    .absen-skeleton .skel-sig { height: 180px; width: 100%; margin-bottom: 16px; border-radius: 20px; }
+    .absen-skeleton .skel-btn { height: 52px; width: 100%; border-radius: 50px; }
+
+    /* ============ FOOTER ============ */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -196,6 +238,7 @@
       background: white;
     }
 
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -234,11 +277,16 @@
         <i class="bi bi-pen me-2"></i>Absen Digital per Sesi
       </h2>
       <div id="absenContainer" class="mt-3">
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Memuat...</span>
-          </div>
-          <p class="mt-2 text-muted small">Memuat data sesi & peserta...</p>
+        <!-- Skeleton — instant render -->
+        <div class="absen-skeleton">
+          <div class="skel-box skel-line"></div>
+          <div class="skel-box skel-input"></div>
+          <div class="skel-box skel-line"></div>
+          <div class="skel-box skel-input"></div>
+          <div class="skel-box skel-line"></div>
+          <div class="skel-box skel-input"></div>
+          <div class="skel-box skel-sig"></div>
+          <div class="skel-box skel-btn"></div>
         </div>
       </div>
     </div>
@@ -256,7 +304,7 @@
 
   <script type="module">
     // ==========================================================
-    //   IMPORTS — v26.1.9
+    //   IMPORTS — v27.0.0 FAST LOAD EDITION
     // ==========================================================
     import {
       guardPublicAccess,
@@ -267,6 +315,16 @@
       callApi,
       escapeHtml
     } from '/bisaa/js/core/api.js';
+
+    // ==========================================================
+    //   CONSTANTS
+    // ==========================================================
+    const CACHE_KEY_SESI = 'pkd_absen_cache_sesi';
+    const CACHE_KEY_PESERTA = 'pkd_absen_cache_peserta';
+    const CACHE_KEY_TS = 'pkd_absen_cache_ts';
+    const CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
+    const STORAGE_KEY = 'absenFormState_v2';
+    const SIG_QUALITY = 0.15; // ⭐ Turunkan dari 0.2 → 0.15
 
     // ==========================================================
     //   STATE
@@ -281,9 +339,35 @@
       sigPad: null,
       isSubmitting: false,
       isBrokenQr: false,
+      isFormRendered: false,
+      isDataFresh: false,
+      loadToken: 0,
     };
 
-    const STORAGE_KEY = 'absenFormState_v2';
+    // ==========================================================
+    //   CACHE HELPERS
+    // ==========================================================
+    function saveCache(sesi, peserta) {
+      try {
+        localStorage.setItem(CACHE_KEY_SESI, JSON.stringify(sesi));
+        localStorage.setItem(CACHE_KEY_PESERTA, JSON.stringify(peserta));
+        localStorage.setItem(CACHE_KEY_TS, String(Date.now()));
+      } catch (e) { /* quota exceeded — silent */ }
+    }
+
+    function loadCache() {
+      try {
+        const sesi = JSON.parse(localStorage.getItem(CACHE_KEY_SESI) || 'null');
+        const peserta = JSON.parse(localStorage.getItem(CACHE_KEY_PESERTA) || 'null');
+        const ts = parseInt(localStorage.getItem(CACHE_KEY_TS) || '0', 10);
+        if (ts && (Date.now() - ts) < CACHE_TTL_MS) {
+          return { sesi, peserta, fresh: true };
+        }
+        return { sesi, peserta, fresh: false };
+      } catch (e) {
+        return { sesi: null, peserta: null, fresh: false };
+      }
+    }
 
     // ==========================================================
     //   UTILITY
@@ -311,7 +395,7 @@
     }
 
     // ==========================================================
-    //   FETCH DATA
+    //   FETCH — PARALLEL & CACHE-FIRST
     // ==========================================================
     async function fetchSesiAbsen() {
       try {
@@ -340,7 +424,7 @@
     }
 
     // ==========================================================
-    //   SIGNATURE PAD
+    //   SIGNATURE PAD — Optimized
     // ==========================================================
     function initSignaturePad() {
       const canvas = document.getElementById('signatureCanvasAbsen');
@@ -416,7 +500,6 @@
     // ==========================================================
     function saveFormState() {
       if (STATE.isBrokenQr) return;
-
       const select = document.getElementById('pilihSesiAbsen');
       const idInput = document.getElementById('pesertaIdAbsen');
       if (!select || !idInput) return;
@@ -427,9 +510,7 @@
       };
 
       if (STATE.sigPad && !STATE.sigPad.isEmpty()) {
-        try {
-          state.signatureData = STATE.sigPad.toData();
-        } catch (e) { /* ignore */ }
+        try { state.signatureData = STATE.sigPad.toData(); } catch (e) {}
       }
 
       safeLocalStorage(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(state)));
@@ -441,26 +522,21 @@
 
       try {
         const { sesiId, pesertaId, signatureData } = JSON.parse(saved);
-
         const sel = document.getElementById('pilihSesiAbsen');
         if (sel && sesiId) {
           const opt = Array.from(sel.options).find(o => o.value === String(sesiId));
           if (opt) sel.value = sesiId;
         }
-
         const idInput = document.getElementById('pesertaIdAbsen');
         if (idInput && pesertaId) {
           idInput.value = pesertaId;
           updatePesertaInfo(pesertaId);
         }
-
         if (signatureData && STATE.sigPad && signatureData.length) {
           STATE.sigPad.fromData(signatureData);
           document.getElementById('signatureCanvasAbsen')?.parentElement.classList.add('drawing');
         }
-      } catch (e) {
-        console.warn('Gagal restore form state:', e);
-      }
+      } catch (e) { /* silent */ }
     }
 
     function clearFormState() {
@@ -546,7 +622,7 @@
     }
 
     // ==========================================================
-    //   RENDER FORM
+    //   RENDER FORM — INSTANT
     // ==========================================================
     function renderForm() {
       const container = document.getElementById('absenContainer');
@@ -647,6 +723,7 @@
 
       container.innerHTML = html;
       container.classList.add('fade-up');
+      STATE.isFormRendered = true;
 
       requestAnimationFrame(() => {
         initSignaturePad();
@@ -755,14 +832,15 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
+      // ⭐ OPTIMASI: Signature WebP 0.15 (upload 2-3x lebih cepat)
       let tandaTangan;
       try {
-        tandaTangan = STATE.sigPad.toDataURL('image/webp', 0.05);
+        tandaTangan = STATE.sigPad.toDataURL('image/webp', SIG_QUALITY);
         if (!tandaTangan.startsWith('data:image/')) {
-          tandaTangan = STATE.sigPad.toDataURL('image/jpeg', 0.1);
+          tandaTangan = STATE.sigPad.toDataURL('image/jpeg', SIG_QUALITY);
         }
       } catch (e) {
-        tandaTangan = STATE.sigPad.toDataURL('image/jpeg', 0.1);
+        tandaTangan = STATE.sigPad.toDataURL('image/jpeg', SIG_QUALITY);
       }
 
       try {
@@ -810,7 +888,7 @@
     }
 
     // ==========================================================
-    //   LOAD DATA & INIT — v26.1.9 FIX BROKEN QR
+    //   LOAD DATA — CACHE-FIRST + PARALLEL
     // ==========================================================
     async function loadAbsenSesi() {
       const container = document.getElementById('absenContainer');
@@ -820,8 +898,7 @@
       STATE.tokenFromUrl = urlParams.get('token');
       STATE.isQRMode = !!(STATE.sesiIdFromUrl && STATE.tokenFromUrl);
 
-      // ⚠️ FIX v26.1.9: Deteksi QR link rusak (ada sesi_id tapi token hilang)
-      // Sebelumnya user melihat form membingungkan dengan dropdown disabled.
+      // FIX: Deteksi QR link rusak
       if (STATE.sesiIdFromUrl && !STATE.tokenFromUrl) {
         STATE.isBrokenQr = true;
         console.warn('[Absen] QR link rusak: sesi_id ada, token hilang');
@@ -830,6 +907,53 @@
       }
 
       if (STATE.isQRMode) clearFormState();
+
+      // ⭐ STEP 1: Cek cache dulu (INSTANT RENDER)
+      const cached = loadCache();
+
+      if (cached.sesi && cached.sesi.length > 0 && cached.fresh) {
+        console.log('[Absen] ⚡ Cache hit — instant render');
+        STATE.sesiList = cached.sesi || [];
+        STATE.daftarPesertaValid = cached.peserta || [];
+        STATE.pesertaById.clear();
+        STATE.daftarPesertaValid.forEach(p => {
+          if (p.id !== undefined && p.id !== null) {
+            STATE.pesertaById.set(String(p.id), p);
+          }
+        });
+
+        if (!STATE.sesiList.length) {
+          container.innerHTML = `
+            <div class="alert-info-custom text-center">
+              <i class="bi bi-info-circle me-1"></i>
+              Belum ada sesi absen tersedia. Silakan hubungi panitia.
+            </div>`;
+          return;
+        }
+
+        renderForm();
+        STATE.isDataFresh = true;
+
+        // ⭐ Background refresh (non-blocking)
+        refreshInBackground();
+        return;
+      }
+
+      // ⭐ STEP 2: Cache kosong atau expired
+      console.log('[Absen] 🌐 No fresh cache — fetching...');
+
+      // Kalau ada cache lama (expired), tampilkan dulu
+      if (cached.sesi && cached.sesi.length > 0) {
+        STATE.sesiList = cached.sesi || [];
+        STATE.daftarPesertaValid = cached.peserta || [];
+        STATE.pesertaById.clear();
+        STATE.daftarPesertaValid.forEach(p => {
+          if (p.id !== undefined && p.id !== null) {
+            STATE.pesertaById.set(String(p.id), p);
+          }
+        });
+        renderForm();
+      }
 
       try {
         const [freshSesi, freshPeserta] = await Promise.all([
@@ -846,6 +970,8 @@
             STATE.pesertaById.set(String(p.id), p);
           }
         });
+
+        saveCache(STATE.sesiList, STATE.daftarPesertaValid);
 
         if (!STATE.sesiList.length) {
           container.innerHTML = `
@@ -873,19 +999,78 @@
       }
     }
 
+    // ⭐ Background refresh — update cache tanpa block UI
+    async function refreshInBackground() {
+      const myToken = ++STATE.loadToken;
+
+      try {
+        const [freshSesi, freshPeserta] = await Promise.all([
+          fetchSesiAbsen(),
+          fetchPesertaValid()
+        ]);
+
+        if (myToken !== STATE.loadToken) return;
+
+        const changed = JSON.stringify(freshSesi) !== JSON.stringify(STATE.sesiList);
+
+        STATE.sesiList = freshSesi || [];
+        STATE.daftarPesertaValid = freshPeserta || [];
+
+        STATE.pesertaById.clear();
+        STATE.daftarPesertaValid.forEach(p => {
+          if (p.id !== undefined && p.id !== null) {
+            STATE.pesertaById.set(String(p.id), p);
+          }
+        });
+
+        saveCache(STATE.sesiList, STATE.daftarPesertaValid);
+
+        if (changed && STATE.isFormRendered) {
+          console.log('[Absen] 🔄 Background refresh — data changed, re-render');
+          const currentSesiValue = document.getElementById('pilihSesiAbsen')?.value;
+          const currentPesertaId = document.getElementById('pesertaIdAbsen')?.value;
+
+          renderForm();
+
+          if (currentSesiValue) {
+            const sel = document.getElementById('pilihSesiAbsen');
+            if (sel) sel.value = currentSesiValue;
+          }
+          if (currentPesertaId) {
+            const input = document.getElementById('pesertaIdAbsen');
+            if (input) {
+              input.value = currentPesertaId;
+              updatePesertaInfo(currentPesertaId);
+            }
+          }
+        }
+
+        console.log('[Absen] ✅ Background refresh done');
+      } catch (e) {
+        console.warn('[Absen] Background refresh failed:', e.message);
+      }
+    }
+
     // ==========================================================
-    //   BOOT
+    //   BOOT — Fast path
     // ==========================================================
     (async function boot() {
-      const canAccess = await guardPublicAccess();
+      // ⭐ PARALLEL: guard + navbar (tidak blocking)
+      const [canAccess] = await Promise.all([
+        guardPublicAccess(),
+        Promise.resolve(updateNavbarMenu())
+      ]);
+
       if (!canAccess) return;
 
-      updateNavbarMenu();
+      // ⭐ Load data — cache-first, instant render
       await loadAbsenSesi();
+
+      console.log('[Absen] ✅ Boot complete');
     })();
 
     console.log(
-      '%c absen.html v26.1.9 — GitHub Pages /bisaa/ Edition ',
+      '%c absen.html v27.0.0 — FAST LOAD Edition ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>

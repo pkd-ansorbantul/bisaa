@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="dns-prefetch" href="https://script.google.com">
   <link rel="dns-prefetch" href="https://drive.google.com">
 
@@ -32,11 +33,23 @@
   <!-- GLOBAL THEME -->
   <link rel="stylesheet" href="/bisaa/assets/theme.css">
 
-  <!-- LIBRARIES (deferred) -->
+  <!-- ============================================================
+       LIBRARIES (deferred) — v28.1.0 FULL STACK
+       ============================================================ -->
+  <!-- Bootstrap JS -->
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Signature Pad (untuk absen & TTD) -->
   <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+  <!-- QR Generator (untuk ID Card & QR Sesi) -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+  <!-- HTML2Canvas (untuk download ID Card & Screenshot) -->
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <!-- ⭐ NEW: HTML5-QRCode (untuk scan QR di Dashboard) -->
+  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <!-- EARLY THEME APPLY (anti-FOUC) -->
   <script>
@@ -318,6 +331,93 @@
       flex-shrink: 0;
       font-size: 0.68rem;
     }
+
+    /* ⭐ Scanner Modal Styling (Fix) */
+    #scanQrModal .modal-body {
+      background: #0f172a;
+      color: #fff;
+      padding: 1.5rem;
+    }
+    #scannerVideoContainer {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #scannerVideoContainer video {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 16px;
+    }
+    #scannerVideoContainer canvas {
+      display: none !important;
+    }
+    .scanner-status {
+      text-align: center;
+      margin-top: 1rem;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      min-height: 1.5rem;
+    }
+    #manualSessionContainer {
+      display: none;
+      margin-bottom: 1rem;
+    }
+    #manualSessionContainer label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    #manualSessionContainer select {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      display: block;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 0.6rem 1rem;
+    }
+    .scan-stop-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+    }
+    #modeSelectionContainer {
+      color: #fff;
+    }
+    #modeSelectionContainer .btn-check + label {
+      border-radius: 50px;
+      padding: 0.3rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* Scanner loading state */
+    .scanner-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 1rem;
+    }
+    .scanner-loading .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      color: #3b82f6;
+    }
   </style>
 </head>
 <body>
@@ -420,10 +520,6 @@
 
   <!-- ============================================================
        MODAL: MENU LAINNYA (MOBILE BOTTOM NAV)
-       ============================================================
-       ✅ v28.0.0: Angkatan PKD menggantikan Alumni & Lokasi PKD
-       ✅ Filter Angkatan PKD dari API getAngkatanPKDWithCount
-       ✅ Semua link pakai data-route untuk router
        ============================================================ -->
   <div class="modal fade" id="moreMenuModal" tabindex="-1" aria-labelledby="moreMenuModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -596,7 +692,9 @@
     </div>
   </div>
 
-  <!-- MODAL: KEYBOARD SHORTCUTS -->
+  <!-- ============================================================
+       MODAL: KEYBOARD SHORTCUTS
+       ============================================================ -->
   <div class="modal fade" id="shortcutsModal" tabindex="-1"
        aria-labelledby="shortcutsModalLabel" aria-hidden="true"
        data-bs-backdrop="true" data-bs-keyboard="true">
@@ -771,7 +869,7 @@
   <!-- ==================== ENTRY POINT SPA ==================== -->
   <script type="module" src="/bisaa/js/app.js"></script>
 
-  <!-- ==================== INLINE FALLBACK v28.0.0 ==================== -->
+  <!-- ==================== INLINE FALLBACK v28.1.0 ==================== -->
   <script type="module">
     'use strict';
 
@@ -895,7 +993,7 @@
     });
 
     // ============================================================
-    //   POLL APP LOADED FLAG (max 40 attempts × 500ms = 20s)
+    //   POLL APP LOADED FLAG
     // ============================================================
     (function pollAppLoaded() {
       let attempts = 0;
@@ -944,13 +1042,12 @@
     })();
 
     // ============================================================
-    //   ⭐ v28.0.0: LOAD ANGKATAN PKD KE MODAL LAINNYA
+    //   LOAD ANGKATAN PKD KE MODAL LAINNYA
     // ============================================================
     async function loadAngkatanPKDToModal() {
       const container = document.getElementById('modalAngkatanPKDList');
       if (!container) return;
 
-      // Loading state
       container.innerHTML = `
         <div class="col-12 text-muted small text-center py-2">
           <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -973,14 +1070,12 @@
           return;
         }
 
-        // Ambil filter yang aktif
         let currentFilter = '';
         try { currentFilter = sessionStorage.getItem('pkd_filter_lokasi') || ''; }
         catch (e) { /* silent */ }
 
         let html = '';
 
-        // Opsi "Semua Angkatan"
         const isAllActive = currentFilter === '';
         html += `
           <div class="col-12">
@@ -993,7 +1088,6 @@
             </button>
           </div>`;
 
-        // Setiap angkatan
         list.forEach(function (angkatan) {
           const total = parseInt(angkatan.totalPeserta) || 0;
           const pending = parseInt(angkatan.totalPending) || 0;
@@ -1016,12 +1110,10 @@
 
         container.innerHTML = html;
 
-        // Bind click handlers
         container.querySelectorAll('[data-pkd-filter]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             const filter = btn.dataset.pkdFilter || '';
 
-            // Simpan ke sessionStorage (key lama: pkd_filter_lokasi)
             try {
               if (filter) {
                 sessionStorage.setItem('pkd_filter_lokasi', filter);
@@ -1032,25 +1124,21 @@
 
             console.log('[app.html] 🎯 Filter Angkatan PKD:', filter || '(semua)');
 
-            // Update visual state
             container.querySelectorAll('[data-pkd-filter]').forEach(b => {
               const isThis = b === btn;
               b.classList.toggle('btn-primary', isThis);
               b.classList.toggle('btn-outline-primary', isThis && !b.dataset.pkdFilter);
               b.classList.toggle('btn-outline-info', !isThis && b.dataset.pkdFilter);
-              // Remove old check icon
               const oldIcon = b.querySelector('.bi-check-circle-fill');
               if (oldIcon) oldIcon.remove();
             });
 
-            // Close modal
             const modalEl = document.getElementById('moreMenuModal');
             if (modalEl && typeof bootstrap !== 'undefined') {
               const inst = bootstrap.Modal.getInstance(modalEl);
               if (inst) inst.hide();
             }
 
-            // Navigate ke peserta
             setTimeout(function () {
               window.dispatchEvent(new CustomEvent('router:navigate', {
                 detail: { hash: '#/admin/peserta' },
@@ -1074,7 +1162,6 @@
       }
     }
 
-    // Helper escapeHtml (fallback)
     function escapeHtmlLocal(str) {
       if (str == null) return '';
       return String(str)
@@ -1085,14 +1172,10 @@
         .replace(/'/g, '&#039;');
     }
 
-    // Hook: load saat modal dibuka
     document.getElementById('moreMenuModal')?.addEventListener('show.bs.modal', function () {
       loadAngkatanPKDToModal();
     });
 
-    // ============================================================
-    //   LISTEN: lokasi-updated → reload modal (kalau sedang terbuka)
-    // ============================================================
     window.addEventListener('pkd:lokasi-updated', function () {
       const modalEl = document.getElementById('moreMenuModal');
       if (modalEl && modalEl.classList.contains('show')) {
@@ -1125,7 +1208,7 @@
     });
 
     console.log(
-      '%c app.html inline v28.0.0 — Angkatan PKD Edition ',
+      '%c app.html inline v28.1.0 — Connection + QR Scanner Edition ',
       'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>
