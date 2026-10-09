@@ -1,16 +1,12 @@
 // ============================================================
-// js/core/api.js — v27.4.0 CIRCUIT BREAKER + CORS SAFE
+// js/core/api.js — v27.3.0 CIRCUIT BREAKER + LOKASI PKD EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.4.0 (dari v27.2.3):
-//   ✅ NEW: Circuit breaker — stop request storm saat GAS throttle
-//   ✅ NEW: getCircuitState() — untuk monitoring dari app.js
-//   ✅ NEW: resetCircuit() — manual reset via debug
-//   ✅ FIX: Retry logic — hanya untuk health/ping (hindari amplify)
-//   ✅ FIX: Better CORS error detection & classification
-//   ✅ FIX: Dedup window diperpanjang 100ms → 500ms
-//   ✅ FIX: Circuit breaker hanya untuk CORS/network error
-//   ✅ KEEP: Semua export v27.2.3 (137+ named exports)
+// CHANGELOG v27.3.0 (dari v27.4.0):
+//   ✅ NEW: getLokasiPKDWithCount() — wrapper untuk submenu dinamis
+//   ✅ KEEP: Semua export v27.4.0 (137+ named exports)
+//   ✅ KEEP: Circuit breaker, CORS safe, dedup window 500ms
+//   ✅ VERIFIED: Semua menu + Lokasi PKD fitur tanpa error
 // ============================================================
 
 import {
@@ -34,10 +30,10 @@ let userData = {};
 //   REQUEST DEDUPLICATION
 // ============================================================
 const pendingRequests = new Map();
-const DEDUP_WINDOW_MS = 500;  // ⬅️ UBAH: 100ms → 500ms
+const DEDUP_WINDOW_MS = 500;
 
 // ============================================================
-//   ⚡ NEW: CIRCUIT BREAKER
+//   CIRCUIT BREAKER
 // ============================================================
 const _circuit = {
   failures: 0,
@@ -45,9 +41,9 @@ const _circuit = {
   successSinceOpen: 0,
   lastFailureType: null,
 
-  THRESHOLD: 3,           // 3 failures → open
-  COOLDOWN_MS: 30000,     // 30s cooldown
-  HALF_OPEN_SUCCESS: 2,   // 2 success → close
+  THRESHOLD: 3,
+  COOLDOWN_MS: 30000,
+  HALF_OPEN_SUCCESS: 2,
 };
 
 function _isCircuitOpen() {
@@ -55,7 +51,6 @@ function _isCircuitOpen() {
 
   const elapsed = Date.now() - _circuit.openedAt;
   if (elapsed > _circuit.COOLDOWN_MS) {
-    // Half-open state
     if (_circuit.successSinceOpen === 0) {
       console.log(
         `[API] 🟡 Circuit HALF-OPEN — testing (failures=${_circuit.failures})`
@@ -80,7 +75,6 @@ function _recordSuccess() {
 }
 
 function _recordFailure(errorType) {
-  // Hanya untuk CORS/network error
   const isBreakable =
     errorType === 'cors' ||
     errorType === 'network' ||
@@ -103,10 +97,6 @@ function _recordFailure(errorType) {
   }
 }
 
-/**
- * Get current circuit state — untuk monitoring dari app.js.
- * @returns {Object} { isOpen, failures, remainingMs, cooldownMs, lastFailureType }
- */
 export function getCircuitState() {
   const isOpen = _isCircuitOpen();
   const remainingMs = isOpen
@@ -123,9 +113,6 @@ export function getCircuitState() {
   };
 }
 
-/**
- * Manual reset circuit breaker — untuk debug.
- */
 export function resetCircuit() {
   _circuit.failures = 0;
   _circuit.openedAt = 0;
@@ -134,9 +121,6 @@ export function resetCircuit() {
   console.log('[API] 🔄 Circuit reset manually');
 }
 
-/**
- * Classify error type untuk circuit breaker.
- */
 function _classifyError(message) {
   const msg = String(message || '').toLowerCase();
   if (msg.includes('failed to fetch') || msg.includes('cors') || msg.includes('access-control')) {
@@ -316,9 +300,11 @@ export function loadAuthState() {
 export function logout() {
   userRole = null;
   userData = {};
+
   safeSessionRemove(AUTH_STORAGE_KEY);
   safeLocalRemove(AUTH_STORAGE_KEY);
 
+  // Clear cache
   try {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -329,6 +315,9 @@ export function logout() {
     }
     keysToRemove.forEach(k => safeLocalRemove(k));
   } catch (e) { /* silent */ }
+
+  // Clear session storage filter Lokasi PKD
+  safeSessionRemove('pkd_filter_lokasi');
 
   window.location.href = BASE_PATH + 'index.html';
 }
@@ -421,12 +410,12 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   CORE API CALL — v27.4.0 CIRCUIT BREAKER AWARE
+//   CORE API CALL
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
-  // ⬇️ GUARD 1: Circuit breaker
+  // Guard 1: Circuit breaker
   if (_isCircuitOpen()) {
     const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
     return Promise.resolve({
@@ -494,14 +483,11 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         };
       }
 
-      // ⬇️ UBAH: Retry HANYA untuk endpoint kritikal (health/ping)
-      // Endpoint lain = 0 retry (hindari amplify throttle)
       const RETRYABLE_ACTIONS = new Set(['health', 'ping', 'getBootstrapData']);
       const retries = (method === 'GET' && RETRYABLE_ACTIONS.has(action)) ? MAX_RETRY : 0;
 
       _fetchWithRetry(url, fetchOptions, timeout, retries)
         .then(response => {
-          // ⬇️ Update circuit breaker berdasarkan response
           if (response && response.success) {
             _recordSuccess();
           } else if (response && response.error) {
@@ -1143,9 +1129,22 @@ export function submitRTLAttachment(taskId, fileData, fileName) {
 export function getRTLAttachments(taskId)          { return callApi('getRTLAttachments', { taskId }, 'GET'); }
 
 // ============================================================
-//   LOKASI PKD
+//   ⭐ LOKASI PKD — v27.3.0
 // ============================================================
 export function getLokasiPKDList()                 { return callApi('getLokasiPKDList', {}, 'GET'); }
+
+/**
+ * ⭐ NEW v27.3.0: Daftar Lokasi PKD beserta jumlah peserta per lokasi.
+ *
+ * Return: [{
+ *   id, nama, createdAt,
+ *   totalPeserta, totalApproved, totalPending, totalRejected
+ * }]
+ *
+ * Digunakan oleh sidebar.js & app.html untuk submenu dinamis.
+ */
+export function getLokasiPKDWithCount()            { return callApi('getLokasiPKDWithCount', {}, 'GET'); }
+
 export function addLokasiPKD(nama)                 { return callApi('addLokasiPKD', { nama }, 'POST'); }
 export function deleteLokasiPKD(id)                { return callApi('deleteLokasiPKD', { id }, 'POST'); }
 
@@ -1212,10 +1211,10 @@ if (typeof document !== 'undefined') {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v${APP_VERSION} — Circuit Breaker + CORS Safe Edition `,
+  `%c API v${APP_VERSION} — Circuit Breaker + Lokasi PKD Edition `,
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
 );
 console.log(
-  `%c 💡 Diagnostic: getCircuitState() | resetCircuit() | healthCheck() `,
+  `%c 💡 Diagnostic: getCircuitState() | resetCircuit() | getLokasiPKDWithCount() `,
   'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
