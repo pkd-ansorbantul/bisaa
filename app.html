@@ -262,6 +262,64 @@
         font-size: 1rem;
       }
     }
+
+    /* ============================================================
+       ⭐ NEW v27.3.0: Lokasi PKD Filter Modal Styles
+       ============================================================ */
+    #moreMenuModal .pkd-filter-section {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 0.85rem;
+      border: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] #moreMenuModal .pkd-filter-section {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    #moreMenuModal .pkd-filter-section h6 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    [data-theme="dark"] #moreMenuModal .pkd-filter-section h6 {
+      color: #94a3b8;
+    }
+    #moreMenuModal .pkd-filter-btn {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      border-radius: 10px !important;
+      transition: all 0.2s ease;
+    }
+    #moreMenuModal .pkd-filter-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+    #moreMenuModal .pkd-filter-btn .pkd-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      text-align: left;
+      min-width: 0;
+    }
+    #moreMenuModal .pkd-filter-btn .badge {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+    }
   </style>
 </head>
 <body>
@@ -282,8 +340,12 @@
     <div class="preload-progress" aria-live="polite"></div>
   </div>
 
-  <!-- SPA SHELL -->
+  <!-- ================= SPA SHELL ================= -->
   <div class="admin-wrapper" id="appShell">
+
+    <!-- Backdrop untuk mobile drawer -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
     <div id="sidebar-container" aria-label="Navigasi utama"></div>
     <div id="bottom-nav-container" aria-label="Navigasi mobile"></div>
 
@@ -294,6 +356,33 @@
       tabindex="-1"
       aria-label="Konten halaman"
     >
+      <!-- Mobile topbar dengan hamburger -->
+      <div class="mobile-topbar" id="mobileTopbar">
+        <button
+          type="button"
+          class="mobile-topbar-btn"
+          id="mobileMenuBtn"
+          aria-label="Buka menu navigasi"
+          title="Menu"
+        >
+          <i class="bi bi-list" aria-hidden="true"></i>
+        </button>
+
+        <div class="mobile-topbar-title" id="mobileTopbarTitle">
+          PKD GP Ansor
+        </div>
+
+        <button
+          type="button"
+          class="mobile-topbar-btn"
+          id="mobileThemeBtn"
+          aria-label="Toggle tema"
+          title="Toggle tema"
+        >
+          <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+        </button>
+      </div>
+
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Memuat halaman...</span>
@@ -331,7 +420,13 @@
     </div>
   </div>
 
-  <!-- MODAL: MENU LAINNYA (MOBILE) -->
+  <!-- ============================================================
+       MODAL: MENU LAINNYA (MOBILE BOTTOM NAV)
+       ============================================================
+       ✅ v27.3.0: Tambah section "Filter per Lokasi PKD"
+       ✅ Semua link pakai data-route untuk router
+       ✅ Tombol Lokasi PKD: set sessionStorage + navigate
+       ============================================================ -->
   <div class="modal fade" id="moreMenuModal" tabindex="-1" aria-labelledby="moreMenuModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow-lg">
@@ -342,6 +437,25 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
         <div class="modal-body p-4">
+
+          <!-- ⭐ NEW v27.3.0: FILTER PER LOKASI PKD -->
+          <div class="pkd-filter-section mb-3">
+            <h6>
+              <i class="bi bi-geo-alt-fill text-primary" aria-hidden="true"></i>
+              Filter per Lokasi PKD
+            </h6>
+            <div id="modalLokasiPKDList" class="row g-2">
+              <!-- Diisi dinamis oleh JS -->
+              <div class="col-12 text-muted small text-center py-2">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Memuat lokasi…
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ============ MENU UTAMA (18 items) ============ -->
           <div class="row g-2">
             <div class="col-6">
               <a href="#/admin/dashboard" class="btn btn-outline-primary w-100" data-route="#/admin/dashboard">
@@ -455,6 +569,7 @@
 
           <hr class="my-3">
 
+          <!-- ============ ACTIONS ============ -->
           <div class="row g-2">
             <div class="col-6">
               <button
@@ -654,7 +769,7 @@
   <!-- ==================== ENTRY POINT SPA ==================== -->
   <script type="module" src="/bisaa/js/app.js"></script>
 
-  <!-- ==================== INLINE FALLBACK v27.2.1 ==================== -->
+  <!-- ==================== INLINE FALLBACK v27.3.0 ==================== -->
   <script type="module">
     'use strict';
 
@@ -685,7 +800,7 @@
     });
 
     // ============================================================
-    //   ⚡ v27.2.1: FALLBACK TIMER 20s (toleransi cold start GAS)
+    //   FALLBACK TIMER 20s
     // ============================================================
     const fallbackTimer = setTimeout(function () {
       if (window.__pkdAppLoaded) return;
@@ -704,7 +819,7 @@
         +     '<i class="bi bi-arrow-clockwise"></i> Muat Ulang'
         +   '</button>'
         + '</div>';
-    }, 20000); // ✅ 20 detik
+    }, 20000);
 
     window.addEventListener('pkd:app-loaded', () => {
       clearTimeout(fallbackTimer);
@@ -754,8 +869,16 @@
       const detail = e && e.detail;
       if (!detail || !detail.path) return;
       const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
-      const title = path.charAt(0).toUpperCase() + path.slice(1);
-      document.title = title + ' · PKD GP Ansor Bantul';
+      const title = path.split(' ').map(w =>
+        w.charAt(0).toUpperCase() + w.slice(1)
+      ).join(' ');
+
+      document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
+
+      const topbarTitle = document.getElementById('mobileTopbarTitle');
+      if (topbarTitle) {
+        topbarTitle.textContent = title || 'PKD GP Ansor';
+      }
     });
 
     // ============================================================
@@ -786,8 +909,220 @@
       }, 500);
     })();
 
+    // ============================================================
+    //   DEBUG: More menu modal fallback wiring
+    // ============================================================
+    (function ensureMoreMenuModalWorks() {
+      setTimeout(() => {
+        const btn = document.getElementById('moreMenuBtn');
+        const modal = document.getElementById('moreMenuModal');
+
+        if (!btn || !modal) {
+          console.warn('[app.html] #moreMenuBtn atau #moreMenuModal tidak ditemukan');
+          return;
+        }
+
+        if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+          console.warn('[app.html] Bootstrap Modal tidak tersedia');
+          return;
+        }
+
+        const hasToggle = btn.getAttribute('data-bs-toggle') === 'modal';
+        if (hasToggle) {
+          console.log('[app.html] ✅ More menu modal: Bootstrap native handle aktif');
+        } else {
+          console.log('[app.html] ⚠️ Fallback bind manual for more menu');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const inst = bootstrap.Modal.getOrCreateInstance(modal);
+            inst.show();
+          });
+        }
+      }, 800);
+    })();
+
+    // ============================================================
+    //   ⭐ NEW v27.3.0: LOAD LOKASI PKD KE MODAL LAINNYA
+    // ============================================================
+    async function loadLokasiPKDToModal() {
+      const container = document.getElementById('modalLokasiPKDList');
+      if (!container) return;
+
+      // Loading state
+      container.innerHTML = `
+        <div class="col-12 text-muted small text-center py-2">
+          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Memuat lokasi…
+        </div>`;
+
+      try {
+        const { getLokasiPKDWithCount } = await import('/bisaa/js/core/api.js');
+        const res = await getLokasiPKDWithCount();
+        const list = (res && res.success && Array.isArray(res.data))
+          ? res.data
+          : (Array.isArray(res) ? res : []);
+
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="col-12 text-muted small text-center py-2">
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+              Belum ada Lokasi PKD
+            </div>`;
+          return;
+        }
+
+        // Ambil filter yang aktif
+        let currentFilter = '';
+        try { currentFilter = sessionStorage.getItem('pkd_filter_lokasi') || ''; }
+        catch (e) { /* silent */ }
+
+        let html = '';
+
+        // Opsi "Semua Lokasi"
+        const isAllActive = currentFilter === '';
+        html += `
+          <div class="col-12">
+            <button type="button"
+                    class="btn ${isAllActive ? 'btn-primary' : 'btn-outline-primary'} pkd-filter-btn"
+                    data-pkd-filter="">
+              <i class="bi bi-collection" aria-hidden="true"></i>
+              <span class="pkd-name">Semua Lokasi</span>
+              ${isAllActive ? '<i class="bi bi-check-circle-fill" aria-hidden="true"></i>' : ''}
+            </button>
+          </div>`;
+
+        // Setiap lokasi
+        list.forEach(function (lokasi) {
+          const total = parseInt(lokasi.totalPeserta) || 0;
+          const pending = parseInt(lokasi.totalPending) || 0;
+          const badgeClass = pending > 0 ? 'bg-warning text-dark' : 'bg-info text-dark';
+          const isActive = currentFilter === lokasi.nama;
+
+          html += `
+            <div class="col-6">
+              <button type="button"
+                      class="btn ${isActive ? 'btn-primary' : 'btn-outline-info'} pkd-filter-btn"
+                      data-pkd-filter="${escapeHtmlLocal(lokasi.nama)}"
+                      title="${escapeHtmlLocal(lokasi.nama)} — ${total} peserta">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                <span class="pkd-name">${escapeHtmlLocal(lokasi.nama)}</span>
+                <span class="badge ${badgeClass}">${total}</span>
+              </button>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+
+        // Bind click handlers
+        container.querySelectorAll('[data-pkd-filter]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const filter = btn.dataset.pkdFilter || '';
+
+            // Simpan ke sessionStorage
+            try {
+              if (filter) {
+                sessionStorage.setItem('pkd_filter_lokasi', filter);
+              } else {
+                sessionStorage.removeItem('pkd_filter_lokasi');
+              }
+            } catch (e) { /* silent */ }
+
+            console.log('[app.html] 🎯 Filter Lokasi PKD:', filter || '(semua)');
+
+            // Update visual state
+            container.querySelectorAll('[data-pkd-filter]').forEach(b => {
+              const isThis = b === btn;
+              b.classList.toggle('btn-primary', isThis);
+              b.classList.toggle('btn-outline-primary', isThis && !b.dataset.pkdFilter);
+              b.classList.toggle('btn-outline-info', !isThis && b.dataset.pkdFilter);
+              // Remove old check icon
+              const oldIcon = b.querySelector('.bi-check-circle-fill');
+              if (oldIcon) oldIcon.remove();
+            });
+
+            // Close modal
+            const modalEl = document.getElementById('moreMenuModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+              const inst = bootstrap.Modal.getInstance(modalEl);
+              if (inst) inst.hide();
+            }
+
+            // Navigate ke peserta
+            setTimeout(function () {
+              window.dispatchEvent(new CustomEvent('router:navigate', {
+                detail: { hash: '#/admin/peserta' },
+              }));
+            }, 250);
+          });
+        });
+
+      } catch (e) {
+        console.warn('[app.html] loadLokasiPKDToModal:', e);
+        container.innerHTML = `
+          <div class="col-12 text-danger small text-center py-2">
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+            Gagal memuat.
+            <a href="#" id="retryLokasiModalBtn" class="text-decoration-underline">Coba lagi</a>
+          </div>`;
+        document.getElementById('retryLokasiModalBtn')?.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          loadLokasiPKDToModal();
+        });
+      }
+    }
+
+    // Helper escapeHtml (fallback)
+    function escapeHtmlLocal(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Hook: load saat modal dibuka
+    document.getElementById('moreMenuModal')?.addEventListener('show.bs.modal', function () {
+      loadLokasiPKDToModal();
+    });
+
+    // ============================================================
+    //   LISTEN: lokasi-updated → reload modal (kalau sedang terbuka)
+    // ============================================================
+    window.addEventListener('pkd:lokasi-updated', function () {
+      const modalEl = document.getElementById('moreMenuModal');
+      if (modalEl && modalEl.classList.contains('show')) {
+        loadLokasiPKDToModal();
+      }
+    });
+
+    // ============================================================
+    //   MOBILE LOGOUT (di modal)
+    // ============================================================
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function () {
+      if (!confirm('Yakin ingin logout dari sistem?')) return;
+
+      const modalEl = document.getElementById('moreMenuModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      }
+
+      setTimeout(() => {
+        import('/bisaa/js/core/api.js')
+          .then(mod => {
+            if (mod && typeof mod.logout === 'function') mod.logout();
+            else window.location.href = '/bisaa/index.html';
+          })
+          .catch(() => {
+            window.location.href = '/bisaa/index.html';
+          });
+      }, 200);
+    });
+
     console.log(
-      '%c app.html inline v27.2.1 — Fallback + Shortcuts Mount ',
+      '%c app.html inline v27.3.0 — Lokasi PKD Filter Edition ',
       'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>

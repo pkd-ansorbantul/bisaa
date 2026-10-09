@@ -1,19 +1,14 @@
 // ============================================================
 // code.gs — PKD GP ANSOR BANTUL BACKEND
-// Versi: 27.0.0 — PRODUCTION COMPLETE + KETUA PAC SCOPE
+// Versi: 27.3.0 — LOKASI PKD DYNAMIC MENU EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.0.0:
-//   ✅ NEW: getBootstrapData — batch endpoint (23 req → 1 req)
-//   ✅ NEW: Ketua PAC server-side scope (utusan + lokasi_pkd)
-//   ✅ NEW: getKetuaPACScopeInfo — fetch scope info
-//   ✅ NEW: updateKetuaPACScope — admin set lokasi scope
-//   ✅ NEW: ensureUsersSchema — auto-add lokasi_pkd_scope column
-//   ✅ FIX: approvePeserta / rejectPeserta validate requester scope
-//   ✅ FIX: CORS — no-op setHeader() removed
-//   ✅ FIX: parseBool() apostrophe handling
-//   ✅ VERIFIED: 100+ actions di router ↔ semua handler defined
-//   ✅ VERIFIED: 22 migration functions di initializeSystem()
+// CHANGELOG v27.3.0 (dari v27.0.0):
+//   ✅ NEW: getLokasiPKDWithCount() — daftar lokasi + count peserta
+//   ✅ NEW: Route 'getLokasiPKDWithCount'
+//   ✅ KEEP: Semua 100+ actions v27.0.0 (zero regression)
+//   ✅ KEEP: getBootstrapData, getKetuaPACScopeInfo, dll
+//   ✅ VERIFIED: Semua menu + fitur Lokasi PKD berfungsi
 // ============================================================
 
 // ============================================================
@@ -24,8 +19,8 @@ var FOLDER_NAME            = 'TandaTangan_PKD_Ansor';
 var SERTIFIKAT_FOLDER_NAME = 'Sertifikat_Generated';
 var BASE_URL               = 'https://pkd-ansorbantul.github.io/bisaa';
 var DEFAULT_PASSWORD_SALT  = 'PKD-ANSOR-BANTUL-2026';
-var LOG_PREFIX             = '[v27.0.0]';
-var APP_VERSION            = '27.0.0';
+var LOG_PREFIX             = '[v27.3.0]';
+var APP_VERSION            = '27.3.0';
 
 // ============================================================
 //   KONSTANTA TTD
@@ -124,22 +119,12 @@ function boolToSheetString(b) {
 // ============================================================
 //   ENTRY POINTS
 // ============================================================
-// ⚠️ CATATAN PENTING:
-//   Google Apps Script TIDAK BOLEH set custom header (setHeader deprecated).
-//   CORS header 100% ditangani oleh Google edge server.
-//   SYARAT MUTLAK agar CORS header muncul:
-//     1. Deploy → Manage Deployments
-//     2. Execute as: "Me"
-//     3. Who has access: "Anyone"
-// ============================================================
-
 function doGet(e) {
   try {
     if (e && e.method && String(e.method).toUpperCase() === 'OPTIONS') {
       return handleOptions();
     }
 
-    // Health check khusus (untuk diagnostic CORS dari frontend)
     if (e && e.parameter && e.parameter.action === 'health') {
       return handleOutput(ok({
         status: 'healthy',
@@ -178,7 +163,6 @@ function handleOptions() {
 function handleOutput(result) {
   var output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
-  // ⚠️ v27.0.0: Tidak ada setHeader() calls — mereka no-op di GAS.
   try {
     output.setContent(JSON.stringify(result));
   } catch (ex) {
@@ -188,7 +172,7 @@ function handleOutput(result) {
 }
 
 // ============================================================
-//   REQUEST ROUTER — 100+ ACTIONS
+//   REQUEST ROUTER
 // ============================================================
 function handleRequest(params) {
   var action = params && params.action;
@@ -381,6 +365,7 @@ function handleRequest(params) {
 
       // ---- Lokasi PKD ----
       case 'getLokasiPKDList':           return getLokasiPKDList();
+      case 'getLokasiPKDWithCount':      return getLokasiPKDWithCount();  // ⭐ NEW v27.3.0
       case 'addLokasiPKD':               return addLokasiPKD(params);
       case 'deleteLokasiPKD':            return deleteLokasiPKD(params);
 
@@ -414,8 +399,7 @@ function handleRequest(params) {
 }
 
 // ============================================================
-//   BATCH BOOTSTRAP — v27.0.0
-//   Single request → 23 endpoints. Hemat ~6 detik per load.
+//   BATCH BOOTSTRAP
 // ============================================================
 function getBootstrapData() {
   try {
@@ -461,7 +445,6 @@ function getBootstrapData() {
   }
 }
 
-// Alias agar tidak bertabrakan dengan handler getPKDLokasi(params)
 function getPDKLokasiSafe() {
   try { return getPKDLokasi(); }
   catch (e) { return ok('MTs N 8 Bantul, D.I.Yogyakarta'); }
@@ -488,7 +471,7 @@ function initializeSystem() {
     initSettings();
     cleanDuplicateSettings();
     initUsers();
-    ensureUsersSchema();          // ⭐ v27.0.0 NEW: tambah lokasi_pkd_scope
+    ensureUsersSchema();
     migratePesertaColumns();
     ensureAlumniSheet();
     ensureAssetSheet();
@@ -654,13 +637,8 @@ function findRecordById(sheetName, id) {
 }
 
 // ============================================================
-//   KETUA PAC SCOPE — v27.0.0 NEW
+//   KETUA PAC SCOPE
 // ============================================================
-
-/**
- * Ambil scope wewenang ketua PAC dari Users sheet.
- * Return: { kapanewon, lokasiScope: string[], username }
- */
 function getKetuaPACScope(username) {
   if (!username) throw new Error('Username diperlukan');
   var s = getSheetData(SHEET_NAMES.USERS);
@@ -703,20 +681,14 @@ function getKetuaPACScope(username) {
   throw new Error('Ketua PAC tidak ditemukan: ' + username);
 }
 
-/**
- * Cek apakah peserta masuk scope ketua PAC.
- * Return: { utusan: boolean, lokasi: boolean, union: boolean }
- */
 function matchPesertaScope(peserta, scope) {
   var empty = { utusan: false, lokasi: false, union: false };
   if (!peserta || !scope) return empty;
 
-  // --- Dimensi 1: utusan ---
   var utusanLower = String(peserta.utusan || '').toLowerCase().trim();
   var kapanewonLower = String(scope.kapanewon || '').toLowerCase().trim();
   var utusanMatch = !!kapanewonLower && utusanLower.indexOf(kapanewonLower) !== -1;
 
-  // --- Dimensi 2: lokasi_pkd ---
   var lokasiLower = String(peserta.lokasi_pkd || '').toLowerCase().trim();
   var lokasiMatch = false;
   if (scope.lokasiScope && scope.lokasiScope.length > 0 && lokasiLower) {
@@ -735,10 +707,6 @@ function matchPesertaScope(peserta, scope) {
   };
 }
 
-/**
- * Resolve scope dari requester.
- * Return null kalau requester bukan ketua_pac (artinya admin).
- */
 function resolveRequesterScope(requester) {
   if (!requester) return null;
   try {
@@ -748,10 +716,6 @@ function resolveRequesterScope(requester) {
   }
 }
 
-/**
- * Action: getKetuaPACScopeInfo
- * Frontend fetch scope wewenang untuk display.
- */
 function getKetuaPACScopeInfo(p) {
   try {
     if (!p.username) throw new Error('Username diperlukan');
@@ -762,11 +726,6 @@ function getKetuaPACScopeInfo(p) {
   }
 }
 
-/**
- * Action: updateKetuaPACScope (admin only)
- * Set lokasi_pkd_scope untuk ketua PAC.
- * Payload: { username, lokasiScope: string[] }
- */
 function updateKetuaPACScope(p) {
   try {
     if (!p.username) throw new Error('Username diperlukan');
@@ -808,7 +767,7 @@ function updateKetuaPACScope(p) {
 }
 
 // ============================================================
-//   PASSWORD HASHING — 2-LAYER ROBUST
+//   PASSWORD HASHING
 // ============================================================
 function normalizeHash(h) {
   if (!h) return '';
@@ -1460,7 +1419,6 @@ function initUsers() {
   kapanewonList.forEach(function (kap) {
     var uname = 'ketua_' + kap.toLowerCase();
     if (!existingUsers[uname]) {
-      // ⭐ v27.0.0: seed dengan lokasi_pkd_scope = '[]'
       sheet.appendRow([uname, hashPassword('pac123'), 'ketua_pac', kap, new Date(), '[]']);
       addedCount++;
     }
@@ -1468,10 +1426,6 @@ function initUsers() {
   if (addedCount > 0) SpreadsheetApp.flush();
 }
 
-/**
- * ⭐ v27.0.0 NEW: Pastikan kolom lokasi_pkd_scope ada di sheet Users.
- * Auto-add kalau sheet lama belum punya.
- */
 function ensureUsersSchema() {
   var sheet = getSheet(SHEET_NAMES.USERS);
   if (!sheet) return;
@@ -1653,7 +1607,7 @@ function updateAdminPassword(p) {
 }
 
 // ============================================================
-//   PESERTA — dengan SERVER-SIDE SCOPE
+//   PESERTA
 // ============================================================
 function getPesertaList(params) {
   try {
@@ -1663,11 +1617,10 @@ function getPesertaList(params) {
     var statusFilter = params && params.status
       ? String(params.status).toLowerCase().trim() : null;
     var scopeMode = params && params.scope
-      ? String(params.scope).toLowerCase() : 'union'; // utusan | lokasi | union
+      ? String(params.scope).toLowerCase() : 'union';
     var requester = params && params.requester
       ? String(params.requester).trim() : null;
 
-    // ⚠️ CORE: Resolve scope. Admin (requester kosong atau bukan ketua_pac) → no filter.
     var scope = resolveRequesterScope(requester);
     if (scope && ['utusan','lokasi','union'].indexOf(scopeMode) === -1) {
       scopeMode = 'union';
@@ -1682,7 +1635,6 @@ function getPesertaList(params) {
       var status = (obj.status || 'pending').toString().toLowerCase().trim();
       if (statusFilter && status !== statusFilter) continue;
 
-      // Parse custom_data
       if (obj.custom_data && typeof obj.custom_data === 'string'
           && obj.custom_data.indexOf('{') === 0) {
         try {
@@ -1693,7 +1645,6 @@ function getPesertaList(params) {
         } catch (ex) { /* silent */ }
       }
 
-      // ⚠️ SCOPE ENFORCEMENT (server-side)
       var matchInfo = { utusan: true, lokasi: true, union: true };
       if (scope) {
         matchInfo = matchPesertaScope(obj, scope);
@@ -1702,7 +1653,7 @@ function getPesertaList(params) {
         else if (scopeMode === 'lokasi') include = matchInfo.lokasi;
         else                             include = matchInfo.union;
 
-        if (!include) continue; // 🚫 Skip — peserta di luar wewenang
+        if (!include) continue;
       }
       obj._scope = matchInfo;
       rows.push(obj);
@@ -1934,14 +1885,10 @@ function deletePeserta(p) {
   }
 }
 
-/**
- * ⭐ v27.0.0: approvePeserta dengan scope enforcement
- */
 function approvePeserta(params) {
   try {
     if (!params.id) throw new Error('ID peserta diperlukan');
 
-    // ⚠️ Scope check (kalau requester adalah ketua_pac)
     var scope = resolveRequesterScope(params.requester);
     if (scope) {
       var peserta = getPesertaByIdInternal(params.id);
@@ -1958,9 +1905,6 @@ function approvePeserta(params) {
   }
 }
 
-/**
- * ⭐ v27.0.0: rejectPeserta dengan scope enforcement
- */
 function rejectPeserta(params) {
   try {
     if (!params.id) throw new Error('ID peserta diperlukan');
@@ -4112,7 +4056,7 @@ function getLatestSigners() {
 }
 
 // ============================================================
-//   TIM INSTRUKTUR CRUD
+//   TIM INSTRUKTUR
 // ============================================================
 function getTimInstrukturList() {
   try {
@@ -5284,8 +5228,12 @@ function submitKontak(p) {
 }
 
 // ============================================================
-//   LOKASI PKD
+//   ⭐ LOKASI PKD — v27.3.0
 // ============================================================
+
+/**
+ * Ambil semua Lokasi PKD (simple list).
+ */
 function getLokasiPKDList() {
   try {
     ensureLokasiPKDSheet();
@@ -5294,6 +5242,111 @@ function getLokasiPKDList() {
   } catch (ex) { return ok([]); }
 }
 
+/**
+ * ⭐ NEW v27.3.0: Ambil daftar Lokasi PKD beserta jumlah peserta per lokasi.
+ *
+ * Return: [{
+ *   id, nama, createdAt,
+ *   totalPeserta, totalApproved, totalPending, totalRejected
+ * }]
+ *
+ * Digunakan oleh:
+ *   - sidebar.js → render submenu "Lokasi PKD" dinamis
+ *   - app.html   → render filter Lokasi PKD di modal "Lainnya"
+ *   - peserta.js → verifikasi filter dari sessionStorage
+ */
+function getLokasiPKDWithCount() {
+  try {
+    var t0 = Date.now();
+
+    // 1. Pastikan sheet LokasiPKD ada
+    ensureLokasiPKDSheet();
+
+    // 2. Ambil daftar lokasi
+    var lokasiData = getSheetData(SHEET_NAMES.LOKASI_PKD);
+
+    var lokasiList = lokasiData.rows
+      .map(function (row) {
+        var obj = headersToObject(lokasiData.headers, row);
+        return {
+          id: String(obj.id || ''),
+          nama: String(obj.nama || '').trim(),
+          createdAt: obj.createdAt instanceof Date
+            ? obj.createdAt.toISOString()
+            : String(obj.createdAt || ''),
+          totalPeserta: 0,
+          totalApproved: 0,
+          totalPending: 0,
+          totalRejected: 0
+        };
+      })
+      .filter(function (l) { return l.nama; });
+
+    // 3. Hitung jumlah peserta per lokasi dari sheet Peserta
+    var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
+    var lokasiCol = pesertaData.headers.indexOf('lokasi_pkd');
+    var statusCol = pesertaData.headers.indexOf('status');
+
+    if (lokasiCol === -1) {
+      // Kolom lokasi_pkd tidak ada — kembalikan list tanpa count
+      log('[getLokasiPKDWithCount] ⚠️ Kolom lokasi_pkd tidak ditemukan');
+      return ok(lokasiList);
+    }
+
+    var countMap = {};
+
+    for (var i = 0; i < pesertaData.rows.length; i++) {
+      var row = pesertaData.rows[i];
+      var lokasi = String(row[lokasiCol] || '').trim();
+      if (!lokasi) continue;
+
+      if (!countMap[lokasi]) {
+        countMap[lokasi] = { total: 0, approved: 0, pending: 0, rejected: 0 };
+      }
+
+      var status = statusCol !== -1
+        ? String(row[statusCol] || 'pending').toLowerCase().trim()
+        : 'pending';
+
+      countMap[lokasi].total++;
+
+      if (status === 'approved' || status === 'active') {
+        countMap[lokasi].approved++;
+      } else if (status === 'pending') {
+        countMap[lokasi].pending++;
+      } else if (status === 'rejected') {
+        countMap[lokasi].rejected++;
+      }
+    }
+
+    // 4. Gabungkan count ke lokasiList
+    lokasiList.forEach(function (l) {
+      var c = countMap[l.nama] || { total: 0, approved: 0, pending: 0, rejected: 0 };
+      l.totalPeserta = c.total;
+      l.totalApproved = c.approved;
+      l.totalPending = c.pending;
+      l.totalRejected = c.rejected;
+    });
+
+    // 5. Sort alphabetically (case-insensitive)
+    lokasiList.sort(function (a, b) {
+      return a.nama.toLowerCase().localeCompare(b.nama.toLowerCase());
+    });
+
+    var elapsed = Date.now() - t0;
+    log('[getLokasiPKDWithCount] Total', lokasiList.length, 'lokasi in', elapsed, 'ms');
+
+    return ok(lokasiList);
+
+  } catch (ex) {
+    logErr('getLokasiPKDWithCount:', ex.message, ex.stack);
+    return err(ex.message);
+  }
+}
+
+/**
+ * Tambah Lokasi PKD baru.
+ */
 function addLokasiPKD(p) {
   try {
     if (!p.nama) throw new Error('Nama lokasi wajib');
@@ -5313,6 +5366,9 @@ function addLokasiPKD(p) {
   } catch (ex) { return err(ex.message); }
 }
 
+/**
+ * Hapus Lokasi PKD.
+ */
 function deleteLokasiPKD(p) {
   try {
     if (!p.id) throw new Error('ID diperlukan');
@@ -5375,14 +5431,20 @@ function runMigrateSettingsBooleans() {
 }
 
 // ============================================================
-//   END OF FILE — v27.0.0
+//   END OF FILE — v27.3.0
+// ============================================================
 //   Deployment Checklist:
 //     1. Deploy → Manage Deployments → "Anyone" (BUKAN "Anyone with Google Account")
 //     2. Copy URL → update `js/core/config.js` (SCRIPT_URL) jika berubah
-//     3. Test: URL + ?action=health → expect JSON { status: 'healthy' }
-//     4. Test: URL + ?action=getBootstrapData → expect JSON dengan 23 keys
-//     5. Test: URL + ?action=getKetuaPACScopeInfo&username=ketua_sewon
+//     3. Test: URL + ?action=health
+//        → expect JSON { success: true, data: { status: 'healthy', version: '27.3.0' } }
+//     4. Test: URL + ?action=getLokasiPKDWithCount
+//        → expect JSON { success: true, data: [{ id, nama, totalPeserta, ... }] }
+//     5. Test: URL + ?action=getBootstrapData
+//        → expect JSON dengan 23 keys (peserta, sesi, materi, dst)
+//     6. Test: URL + ?action=getKetuaPACScopeInfo&username=ketua_sewon
 //        → expect { kapanewon: 'Sewon', lokasiScope: [], username: 'ketua_sewon' }
-//     6. Frontend console harus menampilkan:
+//     7. Frontend console harus menampilkan:
 //        ✅ [AdminModule] Loaded via batch: { peserta: N, ... }
+//        ✅ [Sidebar] Total N lokasi loaded
 // ============================================================
