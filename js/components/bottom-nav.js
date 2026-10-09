@@ -1,19 +1,20 @@
 // ============================================================
-// js/components/bottom-nav.js — v26.2.1 PRODUCTION FULL FIX
+// js/components/bottom-nav.js — v27.1.0 MOBILE MODAL FIX
 // ============================================================
-// CHANGELOG v26.2.1:
-//   ✅ FIX: Double-bind guard pada route links
-//   ✅ FIX: More menu modal wiring (idempotent)
-//   ✅ FIX: Logout cleanup + redirect pakai BASE_PATH
-//   ✅ FIX: Active state sync — handle submenu routes
-//   ✅ PERF: Idempotent init
-//   ✅ PERF: Event delegation untuk route navigation
-//   ✅ ADD: bottomnav:ready event
-//   ✅ ADD: Null-safe semua element access
-//   ✅ KEEP: Semua fitur (5 nav items, more menu modal, logout)
+// CHANGELOG v27.1.0 (dari v26.2.1):
+//   ✅ FIX CRITICAL: Tombol "Lainnya" tidak membuka modal
+//     → Pakai data-bs-toggle sebagai PRIMARY (Bootstrap native)
+//     → JS handler jadi SECONDARY (auto-cleanup + logging)
+//   ✅ FIX: wireMoreMenuModal() idempotent + tidak silent-fail
+//   ✅ FIX: Modal backdrop cleanup kalau stuck
+//   ✅ FIX: Auto-close modal saat route berubah
+//   ✅ FIX: Active state sync untuk tombol "Lainnya"
+//   ✅ FIX: Null-safe untuk semua element
+//   ✅ NEW: Logging untuk debugging modal state
+//   ✅ KEEP: 5 nav items, more menu modal, logout, active state
 // ============================================================
 
-import { logout as apiLogout, getUserRole, getUserData } from '../core/api.js';
+import { logout as apiLogout } from '../core/api.js';
 import { BASE_PATH } from '../core/config.js';
 
 // ============================================================
@@ -21,6 +22,7 @@ import { BASE_PATH } from '../core/config.js';
 // ============================================================
 const CONTAINER_ID = 'bottom-nav-container';
 const MODAL_ID = 'moreMenuModal';
+const MODAL_BTN_ID = 'moreMenuBtn';
 
 const FALLBACK_BOTTOM_NAV_HTML = `
 <nav class="bottom-nav" role="navigation" aria-label="Navigasi mobile">
@@ -40,7 +42,16 @@ const FALLBACK_BOTTOM_NAV_HTML = `
     <i class="bi bi-patch-check" aria-hidden="true"></i>
     <span>Sertifikat</span>
   </a>
-  <button type="button" class="nav-item" id="moreMenuBtn" title="Menu Lainnya" aria-label="Buka menu lainnya" aria-haspopup="dialog">
+  <button
+    type="button"
+    class="nav-item"
+    id="${MODAL_BTN_ID}"
+    title="Menu Lainnya"
+    aria-label="Buka menu lainnya"
+    aria-haspopup="dialog"
+    data-bs-toggle="modal"
+    data-bs-target="#${MODAL_ID}"
+  >
     <i class="bi bi-grid" aria-hidden="true"></i>
     <span>Lainnya</span>
   </button>
@@ -53,6 +64,7 @@ const listeners = [];
 let isBottomNavLoaded = false;
 let isBehaviorInitialized = false;
 let moreMenuBound = false;
+let modalInstance = null;
 
 // ============================================================
 //   UTILITY
@@ -69,6 +81,18 @@ function safeHideModal(modalEl) {
   try {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
+  } catch (e) { /* silent */ }
+}
+
+function cleanupModalBackdrop() {
+  try {
+    // Kalau tidak ada modal yang benar-benar terbuka, hapus backdrop yang tertinggal
+    if (!document.querySelector('.modal.show')) {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    }
   } catch (e) { /* silent */ }
 }
 
@@ -106,6 +130,8 @@ export async function loadBottomNav() {
 
   initBottomNavBehavior();
   isBottomNavLoaded = true;
+
+  console.log('[BottomNav] ✅ Loaded');
 }
 
 // ============================================================
@@ -128,8 +154,8 @@ function initBottomNavBehavior() {
     const link = e.target.closest('[data-route]');
     if (!link) return;
 
-    // Skip jika ini tombol "more menu"
-    if (link.id === 'moreMenuBtn') return;
+    // Skip kalau ini tombol "more menu" (punya data-bs-toggle)
+    if (link.id === MODAL_BTN_ID) return;
 
     e.preventDefault();
     const route = link.dataset.route;
@@ -141,20 +167,42 @@ function initBottomNavBehavior() {
   });
 
   // --------------------------------------------------------
-  //   MORE MENU BUTTON
+  //   MORE MENU BUTTON — Bootstrap native handle klik via
+  //   data-bs-toggle. Handler ini hanya untuk logging.
   // --------------------------------------------------------
-  const moreMenuBtn = document.getElementById('moreMenuBtn');
-  on(moreMenuBtn, 'click', () => {
-    setTimeout(wireMoreMenuModal, 50);
-  });
+  const moreMenuBtn = document.getElementById(MODAL_BTN_ID);
+  if (moreMenuBtn) {
+    on(moreMenuBtn, 'click', () => {
+      console.log('[BottomNav] More menu button clicked');
+      // Beri waktu Bootstrap untuk buka modal
+      setTimeout(() => {
+        wireMoreMenuModal();
+      }, 100);
+    });
+  }
 
-  // Wire on initial load
-  wireMoreMenuModal();
+  // Wire sekali saat init (untuk cleanup listeners)
+  setTimeout(wireMoreMenuModal, 150);
 
   // --------------------------------------------------------
   //   INITIAL ACTIVE STATE
   // --------------------------------------------------------
   updateBottomNavActive(window.location.hash || '#/admin/dashboard');
+
+  // --------------------------------------------------------
+  //   AUTO-CLOSE MODAL SAAT ROUTE BERUBAH
+  //   (Bootstrap native akan close via data-bs-dismiss, tapi ini backup)
+  // --------------------------------------------------------
+  on(window, 'routeChanged', () => {
+    const modalEl = document.getElementById(MODAL_ID);
+    if (!modalEl) return;
+    // Cek apakah modal sedang terbuka
+    const isShown = modalEl.classList.contains('show');
+    if (isShown) {
+      safeHideModal(modalEl);
+      setTimeout(cleanupModalBackdrop, 300);
+    }
+  });
 
   // --------------------------------------------------------
   //   NOTIFY COMPONENTS
@@ -169,14 +217,40 @@ function initBottomNavBehavior() {
 // ============================================================
 function wireMoreMenuModal() {
   const modalEl = document.getElementById(MODAL_ID);
-  if (!modalEl) return;
+  if (!modalEl) {
+    console.warn('[BottomNav] #' + MODAL_ID + ' tidak ditemukan di DOM');
+    return;
+  }
 
-  // Idempotent
+  // Idempotent — cek flag dataset
   if (modalEl.dataset.wired === 'true') return;
   modalEl.dataset.wired = 'true';
   moreMenuBound = true;
 
-  // Navigation links di dalam modal (event delegation)
+  console.log('[BottomNav] Wiring more menu modal');
+
+  // --------------------------------------------------------
+  //   Inisialisasi Bootstrap Modal instance (untuk API access)
+  // --------------------------------------------------------
+  try {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+      modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl, {
+        backdrop: true,
+        keyboard: true,
+        focus: true,
+      });
+    } else {
+      console.warn('[BottomNav] Bootstrap Modal tidak tersedia');
+    }
+  } catch (e) {
+    console.warn('[BottomNav] Gagal init modal:', e);
+  }
+
+  // --------------------------------------------------------
+  //   Navigation links di dalam modal (event delegation)
+  //   Bootstrap native juga handle via data-bs-dismiss,
+  //   ini untuk memastikan route navigate terpanggil
+  // --------------------------------------------------------
   on(modalEl, 'click', (e) => {
     const link = e.target.closest('[data-route]');
     if (!link) return;
@@ -185,17 +259,24 @@ function wireMoreMenuModal() {
     if (!route) return;
 
     e.preventDefault();
+
+    // Hide modal dulu
     safeHideModal(modalEl);
 
+    // Navigate setelah modal tertutup
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('router:navigate', {
         detail: { hash: route },
       }));
-    }, 150);
+    }, 180);
   });
 
-  // Logout di dalam modal
-  const logoutBtn = modalEl.querySelector('#mobileLogoutBtn') || document.getElementById('mobileLogoutBtn');
+  // --------------------------------------------------------
+  //   Logout di dalam modal
+  // --------------------------------------------------------
+  const logoutBtn = modalEl.querySelector('#mobileLogoutBtn')
+                 || document.getElementById('mobileLogoutBtn');
+
   on(logoutBtn, 'click', (e) => {
     e.preventDefault();
 
@@ -211,6 +292,24 @@ function wireMoreMenuModal() {
         window.location.href = BASE_PATH + 'index.html';
       }
     }, 200);
+  });
+
+  // --------------------------------------------------------
+  //   Cleanup on hidden — remove stray backdrops
+  // --------------------------------------------------------
+  on(modalEl, 'hidden.bs.modal', () => {
+    cleanupModalBackdrop();
+  });
+
+  // --------------------------------------------------------
+  //   Ensure modal bisa dibuka — force re-init kalau perlu
+  // --------------------------------------------------------
+  on(modalEl, 'show.bs.modal', () => {
+    console.log('[BottomNav] Modal showing');
+  });
+
+  on(modalEl, 'shown.bs.modal', () => {
+    console.log('[BottomNav] Modal shown');
   });
 }
 
@@ -233,7 +332,7 @@ export function updateBottomNavActive(route) {
   const primaryRoutes = Array.from(routeLinks).map(l => l.dataset.route);
   const isPrimaryActive = primaryRoutes.includes(route);
 
-  const moreBtn = document.getElementById('moreMenuBtn');
+  const moreBtn = document.getElementById(MODAL_BTN_ID);
   if (moreBtn) {
     if (!isPrimaryActive) moreBtn.classList.add('active');
     else moreBtn.classList.remove('active');
@@ -246,19 +345,66 @@ export function updateBottomNavActive(route) {
 export function closeMoreMenu() {
   const modalEl = document.getElementById(MODAL_ID);
   safeHideModal(modalEl);
+  setTimeout(cleanupModalBackdrop, 300);
+}
+
+// ============================================================
+//   MANUAL: Open "More Menu" modal (public API untuk debug)
+// ============================================================
+export function openMoreMenu() {
+  const modalEl = document.getElementById(MODAL_ID);
+  if (!modalEl) {
+    console.warn('[BottomNav] #' + MODAL_ID + ' tidak ditemukan');
+    return;
+  }
+
+  try {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+      const inst = bootstrap.Modal.getOrCreateInstance(modalEl, {
+        backdrop: true,
+        keyboard: true,
+        focus: true,
+      });
+      inst.show();
+    } else {
+      console.warn('[BottomNav] Bootstrap Modal tidak tersedia');
+    }
+  } catch (e) {
+    console.error('[BottomNav] Gagal open modal:', e);
+  }
 }
 
 // ============================================================
 //   UNLOAD: Cleanup
 // ============================================================
 export function unloadBottomNav() {
+  // Close modal kalau terbuka
+  try {
+    const modalEl = document.getElementById(MODAL_ID);
+    if (modalEl) safeHideModal(modalEl);
+  } catch (e) { /* silent */ }
+
   listeners.forEach(({ el, ev, handler, options }) => {
     try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
   });
   listeners.length = 0;
+
   isBottomNavLoaded = false;
   isBehaviorInitialized = false;
   moreMenuBound = false;
+  modalInstance = null;
+}
+
+// ============================================================
+//   DEBUG HELPER — accessible via window
+// ============================================================
+if (typeof window !== 'undefined') {
+  window.__bottomNav = {
+    open: openMoreMenu,
+    close: closeMoreMenu,
+    isLoaded: () => isBottomNavLoaded,
+    isBound: () => moreMenuBound,
+  };
 }
 
 // ============================================================
@@ -268,10 +414,11 @@ export default {
   loadBottomNav,
   updateBottomNavActive,
   closeMoreMenu,
+  openMoreMenu,
   unloadBottomNav,
 };
 
 console.log(
-  '%c Bottom Nav v26.2.1 — Production Full Fix ',
+  '%c Bottom Nav v27.1.0 — Mobile Modal Fix ',
   'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

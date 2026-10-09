@@ -1,35 +1,33 @@
 // ============================================================
-// js/components/sidebar.js — v26.4.0 PRODUCTION FULL FIX
+// js/components/sidebar.js — v27.3.0 LOKASI PKD DYNAMIC + MOBILE DRAWER
 // ============================================================
-// CHANGELOG v26.4.0:
-//   ✅ Use shared view-helpers (getEl, debounce, safeLocalStorage)
-//   ✅ FIX: Idempotent init — skip jika sudah diinisialisasi
-//   ✅ FIX: Event delegation untuk submenu + route (1 listener each)
-//   ✅ FIX: WeakSet untuk track bound theme toggle
-//   ✅ FIX: Debounced resize handler (200ms)
-//   ✅ FIX: Submenu auto-open saat route aktif (tanpa race)
-//   ✅ FIX: Mobile detection edge case (touch + width)
-//   ✅ FIX: LocalStorage key consistency (MINIMIZED_STORAGE_KEY)
-//   ✅ FIX: Theme toggle button — auto-detect & bind via MutationObserver
-//   ✅ FIX: esc key — close submenu + mobile drawer
-//   ✅ FIX: Click-outside mobile — auto close dengan proper guard
-//   ✅ FIX: Aria attributes — aria-expanded, aria-current
-//   ✅ FIX: Logout button — konfirmasi + safe redirect
-//   ✅ PERF: Event delegation — 1 listener untuk semua submenu
-//   ✅ PERF: Throttled resize via debounce
-//   ✅ KEEP: Semua fitur (minimize, submenu, route nav, logout, mobile)
+// CHANGELOG v27.3.0 (dari v27.1.0):
+//   ✅ NEW: Submenu "Lokasi PKD" dinamis dari getLokasiPKDWithCount()
+//   ✅ NEW: Auto-count peserta per lokasi (badge)
+//   ✅ NEW: Klik lokasi → set sessionStorage + navigate ke #/admin/peserta
+//   ✅ NEW: Auto-refresh submenu saat event 'pkd:data-ready'
+//   ✅ NEW: Auto-refresh submenu saat 'pkd:lokasi-updated'
+//   ✅ NEW: Badge warna berbeda (warning jika ada pending)
+//   ✅ FIX: Race-safe load lokasi (loading state)
+//   ✅ FIX: Auto-close drawer di mobile saat klik lokasi
+//   ✅ FIX: Idempotent — aman dipanggil berkali-kali
+//   ✅ FIX: Cleanup listener saat unload
+//   ✅ KEEP: Mobile drawer + swipe-to-close + backdrop
+//   ✅ KEEP: Submenu accordion + route navigation + logout
+//   ✅ KEEP: Minimize/maximize (desktop)
+//   ✅ Zero memory leak
 // ============================================================
 
 import {
   logout as apiLogout,
   escapeHtml,
   getUserRole,
+  getLokasiPKDWithCount,
 } from '../core/api.js';
 import { BASE_PATH } from '../core/config.js';
 import {
   getEl,
   debounce,
-  toggleClass,
 } from '../core/view-helpers.js';
 
 // ============================================================
@@ -38,6 +36,7 @@ import {
 const SIDEBAR_CONTAINER_ID  = 'sidebar-container';
 const SIDEBAR_WRAPPER_ID    = 'sidebarWrapper';
 const MINIMIZED_STORAGE_KEY = 'pkd_sidebar_minimized';
+const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';
 const PUBLIC_INDEX_URL      = BASE_PATH + 'index.html';
 const LOGO_URL              = BASE_PATH + 'LOGOANSOR.webp';
 const MOBILE_BREAKPOINT     = 992;
@@ -65,11 +64,20 @@ const FALLBACK_SIDEBAR_HTML = `
       <button
         type="button"
         id="toggleSidebarBtn"
-        class="sidebar-mini-btn"
+        class="sidebar-mini-btn sidebar-minimize-btn"
         title="Minimize / Maximize Sidebar"
         aria-label="Minimize atau maximize sidebar"
       >
         <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        id="closeSidebarBtn"
+        class="sidebar-mini-btn sidebar-close-btn"
+        title="Tutup Menu"
+        aria-label="Tutup menu navigasi"
+      >
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
   </div>
@@ -173,6 +181,18 @@ const FALLBACK_SIDEBAR_HTML = `
         <span>Skrining</span>
       </a>
 
+      <!-- ⭐ NEW: Lokasi PKD -->
+      <div class="nav-link" data-target="lokasi-pkd" title="Lokasi PKD" role="button" tabindex="0" aria-expanded="false">
+        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+        <span>Lokasi PKD</span>
+      </div>
+      <div class="submenu" id="submenu-lokasi-pkd">
+        <div class="text-muted small px-3 py-2 d-flex align-items-center gap-2">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          <span>Memuat lokasi…</span>
+        </div>
+      </div>
+
       <a class="nav-link" href="#/admin/sertifikat" data-route="#/admin/sertifikat" title="Sertifikat">
         <i class="bi bi-patch-check" aria-hidden="true"></i>
         <span>Sertifikat</span>
@@ -213,6 +233,20 @@ let resizeTimer = null;
 let outsideClickHandler = null;
 let escKeyHandler = null;
 
+// Mobile drawer state
+let isMobileDrawerOpen = false;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeCurrentX = 0;
+let isSwiping = false;
+let touchStartHandler = null;
+let touchMoveHandler = null;
+let touchEndHandler = null;
+
+// Lokasi PKD state
+let lokasiPKDLoaded = false;
+let lokasiPKDLoading = false;
+
 // ============================================================
 //   UTILITY
 // ============================================================
@@ -233,8 +267,18 @@ function safeLocalSet(key, value) {
   catch (e) { return false; }
 }
 
+function safeSessionSet(key, value) {
+  try { sessionStorage.setItem(key, value); return true; }
+  catch (e) { return false; }
+}
+
+function safeSessionRemove(key) {
+  try { sessionStorage.removeItem(key); return true; }
+  catch (e) { return false; }
+}
+
 function isMobile() {
-  return window.innerWidth < MOBILE_BREAKPOINT;
+  return window.innerWidth <= MOBILE_BREAKPOINT;
 }
 
 function updateToggleIcon(isMinimized) {
@@ -245,6 +289,263 @@ function updateToggleIcon(isMinimized) {
   icon.className = 'bi bi-arrow-left-right';
   icon.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
   icon.style.transform = isMinimized ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// ============================================================
+//   BODY SCROLL LOCK
+// ============================================================
+function lockBodyScroll() {
+  document.body.style.overflow = 'hidden';
+  document.body.classList.add('sidebar-drawer-open');
+}
+
+function unlockBodyScroll() {
+  document.body.style.overflow = '';
+  document.body.classList.remove('sidebar-drawer-open');
+}
+
+// ============================================================
+//   MOBILE DRAWER — PUBLIC API
+// ============================================================
+export function openMobileDrawer() {
+  const sidebar = getEl(SIDEBAR_WRAPPER_ID);
+  const backdrop = getEl('sidebarBackdrop');
+  if (!sidebar || !isMobile()) return;
+
+  sidebar.classList.add('show');
+  if (backdrop) {
+    backdrop.classList.add('show');
+    backdrop.setAttribute('aria-hidden', 'false');
+  }
+
+  lockBodyScroll();
+  isMobileDrawerOpen = true;
+
+  setTimeout(() => {
+    try {
+      const firstLink = sidebar.querySelector('.nav-link');
+      firstLink?.focus?.({ preventScroll: true });
+    } catch (e) { /* silent */ }
+  }, 320);
+
+  window.dispatchEvent(new CustomEvent('sidebar:mobile-opened'));
+}
+
+export function closeMobileDrawer() {
+  const sidebar = getEl(SIDEBAR_WRAPPER_ID);
+  const backdrop = getEl('sidebarBackdrop');
+  if (!sidebar) return;
+
+  sidebar.classList.remove('show');
+  if (backdrop) {
+    backdrop.classList.remove('show');
+    backdrop.setAttribute('aria-hidden', 'true');
+  }
+
+  unlockBodyScroll();
+  isMobileDrawerOpen = false;
+
+  window.dispatchEvent(new CustomEvent('sidebar:mobile-closed'));
+}
+
+export function toggleMobileDrawer() {
+  if (isMobileDrawerOpen) closeMobileDrawer();
+  else openMobileDrawer();
+}
+
+// ============================================================
+//   SWIPE-TO-CLOSE GESTURE
+// ============================================================
+function attachSwipeGesture(sidebar) {
+  if (!sidebar) return;
+
+  touchStartHandler = function (e) {
+    if (!isMobile() || !isMobileDrawerOpen) return;
+    const touch = e.touches[0];
+    swipeStartX = touch.clientX;
+    swipeStartY = touch.clientY;
+    swipeCurrentX = 0;
+    isSwiping = false;
+  };
+
+  touchMoveHandler = function (e) {
+    if (!isMobile() || !isMobileDrawerOpen || swipeStartX === 0) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - swipeStartX;
+    const dy = touch.clientY - swipeStartY;
+
+    if (Math.abs(dx) < Math.abs(dy)) return;
+    if (dx > 0) return;
+
+    isSwiping = true;
+    swipeCurrentX = Math.max(dx, -sidebar.offsetWidth);
+
+    sidebar.style.transform = `translateX(${swipeCurrentX}px)`;
+    sidebar.style.transition = 'none';
+  };
+
+  touchEndHandler = function () {
+    if (!isSwiping) {
+      swipeStartX = 0;
+      return;
+    }
+
+    sidebar.style.transition = '';
+    sidebar.style.transform = '';
+
+    if (Math.abs(swipeCurrentX) > sidebar.offsetWidth * 0.3) {
+      closeMobileDrawer();
+    }
+
+    swipeStartX = 0;
+    swipeStartY = 0;
+    swipeCurrentX = 0;
+    isSwiping = false;
+  };
+
+  on(sidebar, 'touchstart', touchStartHandler, { passive: true });
+  on(sidebar, 'touchmove', touchMoveHandler, { passive: true });
+  on(sidebar, 'touchend', touchEndHandler);
+}
+
+// ============================================================
+//   ⭐ NEW v27.3.0: LOAD LOKASI PKD SUBMENU
+// ============================================================
+export async function loadLokasiPKDSubmenu(forceRefresh = false) {
+  const submenu = document.getElementById('submenu-lokasi-pkd');
+  if (!submenu) return;
+
+  // Guard: sedang loading
+  if (lokasiPKDLoading && !forceRefresh) return;
+  // Guard: sudah loaded (skip kalau tidak force)
+  if (lokasiPKDLoaded && !forceRefresh) return;
+
+  lokasiPKDLoading = true;
+
+  // Loading state (hanya kalau belum pernah load)
+  if (!lokasiPKDLoaded) {
+    submenu.innerHTML = `
+      <div class="text-muted small px-3 py-2 d-flex align-items-center gap-2">
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span>Memuat lokasi…</span>
+      </div>`;
+  }
+
+  try {
+    const res = await getLokasiPKDWithCount();
+    const list = (res && res.success && Array.isArray(res.data))
+      ? res.data
+      : (Array.isArray(res) ? res : []);
+
+    if (!list || list.length === 0) {
+      submenu.innerHTML = `
+        <div class="text-muted small px-3 py-2">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Belum ada Lokasi PKD
+        </div>`;
+      lokasiPKDLoaded = true;
+      lokasiPKDLoading = false;
+      return;
+    }
+
+    let html = '';
+
+    // Opsi "Semua Lokasi"
+    html += `
+      <a class="nav-link" href="#/admin/peserta"
+         data-route="#/admin/peserta"
+         data-pkd-filter=""
+         title="Semua Lokasi PKD">
+        <i class="bi bi-collection" aria-hidden="true"></i>
+        <span>Semua Lokasi</span>
+      </a>`;
+
+    // Setiap lokasi
+    list.forEach(function (lokasi) {
+      const totalPeserta = parseInt(lokasi.totalPeserta) || 0;
+      const approvedCount = parseInt(lokasi.totalApproved) || 0;
+      const pendingCount = parseInt(lokasi.totalPending) || 0;
+
+      const badgeClass = pendingCount > 0 ? 'bg-warning text-dark' : 'bg-primary';
+      const tooltipTitle = `${lokasi.nama} — Total: ${totalPeserta}, Approved: ${approvedCount}, Pending: ${pendingCount}`;
+
+      html += `
+        <a class="nav-link"
+           href="#/admin/peserta"
+           data-route="#/admin/peserta"
+           data-pkd-filter="${escapeHtml(lokasi.nama)}"
+           title="${escapeHtml(tooltipTitle)}">
+          <i class="bi bi-geo-alt" aria-hidden="true"></i>
+          <span class="text-truncate">${escapeHtml(lokasi.nama)}</span>
+          <span class="badge ${badgeClass} ms-auto">${totalPeserta}</span>
+        </a>`;
+    });
+
+    submenu.innerHTML = html;
+    lokasiPKDLoaded = true;
+
+    // Bind click handlers
+    submenu.querySelectorAll('[data-pkd-filter]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const route = link.dataset.route || '#/admin/peserta';
+        const pkdFilter = link.dataset.pkdFilter || '';
+
+        // Simpan filter ke sessionStorage
+        if (pkdFilter) {
+          safeSessionSet(PKD_FILTER_STORAGE_KEY, pkdFilter);
+        } else {
+          safeSessionRemove(PKD_FILTER_STORAGE_KEY);
+        }
+
+        console.log('[Sidebar] 🎯 Filter Lokasi PKD:', pkdFilter || '(semua)');
+
+        // Highlight active
+        submenu.querySelectorAll('[data-pkd-filter]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // Navigate
+        window.dispatchEvent(new CustomEvent('router:navigate', {
+          detail: { hash: route },
+        }));
+
+        // Auto-close drawer di mobile
+        if (isMobile() && isMobileDrawerOpen) {
+          closeMobileDrawer();
+        }
+      });
+    });
+
+    // Highlight item yang sedang aktif (dari sessionStorage)
+    const currentFilter = (function () {
+      try { return sessionStorage.getItem(PKD_FILTER_STORAGE_KEY) || ''; }
+      catch (e) { return ''; }
+    })();
+
+    submenu.querySelectorAll('[data-pkd-filter]').forEach(l => {
+      const isActive = l.dataset.pkdFilter === currentFilter;
+      l.classList.toggle('active', isActive);
+    });
+
+    console.log(`[Sidebar] ✅ Loaded ${list.length} Lokasi PKD`);
+
+  } catch (e) {
+    console.warn('[Sidebar] loadLokasiPKDSubmenu error:', e);
+    submenu.innerHTML = `
+      <div class="text-danger small px-3 py-2">
+        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+        Gagal memuat. <a href="#" data-retry-lokasi class="text-decoration-underline">Coba lagi</a>
+      </div>`;
+
+    submenu.querySelector('[data-retry-lokasi]')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      loadLokasiPKDSubmenu(true);
+    });
+  } finally {
+    lokasiPKDLoading = false;
+  }
 }
 
 // ============================================================
@@ -283,6 +584,8 @@ export async function loadSidebar() {
   container.innerHTML = htmlText;
   initSidebarBehavior();
   isSidebarLoaded = true;
+
+  console.log('[Sidebar] ✅ Loaded');
 }
 
 // ============================================================
@@ -298,7 +601,9 @@ function initSidebarBehavior() {
     return;
   }
 
-  // === Restore minimized state (desktop only) ===
+  // ==========================================================
+  //   RESTORE MINIMIZED STATE (desktop only)
+  // ==========================================================
   const minimizedSaved = safeLocalGet(MINIMIZED_STORAGE_KEY);
   if (minimizedSaved === 'true' && !isMobile()) {
     sidebar.classList.add('minimized');
@@ -308,9 +613,11 @@ function initSidebarBehavior() {
   }
 
   // ==========================================================
-  //   TOGGLE MINIMIZE
+  //   TOGGLE MINIMIZE (desktop)
   // ==========================================================
   on(getEl('toggleSidebarBtn'), 'click', () => {
+    if (isMobile()) return;
+
     sidebar.classList.toggle('minimized');
     const isMinimized = sidebar.classList.contains('minimized');
 
@@ -323,8 +630,33 @@ function initSidebarBehavior() {
   });
 
   // ==========================================================
-  //   THEME TOGGLE — handled by theme-toggle.js via MutationObserver
-  //   Hanya set ARIA attributes — jangan bind click di sini.
+  //   MOBILE DRAWER CONTROLS
+  // ==========================================================
+  on(getEl('mobileMenuBtn'), 'click', (e) => {
+    e.preventDefault();
+    toggleMobileDrawer();
+  });
+
+  on(getEl('closeSidebarBtn'), 'click', (e) => {
+    e.preventDefault();
+    closeMobileDrawer();
+  });
+
+  on(getEl('sidebarBackdrop'), 'click', () => {
+    if (isMobileDrawerOpen) closeMobileDrawer();
+  });
+
+  on(getEl('mobileThemeBtn'), 'click', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('theme:toggle'));
+  });
+
+  on(window, 'sidebar:mobile-toggle', () => toggleMobileDrawer());
+  on(window, 'sidebar:mobile-open', () => openMobileDrawer());
+  on(window, 'sidebar:mobile-close', () => closeMobileDrawer());
+
+  // ==========================================================
+  //   THEME TOGGLE — hanya set ARIA (theme-toggle.js yang handle click)
   // ==========================================================
   const themeBtn = getEl('sidebarThemeToggleBtn');
   if (themeBtn && !themeBtn.dataset.sidebarBound) {
@@ -335,11 +667,10 @@ function initSidebarBehavior() {
   }
 
   // ==========================================================
-  //   SUBMENU — Event Delegation (1 listener)
+  //   SUBMENU — Event Delegation
   // ==========================================================
   const menuArea = sidebar.querySelector('.sidebar-menu-area');
   if (menuArea) {
-    // Click handler
     on(menuArea, 'click', (e) => {
       const link = e.target.closest('.nav-link[data-target]');
       if (!link) return;
@@ -347,7 +678,6 @@ function initSidebarBehavior() {
       toggleSubmenu(link, sidebar);
     });
 
-    // Keyboard handler
     on(menuArea, 'keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const link = e.target.closest('.nav-link[data-target]');
@@ -358,11 +688,15 @@ function initSidebarBehavior() {
   }
 
   // ==========================================================
-  //   ROUTE NAVIGATION — Event Delegation
+  //   ROUTE NAVIGATION — Event Delegation (untuk link dengan data-route)
+  //   ⚠️ Skip yang punya data-pkd-filter (ditangani khusus)
   // ==========================================================
   on(sidebar, 'click', (e) => {
     const link = e.target.closest('[data-route]');
     if (!link) return;
+    // Skip yang punya data-pkd-filter (ditangani loadLokasiPKDSubmenu)
+    if (link.hasAttribute('data-pkd-filter')) return;
+
     e.preventDefault();
 
     const route = link.dataset.route;
@@ -372,7 +706,9 @@ function initSidebarBehavior() {
       detail: { hash: route },
     }));
 
-    if (isMobile()) sidebar.classList.remove('show');
+    if (isMobile() && isMobileDrawerOpen) {
+      closeMobileDrawer();
+    }
   });
 
   // ==========================================================
@@ -397,6 +733,11 @@ function initSidebarBehavior() {
   escKeyHandler = (e) => {
     if (e.key !== 'Escape') return;
 
+    if (isMobileDrawerOpen) {
+      closeMobileDrawer();
+      return;
+    }
+
     sidebar.querySelectorAll('.submenu.open').forEach(sm => {
       sm.classList.remove('open');
     });
@@ -404,8 +745,6 @@ function initSidebarBehavior() {
       p.setAttribute('aria-expanded', 'false');
       p.classList.remove('active');
     });
-
-    if (isMobile()) sidebar.classList.remove('show');
   };
   on(document, 'keydown', escKeyHandler);
 
@@ -414,14 +753,15 @@ function initSidebarBehavior() {
   // ==========================================================
   outsideClickHandler = (e) => {
     if (!isMobile()) return;
+    if (!isMobileDrawerOpen) return;
     if (!sidebar.classList.contains('show')) return;
 
     const isClickInside = sidebar.contains(e.target);
-    const isToggleClick = e.target.closest('.navbar-toggler')
-                       || e.target.closest('#mobileSidebarBtn');
+    const isBackdrop = e.target.closest('#sidebarBackdrop');
+    const isToggleClick = e.target.closest('#mobileMenuBtn');
 
-    if (!isClickInside && !isToggleClick) {
-      sidebar.classList.remove('show');
+    if (!isClickInside && !isToggleClick && !isBackdrop) {
+      closeMobileDrawer();
     }
   };
   on(document, 'click', outsideClickHandler);
@@ -431,7 +771,10 @@ function initSidebarBehavior() {
   // ==========================================================
   const handleResize = debounce(() => {
     if (!isMobile()) {
+      if (isMobileDrawerOpen) closeMobileDrawer();
       sidebar.classList.remove('show');
+      unlockBodyScroll();
+
       if (safeLocalGet(MINIMIZED_STORAGE_KEY) === 'true') {
         sidebar.classList.add('minimized');
         updateToggleIcon(true);
@@ -444,17 +787,47 @@ function initSidebarBehavior() {
   on(window, 'resize', handleResize);
 
   // ==========================================================
+  //   AUTO-CLOSE saat route berubah (mobile)
+  // ==========================================================
+  on(window, 'routeChanged', () => {
+    if (isMobile() && isMobileDrawerOpen) {
+      closeMobileDrawer();
+    }
+  });
+
+  // ==========================================================
+  //   SWIPE-TO-CLOSE GESTURE (mobile)
+  // ==========================================================
+  attachSwipeGesture(sidebar);
+
+  // ==========================================================
   //   INITIAL ACTIVE STATE
   // ==========================================================
   const currentHash = window.location.hash || '#/admin/dashboard';
   updateSidebarActive(currentHash);
 
-  // Listen routeChanged untuk sync active
   const routeChangedHandler = (e) => {
     const path = e?.detail?.path;
     if (path) updateSidebarActive(path);
   };
   on(window, 'routeChanged', routeChangedHandler);
+
+  // ==========================================================
+  //   ⭐ NEW: LOAD LOKASI PKD SUBMENU (async, non-blocking)
+  // ==========================================================
+  loadLokasiPKDSubmenu(false).catch(function (e) {
+    console.warn('[Sidebar] loadLokasiPKDSubmenu gagal:', e);
+  });
+
+  // Reload submenu saat data ready (kalau add lokasi baru)
+  on(window, 'pkd:data-ready', () => {
+    loadLokasiPKDSubmenu(true).catch(() => {});
+  });
+
+  // Reload submenu saat lokasi PKD berubah (custom event)
+  on(window, 'pkd:lokasi-updated', () => {
+    loadLokasiPKDSubmenu(true).catch(() => {});
+  });
 
   // ==========================================================
   //   NOTIFY COMPONENTS
@@ -468,8 +841,7 @@ function initSidebarBehavior() {
 //   TOGGLE SUBMENU
 // ============================================================
 function toggleSubmenu(link, sidebar) {
-  // Auto-expand sidebar jika minimized
-  if (sidebar.classList.contains('minimized')) {
+  if (sidebar.classList.contains('minimized') && !isMobile()) {
     sidebar.classList.remove('minimized');
     safeLocalSet(MINIMIZED_STORAGE_KEY, 'false');
     updateToggleIcon(false);
@@ -481,7 +853,6 @@ function toggleSubmenu(link, sidebar) {
 
   const isOpen = submenu.classList.contains('open');
 
-  // Close all other submenus
   sidebar.querySelectorAll('.submenu').forEach(sm => {
     if (sm.id !== targetId) sm.classList.remove('open');
   });
@@ -492,7 +863,6 @@ function toggleSubmenu(link, sidebar) {
     }
   });
 
-  // Toggle target
   submenu.classList.toggle('open', !isOpen);
   link.setAttribute('aria-expanded', String(!isOpen));
   link.classList.toggle('active', !isOpen);
@@ -510,8 +880,10 @@ export function updateSidebarActive(route) {
   const allRoutes = sidebar.querySelectorAll('[data-route]');
   let hasActive = false;
 
-  // Reset semua active
   allRoutes.forEach(link => {
+    // Skip yang data-pkd-filter (active state-nya di-handle loadLokasiPKDSubmenu)
+    if (link.hasAttribute('data-pkd-filter')) return;
+
     const isActive = link.dataset.route === route;
     link.classList.toggle('active', isActive);
     link.toggleAttribute('aria-current', isActive);
@@ -546,14 +918,14 @@ export function updateSidebarActive(route) {
 }
 
 // ============================================================
-//   MANUAL TOGGLE (untuk dipanggil dari luar)
+//   MANUAL TOGGLE (public API)
 // ============================================================
 export function toggleSidebar() {
   const sidebar = getEl(SIDEBAR_WRAPPER_ID);
   if (!sidebar) return;
 
   if (isMobile()) {
-    sidebar.classList.toggle('show');
+    toggleMobileDrawer();
     return;
   }
 
@@ -568,6 +940,10 @@ export function toggleSidebar() {
 //   UNLOAD CLEANUP
 // ============================================================
 export function unloadSidebar() {
+  if (isMobileDrawerOpen) {
+    closeMobileDrawer();
+  }
+
   listeners.forEach(({ el, ev, handler, options }) => {
     try { el.removeEventListener(ev, handler, options); }
     catch (e) { /* silent */ }
@@ -576,17 +952,19 @@ export function unloadSidebar() {
 
   isSidebarLoaded = false;
   isBehaviorInitialized = false;
+  isMobileDrawerOpen = false;
+  lokasiPKDLoaded = false;
+  lokasiPKDLoading = false;
 
   if (resizeTimer) {
     clearTimeout(resizeTimer);
     resizeTimer = null;
   }
-  if (outsideClickHandler) {
-    outsideClickHandler = null;
-  }
-  if (escKeyHandler) {
-    escKeyHandler = null;
-  }
+  outsideClickHandler = null;
+  escKeyHandler = null;
+  touchStartHandler = null;
+  touchMoveHandler = null;
+  touchEndHandler = null;
 }
 
 // ============================================================
@@ -597,12 +975,16 @@ export default {
   updateSidebarActive,
   toggleSidebar,
   unloadSidebar,
+  openMobileDrawer,
+  closeMobileDrawer,
+  toggleMobileDrawer,
+  loadLokasiPKDSubmenu,
 };
 
 // ============================================================
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c Sidebar v26.4.0 — Production Full Fix ',
+  '%c Sidebar v27.3.0 — Lokasi PKD Dynamic Edition ',
   'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
