@@ -263,9 +263,7 @@
       }
     }
 
-    /* ============================================================
-       ⭐ NEW v27.3.0: Lokasi PKD Filter Modal Styles
-       ============================================================ */
+    /* ⭐ Filter Angkatan PKD section */
     #moreMenuModal .pkd-filter-section {
       background: #f8fafc;
       border-radius: 12px;
@@ -423,9 +421,9 @@
   <!-- ============================================================
        MODAL: MENU LAINNYA (MOBILE BOTTOM NAV)
        ============================================================
-       ✅ v27.3.0: Tambah section "Filter per Lokasi PKD"
+       ✅ v28.0.0: Angkatan PKD menggantikan Alumni & Lokasi PKD
+       ✅ Filter Angkatan PKD dari API getAngkatanPKDWithCount
        ✅ Semua link pakai data-route untuk router
-       ✅ Tombol Lokasi PKD: set sessionStorage + navigate
        ============================================================ -->
   <div class="modal fade" id="moreMenuModal" tabindex="-1" aria-labelledby="moreMenuModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -438,17 +436,17 @@
         </div>
         <div class="modal-body p-4">
 
-          <!-- ⭐ NEW v27.3.0: FILTER PER LOKASI PKD -->
+          <!-- ⭐ FILTER PER ANGKATAN PKD -->
           <div class="pkd-filter-section mb-3">
             <h6>
-              <i class="bi bi-geo-alt-fill text-primary" aria-hidden="true"></i>
-              Filter per Lokasi PKD
+              <i class="bi bi-mortarboard-fill text-primary" aria-hidden="true"></i>
+              Filter per Angkatan PKD
             </h6>
-            <div id="modalLokasiPKDList" class="row g-2">
+            <div id="modalAngkatanPKDList" class="row g-2">
               <!-- Diisi dinamis oleh JS -->
               <div class="col-12 text-muted small text-center py-2">
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                Memuat lokasi…
+                Memuat angkatan…
               </div>
             </div>
           </div>
@@ -470,9 +468,9 @@
               </a>
             </div>
             <div class="col-6">
-              <a href="#/admin/alumni" class="btn btn-outline-primary w-100" data-route="#/admin/alumni">
-                <i class="bi bi-award" aria-hidden="true"></i>
-                <span>Alumni</span>
+              <a href="#/admin/angkatan-pkd" class="btn btn-outline-primary w-100" data-route="#/admin/angkatan-pkd">
+                <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+                <span>Angkatan PKD</span>
               </a>
             </div>
             <div class="col-6">
@@ -629,6 +627,10 @@
               <span class="shortcut-keys"><kbd>Alt</kbd><kbd>P</kbd></span>
             </div>
             <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-mortarboard-fill"></i>Angkatan PKD</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>L</kbd></span>
+            </div>
+            <div class="shortcut-row">
               <span class="shortcut-label"><i class="bi bi-calendar-event"></i>Sesi Absen</span>
               <span class="shortcut-keys"><kbd>Alt</kbd><kbd>A</kbd></span>
             </div>
@@ -769,7 +771,7 @@
   <!-- ==================== ENTRY POINT SPA ==================== -->
   <script type="module" src="/bisaa/js/app.js"></script>
 
-  <!-- ==================== INLINE FALLBACK v27.3.0 ==================== -->
+  <!-- ==================== INLINE FALLBACK v28.0.0 ==================== -->
   <script type="module">
     'use strict';
 
@@ -942,22 +944,22 @@
     })();
 
     // ============================================================
-    //   ⭐ NEW v27.3.0: LOAD LOKASI PKD KE MODAL LAINNYA
+    //   ⭐ v28.0.0: LOAD ANGKATAN PKD KE MODAL LAINNYA
     // ============================================================
-    async function loadLokasiPKDToModal() {
-      const container = document.getElementById('modalLokasiPKDList');
+    async function loadAngkatanPKDToModal() {
+      const container = document.getElementById('modalAngkatanPKDList');
       if (!container) return;
 
       // Loading state
       container.innerHTML = `
         <div class="col-12 text-muted small text-center py-2">
           <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Memuat lokasi…
+          Memuat angkatan…
         </div>`;
 
       try {
-        const { getLokasiPKDWithCount } = await import('/bisaa/js/core/api.js');
-        const res = await getLokasiPKDWithCount();
+        const { getAngkatanPKDWithCount } = await import('/bisaa/js/core/api.js');
+        const res = await getAngkatanPKDWithCount();
         const list = (res && res.success && Array.isArray(res.data))
           ? res.data
           : (Array.isArray(res) ? res : []);
@@ -966,7 +968,7 @@
           container.innerHTML = `
             <div class="col-12 text-muted small text-center py-2">
               <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-              Belum ada Lokasi PKD
+              Belum ada Angkatan PKD
             </div>`;
           return;
         }
@@ -978,7 +980,7 @@
 
         let html = '';
 
-        // Opsi "Semua Lokasi"
+        // Opsi "Semua Angkatan"
         const isAllActive = currentFilter === '';
         html += `
           <div class="col-12">
@@ -986,26 +988,27 @@
                     class="btn ${isAllActive ? 'btn-primary' : 'btn-outline-primary'} pkd-filter-btn"
                     data-pkd-filter="">
               <i class="bi bi-collection" aria-hidden="true"></i>
-              <span class="pkd-name">Semua Lokasi</span>
+              <span class="pkd-name">Semua Angkatan</span>
               ${isAllActive ? '<i class="bi bi-check-circle-fill" aria-hidden="true"></i>' : ''}
             </button>
           </div>`;
 
-        // Setiap lokasi
-        list.forEach(function (lokasi) {
-          const total = parseInt(lokasi.totalPeserta) || 0;
-          const pending = parseInt(lokasi.totalPending) || 0;
+        // Setiap angkatan
+        list.forEach(function (angkatan) {
+          const total = parseInt(angkatan.totalPeserta) || 0;
+          const pending = parseInt(angkatan.totalPending) || 0;
           const badgeClass = pending > 0 ? 'bg-warning text-dark' : 'bg-info text-dark';
-          const isActive = currentFilter === lokasi.nama;
+          const isActive = currentFilter === angkatan.nama;
+          const tahunText = angkatan.tahun ? ` (${angkatan.tahun})` : '';
 
           html += `
             <div class="col-6">
               <button type="button"
                       class="btn ${isActive ? 'btn-primary' : 'btn-outline-info'} pkd-filter-btn"
-                      data-pkd-filter="${escapeHtmlLocal(lokasi.nama)}"
-                      title="${escapeHtmlLocal(lokasi.nama)} — ${total} peserta">
-                <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                <span class="pkd-name">${escapeHtmlLocal(lokasi.nama)}</span>
+                      data-pkd-filter="${escapeHtmlLocal(angkatan.nama)}"
+                      title="${escapeHtmlLocal(angkatan.nama)}${tahunText} — ${total} peserta">
+                <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+                <span class="pkd-name">${escapeHtmlLocal(angkatan.nama)}</span>
                 <span class="badge ${badgeClass}">${total}</span>
               </button>
             </div>`;
@@ -1018,7 +1021,7 @@
           btn.addEventListener('click', function () {
             const filter = btn.dataset.pkdFilter || '';
 
-            // Simpan ke sessionStorage
+            // Simpan ke sessionStorage (key lama: pkd_filter_lokasi)
             try {
               if (filter) {
                 sessionStorage.setItem('pkd_filter_lokasi', filter);
@@ -1027,7 +1030,7 @@
               }
             } catch (e) { /* silent */ }
 
-            console.log('[app.html] 🎯 Filter Lokasi PKD:', filter || '(semua)');
+            console.log('[app.html] 🎯 Filter Angkatan PKD:', filter || '(semua)');
 
             // Update visual state
             container.querySelectorAll('[data-pkd-filter]').forEach(b => {
@@ -1057,16 +1060,16 @@
         });
 
       } catch (e) {
-        console.warn('[app.html] loadLokasiPKDToModal:', e);
+        console.warn('[app.html] loadAngkatanPKDToModal:', e);
         container.innerHTML = `
           <div class="col-12 text-danger small text-center py-2">
             <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
             Gagal memuat.
-            <a href="#" id="retryLokasiModalBtn" class="text-decoration-underline">Coba lagi</a>
+            <a href="#" id="retryAngkatanModalBtn" class="text-decoration-underline">Coba lagi</a>
           </div>`;
-        document.getElementById('retryLokasiModalBtn')?.addEventListener('click', function (ev) {
+        document.getElementById('retryAngkatanModalBtn')?.addEventListener('click', function (ev) {
           ev.preventDefault();
-          loadLokasiPKDToModal();
+          loadAngkatanPKDToModal();
         });
       }
     }
@@ -1084,7 +1087,7 @@
 
     // Hook: load saat modal dibuka
     document.getElementById('moreMenuModal')?.addEventListener('show.bs.modal', function () {
-      loadLokasiPKDToModal();
+      loadAngkatanPKDToModal();
     });
 
     // ============================================================
@@ -1093,7 +1096,7 @@
     window.addEventListener('pkd:lokasi-updated', function () {
       const modalEl = document.getElementById('moreMenuModal');
       if (modalEl && modalEl.classList.contains('show')) {
-        loadLokasiPKDToModal();
+        loadAngkatanPKDToModal();
       }
     });
 
@@ -1122,7 +1125,7 @@
     });
 
     console.log(
-      '%c app.html inline v27.3.0 — Lokasi PKD Filter Edition ',
+      '%c app.html inline v28.0.0 — Angkatan PKD Edition ',
       'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>
