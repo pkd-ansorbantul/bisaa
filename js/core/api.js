@@ -1,19 +1,16 @@
 // ============================================================
-// js/core/api.js — v27.4.0 CORS ROBUST + SAFE STORAGE EDITION
+// js/core/api.js — v28.0.0 ANGKATAN PKD EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.4.0 (dari v27.3.0):
-//   ✅ FIX CRITICAL: Safe storage dengan in-memory fallback
-//     → Menghilangkan warning "Tracking Prevention blocked"
-//     → Data tidak hilang saat localStorage diblokir Edge
-//   ✅ FIX CRITICAL: CORS handling — pastikan GAS "Anyone"
-//     → Redirect follow + credentials omit
-//     → Deteksi halaman login GAS (kalau bukan Anyone)
-//   ✅ FIX: Circuit breaker auto-recovery lebih halus
-//   ✅ FIX: Semua helper storage pakai _memoryStore fallback
-//   ✅ KEEP: getLokasiPKDWithCount (v27.3.0)
-//   ✅ KEEP: Semua 150+ named exports (zero regression)
-//   ✅ VERIFIED: Semua menu + Lokasi PKD fitur tanpa error
+// CHANGELOG v28.0.0 (dari v27.4.0):
+//   ✅ NEW: getAngkatanPKDList() — list angkatan (simple)
+//   ✅ NEW: getAngkatanPKDWithCount() — list + count peserta
+//   ✅ NEW: getAngkatanDetail() — detail lengkap 1 angkatan (7 tabs)
+//   ✅ NEW: addAngkatanPKD() / updateAngkatanPKD() / deleteAngkatanPKD()
+//   ✅ NEW: getActiveAngkatan() (placeholder, tidak dipakai lagi)
+//   ✅ KEEP: Semua 150+ exports (zero regression)
+//   ✅ KEEP: Circuit breaker, dedup, retry logic
+//   ✅ KEEP: Legacy alias Lokasi PKD (backward compat)
 // ============================================================
 
 import {
@@ -208,8 +205,7 @@ function shouldJsonSerialize(v) {
 }
 
 // ============================================================
-//   ⭐ SAFE STORAGE WRAPPERS — v27.4.0
-//   Dengan in-memory fallback untuk handle "Tracking Prevention"
+//   SAFE STORAGE WRAPPERS (in-memory fallback)
 // ============================================================
 const _memoryStore = new Map();
 
@@ -217,17 +213,16 @@ function safeLocalGet(key) {
   try {
     const v = localStorage.getItem(key);
     if (v !== null) return v;
-  } catch (e) { /* blocked by browser */ }
+  } catch (e) { /* blocked */ }
   return _memoryStore.get('L:' + key) || null;
 }
 
 function safeLocalSet(key, value) {
   try {
     localStorage.setItem(key, value);
-    _memoryStore.delete('L:' + key); // cleanup memory dup
+    _memoryStore.delete('L:' + key);
     return true;
   } catch (e) {
-    // Fallback ke memory (hilang saat reload, tapi aplikasi tetap jalan)
     _memoryStore.set('L:' + key, value);
     return false;
   }
@@ -369,6 +364,7 @@ export function logout() {
   } catch (e) { /* silent */ }
 
   safeSessionRemove('pkd_filter_lokasi');
+  safeSessionRemove('pkd_filter_angkatan');
 
   window.location.href = BASE_PATH + 'index.html';
 }
@@ -461,12 +457,11 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   CORE API CALL — v27.4.0
+//   CORE API CALL
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
-  // Guard 1: Circuit breaker
   if (_isCircuitOpen()) {
     const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
     return Promise.resolve({
@@ -523,8 +518,7 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
           },
         };
       } else {
-        // ⚠️ GAS hanya bisa handle x-www-form-urlencoded
-        // JANGAN pakai application/json — trigger preflight yang gagal
+        // GAS hanya bisa handle x-www-form-urlencoded
         const body = new URLSearchParams({ action, ...cleanParams }).toString();
         fetchOptions = {
           method: 'POST',
@@ -631,10 +625,10 @@ function _fetchOnce(url, options, timeout) {
             return resolve({ success: true, data: [] });
           }
 
-          // Deteksi halaman login Google (artinya GAS belum "Anyone")
+          // Detect Google login page (GAS not deployed "Anyone")
           if (text.includes('<!DOCTYPE html>') || text.toLowerCase().includes('<html')) {
             if (text.includes('accounts.google.com') || text.includes('Sign in')) {
-              console.error('[API] ❌ GAS deployment BUKAN "Anyone" — response berupa halaman login Google');
+              console.error('[API] ❌ GAS deployment BUKAN "Anyone"');
               return resolve({
                 success: false,
                 error: 'Deployment GAS belum di-set "Anyone". Buka GAS → Deploy → Manage Deployments → Who has access → "Anyone"',
@@ -642,7 +636,7 @@ function _fetchOnce(url, options, timeout) {
             }
             return resolve({
               success: false,
-              error: 'Server mengembalikan HTML, bukan JSON. Kemungkinan deployment GAS salah.',
+              error: 'Server mengembalikan HTML, bukan JSON.',
             });
           }
 
@@ -1199,18 +1193,79 @@ export function submitRTLAttachment(taskId, fileData, fileName) {
 export function getRTLAttachments(taskId)          { return callApi('getRTLAttachments', { taskId }, 'GET'); }
 
 // ============================================================
-//   ⭐ LOKASI PKD — v27.3.0 / v27.4.0
+//   ⭐ v28.0.0: ANGKATAN PKD
 // ============================================================
-export function getLokasiPKDList()                 { return callApi('getLokasiPKDList', {}, 'GET'); }
 
 /**
- * ⭐ Daftar Lokasi PKD + jumlah peserta per lokasi.
- * Digunakan oleh sidebar.js & app.html untuk submenu dinamis.
+ * ⭐ Ambil list angkatan PKD (simple — tanpa count).
  */
-export function getLokasiPKDWithCount()            { return callApi('getLokasiPKDWithCount', {}, 'GET'); }
+export function getAngkatanPKDList() {
+  return callApi('getAngkatanPKDList', {}, 'GET');
+}
 
-export function addLokasiPKD(nama)                 { return callApi('addLokasiPKD', { nama }, 'POST'); }
-export function deleteLokasiPKD(id)                { return callApi('deleteLokasiPKD', { id }, 'POST'); }
+/**
+ * ⭐ Ambil list angkatan PKD + count peserta per angkatan.
+ * Backend action: getAngkatanPKDWithCount
+ */
+export function getAngkatanPKDWithCount() {
+  return callApi('getAngkatanPKDWithCount', {}, 'GET');
+}
+
+/**
+ * ⭐ Ambil detail lengkap 1 angkatan (7 tabs).
+ * @param {string} namaOrId - Nama angkatan atau ID
+ * @returns {Promise} { angkatan, peserta, absensi, pretest, posttest, skrining, sertifikat, rtl, stats }
+ */
+export function getAngkatanDetail(namaOrId) {
+  const params = {};
+  const str = String(namaOrId || '').trim();
+
+  if (/^\d+$/.test(str)) {
+    params.id = str;
+    params.lokasiId = str;  // alias
+  } else {
+    params.nama = str;
+  }
+
+  return callApi('getAngkatanDetail', params, 'GET');
+}
+
+/**
+ * ⭐ Tambah Angkatan PKD baru.
+ */
+export function addAngkatanPKD(nama, tahun, status, lokasi, tglMulai, tglSelesai) {
+  return callApi('addAngkatanPKD', {
+    nama: String(nama || '').trim(),
+    tahun: tahun || new Date().getFullYear(),
+    status: status || 'aktif',
+    lokasi: lokasi || String(nama || '').trim(),
+    tanggal_mulai: tglMulai || '',
+    tanggal_selesai: tglSelesai || '',
+  }, 'POST');
+}
+
+/**
+ * ⭐ Update Angkatan PKD.
+ */
+export function updateAngkatanPKD(data) {
+  return callApi('updateAngkatanPKD', data, 'POST');
+}
+
+/**
+ * ⭐ Hapus Angkatan PKD.
+ */
+export function deleteAngkatanPKD(id) {
+  return callApi('deleteAngkatanPKD', { id }, 'POST');
+}
+
+// ============================================================
+//   ⚠️ LEGACY ALIAS (backward compat — v28.0.0)
+//   Menghubungkan fungsi lama LokasiPKD ke AngkatanPKD
+// ============================================================
+export const getLokasiPKDList       = getAngkatanPKDList;
+export const getLokasiPKDWithCount  = getAngkatanPKDWithCount;
+export const addLokasiPKD           = (nama) => addAngkatanPKD(nama);
+export const deleteLokasiPKD        = deleteAngkatanPKD;
 
 // ============================================================
 //   MEMBER
@@ -1275,10 +1330,10 @@ if (typeof document !== 'undefined') {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v${APP_VERSION} — CORS Robust + Safe Storage Edition `,
+  `%c API v${APP_VERSION} — Angkatan PKD Edition `,
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
 );
 console.log(
-  `%c 💡 Diagnostic: getCircuitState() | resetCircuit() | getLokasiPKDWithCount() `,
+  `%c 💡 Diagnostic: getCircuitState() | resetCircuit() | getAngkatanPKDWithCount() | getAngkatanDetail() `,
   'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

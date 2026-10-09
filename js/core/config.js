@@ -14,7 +14,7 @@
 // ============================================================
 //   BACKEND URL
 // ============================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7GV43lV9lywq_m2kywD_6Nd-YwiCm2ha0UQ--0bAkRDe36xW53Cfwfz0mgpncOQWRYg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzp0tP17LjMMckHRZgc9zusGEu4iNv6YbRbtqnRys7C9ArA4XtXpLtmfeWT9-F9mJAP0A/exec';
 
 // ============================================================
 //   BASE PATH — FIXED /bisaa/ (GitHub Pages)
