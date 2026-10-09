@@ -1,17 +1,18 @@
 // ============================================================
-// VIEW: peserta.js — v27.3.0 PRELOAD + SUBSCRIPTION + LOKASI PKD FILTER
+// VIEW: peserta.js — v28.0.0 ANGKATAN PKD EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/peserta.html
 // ============================================================
-// CHANGELOG v27.3.0 (dari v27.2.0):
-//   ✅ NEW: Filter Lokasi PKD dari sessionStorage (dari sidebar)
+// CHANGELOG v28.0.0 (dari v27.3.0):
+//   ✅ NEW: Integrasi dengan Angkatan PKD (menggantikan Lokasi PKD)
+//   ✅ NEW: Filter Angkatan PKD dari sessionStorage (dari sidebar)
+//   ✅ NEW: Dropdown Angkatan PKD dinamis dari AdminModule
 //   ✅ NEW: Filter banner dengan count + tombol hapus
-//   ✅ NEW: Statistik menyesuaikan filter lokasi
-//   ✅ NEW: Auto re-render banner saat data berubah
-//   ✅ FIX: applyLokasiFilter() di getFilteredPeserta()
+//   ✅ NEW: Statistik menyesuaikan filter angkatan
+//   ✅ FIX: Race-safe applyLokasiFilter() di getFilteredPeserta()
 //   ✅ FIX: Reset filter saat unmount
-//   ✅ FIX: Race-safe renderFilterBanner
-//   ✅ KEEP: Semua fitur v27.2.0 (Form builder, ID Card, TTD, dll)
+//   ✅ FIX: Auto re-render banner saat data berubah
+//   ✅ KEEP: Semua fitur v27.3.0 (Form builder, ID Card, TTD, dll)
 //   ✅ Zero memory leak
 // ============================================================
 
@@ -21,9 +22,9 @@ import {
   showToast,
   escapeHtml,
   resetPesertaPassword as apiResetPesertaPassword,
-  getLokasiPKDList as apiGetLokasiPKDList,
-  addLokasiPKD as apiAddLokasiPKD,
-  deleteLokasiPKD as apiDeleteLokasiPKD,
+  getAngkatanPKDWithCount as apiGetAngkatanPKDWithCount,
+  addAngkatanPKD as apiAddAngkatanPKD,
+  deleteAngkatanPKD as apiDeleteAngkatanPKD,
   getDefaultFormFields,
   fileToBase64,
 } from '../../js/core/api.js';
@@ -47,7 +48,7 @@ import {
 // ============================================================
 const MAX_FILE_SIZE_MB = 5;
 const GENERATE_CONCURRENCY = 5;
-const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';
+const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';  // legacy key name
 
 // ============================================================
 //   LOCAL HELPERS
@@ -70,12 +71,16 @@ function getStatusBadge(status) {
   return 'bg-warning text-dark';
 }
 
-function getPkdFilterFromStorage() {
+/**
+ * ⭐ Baca filter Angkatan PKD dari sessionStorage
+ * (dikirim dari sidebar saat klik submenu Angkatan PKD)
+ */
+function getAngkatanFilterFromStorage() {
   try { return sessionStorage.getItem(PKD_FILTER_STORAGE_KEY) || ''; }
   catch (e) { return ''; }
 }
 
-function setPkdFilterToStorage(value) {
+function setAngkatanFilterToStorage(value) {
   try {
     if (value) sessionStorage.setItem(PKD_FILTER_STORAGE_KEY, value);
     else sessionStorage.removeItem(PKD_FILTER_STORAGE_KEY);
@@ -92,10 +97,10 @@ const ctx = createViewContext(
     formStructure: [],
     rtlData: [],
     approvalsData: [],
-    lokasiPKDList: [],
+    angkatanPKDList: [],       // ⭐ Ganti dari lokasiPKDList
     searchQuery: '',
     statusFilter: '',
-    lokasiPkdFilter: '',
+    angkatanFilter: '',        // ⭐ Ganti dari lokasiPkdFilter
     currentPage: 1,
     itemsPerPage: 15,
     selectedIds: new Set(),
@@ -103,11 +108,11 @@ const ctx = createViewContext(
     pendingCredentialId: null,
     pendingCertIds: [],
     isLoadingFormStructure: false,
-    isLoadingLokasiPKD: false,
+    isLoadingAngkatan: false,
     lastHash: '',
   },
   {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'peserta'],
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'peserta', 'angkatan'],
     onDataChange: (type) => {
       if (!ctx.mounted) return;
       console.log(`[PesertaView] ⚡ Data changed (${type}) → refresh from cache`);
@@ -141,9 +146,10 @@ export async function mount() {
     filteredList: [],
     rtlData: [],
     approvalsData: [],
+    angkatanPKDList: [],
     searchQuery: '',
     statusFilter: '',
-    lokasiPkdFilter: '',
+    angkatanFilter: '',
     currentPage: 1,
     pendingDeleteId: null,
     pendingCredentialId: null,
@@ -159,11 +165,14 @@ export async function mount() {
 
   // ⚡ Instant render dari preload cache
   const cached = AdminModule.getPesertaList() || [];
+  const cachedAngkatan = AdminModule.getAngkatanPKDList() || [];
+
   if (cached.length > 0) {
     console.log('[PesertaView] ⚡ Rendering from preload cache');
     ctx.state.pesertaList = cached.map(p => ({ ...p }));
     ctx.state.rtlData = AdminModule.getRTLList() || [];
     ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
+    ctx.state.angkatanPKDList = cachedAngkatan.map(a => ({ ...a }));
     ctx.state.lastHash = computeListHash(ctx.state.pesertaList);
     renderStats();
     applyFiltersAndSort();
@@ -176,12 +185,12 @@ export async function mount() {
 
   bindEvents();
 
-  // ===== ⭐ NEW: Baca filter Lokasi PKD dari sessionStorage =====
-  const pkdFilter = getPkdFilterFromStorage();
-  if (pkdFilter) {
-    console.log('[PesertaView] 🎯 Filter Lokasi PKD:', pkdFilter);
-    ctx.state.lokasiPkdFilter = pkdFilter;
-    renderFilterBanner(pkdFilter);
+  // ===== ⭐ Baca filter Angkatan PKD dari sessionStorage =====
+  const angkatanFilter = getAngkatanFilterFromStorage();
+  if (angkatanFilter) {
+    console.log('[PesertaView] 🎯 Filter Angkatan PKD:', angkatanFilter);
+    ctx.state.angkatanFilter = angkatanFilter;
+    renderFilterBanner(angkatanFilter);
     // Re-apply filter karena state berubah
     applyFiltersAndSort();
   }
@@ -189,10 +198,10 @@ export async function mount() {
   // ⚡ Subscribe ke perubahan data
   await ctx.subscribeToData();
 
-  // Parallel load — form structure + lokasi (fallback hanya kalau cache kosong)
+  // Parallel load — form structure + angkatan (fallback hanya kalau cache kosong)
   await Promise.allSettled([
     loadFormStructure(),
-    loadLokasiPKD(),
+    loadAngkatanPKD(),
     cached.length === 0 ? loadPesertaData(false) : Promise.resolve(),
   ]);
 
@@ -238,26 +247,27 @@ function refreshFromCache() {
   ctx.state.lastHash = freshHash;
   ctx.state.rtlData = AdminModule.getRTLList() || [];
   ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
+  ctx.state.angkatanPKDList = AdminModule.getAngkatanPKDList() || [];
 
   renderStats();
   applyFiltersAndSort();
   setCacheStatus('Live');
 
   // ⭐ Re-render banner kalau filter masih ada
-  if (ctx.state.lokasiPkdFilter) {
-    renderFilterBanner(ctx.state.lokasiPkdFilter);
+  if (ctx.state.angkatanFilter) {
+    renderFilterBanner(ctx.state.angkatanFilter);
   }
 }
 
 // ============================================================
-//   ⭐ NEW: FILTER BANNER
+//   ⭐ FILTER BANNER (Angkatan PKD)
 // ============================================================
-function renderFilterBanner(lokasi) {
+function renderFilterBanner(angkatanNama) {
   // Hapus banner lama
   const oldBanner = document.getElementById('pesertaFilterBanner');
   if (oldBanner) oldBanner.remove();
 
-  if (!lokasi) return;
+  if (!angkatanNama) return;
 
   const container = document.getElementById('pesertaTableContainer');
   if (!container || !container.parentNode) return;
@@ -267,15 +277,15 @@ function renderFilterBanner(lokasi) {
   banner.className = 'alert alert-info d-flex align-items-center gap-2 mb-3 rounded-3 shadow-sm flex-wrap';
   banner.style.cssText = 'border-left:4px solid #2563eb;';
   banner.innerHTML = `
-    <i class="bi bi-geo-alt-fill fs-5 text-primary" aria-hidden="true"></i>
+    <i class="bi bi-mortarboard-fill fs-5 text-primary" aria-hidden="true"></i>
     <div class="flex-grow-1">
-      <strong>Filter Lokasi PKD:</strong> ${escapeHtml(lokasi)}
+      <strong>Filter Angkatan PKD:</strong> ${escapeHtml(angkatanNama)}
       <span class="badge bg-primary ms-2" id="pesertaFilterCount">0</span>
     </div>
     <button type="button"
             class="btn btn-sm btn-outline-secondary rounded-pill"
             id="clearPesertaFilterBtn"
-            aria-label="Hapus filter lokasi">
+            aria-label="Hapus filter angkatan">
       <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
       Hapus Filter
     </button>
@@ -285,15 +295,15 @@ function renderFilterBanner(lokasi) {
 
   // Bind clear button
   banner.querySelector('#clearPesertaFilterBtn')?.addEventListener('click', () => {
-    setPkdFilterToStorage('');
-    ctx.state.lokasiPkdFilter = '';
+    setAngkatanFilterToStorage('');
+    ctx.state.angkatanFilter = '';
     banner.remove();
 
     // Sync active state di sidebar
-    const submenu = document.getElementById('submenu-lokasi-pkd');
+    const submenu = document.getElementById('submenu-angkatan-pkd');
     if (submenu) {
-      submenu.querySelectorAll('[data-pkd-filter]').forEach(l => {
-        l.classList.toggle('active', l.dataset.pkdFilter === '');
+      submenu.querySelectorAll('[data-angkatan-filter]').forEach(l => {
+        l.classList.toggle('active', l.dataset.angkatanFilter === '');
       });
     }
 
@@ -342,9 +352,9 @@ function bindEvents() {
     if (group) group.style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
   });
 
-  // Lokasi PKD
-  ctx.on(getEl('addLokasiBtn'), 'click', handleAddLokasi);
-  ctx.on(getEl('savePkdLokasiBtn'), 'click', handleSavePkdLokasi);
+  // Angkatan PKD CRUD
+  ctx.on(getEl('addLokasiBtn'), 'click', handleAddAngkatan);
+  ctx.on(getEl('savePkdLokasiBtn'), 'click', handleSaveAngkatanFilter);
 
   // Modals
   ctx.on(getEl('savePesertaBtn'), 'click', handleSavePeserta);
@@ -427,14 +437,14 @@ function bindEvents() {
     });
   }
 
-  // ✅ DELEGATION — lokasi PKD list
-  const lokasiContainer = getEl('lokasiPKDListContainer');
-  if (lokasiContainer) {
-    ctx.on(lokasiContainer, 'click', (e) => {
+  // ✅ DELEGATION — angkatan PKD list
+  const angkatanContainer = getEl('lokasiPKDListContainer');
+  if (angkatanContainer) {
+    ctx.on(angkatanContainer, 'click', (e) => {
       const btn = e.target.closest('[data-lokasi-id]');
       if (!btn) return;
       e.preventDefault();
-      deleteLokasiPKDItem(btn.dataset.lokasiId);
+      deleteAngkatanPKDItem(btn.dataset.lokasiId);
     });
   }
 }
@@ -463,8 +473,8 @@ async function loadPesertaData(forceRefresh = false) {
 //   RENDER: Stats
 // ============================================================
 function renderStats() {
-  // ⭐ NEW: Kalau ada filter lokasi, pakai filteredList untuk stats
-  const useFiltered = ctx.state.lokasiPkdFilter && ctx.state.filteredList.length >= 0;
+  // ⭐ Kalau ada filter angkatan, pakai filteredList untuk stats
+  const useFiltered = ctx.state.angkatanFilter && ctx.state.filteredList.length >= 0;
   const list = useFiltered ? ctx.state.filteredList : ctx.state.pesertaList;
 
   const total = list.length;
@@ -488,11 +498,11 @@ function renderStats() {
 function getFilteredPeserta(query, status) {
   let filtered = ctx.state.pesertaList.slice();
 
-  // ⭐ NEW: Apply filter Lokasi PKD dulu
-  const lokasiFilter = ctx.state.lokasiPkdFilter;
-  if (lokasiFilter) {
+  // ⭐ Apply filter Angkatan PKD dulu
+  const angkatanFilter = ctx.state.angkatanFilter;
+  if (angkatanFilter) {
     filtered = filtered.filter(item =>
-      String(item.lokasi_pkd || '').trim() === lokasiFilter
+      String(item.lokasi_pkd || '').trim() === angkatanFilter
     );
   }
 
@@ -533,7 +543,7 @@ function applyFiltersAndSort() {
   ctx.state.filteredList = filtered;
 
   // ⭐ Update banner count
-  if (ctx.state.lokasiPkdFilter) {
+  if (ctx.state.angkatanFilter) {
     updateFilterBannerCount(filtered.length);
   }
 
@@ -591,7 +601,7 @@ function renderTable() {
       <th>Email</th>
       <th>No HP</th>
       <th>Utusan</th>
-      <th>Lokasi PKD</th>
+      <th>Angkatan PKD</th>
       <th>Status</th>
       <th style="width:60px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
@@ -599,7 +609,7 @@ function renderTable() {
   if (pageData.length === 0) {
     html += `<tr><td colspan="9" class="text-center py-5 text-muted">
       <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
-      ${(ctx.state.searchQuery || ctx.state.statusFilter || ctx.state.lokasiPkdFilter) ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
+      ${(ctx.state.searchQuery || ctx.state.statusFilter || ctx.state.angkatanFilter) ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
     </td></tr>`;
   } else {
     pageData.forEach((item, i) => {
@@ -617,7 +627,7 @@ function renderTable() {
         <td>${escapeHtml(item.email || '-')}</td>
         <td>${escapeHtml(item.no_hp || '-')}</td>
         <td>${escapeHtml(item.utusan || '-')}</td>
-        <td><span class="badge bg-info text-dark">${escapeHtml(item.lokasi_pkd || '-')}</span></td>
+        <td><span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></td>
         <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
         <td>
           <div class="dropdown action-dropdown">
@@ -739,7 +749,7 @@ function viewPeserta(id) {
     const val = item[field.id] || '-';
     html += `<div class="list-group-item py-2"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(String(val))}</div>`;
   });
-  html += `<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> ${escapeHtml(item.lokasi_pkd || '-')}</div>`;
+  html += `<div class="list-group-item py-2"><strong>Angkatan PKD:</strong> <span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></div>`;
   html += `<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ${getStatusBadge(item.status)}">${escapeHtml(item.status || 'pending')}</span></div>`;
   html += '</div>';
 
@@ -1374,6 +1384,7 @@ async function handleRefresh(e) {
   try {
     await AdminModule.loadAllData(true);
     refreshFromCache();
+    await loadAngkatanPKD();
     showToast('Data berhasil disegarkan', 'success');
   } catch (err) {
     showToast('Gagal menyegarkan', 'error');
@@ -1615,32 +1626,45 @@ async function handleSaveFormStructure(e) {
 }
 
 // ============================================================
-//   LOKASI PKD
+//   ⭐ ANGKATAN PKD (menggantikan Lokasi PKD)
 // ============================================================
-async function loadLokasiPKD() {
+async function loadAngkatanPKD() {
   try {
-    const res = await apiGetLokasiPKDList();
+    const res = await apiGetAngkatanPKDWithCount();
     if (!ctx.mounted) return;
-    ctx.state.lokasiPKDList = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
-    renderLokasiPKDList();
+
+    let list = [];
+    if (res && res.success && Array.isArray(res.data)) list = res.data;
+    else if (Array.isArray(res)) list = res;
+
+    ctx.state.angkatanPKDList = list;
+    renderAngkatanPKDList();
+    await loadAngkatanFilterSetting();
   } catch (e) {
-    ctx.state.lokasiPKDList = [];
-    renderLokasiPKDList();
+    console.warn('[PesertaView] loadAngkatanPKD:', e);
+    ctx.state.angkatanPKDList = [];
+    renderAngkatanPKDList();
   }
 }
 
-function renderLokasiPKDList() {
+function renderAngkatanPKDList() {
   const c = getEl('lokasiPKDListContainer');
   if (!c) return;
 
-  if (ctx.state.lokasiPKDList.length === 0) {
-    c.innerHTML = '<p class="text-muted small">Belum ada lokasi PKD.</p>';
+  if (ctx.state.angkatanPKDList.length === 0) {
+    c.innerHTML = '<p class="text-muted small">Belum ada Angkatan PKD.</p>';
   } else {
     let html = '';
-    ctx.state.lokasiPKDList.forEach(item => {
+    ctx.state.angkatanPKDList.forEach(item => {
+      const total = item.totalPeserta || 0;
+      const pending = item.totalPending || 0;
+      const badge = pending > 0 ? 'bg-warning text-dark' : 'bg-info text-dark';
       html += `<div class="lokasi-pkd-item">
-        <span><span class="badge bg-primary">${escapeHtml(item.nama)}</span></span>
-        <button type="button" class="btn btn-sm btn-outline-danger" data-lokasi-id="${escapeHtml(String(item.id))}" aria-label="Hapus lokasi">
+        <span>
+          <span class="badge bg-primary">${escapeHtml(item.nama)}</span>
+          <span class="badge ${badge} ms-1">${total} peserta</span>
+        </span>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-lokasi-id="${escapeHtml(String(item.id))}" aria-label="Hapus angkatan">
           <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
       </div>`;
@@ -1651,25 +1675,24 @@ function renderLokasiPKDList() {
   const sel = getEl('pkdLokasiSelect');
   if (sel) {
     const cur = sel.value;
-    sel.innerHTML = '<option value="">-- Semua Lokasi --</option>';
-    ctx.state.lokasiPKDList.forEach(l => {
+    sel.innerHTML = '<option value="">-- Semua Angkatan --</option>';
+    ctx.state.angkatanPKDList.forEach(a => {
       const opt = document.createElement('option');
-      opt.value = l.nama;
-      opt.textContent = l.nama;
-      if (cur === l.nama) opt.selected = true;
+      opt.value = a.nama;
+      opt.textContent = `${a.nama} (${a.tahun || '-'})`;
+      if (cur === a.nama) opt.selected = true;
       sel.appendChild(opt);
     });
   }
 }
 
-async function deleteLokasiPKDItem(id) {
-  if (!confirm('Hapus lokasi ini?')) return;
+async function deleteAngkatanPKDItem(id) {
+  if (!confirm('Hapus Angkatan PKD ini? Data peserta TIDAK akan terhapus.')) return;
   try {
-    const res = await apiDeleteLokasiPKD(id);
+    const res = await apiDeleteAngkatanPKD(id);
     if (res && res.success) {
-      showToast('Lokasi dihapus', 'success');
-      await loadLokasiPKD();
-      loadPkdLokasiSetting();
+      showToast('Angkatan PKD dihapus', 'success');
+      await loadAngkatanPKD();
 
       // ⭐ Notify sidebar untuk refresh submenu
       window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
@@ -1681,23 +1704,24 @@ async function deleteLokasiPKDItem(id) {
   }
 }
 
-async function handleAddLokasi(e) {
+async function handleAddAngkatan(e) {
   if (ctx.saving) return;
 
   const btn = e?.currentTarget || getEl('addLokasiBtn');
   const input = getEl('newLokasiInput');
   const nama = input ? input.value.trim() : '';
-  if (!nama) { showToast('Nama lokasi wajib diisi', 'error'); return; }
+  if (!nama) { showToast('Nama angkatan wajib diisi', 'error'); return; }
 
   const restore = setBtnLoading(btn, true, '');
   ctx.saving = true;
 
   try {
-    const res = await apiAddLokasiPKD(nama);
+    const currentYear = new Date().getFullYear();
+    const res = await apiAddAngkatanPKD(nama, currentYear, 'aktif', nama);
     if (res && res.success) {
-      showToast('Lokasi ditambahkan', 'success');
+      showToast('Angkatan PKD ditambahkan', 'success');
       if (input) input.value = '';
-      await loadLokasiPKD();
+      await loadAngkatanPKD();
 
       // ⭐ Notify sidebar untuk refresh submenu
       window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
@@ -1712,7 +1736,7 @@ async function handleAddLokasi(e) {
   }
 }
 
-async function loadPkdLokasiSetting() {
+async function loadAngkatanFilterSetting() {
   try {
     const res = await callApi('getPKDLokasi', {}, 'GET');
     if (!ctx.mounted) return;
@@ -1725,26 +1749,32 @@ async function loadPkdLokasiSetting() {
         }
       }
       const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `Filter saat ini: ${cur || 'Semua Lokasi'}`;
+      if (statusEl) statusEl.innerText = `Filter saat ini: ${cur || 'Semua Angkatan'}`;
     }
   } catch (e) { /* silent */ }
 }
 
-async function handleSavePkdLokasi(e) {
+async function handleSaveAngkatanFilter(e) {
   if (ctx.saving) return;
 
   const btn = e?.currentTarget || getEl('savePkdLokasiBtn');
-  const lokasi = getEl('pkdLokasiSelect')?.value || '';
+  const angkatan = getEl('pkdLokasiSelect')?.value || '';
 
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
   ctx.saving = true;
 
   try {
-    const res = await callApi('setPKDLokasi', { lokasi }, 'POST');
+    const res = await callApi('setPKDLokasi', { lokasi: angkatan }, 'POST');
     if (res && res.success) {
       const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `✅ Filter disimpan: ${lokasi || 'Semua Lokasi'}`;
-      showToast('Filter lokasi diperbarui', 'success');
+      if (statusEl) statusEl.innerText = `✅ Filter disimpan: ${angkatan || 'Semua Angkatan'}`;
+      showToast('Filter angkatan diperbarui', 'success');
+
+      // Update state & re-apply filter
+      ctx.state.angkatanFilter = angkatan;
+      setAngkatanFilterToStorage(angkatan);
+      if (angkatan) renderFilterBanner(angkatan);
+      applyFiltersAndSort();
     } else {
       throw new Error((res && res.error) || 'Gagal');
     }
@@ -1761,21 +1791,24 @@ async function handleSavePkdLokasi(e) {
 // ============================================================
 //   DYNAMIC FORM — Race-safe wait
 // ============================================================
-async function ensureLokasiPKDLoaded() {
-  if (ctx.state.lokasiPKDList.length > 0) return;
-  if (ctx.state.isLoadingLokasiPKD) {
-    await waitFor(() => ctx.state.lokasiPKDList.length > 0, 3000, 100);
-    if (ctx.state.lokasiPKDList.length > 0) return;
+async function ensureAngkatanPKDLoaded() {
+  if (ctx.state.angkatanPKDList.length > 0) return;
+  if (ctx.state.isLoadingAngkatan) {
+    await waitFor(() => ctx.state.angkatanPKDList.length > 0, 3000, 100);
+    if (ctx.state.angkatanPKDList.length > 0) return;
   }
 
-  ctx.state.isLoadingLokasiPKD = true;
+  ctx.state.isLoadingAngkatan = true;
   try {
-    const res = await apiGetLokasiPKDList();
-    ctx.state.lokasiPKDList = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+    const res = await apiGetAngkatanPKDWithCount();
+    let list = [];
+    if (res && res.success && Array.isArray(res.data)) list = res.data;
+    else if (Array.isArray(res)) list = res;
+    ctx.state.angkatanPKDList = list;
   } catch (e) {
-    ctx.state.lokasiPKDList = [];
+    ctx.state.angkatanPKDList = [];
   } finally {
-    ctx.state.isLoadingLokasiPKD = false;
+    ctx.state.isLoadingAngkatan = false;
   }
 }
 
@@ -1793,8 +1826,8 @@ async function renderDynamicForm(data) {
   }
 
   const fields = ctx.state.formStructure;
-  await ensureLokasiPKDLoaded();
-  const lokasiList = ctx.state.lokasiPKDList;
+  await ensureAngkatanPKDLoaded();
+  const angkatanList = ctx.state.angkatanPKDList;
 
   let html = `<form id="dynamicAdminForm" autocomplete="off">`;
 
@@ -1848,21 +1881,21 @@ async function renderDynamicForm(data) {
   </div>`;
 
   html += `<div class="mb-3">
-    <label class="form-label fw-bold">Lokasi PKD <span class="text-danger">*</span></label>`;
+    <label class="form-label fw-bold">Angkatan PKD <span class="text-danger">*</span></label>`;
 
-  if (lokasiList.length === 0) {
+  if (angkatanList.length === 0) {
     html += `
       <div class="alert alert-warning small mb-0">
         <i class="bi bi-exclamation-triangle me-1"></i>
-        <strong>Belum ada lokasi PKD.</strong><br>
-        Silakan tutup modal ini dan tambahkan lokasi di bagian <strong>Lokasi PKD</strong> di bawah halaman.
+        <strong>Belum ada Angkatan PKD.</strong><br>
+        Silakan tutup modal ini dan tambahkan angkatan di bagian <strong>Angkatan PKD</strong> di bawah halaman.
         <input type="hidden" name="lokasi_pkd" value="" data-empty="true">
       </div>`;
   } else {
     html += `
       <select class="form-select" name="lokasi_pkd" required>
-        <option value="">-- Pilih Lokasi --</option>
-        ${lokasiList.map(l => `<option value="${escapeHtml(l.nama)}" ${(data && data.lokasi_pkd === l.nama) ? 'selected' : ''}>${escapeHtml(l.nama)}</option>`).join('')}
+        <option value="">-- Pilih Angkatan --</option>
+        ${angkatanList.map(a => `<option value="${escapeHtml(a.nama)}" ${(data && data.lokasi_pkd === a.nama) ? 'selected' : ''}>${escapeHtml(a.nama)}${a.tahun ? ` (${a.tahun})` : ''}</option>`).join('')}
       </select>`;
   }
   html += `</div>`;
@@ -1912,7 +1945,7 @@ async function handleSavePeserta(e) {
   data.lokasi_pkd = lokSel ? lokSel.value : '';
 
   if (!data.lokasi_pkd) {
-    showToast('Lokasi PKD wajib diisi. Tambahkan lokasi terlebih dahulu di bagian bawah halaman.', 'error');
+    showToast('Angkatan PKD wajib diisi. Tambahkan angkatan terlebih dahulu di bagian bawah halaman.', 'error');
     return;
   }
 
@@ -1951,7 +1984,7 @@ async function handleSavePeserta(e) {
       ctx.getModal('pesertaFormModal')?.hide();
       await AdminModule.loadAllData(true);
 
-      // ⭐ Notify sidebar (kalau lokasi baru muncul)
+      // ⭐ Notify sidebar (kalau angkatan baru muncul)
       window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
     } else {
       throw new Error(res.error || 'Gagal menyimpan');
@@ -1970,6 +2003,6 @@ async function handleSavePeserta(e) {
 export default { mount, unmount };
 
 console.log(
-  '%c Peserta View v27.3.0 — Lokasi PKD Filter Edition ',
+  '%c Peserta View v28.0.0 — Angkatan PKD Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
