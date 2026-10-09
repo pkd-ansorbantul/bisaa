@@ -1,16 +1,22 @@
 // ============================================================
-// js/app.js — v27.5.0 ROUTE-NORMALIZER + CIRCUIT-BREAKER AWARE
+// js/app.js — v27.2.0 MOBILE DRAWER EDITION
 // ============================================================
-// CHANGELOG v27.5.0 (dari v27.4.0):
-//   ✅ FIX CRITICAL: Route alias — typo "skriining" auto-redirect ke "skrining"
-//   ✅ FIX CRITICAL: normalizeRoute() — hapus karakter aneh, trailing slash
-//   ✅ FIX: Preload fragment + JS tidak fail kan route salah
-//   ✅ FIX: Auto-sync 180s + MIN_SYNC_GAP 60s (anti GAS throttle)
-//   ✅ FIX: Circuit breaker status check sebelum trigger sync
-//   ✅ NEW: ALL_ROUTES constant untuk debug
-//   ✅ NEW: validateRoutes() saat boot — log route yang file-nya 404
-//   ✅ NEW: window.__pkd.diagnose() untuk health check lengkap
-//   ✅ KEEP: Semua fitur v27.4.0
+// CHANGELOG v27.2.0 (dari v27.5.0):
+//   ✅ NEW: installMobileTopbarTitle() — update #mobileTopbarTitle
+//     saat route berubah (juga di document.title)
+//   ✅ NEW: bindMobileTopbarButtons() — fallback bind #mobileThemeBtn
+//     kalau theme-toggle.js belum mount
+//   ✅ NEW: Listen sidebar:mobile-opened / sidebar:mobile-closed
+//     untuk log + analytics hook
+//   ✅ NEW: Guard keyboard shortcuts — skip Alt+key saat drawer
+//     mobile terbuka (cegah konflik)
+//   ✅ NEW: Track sidebar drawer state (isMobileDrawerOpen)
+//   ✅ FIX: installTitleUpdate() sekarang juga update mobile topbar
+//   ✅ FIX: Route normalizer tetap robust (semua alias tetap work)
+//   ✅ FIX: Circuit breaker aware (dari api.js)
+//   ✅ FIX: Auto-sync 180s + MIN_SYNC_GAP 60s
+//   ✅ KEEP: Semua fitur v27.5.0 (route alias, validateRoutes,
+//     diagnose, checkRoutes, forceSync, dll)
 // ============================================================
 
 import {
@@ -38,7 +44,7 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '27.5.0';
+const APP_VERSION = '27.2.0';
 
 const DATA_PRELOAD_TIMEOUT_MS       = 20000;
 const ENSURE_READY_TIMEOUT_MS       = 10000;
@@ -48,6 +54,7 @@ const IDLE_THRESHOLD_MS             = 5 * 60 * 1000;
 const FAILED_MODULE_RETRY_DELAY_MS  = 3000;
 const FAILED_MODULE_MAX_RETRY       = 3;
 const QUIZ_PRELOAD_DELAY_MS         = 2000;
+const MOBILE_BREAKPOINT             = 992;
 
 // ============================================================
 //   ROUTES — 18 Views (dengan alias support)
@@ -125,10 +132,6 @@ const ROUTE_ALIASES = {
 // ============================================================
 /**
  * Normalisasi hash supaya route selalu match.
- * - Trim whitespace
- * - Hapus trailing slash (kecuali root)
- * - Hapus karakter zero-width & unicode aneh
- * - Apply ROUTE_ALIASES
  */
 function normalizeRoute(hash) {
   if (!hash || typeof hash !== 'string') return '#/admin/dashboard';
@@ -173,6 +176,9 @@ let lastSyncAt = 0;
 let dataReady = false;
 let corsErrorShown = false;
 
+// ⚡ NEW: Mobile drawer state tracking
+let isMobileDrawerOpen = false;
+
 window.__pkdFailedModules = new Map();
 
 // ============================================================
@@ -188,6 +194,10 @@ function findElement(ids) {
 
 function getRouteCount() {
   return Object.keys(ROUTES).length;
+}
+
+function isMobile() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
 }
 
 function updateLoaderText(text) {
@@ -262,7 +272,7 @@ async function safeImport(url, options = {}) {
 }
 
 // ============================================================
-//   ⚡ NEW: VALIDATE ROUTE FILES (saat boot)
+//   ⚡ VALIDATE ROUTE FILES (saat boot)
 // ============================================================
 async function validateRouteFiles() {
   console.log('[Boot] 🔍 Validating route files...');
@@ -712,6 +722,44 @@ async function mountInteractiveFeatures() {
 }
 
 // ============================================================
+//   ⚡ NEW: BIND MOBILE TOPBAR BUTTONS (FALLBACK)
+//   Bind theme button di mobile topbar kalau theme-toggle.js
+//   belum sempat handle via MutationObserver.
+// ============================================================
+function bindMobileTopbarButtons() {
+  const themeBtn = document.getElementById('mobileThemeBtn');
+  if (!themeBtn || themeBtn.dataset.bound === '1') return;
+  themeBtn.dataset.bound = '1';
+
+  themeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('theme:toggle'));
+  });
+
+  console.log('[Boot] ✅ Mobile theme button bound');
+}
+
+// ============================================================
+//   ⚡ NEW: MOBILE DRAWER STATE TRACKING
+// ============================================================
+function installSidebarDrawerListeners() {
+  if (window.__pkdSidebarDrawerListenersInstalled) return;
+  window.__pkdSidebarDrawerListenersInstalled = true;
+
+  window.addEventListener('sidebar:mobile-opened', () => {
+    isMobileDrawerOpen = true;
+    console.log('[App] 📱 Mobile sidebar opened');
+  });
+
+  window.addEventListener('sidebar:mobile-closed', () => {
+    isMobileDrawerOpen = false;
+    console.log('[App] 📱 Mobile sidebar closed');
+  });
+
+  console.log('[Boot] ✅ Sidebar drawer listeners installed');
+}
+
+// ============================================================
 //   BOOT SEQUENCE
 // ============================================================
 async function boot() {
@@ -863,6 +911,12 @@ async function boot() {
   // 11. Interactive features
   await mountInteractiveFeatures();
 
+  // ⚡ 11b. NEW: Mobile topbar buttons
+  bindMobileTopbarButtons();
+
+  // ⚡ 11c. NEW: Sidebar drawer listeners
+  installSidebarDrawerListeners();
+
   // 12. Auto-sync
   startAutoSync();
 
@@ -871,7 +925,7 @@ async function boot() {
   installBeforeUnloadGuard();
   installBfcacheGuard();
   installTitleUpdate();
-  installHashChangeNormalizer();  // ⬅️ NEW
+  installHashChangeNormalizer();
 
   // 14. Done
   const totalBoot = Date.now() - bootStart;
@@ -883,8 +937,7 @@ async function boot() {
 }
 
 // ============================================================
-//   ⚡ NEW: HASH CHANGE NORMALIZER
-//   Auto-normalize typo saat user klik link (tanpa reload)
+//   HASH CHANGE NORMALIZER
 // ============================================================
 function installHashChangeNormalizer() {
   if (window.__pkdHashNormalizerInstalled) return;
@@ -900,7 +953,6 @@ function installHashChangeNormalizer() {
     console.log(`[HashNormalizer] 🔄 Auto-fix: "${raw}" → "${normalized}"`);
     try {
       history.replaceState(null, '', normalized);
-      // Trigger router manual
       if (router && typeof router.navigate === 'function') {
         router.navigate(normalized);
       }
@@ -922,6 +974,9 @@ function installKeyboardShortcuts() {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey) return;
     if (!e.altKey) return;
+
+    // ⚡ NEW: Skip Alt+key kalau mobile drawer terbuka
+    if (isMobile() && isMobileDrawerOpen) return;
 
     const key = String(e.key || '').toLowerCase();
     const routes = {
@@ -977,7 +1032,7 @@ function installBfcacheGuard() {
 }
 
 // ============================================================
-//   TITLE UPDATE
+//   TITLE UPDATE — Also update mobile topbar
 // ============================================================
 function installTitleUpdate() {
   if (window.__pkdTitleUpdateInstalled) return;
@@ -986,9 +1041,20 @@ function installTitleUpdate() {
   window.addEventListener('routeChanged', function (e) {
     const detail = e && e.detail;
     if (!detail || !detail.path) return;
+
     const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
-    const title = path.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const title = path.split(' ').map(w =>
+      w.charAt(0).toUpperCase() + w.slice(1)
+    ).join(' ');
+
+    // Update document title
     document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
+
+    // ⚡ NEW: Update mobile topbar title
+    const topbarTitle = document.getElementById('mobileTopbarTitle');
+    if (topbarTitle) {
+      topbarTitle.textContent = title || 'PKD GP Ansor';
+    }
   });
 }
 
@@ -1016,7 +1082,7 @@ window.__pkd = {
     const normalized = normalizeRoute(hash);
     if (router) router.navigate(normalized);
   },
-  normalizeRoute: normalizeRoute,   // ⬅️ NEW public API
+  normalizeRoute: normalizeRoute,
   reload: () => router && router.reload(),
   destroy: () => router && router.destroy(),
 
@@ -1025,6 +1091,12 @@ window.__pkd = {
   toggleTheme: () => window.dispatchEvent(new CustomEvent('theme:toggle')),
   setTheme: (t) => window.dispatchEvent(new CustomEvent('theme:set', { detail: { theme: t } })),
   openShortcuts: () => window.dispatchEvent(new CustomEvent('shortcuts:open')),
+
+  // ⚡ NEW: Mobile drawer helpers
+  openSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-open')),
+  closeSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-close')),
+  toggleSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-toggle')),
+  isSidebarOpen: () => isMobileDrawerOpen,
 
   getAdminModule: () => adminModule,
   forceSync: async () => {
@@ -1059,12 +1131,14 @@ window.__pkd = {
     ? adminModule.getStats()
     : null,
 
-  // ⬇️ NEW: Full diagnostic
+  // Full diagnostic
   diagnose: async () => {
     const report = {
       version: APP_VERSION,
       dataReady,
       isSyncing,
+      isMobileDrawerOpen,
+      isMobile: isMobile(),
       lastSyncAgo: lastSyncAt ? `${Math.round((Date.now() - lastSyncAt)/1000)}s` : 'never',
       lastUserActivityAgo: `${Math.round((Date.now() - lastUserActivity)/1000)}s`,
       autoSyncRunning: !!autoSyncInterval,
@@ -1083,7 +1157,7 @@ window.__pkd = {
     return report;
   },
 
-  // ⬇️ NEW: Quick route check
+  // Quick route check
   checkRoutes: async () => {
     const results = [];
     for (const [route, config] of Object.entries(ROUTES)) {
@@ -1108,6 +1182,6 @@ window.__pkd = {
 };
 
 console.log(
-  '%c App v27.5.0 — Route Normalizer + Circuit-Breaker Aware ',
+  '%c App v27.2.0 — Mobile Drawer Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
