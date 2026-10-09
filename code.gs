@@ -1,14 +1,19 @@
 // ============================================================
 // code.gs — PKD GP ANSOR BANTUL BACKEND
-// Versi: 27.3.0 — LOKASI PKD DYNAMIC MENU EDITION
+// Versi: 28.0.0 — ANGKATAN PKD EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.3.0 (dari v27.0.0):
-//   ✅ NEW: getLokasiPKDWithCount() — daftar lokasi + count peserta
-//   ✅ NEW: Route 'getLokasiPKDWithCount'
-//   ✅ KEEP: Semua 100+ actions v27.0.0 (zero regression)
-//   ✅ KEEP: getBootstrapData, getKetuaPACScopeInfo, dll
-//   ✅ VERIFIED: Semua menu + fitur Lokasi PKD berfungsi
+// CHANGELOG v28.0.0 (dari v27.3.0):
+//   ✅ NEW: Sheet AngkatanPKD (menggantikan LokasiPKD)
+//   ✅ NEW: getAngkatanPKDList() — list angkatan
+//   ✅ NEW: getAngkatanPKDWithCount() — list + count peserta
+//   ✅ NEW: addAngkatanPKD() / updateAngkatanPKD() / deleteAngkatanPKD()
+//   ✅ NEW: getAngkatanDetail() — 7 tabs data lengkap
+//     → peserta, absensi, pretest, posttest, skrining, sertifikat, rtl
+//   ✅ MIGRATE: LokasiPKD → AngkatanPKD (auto-migrate saat init)
+//   ✅ KEEP: getBootstrapData batch endpoint
+//   ✅ KEEP: Semua 100+ actions v27.3.0 (zero regression)
+//   ✅ KEEP: Alias legacy getLokasiPKD* untuk backward compat
 // ============================================================
 
 // ============================================================
@@ -19,8 +24,8 @@ var FOLDER_NAME            = 'TandaTangan_PKD_Ansor';
 var SERTIFIKAT_FOLDER_NAME = 'Sertifikat_Generated';
 var BASE_URL               = 'https://pkd-ansorbantul.github.io/bisaa';
 var DEFAULT_PASSWORD_SALT  = 'PKD-ANSOR-BANTUL-2026';
-var LOG_PREFIX             = '[v27.3.0]';
-var APP_VERSION            = '27.3.0';
+var LOG_PREFIX             = '[v28.0.0]';
+var APP_VERSION            = '28.0.0';
 
 // ============================================================
 //   KONSTANTA TTD
@@ -64,7 +69,7 @@ var SHEET_NAMES = {
   KADER:                'Kader',
   RTL_TASKS:            'RTLTasks',
   CERTIFICATE_LAYOUTS:  'CertificateLayouts',
-  LOKASI_PKD:           'LokasiPKD',
+  ANGKATAN_PKD:         'AngkatanPKD',
   TIM_INSTRUKTUR:       'TimInstruktur'
 };
 
@@ -363,11 +368,19 @@ function handleRequest(params) {
       // ---- Drive Token ----
       case 'getDriveToken':              return getDriveToken();
 
-      // ---- Lokasi PKD ----
-      case 'getLokasiPKDList':           return getLokasiPKDList();
-      case 'getLokasiPKDWithCount':      return getLokasiPKDWithCount();  // ⭐ NEW v27.3.0
-      case 'addLokasiPKD':               return addLokasiPKD(params);
-      case 'deleteLokasiPKD':            return deleteLokasiPKD(params);
+      // ---- ⭐ ANGKATAN PKD (menggantikan Lokasi PKD) ----
+      case 'getAngkatanPKDList':         return getAngkatanPKDList();
+      case 'getAngkatanPKDWithCount':    return getAngkatanPKDWithCount();
+      case 'addAngkatanPKD':             return addAngkatanPKD(params);
+      case 'updateAngkatanPKD':          return updateAngkatanPKD(params);
+      case 'deleteAngkatanPKD':          return deleteAngkatanPKD(params);
+      case 'getAngkatanDetail':          return getAngkatanDetail(params);
+
+      // ---- ⚠️ LEGACY ALIAS untuk Lokasi PKD ----
+      case 'getLokasiPKDList':           return getAngkatanPKDList();
+      case 'getLokasiPKDWithCount':      return getAngkatanPKDWithCount();
+      case 'addLokasiPKD':               return addAngkatanPKD(params);
+      case 'deleteLokasiPKD':            return deleteAngkatanPKD(params);
 
       // ---- Pengaturan ----
       case 'getQuizSettings':            return getQuizSettings();
@@ -399,7 +412,7 @@ function handleRequest(params) {
 }
 
 // ============================================================
-//   BATCH BOOTSTRAP
+//   BATCH BOOTSTRAP — 23 endpoints in 1 request
 // ============================================================
 function getBootstrapData() {
   try {
@@ -423,6 +436,9 @@ function getBootstrapData() {
       usulan:            (getUsulanList()           || {}).data || [],
       rtl:               (getRTLTasks({})           || {}).data || [],
       timInstruktur:     (getTimInstrukturList()    || {}).data || [],
+      // ⭐ NEW: Angkatan PKD
+      angkatanPKDList:   (getAngkatanPKDWithCount() || {}).data || [],
+      // Settings
       quizSettings:      (getQuizSettings()         || {}).data || {},
       loginMode:         (getLoginMode()            || {}).data || { enabled: false },
       publicVisibility:  (getPublicVisibility()     || {}).data || {},
@@ -435,6 +451,7 @@ function getBootstrapData() {
     log('[getBootstrapData] OK in', elapsed, 'ms',
         '| peserta:', data.peserta.length,
         '| sesi:', data.sesi.length,
+        '| angkatan:', data.angkatanPKDList.length,
         '| timInstruktur:', data.timInstruktur.length);
 
     return ok(data);
@@ -484,7 +501,7 @@ function initializeSystem() {
     migrateSesiAbsen();
     ensureCertificateLayoutsSheet();
     ensureDigitalApprovalHeaders();
-    ensureLokasiPKDSheet();
+    ensureAngkatanPKDSheet();       // ⭐ NEW
     ensureAbsenResponsesSheet();
     ensureTimInstrukturSheet();
 
@@ -558,7 +575,7 @@ function createHeaders(sheet, name) {
     'Kader':                ['id', 'nama', 'email', 'hp', 'asal', 'tingkatan', 'status', 'tanggal', 'catatan'],
     'RTLTasks':             ['id', 'judul', 'deskripsi', 'deadline', 'status', 'createdAt', 'createdBy', 'pesertaId', 'fileDriveId', 'catatan'],
     'CertificateLayouts':   ['id', 'nama', 'data_json', 'createdAt', 'updatedAt', 'createdBy'],
-    'LokasiPKD':            ['id', 'nama', 'createdAt'],
+    'AngkatanPKD':          ['id', 'nama', 'tahun', 'lokasi', 'tanggal_mulai', 'tanggal_selesai', 'status', 'total_peserta', 'createdAt', 'updatedAt'],
     'TimInstruktur':        ['id', 'nama', 'jabatan', 'urutan', 'foto_driveId', 'deskripsi', 'kontak_wa', 'kontak_email', 'createdAt', 'updatedAt']
   }[name] || ['id', 'data'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -634,6 +651,404 @@ function findRecordById(sheetName, id) {
     }
   }
   return null;
+}
+
+// ============================================================
+//   ⭐ ANGKATAN PKD — CRUD + DETAIL
+// ============================================================
+
+/**
+ * Pastikan sheet AngkatanPKD ada dengan header lengkap.
+ * Auto-migrate dari LokasiPKD kalau ada.
+ */
+function ensureAngkatanPKDSheet() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(SHEET_NAMES.ANGKATAN_PKD);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAMES.ANGKATAN_PKD);
+    var headers = ['id', 'nama', 'tahun', 'lokasi', 'tanggal_mulai', 'tanggal_selesai', 'status', 'total_peserta', 'createdAt', 'updatedAt'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    log('ensureAngkatanPKDSheet: created new sheet');
+
+    // Migrate dari LokasiPKD kalau ada
+    var oldSheet = ss.getSheetByName('LokasiPKD');
+    if (oldSheet) {
+      try {
+        var oldData = oldSheet.getDataRange().getValues();
+        if (oldData.length > 1) {
+          var currentYear = new Date().getFullYear();
+          for (var i = 1; i < oldData.length; i++) {
+            var oldRow = oldData[i];
+            var namaLama = String(oldRow[1] || '').trim();
+            if (!namaLama) continue;
+            sheet.appendRow([
+              oldRow[0],           // id
+              namaLama,            // nama
+              currentYear,         // tahun
+              namaLama,            // lokasi
+              '',                  // tanggal_mulai
+              '',                  // tanggal_selesai
+              'aktif',             // status
+              0,                   // total_peserta
+              oldRow[2] || new Date(), // createdAt
+              new Date()           // updatedAt
+            ]);
+          }
+          log('ensureAngkatanPKDSheet: migrated', oldData.length - 1, 'lokasi from LokasiPKD');
+        }
+      } catch (ex) { logErr('migrate LokasiPKD:', ex.message); }
+    }
+  } else {
+    // Migrate header
+    try {
+      var currentHeaders = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0]
+        .map(function (h) { return String(h).trim(); });
+      var expected = ['id', 'nama', 'tahun', 'lokasi', 'tanggal_mulai', 'tanggal_selesai', 'status', 'total_peserta', 'createdAt', 'updatedAt'];
+      var missing = expected.filter(function (h) { return currentHeaders.indexOf(h) === -1; });
+      if (missing.length > 0) {
+        var startCol = currentHeaders.length + 1;
+        sheet.getRange(1, startCol, 1, missing.length).setValues([missing]);
+        log('ensureAngkatanPKDSheet: added', missing.join(', '));
+      }
+    } catch (ex) { logErr('ensureAngkatanPKDSheet migrate:', ex.message); }
+  }
+}
+
+/**
+ * Ambil semua Angkatan PKD (simple list).
+ */
+function getAngkatanPKDList() {
+  try {
+    ensureAngkatanPKDSheet();
+    var s = getSheetData(SHEET_NAMES.ANGKATAN_PKD);
+    if (!s.sheet) return ok([]);
+
+    var rows = s.rows.map(function (row) {
+      var obj = headersToObject(s.headers, row);
+      obj.tahun = parseInt(obj.tahun) || new Date().getFullYear();
+      obj.total_peserta = parseInt(obj.total_peserta) || 0;
+      return obj;
+    }).filter(function (o) { return o.nama; });
+
+    rows.sort(function (a, b) {
+      if (b.tahun !== a.tahun) return b.tahun - a.tahun;
+      return String(a.nama).localeCompare(String(b.nama));
+    });
+
+    return ok(rows);
+  } catch (ex) {
+    logErr('getAngkatanPKDList:', ex.message);
+    return ok([]);
+  }
+}
+
+/**
+ * ⭐ Ambil daftar Angkatan PKD + count peserta per angkatan.
+ */
+function getAngkatanPKDWithCount() {
+  try {
+    var t0 = Date.now();
+
+    ensureAngkatanPKDSheet();
+
+    var angkatanData = getSheetData(SHEET_NAMES.ANGKATAN_PKD);
+    var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
+
+    var angkatanCol = pesertaData.headers.indexOf('lokasi_pkd');
+    var statusCol = pesertaData.headers.indexOf('status');
+
+    var countMap = {};
+
+    if (angkatanCol !== -1) {
+      for (var i = 0; i < pesertaData.rows.length; i++) {
+        var row = pesertaData.rows[i];
+        var angkatan = String(row[angkatanCol] || '').trim();
+        if (!angkatan) continue;
+
+        if (!countMap[angkatan]) {
+          countMap[angkatan] = { total: 0, approved: 0, pending: 0, rejected: 0, alumni: 0 };
+        }
+        var status = statusCol !== -1
+          ? String(row[statusCol] || 'pending').toLowerCase().trim()
+          : 'pending';
+
+        countMap[angkatan].total++;
+        if (status === 'approved' || status === 'active') countMap[angkatan].approved++;
+        else if (status === 'pending') countMap[angkatan].pending++;
+        else if (status === 'rejected') countMap[angkatan].rejected++;
+        else if (status === 'alumni') countMap[angkatan].alumni++;
+      }
+    }
+
+    var list = angkatanData.rows.map(function (row) {
+      var obj = headersToObject(angkatanData.headers, row);
+      var nama = String(obj.nama || '').trim();
+      var c = countMap[nama] || { total: 0, approved: 0, pending: 0, rejected: 0, alumni: 0 };
+
+      return {
+        id: String(obj.id || ''),
+        nama: nama,
+        tahun: parseInt(obj.tahun) || new Date().getFullYear(),
+        lokasi: String(obj.lokasi || ''),
+        tanggal_mulai: obj.tanggal_mulai instanceof Date ? obj.tanggal_mulai.toISOString() : String(obj.tanggal_mulai || ''),
+        tanggal_selesai: obj.tanggal_selesai instanceof Date ? obj.tanggal_selesai.toISOString() : String(obj.tanggal_selesai || ''),
+        status: String(obj.status || 'aktif'),
+        totalPeserta: c.total,
+        totalApproved: c.approved,
+        totalPending: c.pending,
+        totalRejected: c.rejected,
+        totalAlumni: c.alumni,
+        createdAt: obj.createdAt instanceof Date ? obj.createdAt.toISOString() : String(obj.createdAt || ''),
+      };
+    }).filter(function (o) { return o.nama; });
+
+    list.sort(function (a, b) {
+      if (b.tahun !== a.tahun) return b.tahun - a.tahun;
+      return a.nama.localeCompare(b.nama);
+    });
+
+    log('[getAngkatanPKDWithCount]', list.length, 'angkatan in', Date.now() - t0, 'ms');
+    return ok(list);
+
+  } catch (ex) {
+    logErr('getAngkatanPKDWithCount:', ex.message, ex.stack);
+    return err(ex.message);
+  }
+}
+
+/**
+ * Tambah Angkatan PKD baru.
+ */
+function addAngkatanPKD(p) {
+  try {
+    if (!p.nama) throw new Error('Nama angkatan wajib');
+    ensureAngkatanPKDSheet();
+
+    var sheet = getSheet(SHEET_NAMES.ANGKATAN_PKD);
+    var headers = sheet.getDataRange().getValues()[0].map(function (h) { return String(h).trim(); });
+    var id = getNextId(SHEET_NAMES.ANGKATAN_PKD, 'id');
+    var now = new Date();
+
+    var row = headers.map(function (colName) {
+      switch (colName) {
+        case 'id': return id;
+        case 'nama': return String(p.nama).trim();
+        case 'tahun': return parseInt(p.tahun) || now.getFullYear();
+        case 'lokasi': return String(p.lokasi || p.nama || '');
+        case 'tanggal_mulai': return String(p.tanggal_mulai || '');
+        case 'tanggal_selesai': return String(p.tanggal_selesai || '');
+        case 'status': return String(p.status || 'aktif');
+        case 'total_peserta': return 0;
+        case 'createdAt': return now;
+        case 'updatedAt': return now;
+        default: return '';
+      }
+    });
+
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+    log('[addAngkatanPKD]', id, p.nama);
+    return ok({ id: id });
+  } catch (ex) {
+    logErr('addAngkatanPKD:', ex.message);
+    return err(ex.message);
+  }
+}
+
+/**
+ * Update Angkatan PKD.
+ */
+function updateAngkatanPKD(p) {
+  try {
+    if (!p.id) throw new Error('ID diperlukan');
+    var r = findRowById(SHEET_NAMES.ANGKATAN_PKD, p.id);
+    if (!r) throw new Error('Angkatan tidak ditemukan');
+
+    for (var j = 0; j < r.headers.length; j++) {
+      var colName = r.headers[j];
+      if (colName === 'id' || colName === 'createdAt') continue;
+      if (colName === 'updatedAt') {
+        r.sheet.getRange(r.rowIndex, j + 1).setValue(new Date());
+        continue;
+      }
+      if (p[colName] !== undefined) {
+        r.sheet.getRange(r.rowIndex, j + 1).setValue(p[colName]);
+      }
+    }
+    SpreadsheetApp.flush();
+    log('[updateAngkatanPKD]', p.id);
+    return ok();
+  } catch (ex) {
+    logErr('updateAngkatanPKD:', ex.message);
+    return err(ex.message);
+  }
+}
+
+/**
+ * Hapus Angkatan PKD.
+ */
+function deleteAngkatanPKD(p) {
+  try {
+    if (!p.id) throw new Error('ID diperlukan');
+    var r = findRowById(SHEET_NAMES.ANGKATAN_PKD, p.id);
+    if (!r) throw new Error('Angkatan tidak ditemukan');
+    r.sheet.deleteRow(r.rowIndex);
+    SpreadsheetApp.flush();
+    log('[deleteAngkatanPKD]', p.id);
+    return ok();
+  } catch (ex) {
+    logErr('deleteAngkatanPKD:', ex.message);
+    return err(ex.message);
+  }
+}
+
+/**
+ * ⭐ AMBIL DETAIL LENGKAP 1 ANGKATAN
+ * Return: { angkatan, peserta, absensi, pretest, posttest, skrining, sertifikat, rtl, stats }
+ */
+function getAngkatanDetail(params) {
+  try {
+    var t0 = Date.now();
+    var namaOrId = params.nama || params.lokasiId || params.angkatanId || params.id;
+    if (!namaOrId) throw new Error('Nama atau ID angkatan wajib');
+
+    // ===== 1. Ambil info angkatan =====
+    ensureAngkatanPKDSheet();
+    var angkatanSheet = getSheetData(SHEET_NAMES.ANGKATAN_PKD);
+    var angkatanInfo = null;
+    var idCol = angkatanSheet.headers.indexOf('id');
+    var namaCol = angkatanSheet.headers.indexOf('nama');
+
+    for (var i = 0; i < angkatanSheet.rows.length; i++) {
+      var row = angkatanSheet.rows[i];
+      if (String(row[idCol]) === String(namaOrId) || String(row[namaCol]) === String(namaOrId)) {
+        angkatanInfo = headersToObject(angkatanSheet.headers, row);
+        break;
+      }
+    }
+
+    if (!angkatanInfo) {
+      throw new Error('Angkatan tidak ditemukan: ' + namaOrId);
+    }
+
+    var angkatanNama = String(angkatanInfo.nama || namaOrId).trim();
+
+    // ===== 2. Ambil semua peserta dengan angkatan ini =====
+    var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
+    var pAngkatanCol = pesertaData.headers.indexOf('lokasi_pkd');
+    if (pAngkatanCol === -1) throw new Error('Kolom lokasi_pkd tidak ditemukan di sheet Peserta');
+
+    var pesertaList = [];
+    var namaPesertaSet = {};
+    var pesertaIdSet = {};
+
+    for (var k = 0; k < pesertaData.rows.length; k++) {
+      var pRow = pesertaData.rows[k];
+      if (String(pRow[pAngkatanCol] || '').trim() === angkatanNama) {
+        var obj = headersToObject(pesertaData.headers, pRow);
+        // Expand custom_data
+        if (obj.custom_data && typeof obj.custom_data === 'string' && obj.custom_data.indexOf('{') === 0) {
+          try {
+            var parsed = JSON.parse(obj.custom_data);
+            Object.keys(parsed).forEach(function (key) {
+              if (obj[key] === undefined || obj[key] === '') obj[key] = parsed[key];
+            });
+          } catch (e) { /* silent */ }
+        }
+        obj.status = String(obj.status || 'pending').toLowerCase();
+        pesertaList.push(obj);
+
+        if (obj.nama_lengkap) {
+          namaPesertaSet[String(obj.nama_lengkap).toLowerCase().trim()] = true;
+        }
+        if (obj.id !== undefined && obj.id !== null) {
+          pesertaIdSet[String(obj.id)] = true;
+        }
+      }
+    }
+
+    // ===== 3. Filter data by nama peserta =====
+    var namaMatchFn = function (nama) {
+      return namaPesertaSet[String(nama || '').toLowerCase().trim()] === true;
+    };
+
+    var absensiList = (getAbsensiResponses().data || []).filter(function (a) {
+      return namaMatchFn(a.nama);
+    });
+
+    var pretestList = (getPretestResponses().data || []).filter(function (p) {
+      return namaMatchFn(p.nama);
+    });
+
+    var posttestList = (getPosttestResponses().data || []).filter(function (p) {
+      return namaMatchFn(p.nama);
+    });
+
+    var skriningList = (getSkriningResponses().data || []).filter(function (s) {
+      return namaMatchFn(s.nama);
+    });
+
+    var sertifikatList = (getUploadedCertificates().data || []).filter(function (s) {
+      return namaMatchFn(s.nama_peserta);
+    });
+
+    // RTL filter: by pesertaId (kalau ada) atau umum
+    var rtlAll = (getRTLTasks({}).data || []);
+    var filteredRTL = rtlAll.filter(function (r) {
+      if (!r.pesertaId) return true; // tugas umum
+      return pesertaIdSet[String(r.pesertaId)] === true;
+    });
+
+    // ===== 4. Stats =====
+    var approved = 0, pending = 0, rejected = 0, alumni = 0;
+    pesertaList.forEach(function (p) {
+      var s = String(p.status || '').toLowerCase();
+      if (s === 'approved' || s === 'active') approved++;
+      else if (s === 'pending') pending++;
+      else if (s === 'rejected') rejected++;
+      else if (s === 'alumni') alumni++;
+    });
+
+    var result = {
+      angkatan: angkatanInfo,
+      peserta: pesertaList,
+      absensi: absensiList,
+      pretest: pretestList,
+      posttest: posttestList,
+      skrining: skriningList,
+      sertifikat: sertifikatList,
+      rtl: filteredRTL,
+      stats: {
+        totalPeserta: pesertaList.length,
+        totalApproved: approved,
+        totalPending: pending,
+        totalRejected: rejected,
+        totalAlumni: alumni,
+        totalAbsensi: absensiList.length,
+        totalPretest: pretestList.length,
+        totalPosttest: posttestList.length,
+        totalSkrining: skriningList.length,
+        totalSertifikat: sertifikatList.length,
+        totalRTL: filteredRTL.length,
+      }
+    };
+
+    log('[getAngkatanDetail]', angkatanNama, 'in', Date.now() - t0, 'ms',
+        '| peserta:', pesertaList.length,
+        '| absensi:', absensiList.length,
+        '| pretest:', pretestList.length,
+        '| posttest:', posttestList.length,
+        '| skrining:', skriningList.length,
+        '| sertifikat:', sertifikatList.length,
+        '| rtl:', filteredRTL.length);
+
+    return ok(result);
+
+  } catch (ex) {
+    logErr('getAngkatanDetail:', ex.message, ex.stack);
+    return err(ex.message);
+  }
 }
 
 // ============================================================
@@ -1440,14 +1855,6 @@ function ensureUsersSchema() {
     }
   } catch (ex) {
     logErr('ensureUsersSchema:', ex.message);
-  }
-}
-
-function ensureLokasiPKDSheet() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  if (!ss.getSheetByName(SHEET_NAMES.LOKASI_PKD)) {
-    var s = ss.insertSheet(SHEET_NAMES.LOKASI_PKD);
-    s.appendRow(['id', 'nama', 'createdAt']);
   }
 }
 
@@ -5228,160 +5635,6 @@ function submitKontak(p) {
 }
 
 // ============================================================
-//   ⭐ LOKASI PKD — v27.3.0
-// ============================================================
-
-/**
- * Ambil semua Lokasi PKD (simple list).
- */
-function getLokasiPKDList() {
-  try {
-    ensureLokasiPKDSheet();
-    var s = getSheetData(SHEET_NAMES.LOKASI_PKD);
-    return ok(s.rows.map(function (row) { return headersToObject(s.headers, row); }));
-  } catch (ex) { return ok([]); }
-}
-
-/**
- * ⭐ NEW v27.3.0: Ambil daftar Lokasi PKD beserta jumlah peserta per lokasi.
- *
- * Return: [{
- *   id, nama, createdAt,
- *   totalPeserta, totalApproved, totalPending, totalRejected
- * }]
- *
- * Digunakan oleh:
- *   - sidebar.js → render submenu "Lokasi PKD" dinamis
- *   - app.html   → render filter Lokasi PKD di modal "Lainnya"
- *   - peserta.js → verifikasi filter dari sessionStorage
- */
-function getLokasiPKDWithCount() {
-  try {
-    var t0 = Date.now();
-
-    // 1. Pastikan sheet LokasiPKD ada
-    ensureLokasiPKDSheet();
-
-    // 2. Ambil daftar lokasi
-    var lokasiData = getSheetData(SHEET_NAMES.LOKASI_PKD);
-
-    var lokasiList = lokasiData.rows
-      .map(function (row) {
-        var obj = headersToObject(lokasiData.headers, row);
-        return {
-          id: String(obj.id || ''),
-          nama: String(obj.nama || '').trim(),
-          createdAt: obj.createdAt instanceof Date
-            ? obj.createdAt.toISOString()
-            : String(obj.createdAt || ''),
-          totalPeserta: 0,
-          totalApproved: 0,
-          totalPending: 0,
-          totalRejected: 0
-        };
-      })
-      .filter(function (l) { return l.nama; });
-
-    // 3. Hitung jumlah peserta per lokasi dari sheet Peserta
-    var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
-    var lokasiCol = pesertaData.headers.indexOf('lokasi_pkd');
-    var statusCol = pesertaData.headers.indexOf('status');
-
-    if (lokasiCol === -1) {
-      // Kolom lokasi_pkd tidak ada — kembalikan list tanpa count
-      log('[getLokasiPKDWithCount] ⚠️ Kolom lokasi_pkd tidak ditemukan');
-      return ok(lokasiList);
-    }
-
-    var countMap = {};
-
-    for (var i = 0; i < pesertaData.rows.length; i++) {
-      var row = pesertaData.rows[i];
-      var lokasi = String(row[lokasiCol] || '').trim();
-      if (!lokasi) continue;
-
-      if (!countMap[lokasi]) {
-        countMap[lokasi] = { total: 0, approved: 0, pending: 0, rejected: 0 };
-      }
-
-      var status = statusCol !== -1
-        ? String(row[statusCol] || 'pending').toLowerCase().trim()
-        : 'pending';
-
-      countMap[lokasi].total++;
-
-      if (status === 'approved' || status === 'active') {
-        countMap[lokasi].approved++;
-      } else if (status === 'pending') {
-        countMap[lokasi].pending++;
-      } else if (status === 'rejected') {
-        countMap[lokasi].rejected++;
-      }
-    }
-
-    // 4. Gabungkan count ke lokasiList
-    lokasiList.forEach(function (l) {
-      var c = countMap[l.nama] || { total: 0, approved: 0, pending: 0, rejected: 0 };
-      l.totalPeserta = c.total;
-      l.totalApproved = c.approved;
-      l.totalPending = c.pending;
-      l.totalRejected = c.rejected;
-    });
-
-    // 5. Sort alphabetically (case-insensitive)
-    lokasiList.sort(function (a, b) {
-      return a.nama.toLowerCase().localeCompare(b.nama.toLowerCase());
-    });
-
-    var elapsed = Date.now() - t0;
-    log('[getLokasiPKDWithCount] Total', lokasiList.length, 'lokasi in', elapsed, 'ms');
-
-    return ok(lokasiList);
-
-  } catch (ex) {
-    logErr('getLokasiPKDWithCount:', ex.message, ex.stack);
-    return err(ex.message);
-  }
-}
-
-/**
- * Tambah Lokasi PKD baru.
- */
-function addLokasiPKD(p) {
-  try {
-    if (!p.nama) throw new Error('Nama lokasi wajib');
-    ensureLokasiPKDSheet();
-    var sheet = getSheet(SHEET_NAMES.LOKASI_PKD);
-    var headers = sheet.getDataRange().getValues()[0].map(function (h) { return String(h).trim(); });
-    var id = getNextId(SHEET_NAMES.LOKASI_PKD, 'id');
-    var row = headers.map(function (colName) {
-      if (colName === 'id') return id;
-      if (colName === 'nama') return p.nama;
-      if (colName === 'createdAt') return new Date();
-      return '';
-    });
-    sheet.appendRow(row);
-    SpreadsheetApp.flush();
-    return ok({ id: id });
-  } catch (ex) { return err(ex.message); }
-}
-
-/**
- * Hapus Lokasi PKD.
- */
-function deleteLokasiPKD(p) {
-  try {
-    if (!p.id) throw new Error('ID diperlukan');
-    ensureLokasiPKDSheet();
-    var r = findRowById(SHEET_NAMES.LOKASI_PKD, p.id);
-    if (!r) throw new Error('ID tidak ditemukan');
-    r.sheet.deleteRow(r.rowIndex);
-    SpreadsheetApp.flush();
-    return ok();
-  } catch (ex) { return err(ex.message); }
-}
-
-// ============================================================
 //   DEFAULT FORM FIELDS
 // ============================================================
 function getDefaultFormFields() {
@@ -5431,20 +5684,19 @@ function runMigrateSettingsBooleans() {
 }
 
 // ============================================================
-//   END OF FILE — v27.3.0
+//   END OF FILE — v28.0.0
 // ============================================================
 //   Deployment Checklist:
 //     1. Deploy → Manage Deployments → "Anyone" (BUKAN "Anyone with Google Account")
 //     2. Copy URL → update `js/core/config.js` (SCRIPT_URL) jika berubah
 //     3. Test: URL + ?action=health
-//        → expect JSON { success: true, data: { status: 'healthy', version: '27.3.0' } }
-//     4. Test: URL + ?action=getLokasiPKDWithCount
-//        → expect JSON { success: true, data: [{ id, nama, totalPeserta, ... }] }
-//     5. Test: URL + ?action=getBootstrapData
-//        → expect JSON dengan 23 keys (peserta, sesi, materi, dst)
-//     6. Test: URL + ?action=getKetuaPACScopeInfo&username=ketua_sewon
-//        → expect { kapanewon: 'Sewon', lokasiScope: [], username: 'ketua_sewon' }
+//        → expect JSON { success: true, data: { status: 'healthy', version: '28.0.0' } }
+//     4. Test: URL + ?action=getAngkatanPKDWithCount
+//        → expect JSON { success: true, data: [{ id, nama, tahun, totalPeserta, ... }] }
+//     5. Test: URL + ?action=getAngkatanDetail&nama=2026%20-%20Kretek
+//        → expect JSON dengan 7 tabs data lengkap
+//     6. Test: URL + ?action=getBootstrapData
+//        → expect JSON dengan angkatanPKDList included
 //     7. Frontend console harus menampilkan:
-//        ✅ [AdminModule] Loaded via batch: { peserta: N, ... }
-//        ✅ [Sidebar] Total N lokasi loaded
+//        ✅ [AdminModule] Loaded via batch: { peserta: N, angkatan: M, ... }
 // ============================================================
