@@ -1,0 +1,583 @@
+<!-- ============================================================
+     views/admin/angkatan-pkd.html — Angkatan PKD View
+     Dimuat oleh: js/router.js
+     Logic: views/admin/angkatan-pkd.js
+     Versi: 28.0.0 — Angkatan PKD Edition
+     ============================================================
+     CHANGELOG v28.0.0:
+     ✅ Hub View — grid cards semua angkatan
+     ✅ Detail View — 7 tabs (Peserta, Absensi, Pretest, Posttest,
+        Skrining, Sertifikat, RTL)
+     ✅ Breadcrumb + Back navigation
+     ✅ Modal Tambah Angkatan
+     ✅ Modal Konfirmasi Hapus
+     ✅ Modal Detail Peserta (dari tab Peserta)
+     ✅ Skeleton loading
+     ✅ ARIA labels lengkap
+     ✅ Dark mode + mobile responsive
+     ============================================================ -->
+
+<!-- ==========================================================
+     PAGE HEADER
+     ========================================================== -->
+<h2 class="section-title">
+  <i class="bi bi-mortarboard-fill me-2" aria-hidden="true"></i>Angkatan PKD
+</h2>
+
+<!-- ==========================================================
+     HUB VIEW — Daftar semua angkatan
+     ========================================================== -->
+<div id="angkatanHubView" role="region" aria-label="Daftar angkatan PKD">
+
+  <!-- Info Banner -->
+  <div class="alert alert-info d-flex align-items-center gap-2 mb-4 rounded-3 shadow-sm"
+       style="border-left:4px solid #2563eb;" role="note">
+    <i class="bi bi-info-circle-fill fs-5 text-primary" aria-hidden="true"></i>
+    <div class="flex-grow-1">
+      <strong>Angkatan PKD</strong> — Klik angkatan untuk melihat data
+      <strong>peserta, absensi, pretest, posttest, skrining, sertifikat,</strong> dan
+      <strong>RTL</strong> angkatan tersebut.
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-2 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-mini">
+        <div class="num" id="statTotalAngkatan">-</div>
+        <div class="lbl">Total Angkatan</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-mini">
+        <div class="num" id="statTotalPesertaAll">-</div>
+        <div class="lbl">Total Peserta</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-mini">
+        <div class="num" id="statTotalApprovedAll">-</div>
+        <div class="lbl">Total Approved</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-mini">
+        <div class="num" id="statTotalPendingAll">-</div>
+        <div class="lbl">Total Pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="row mb-3 g-2 align-items-center">
+    <div class="col-lg-6">
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <button type="button" class="btn btn-outline-primary" id="addAngkatanBtn"
+                aria-label="Tambah angkatan baru">
+          <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tambah Angkatan
+        </button>
+        <button type="button" class="btn btn-outline-secondary" id="refreshAngkatanBtn"
+                aria-label="Segarkan data">
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Segarkan
+        </button>
+        <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat...</span>
+      </div>
+    </div>
+    <div class="col-lg-6 d-flex gap-2 justify-content-lg-end">
+      <div class="input-group" style="max-width: 280px;">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted" aria-hidden="true"></i>
+        </span>
+        <input type="text" class="form-control border-start-0" id="searchAngkatanInput"
+               placeholder="Cari angkatan..." autocomplete="off"
+               aria-label="Cari angkatan">
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid Angkatan -->
+  <div id="angkatanGridContainer" class="row g-3" aria-live="polite">
+    <!-- Skeleton initial -->
+    <div class="col-md-6 col-xl-4">
+      <div class="glass-card h-100" style="padding:1.25rem;">
+        <div class="d-flex align-items-start gap-2 mb-3">
+          <div class="skeleton-box" style="width:46px;height:46px;border-radius:14px;"></div>
+          <div class="flex-grow-1">
+            <div class="skeleton-box" style="height:18px;width:70%;margin-bottom:6px;"></div>
+            <div class="skeleton-box" style="height:14px;width:50%;"></div>
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+        </div>
+        <div class="skeleton-box" style="height:14px;width:40%;"></div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+      <div class="glass-card h-100" style="padding:1.25rem;">
+        <div class="d-flex align-items-start gap-2 mb-3">
+          <div class="skeleton-box" style="width:46px;height:46px;border-radius:14px;"></div>
+          <div class="flex-grow-1">
+            <div class="skeleton-box" style="height:18px;width:70%;margin-bottom:6px;"></div>
+            <div class="skeleton-box" style="height:14px;width:50%;"></div>
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+        </div>
+        <div class="skeleton-box" style="height:14px;width:40%;"></div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+      <div class="glass-card h-100" style="padding:1.25rem;">
+        <div class="d-flex align-items-start gap-2 mb-3">
+          <div class="skeleton-box" style="width:46px;height:46px;border-radius:14px;"></div>
+          <div class="flex-grow-1">
+            <div class="skeleton-box" style="height:18px;width:70%;margin-bottom:6px;"></div>
+            <div class="skeleton-box" style="height:14px;width:50%;"></div>
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+          <div class="col-4"><div class="skeleton-box" style="height:50px;border-radius:12px;"></div></div>
+        </div>
+        <div class="skeleton-box" style="height:14px;width:40%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================
+     DETAIL VIEW — Tampil setelah klik angkatan
+     ========================================================== -->
+<div id="angkatanDetailView" style="display:none;" role="region" aria-label="Detail angkatan PKD">
+
+  <!-- Breadcrumb + Back -->
+  <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill"
+            id="backToHubBtn" aria-label="Kembali ke daftar angkatan">
+      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Kembali
+    </button>
+    <nav aria-label="breadcrumb" class="mb-0">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+          <a href="#" id="breadcrumbHub" class="text-decoration-none">Angkatan PKD</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page" id="breadcrumbAngkatan">-</li>
+      </ol>
+    </nav>
+  </div>
+
+  <!-- Header Card -->
+  <div class="glass-card mb-4" style="padding:1.5rem;">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="stat-icon-box blue"
+           style="width:56px;height:56px;font-size:1.6rem;flex-shrink:0;">
+        <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+      </div>
+      <div class="flex-grow-1" style="min-width:200px;">
+        <h4 class="fw-bold mb-1" id="detailAngkatanNama">-</h4>
+        <div class="text-muted small">
+          <i class="bi bi-calendar me-1" aria-hidden="true"></i>
+          Tahun <span id="detailAngkatanTahun">-</span>
+          <span class="mx-2">·</span>
+          <span class="badge bg-primary" id="detailAngkatanStatus">-</span>
+        </div>
+      </div>
+      <!-- Quick stats di header -->
+      <div class="d-flex gap-2 flex-wrap">
+        <div class="text-center px-3 py-2 rounded-3" style="background:rgba(37,99,235,0.08);">
+          <div class="fw-bold text-primary" style="font-size:1.3rem;" id="detailStatPeserta">0</div>
+          <div style="font-size:0.65rem;text-transform:uppercase;color:#64748b;">Peserta</div>
+        </div>
+        <div class="text-center px-3 py-2 rounded-3" style="background:rgba(22,163,74,0.08);">
+          <div class="fw-bold text-success" style="font-size:1.3rem;" id="detailStatApproved">0</div>
+          <div style="font-size:0.65rem;text-transform:uppercase;color:#64748b;">Approved</div>
+        </div>
+        <div class="text-center px-3 py-2 rounded-3" style="background:rgba(245,158,11,0.08);">
+          <div class="fw-bold text-warning" style="font-size:1.3rem;" id="detailStatPending">0</div>
+          <div style="font-size:0.65rem;text-transform:uppercase;color:#64748b;">Pending</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <ul class="nav nav-pills mb-3 flex-wrap gap-1" id="angkatanTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tabPesertaBtn"
+              data-bs-toggle="pill" data-bs-target="#tabPeserta"
+              type="button" role="tab" aria-controls="tabPeserta" aria-selected="true">
+        <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Peserta
+        <span class="badge bg-primary ms-1" id="badgeTabPeserta">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabAbsensiBtn"
+              data-bs-toggle="pill" data-bs-target="#tabAbsensi"
+              type="button" role="tab" aria-controls="tabAbsensi" aria-selected="false">
+        <i class="bi bi-calendar-check me-1" aria-hidden="true"></i>Absensi
+        <span class="badge bg-primary ms-1" id="badgeTabAbsensi">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabPretestBtn"
+              data-bs-toggle="pill" data-bs-target="#tabPretest"
+              type="button" role="tab" aria-controls="tabPretest" aria-selected="false">
+        <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Pretest
+        <span class="badge bg-primary ms-1" id="badgeTabPretest">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabPosttestBtn"
+              data-bs-toggle="pill" data-bs-target="#tabPosttest"
+              type="button" role="tab" aria-controls="tabPosttest" aria-selected="false">
+        <i class="bi bi-trophy me-1" aria-hidden="true"></i>Posttest
+        <span class="badge bg-primary ms-1" id="badgeTabPosttest">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabSkriningBtn"
+              data-bs-toggle="pill" data-bs-target="#tabSkrining"
+              type="button" role="tab" aria-controls="tabSkrining" aria-selected="false">
+        <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>Skrining
+        <span class="badge bg-primary ms-1" id="badgeTabSkrining">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabSertifikatBtn"
+              data-bs-toggle="pill" data-bs-target="#tabSertifikat"
+              type="button" role="tab" aria-controls="tabSertifikat" aria-selected="false">
+        <i class="bi bi-award me-1" aria-hidden="true"></i>Sertifikat
+        <span class="badge bg-primary ms-1" id="badgeTabSertifikat">0</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabRTLBtn"
+              data-bs-toggle="pill" data-bs-target="#tabRTL"
+              type="button" role="tab" aria-controls="tabRTL" aria-selected="false">
+        <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>RTL
+        <span class="badge bg-primary ms-1" id="badgeTabRTL">0</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="angkatanTabContent">
+
+    <!-- TAB: PESERTA -->
+    <div class="tab-pane fade show active" id="tabPeserta"
+         role="tabpanel" aria-labelledby="tabPesertaBtn">
+      <div class="table-container">
+        <div id="tabPesertaContainer" class="table-responsive" aria-live="polite">
+          <!-- Skeleton -->
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat peserta...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ABSENSI -->
+    <div class="tab-pane fade" id="tabAbsensi"
+         role="tabpanel" aria-labelledby="tabAbsensiBtn">
+      <div class="table-container">
+        <div id="tabAbsensiContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat absensi...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: PRETEST -->
+    <div class="tab-pane fade" id="tabPretest"
+         role="tabpanel" aria-labelledby="tabPretestBtn">
+      <div class="table-container">
+        <div id="tabPretestContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat pretest...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: POSTTEST -->
+    <div class="tab-pane fade" id="tabPosttest"
+         role="tabpanel" aria-labelledby="tabPosttestBtn">
+      <div class="table-container">
+        <div id="tabPosttestContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat posttest...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SKRINING -->
+    <div class="tab-pane fade" id="tabSkrining"
+         role="tabpanel" aria-labelledby="tabSkriningBtn">
+      <div class="table-container">
+        <div id="tabSkriningContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat skrining...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SERTIFIKAT -->
+    <div class="tab-pane fade" id="tabSertifikat"
+         role="tabpanel" aria-labelledby="tabSertifikatBtn">
+      <div class="table-container">
+        <div id="tabSertifikatContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat sertifikat...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: RTL -->
+    <div class="tab-pane fade" id="tabRTL"
+         role="tabpanel" aria-labelledby="tabRTLBtn">
+      <div class="table-container">
+        <div id="tabRTLContainer" class="table-responsive" aria-live="polite">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat...</span>
+            </div>
+            <p class="mt-2 text-muted small">Memuat RTL...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==========================================================
+     MODAL: TAMBAH ANGKATAN
+     ========================================================== -->
+<div class="modal fade" id="addAngkatanModal" tabindex="-1"
+     data-bs-backdrop="static" aria-labelledby="addAngkatanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="addAngkatanModalLabel">
+          <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Tambah Angkatan PKD
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="angkatanNama">
+            Nama Angkatan <span class="text-danger" aria-label="wajib diisi">*</span>
+          </label>
+          <input type="text" class="form-control" id="angkatanNama"
+                 placeholder="Contoh: PKD Angkatan 2026 - Kretek" autocomplete="off">
+          <div class="form-text text-muted small">
+            Nama ini akan muncul di daftar peserta, absensi, dll.
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="angkatanTahun">
+            Tahun <span class="text-danger" aria-label="wajib diisi">*</span>
+          </label>
+          <input type="number" class="form-control" id="angkatanTahun"
+                 min="2000" max="2100" inputmode="numeric"
+                 placeholder="2026">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="angkatanStatus">Status</label>
+          <select class="form-select" id="angkatanStatus">
+            <option value="aktif">Aktif</option>
+            <option value="selesai">Selesai</option>
+            <option value="arsip">Arsip</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4"
+                data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveAngkatanBtn">
+          <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================
+     MODAL: KONFIRMASI HAPUS ANGKATAN
+     ========================================================== -->
+<div class="modal fade" id="deleteAngkatanModal" tabindex="-1"
+     data-bs-backdrop="static" aria-labelledby="deleteAngkatanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-danger text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="deleteAngkatanModalLabel">
+          <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>Konfirmasi Hapus
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning mb-3 d-block" aria-hidden="true"></i>
+        <p class="mb-2">Yakin ingin menghapus angkatan ini?</p>
+        <p class="fw-bold text-primary mb-3" id="deleteAngkatanNama">—</p>
+        <div class="alert alert-warning small mb-0 text-start">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Data peserta & respons <strong>tidak akan terhapus</strong>, tapi angkatan ini akan hilang dari daftar.
+        </div>
+        <input type="hidden" id="deleteAngkatanId">
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-secondary rounded-pill px-4"
+                data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteAngkatanBtn">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================
+     MODAL: DETAIL PESERTA (dari tab Peserta)
+     ========================================================== -->
+<div class="modal fade" id="detailPesertaAngkatanModal" tabindex="-1"
+     aria-labelledby="detailPesertaAngkatanLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white border-0 rounded-top-4">
+        <h5 class="modal-title" id="detailPesertaAngkatanLabel">
+          <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Detail Peserta
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4" style="max-height:75vh;overflow-y:auto;">
+        <div id="detailPesertaAngkatanContent"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4"
+                data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================
+     INLINE STYLE (view-specific tweaks)
+     ========================================================== -->
+<style>
+  /* Tabs styling untuk angkatan PKD */
+  #angkatanTab .nav-link {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.88rem;
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  #angkatanTab .nav-link:hover {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.06);
+    border-color: rgba(37, 99, 235, 0.15);
+  }
+  #angkatanTab .nav-link.active {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  }
+  #angkatanTab .nav-link .badge {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.45rem;
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
+  #angkatanTab .nav-link:not(.active) .badge {
+    background: #2563eb !important;
+    color: #fff;
+  }
+
+  /* Dark mode tabs */
+  [data-theme="dark"] #angkatanTab .nav-link {
+    color: #94a3b8;
+  }
+  [data-theme="dark"] #angkatanTab .nav-link:hover {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.08);
+    border-color: rgba(96, 165, 250, 0.2);
+  }
+  [data-theme="dark"] #angkatanTab .nav-link.active {
+    color: #fff;
+    background: #3b82f6;
+    border-color: #3b82f6;
+  }
+
+  /* Grid card click hint */
+  [data-angkatan-nama] {
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s ease;
+  }
+  [data-angkatan-nama]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+  }
+
+  /* Stat box di header detail */
+  #angkatanDetailView .stat-icon-box {
+    flex-shrink: 0;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 576px) {
+    #angkatanTab .nav-link {
+      font-size: 0.78rem;
+      padding: 0.4rem 0.75rem;
+    }
+    #angkatanTab .nav-link .badge {
+      font-size: 0.62rem;
+      padding: 0.15rem 0.4rem;
+    }
+    #detailAngkatanNama {
+      font-size: 1.1rem;
+    }
+    #angkatanDetailView .stat-icon-box {
+      width: 48px !important;
+      height: 48px !important;
+      font-size: 1.3rem !important;
+    }
+  }
+</style>
