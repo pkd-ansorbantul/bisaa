@@ -1,18 +1,23 @@
 // ============================================================
-// js/modules/admin.js — v27.4.0 CIRCUIT-BREAKER AWARE
+// js/modules/admin.js — v28.0.0 ANGKATAN PKD EDITION
+// GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v27.4.0 (dari v27.3.3):
-//   ✅ FIX CRITICAL: Sequential batch di loadParallel (hindari CORS storm)
-//   ✅ FIX CRITICAL: Semua nama export disamakan dengan yang dipakai views
-//   ✅ FIX: Batch size 6 + delay 800ms antar batch
-//   ✅ FIX: Skip parallel jika circuit open
+// CHANGELOG v28.0.0 (dari v27.4.0):
+//   ✅ NEW: State angkatanPKDList + activeAngkatan
+//   ✅ NEW: Getter getAngkatanPKDList, getActiveAngkatan,
+//     getAngkatanByName, getAngkatanById
+//   ✅ NEW: Auto-assign dari getBootstrapData (angkatanPKDList)
+//   ✅ NEW: Fallback load angkatan via API kalau batch tidak include
+//   ✅ NEW: CRUD wrapper addAngkatanPKD, updateAngkatanPKD,
+//     deleteAngkatanPKD, refreshAngkatanPKD
+//   ✅ NEW: getAngkatanDetail — bypass cache (always fresh)
+//   ✅ FIX: Sequential batch size 6 + delay 800ms (anti CORS storm)
+//   ✅ FIX: Circuit breaker skip parallel jika OPEN
+//   ✅ FIX: Semua nama export disamakan dengan view
 //   ✅ FIX: Alias getter lengkap (getPesertaList, getSesiList, dst)
 //   ✅ FIX: CRUD wrapper auto-refresh setelah mutasi
-//   ✅ FIX: getPKDLokasi (alias getPKDLokasiCache)
-//   ✅ NEW: getPartialStats() untuk UI partial state
-//   ✅ NEW: getPesertaById() helper
-//   ✅ NEW: approveMultiplePeserta() dengan progress callback
-//   ✅ KEEP: Semua fitur v27.3.3 (subscribe, ensureDataReady, dll)
+//   ✅ KEEP: Semua fitur v27.4.0 (subscribe, ensureDataReady, dll)
+//   ✅ Zero regression
 // ============================================================
 
 import {
@@ -41,6 +46,13 @@ import {
   getFormSettings         as apiGetFormSettings,
   getRealtimeSetting      as apiGetRealtimeSetting,
   getCircuitState         as apiGetCircuitState,
+  // ⭐ NEW v28.0.0: Angkatan PKD
+  getAngkatanPKDList      as apiGetAngkatanPKDList,
+  getAngkatanPKDWithCount as apiGetAngkatanPKDWithCount,
+  getAngkatanDetail       as apiGetAngkatanDetail,
+  addAngkatanPKD          as apiAddAngkatanPKD,
+  updateAngkatanPKD       as apiUpdateAngkatanPKD,
+  deleteAngkatanPKD       as apiDeleteAngkatanPKD,
 } from '../core/api.js';
 
 // ============================================================
@@ -49,9 +61,9 @@ import {
 const TTL_FRESH_MS       = 3000;
 const CONCURRENT_WAIT_MS = 15000;
 const BATCH_TIMEOUT_MS   = 25000;
-const BATCH_SIZE         = 6;      // ⬅️ Sequential batch
-const BATCH_DELAY_MS     = 800;    // ⬅️ Delay antar batch
-const MUTATION_REFRESH   = true;   // auto refresh setelah CRUD
+const BATCH_SIZE         = 6;
+const BATCH_DELAY_MS     = 800;
+const MUTATION_REFRESH   = true;
 
 // ============================================================
 //   STATE
@@ -75,6 +87,10 @@ const STATE = {
   usulan: [],
   rtl: [],
   timInstruktur: [],
+
+  // ==== ⭐ NEW v28.0.0: ANGKATAN PKD ====
+  angkatanPKDList: [],
+  activeAngkatan: null,
 
   // ==== SETTINGS ====
   quizSettings: {},
@@ -144,6 +160,25 @@ export function getPKDLokasi()          { return STATE.pkdLokasi || ''; }
 export function getFormSettings()       { return STATE.formSettings || []; }
 export function getRealtimeSetting()    { return STATE.realtime || { enabled: false }; }
 
+// ⭐ NEW v28.0.0: Angkatan PKD getters
+export function getAngkatanPKDList()    { return STATE.angkatanPKDList || []; }
+export function getActiveAngkatan()     { return STATE.activeAngkatan; }
+
+export function getAngkatanByName(nama) {
+  if (!nama) return null;
+  const target = String(nama).trim().toLowerCase();
+  return (STATE.angkatanPKDList || []).find(a =>
+    String(a.nama || '').trim().toLowerCase() === target
+  ) || null;
+}
+
+export function getAngkatanById(id) {
+  if (!id) return null;
+  return (STATE.angkatanPKDList || []).find(a =>
+    String(a.id) === String(id)
+  ) || null;
+}
+
 // ============================================================
 //   HELPER — getPesertaById
 // ============================================================
@@ -174,6 +209,7 @@ export function getStats() {
     totalUsulan:            STATE.usulan.length,
     totalRTL:               STATE.rtl.length,
     totalTimInstruktur:     STATE.timInstruktur.length,
+    totalAngkatan:          STATE.angkatanPKDList.length,   // ⭐ NEW
 
     lastSync:               STATE.lastSync,
     lastSyncSource:         STATE.lastSyncSource,
@@ -254,6 +290,10 @@ export function clearState() {
   STATE.rtl = [];
   STATE.timInstruktur = [];
 
+  // ⭐ NEW
+  STATE.angkatanPKDList = [];
+  STATE.activeAngkatan = null;
+
   STATE.quizSettings = {};
   STATE.loginMode = { enabled: false };
   STATE.publicVisibility = {};
@@ -322,6 +362,14 @@ async function loadBatch(timeoutMs = BATCH_TIMEOUT_MS) {
   STATE.formSettings      = data.formSettings || [];
   STATE.realtime          = data.realtime || { enabled: false };
 
+  // ⭐ NEW v28.0.0: Angkatan PKD
+  if (Array.isArray(data.angkatanPKDList)) {
+    STATE.angkatanPKDList = data.angkatanPKDList;
+  }
+  if (data.activeAngkatan !== undefined) {
+    STATE.activeAngkatan = data.activeAngkatan;
+  }
+
   STATE.partialErrors = [];
 
   console.log(`✅ [AdminModule] Loaded via batch:`, {
@@ -330,6 +378,7 @@ async function loadBatch(timeoutMs = BATCH_TIMEOUT_MS) {
     materi: STATE.materi.length,
     alumni: STATE.alumni.length,
     rtl: STATE.rtl.length,
+    angkatan: STATE.angkatanPKDList.length,
   });
 
   return { elapsed, source: 'batch' };
@@ -356,7 +405,7 @@ async function loadParallel() {
     // getCircuitState not available — continue
   }
 
-  // Definisi tasks (semua endpoint yang dibutuhkan)
+  // Definisi tasks
   const tasks = [
     { key: 'materi',           fn: () => apiGetMateriList() },
     { key: 'skrining',         fn: () => apiGetSkriningResponses() },
@@ -378,6 +427,8 @@ async function loadParallel() {
     { key: 'formSettings',     fn: () => apiGetFormSettings() },
     { key: 'realtime',         fn: () => apiGetRealtimeSetting() },
     { key: 'quizSettings',     fn: () => apiGetQuizSettings() },
+    // ⭐ NEW v28.0.0: Angkatan PKD
+    { key: 'angkatanPKDList',  fn: () => apiGetAngkatanPKDWithCount() },
   ];
 
   const partialErrors = [];
@@ -419,7 +470,6 @@ async function loadParallel() {
         continue;
       }
 
-      // Assign ke state
       const data = res.data;
       switch (key) {
         case 'materi':           STATE.materi = data || []; break;
@@ -442,6 +492,8 @@ async function loadParallel() {
         case 'formSettings':     STATE.formSettings = data || []; break;
         case 'realtime':         STATE.realtime = data || { enabled: false }; break;
         case 'quizSettings':     STATE.quizSettings = data || {}; break;
+        // ⭐ NEW v28.0.0
+        case 'angkatanPKDList':  STATE.angkatanPKDList = data || []; break;
       }
     }
 
@@ -451,7 +503,7 @@ async function loadParallel() {
     }
   }
 
-  // Load core 3 (peserta, sesi, alumni) — biasanya cached atau kecil
+  // Load core 3 (peserta, sesi, alumni)
   try {
     const [pesertaRes, sesiRes, alumniRes] = await Promise.allSettled([
       apiGetPesertaList(),
@@ -550,7 +602,6 @@ export async function loadAllData(force = false) {
     } catch (parErr) {
       console.error('[AdminModule] Parallel failed:', parErr.message);
 
-      // Kalau ada data lama, tetap return partial success
       if (hasData()) {
         STATE.lastSync = Date.now();
         notifySubscribers('partial');
@@ -575,8 +626,27 @@ export async function loadAllData(force = false) {
 }
 
 // ============================================================
-//   CRUD WRAPPERS
-//   Semua wrapper auto-refresh state setelah mutasi berhasil
+//   ⭐ NEW v28.0.0: Refresh Angkatan PKD (manual)
+// ============================================================
+export async function refreshAngkatanPKD() {
+  try {
+    const res = await apiGetAngkatanPKDWithCount();
+    if (res && res.success) {
+      STATE.angkatanPKDList = res.data || [];
+      notifySubscribers('angkatan');
+      return { success: true, count: STATE.angkatanPKDList.length };
+    } else {
+      console.warn('[AdminModule] refreshAngkatanPKD failed:', res?.error);
+      return { success: false, error: res?.error || 'Unknown error' };
+    }
+  } catch (e) {
+    console.warn('[AdminModule] refreshAngkatanPKD:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
+//   CRUD WRAPPERS — auto-refresh setelah mutasi
 // ============================================================
 async function _refresh() {
   if (MUTATION_REFRESH) {
@@ -641,7 +711,6 @@ export async function approveMultiplePeserta(ids, onProgress) {
       catch (e) { /* silent */ }
     }
 
-    // Delay antar request untuk hindari throttle
     if (i < total - 1) {
       await new Promise(r => setTimeout(r, 400));
     }
@@ -859,6 +928,65 @@ export async function setPublicVisibility(data) {
 }
 
 // ============================================================
+//   ⭐ NEW v28.0.0: ANGKATAN PKD — CRUD WRAPPER
+// ============================================================
+
+export async function addAngkatanPKD(nama, tahun, status, lokasi, tglMulai, tglSelesai) {
+  try {
+    const res = await apiAddAngkatanPKD(nama, tahun, status, lokasi, tglMulai, tglSelesai);
+    if (res?.success) {
+      await refreshAngkatanPKD();
+      await _refresh();
+    }
+    return res;
+  } catch (e) {
+    console.warn('[AdminModule] addAngkatanPKD error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function updateAngkatanPKD(data) {
+  try {
+    const res = await apiUpdateAngkatanPKD(data);
+    if (res?.success) {
+      await refreshAngkatanPKD();
+      await _refresh();
+    }
+    return res;
+  } catch (e) {
+    console.warn('[AdminModule] updateAngkatanPKD error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+export async function deleteAngkatanPKD(id) {
+  try {
+    const res = await apiDeleteAngkatanPKD(id);
+    if (res?.success) {
+      await refreshAngkatanPKD();
+      await _refresh();
+    }
+    return res;
+  } catch (e) {
+    console.warn('[AdminModule] deleteAngkatanPKD error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * ⭐ Ambil detail lengkap 1 angkatan (7 tabs).
+ * Bypass state — selalu fetch fresh dari server.
+ */
+export async function getAngkatanDetail(namaOrId) {
+  try {
+    return await apiGetAngkatanDetail(namaOrId);
+  } catch (e) {
+    console.warn('[AdminModule] getAngkatanDetail error:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
 //   EXPORT — named (untuk view yang pakai direct import)
 // ============================================================
 // Sudah di-export di atas (getPesertaList, getSesiList, dll)
@@ -902,6 +1030,12 @@ export const AdminModule = {
   getRealtimeSetting,
   getPesertaById,
 
+  // ⭐ NEW v28.0.0
+  getAngkatanPKDList,
+  getActiveAngkatan,
+  getAngkatanByName,
+  getAngkatanById,
+
   // Ready checks
   isReady,
   hasData,
@@ -910,6 +1044,7 @@ export const AdminModule = {
   // Main
   loadAllData,
   clearState,
+  refreshAngkatanPKD,
 
   // CRUD Peserta
   deletePeserta,
@@ -956,6 +1091,12 @@ export const AdminModule = {
   deleteInfo,
   toggleInfoStatus,
 
+  // ⭐ NEW v28.0.0: CRUD Angkatan
+  addAngkatanPKD,
+  updateAngkatanPKD,
+  deleteAngkatanPKD,
+  getAngkatanDetail,
+
   // Settings
   setFormSettings,
   setLoginMode,
@@ -968,6 +1109,6 @@ export default { AdminModule };
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  '%c AdminModule v27.4.0 — Circuit-Breaker Aware + Sequential Batch ',
+  '%c AdminModule v28.0.0 — Angkatan PKD Edition ',
   'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
