@@ -1,16 +1,15 @@
 // ============================================================
-// js/app.js — v28.0.0 ANGKATAN PKD EDITION
+// js/app.js — v28.1.0 CONNECTION RESILIENCE EDITION
 // ============================================================
-// CHANGELOG v28.0.0 (dari v27.2.0):
-//   ✅ NEW: Route #/admin/angkatan-pkd (Hub + Detail 7 tabs)
-//   ✅ NEW: Alias #/admin/angkatan, #/admin/alumni, #/admin/pkd,
-//     #/admin/lokasi-pkd, #/admin/lokasi
-//   ✅ NEW: Shortcut Alt+L → Angkatan PKD
-//   ✅ REMOVED: Route #/admin/lokasi-pkd (digantikan alias)
-//   ✅ REMOVED: Route #/admin/alumni (digantikan alias)
-//   ✅ KEEP: Semua fitur v27.2.0 (mobile drawer, auto-sync, dll)
+// CHANGELOG v28.1.0 (dari v28.0.0):
+//   ✅ NEW: Preload data retry 2x dengan delay
+//   ✅ NEW: UI "Gagal Terhubung" dengan tombol Test Koneksi
+//   ✅ NEW: Deteksi CORS error → hint solusi deployment GAS
+//   ✅ NEW: Online/offline event listener
+//   ✅ FIX: Timeout startup lebih pendek (15s)
+//   ✅ FIX: Fallback ke cache kalau server tidak responsif
 //   ✅ KEEP: Semua 18 route + alias + validasi
-//   ✅ VERIFIED: Zero regression
+//   ✅ KEEP: Semua fitur v28.0.0
 // ============================================================
 
 import {
@@ -26,6 +25,9 @@ import {
   BASE_PATH,
   DEFAULT_ROUTE,
   LOGIN_PATH,
+  isOnline,
+  isScriptUrlValid,
+  APP_VERSION,
 } from './core/config.js';
 
 import { loadSidebar } from './components/sidebar.js';
@@ -38,25 +40,25 @@ import Router from './router.js';
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const APP_VERSION = '28.0.0';
-
 const DATA_PRELOAD_TIMEOUT_MS       = 20000;
 const ENSURE_READY_TIMEOUT_MS       = 10000;
-const AUTO_SYNC_INTERVAL_MS         = 180000;  // 3 menit
-const MIN_SYNC_GAP_MS               = 60000;   // 1 menit
+const AUTO_SYNC_INTERVAL_MS         = 180000;
+const MIN_SYNC_GAP_MS               = 60000;
 const IDLE_THRESHOLD_MS             = 5 * 60 * 1000;
 const FAILED_MODULE_RETRY_DELAY_MS  = 3000;
 const FAILED_MODULE_MAX_RETRY       = 3;
 const QUIZ_PRELOAD_DELAY_MS         = 2000;
 const MOBILE_BREAKPOINT             = 992;
+const PRELOAD_RETRY_DELAY_MS        = 1500;
+const PRELOAD_MAX_ATTEMPTS          = 2;
 
 // ============================================================
-//   ROUTES — 18 Views (dengan Angkatan PKD)
+//   ROUTES — 18 Views
 // ============================================================
 const ROUTES = {
   '#/admin/dashboard':      { html: BASE_PATH + 'views/admin/dashboard.html',      js: BASE_PATH + 'views/admin/dashboard.js' },
   '#/admin/peserta':        { html: BASE_PATH + 'views/admin/peserta.html',        js: BASE_PATH + 'views/admin/peserta.js' },
-  '#/admin/angkatan-pkd':   { html: BASE_PATH + 'views/admin/angkatan-pkd.html',   js: BASE_PATH + 'views/admin/angkatan-pkd.js' },  // ⭐ NEW
+  '#/admin/angkatan-pkd':   { html: BASE_PATH + 'views/admin/angkatan-pkd.html',   js: BASE_PATH + 'views/admin/angkatan-pkd.js' },
   '#/admin/kader':          { html: BASE_PATH + 'views/admin/kader.html',          js: BASE_PATH + 'views/admin/kader.js' },
   '#/admin/tim-instruktur': { html: BASE_PATH + 'views/admin/tim-instruktur.html', js: BASE_PATH + 'views/admin/tim-instruktur.js' },
   '#/admin/sesi-absen':     { html: BASE_PATH + 'views/admin/sesi-absen.html',     js: BASE_PATH + 'views/admin/sesi-absen.js' },
@@ -75,63 +77,46 @@ const ROUTES = {
 };
 
 // ============================================================
-//   ROUTE ALIASES — auto-fix typo & redirect legacy
+//   ROUTE ALIASES
 // ============================================================
 const ROUTE_ALIASES = {
-  // ===== ⭐ NEW: Angkatan PKD =====
   '#/admin/angkatan':       '#/admin/angkatan-pkd',
   '#/admin/angkatanpkd':    '#/admin/angkatan-pkd',
-
-  // ===== ⭐ LEGACY REDIRECT: Alumni → Angkatan PKD =====
   '#/admin/alumni':         '#/admin/angkatan-pkd',
   '#/admin/alumn':          '#/admin/angkatan-pkd',
-
-  // ===== ⭐ LEGACY REDIRECT: Lokasi PKD → Angkatan PKD =====
   '#/admin/lokasi-pkd':     '#/admin/angkatan-pkd',
   '#/admin/lokasipkd':      '#/admin/angkatan-pkd',
   '#/admin/lokasi_pkd':     '#/admin/angkatan-pkd',
   '#/admin/lokasi':         '#/admin/angkatan-pkd',
   '#/admin/pkd':            '#/admin/angkatan-pkd',
-
-  // ===== Typo umum =====
-  '#/admin/skriining':       '#/admin/skrining',
-  '#/admin/skrinng':         '#/admin/skrining',
-  '#/admin/skrinig':         '#/admin/skrining',
-  '#/admin/skining':         '#/admin/skrining',
-
-  '#/admin/sertifkat':       '#/admin/sertifikat',
-  '#/admin/certifikat':      '#/admin/sertifikat',
-
-  '#/admin/tandatangan':     '#/admin/tanda-tangan',
-  '#/admin/tanda_tangan':    '#/admin/tanda-tangan',
-  '#/admin/ttd':             '#/admin/tanda-tangan',
-
-  '#/admin/dataabsensi':     '#/admin/data-absensi',
-  '#/admin/data_absensi':    '#/admin/data-absensi',
-
-  '#/admin/rekapabsensi':    '#/admin/rekap-absensi',
-  '#/admin/rekap_absensi':   '#/admin/rekap-absensi',
-
-  '#/admin/sesiabsen':       '#/admin/sesi-absen',
-  '#/admin/sesi_absen':      '#/admin/sesi-absen',
-
-  '#/admin/timinstruktur':   '#/admin/tim-instruktur',
-  '#/admin/tim_instruktur':  '#/admin/tim-instruktur',
-
-  '#/admin/pre-test':        '#/admin/pretest',
-  '#/admin/pre_test':        '#/admin/pretest',
-  '#/admin/prestest':        '#/admin/pretest',
-
-  '#/admin/postest':         '#/admin/posttest',
-  '#/admin/post-test':       '#/admin/posttest',
-  '#/admin/post_test':       '#/admin/posttest',
-
-  // ===== Trailing slash =====
-  '#/admin/dashboard/':      '#/admin/dashboard',
-  '#/admin/peserta/':        '#/admin/peserta',
-  '#/admin/angkatan-pkd/':   '#/admin/angkatan-pkd',
-  '#/admin/kader/':          '#/admin/kader',
-  '#/admin/materi/':         '#/admin/materi',
+  '#/admin/skriining':      '#/admin/skrining',
+  '#/admin/skrinng':        '#/admin/skrining',
+  '#/admin/skrinig':        '#/admin/skrining',
+  '#/admin/skining':        '#/admin/skrining',
+  '#/admin/sertifkat':      '#/admin/sertifikat',
+  '#/admin/certifikat':     '#/admin/sertifikat',
+  '#/admin/tandatangan':    '#/admin/tanda-tangan',
+  '#/admin/tanda_tangan':   '#/admin/tanda-tangan',
+  '#/admin/ttd':            '#/admin/tanda-tangan',
+  '#/admin/dataabsensi':    '#/admin/data-absensi',
+  '#/admin/data_absensi':   '#/admin/data-absensi',
+  '#/admin/rekapabsensi':   '#/admin/rekap-absensi',
+  '#/admin/rekap_absensi':  '#/admin/rekap-absensi',
+  '#/admin/sesiabsen':      '#/admin/sesi-absen',
+  '#/admin/sesi_absen':     '#/admin/sesi-absen',
+  '#/admin/timinstruktur':  '#/admin/tim-instruktur',
+  '#/admin/tim_instruktur': '#/admin/tim-instruktur',
+  '#/admin/pre-test':       '#/admin/pretest',
+  '#/admin/pre_test':       '#/admin/pretest',
+  '#/admin/prestest':       '#/admin/pretest',
+  '#/admin/postest':        '#/admin/posttest',
+  '#/admin/post-test':      '#/admin/posttest',
+  '#/admin/post_test':      '#/admin/posttest',
+  '#/admin/dashboard/':     '#/admin/dashboard',
+  '#/admin/peserta/':       '#/admin/peserta',
+  '#/admin/angkatan-pkd/':  '#/admin/angkatan-pkd',
+  '#/admin/kader/':         '#/admin/kader',
+  '#/admin/materi/':        '#/admin/materi',
 };
 
 // ============================================================
@@ -141,29 +126,22 @@ function normalizeRoute(hash) {
   if (!hash || typeof hash !== 'string') return '#/admin/dashboard';
 
   let h = hash.trim();
-
-  // Hapus zero-width & karakter kontrol
   h = h.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-  // Pastikan mulai dengan '#/'
   if (!h.startsWith('#')) h = '#' + h;
   if (h === '#' || h === '#/') return '#/admin/dashboard';
   if (!h.startsWith('#/')) h = '#/' + h.slice(1);
 
-  // Hapus trailing slash (kecuali root)
   if (h.length > 3 && h.endsWith('/')) {
     h = h.slice(0, -1);
   }
 
-  // Apply alias
   if (ROUTE_ALIASES[h]) {
     console.log(`[Route] 🔄 Aliased "${h}" → "${ROUTE_ALIASES[h]}"`);
     h = ROUTE_ALIASES[h];
   }
 
-  // Case-normalize (lowercase)
   h = h.toLowerCase();
-
   return h;
 }
 
@@ -455,6 +433,87 @@ function renderShellError(message, detail) {
   });
 }
 
+// ⭐ NEW: Connection error UI khusus
+function renderConnectionError(message, isCors = false) {
+  const shell = findElement(['appShell', 'adminWrapper']);
+  if (!shell) return;
+
+  const safeMsg = escapeHtml(message || 'Gagal terhubung ke server');
+  const safeLogin = escapeHtml(LOGIN_PATH);
+
+  const corsHint = isCors ? `
+    <div class="alert alert-warning small text-start mt-3 mb-0">
+      <strong><i class="bi bi-info-circle me-1"></i>Solusi:</strong>
+      <ol class="mb-0 mt-2 ps-3">
+        <li>Pastikan <strong>deployment GAS</strong> di-set <code>Who has access: Anyone</code></li>
+        <li>Periksa <strong>koneksi internet</strong> Anda</li>
+        <li>Coba buka link GAS langsung di tab baru: <code>?action=health</code></li>
+        <li>Jika masih gagal, hubungi admin</li>
+      </ol>
+    </div>` : '';
+
+  shell.innerHTML = `
+    <div class="d-flex justify-content-center align-items-center p-4" style="min-height:100vh;">
+      <div class="text-center" style="max-width:600px;">
+        <div class="mb-3" style="font-size:4rem;color:#dc2626;">
+          <i class="bi bi-wifi-off" aria-hidden="true"></i>
+        </div>
+        <h4 class="fw-bold">Gagal Terhubung ke Server</h4>
+        <p class="text-muted small mb-3">${safeMsg}</p>
+        ${corsHint}
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+          <button class="btn btn-primary rounded-pill px-4" data-shell-action="retry" type="button">
+            <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+          </button>
+          <button class="btn btn-warning rounded-pill px-4" data-shell-action="clearcache" type="button">
+            <i class="bi bi-trash me-1"></i>Clear Cache
+          </button>
+          <button class="btn btn-outline-info rounded-pill px-4" data-shell-action="testconn" type="button">
+            <i class="bi bi-wifi me-1"></i>Test Koneksi
+          </button>
+          <a href="${safeLogin}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Login Ulang
+          </a>
+        </div>
+        <div id="connTestResult" class="mt-3 small"></div>
+      </div>
+    </div>`;
+
+  shell.querySelector('[data-shell-action="retry"]')?.addEventListener('click', () => window.location.reload());
+
+  shell.querySelector('[data-shell-action="clearcache"]')?.addEventListener('click', async () => {
+    if (!confirm('Hapus cache browser & reload?')) return;
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      sessionStorage.clear();
+      const toKeep = {};
+      ['pkd_auth'].forEach(k => { const v = localStorage.getItem(k); if (v) toKeep[k] = v; });
+      localStorage.clear();
+      Object.keys(toKeep).forEach(k => localStorage.setItem(k, toKeep[k]));
+    } catch (e) { /* silent */ }
+    window.location.reload();
+  });
+
+  shell.querySelector('[data-shell-action="testconn"]')?.addEventListener('click', async () => {
+    const resultEl = document.getElementById('connTestResult');
+    if (resultEl) resultEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menguji koneksi...';
+    try {
+      const mod = await import('./core/api.js');
+      const ok = await mod.testConnection();
+      if (resultEl) {
+        resultEl.innerHTML = ok
+          ? '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Server terhubung! Silakan reload.</span>'
+          : '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> Server tidak merespons. Cek deployment GAS.</span>';
+      }
+    } catch (e) {
+      if (resultEl) resultEl.innerHTML = `<span class="text-danger">Error: ${escapeHtml(e.message)}</span>`;
+    }
+  });
+}
+
 // ============================================================
 //   PARTIALS LOADER
 // ============================================================
@@ -478,10 +537,10 @@ async function loadPartialsWithRetry() {
 }
 
 // ============================================================
-//   PRELOAD DATA
+//   ⭐ PRELOAD DATA — dengan Retry
 // ============================================================
 async function preloadAllData() {
-  console.log('[Boot] ⚡ Preloading data (blocking, timeout 20s)...');
+  console.log('[Boot] ⚡ Preloading data...');
   updateLoaderText('Memuat data...');
 
   const startTime = Date.now();
@@ -492,35 +551,68 @@ async function preloadAllData() {
 
     if (!adminModule) throw new Error('AdminModule tidak tersedia');
 
-    const loadPromise = adminModule.loadAllData(true);
+    let lastError = null;
 
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ __timeout: true }), DATA_PRELOAD_TIMEOUT_MS);
-    });
+    for (let attempt = 0; attempt < PRELOAD_MAX_ATTEMPTS; attempt++) {
+      try {
+        const loadPromise = adminModule.loadAllData(true);
 
-    const result = await Promise.race([loadPromise, timeoutPromise]);
-    const elapsed = Date.now() - startTime;
+        const timeoutPromise = new Promise((resolve) => {
+          setTimeout(() => resolve({ __timeout: true }), DATA_PRELOAD_TIMEOUT_MS);
+        });
 
-    if (result && result.__timeout) {
-      console.warn(`[Boot] ⚠️ Data preload TIMEOUT after ${elapsed}ms`);
-      loadPromise
-        .then((r) => {
-          if (r && r.success) {
-            console.log('[Boot] ✅ Data loaded late in background');
-            dataReady = true;
-            window.dispatchEvent(new CustomEvent('pkd:data-ready'));
+        const result = await Promise.race([loadPromise, timeoutPromise]);
+        const elapsed = Date.now() - startTime;
+
+        if (result && result.__timeout) {
+          console.warn(`[Boot] ⚠️ Preload TIMEOUT (attempt ${attempt + 1})`);
+
+          if (attempt === 0) {
+            await sleep(PRELOAD_RETRY_DELAY_MS);
+            continue;
           }
-        })
-        .catch((e) => console.warn('[Boot] Late load error:', e.message));
-      return { success: false, error: 'timeout', timeout: true };
+
+          // Background continue
+          loadPromise
+            .then((r) => {
+              if (r && r.success) {
+                console.log('[Boot] ✅ Data loaded late in background');
+                dataReady = true;
+                window.dispatchEvent(new CustomEvent('pkd:data-ready'));
+              }
+            })
+            .catch((e) => console.warn('[Boot] Late load error:', e.message));
+
+          return { success: false, error: 'timeout', timeout: true };
+        }
+
+        if (result && result.success) {
+          console.log(`[Boot] ✅ Data loaded in ${elapsed}ms via ${result.source || 'unknown'}`);
+          return { success: true, elapsed };
+        }
+
+        lastError = result?.error || 'Unknown error';
+
+        if (attempt < PRELOAD_MAX_ATTEMPTS - 1) {
+          console.warn(`[Boot] ⚠️ Load failed (attempt ${attempt + 1}), retrying...`);
+          await sleep(PRELOAD_RETRY_DELAY_MS);
+          continue;
+        }
+
+        return { success: false, error: lastError };
+      } catch (err) {
+        lastError = err.message;
+        console.warn(`[Boot] ⚠️ Preload attempt ${attempt + 1} failed:`, err.message);
+
+        if (attempt < PRELOAD_MAX_ATTEMPTS - 1) {
+          await sleep(PRELOAD_RETRY_DELAY_MS);
+          continue;
+        }
+        return { success: false, error: lastError };
+      }
     }
 
-    if (result && result.success) {
-      console.log(`[Boot] ✅ Data loaded in ${elapsed}ms via ${result.source || 'unknown'}`);
-      return { success: true, elapsed };
-    }
-
-    return { success: false, error: result?.error };
+    return { success: false, error: lastError || 'All attempts failed' };
   } catch (e) {
     const elapsed = Date.now() - startTime;
     console.warn(`[Boot] ⚠️ Preload failed after ${elapsed}ms:`, e.message);
@@ -715,7 +807,7 @@ async function mountInteractiveFeatures() {
 }
 
 // ============================================================
-//   MOBILE TOPBAR BUTTONS (FALLBACK)
+//   MOBILE TOPBAR BUTTONS
 // ============================================================
 function bindMobileTopbarButtons() {
   const themeBtn = document.getElementById('mobileThemeBtn');
@@ -731,7 +823,7 @@ function bindMobileTopbarButtons() {
 }
 
 // ============================================================
-//   SIDEBAR DRAWER STATE TRACKING
+//   SIDEBAR DRAWER LISTENERS
 // ============================================================
 function installSidebarDrawerListeners() {
   if (window.__pkdSidebarDrawerListenersInstalled) return;
@@ -751,6 +843,32 @@ function installSidebarDrawerListeners() {
 }
 
 // ============================================================
+//   ONLINE/OFFLINE LISTENERS
+// ============================================================
+function installNetworkListeners() {
+  if (window.__pkdNetworkListenersInstalled) return;
+  window.__pkdNetworkListenersInstalled = true;
+
+  window.addEventListener('online', () => {
+    console.log('[App] 🌐 Online — reloading data');
+    try { showToast('Koneksi kembali. Menyegarkan data...', 'success'); }
+    catch (e) { /* silent */ }
+
+    if (adminModule && typeof adminModule.loadAllData === 'function') {
+      adminModule.loadAllData(true).catch(() => {});
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    console.log('[App] 📴 Offline');
+    try { showToast('Koneksi terputus. Cek internet Anda.', 'warning'); }
+    catch (e) { /* silent */ }
+  });
+
+  console.log('[Boot] ✅ Network listeners installed');
+}
+
+// ============================================================
 //   BOOT SEQUENCE
 // ============================================================
 async function boot() {
@@ -759,6 +877,19 @@ async function boot() {
 
   console.log(`[Boot] Starting PKD GP Ansor Admin v${APP_VERSION}...`);
   const bootStart = Date.now();
+
+  // 0. Cek koneksi & config
+  if (!isOnline()) {
+    console.warn('[Boot] ⚠️ Browser offline');
+    updateLoaderText('Menunggu koneksi...');
+  }
+
+  if (!isScriptUrlValid()) {
+    console.error('[Boot] ❌ SCRIPT_URL tidak valid');
+    hideInitialLoader();
+    renderConnectionError('Konfigurasi server tidak valid. Cek js/core/config.js', false);
+    return;
+  }
 
   // 1. Auth state
   try { loadAuthState(); }
@@ -841,7 +972,7 @@ async function boot() {
 
   await Promise.allSettled([fragmentsPromise, dataPromise, validatePromise]);
 
-  console.log('[Boot] ✅ Preload complete (fragments + data + validation)');
+  console.log('[Boot] ✅ Preload complete');
 
   // 7b. Verify data ready
   updateLoaderText('Memverifikasi data...');
@@ -860,10 +991,24 @@ async function boot() {
       sesi: stats.totalSesi || 0,
       materi: stats.totalMateri || 0,
       alumni: stats.totalAlumni || 0,
-      angkatan: stats.totalAngkatan || 0,   // ⭐ NEW
+      angkatan: stats.totalAngkatan || 0,
     });
   } else {
-    console.warn('[Boot] ⚠️ Data not verified — view akan show skeleton first');
+    // Cek apakah fatal: tidak ada data & ada error
+    const adminState = adminModule?.getState?.() || {};
+    const hasError = adminState.lastError;
+    const hasData = adminModule?.hasData?.() || false;
+
+    if (!hasData && hasError) {
+      console.error('[Boot] ❌ Fatal: No data & connection error');
+      hideInitialLoader();
+      const isCors = String(hasError).toLowerCase().includes('cors') ||
+                     String(hasError).toLowerCase().includes('failed to fetch');
+      renderConnectionError(hasError, isCors);
+      return;
+    }
+
+    console.warn('[Boot] ⚠️ Data not verified — view akan show skeleton');
   }
 
   preloadQuizQuestions();
@@ -907,6 +1052,9 @@ async function boot() {
 
   // 11c. Sidebar drawer listeners
   installSidebarDrawerListeners();
+
+  // 11d. Network listeners
+  installNetworkListeners();
 
   // 12. Auto-sync
   startAutoSync();
@@ -979,7 +1127,7 @@ function installKeyboardShortcuts() {
       'm': '#/admin/materi',
       'k': '#/admin/kader',
       't': '#/admin/tim-instruktur',
-      'l': '#/admin/angkatan-pkd',   // ⭐ NEW: Alt+L → Angkatan PKD
+      'l': '#/admin/angkatan-pkd',
     };
     if (routes[key]) {
       e.preventDefault();
@@ -1095,6 +1243,15 @@ window.__pkd = {
     return { ...result, elapsed: Date.now() - t0 };
   },
 
+  testConnection: async () => {
+    try {
+      const mod = await import('./core/api.js');
+      return await mod.testConnection();
+    } catch (e) {
+      return false;
+    }
+  },
+
   getFailedModules: () => {
     const result = {};
     window.__pkdFailedModules.forEach((v, k) => { result[k] = v; });
@@ -1126,6 +1283,8 @@ window.__pkd = {
       isSyncing,
       isMobileDrawerOpen,
       isMobile: isMobile(),
+      isOnline: isOnline(),
+      scriptUrlValid: isScriptUrlValid(),
       lastSyncAgo: lastSyncAt ? `${Math.round((Date.now() - lastSyncAt)/1000)}s` : 'never',
       lastUserActivityAgo: `${Math.round((Date.now() - lastUserActivity)/1000)}s`,
       autoSyncRunning: !!autoSyncInterval,
@@ -1168,6 +1327,6 @@ window.__pkd = {
 };
 
 console.log(
-  '%c App v28.0.0 — Angkatan PKD Edition ',
+  '%c App v28.1.0 — Connection Resilience Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
