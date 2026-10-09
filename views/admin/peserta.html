@@ -2,15 +2,29 @@
      PESERTA VIEW — Fragment HTML
      Dimuat oleh: js/router.js
      Logic: views/admin/peserta.js
-     Versi: 26.4.0 — Production Full Fix
-     Tidak ada <html>, <head>, <body> — hanya konten fragment
+     Versi: 28.7.0 — FULL FIX EDITION
+     ============================================================
+     CHANGELOG v28.7.0:
+     ✅ FIX CRITICAL: Kolom "#" → "ID" (ID asli spreadsheet)
+     ✅ FIX CRITICAL: Default sort by ID descending (terbesar dulu)
+     ✅ FIX: Sort toggle klik header ID (asc/desc)
+     ✅ FIX: Label "Angkatan PKD" → "Lokasi PKD"
+     ✅ FIX: Dropdown filter Lokasi PKD di toolbar
+     ✅ FIX: Section "Lokasi PKD Aktif" berfungsi penuh
+     ✅ FIX: Semua ID unik — tidak bentrok
+     ✅ FIX: Modal cleanup — reset state saat hide
+     ✅ FIX: Event delegation — no per-render listener
+     ✅ FIX: ARIA labels lengkap
+     ✅ FIX: Bootstrap 5.3 compatible
+     ✅ FIX: Responsive mobile — grid stack
+     ✅ KEEP: Semua fitur (CRUD, Form Builder, ID Card, TTD, Cert)
      ============================================================ -->
 
 <h2 class="section-title">
   <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Manajemen Peserta
 </h2>
 
-<!-- Stats Row -->
+<!-- ==================== STATS ROW ==================== -->
 <div class="row g-2 mb-3">
   <div class="col-6 col-md-3">
     <div class="stat-mini">
@@ -38,7 +52,7 @@
   </div>
 </div>
 
-<!-- Toolbar -->
+<!-- ==================== TOOLBAR ==================== -->
 <div class="row mb-3 g-2 align-items-center">
   <div class="col-lg-8">
     <div class="d-flex gap-2 flex-wrap align-items-center">
@@ -87,14 +101,29 @@
   </div>
 </div>
 
-<!-- Table Container — diisi oleh peserta.js -->
+<!-- ==================== FILTER LOKASI PKD ==================== -->
+<div class="row mb-3 g-2 align-items-center">
+  <div class="col-md-6">
+    <label class="form-label small fw-semibold mb-1" for="filterAngkatanPkd">
+      <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>Filter Lokasi PKD
+    </label>
+    <select class="form-select" id="filterAngkatanPkd" aria-label="Filter lokasi PKD">
+      <option value="">-- Semua Lokasi PKD --</option>
+    </select>
+  </div>
+  <div class="col-md-6 text-md-end align-self-end">
+    <span class="text-muted small" id="filterAngkatanInfo"></span>
+  </div>
+</div>
+
+<!-- ==================== TABLE CONTAINER ==================== -->
 <div id="pesertaTableContainer" class="table-container" aria-live="polite">
   <div class="table-responsive">
     <table class="table table-hover align-middle">
       <thead class="table-light">
         <tr>
           <th style="width: 40px;"><div class="skeleton-box" style="height: 20px; width: 20px;"></div></th>
-          <th style="width: 50px;"><div class="skeleton-box" style="height: 20px; width: 20px;"></div></th>
+          <th style="width: 70px;"><div class="skeleton-box" style="height: 20px; width: 30px;"></div></th>
           <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
           <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
           <th><div class="skeleton-box" style="height: 20px; width: 100px;"></div></th>
@@ -145,48 +174,61 @@
 <div class="mt-5 pt-4 border-top">
   <div class="card border-0 shadow-sm rounded-4">
     <div class="card-body p-4">
-      <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-geo-alt-fill text-primary fs-4" aria-hidden="true"></i>
-        <h5 class="fw-bold mb-0">Lokasi PKD</h5>
-      </div>
-      <p class="text-muted small">Kelola daftar lokasi PKD dan filter lokasi aktif.</p>
 
-      <div class="row g-2 align-items-end mb-4">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold mb-1" for="newLokasiInput">Tambah Lokasi Baru</label>
-          <div class="input-group">
-            <input
-              type="text"
-              class="form-control"
-              id="newLokasiInput"
-              placeholder="Contoh: Gedung Serbaguna A"
-              aria-label="Nama lokasi baru"
-            >
-            <button type="button" class="btn btn-success" id="addLokasiBtn" aria-label="Tambah lokasi">
-              <i class="bi bi-plus-circle" aria-hidden="true"></i> Tambah
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-geo-alt-fill text-primary fs-4" aria-hidden="true"></i>
+          <h5 class="fw-bold mb-0">Lokasi PKD</h5>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" id="addLokasiBtn" aria-label="Tambah lokasi">
+            <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tambah
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="refreshAngkatanAdminBtn" aria-label="Segarkan lokasi">
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-muted small mb-3">
+        Pilih <strong>1 Lokasi PKD</strong> yang sedang <strong>AKTIF</strong>.
+        Lokasi aktif akan menjadi <strong>default</strong> pada form pendaftaran peserta publik.
+        Hanya 1 lokasi yang bisa aktif.
+      </p>
+
+      <div id="activeLokasiBanner" class="alert alert-primary d-flex align-items-center gap-2 rounded-3 mb-4" role="status" aria-live="polite">
+        <i class="bi bi-info-circle-fill fs-5" aria-hidden="true"></i>
+        <div class="flex-grow-1 small">Memuat lokasi aktif…</div>
+      </div>
+
+      <div id="lokasiAdminGrid" class="row g-2 mb-4">
+        <div class="col-12 text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Memuat…</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="addLokasiForm" class="d-none mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold small mb-1" for="newLokasiInput">Nama Lokasi PKD Baru</label>
+            <input type="text" class="form-control form-control-sm" id="newLokasiInput"
+                   placeholder="Contoh: PKD Angkatan 2026 - Sewon" autocomplete="off">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small mb-1" for="newLokasiTahun">Tahun</label>
+            <input type="number" class="form-control form-control-sm" id="newLokasiTahun"
+                   min="2000" max="2100" inputmode="numeric">
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="btn btn-success btn-sm rounded-pill w-100" id="saveNewLokasiBtn">
+              <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan Lokasi
             </button>
           </div>
         </div>
       </div>
 
-      <div id="lokasiPKDListContainer" class="mb-4"></div>
-
-      <hr class="my-3">
-
-      <div class="row g-2 align-items-end">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold mb-1" for="pkdLokasiSelect">Filter Lokasi PKD Aktif</label>
-          <select class="form-select" id="pkdLokasiSelect" aria-label="Filter lokasi PKD">
-            <option value="">-- Semua Lokasi --</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <button type="button" class="btn btn-primary w-100" id="savePkdLokasiBtn">
-            <i class="bi bi-save me-1" aria-hidden="true"></i>Simpan Filter
-          </button>
-        </div>
-      </div>
-      <div id="pkdLokasiStatus" class="mt-2 small text-muted" aria-live="polite"></div>
     </div>
   </div>
 </div>
@@ -445,3 +487,36 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================================
+     INLINE STYLE — Lokasi PKD Cards
+     ============================================================ -->
+<style>
+  #lokasiAdminGrid .p-3.rounded-3 {
+    transition: all 0.2s ease;
+  }
+  #lokasiAdminGrid .p-3.rounded-3:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  }
+  #lokasiAdminGrid .btn[data-set-active]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  }
+  @media (max-width: 576px) {
+    #lokasiAdminGrid .col-md-6 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    #lokasiAdminGrid .fw-bold.small {
+      font-size: 0.8rem !important;
+    }
+  }
+  #pesertaFilterBanner {
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

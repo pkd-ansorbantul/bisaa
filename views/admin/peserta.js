@@ -1,22 +1,22 @@
 // ============================================================
-// VIEW: peserta.js — v28.1.0 FULL FIX EDITION
+// VIEW: peserta.js — Fragment Logic
 // Dimuat oleh: js/router.js
 // HTML: views/admin/peserta.html
+// Versi: 28.7.0 — FULL FIX EDITION
 // ============================================================
-// CHANGELOG v28.1.0 (dari v28.0.0):
-//   ✅ FIX CRITICAL: ID Peserta & QR Code tidak muncul setelah submit
-//     → Pakai extractId() dari api.js untuk ekstrak ID multi-level
-//   ✅ FIX: loadAngkatanPKD() fallback robust kalau API gagal
-//   ✅ FIX: renderFilterBanner() null-safe + auto-render saat data berubah
-//   ✅ FIX: renderDynamicForm() race-safe (waitFor + fallback)
-//   ✅ FIX: Angkatan dropdown auto-refresh setelah add
-//   ✅ FIX: Bulk approve progress callback (nama peserta)
-//   ✅ FIX: QR generation dengan fallback placeholder (pre-approve)
-//   ✅ FIX: handleSavePeserta() defensive multi-level ID extraction
-//   ✅ FIX: Reset all state on unmount (zero memory leak)
-//   ✅ KEEP: Semua fitur v28.0.0 (Form Builder, ID Card, TTD, Sertifikat)
-//   ✅ KEEP: Angkatan PKD integration + sessionStorage filter
-//   ✅ Zero regression
+// CHANGELOG v28.7.0 (dari v28.6.0):
+//   ✅ FIX CRITICAL: Kolom ID menampilkan ID asli spreadsheet
+//   ✅ FIX CRITICAL: Default sort by ID descending
+//   ✅ FIX: Sort toggle klik header ID (asc/desc)
+//   ✅ FIX: Dropdown filter Lokasi PKD di toolbar
+//   ✅ FIX: Section "Lokasi PKD Aktif" berfungsi penuh
+//   ✅ FIX: Semua label "Angkatan PKD" → "Lokasi PKD"
+//   ✅ FIX: Modal cleanup zero leak
+//   ✅ FIX: Event delegation — no per-render listener
+//   ✅ FIX: Focus preservation search input
+//   ✅ FIX: Null-safe semua element access
+//   ✅ FIX: All async handler pakai try/finally
+//   ✅ KEEP: Semua fitur (CRUD, Form Builder, ID Card, TTD, Cert)
 // ============================================================
 
 import { AdminModule } from '../../js/modules/admin.js';
@@ -31,7 +31,10 @@ import {
   deleteAngkatanPKD as apiDeleteAngkatanPKD,
   getDefaultFormFields,
   fileToBase64,
-  extractId,                       // ⭐ NEW: helper untuk extract ID
+  extractId,
+  formatDateTimeID,
+  getLocalDateOnly,
+  downloadJSON,
 } from '../../js/core/api.js';
 import { BASE_PATH } from '../../js/core/config.js';
 import {
@@ -39,7 +42,6 @@ import {
   debounce,
   setBtnLoading,
   createViewContext,
-  delegateTableClicks,
   captureFocusState,
   restoreFocusState,
   cleanupBootstrapArtifacts,
@@ -53,7 +55,24 @@ import {
 // ============================================================
 const MAX_FILE_SIZE_MB = 5;
 const GENERATE_CONCURRENCY = 5;
-const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';  // legacy key name
+const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';
+
+const STATUS_OPTIONS = ['pending', 'approved', 'active', 'alumni', 'rejected'];
+const STATUS_BADGE_MAP = {
+  approved: 'bg-success',
+  active: 'bg-success',
+  pending: 'bg-warning text-dark',
+  rejected: 'bg-danger',
+  alumni: 'bg-secondary',
+};
+
+const FIELD_TYPE_LABELS = {
+  text: 'Text',
+  textarea: 'Textarea',
+  radio: 'Radio',
+  select: 'Select',
+  file: 'File',
+};
 
 // ============================================================
 //   LOCAL HELPERS
@@ -70,10 +89,7 @@ function setCacheStatus(status) {
 
 function getStatusBadge(status) {
   const s = String(status || 'pending').toLowerCase();
-  if (s === 'approved' || s === 'active') return 'bg-success';
-  if (s === 'rejected') return 'bg-danger';
-  if (s === 'alumni') return 'bg-secondary';
-  return 'bg-warning text-dark';
+  return STATUS_BADGE_MAP[s] || STATUS_BADGE_MAP.pending;
 }
 
 function getAngkatanFilterFromStorage() {
@@ -88,35 +104,69 @@ function setAngkatanFilterToStorage(value) {
   } catch (e) { /* silent */ }
 }
 
+function normalizeListResult(res) {
+  if (Array.isArray(res)) return res;
+  if (res && res.success && Array.isArray(res.data)) return res.data;
+  if (res && Array.isArray(res.data)) return res.data;
+  return [];
+}
+
 // ============================================================
-//   CONTEXT
+//   CONTEXT — subscription ke AdminModule
 // ============================================================
 const ctx = createViewContext(
   {
+    // Peserta data
     pesertaList: [],
     filteredList: [],
     formStructure: [],
     rtlData: [],
     approvalsData: [],
-    angkatanPKDList: [],
+    lokasiPKDList: [],
+
+    // Filters
     searchQuery: '',
     statusFilter: '',
     angkatanFilter: '',
+
+    // Pagination
     currentPage: 1,
     itemsPerPage: 15,
+
+    // ⭐ Sort by ID (default descending)
+    sortColumn: 'id',
+    sortDirection: 'desc',
+
+    // Selection
     selectedIds: new Set(),
+
+    // Modals
     pendingDeleteId: null,
     pendingCredentialId: null,
     pendingCertIds: [],
+
+    // Load flags
     isLoadingFormStructure: false,
-    isLoadingAngkatan: false,
+    isLoadingLokasi: false,
+    isProcessing: false,
+
+    // Lokasi PKD Aktif
+    activeLokasiNama: '',
+    activeLokasiInfo: null,
+    isSettingActive: false,
+
+    // Hash
     lastHash: '',
   },
   {
     watchTypes: ['all', 'multiple', 'manual-refresh', 'peserta', 'angkatan'],
     onDataChange: (type) => {
       if (!ctx.mounted) return;
-      console.log(`[PesertaView] ⚡ Data changed (${type}) → refresh from cache`);
+      if (ctx.state.isProcessing) {
+        console.log(`[PesertaView] Data changed (${type}) — skip (processing)`);
+        return;
+      }
+      console.log(`[PesertaView] Data changed (${type}) — refresh from cache`);
       try {
         refreshFromCache();
       } catch (e) {
@@ -125,8 +175,6 @@ const ctx = createViewContext(
     },
   }
 );
-
-let tableCleanup = null;
 
 // ============================================================
 //   MOUNT
@@ -139,7 +187,8 @@ export async function mount() {
   ctx.mounted = true;
   ctx.saving = false;
   ctx.refreshing = false;
-  console.log('[PesertaView] mounted');
+  ctx.state.isProcessing = false;
+  console.log('[PesertaView] 🚀 mounted');
 
   // Reset state
   Object.assign(ctx.state, {
@@ -147,34 +196,42 @@ export async function mount() {
     filteredList: [],
     rtlData: [],
     approvalsData: [],
-    angkatanPKDList: [],
+    lokasiPKDList: [],
     searchQuery: '',
     statusFilter: '',
     angkatanFilter: '',
     currentPage: 1,
+    sortColumn: 'id',
+    sortDirection: 'desc',
     pendingDeleteId: null,
     pendingCredentialId: null,
     pendingCertIds: [],
     selectedIds: new Set(),
+    isProcessing: false,
+    activeLokasiNama: '',
+    activeLokasiInfo: null,
+    isSettingActive: false,
     lastHash: '',
   });
 
   const searchEl = getEl('searchInput');
-  const filterEl = getEl('filterStatus');
+  const filterStatusEl = getEl('filterStatus');
+  const filterAngkatanEl = getEl('filterAngkatanPkd');
   if (searchEl) searchEl.value = '';
-  if (filterEl) filterEl.value = '';
+  if (filterStatusEl) filterStatusEl.value = '';
+  if (filterAngkatanEl) filterAngkatanEl.value = '';
 
   // ⚡ Instant render dari preload cache
   const cached = AdminModule.getPesertaList() || [];
-  const cachedAngkatan = AdminModule.getAngkatanPKDList() || [];
+  const cachedLokasi = AdminModule.getAngkatanPKDList() || [];
 
   if (cached.length > 0) {
     console.log('[PesertaView] ⚡ Rendering from preload cache');
     ctx.state.pesertaList = cached.map(p => ({ ...p }));
     ctx.state.rtlData = AdminModule.getRTLList() || [];
     ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
-    ctx.state.angkatanPKDList = cachedAngkatan.map(a => ({ ...a }));
-    ctx.state.lastHash = computeListHash(ctx.state.pesertaList);
+    ctx.state.lokasiPKDList = cachedLokasi.map(a => ({ ...a }));
+    ctx.state.lastHash = computeListHash(cached);
     renderStats();
     applyFiltersAndSort();
     setCacheStatus('Live');
@@ -183,15 +240,16 @@ export async function mount() {
     renderSkeletonTable();
   }
   renderSkeletonFormBuilder();
+  renderSkeletonLokasiGrid();
 
   bindEvents();
 
-  // ⭐ Baca filter Angkatan PKD dari sessionStorage
+  // Baca filter Lokasi PKD dari sessionStorage
   const angkatanFilter = getAngkatanFilterFromStorage();
   if (angkatanFilter) {
-    console.log('[PesertaView] 🎯 Filter Angkatan PKD:', angkatanFilter);
+    console.log('[PesertaView] 🎯 Filter Lokasi PKD from storage:', angkatanFilter);
     ctx.state.angkatanFilter = angkatanFilter;
-    renderFilterBanner(angkatanFilter);
+    if (filterAngkatanEl) filterAngkatanEl.value = angkatanFilter;
     applyFiltersAndSort();
   }
 
@@ -201,10 +259,11 @@ export async function mount() {
   // Parallel load
   await Promise.allSettled([
     loadFormStructure(),
-    loadAngkatanPKD(),
+    loadLokasiPKD(),
     cached.length === 0 ? loadPesertaData(false) : Promise.resolve(),
   ]);
 
+  console.log('[PesertaView] ✅ Mount complete');
   return unmount;
 }
 
@@ -214,110 +273,17 @@ export async function mount() {
 export function unmount() {
   if (!ctx.mounted) return;
   ctx.mounted = false;
-  console.log('[PesertaView] unmounted');
-
-  if (tableCleanup) {
-    try { tableCleanup(); } catch (e) { /* silent */ }
-    tableCleanup = null;
-  }
-
-  // Cleanup banner
-  const banner = document.getElementById('pesertaFilterBanner');
-  if (banner) {
-    try { banner.remove(); } catch (e) { /* silent */ }
-  }
+  console.log('[PesertaView] 🛑 unmounted');
 
   ctx.cleanup();
   cleanupBootstrapArtifacts();
 }
 
 // ============================================================
-//   REFRESH FROM CACHE
-// ============================================================
-function refreshFromCache() {
-  const fresh = AdminModule.getPesertaList() || [];
-  const freshHash = computeListHash(fresh);
-
-  if (freshHash === ctx.state.lastHash) {
-    console.log('[PesertaView] No change, skip re-render');
-    return;
-  }
-
-  ctx.state.pesertaList = fresh.map(p => ({ ...p }));
-  ctx.state.lastHash = freshHash;
-  ctx.state.rtlData = AdminModule.getRTLList() || [];
-  ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
-
-  // Update angkatan list juga
-  const freshAngkatan = AdminModule.getAngkatanPKDList() || [];
-  if (freshAngkatan.length > 0) {
-    ctx.state.angkatanPKDList = freshAngkatan.map(a => ({ ...a }));
-  }
-
-  renderStats();
-  applyFiltersAndSort();
-  setCacheStatus('Live');
-
-  // Re-render banner kalau filter masih ada
-  if (ctx.state.angkatanFilter) {
-    renderFilterBanner(ctx.state.angkatanFilter);
-  }
-}
-
-// ============================================================
-//   ⭐ FILTER BANNER (Angkatan PKD)
-// ============================================================
-function renderFilterBanner(angkatanNama) {
-  // Hapus banner lama
-  const oldBanner = document.getElementById('pesertaFilterBanner');
-  if (oldBanner) oldBanner.remove();
-
-  if (!angkatanNama) return;
-
-  const container = document.getElementById('pesertaTableContainer');
-  if (!container || !container.parentNode) return;
-
-  const banner = document.createElement('div');
-  banner.id = 'pesertaFilterBanner';
-  banner.className = 'alert alert-info d-flex align-items-center gap-2 mb-3 rounded-3 shadow-sm flex-wrap';
-  banner.style.cssText = 'border-left:4px solid #2563eb;';
-  banner.innerHTML = `
-    <i class="bi bi-mortarboard-fill fs-5 text-primary" aria-hidden="true"></i>
-    <div class="flex-grow-1">
-      <strong>Filter Angkatan PKD:</strong> ${escapeHtml(angkatanNama)}
-      <span class="badge bg-primary ms-2" id="pesertaFilterCount">0</span>
-    </div>
-    <button type="button"
-            class="btn btn-sm btn-outline-secondary rounded-pill"
-            id="clearPesertaFilterBtn"
-            aria-label="Hapus filter angkatan">
-      <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
-      Hapus Filter
-    </button>
-  `;
-
-  container.parentNode.insertBefore(banner, container);
-
-  // Bind clear button
-  banner.querySelector('#clearPesertaFilterBtn')?.addEventListener('click', () => {
-    setAngkatanFilterToStorage('');
-    ctx.state.angkatanFilter = '';
-    banner.remove();
-    applyFiltersAndSort();
-    showToast('Filter dihapus', 'info');
-  });
-}
-
-function updateFilterBannerCount(count) {
-  const el = document.getElementById('pesertaFilterCount');
-  if (el) el.textContent = String(count);
-}
-
-// ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  // Toolbar
+  // ============ TOOLBAR ============
   ctx.on(getEl('addPesertaBtn'), 'click', handleAddPeserta);
   ctx.on(getEl('exportDataBtn'), 'click', handleExport);
   ctx.on(getEl('moveToAlumniBtn'), 'click', handleMoveToAlumni);
@@ -325,7 +291,7 @@ function bindEvents() {
   ctx.on(getEl('bulkGenerateTTDBtn'), 'click', handleBulkTTD);
   ctx.on(getEl('generateCertificateBtn'), 'click', handleGenerateCert);
 
-  // Search & filter
+  // ============ SEARCH & FILTER ============
   ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
     ctx.state.searchQuery = e.target.value;
     ctx.state.currentPage = 1;
@@ -338,57 +304,51 @@ function bindEvents() {
     applyFiltersAndSort();
   });
 
-  // Form builder
-  ctx.on(getEl('addFieldBtn'), 'click', handleAddField);
-  ctx.on(getEl('saveFormStructureBtn'), 'click', handleSaveFormStructure);
-  ctx.on(getEl('saveFieldBtn'), 'click', handleSaveField);
+  // ⭐ Dropdown Filter Lokasi PKD
+  ctx.on(getEl('filterAngkatanPkd'), 'change', function (e) {
+    const val = e.target.value || '';
+    console.log('[PesertaView] 🎯 Dropdown filter changed:', val || '(semua)');
 
-  ctx.on(getEl('fieldType'), 'change', function () {
-    const group = getEl('fieldOptionsGroup');
-    if (group) group.style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
+    ctx.state.angkatanFilter = val;
+    ctx.state.currentPage = 1;
+    setAngkatanFilterToStorage(val);
+    updateFilterInfo(val);
+    applyFiltersAndSort();
   });
 
-  // Angkatan PKD CRUD
-  ctx.on(getEl('addLokasiBtn'), 'click', handleAddAngkatan);
-  ctx.on(getEl('savePkdLokasiBtn'), 'click', handleSaveAngkatanFilter);
-
-  // Modals
-  ctx.on(getEl('savePesertaBtn'), 'click', handleSavePeserta);
-  ctx.on(getEl('confirmDeleteBtn'), 'click', handleConfirmDelete);
-  ctx.on(getEl('resetCredentialPasswordBtn'), 'click', handleResetPassword);
-  ctx.on(getEl('generateCertSubmit'), 'click', handleGenerateCertSubmit);
-
-  // Modal cleanup
-  const pesertaFormModalEl = getEl('pesertaFormModal');
-  if (pesertaFormModalEl) {
-    ctx.on(pesertaFormModalEl, 'hidden.bs.modal', () => {
-      const container = getEl('dynamicAdminFormContainer');
-      if (container) container.innerHTML = '';
-      const editId = getEl('editPesertaId');
-      if (editId) editId.value = '';
-    });
-  }
-
-  const fieldEditorModalEl = getEl('fieldEditorModal');
-  if (fieldEditorModalEl) {
-    ctx.on(fieldEditorModalEl, 'hidden.bs.modal', () => {
-      const editId = getEl('editFieldId');
-      if (editId) editId.value = '';
-    });
-  }
-
-  // ✅ DELEGATION — peserta table
+  // ============ SORT BY ID (klik header) ============
   const tableContainer = getEl('pesertaTableContainer');
   if (tableContainer) {
-    tableCleanup = delegateTableClicks(tableContainer, {
-      onAction: (action, id) => handleRowAction(action, id),
-      onPage: (page) => {
-        ctx.state.currentPage = page;
-        applyFiltersAndSort();
-      },
+    ctx.on(tableContainer, 'click', (e) => {
+      // Sort by ID header
+      const idHeader = e.target.closest('[data-sort="id"]');
+      if (idHeader) {
+        e.preventDefault();
+        handleSort('id');
+        return;
+      }
+
+      // Skip checkbox toggle
+      if (e.target.closest('.peserta-checkbox, #selectAllPeserta')) return;
+
+      // Dropdown action buttons
+      const actionEl = e.target.closest('[data-action]');
+      if (actionEl) {
+        e.preventDefault();
+        handleRowAction(actionEl.dataset.action, actionEl.dataset.id);
+        return;
+      }
+
+      // Pagination
+      const pageBtn = e.target.closest('[data-page]');
+      if (pageBtn) {
+        e.preventDefault();
+        const page = parseInt(pageBtn.dataset.page, 10);
+        if (!isNaN(page)) goToPage(page);
+      }
     });
 
-    // Change event — checkbox
+    // Checkbox changes
     ctx.on(tableContainer, 'change', (e) => {
       if (e.target.matches('#selectAllPeserta')) {
         const isChecked = e.target.checked;
@@ -419,7 +379,53 @@ function bindEvents() {
     });
   }
 
-  // ✅ DELEGATION — form builder
+  // ============ FORM BUILDER ============
+  ctx.on(getEl('addFieldBtn'), 'click', handleAddField);
+  ctx.on(getEl('saveFormStructureBtn'), 'click', handleSaveFormStructure);
+  ctx.on(getEl('saveFieldBtn'), 'click', handleSaveField);
+
+  ctx.on(getEl('fieldType'), 'change', function () {
+    const group = getEl('fieldOptionsGroup');
+    if (group) group.style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
+  });
+
+  // ============ LOKASI PKD ============
+  ctx.on(getEl('addLokasiBtn'), 'click', handleToggleAddLokasiForm);
+  ctx.on(getEl('saveNewLokasiBtn'), 'click', handleAddLokasi);
+  ctx.on(getEl('refreshAngkatanAdminBtn'), 'click', async () => {
+    await loadLokasiPKD();
+    await loadActiveLokasi();
+    showToast('Data lokasi disegarkan', 'success');
+  });
+
+  // ============ MODALS ============
+  ctx.on(getEl('savePesertaBtn'), 'click', handleSavePeserta);
+  ctx.on(getEl('confirmDeleteBtn'), 'click', handleConfirmDelete);
+  ctx.on(getEl('resetCredentialPasswordBtn'), 'click', handleResetPassword);
+  ctx.on(getEl('generateCertSubmit'), 'click', handleGenerateCertSubmit);
+
+  // ============ LOKASI ADMIN GRID — Event Delegation ============
+  const lokasiGrid = getEl('lokasiAdminGrid');
+  if (lokasiGrid) {
+    ctx.on(lokasiGrid, 'click', (e) => {
+      const delBtn = e.target.closest('[data-delete-angkatan]');
+      if (delBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteLokasiPKDItem(delBtn.dataset.deleteAngkatan);
+        return;
+      }
+      const setBtn = e.target.closest('[data-set-active]');
+      if (setBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveLokasi(setBtn.dataset.setActive);
+        return;
+      }
+    });
+  }
+
+  // ============ FORM BUILDER — Event Delegation ============
   const formBuilderEl = getEl('formBuilderContainer');
   if (formBuilderEl) {
     ctx.on(formBuilderEl, 'click', (e) => {
@@ -433,15 +439,104 @@ function bindEvents() {
     });
   }
 
-  // ✅ DELEGATION — angkatan PKD list
-  const angkatanContainer = getEl('lokasiPKDListContainer');
-  if (angkatanContainer) {
-    ctx.on(angkatanContainer, 'click', (e) => {
-      const btn = e.target.closest('[data-lokasi-id]');
-      if (!btn) return;
-      e.preventDefault();
-      deleteAngkatanPKDItem(btn.dataset.lokasiId);
+  // ============ MODAL CLEANUP ============
+  const pesertaFormModalEl = getEl('pesertaFormModal');
+  if (pesertaFormModalEl) {
+    ctx.on(pesertaFormModalEl, 'hidden.bs.modal', () => {
+      const container = getEl('dynamicAdminFormContainer');
+      if (container) container.innerHTML = '';
+      const editId = getEl('editPesertaId');
+      if (editId) editId.value = '';
     });
+  }
+
+  const fieldEditorModalEl = getEl('fieldEditorModal');
+  if (fieldEditorModalEl) {
+    ctx.on(fieldEditorModalEl, 'hidden.bs.modal', () => {
+      const editId = getEl('editFieldId');
+      if (editId) editId.value = '';
+    });
+  }
+}
+
+// ============================================================
+//   SORT HANDLER
+// ============================================================
+function handleSort(column) {
+  if (ctx.state.sortColumn === column) {
+    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    ctx.state.sortColumn = column;
+    ctx.state.sortDirection = 'desc';
+  }
+  ctx.state.currentPage = 1;
+  applyFiltersAndSort();
+}
+
+// ============================================================
+//   UPDATE FILTER INFO
+// ============================================================
+function updateFilterInfo(angkatanNama) {
+  const infoEl = getEl('filterAngkatanInfo');
+  if (!infoEl) return;
+
+  if (!angkatanNama) {
+    infoEl.textContent = '';
+    return;
+  }
+
+  const total = ctx.state.pesertaList.filter(p =>
+    String(p.lokasi_pkd || '').trim() === angkatanNama
+  ).length;
+
+  infoEl.innerHTML = `
+    <i class="bi bi-funnel-fill text-primary me-1" aria-hidden="true"></i>
+    Filter: <strong>${escapeHtml(angkatanNama)}</strong>
+    <span class="badge bg-primary ms-1">${total} peserta</span>
+  `;
+}
+
+// ============================================================
+//   UPDATE BULK ACTION BUTTONS
+// ============================================================
+function updateBulkActionButtons() {
+  const count = ctx.state.selectedIds.size;
+  const btn = getEl('moveToAlumniBtn');
+  if (btn) btn.disabled = count === 0;
+}
+
+function getSelectedIds() {
+  return Array.from(ctx.state.selectedIds);
+}
+
+// ============================================================
+//   REFRESH FROM CACHE
+// ============================================================
+function refreshFromCache() {
+  const fresh = AdminModule.getPesertaList() || [];
+  const freshHash = computeListHash(fresh);
+
+  const freshLokasi = AdminModule.getAngkatanPKDList() || [];
+  if (freshLokasi.length > 0) {
+    ctx.state.lokasiPKDList = freshLokasi.map(a => ({ ...a }));
+  }
+
+  if (freshHash === ctx.state.lastHash) {
+    console.log('[PesertaView] No change, skip re-render');
+    return;
+  }
+
+  ctx.state.pesertaList = fresh.map(p => ({ ...p }));
+  ctx.state.lastHash = freshHash;
+  ctx.state.rtlData = AdminModule.getRTLList() || [];
+  ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
+
+  renderStats();
+  applyFiltersAndSort();
+  setCacheStatus('Live');
+
+  if (ctx.state.angkatanFilter) {
+    updateFilterInfo(ctx.state.angkatanFilter);
   }
 }
 
@@ -466,10 +561,10 @@ async function loadPesertaData(forceRefresh = false) {
 }
 
 // ============================================================
-//   RENDER: Stats
+//   RENDER: STATS
 // ============================================================
 function renderStats() {
-  const useFiltered = ctx.state.angkatanFilter && ctx.state.filteredList.length >= 0;
+  const useFiltered = ctx.state.angkatanFilter !== '';
   const list = useFiltered ? ctx.state.filteredList : ctx.state.pesertaList;
 
   const total = list.length;
@@ -488,12 +583,12 @@ function renderStats() {
 }
 
 // ============================================================
-//   FILTER & SORT
+//   FILTER
 // ============================================================
 function getFilteredPeserta(query, status) {
   let filtered = ctx.state.pesertaList.slice();
 
-  // ⭐ Apply filter Angkatan PKD dulu
+  // Filter by Lokasi PKD
   const angkatanFilter = ctx.state.angkatanFilter;
   if (angkatanFilter) {
     filtered = filtered.filter(item =>
@@ -501,6 +596,7 @@ function getFilteredPeserta(query, status) {
     );
   }
 
+  // Filter by search query
   if (query && query.trim() !== '') {
     const q = query.toLowerCase().trim();
     filtered = filtered.filter(item =>
@@ -508,10 +604,12 @@ function getFilteredPeserta(query, status) {
       (item.email || '').toLowerCase().includes(q) ||
       (item.no_hp || '').toLowerCase().includes(q) ||
       (item.utusan || '').toLowerCase().includes(q) ||
-      (item.lokasi_pkd || '').toLowerCase().includes(q)
+      (item.lokasi_pkd || '').toLowerCase().includes(q) ||
+      String(item.id || '').includes(q)
     );
   }
 
+  // Filter by status
   if (status && status.trim() !== '') {
     const s = status.toLowerCase().trim();
     filtered = filtered.filter(item =>
@@ -525,20 +623,37 @@ function getFilteredPeserta(query, status) {
 function applyFiltersAndSort() {
   let filtered = getFilteredPeserta(ctx.state.searchQuery, ctx.state.statusFilter);
 
-  filtered.sort((a, b) => {
-    const aIsAlumni = String(a.status || '').toLowerCase().trim() === 'alumni';
-    const bIsAlumni = String(b.status || '').toLowerCase().trim() === 'alumni';
-    if (aIsAlumni && !bIsAlumni) return 1;
-    if (!aIsAlumni && bIsAlumni) return -1;
-    const aT = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-    const bT = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-    return bT - aT;
-  });
+  // ⭐ SORT: Default by ID descending
+  const sortCol = ctx.state.sortColumn;
+  const sortDir = ctx.state.sortDirection === 'asc' ? 1 : -1;
+
+  if (sortCol) {
+    filtered.sort((a, b) => {
+      let va, vb;
+
+      if (sortCol === 'id') {
+        va = parseInt(a.id) || 0;
+        vb = parseInt(b.id) || 0;
+      } else if (sortCol === 'timestamp') {
+        va = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        vb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      } else {
+        va = String(a[sortCol] || '').toLowerCase();
+        vb = String(b[sortCol] || '').toLowerCase();
+      }
+
+      if (va < vb) return -1 * sortDir;
+      if (va > vb) return 1 * sortDir;
+
+      // Tie-breaker
+      return (parseInt(b.id) || 0) - (parseInt(a.id) || 0);
+    });
+  }
 
   ctx.state.filteredList = filtered;
 
   if (ctx.state.angkatanFilter) {
-    updateFilterBannerCount(filtered.length);
+    updateFilterInfo(ctx.state.angkatanFilter);
   }
 
   const totalItems = filtered.length;
@@ -572,6 +687,32 @@ function renderSkeletonTable() {
   c.innerHTML = html;
 }
 
+function renderSkeletonFormBuilder() {
+  const c = getEl('formBuilderContainer');
+  if (!c) return;
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
+      <div style="width:100%;">
+        <div class="skeleton-box" style="height:1.2rem;width:70%;margin-bottom:6px;"></div>
+        <div class="skeleton-box" style="height:0.9rem;width:40%;"></div>
+      </div>
+    </div></div>`;
+  }
+  c.innerHTML = html;
+}
+
+function renderSkeletonLokasiGrid() {
+  const c = getEl('lokasiAdminGrid');
+  if (!c) return;
+  c.innerHTML = `
+    <div class="col-12 text-center py-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Memuat...</span>
+      </div>
+    </div>`;
+}
+
 // ============================================================
 //   RENDER: Table
 // ============================================================
@@ -587,27 +728,35 @@ function renderTable() {
   const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
   const pageData = ctx.state.filteredList.slice(start, end);
 
+  // Arrow indicator for ID sort
+  const idArrow = ctx.state.sortColumn === 'id'
+    ? (ctx.state.sortDirection === 'asc' ? ' ↑' : ' ↓')
+    : ' ↕';
+
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
     <thead class="table-light"><tr>
       <th style="width:40px;"><input type="checkbox" id="selectAllPeserta" aria-label="Pilih semua"></th>
-      <th style="width:50px;">#</th>
+      <th style="width:80px; cursor:pointer; user-select:none;" data-sort="id"
+          role="button" tabindex="0"
+          title="Klik untuk sort by ID">ID${idArrow}</th>
       <th>Nama</th>
       <th>Email</th>
       <th>No HP</th>
       <th>Utusan</th>
-      <th>Angkatan PKD</th>
+      <th>Lokasi PKD</th>
       <th>Status</th>
       <th style="width:60px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
 
   if (pageData.length === 0) {
+    const hasFilter = ctx.state.searchQuery || ctx.state.statusFilter || ctx.state.angkatanFilter;
     html += `<tr><td colspan="9" class="text-center py-5 text-muted">
       <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
-      ${(ctx.state.searchQuery || ctx.state.statusFilter || ctx.state.angkatanFilter) ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
+      ${hasFilter ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
     </td></tr>`;
   } else {
-    pageData.forEach((item, i) => {
-      const globalIdx = start + i + 1;
+    pageData.forEach((item) => {
+      const displayId = escapeHtml(String(item.id || '-'));
       const status = String(item.status || 'pending').toLowerCase();
       const badge = getStatusBadge(status);
       const isApproved = status === 'approved' || status === 'active';
@@ -616,9 +765,9 @@ function renderTable() {
 
       html += `<tr>
         <td><input type="checkbox" class="peserta-checkbox" value="${safeId}" ${isChecked ? 'checked' : ''} aria-label="Pilih peserta ${escapeHtml(item.nama_lengkap || '')}"></td>
-        <td>${globalIdx}</td>
+        <td><span class="badge bg-secondary font-monospace" style="font-size:0.78rem;">#${displayId}</span></td>
         <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
-        <td>${escapeHtml(item.email || '-')}</td>
+        <td><small>${escapeHtml(item.email || '-')}</small></td>
         <td>${escapeHtml(item.no_hp || '-')}</td>
         <td>${escapeHtml(item.utusan || '-')}</td>
         <td><span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></td>
@@ -664,6 +813,7 @@ function renderTable() {
 
   html += `</tbody></table></div>`;
 
+  // Pagination
   html += `<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
     <div class="small text-muted">Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data</div>
     <div class="btn-group">`;
@@ -674,15 +824,15 @@ function renderTable() {
   if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
   if (startPage > 1) {
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-page="1">1</button>`;
     if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" data-action="goto" data-page="${i}">${i}</button>`;
+    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
     if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
@@ -691,14 +841,15 @@ function renderTable() {
   restoreFocusState('searchInput', savedFocus);
 }
 
-function updateBulkActionButtons() {
-  const count = ctx.state.selectedIds.size;
-  const btn = getEl('moveToAlumniBtn');
-  if (btn) btn.disabled = count === 0;
-}
-
-function getSelectedIds() {
-  return Array.from(ctx.state.selectedIds);
+// ============================================================
+//   PAGINATION
+// ============================================================
+function goToPage(page) {
+  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  if (page < 1 || page > totalPages) return;
+  ctx.state.currentPage = page;
+  renderTable();
+  getEl('pesertaTableContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
@@ -720,10 +871,11 @@ function handleRowAction(action, id) {
 }
 
 // ============================================================
-//   CRUD: Add / Edit / Delete
+//   CRUD
 // ============================================================
 async function handleAddPeserta() {
   if (ctx.saving) return;
+
   const editId = getEl('editPesertaId');
   const title = getEl('formModalTitle');
   if (editId) editId.value = '';
@@ -738,12 +890,16 @@ function viewPeserta(id) {
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   let html = '<div class="list-group list-group-flush">';
+  html += `<div class="list-group-item py-2 bg-light">
+    <strong>ID Peserta:</strong>
+    <span class="badge bg-secondary font-monospace ms-2">#${escapeHtml(String(item.id || '-'))}</span>
+  </div>`;
   ctx.state.formStructure.forEach(field => {
     if (field.type === 'file') return;
     const val = item[field.id] || '-';
     html += `<div class="list-group-item py-2"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(String(val))}</div>`;
   });
-  html += `<div class="list-group-item py-2"><strong>Angkatan PKD:</strong> <span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></div>`;
+  html += `<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> <span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></div>`;
   html += `<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ${getStatusBadge(item.status)}">${escapeHtml(item.status || 'pending')}</span></div>`;
   html += '</div>';
 
@@ -753,13 +909,15 @@ function viewPeserta(id) {
 }
 
 async function editPeserta(id) {
+  if (ctx.saving) return;
+
   const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const editId = getEl('editPesertaId');
   const title = getEl('formModalTitle');
   if (editId) editId.value = id;
-  if (title) title.innerText = 'Edit Peserta';
+  if (title) title.innerText = `Edit Peserta #${id}`;
 
   await renderDynamicForm(item);
   ctx.getModal('pesertaFormModal')?.show();
@@ -768,12 +926,13 @@ async function editPeserta(id) {
 function confirmDelete(id) {
   const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+
   ctx.state.pendingDeleteId = id;
   ctx.getModal('deleteConfirmModal')?.show();
 }
 
 async function handleConfirmDelete(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const id = ctx.state.pendingDeleteId;
   if (!id) return;
@@ -781,22 +940,24 @@ async function handleConfirmDelete(e) {
   const btn = e?.currentTarget || getEl('confirmDeleteBtn');
   const restore = setBtnLoading(btn, true, 'Menghapus...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await AdminModule.deletePeserta(id);
-    if (res.success) {
-      showToast('Peserta berhasil dihapus', 'success');
+    if (res && res.success) {
+      showToast(`Peserta #${id} berhasil dihapus`, 'success');
       ctx.getModal('deleteConfirmModal')?.hide();
       ctx.state.selectedIds.delete(String(id));
       await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menghapus');
+      throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
     ctx.state.pendingDeleteId = null;
   }
 }
@@ -805,20 +966,28 @@ async function handleConfirmDelete(e) {
 //   APPROVE
 // ============================================================
 async function approvePeserta(id) {
+  if (ctx.saving || ctx.state.isProcessing) return;
+
   const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) return;
-  if (!confirm(`Setujui peserta "${item.nama_lengkap}"? Akun login akan otomatis dibuat.`)) return;
 
+  if (!confirm(`Setujui peserta "${item.nama_lengkap}" (#${item.id})? Akun login akan otomatis dibuat.`)) return;
+
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   try {
     const res = await AdminModule.approvePeserta(id);
-    if (res.success) {
+    if (res && res.success) {
       showToast('Peserta disetujui! Password default = No HP.', 'success');
       await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menyetujui');
+      throw new Error((res && res.error) || 'Gagal menyetujui');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -826,12 +995,15 @@ async function approvePeserta(id) {
 //   CREDENTIALS
 // ============================================================
 async function showCredential(id) {
+  if (ctx.saving) return;
+
   try {
     const res = await callApi('getPesertaCredentials', { id }, 'GET');
     if (!res || !res.success || !res.data) {
       showToast((res && res.error) ? res.error : 'Kredensial tidak ditemukan', 'error');
       return;
     }
+
     ctx.state.pendingCredentialId = id;
 
     const setText = (elId, val) => { const el = getEl(elId); if (el) el.innerText = val; };
@@ -846,7 +1018,7 @@ async function showCredential(id) {
 }
 
 async function handleResetPassword(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const id = ctx.state.pendingCredentialId;
   if (!id) { showToast('Data tidak valid', 'error'); return; }
@@ -857,11 +1029,12 @@ async function handleResetPassword(e) {
   const newPassword = item.no_hp;
   if (!newPassword) { showToast('Peserta tidak punya No HP terdaftar', 'error'); return; }
 
-  if (!confirm(`Reset password untuk "${item.nama_lengkap}" ke No HP (${newPassword})?`)) return;
+  if (!confirm(`Reset password untuk "${item.nama_lengkap}" (#${item.id}) ke No HP (${newPassword})?`)) return;
 
   const btn = e?.currentTarget || getEl('resetCredentialPasswordBtn');
   const restore = setBtnLoading(btn, true, 'Memproses...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await apiResetPesertaPassword(id, newPassword);
@@ -876,6 +1049,7 @@ async function handleResetPassword(e) {
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -925,7 +1099,6 @@ function showIdCard(id) {
       </button>
     </div>`;
 
-  // Generate QR
   const qrTarget = getEl('adminQrContainer');
   if (qrTarget && typeof qrcode === 'function') {
     qrTarget.innerHTML = '';
@@ -977,7 +1150,7 @@ function showIdCard(id) {
       html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
         .then(c => {
           const link = document.createElement('a');
-          link.download = `Kartu_ID_${nama.replace(/\s+/g, '_')}.png`;
+          link.download = `Kartu_ID_${idPeserta}_${nama.replace(/\s+/g, '_')}.png`;
           link.href = c.toDataURL('image/png');
           link.click();
           showToast('Kartu ID diunduh', 'success');
@@ -997,6 +1170,7 @@ function showIdCard(id) {
 async function showTTD(id) {
   const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) { showToast('Peserta tidak ditemukan', 'error'); return; }
+
   const nama = peserta.nama_lengkap;
 
   try {
@@ -1017,7 +1191,8 @@ async function showTTD(id) {
 
       const roleMap = { ketua_pc: null, sekretaris: null, instruktur: null };
       filtered.forEach(a => {
-        if (!roleMap[a.role] || new Date(a.timestamp) > new Date(roleMap[a.role].timestamp)) {
+        const existing = roleMap[a.role];
+        if (!existing || new Date(a.timestamp) > new Date(existing.timestamp)) {
           roleMap[a.role] = a;
         }
       });
@@ -1094,20 +1269,28 @@ async function showTTD(id) {
 //   ACC RTL
 // ============================================================
 async function approveRTL(id) {
+  if (ctx.saving || ctx.state.isProcessing) return;
+
   const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) return;
-  if (!confirm(`Setujui SEMUA tugas RTL untuk "${peserta.nama_lengkap}"?`)) return;
 
+  if (!confirm(`Setujui SEMUA tugas RTL untuk "${peserta.nama_lengkap}" (#${peserta.id})?`)) return;
+
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   try {
     const res = await callApi('approveAllRTL', { pesertaId: id }, 'POST');
-    if (res.success) {
+    if (res && res.success) {
       showToast(`Semua RTL disetujui (${res.updated || 0} tugas)`, 'success');
       await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal');
+      throw new Error((res && res.error) || 'Gagal');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1140,8 +1323,11 @@ function isEligible(p) {
 //   GENERATE CERTIFICATE
 // ============================================================
 async function generateCertForOne(id) {
+  if (ctx.saving) return;
+
   const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) { showToast('Peserta tidak ditemukan', 'error'); return; }
+
   const check = isEligible(peserta);
   if (!check.eligible) {
     showToast('Peserta belum memenuhi syarat: ' + check.reason, 'warning');
@@ -1182,9 +1368,9 @@ async function openGenerateModal(ids) {
     participants.forEach(p => {
       const check = isEligible(p);
       if (check.eligible) {
-        listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)}</span>`;
+        listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)} (#${p.id})</span>`;
       } else {
-        listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} <small>(${escapeHtml(check.reason)})</small></span>`;
+        listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} (#${p.id}) <small>(${escapeHtml(check.reason)})</small></span>`;
         allValid = false;
       }
     });
@@ -1218,7 +1404,7 @@ async function openGenerateModal(ids) {
 }
 
 async function handleGenerateCertSubmit(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('generateCertSubmit');
   if (!btn) return;
@@ -1239,6 +1425,7 @@ async function handleGenerateCertSubmit(e) {
   }
 
   ctx.saving = true;
+  ctx.state.isProcessing = true;
   const restore = setBtnLoading(btn, true, 'Memproses...');
 
   const progressEl = getEl('generateProgress');
@@ -1256,67 +1443,93 @@ async function handleGenerateCertSubmit(e) {
     if (progressBar) progressBar.style.width = ((completed / valid.length) * 100) + '%';
   };
 
-  for (let i = 0; i < valid.length; i += GENERATE_CONCURRENCY) {
-    if (!ctx.mounted) break;
+  try {
+    for (let i = 0; i < valid.length; i += GENERATE_CONCURRENCY) {
+      if (!ctx.mounted) break;
 
-    const batch = valid.slice(i, i + GENERATE_CONCURRENCY);
-    const batchResults = await Promise.allSettled(
-      batch.map(p => callApi('generateCertificateForParticipant', { templateId, pesertaId: p.id }, 'POST'))
+      const batch = valid.slice(i, i + GENERATE_CONCURRENCY);
+      const batchResults = await Promise.allSettled(
+        batch.map(p => callApi('generateCertificateForParticipant', { templateId, pesertaId: p.id }, 'POST'))
+      );
+
+      batchResults.forEach((r, idx) => {
+        const p = batch[idx];
+        if (r.status === 'fulfilled' && r.value && r.value.success) {
+          results.push({
+            nama: p.nama_lengkap,
+            id: p.id,
+            nomor: r.value.nomorSertifikat,
+            url: r.value.pdfUrl,
+          });
+        } else {
+          errors.push({
+            nama: p.nama_lengkap,
+            id: p.id,
+            error: (r.value && r.value.error) || r.reason?.message || 'Gagal',
+          });
+        }
+        updateProgress(p.nama_lengkap);
+      });
+    }
+
+    if (progressEl) progressEl.style.display = 'none';
+
+    let html = '';
+    if (results.length > 0) {
+      html += `<div class="alert alert-success">✅ Berhasil: ${results.length} sertifikat.</div>`;
+      html += `<div class="table-responsive"><table class="table table-sm">
+        <thead><tr><th>ID</th><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
+      results.forEach(r => {
+        html += `<tr>
+          <td><span class="badge bg-secondary font-monospace">#${escapeHtml(String(r.id || ''))}</span></td>
+          <td>${escapeHtml(r.nama)}</td>
+          <td><code>${escapeHtml(r.nomor || '')}</code></td>
+          <td><a href="${escapeHtml(r.url || '#')}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
+            <i class="bi bi-download" aria-hidden="true"></i>
+          </a></td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    if (errors.length > 0) {
+      html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul class="mb-0">`;
+      errors.forEach(err => { html += `<li>[#${err.id}] ${escapeHtml(err.nama)}: ${escapeHtml(err.error)}</li>`; });
+      html += `</ul></div>`;
+    }
+
+    const resultEl = getEl('generateResultArea');
+    if (resultEl) resultEl.innerHTML = html;
+
+    showToast(
+      `Selesai: ${results.length} berhasil, ${errors.length} gagal`,
+      results.length > 0 ? 'success' : 'error'
     );
 
-    batchResults.forEach((r, idx) => {
-      const p = batch[idx];
-      if (r.status === 'fulfilled' && r.value && r.value.success) {
-        results.push({ nama: p.nama_lengkap, nomor: r.value.nomorSertifikat, url: r.value.pdfUrl });
-      } else {
-        errors.push({ nama: p.nama_lengkap, error: (r.value && r.value.error) || r.reason?.message || 'Gagal' });
-      }
-      updateProgress(p.nama_lengkap);
-    });
+    if (results.length > 0) {
+      await AdminModule.loadAllData(true);
+    }
+  } catch (err) {
+    console.error('[PesertaView] executeGenerate error:', err);
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
-
-  if (progressEl) progressEl.style.display = 'none';
-
-  let html = '';
-  if (results.length > 0) {
-    html += `<div class="alert alert-success">✅ Berhasil: ${results.length} sertifikat.</div>`;
-    html += `<div class="table-responsive"><table class="table table-sm">
-      <thead><tr><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
-    results.forEach(r => {
-      html += `<tr>
-        <td>${escapeHtml(r.nama)}</td>
-        <td><code>${escapeHtml(r.nomor || '')}</code></td>
-        <td><a href="${escapeHtml(r.url || '#')}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
-          <i class="bi bi-download" aria-hidden="true"></i>
-        </a></td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-  if (errors.length > 0) {
-    html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul class="mb-0">`;
-    errors.forEach(err => { html += `<li>${escapeHtml(err.nama)}: ${escapeHtml(err.error)}</li>`; });
-    html += `</ul></div>`;
-  }
-
-  const resultEl = getEl('generateResultArea');
-  if (resultEl) resultEl.innerHTML = html;
-
-  restore();
-  ctx.saving = false;
 }
 
 // ============================================================
 //   BULK TTD
 // ============================================================
 async function handleBulkTTD(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   if (!confirm('Generate TTD digital untuk SEMUA peserta approved/active? Ini akan memakan waktu.')) return;
 
   const btn = e?.currentTarget || getEl('bulkGenerateTTDBtn');
   const restore = setBtnLoading(btn, true, 'Memproses...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await callApi('bulkGenerateTTD', {}, 'POST');
@@ -1331,6 +1544,7 @@ async function handleBulkTTD(e) {
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1338,30 +1552,32 @@ async function handleBulkTTD(e) {
 //   MOVE TO ALUMNI
 // ============================================================
 async function handleMoveToAlumni(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const ids = getSelectedIds();
   if (ids.length === 0) { showToast('Pilih minimal satu peserta', 'warning'); return; }
-  if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?`)) return;
+  if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?\n\nID: ${ids.map(i => '#' + i).join(', ')}`)) return;
 
   const btn = e?.currentTarget || getEl('moveToAlumniBtn');
   const restore = setBtnLoading(btn, true, 'Memindahkan...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await AdminModule.moveMultipleToAlumni(ids);
-    if (res.success) {
+    if (res && res.success) {
       showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta ke Alumni`, 'success');
       ctx.state.selectedIds.clear();
       await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal');
+      throw new Error((res && res.error) || 'Gagal');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1369,22 +1585,24 @@ async function handleMoveToAlumni(e) {
 //   REFRESH
 // ============================================================
 async function handleRefresh(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('refreshDataBtn');
   const restore = setBtnLoading(btn, true, 'Memuat...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     await AdminModule.loadAllData(true);
     refreshFromCache();
-    await loadAngkatanPKD();
+    await loadLokasiPKD();
     showToast('Data berhasil disegarkan', 'success');
   } catch (err) {
     showToast('Gagal menyegarkan', 'error');
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1408,27 +1626,16 @@ function handleExport() {
     status: item.status,
   }));
 
-  try {
-    const json = JSON.stringify(out, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const today = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    a.href = url;
-    a.download = `peserta_export_${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const fileName = `peserta_export_${getLocalDateOnly(new Date())}.json`;
+  if (downloadJSON(out, fileName)) {
     showToast(`Ekspor ${data.length} data berhasil`, 'success');
-  } catch (e) {
-    showToast('Gagal ekspor: ' + e.message, 'error');
+  } else {
+    showToast('Gagal ekspor data', 'error');
   }
 }
 
 // ============================================================
-//   FORM BUILDER
+//   FORM STRUCTURE
 // ============================================================
 async function loadFormStructure() {
   if (ctx.state.isLoadingFormStructure) return;
@@ -1461,21 +1668,6 @@ async function loadFormStructure() {
   }
 }
 
-function renderSkeletonFormBuilder() {
-  const c = getEl('formBuilderContainer');
-  if (!c) return;
-  let html = '';
-  for (let i = 0; i < 6; i++) {
-    html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
-      <div style="width:100%;">
-        <div class="skeleton-box" style="height:1.2rem;width:70%;margin-bottom:6px;"></div>
-        <div class="skeleton-box" style="height:0.9rem;width:40%;"></div>
-      </div>
-    </div></div>`;
-  }
-  c.innerHTML = html;
-}
-
 function renderFormStructure() {
   const c = getEl('formBuilderContainer');
   if (!c) return;
@@ -1488,7 +1680,7 @@ function renderFormStructure() {
   let html = '';
   ctx.state.formStructure.forEach(field => {
     const isCore = field.isCore === true;
-    const typeLabel = { text: 'Teks', textarea: 'Textarea', radio: 'Radio', select: 'Select', file: 'File' }[field.type] || field.type;
+    const typeLabel = FIELD_TYPE_LABELS[field.type] || field.type;
 
     html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
       <div>
@@ -1596,20 +1788,309 @@ function handleSaveField() {
 }
 
 async function handleSaveFormStructure(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('saveFormStructureBtn');
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
   ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await AdminModule.setFormSettings(ctx.state.formStructure);
-    if (res.success) {
+    if (res && res.success) {
       showToast('Struktur form berhasil disimpan!', 'success');
       await AdminModule.loadAllData(true);
       await loadFormStructure();
     } else {
-      throw new Error(res.error || 'Gagal menyimpan');
+      throw new Error((res && res.error) || 'Gagal menyimpan');
+    }
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
+  }
+}
+
+// ============================================================
+//   LOKASI PKD — LOAD
+// ============================================================
+async function loadLokasiPKD() {
+  if (ctx.state.isLoadingLokasi) return;
+  ctx.state.isLoadingLokasi = true;
+
+  try {
+    let list = [];
+
+    try {
+      const res = await apiGetAngkatanPKDWithCount();
+      list = normalizeListResult(res);
+    } catch (e) {
+      console.warn('[PesertaView] WithCount failed:', e.message);
+    }
+
+    if (list.length === 0) {
+      try {
+        const res2 = await apiGetAngkatanPKDList();
+        list = normalizeListResult(res2);
+      } catch (e) {
+        console.warn('[PesertaView] Simple list failed too:', e.message);
+      }
+    }
+
+    ctx.state.lokasiPKDList = list;
+    renderLokasiAdminGrid();
+    renderFilterDropdown();
+    await loadActiveLokasi();
+  } catch (e) {
+    console.warn('[PesertaView] loadLokasiPKD:', e);
+    ctx.state.lokasiPKDList = [];
+    renderLokasiAdminGrid();
+    renderFilterDropdown();
+  } finally {
+    ctx.state.isLoadingLokasi = false;
+  }
+}
+
+// ============================================================
+//   LOKASI PKD ADMIN GRID
+// ============================================================
+function renderLokasiAdminGrid() {
+  const c = getEl('lokasiAdminGrid');
+  if (!c) return;
+
+  if (!ctx.state.lokasiPKDList || ctx.state.lokasiPKDList.length === 0) {
+    c.innerHTML = `
+      <div class="col-12">
+        <div class="alert alert-info text-center mb-0 small">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Belum ada Lokasi PKD. Klik <strong>Tambah</strong> untuk membuat lokasi pertama.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const activeNama = ctx.state.activeLokasiNama || '';
+
+  let html = '';
+  ctx.state.lokasiPKDList.forEach(item => {
+    const total = parseInt(item.totalPeserta) || 0;
+    const tahun = item.tahun || '-';
+    const isActive = String(item.nama) === String(activeNama);
+    const safeNama = escapeHtml(item.nama);
+
+    html += `
+      <div class="col-md-6 col-lg-4">
+        <div class="p-3 rounded-3 position-relative"
+             style="
+               border: 2px solid ${isActive ? '#2563eb' : '#e2e8f0'};
+               background: ${isActive ? 'rgba(37,99,235,0.05)' : '#fff'};
+               transition: all 0.2s;
+             ">
+          ${isActive ? `
+            <span class="badge bg-primary position-absolute"
+                  style="top:8px;right:8px;font-size:0.65rem;">
+              <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>AKTIF
+            </span>
+          ` : ''}
+
+          <div class="d-flex align-items-start gap-2 mb-2">
+            <i class="bi bi-geo-alt-fill text-primary fs-4" aria-hidden="true"></i>
+            <div style="min-width:0;flex:1;">
+              <div class="fw-bold small text-truncate" title="${safeNama}">${safeNama}</div>
+              <div class="text-muted" style="font-size:0.7rem;">
+                Tahun ${escapeHtml(String(tahun))} · ${total} peserta
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-1 mt-3">
+            ${!isActive ? `
+              <button type="button" class="btn btn-primary btn-sm rounded-pill flex-grow-1"
+                      data-set-active="${safeNama}">
+                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Jadikan Aktif
+              </button>
+            ` : `
+              <button type="button" class="btn btn-success btn-sm rounded-pill flex-grow-1" disabled>
+                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Sedang Aktif
+              </button>
+            `}
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill"
+                    data-delete-angkatan="${escapeHtml(String(item.id))}"
+                    title="Hapus lokasi" aria-label="Hapus ${safeNama}">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  c.innerHTML = html;
+}
+
+// ============================================================
+//   LOKASI PKD — ACTIVE STATE
+// ============================================================
+async function loadActiveLokasi() {
+  try {
+    const res = await callApi('getPKDLokasi', {}, 'GET');
+    if (!ctx.mounted) return;
+
+    let activeNama = '';
+    if (res && res.success) {
+      activeNama = typeof res.data === 'string' ? res.data : (res.data || '');
+    }
+
+    ctx.state.activeLokasiNama = activeNama;
+    ctx.state.activeLokasiInfo = ctx.state.lokasiPKDList.find(a =>
+      String(a.nama) === String(activeNama)
+    ) || null;
+
+    const banner = getEl('activeLokasiBanner');
+    if (banner) {
+      if (activeNama) {
+        const info = ctx.state.activeLokasiInfo;
+        const total = info ? (parseInt(info.totalPeserta) || 0) : 0;
+        banner.className = 'alert alert-success d-flex align-items-center gap-2 rounded-3 mb-4';
+        banner.innerHTML = `
+          <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
+          <div class="flex-grow-1 small">
+            <strong>Lokasi PKD Aktif:</strong> ${escapeHtml(activeNama)}
+            ${info ? `· Tahun ${escapeHtml(String(info.tahun || '-'))} · ${total} peserta` : ''}
+            <div class="text-muted mt-1" style="font-size:0.75rem;">
+              Peserta publik yang mendaftar akan otomatis terdaftar di lokasi ini.
+            </div>
+          </div>
+        `;
+      } else {
+        banner.className = 'alert alert-warning d-flex align-items-center gap-2 rounded-3 mb-4';
+        banner.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+          <div class="flex-grow-1 small">
+            <strong>Belum ada Lokasi PKD yang aktif.</strong>
+            Klik <strong>"Jadikan Aktif"</strong> pada salah satu lokasi di bawah.
+          </div>
+        `;
+      }
+    }
+
+    renderLokasiAdminGrid();
+  } catch (e) {
+    console.warn('[PesertaView] loadActiveLokasi error:', e);
+    const banner = getEl('activeLokasiBanner');
+    if (banner) {
+      banner.className = 'alert alert-warning d-flex align-items-center gap-2 rounded-3 mb-4';
+      banner.innerHTML = `
+        <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+        <div class="flex-grow-1 small">Gagal memuat status lokasi aktif.</div>`;
+    }
+  }
+}
+
+async function setActiveLokasi(nama) {
+  if (ctx.saving || ctx.state.isSettingActive) return;
+
+  if (!nama) return;
+
+  const info = ctx.state.lokasiPKDList.find(a => String(a.nama) === String(nama));
+  if (!info) {
+    showToast('Lokasi tidak ditemukan', 'error');
+    return;
+  }
+
+  if (!confirm(`Jadikan "${nama}" sebagai Lokasi PKD Aktif?\n\nPeserta publik yang mendaftar akan otomatis terdaftar di lokasi ini.`)) {
+    return;
+  }
+
+  ctx.state.isSettingActive = true;
+  ctx.saving = true;
+
+  try {
+    const res = await callApi('setPKDLokasi', { lokasi: nama }, 'POST');
+
+    if (res && res.success) {
+      showToast(`Lokasi "${nama}" sekarang AKTIF`, 'success');
+      await loadActiveLokasi();
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
+    } else {
+      throw new Error((res && res.error) || 'Gagal menyimpan');
+    }
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+  } finally {
+    ctx.state.isSettingActive = false;
+    ctx.saving = false;
+  }
+}
+
+// ============================================================
+//   LOKASI PKD — FILTER DROPDOWN
+// ============================================================
+function renderFilterDropdown() {
+  const sel = getEl('filterAngkatanPkd');
+  if (!sel) return;
+
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Semua Lokasi PKD --</option>';
+
+  ctx.state.lokasiPKDList.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.nama;
+    opt.textContent = `${a.nama}${a.tahun ? ` (${a.tahun})` : ''}`;
+    if (cur === a.nama) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ============================================================
+//   LOKASI PKD — TOGGLE FORM + ADD + DELETE
+// ============================================================
+function handleToggleAddLokasiForm() {
+  const form = getEl('addLokasiForm');
+  if (!form) return;
+
+  form.classList.toggle('d-none');
+
+  if (!form.classList.contains('d-none')) {
+    const yearEl = getEl('newLokasiTahun');
+    if (yearEl) yearEl.value = new Date().getFullYear();
+    const inputEl = getEl('newLokasiInput');
+    if (inputEl) inputEl.focus();
+  }
+}
+
+async function handleAddLokasi(e) {
+  if (ctx.saving || ctx.state.isSettingActive) return;
+
+  const input = getEl('newLokasiInput');
+  const yearEl = getEl('newLokasiTahun');
+  const nama = input ? input.value.trim() : '';
+  const tahun = parseInt(yearEl?.value) || new Date().getFullYear();
+
+  if (!nama) {
+    showToast('Nama lokasi wajib diisi', 'error');
+    input?.focus();
+    return;
+  }
+
+  const btn = e?.currentTarget || getEl('saveNewLokasiBtn');
+  ctx.saving = true;
+  const restore = setBtnLoading(btn, true, '');
+
+  try {
+    const res = await apiAddAngkatanPKD(nama, tahun, 'aktif', nama);
+
+    if (res && res.success) {
+      showToast('Lokasi PKD ditambahkan', 'success');
+      if (input) input.value = '';
+      if (yearEl) yearEl.value = '';
+      const form = getEl('addLokasiForm');
+      if (form) form.classList.add('d-none');
+      await loadLokasiPKD();
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
+    } else {
+      throw new Error((res && res.error) || 'Gagal');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
@@ -1619,218 +2100,70 @@ async function handleSaveFormStructure(e) {
   }
 }
 
-// ============================================================
-//   ⭐ ANGKATAN PKD (ROBUST FALLBACK v28.1.0)
-// ============================================================
-async function loadAngkatanPKD() {
-  if (ctx.state.isLoadingAngkatan) return;
-  ctx.state.isLoadingAngkatan = true;
+async function deleteLokasiPKDItem(id) {
+  const info = ctx.state.lokasiPKDList.find(a => String(a.id) === String(id));
+  if (!info) return;
 
-  try {
-    // Coba pakai getAngkatanPKDWithCount (dengan count)
-    let res = null;
-    let list = [];
+  const isActive = String(info.nama) === String(ctx.state.activeLokasiNama);
 
-    try {
-      res = await apiGetAngkatanPKDWithCount();
-      if (res && res.success && Array.isArray(res.data)) {
-        list = res.data;
-      } else if (Array.isArray(res)) {
-        list = res;
-      }
-    } catch (e) {
-      console.warn('[PesertaView] WithCount failed, fallback simple list:', e.message);
-    }
+  const msg = isActive
+    ? `"${info.nama}" sedang AKTIF.\n\nSetelah dihapus, tidak ada lokasi aktif.\nData peserta TIDAK akan terhapus.\n\nLanjutkan?`
+    : `Hapus Lokasi PKD "${info.nama}"?\n\nData peserta TIDAK akan terhapus.`;
 
-    // Fallback: pakai getAngkatanPKDList kalau WithCount gagal
-    if (list.length === 0) {
-      try {
-        const res2 = await apiGetAngkatanPKDList();
-        if (res2 && res2.success && Array.isArray(res2.data)) {
-          list = res2.data;
-        } else if (Array.isArray(res2)) {
-          list = res2;
-        }
-      } catch (e) {
-        console.warn('[PesertaView] Simple list failed too:', e.message);
-      }
-    }
+  if (!confirm(msg)) return;
 
-    ctx.state.angkatanPKDList = list;
-    renderAngkatanPKDList();
-    await loadAngkatanFilterSetting();
-  } catch (e) {
-    console.warn('[PesertaView] loadAngkatanPKD:', e);
-    ctx.state.angkatanPKDList = [];
-    renderAngkatanPKDList();
-  } finally {
-    ctx.state.isLoadingAngkatan = false;
-  }
-}
-
-function renderAngkatanPKDList() {
-  const c = getEl('lokasiPKDListContainer');
-  if (!c) return;
-
-  if (ctx.state.angkatanPKDList.length === 0) {
-    c.innerHTML = '<p class="text-muted small">Belum ada Angkatan PKD.</p>';
-  } else {
-    let html = '';
-    ctx.state.angkatanPKDList.forEach(item => {
-      const total = item.totalPeserta || 0;
-      const pending = item.totalPending || 0;
-      const badge = pending > 0 ? 'bg-warning text-dark' : 'bg-info text-dark';
-      html += `<div class="lokasi-pkd-item">
-        <span>
-          <span class="badge bg-primary">${escapeHtml(item.nama)}</span>
-          <span class="badge ${badge} ms-1">${total} peserta</span>
-        </span>
-        <button type="button" class="btn btn-sm btn-outline-danger" data-lokasi-id="${escapeHtml(String(item.id))}" aria-label="Hapus angkatan">
-          <i class="bi bi-trash" aria-hidden="true"></i>
-        </button>
-      </div>`;
-    });
-    c.innerHTML = html;
-  }
-
-  const sel = getEl('pkdLokasiSelect');
-  if (sel) {
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">-- Semua Angkatan --</option>';
-    ctx.state.angkatanPKDList.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.nama;
-      opt.textContent = `${a.nama} (${a.tahun || '-'})`;
-      if (cur === a.nama) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
-}
-
-async function deleteAngkatanPKDItem(id) {
-  if (!confirm('Hapus Angkatan PKD ini? Data peserta TIDAK akan terhapus.')) return;
+  ctx.saving = true;
   try {
     const res = await apiDeleteAngkatanPKD(id);
+
     if (res && res.success) {
-      showToast('Angkatan PKD dihapus', 'success');
-      await loadAngkatanPKD();
+      showToast('Lokasi PKD dihapus', 'success');
+
+      if (isActive) {
+        try {
+          await callApi('setPKDLokasi', { lokasi: '' }, 'POST');
+          ctx.state.activeLokasiNama = '';
+          ctx.state.activeLokasiInfo = null;
+        } catch (e) { /* silent */ }
+      }
+
+      await loadLokasiPKD();
       window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
     } else {
       throw new Error((res && res.error) || 'Gagal');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
-  }
-}
-
-async function handleAddAngkatan(e) {
-  if (ctx.saving) return;
-
-  const btn = e?.currentTarget || getEl('addLokasiBtn');
-  const input = getEl('newLokasiInput');
-  const nama = input ? input.value.trim() : '';
-  if (!nama) { showToast('Nama angkatan wajib diisi', 'error'); return; }
-
-  const restore = setBtnLoading(btn, true, '');
-  ctx.saving = true;
-
-  try {
-    const currentYear = new Date().getFullYear();
-    const res = await apiAddAngkatanPKD(nama, currentYear, 'aktif', nama);
-    if (res && res.success) {
-      showToast('Angkatan PKD ditambahkan', 'success');
-      if (input) input.value = '';
-      await loadAngkatanPKD();
-      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
-  } catch (err) {
-    showToast('Gagal: ' + err.message, 'error');
   } finally {
-    restore();
-    ctx.saving = false;
-  }
-}
-
-async function loadAngkatanFilterSetting() {
-  try {
-    const res = await callApi('getPKDLokasi', {}, 'GET');
-    if (!ctx.mounted) return;
-    if (res && res.success) {
-      const cur = res.data || '';
-      const sel = getEl('pkdLokasiSelect');
-      if (sel) {
-        for (let opt of sel.options) {
-          if (opt.value === cur) { opt.selected = true; break; }
-        }
-      }
-      const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `Filter saat ini: ${cur || 'Semua Angkatan'}`;
-    }
-  } catch (e) { /* silent */ }
-}
-
-async function handleSaveAngkatanFilter(e) {
-  if (ctx.saving) return;
-
-  const btn = e?.currentTarget || getEl('savePkdLokasiBtn');
-  const angkatan = getEl('pkdLokasiSelect')?.value || '';
-
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-  ctx.saving = true;
-
-  try {
-    const res = await callApi('setPKDLokasi', { lokasi: angkatan }, 'POST');
-    if (res && res.success) {
-      const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `✅ Filter disimpan: ${angkatan || 'Semua Angkatan'}`;
-      showToast('Filter angkatan diperbarui', 'success');
-
-      ctx.state.angkatanFilter = angkatan;
-      setAngkatanFilterToStorage(angkatan);
-      if (angkatan) renderFilterBanner(angkatan);
-      applyFiltersAndSort();
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
-  } catch (err) {
-    const statusEl = getEl('pkdLokasiStatus');
-    if (statusEl) statusEl.innerText = `❌ Gagal: ${err.message}`;
-    showToast('Gagal: ' + err.message, 'error');
-  } finally {
-    restore();
     ctx.saving = false;
   }
 }
 
 // ============================================================
-//   DYNAMIC FORM — Race-safe
+//   DYNAMIC FORM
 // ============================================================
-async function ensureAngkatanPKDLoaded() {
-  if (ctx.state.angkatanPKDList.length > 0) return;
-  if (ctx.state.isLoadingAngkatan) {
-    await waitFor(() => ctx.state.angkatanPKDList.length > 0, 3000, 100);
-    if (ctx.state.angkatanPKDList.length > 0) return;
+async function ensureLokasiPKDLoaded() {
+  if (ctx.state.lokasiPKDList.length > 0) return;
+  if (ctx.state.isLoadingLokasi) {
+    await waitFor(() => ctx.state.lokasiPKDList.length > 0, 3000, 100);
+    if (ctx.state.lokasiPKDList.length > 0) return;
   }
 
-  ctx.state.isLoadingAngkatan = true;
+  ctx.state.isLoadingLokasi = true;
   try {
     let list = [];
     try {
       const res = await apiGetAngkatanPKDWithCount();
-      if (res && res.success && Array.isArray(res.data)) list = res.data;
-      else if (Array.isArray(res)) list = res;
+      list = normalizeListResult(res);
     } catch (e) {
       try {
         const res2 = await apiGetAngkatanPKDList();
-        if (res2 && res2.success && Array.isArray(res2.data)) list = res2.data;
-        else if (Array.isArray(res2)) list = res2;
+        list = normalizeListResult(res2);
       } catch (e2) { /* silent */ }
     }
-    ctx.state.angkatanPKDList = list;
+    ctx.state.lokasiPKDList = list;
   } finally {
-    ctx.state.isLoadingAngkatan = false;
+    ctx.state.isLoadingLokasi = false;
   }
 }
 
@@ -1848,10 +2181,19 @@ async function renderDynamicForm(data) {
   }
 
   const fields = ctx.state.formStructure;
-  await ensureAngkatanPKDLoaded();
-  const angkatanList = ctx.state.angkatanPKDList;
+  await ensureLokasiPKDLoaded();
+  const lokasiList = ctx.state.lokasiPKDList;
 
   let html = `<form id="dynamicAdminForm" autocomplete="off">`;
+
+  // Show ID di form edit
+  if (data && data.id) {
+    html += `<div class="mb-3">
+      <label class="form-label fw-bold">ID Peserta</label>
+      <input type="text" class="form-control font-monospace" value="${escapeHtml(String(data.id))}" readonly>
+      <div class="form-text text-muted small">ID dari spreadsheet, tidak dapat diubah.</div>
+    </div>`;
+  }
 
   fields.forEach(field => {
     const val = data ? (data[field.id] || '') : '';
@@ -1893,31 +2235,30 @@ async function renderDynamicForm(data) {
   });
 
   const currentStatus = data ? (data.status || 'pending') : 'pending';
-  const statusOptions = ['pending', 'approved', 'active', 'alumni', 'rejected'];
   html += `<div class="mb-3">
     <label class="form-label fw-bold">Status Peserta <span class="text-danger">*</span></label>
     <select class="form-select" name="status" required>
-      ${statusOptions.map(o => `<option value="${o}" ${currentStatus === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}
+      ${STATUS_OPTIONS.map(o => `<option value="${o}" ${currentStatus === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}
     </select>
     <div class="form-text text-muted small">⚠️ Status <strong>Approved</strong> akan membuat akun login. Status <strong>Alumni</strong> akan memindahkan ke daftar Alumni.</div>
   </div>`;
 
   html += `<div class="mb-3">
-    <label class="form-label fw-bold">Angkatan PKD <span class="text-danger">*</span></label>`;
+    <label class="form-label fw-bold">Lokasi PKD <span class="text-danger">*</span></label>`;
 
-  if (angkatanList.length === 0) {
+  if (lokasiList.length === 0) {
     html += `
       <div class="alert alert-warning small mb-0">
         <i class="bi bi-exclamation-triangle me-1"></i>
-        <strong>Belum ada Angkatan PKD.</strong><br>
-        Silakan tutup modal ini dan tambahkan angkatan di bagian <strong>Angkatan PKD</strong> di bawah halaman.
+        <strong>Belum ada Lokasi PKD.</strong><br>
+        Silakan tutup modal ini dan tambahkan lokasi di bagian <strong>Lokasi PKD</strong> di bawah halaman.
         <input type="hidden" name="lokasi_pkd" value="" data-empty="true">
       </div>`;
   } else {
     html += `
       <select class="form-select" name="lokasi_pkd" required>
-        <option value="">-- Pilih Angkatan --</option>
-        ${angkatanList.map(a => `<option value="${escapeHtml(a.nama)}" ${(data && data.lokasi_pkd === a.nama) ? 'selected' : ''}>${escapeHtml(a.nama)}${a.tahun ? ` (${a.tahun})` : ''}</option>`).join('')}
+        <option value="">-- Pilih Lokasi --</option>
+        ${lokasiList.map(a => `<option value="${escapeHtml(a.nama)}" ${(data && data.lokasi_pkd === a.nama) ? 'selected' : ''}>${escapeHtml(a.nama)}${a.tahun ? ` (${a.tahun})` : ''}</option>`).join('')}
       </select>`;
   }
   html += `</div>`;
@@ -1941,10 +2282,10 @@ async function renderDynamicForm(data) {
 }
 
 // ============================================================
-//   ⭐ SAVE PESERTA — v28.1.0 dengan extractId()
+//   SAVE PESERTA
 // ============================================================
 async function handleSavePeserta(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('savePesertaBtn');
   const id = getEl('editPesertaId')?.value || '';
@@ -1967,7 +2308,7 @@ async function handleSavePeserta(e) {
   data.lokasi_pkd = lokSel ? lokSel.value : '';
 
   if (!data.lokasi_pkd) {
-    showToast('Angkatan PKD wajib diisi. Tambahkan angkatan terlebih dahulu di bagian bawah halaman.', 'error');
+    showToast('Lokasi PKD wajib diisi. Tambahkan lokasi terlebih dahulu di bagian bawah halaman.', 'error');
     return;
   }
 
@@ -1980,20 +2321,25 @@ async function handleSavePeserta(e) {
   if (!data.nama_lengkap) { showToast('Nama lengkap wajib diisi', 'error'); return; }
 
   ctx.saving = true;
+  ctx.state.isProcessing = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
     const fotoInput = form.querySelector('input[name="foto"]');
     if (fotoInput && fotoInput.files && fotoInput.files[0]) {
       const f = fotoInput.files[0];
-      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) throw new Error(`Foto maksimal ${MAX_FILE_SIZE_MB} MB`);
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        throw new Error(`Foto maksimal ${MAX_FILE_SIZE_MB} MB`);
+      }
       data.foto = await fileToBase64(f);
     }
 
     const suratInput = form.querySelector('input[name="surat_rekomendasi"]');
     if (suratInput && suratInput.files && suratInput.files[0]) {
       const f = suratInput.files[0];
-      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) throw new Error(`Surat maksimal ${MAX_FILE_SIZE_MB} MB`);
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        throw new Error(`Surat maksimal ${MAX_FILE_SIZE_MB} MB`);
+      }
       data.surat_rekomendasi = await fileToBase64(f);
     }
 
@@ -2001,23 +2347,23 @@ async function handleSavePeserta(e) {
       ? await AdminModule.updatePeserta(data)
       : await AdminModule.addPeserta(data);
 
-    // ⭐ v28.1.0 FIX: extractId() robust multi-level
     const newId = extractId(res);
     console.log('[DEBUG] Save peserta result:', res, '→ extracted ID:', newId);
 
-    if (res.success) {
-      showToast(id ? 'Data diperbarui' : `Data ditambahkan (ID: ${newId || '?'})`, 'success');
+    if (res && res.success) {
+      showToast(id ? `Data #${id} diperbarui` : `Data ditambahkan (ID: #${newId || '?'})`, 'success');
       ctx.getModal('pesertaFormModal')?.hide();
       await AdminModule.loadAllData(true);
       window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
     } else {
-      throw new Error(res.error || 'Gagal menyimpan');
+      throw new Error((res && res.error) || 'Gagal menyimpan');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -2027,6 +2373,6 @@ async function handleSavePeserta(e) {
 export default { mount, unmount };
 
 console.log(
-  '%c Peserta View v28.1.0 — Full Fix Edition ',
+  '%c Peserta View v28.7.0 — Full Fix Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
