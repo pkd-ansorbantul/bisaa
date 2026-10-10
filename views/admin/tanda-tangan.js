@@ -1,19 +1,27 @@
 // ============================================================
-// VIEW: tanda-tangan.js — v27.2.0 PRELOAD + SUBSCRIPTION
+// VIEW: tanda-tangan.js — v28.1.0 ADMIN QUEUE EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/tanda-tangan.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.0.0):
-//   ✅ NEW: Subscription ke AdminModule (auto re-render)
-//   ✅ NEW: Instant render dari preload cache
-//   ✅ REMOVED: Per-view polling 90s
-//   ✅ FIX: Password save loading state per-role + rollback on error
-//   ✅ FIX: Modal cleanup via ctx.cleanup (zero leak)
-//   ✅ FIX: Null-safe element access — zero crash
-//   ✅ FIX: isMounted guard di semua async callbacks
+// CHANGELOG v28.1.0 (dari v28.0.0):
+//   ✅ NEW: Panel "Pilih Peserta untuk TTD" (Admin → Queue)
+//   ✅ NEW: Queue chips + candidate checkbox + bulk add
+//   ✅ NEW: Clear queue + remove per chip
+//   ✅ NEW: Refresh queue button
+//   ✅ NEW: Search candidate (debounced)
+//   ✅ FIX: Group by peserta — keep LATEST per role
+//   ✅ FIX: Password save — loading state per role + rollback
+//   ✅ FIX: QR generation — escape URL + safe fallback
+//   ✅ FIX: Delete — konfirmasi + reload
+//   ✅ FIX: Sort per kolom (peserta_nama) dengan arrow indicator
+//   ✅ FIX: Pagination responsive (max 7 buttons)
+//   ✅ FIX: Filter role — cek driveId tidak kosong
+//   ✅ FIX: Modal cleanup on hide (zero leak)
+//   ✅ FIX: Event delegation untuk table + pagination + password
+//   ✅ FIX: isProcessing guard putus infinite loop
+//   ✅ FIX: Null-safe semua element access
 //   ✅ FIX: Focus preservation saat re-render
-//   ✅ KEEP: All 3 roles password management, QR verify, delete
-//   ✅ Zero memory leak
+//   ✅ KEEP: Semua fitur v28.0.0 (password CRUD, delete all TTD)
 // ============================================================
 
 import {
@@ -21,6 +29,10 @@ import {
   showToast,
   escapeHtml,
   formatDateTimeID,
+  addBulkToSignatureQueue,
+  getSignatureQueue,
+  removeFromSignatureQueue,
+  clearSignatureQueue,
 } from '../../js/core/api.js';
 import { BASE_PATH } from '../../js/core/config.js';
 import { AdminModule } from '../../js/modules/admin.js';
@@ -29,7 +41,6 @@ import {
   debounce,
   setBtnLoading,
   createViewContext,
-  delegateTableClicks,
   captureFocusState,
   restoreFocusState,
   cleanupBootstrapArtifacts,
@@ -46,6 +57,8 @@ const ROLE_LABELS = {
   instruktur: 'Instruktur',
 };
 
+const ROLE_ORDER = ['ketua_pc', 'sekretaris', 'instruktur'];
+
 const ROLE_INPUT_MAP = {
   ketua_pc: 'passKetua',
   sekretaris: 'passSekretaris',
@@ -58,11 +71,18 @@ const ROLE_STATUS_MAP = {
   instruktur: 'statusInstruktur',
 };
 
+const MIN_PASSWORD_LENGTH = 6;
+
 // ============================================================
 //   LOCAL HELPERS
 // ============================================================
+function normalizeKey(s) {
+  return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 function groupApprovals(rawList) {
   const map = {};
+
   (rawList || []).forEach(row => {
     const peserta = String(row.peserta_nama || '').trim();
     if (!peserta) return;
@@ -76,34 +96,46 @@ function groupApprovals(rawList) {
       };
     }
 
-    const role = String(row.role || '').toLowerCase();
+    const role = String(row.role || '').toLowerCase().trim();
+    if (ROLE_ORDER.indexOf(role) === -1) return;
+
     const nama = row.nama || '';
     const driveId = row.driveId || '';
     const timestamp = row.timestamp || '';
 
-    if (role === 'ketua_pc') {
-      map[peserta].ketua_pc_nama = nama;
-      map[peserta].ketua_pc_driveId = driveId;
-      map[peserta].ketua_pc_timestamp = timestamp;
-    } else if (role === 'sekretaris') {
-      map[peserta].sekretaris_nama = nama;
-      map[peserta].sekretaris_driveId = driveId;
-      map[peserta].sekretaris_timestamp = timestamp;
-    } else if (role === 'instruktur') {
-      map[peserta].instruktur_nama = nama;
-      map[peserta].instruktur_driveId = driveId;
-      map[peserta].instruktur_timestamp = timestamp;
+    // Keep LATEST per role
+    const existingTs = map[peserta][`${role}_timestamp`];
+    const existingDriveId = map[peserta][`${role}_driveId`];
+
+    if (!existingDriveId || !existingTs) {
+      map[peserta][`${role}_nama`] = nama;
+      map[peserta][`${role}_driveId`] = driveId;
+      map[peserta][`${role}_timestamp`] = timestamp;
+    } else {
+      const newTs = new Date(timestamp).getTime();
+      const oldTs = new Date(existingTs).getTime();
+      if (!isNaN(newTs) && !isNaN(oldTs) && newTs > oldTs) {
+        map[peserta][`${role}_nama`] = nama;
+        map[peserta][`${role}_driveId`] = driveId;
+        map[peserta][`${role}_timestamp`] = timestamp;
+      }
     }
   });
+
   return Object.values(map);
 }
 
 function renderTTDColumn(nama, driveId, timestamp) {
-  if (!driveId) return '<span class="text-muted small">—</span>';
+  if (!driveId) {
+    return '<span class="text-muted small">—</span>';
+  }
+
   const safeNama = escapeHtml(nama || '-');
   const safeId = escapeHtml(driveId);
   const thumbUrl = `https://drive.google.com/thumbnail?id=${safeId}&sz=w150`;
   const viewUrl = `https://drive.google.com/file/d/${safeId}/view`;
+  const dateStr = timestamp ? formatDateTimeID(timestamp) : '';
+
   return `
     <div class="d-flex flex-column align-items-center gap-1">
       <span class="fw-semibold small text-center">${safeNama}</span>
@@ -114,7 +146,7 @@ function renderTTDColumn(nama, driveId, timestamp) {
            data-preview-ttd="${safeId}"
            onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
       <code class="small text-muted" style="display:none;font-size:0.6rem;word-break:break-all;">${safeId}</code>
-      <span class="text-muted" style="font-size:0.65rem;">${escapeHtml(formatDateTimeID(timestamp))}</span>
+      ${dateStr ? `<span class="text-muted" style="font-size:0.65rem;">${escapeHtml(dateStr)}</span>` : ''}
       <a href="${viewUrl}" target="_blank" rel="noopener noreferrer"
          class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size:0.65rem;"
          aria-label="Buka TTD ${safeNama} di tab baru">
@@ -133,11 +165,26 @@ function setCacheStatus(status) {
   el.className = 'cache-status' + (cls ? ' ' + cls : '');
 }
 
+function getPasswordStrength(pwd) {
+  if (!pwd) return { level: 0, label: '', class: '' };
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 10) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+  if (score <= 2) return { level: score * 20, label: 'Lemah', class: 'text-danger' };
+  if (score <= 3) return { level: score * 20, label: 'Sedang', class: 'text-warning' };
+  return { level: Math.min(score * 20, 100), label: 'Kuat', class: 'text-success' };
+}
+
 // ============================================================
-//   CONTEXT
+//   CONTEXT — subscription ke AdminModule
 // ============================================================
 const ctx = createViewContext(
   {
+    // Tabel rekap TTD
     grouped: [],
     filtered: [],
     searchQuery: '',
@@ -149,22 +196,33 @@ const ctx = createViewContext(
     deleteTarget: null,
     qrCanvasRef: null,
     lastHash: '',
+
+    // Queue panel
+    queueList: [],
+    candidateList: [],
+    selectedQueueCandidateIds: new Set(),
+    isQueueProcessing: false,
   },
   {
     watchTypes: ['all', 'multiple', 'manual-refresh', 'ttd'],
     onDataChange: (type) => {
       if (!ctx.mounted) return;
-      console.log(`[TandaTanganView] ⚡ Data changed (${type}) → refresh from cache`);
+
+      if (ctx.state.isProcessing) {
+        console.log(`[TandaTanganView] ⚡ Data changed (${type}) — skip (processing)`);
+        return;
+      }
+
+      console.log(`[TandaTanganView] ⚡ Data changed (${type}) → refresh`);
       try {
         refreshFromCache();
+        loadSignatureQueue().catch(() => {});
       } catch (e) {
         console.warn('[TandaTanganView] Re-render error:', e);
       }
     },
   }
 );
-
-let tableCleanup = null;
 
 // ============================================================
 //   MOUNT
@@ -177,7 +235,9 @@ export async function mount() {
   ctx.mounted = true;
   ctx.saving = false;
   ctx.refreshing = false;
-  console.log('[TandaTanganView] mounted');
+  ctx.state.isProcessing = false;
+  ctx.state.isQueueProcessing = false;
+  console.log('[TandaTanganView] 🚀 mounted');
 
   // Reset state
   Object.assign(ctx.state, {
@@ -191,25 +251,36 @@ export async function mount() {
     deleteTarget: null,
     qrCanvasRef: null,
     lastHash: '',
+    queueList: [],
+    candidateList: [],
+    selectedQueueCandidateIds: new Set(),
+    isQueueProcessing: false,
   });
 
   // Reset UI
   const searchEl = getEl('searchInput');
   const filterEl = getEl('filterRole');
+  const queueSearchEl = getEl('adminQueueSearchInput');
   if (searchEl) searchEl.value = '';
   if (filterEl) filterEl.value = '';
+  if (queueSearchEl) queueSearchEl.value = '';
 
-  ['passKetua', 'passSekretaris', 'passInstruktur'].forEach(id => {
+  // Reset password inputs
+  Object.values(ROLE_INPUT_MAP).forEach(id => {
     const el = getEl(id);
     if (el) el.value = '';
   });
-  ['statusKetua', 'statusSekretaris', 'statusInstruktur'].forEach(id => {
+  Object.values(ROLE_STATUS_MAP).forEach(id => {
     const el = getEl(id);
-    if (el) { el.textContent = '—'; el.className = 'text-muted ms-2'; }
+    if (el) {
+      el.textContent = '—';
+      el.className = 'text-muted ms-2';
+    }
   });
 
   // ⚡ Instant render dari preload cache
   const cachedApprovals = AdminModule.getDigitalApprovals() || [];
+
   if (cachedApprovals.length > 0) {
     console.log('[TandaTanganView] ⚡ Rendering from preload cache');
     ctx.state.grouped = groupApprovals(cachedApprovals);
@@ -218,6 +289,7 @@ export async function mount() {
     setCacheStatus('Live');
   } else {
     console.log('[TandaTanganView] ⚠️ No cache, showing skeleton');
+    renderSkeletonTable();
     setCacheStatus('Memuat…');
   }
 
@@ -226,14 +298,18 @@ export async function mount() {
   // ⚡ Subscribe ke perubahan data
   await ctx.subscribeToData();
 
-  // Load password status (tidak di-preload, perlu fresh)
-  await loadPasswordStatus();
-  
+  // Load queue + password status (paralel)
+  await Promise.allSettled([
+    loadSignatureQueue(),
+    loadPasswordStatus(),
+  ]);
+
   // Fallback: kalau cache kosong
   if (cachedApprovals.length === 0) {
     await loadData(false);
   }
 
+  console.log('[TandaTanganView] ✅ Mount complete');
   return unmount;
 }
 
@@ -243,14 +319,13 @@ export async function mount() {
 export function unmount() {
   if (!ctx.mounted) return;
   ctx.mounted = false;
-  console.log('[TandaTanganView] unmounted');
-
-  if (tableCleanup) {
-    try { tableCleanup(); } catch (e) { /* silent */ }
-    tableCleanup = null;
-  }
+  console.log('[TandaTanganView] 🛑 unmounted');
 
   ctx.state.qrCanvasRef = null;
+  ctx.state.queueList = [];
+  ctx.state.candidateList = [];
+  ctx.state.selectedQueueCandidateIds.clear();
+
   ctx.cleanup();
   cleanupBootstrapArtifacts();
 }
@@ -278,7 +353,7 @@ function refreshFromCache() {
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  // Search + filter
+  // ===== REKAP TTD =====
   ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
     ctx.state.searchQuery = e.target.value;
     ctx.state.currentPage = 1;
@@ -291,28 +366,64 @@ function bindEvents() {
     renderTable();
   });
 
-  // Sort headers
-  document.querySelectorAll('#signatureTable th[data-sort]').forEach(th => {
-    ctx.on(th, 'click', () => {
-      const col = th.dataset.sort;
-      if (ctx.state.sortColumn === col) {
-        ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        ctx.state.sortColumn = col;
-        ctx.state.sortDirection = 'asc';
-      }
-      ctx.state.currentPage = 1;
-      renderTable();
-    });
-  });
-
-  // Toolbar
   ctx.on(getEl('refreshBtn'), 'click', handleRefresh);
   ctx.on(getEl('downloadQrBtn'), 'click', downloadQR);
   ctx.on(getEl('confirmDeleteBtn'), 'click', executeDelete);
 
-  // ✅ Delegation — password toggle + save per role
+  // Sort header
+  ctx.on(document.querySelector('#signatureTable th[data-sort]'), 'click', function () {
+    handleSort(this.dataset.sort);
+  });
+
+  // ===== QUEUE PANEL =====
+  ctx.on(getEl('adminClearQueueBtn'), 'click', handleClearQueue);
+  ctx.on(getEl('adminSelectAllCandidatesBtn'), 'click', handleSelectAllCandidates);
+  ctx.on(getEl('adminRefreshQueueBtn'), 'click', handleRefreshQueue);
+  ctx.on(getEl('adminAddSelectedToQueueBtn'), 'click', handleAddSelectedToQueue);
+
+  // Search candidate (debounced)
+  ctx.on(getEl('adminQueueSearchInput'), 'input', debounce(function (e) {
+    renderAdminCandidateList(e.target.value.trim().toLowerCase());
+  }, SEARCH_DEBOUNCE));
+
+  // Candidate checkbox (delegation)
+  const candidateContainer = getEl('adminCandidateList');
+  if (candidateContainer) {
+    ctx.on(candidateContainer, 'change', (e) => {
+      const cb = e.target.closest('.queue-candidate-checkbox');
+      if (!cb) return;
+      const id = String(cb.dataset.pesertaId || '');
+      if (!id) return;
+      if (cb.checked) ctx.state.selectedQueueCandidateIds.add(id);
+      else ctx.state.selectedQueueCandidateIds.delete(id);
+      updateAdminSelectedCount();
+    });
+  }
+
+  // Queue remove chip (delegation)
+  const queueListEl = getEl('adminQueueList');
+  if (queueListEl) {
+    ctx.on(queueListEl, 'click', async (e) => {
+      const btn = e.target.closest('[data-remove-queue]');
+      if (!btn) return;
+      e.preventDefault();
+      const nama = btn.dataset.removeQueue;
+      if (!nama) return;
+      if (!confirm(`Hapus "${nama}" dari queue TTD?`)) return;
+
+      try {
+        await removeFromSignatureQueue(nama);
+        showToast(`"${nama}" dihapus dari queue`, 'info');
+        await loadSignatureQueue();
+      } catch (err) {
+        showToast('Gagal: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // ===== DELEGATION: Password toggle + save + table actions =====
   ctx.on(document, 'click', function (e) {
+    // Password toggle
     const toggleBtn = e.target.closest('[data-toggle-pass]');
     if (toggleBtn) {
       const input = getEl(toggleBtn.dataset.togglePass);
@@ -323,61 +434,415 @@ function bindEvents() {
       return;
     }
 
+    // Password save
     const saveBtn = e.target.closest('[data-save-role]');
     if (saveBtn) {
       savePassword(saveBtn.dataset.saveRole, saveBtn);
     }
   });
 
-  // ✅ Delegation — table body (actions)
+  // ===== DELEGATION: Table body =====
   const tableBody = getEl('tableBody');
   if (tableBody) {
-    tableCleanup = delegateTableClicks(tableBody, {
-      onAction: (action, _id, el) => {
-        const nama = el.dataset.nama;
+    ctx.on(tableBody, 'click', (e) => {
+      // TTD preview
+      const img = e.target.closest('[data-preview-ttd]');
+      if (img) {
+        e.preventDefault();
+        window.open(
+          `https://drive.google.com/file/d/${img.dataset.previewTtd}/view`,
+          '_blank',
+          'noopener,noreferrer'
+        );
+        return;
+      }
+
+      // Action button (qr / delete)
+      const actionBtn = e.target.closest('[data-action]');
+      if (actionBtn) {
+        e.preventDefault();
+        const action = actionBtn.dataset.action;
+        const nama = actionBtn.dataset.nama;
+
         if (action === 'qr') showQRGroup(nama);
         else if (action === 'delete') confirmDelete(nama);
-      },
-    });
-
-    // Preview TTD image
-    ctx.on(tableBody, 'click', (e) => {
-      const img = e.target.closest('[data-preview-ttd]');
-      if (!img) return;
-      e.preventDefault();
-      window.open(
-        `https://drive.google.com/file/d/${img.dataset.previewTtd}/view`,
-        '_blank',
-        'noopener,noreferrer'
-      );
+      }
     });
   }
 
-  // Pagination — delegation
+  // ===== DELEGATION: Pagination =====
   const pag = getEl('paginationControls');
   if (pag) {
     ctx.on(pag, 'click', (e) => {
-      const pageEl = e.target.closest('[data-action="goto"]');
+      const pageEl = e.target.closest('[data-page]');
       if (!pageEl) return;
       e.preventDefault();
       const page = parseInt(pageEl.dataset.page, 10);
       if (!isNaN(page)) goToPage(page);
     });
   }
+
+  // ===== Password input → strength indicator =====
+  Object.entries(ROLE_INPUT_MAP).forEach(([role, inputId]) => {
+    const input = getEl(inputId);
+    if (!input) return;
+
+    const wrapper = input.closest('.input-group');
+    if (!wrapper) return;
+
+    let bar = wrapper.parentElement.querySelector('.pass-strength-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'pass-strength-bar small mt-1';
+      wrapper.parentElement.appendChild(bar);
+    }
+
+    ctx.on(input, 'input', function () {
+      const strength = getPasswordStrength(this.value);
+      if (!this.value) {
+        bar.innerHTML = '';
+        return;
+      }
+      bar.innerHTML = `<span class="${strength.class}">${strength.label}</span>`;
+    });
+  });
+
+  // ===== Modal cleanup =====
+  const qrModal = getEl('qrModal');
+  if (qrModal) {
+    ctx.on(qrModal, 'hidden.bs.modal', () => {
+      ctx.state.qrCanvasRef = null;
+      const container = getEl('qrContainer');
+      if (container) container.innerHTML = '';
+      const info = getEl('qrInfo');
+      if (info) info.innerHTML = '';
+    });
+  }
 }
 
 // ============================================================
-//   FILTER & SORT
+//   SKELETON
+// ============================================================
+function renderSkeletonTable() {
+  const tbody = getEl('tableBody');
+  if (!tbody) return;
+
+  let html = '';
+  for (let r = 0; r < 5; r++) {
+    html += '<tr>';
+    for (let c = 0; c < 6; c++) {
+      html += `<td><div class="skeleton-box" style="height:20px;width:${c === 0 ? 30 : 80}px;"></div></td>`;
+    }
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+// ============================================================
+//   QUEUE — LOAD
+// ============================================================
+async function loadSignatureQueue() {
+  try {
+    const [queueRes, allPeserta] = await Promise.all([
+      getSignatureQueue(),
+      Promise.resolve(AdminModule.getPesertaList() || []),
+    ]);
+
+    const queueList = (queueRes && queueRes.success && Array.isArray(queueRes.data))
+      ? queueRes.data
+      : [];
+    ctx.state.queueList = queueList;
+
+    // Build set untuk lookup cepat
+    const queueSet = new Set(
+      queueList.map(q => normalizeKey(q.peserta_nama)).filter(Boolean)
+    );
+
+    // Kandidat = peserta approved/active yang BELUM di queue
+    const candidates = allPeserta.filter(p => {
+      const status = String(p.status || '').toLowerCase();
+      if (status !== 'approved' && status !== 'active') return false;
+      const key = normalizeKey(p.nama_lengkap || '');
+      return key && !queueSet.has(key);
+    });
+
+    ctx.state.candidateList = candidates;
+
+    renderAdminQueueList();
+    renderAdminCandidateList(
+      (getEl('adminQueueSearchInput')?.value || '').trim().toLowerCase()
+    );
+    updateAdminQueueCount();
+  } catch (e) {
+    console.warn('[TandaTanganView] loadSignatureQueue error:', e);
+    const queueListEl = getEl('adminQueueList');
+    if (queueListEl) {
+      queueListEl.innerHTML = `<div class="alert alert-warning small mb-0">
+        Gagal memuat queue: ${escapeHtml(e.message)}
+      </div>`;
+    }
+  }
+}
+
+// ============================================================
+//   QUEUE — RENDER CHIPS
+// ============================================================
+function renderAdminQueueList() {
+  const el = getEl('adminQueueList');
+  if (!el) return;
+
+  const queue = ctx.state.queueList || [];
+
+  if (queue.length === 0) {
+    el.innerHTML = `<div class="alert alert-info small mb-0">
+      <i class="bi bi-inbox me-1" aria-hidden="true"></i>
+      Belum ada peserta di queue. Pilih dari daftar di bawah.
+    </div>`;
+    return;
+  }
+
+  let html = `
+    <div class="small text-muted text-uppercase fw-bold mb-2"
+         style="letter-spacing:0.04em;font-size:0.7rem;">
+      Peserta di Queue (${queue.length})
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+  `;
+
+  queue.forEach(q => {
+    const safeNama = escapeHtml(q.peserta_nama || '-');
+    const selectedBy = q.selected_by || 'admin';
+    const tooltip = `Dipilih oleh: ${selectedBy}`;
+
+    html += `
+      <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-2 px-3 py-2"
+            style="font-size:0.78rem;"
+            title="${escapeHtml(tooltip)}">
+        ${safeNama}
+        <button type="button" class="btn-close btn-close-sm"
+                style="font-size:0.55rem;"
+                data-remove-queue="${safeNama}"
+                aria-label="Hapus ${safeNama} dari queue"></button>
+      </span>
+    `;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+// ============================================================
+//   QUEUE — RENDER CANDIDATE LIST
+// ============================================================
+function renderAdminCandidateList(searchQuery = '') {
+  const el = getEl('adminCandidateList');
+  const countEl = getEl('adminCandidateCount');
+  if (!el) return;
+
+  let candidates = ctx.state.candidateList || [];
+
+  if (searchQuery) {
+    candidates = candidates.filter(p =>
+      String(p.nama_lengkap || '').toLowerCase().includes(searchQuery)
+    );
+  }
+
+  if (countEl) countEl.textContent = String(candidates.length);
+
+  if (candidates.length === 0) {
+    el.innerHTML = `<div class="col-12">
+      <div class="alert alert-info small mb-0">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        ${searchQuery
+          ? 'Tidak ada kandidat sesuai pencarian.'
+          : 'Semua peserta approved sudah ada di queue atau belum ada peserta approved.'}
+      </div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  candidates.forEach(p => {
+    const safeId = escapeHtml(String(p.id || ''));
+    const safeNama = escapeHtml(p.nama_lengkap || '-');
+    const safePac = escapeHtml(p.utusan || '-');
+    const isChecked = ctx.state.selectedQueueCandidateIds.has(String(p.id));
+
+    html += `
+      <div class="col-md-6 col-lg-4">
+        <label class="d-flex align-items-center gap-2 p-2 rounded-3"
+               style="background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer;">
+          <input type="checkbox" class="form-check-input queue-candidate-checkbox"
+                 value="${safeNama}"
+                 data-peserta-id="${safeId}"
+                 ${isChecked ? 'checked' : ''}
+                 aria-label="Pilih ${safeNama}">
+          <div style="min-width:0;flex:1;">
+            <div class="fw-semibold small text-truncate" title="${safeNama}">${safeNama}</div>
+            <div class="text-muted" style="font-size:0.7rem;">${safePac}</div>
+          </div>
+        </label>
+      </div>
+    `;
+  });
+
+  el.innerHTML = html;
+  updateAdminSelectedCount();
+}
+
+// ============================================================
+//   QUEUE — UPDATE COUNTS
+// ============================================================
+function updateAdminQueueCount() {
+  const el = getEl('adminQueueCount');
+  if (el) el.textContent = `${(ctx.state.queueList || []).length} di queue`;
+
+  const clearBtn = getEl('adminClearQueueBtn');
+  if (clearBtn) clearBtn.disabled = (ctx.state.queueList || []).length === 0;
+}
+
+function updateAdminSelectedCount() {
+  const count = ctx.state.selectedQueueCandidateIds.size;
+  const badge = getEl('adminSelectedCountBadge');
+  const btn = getEl('adminAddSelectedToQueueBtn');
+  if (badge) badge.textContent = String(count);
+  if (btn) btn.disabled = count === 0;
+}
+
+// ============================================================
+//   QUEUE — HANDLERS
+// ============================================================
+async function handleAddSelectedToQueue(e) {
+  if (ctx.state.isQueueProcessing) return;
+
+  const selectedIds = Array.from(ctx.state.selectedQueueCandidateIds);
+  if (selectedIds.length === 0) return;
+
+  const items = selectedIds
+    .map(id => {
+      const p = ctx.state.candidateList.find(x => String(x.id) === String(id));
+      if (!p) return null;
+      return {
+        peserta_nama: p.nama_lengkap || '',
+        peserta_id: id,
+      };
+    })
+    .filter(x => x && x.peserta_nama);
+
+  if (items.length === 0) {
+    showToast('Tidak ada peserta valid untuk ditambahkan', 'warning');
+    return;
+  }
+
+  const btn = e?.currentTarget || getEl('adminAddSelectedToQueueBtn');
+  const original = btn ? btn.innerHTML : '';
+  ctx.state.isQueueProcessing = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menambah…';
+  }
+
+  try {
+    // ⭐ selected_by = 'admin'
+    const res = await addBulkToSignatureQueue(items, 'admin');
+
+    if (res && res.success) {
+      const addedCount = res.added || items.length;
+      const skipped = res.skipped || 0;
+      showToast(
+        `${addedCount} peserta ditambahkan ke queue` +
+        (skipped ? ` (${skipped} duplikat dilewati)` : ''),
+        'success'
+      );
+      ctx.state.selectedQueueCandidateIds.clear();
+      await loadSignatureQueue();
+    } else {
+      throw new Error((res && res.error) || 'Gagal menambah');
+    }
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  } finally {
+    ctx.state.isQueueProcessing = false;
+  }
+}
+
+async function handleClearQueue() {
+  const count = (ctx.state.queueList || []).length;
+  if (count === 0) return;
+
+  if (!confirm(`Kosongkan seluruh queue (${count} peserta)?\n\nPeserta yang sudah di-TTD tidak akan terpengaruh.`)) return;
+
+  const btn = getEl('adminClearQueueBtn');
+  const original = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus…';
+  }
+
+  try {
+    const res = await clearSignatureQueue();
+    if (res && res.success) {
+      showToast('Queue dikosongkan', 'success');
+      await loadSignatureQueue();
+    } else {
+      throw new Error((res && res.error) || 'Gagal mengosongkan');
+    }
+  } catch (e) {
+    showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  }
+}
+
+function handleSelectAllCandidates() {
+  const candidates = ctx.state.candidateList || [];
+  if (candidates.length === 0) return;
+
+  const allSelected = candidates.every(p =>
+    ctx.state.selectedQueueCandidateIds.has(String(p.id))
+  );
+
+  if (allSelected) {
+    ctx.state.selectedQueueCandidateIds.clear();
+  } else {
+    candidates.forEach(p => ctx.state.selectedQueueCandidateIds.add(String(p.id)));
+  }
+
+  renderAdminCandidateList(
+    (getEl('adminQueueSearchInput')?.value || '').trim().toLowerCase()
+  );
+}
+
+async function handleRefreshQueue(e) {
+  const btn = e?.currentTarget || getEl('adminRefreshQueueBtn');
+  const restore = btn ? setBtnLoading(btn, true, '') : () => {};
+  try {
+    await loadSignatureQueue();
+    showToast('Queue disegarkan', 'success');
+  } catch (err) {
+    showToast('Gagal menyegarkan: ' + err.message, 'error');
+  } finally {
+    restore();
+  }
+}
+
+// ============================================================
+//   FILTER & SORT (Tabel rekap)
 // ============================================================
 function getFiltered() {
   let arr = ctx.state.grouped.slice();
 
   if (ctx.state.filterRole) {
     arr = arr.filter(g => {
-      if (ctx.state.filterRole === 'ketua_pc') return !!g.ketua_pc_driveId;
-      if (ctx.state.filterRole === 'sekretaris') return !!g.sekretaris_driveId;
-      if (ctx.state.filterRole === 'instruktur') return !!g.instruktur_driveId;
-      return true;
+      const role = ctx.state.filterRole;
+      return g[`${role}_driveId`] && String(g[`${role}_driveId`]).trim() !== '';
     });
   }
 
@@ -405,12 +870,13 @@ function getFiltered() {
 }
 
 // ============================================================
-//   RENDER — TABLE
+//   RENDER TABLE (Rekap TTD)
 // ============================================================
 function renderTable() {
   const tbody = getEl('tableBody');
   const recordCount = getEl('recordCount');
   const pag = getEl('paginationControls');
+  const sortIndicator = getEl('sortIndicator');
   if (!tbody) return;
 
   const savedFocus = captureFocusState('searchInput');
@@ -438,6 +904,7 @@ function renderTable() {
     pageData.forEach((g, idx) => {
       const globalIdx = start + idx + 1;
       const safeNama = escapeHtml(g.peserta_nama);
+
       html += `<tr>
         <td>${globalIdx}</td>
         <td><strong>${safeNama}</strong></td>
@@ -447,12 +914,12 @@ function renderTable() {
         <td class="text-center">
           <button type="button" class="btn btn-sm btn-outline-info me-1"
                   data-action="qr" data-nama="${safeNama}"
-                  title="QR Verifikasi" aria-label="QR Verifikasi">
+                  title="QR Verifikasi" aria-label="QR Verifikasi ${safeNama}">
             <i class="bi bi-qr-code" aria-hidden="true"></i>
           </button>
           <button type="button" class="btn btn-sm btn-outline-danger"
                   data-action="delete" data-nama="${safeNama}"
-                  title="Hapus Semua TTD" aria-label="Hapus Semua TTD">
+                  title="Hapus Semua TTD" aria-label="Hapus Semua TTD ${safeNama}">
             <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
         </td>
@@ -461,6 +928,12 @@ function renderTable() {
     tbody.innerHTML = html;
   }
 
+  // Sort indicator
+  if (sortIndicator) {
+    sortIndicator.textContent = ctx.state.sortDirection === 'asc' ? '↑' : '↓';
+  }
+
+  // Record count
   if (recordCount) {
     recordCount.textContent = totalItems > 0
       ? `Menampilkan ${start + 1} - ${end} dari ${totalItems} data`
@@ -472,35 +945,51 @@ function renderTable() {
     if (totalPages <= 1) {
       pag.innerHTML = '';
     } else {
-      let html = '<ul class="pagination pagination-sm mb-0">';
-      html += `<li class="page-item ${ctx.state.currentPage === 1 ? 'disabled' : ''}">
-        <a class="page-link" href="#" data-action="goto" data-page="${ctx.state.currentPage - 1}" aria-label="Sebelumnya">«</a></li>`;
-
       const maxButtons = 7;
       let s = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
       let e = Math.min(totalPages, s + maxButtons - 1);
       if (e - s + 1 < maxButtons) s = Math.max(1, e - maxButtons + 1);
 
+      let html = '<ul class="pagination pagination-sm mb-0">';
+
+      html += `<li class="page-item ${ctx.state.currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${ctx.state.currentPage - 1}" aria-label="Sebelumnya">«</a></li>`;
+
       if (s > 1) {
-        html += `<li class="page-item"><a class="page-link" href="#" data-action="goto" data-page="1">1</a></li>`;
+        html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
         if (s > 2) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
       }
+
       for (let i = s; i <= e; i++) {
         html += `<li class="page-item ${i === ctx.state.currentPage ? 'active' : ''}">
-          <a class="page-link" href="#" data-action="goto" data-page="${i}">${i}</a></li>`;
+          <a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
       }
+
       if (e < totalPages) {
         if (e < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
-        html += `<li class="page-item"><a class="page-link" href="#" data-action="goto" data-page="${totalPages}">${totalPages}</a></li>`;
+        html += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
       }
+
       html += `<li class="page-item ${ctx.state.currentPage === totalPages ? 'disabled' : ''}">
-        <a class="page-link" href="#" data-action="goto" data-page="${ctx.state.currentPage + 1}" aria-label="Selanjutnya">»</a></li>`;
+        <a class="page-link" href="#" data-page="${ctx.state.currentPage + 1}" aria-label="Selanjutnya">»</a></li>`;
+
       html += '</ul>';
       pag.innerHTML = html;
     }
   }
 
   restoreFocusState('searchInput', savedFocus);
+}
+
+function handleSort(col) {
+  if (ctx.state.sortColumn === col) {
+    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    ctx.state.sortColumn = col;
+    ctx.state.sortDirection = 'asc';
+  }
+  ctx.state.currentPage = 1;
+  renderTable();
 }
 
 function goToPage(page) {
@@ -536,25 +1025,30 @@ async function loadData(forceRefresh = false) {
 }
 
 // ============================================================
-//   REFRESH
+//   REFRESH (manual)
 // ============================================================
 async function handleRefresh(e) {
-  if (ctx.saving) return;
-  ctx.saving = true;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e.currentTarget || getEl('refreshBtn');
   const restore = setBtnLoading(btn, true, 'Memuat...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     await AdminModule.loadAllData(true);
     refreshFromCache();
-    await loadPasswordStatus();
+    await Promise.allSettled([
+      loadPasswordStatus(),
+      loadSignatureQueue(),
+    ]);
     showToast('Data disegarkan', 'success');
   } catch (err) {
     showToast('Gagal menyegarkan', 'error');
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -567,11 +1061,15 @@ async function showQRGroup(pesertaNama) {
     return;
   }
 
+  if (!pesertaNama) {
+    showToast('Nama peserta tidak valid', 'error');
+    return;
+  }
+
   const baseUrl = window.location.origin + BASE_PATH;
   let verifyUrl = '';
   let displayNomor = '-';
 
-  // Baca dari AdminModule cache — tidak fetch API
   const certList = AdminModule.getSertifikatList() || [];
   const found = certList.find(c =>
     String(c.nama_peserta || '').toLowerCase() === String(pesertaNama).toLowerCase()
@@ -648,7 +1146,9 @@ function downloadQR() {
     const link = document.createElement('a');
     link.download = `QR_TTD_${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     showToast('QR berhasil diunduh', 'success');
   } catch (e) {
     showToast('Gagal unduh QR', 'error');
@@ -656,24 +1156,28 @@ function downloadQR() {
 }
 
 // ============================================================
-//   DELETE ALL TTD FOR PESERTA
+//   DELETE ALL TTD PER PESERTA
 // ============================================================
 function confirmDelete(pesertaNama) {
+  if (!pesertaNama) return;
+
   ctx.state.deleteTarget = pesertaNama;
   const nameEl = getEl('deleteTargetName');
   if (nameEl) nameEl.textContent = pesertaNama;
+
   ctx.getModal('deleteConfirmModal')?.show();
 }
 
 async function executeDelete(e) {
-  if (ctx.saving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const nama = ctx.state.deleteTarget;
   if (!nama) return;
 
-  ctx.saving = true;
   const btn = e.currentTarget || getEl('confirmDeleteBtn');
   const restore = setBtnLoading(btn, true, 'Menghapus...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await callApi('deleteDigitalApprovalByPeserta', { peserta_nama: nama }, 'POST');
@@ -689,6 +1193,7 @@ async function executeDelete(e) {
   } finally {
     restore();
     ctx.saving = false;
+    ctx.state.isProcessing = false;
     ctx.state.deleteTarget = null;
   }
 }
@@ -700,6 +1205,7 @@ async function loadPasswordStatus() {
   try {
     const res = await callApi('getSignPasswords', {}, 'GET');
     if (!ctx.mounted) return;
+
     if (res && res.success && res.data) {
       Object.keys(ROLE_STATUS_MAP).forEach(role => {
         const el = getEl(ROLE_STATUS_MAP[role]);
@@ -715,24 +1221,27 @@ async function loadPasswordStatus() {
 }
 
 async function savePassword(role, triggerBtn) {
+  if (ctx.saving) return;
+
   const inputId = ROLE_INPUT_MAP[role];
   const statusId = ROLE_STATUS_MAP[role];
   const input = getEl(inputId);
   const statusEl = getEl(statusId);
   const newPass = input?.value.trim() || '';
 
-  if (!newPass || newPass.length < 6) {
+  if (!newPass || newPass.length < MIN_PASSWORD_LENGTH) {
     if (statusEl) {
-      statusEl.textContent = '⚠ Minimal 6 karakter';
+      statusEl.textContent = `⚠ Minimal ${MIN_PASSWORD_LENGTH} karakter`;
       statusEl.className = 'text-danger ms-2';
     }
-    showToast('Password minimal 6 karakter', 'warning');
+    showToast(`Password minimal ${MIN_PASSWORD_LENGTH} karakter`, 'warning');
     return;
   }
 
   if (!confirm(`Ubah password untuk role "${ROLE_LABELS[role]}"?`)) return;
 
   const restore = setBtnLoading(triggerBtn, true, 'Menyimpan...');
+  ctx.saving = true;
 
   try {
     const res = await callApi('updateSignPassword', { role, newPassword: newPass }, 'POST');
@@ -743,6 +1252,8 @@ async function savePassword(role, triggerBtn) {
         statusEl.textContent = '✅ Tersimpan';
         statusEl.className = 'text-success ms-2';
       }
+      const bar = input?.parentElement?.querySelector('.pass-strength-bar');
+      if (bar) bar.innerHTML = '';
     } else {
       throw new Error((res && res.error) || 'Gagal mengubah password');
     }
@@ -754,6 +1265,7 @@ async function savePassword(role, triggerBtn) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
     restore();
+    ctx.saving = false;
   }
 }
 
@@ -763,6 +1275,6 @@ async function savePassword(role, triggerBtn) {
 export default { mount, unmount };
 
 console.log(
-  '%c Tanda Tangan View v27.2.0 — Preload + Subscription Edition ',
+  '%c Tanda Tangan View v28.1.0 — Admin Queue Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
