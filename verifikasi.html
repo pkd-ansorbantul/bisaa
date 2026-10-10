@@ -9,7 +9,6 @@
 
   <title>Verifikasi Sertifikat · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -295,7 +294,6 @@
 <body>
 
   <div class="brand-header">
-    <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
     <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
     <h1>Verifikasi Sertifikat</h1>
     <p>PKD GP Ansor Kabupaten Bantul</p>
@@ -330,7 +328,6 @@
   </div>
 
   <div class="footer-links">
-    <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/index.html -->
     <a href="/bisaa/index.html">
       <i class="bi bi-arrow-left"></i>
       Kembali ke Beranda
@@ -340,14 +337,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
-    // ==========================================================
+    // ============================================================
+    //   verifikasi.html v28.4.0 — FULL FIX
+    // ============================================================
+
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
+    // ============================================================
     //   DOM REFS
-    // ==========================================================
+    // ============================================================
     const formEl       = document.getElementById('verifyForm');
     const inputEl      = document.getElementById('nomorInput');
     const btnEl        = document.getElementById('verifyBtn');
@@ -357,9 +355,9 @@
 
     let isVerifying = false;
 
-    // ==========================================================
+    // ============================================================
     //   RENDER HELPERS
-    // ==========================================================
+    // ============================================================
     function renderLoading() {
       resultAreaEl.innerHTML = `
         <div class="loading-state">
@@ -467,9 +465,9 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   VERIFY LOGIC
-    // ==========================================================
+    // ============================================================
     async function verify(nomor) {
       if (isVerifying) return;
       if (!nomor || !nomor.trim()) {
@@ -503,17 +501,17 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   FORM SUBMIT
-    // ==========================================================
+    // ============================================================
     formEl.addEventListener('submit', (e) => {
       e.preventDefault();
       verify(inputEl.value);
     });
 
-    // ==========================================================
+    // ============================================================
     //   AUTO-FROM QUERY STRING (?nomor=xxx)
-    // ==========================================================
+    // ============================================================
     (function autoFromQuery() {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -532,7 +530,7 @@
     }
 
     console.log(
-      '%c verifikasi.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      '%c verifikasi.html v28.4.0 — Full Fix ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>

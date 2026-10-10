@@ -9,7 +9,6 @@
 
   <title>Verifikasi QR · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -21,9 +20,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ============================================================
-       RESET & LAYOUT
-       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -31,7 +27,6 @@
       color: #0f172a;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
     body {
       display: flex;
@@ -40,9 +35,7 @@
       padding: 2rem 1rem;
     }
 
-    /* ============================================================
-       BRAND HEADER
-       ============================================================ */
+    /* BRAND HEADER */
     .brand-header {
       text-align: center;
       margin-bottom: 1.5rem;
@@ -73,9 +66,7 @@
       margin-bottom: 0;
     }
 
-    /* ============================================================
-       VERIFY CARD
-       ============================================================ */
+    /* VERIFY CARD */
     .verify-card {
       max-width: 560px;
       width: 100%;
@@ -88,9 +79,7 @@
       animation-delay: 0.1s;
     }
 
-    /* ============================================================
-       RESULT BOX
-       ============================================================ */
+    /* RESULT BOX */
     .result-box {
       border-radius: 16px;
       padding: 1.25rem;
@@ -193,9 +182,7 @@
       transform: translateY(-1px);
     }
 
-    /* ============================================================
-       LOADING
-       ============================================================ */
+    /* LOADING */
     .loading-state {
       text-align: center;
       padding: 2rem 0;
@@ -218,9 +205,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* ============================================================
-       EMPTY STATE
-       ============================================================ */
+    /* EMPTY STATE */
     .empty-state {
       text-align: center;
       padding: 2rem 1rem;
@@ -271,9 +256,7 @@
       box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
     }
 
-    /* ============================================================
-       FOOTER
-       ============================================================ */
+    /* FOOTER */
     .footer-links {
       margin-top: 1.5rem;
       text-align: center;
@@ -296,9 +279,6 @@
       background: rgba(37, 99, 235, 0.06);
     }
 
-    /* ============================================================
-       ANIMATIONS
-       ============================================================ */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -311,9 +291,6 @@
       }
     }
 
-    /* ============================================================
-       RESPONSIVE
-       ============================================================ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .verify-card {
@@ -336,11 +313,7 @@
 </head>
 <body>
 
-  <!-- ============================================================
-       BRAND HEADER
-       ============================================================ -->
   <div class="brand-header">
-    <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
     <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
     <h1>
       <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
@@ -349,9 +322,6 @@
     <p>PKD GP Ansor Kabupaten Bantul</p>
   </div>
 
-  <!-- ============================================================
-       VERIFY CARD
-       ============================================================ -->
   <div class="verify-card">
 
     <!-- Loading (default) -->
@@ -360,31 +330,25 @@
       <p>Memproses verifikasi…</p>
     </div>
 
-    <!-- Result area (diisi oleh JS) -->
+    <!-- Result area -->
     <div id="resultArea" aria-live="polite" aria-atomic="true" style="display:none;"></div>
 
   </div>
 
-  <!-- ============================================================
-       FOOTER LINKS
-       ============================================================ -->
   <div class="footer-links">
-    <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/index.html -->
     <a href="/bisaa/index.html">
       <i class="bi bi-arrow-left"></i>
       Kembali ke Beranda
     </a>
   </div>
 
-  <!-- ============================================================
-       SCRIPTS
-       ============================================================ -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ============================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
+    //   verifikasi_qr.html v28.4.0 — FULL FIX
     // ============================================================
+
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
     // ============================================================
@@ -500,7 +464,6 @@
             Silakan scan ulang QR code di sertifikat, atau verifikasi
             manual dengan memasukkan nomor sertifikat.
           </p>
-          <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/verifikasi.html -->
           <a href="/bisaa/verifikasi.html" class="btn-manual">
             <i class="bi bi-keyboard"></i>
             Verifikasi Manual
@@ -591,11 +554,8 @@
       return renderEmptyState(params);
     })();
 
-    // ============================================================
-    //   CONSOLE BANNER
-    // ============================================================
     console.log(
-      '%c Verifikasi QR v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      '%c verifikasi_qr.html v28.4.0 — Full Fix ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
