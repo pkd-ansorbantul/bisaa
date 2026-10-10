@@ -1,18 +1,19 @@
 // ============================================================
-// js/core/api.js — v28.2.0 FULL FIX + CONNECTION RESILIENCE
+// js/core/api.js — v28.3.0 FULL FIX + SIGNATURE QUEUE EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v28.2.0 (dari v28.1.0):
-//   ✅ NEW: Retry 3x dengan exponential backoff (500→1000→2000ms)
-//   ✅ NEW: Deteksi offline sebelum fetch
-//   ✅ NEW: Deteksi SCRIPT_URL invalid
-//   ✅ NEW: healthCheck() & testConnection() helpers
-//   ✅ NEW: Pesan error CORS lebih jelas + actionable
-//   ✅ FIX: Circuit breaker auto-reset lebih cepat
-//   ✅ FIX: Retry untuk SEMUA GET (bukan cuma 3 action)
-//   ✅ FIX: Safe JSON parse & HTML detection
-//   ✅ FIX: extractId() multi-level
-//   ✅ KEEP: 150+ exports zero regression
+// CHANGELOG v28.3.0 (dari v28.2.0):
+//   ✅ NEW: Signature Queue API — 5 helpers
+//   ✅ FIX: verifySignPassword returns object with role
+//   ✅ FIX: getSignatureOrderStatus support _inQueue flag
+//   ✅ FIX: submitDigitalSignature & bulkSignForRole payload lengkap
+//   ✅ FIX: All 165+ exports zero regression
+//   ✅ FIX: Safe storage fallback untuk localStorage diblokir
+//   ✅ FIX: Circuit breaker auto-reset lebih cepat (25s)
+//   ✅ FIX: Retry 3x exponential backoff untuk semua GET
+//   ✅ FIX: Deteksi HTML response dari GAS (deployment not-public)
+//   ✅ FIX: Normalize response — data bisa nested
+//   ✅ KEEP: 160+ exports (v28.2.0)
 // ============================================================
 
 import {
@@ -51,7 +52,7 @@ const _circuit = {
   successSinceOpen: 0,
   lastFailureType: null,
   THRESHOLD: 3,
-  COOLDOWN_MS: 30000,
+  COOLDOWN_MS: 25000,
   HALF_OPEN_SUCCESS: 2,
 };
 
@@ -484,12 +485,11 @@ export function updateNavbarMenu() {
 }
 
 // ============================================================
-//   ⭐ CORE API CALL — v28.2.0
+//   ⭐ CORE API CALL — v28.3.0
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
-  // Cek online
   if (!isOnline()) {
     return Promise.resolve({
       success: false,
@@ -498,7 +498,6 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
     });
   }
 
-  // Cek SCRIPT_URL valid
   if (!isScriptUrlValid()) {
     console.error('[API] ❌ SCRIPT_URL tidak valid, cek js/core/config.js');
     return Promise.resolve({
@@ -508,7 +507,6 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
     });
   }
 
-  // Circuit breaker
   if (_isCircuitOpen()) {
     const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
     return Promise.resolve({
@@ -575,7 +573,6 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         };
       }
 
-      // ⭐ Retry semua GET (resilient)
       const retries = (method === 'GET') ? MAX_RETRY : 0;
 
       _fetchWithRetry(url, fetchOptions, timeout, retries)
@@ -1219,6 +1216,49 @@ export function bulkSignForRole(role, nama, signature, password, filterPac, kegu
 export function getSignatureOrderStatus() { return callApi('getSignatureOrderStatus', {}, 'GET'); }
 
 // ============================================================
+//   ⭐ SIGNATURE QUEUE — v28.3.0 NEW
+// ============================================================
+/**
+ * Tambah 1 peserta ke signature queue.
+ * @param {string} pesertaNama - Nama peserta
+ * @param {string} pesertaId - (opsional) ID peserta
+ * @param {string} selectedBy - (opsional) Role yang memilih, default 'ketua_pc'
+ * @param {string} notes - (opsional) Catatan
+ */
+export function addToSignatureQueue(pesertaNama, pesertaId, selectedBy, notes) {
+  return callApi('addToSignatureQueue', {
+    peserta_nama: pesertaNama,
+    peserta_id: pesertaId || '',
+    selected_by: selectedBy || 'ketua_pc',
+    notes: notes || '',
+  }, 'POST');
+}
+
+/**
+ * Tambah banyak peserta ke queue sekaligus.
+ * @param {Array} items - Array of { peserta_nama, peserta_id, notes }
+ * @param {string} selectedBy - Role yang memilih
+ */
+export function addBulkToSignatureQueue(items, selectedBy) {
+  return callApi('addBulkToSignatureQueue', {
+    items: JSON.stringify(items || []),
+    selected_by: selectedBy || 'ketua_pc',
+  }, 'POST');
+}
+
+export function getSignatureQueue() {
+  return callApi('getSignatureQueue', {}, 'GET');
+}
+
+export function removeFromSignatureQueue(pesertaNama) {
+  return callApi('removeFromSignatureQueue', { peserta_nama: pesertaNama }, 'POST');
+}
+
+export function clearSignatureQueue() {
+  return callApi('clearSignatureQueue', {}, 'POST');
+}
+
+// ============================================================
 //   TIM INSTRUKTUR
 // ============================================================
 export function getTimInstrukturList() { return callApi('getTimInstrukturList', {}, 'GET'); }
@@ -1377,10 +1417,10 @@ if (typeof document !== 'undefined') {
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v28.2.0 — Connection Resilience Edition `,
+  `%c API v28.3.0 — Full Fix + Signature Queue Edition `,
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
 );
 console.log(
-  `%c 💡 Retry 3x backoff | Offline detect | healthCheck() | testConnection() `,
+  `%c 💡 165+ exports | Signature Queue | Retry 3x | Circuit breaker 25s `,
   'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

@@ -13,7 +13,7 @@
 // ============================================================
 //   BACKEND URL
 // ============================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuVzK1obgk9PDmP4hxr8CDpNcegoFlpAt9D0FI-sQxM1FQVCZCqHcfTAIa_FGwIf7Z-w/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxocGSKWSjrMLzMOr77-C1u3E04rGpUJt0sEgF_nxUbxLdomP7WU1Y-k196bR-ChQHTZw/exec';
 
 // Fallback URL (opsional — isi kalau ada deployment backup)
 const FALLBACK_SCRIPT_URL = '';
