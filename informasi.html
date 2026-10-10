@@ -7,7 +7,6 @@
   <meta name="description" content="Informasi & Jadwal PKD GP Ansor Kabupaten Bantul">
   <title>Informasi &amp; Jadwal PKD · GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -27,7 +26,7 @@
       flex-direction: column;
     }
 
-    /* ============ HEADER MINIMALIS ============ */
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -38,10 +37,7 @@
       padding-top: 0 !important;
       padding-bottom: 0 !important;
     }
-    .header-minimal .container {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
     .btn-back {
       background: rgba(37, 99, 235, 0.08);
       color: #2563eb;
@@ -62,6 +58,31 @@
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
 
     /* ============ GLASS CARD ============ */
     .glass-card {
@@ -86,19 +107,22 @@
       border-left: 6px solid #2563eb;
       padding-left: 1.2rem;
       margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     /* ============ SKELETON ============ */
     .skeleton-box {
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
       border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
+      animation: shimmer 1.5s infinite linear;
       display: inline-block;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
 
     /* ============ FLYER ============ */
@@ -306,6 +330,21 @@
     }
     .nav-btn:hover { background: rgba(255,255,255,0.3); }
 
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: #64748b;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      color: #cbd5e1;
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .empty-state h5 { font-weight: 700; color: #334155; margin-bottom: 0.5rem; }
+    .empty-state p { font-size: 0.9rem; margin: 0; }
+
     /* ============ ANIMASI ============ */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -332,9 +371,10 @@
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
       .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
-      .brand-title-mini { display: none; }
-      .brand-sub-mini { display: none; }
+      .brand-title-mini, .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
+      .section-title { font-size: 1.35rem; }
+      .cache-indicator { font-size: 0.65rem; }
     }
   </style>
 </head>
@@ -361,11 +401,37 @@
 
   <!-- ================= KONTEN UTAMA ================= -->
   <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 1200px;">
-    <h2 class="section-title fade-up">
-      <i class="bi bi-calendar-heart me-2"></i>Jadwal &amp; Flyer PKD
-    </h2>
-    <div id="infoContainer" class="glass-card p-4 fade-up">
-      <!-- Diisi oleh JS -->
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3 fade-up">
+      <h2 class="section-title mb-0" style="border-left: none; padding-left: 0;">
+        <i class="bi bi-calendar-heart me-2" aria-hidden="true"></i>
+        Jadwal &amp; Flyer PKD
+      </h2>
+      <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+        <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+        <span id="cacheIndicatorText">Memuat…</span>
+      </span>
+    </div>
+
+    <div id="infoContainer" class="glass-card p-4 fade-up" aria-live="polite" aria-busy="true">
+      <!-- Skeleton initial -->
+      <div class="mb-4">
+        <h4 class="mb-3 fw-bold"><i class="bi bi-images me-2"></i>Flyer Kegiatan</h4>
+        <div class="flyer-container">
+          <div class="skeleton-box" style="flex: 0 0 200px; height: 240px; border-radius: 20px;"></div>
+          <div class="skeleton-box" style="flex: 0 0 200px; height: 240px; border-radius: 20px;"></div>
+          <div class="skeleton-box" style="flex: 0 0 200px; height: 240px; border-radius: 20px;"></div>
+          <div class="skeleton-box" style="flex: 0 0 200px; height: 240px; border-radius: 20px;"></div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <h4 class="mb-3 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Timeline Kegiatan</h4>
+        <div class="timeline-track">
+          <div class="skeleton-box" style="width: 100px; height: 100px; border-radius: 50%;"></div>
+          <div class="skeleton-box" style="width: 100px; height: 100px; border-radius: 50%;"></div>
+          <div class="skeleton-box" style="width: 100px; height: 100px; border-radius: 50%;"></div>
+          <div class="skeleton-box" style="width: 100px; height: 100px; border-radius: 50%;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -402,21 +468,21 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
-    // ==========================================================
+    // ============================================================
+    //   informasi.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+
     import {
       guardPublicAccess,
-      getInfoList,
       updateNavbarMenu,
-      showToast,
       escapeHtml,
-      fetchWithCache
     } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
+
+    // ============================================================
     //   STATE
-    // ==========================================================
+    // ============================================================
     let allData = [];
     let flyers = [];
     let timelines = [];
@@ -430,50 +496,36 @@
     let isDragging = false;
     let startX, startY;
     let zoomModalInstance = null;
+    let cacheInstance = null;
+    let cacheIndicatorTimer = null;
 
-    function escapeHtmlLocal(str) { return escapeHtml(str); }
-    function showToastLocal(message, type) { showToast(message, type); }
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
 
-    // ==========================================================
-    //   RENDER SKELETON
-    // ==========================================================
-    function renderSkeletonInfo(container) {
-      if (!container) return;
-      console.log("🟡 Menampilkan SKELETON Informasi...");
-      let html = `
-        <div class="mb-4">
-          <h4 class="mb-3 fw-bold"><i class="bi bi-images me-2"></i>Flyer Kegiatan</h4>
-          <div class="flyer-container">
-            ${Array(4).fill(0).map(() => `
-              <div class="flyer-card">
-                <div class="skeleton-box" style="width:100%;height:180px;border-radius:20px 20px 0 0;"></div>
-                <div class="flyer-card-body">
-                  <div class="skeleton-box" style="height:20px;width:80%;margin-bottom:8px;"></div>
-                  <div class="skeleton-box" style="height:16px;width:60%;"></div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div class="mt-3">
-          <h4 class="mb-3 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Timeline Kegiatan</h4>
-          <div class="timeline-track">
-            ${Array(5).fill(0).map(() => `
-              <div class="timeline-node" style="min-width:100px;">
-                <div class="skeleton-box" style="width:22px;height:22px;border-radius:50%;"></div>
-                <div class="skeleton-box" style="height:16px;width:80px;margin-top:8px;"></div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-      container.innerHTML = html;
-      container.classList.add('fade-up');
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
     }
 
-    // ==========================================================
+    // ============================================================
     //   PROCESS DATA
-    // ==========================================================
+    // ============================================================
     function processData() {
       flyers = allData.filter(item => item.url && String(item.url).trim() !== '');
       timelines = allData
@@ -504,9 +556,9 @@
       return format(startDate);
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER ALL
-    // ==========================================================
+    // ============================================================
     function renderAll(container) {
       let html = '';
 
@@ -526,10 +578,10 @@
           html += `
             <div class="flyer-card" data-flyer-idx="${idx}" onclick="zoomFlyer(${idx})" role="button" tabindex="0">
               ${thumbUrl
-                ? `<img src="${thumbUrl}" alt="${escapeHtmlLocal(f.judul)}" loading="lazy">`
+                ? `<img src="${thumbUrl}" alt="${escapeHtml(f.judul)}" loading="lazy">`
                 : `<div class="bg-light text-center py-5"><i class="bi bi-file-earmark-image fs-1"></i></div>`}
               <div class="flyer-card-body">
-                <h6 class="fw-semibold">${escapeHtmlLocal(f.judul)}</h6>
+                <h6 class="fw-semibold">${escapeHtml(f.judul)}</h6>
                 <span class="status-badge ${f.status === 'selesai' ? 'selesai' : 'aktif'}">
                   ${f.status === 'selesai' ? 'Selesai' : 'Aktif'}
                 </span>
@@ -563,11 +615,11 @@
           const isSelesai = t.status === 'selesai';
           const lokasi = t.lokasi || '';
           html += `
-            <div class="timeline-node" data-timeline-title="${escapeHtmlLocal(t.judul).toLowerCase()}" onclick="handleTimelineClick('${escapeHtmlLocal(t.judul).toLowerCase()}')" role="button" tabindex="0">
+            <div class="timeline-node" data-timeline-title="${escapeHtml(t.judul).toLowerCase()}" onclick="handleTimelineClick('${escapeHtml(t.judul).toLowerCase()}')" role="button" tabindex="0">
               <div class="timeline-dot ${isSelesai ? 'selesai' : ''}"></div>
-              <div class="timeline-label">${escapeHtmlLocal(t.judul)}</div>
+              <div class="timeline-label">${escapeHtml(t.judul)}</div>
               ${tanggalRange ? `<div class="timeline-date"><i class="bi bi-calendar3 me-1"></i>${tanggalRange}</div>` : ''}
-              ${lokasi ? `<div class="timeline-location"><i class="bi bi-geo-alt-fill me-1"></i>${escapeHtmlLocal(lokasi)}</div>` : ''}
+              ${lokasi ? `<div class="timeline-location"><i class="bi bi-geo-alt-fill me-1"></i>${escapeHtml(lokasi)}</div>` : ''}
               <span class="status-badge ${isSelesai ? 'selesai' : 'aktif'}">${isSelesai ? 'Selesai' : 'Aktif'}</span>
             </div>
           `;
@@ -603,6 +655,7 @@
 
       container.innerHTML = html;
       container.classList.add('fade-up');
+      container.setAttribute('aria-busy', 'false');
 
       renderCalendar();
 
@@ -628,17 +681,19 @@
     }
 
     function renderEmptyState(container) {
+      container.setAttribute('aria-busy', 'false');
       container.innerHTML = `
-        <div class="alert alert-info text-center glass-card border-0">
-          <i class="bi bi-info-circle fs-4"></i>
-          <p class="mt-2">Belum ada informasi yang tersedia.</p>
+        <div class="empty-state">
+          <i class="bi bi-info-circle" aria-hidden="true"></i>
+          <h5>Belum Ada Informasi</h5>
+          <p>Belum ada informasi atau jadwal yang tersedia saat ini.</p>
         </div>
       `;
     }
 
-    // ==========================================================
+    // ============================================================
     //   CALENDAR
-    // ==========================================================
+    // ============================================================
     function renderCalendar() {
       const year = calendarYear;
       const month = calendarMonth;
@@ -673,7 +728,7 @@
         if (eventInfo) classes += ' has-event' + (isSelesai ? ' selesai' : '');
         if (date.toDateString() === new Date().toDateString()) classes += ' today';
 
-        const titleAttr = eventInfo ? `data-title="${escapeHtmlLocal(eventInfo.judul)}"` : '';
+        const titleAttr = eventInfo ? `data-title="${escapeHtml(eventInfo.judul)}"` : '';
         gridHtml += `<div class="${classes}" data-date="${dateStr}" ${titleAttr}>${day}</div>`;
       }
 
@@ -690,9 +745,9 @@
       });
     }
 
-    // ==========================================================
+    // ============================================================
     //   FLYER NAV
-    // ==========================================================
+    // ============================================================
     window.slideFlyers = function(direction) {
       let newIdx = currentFlyerIndex + direction;
       if (newIdx < 0) newIdx = 0;
@@ -743,9 +798,9 @@
       img.style.transform = 'translate(0px,0px) scale(1)';
     }
 
-    // ==========================================================
+    // ============================================================
     //   TIMELINE CLICK
-    // ==========================================================
+    // ============================================================
     window.handleTimelineClick = function(titleLower) {
       const targetNode = document.querySelector(`.timeline-node[data-timeline-title="${titleLower}"]`);
       if (targetNode) {
@@ -813,9 +868,9 @@
       }
     };
 
-    // ==========================================================
+    // ============================================================
     //   ZOOM DRAG & SCROLL
-    // ==========================================================
+    // ============================================================
     const zoomImg = () => document.getElementById('zoomImage');
 
     zoomImg()?.addEventListener('wheel', (e) => {
@@ -869,71 +924,96 @@
       }
     });
 
-    // ==========================================================
-    //   LOAD DATA
-    // ==========================================================
-    async function loadInfoData() {
-      const container = document.getElementById('infoContainer');
-      const CACHE_KEY = 'info_list';
-      const CACHE_AGE = 15;
-
-      let cachedData = await fetchWithCache('getInfoList', {}, CACHE_KEY, CACHE_AGE, false);
-
-      if (cachedData && cachedData.length > 0) {
-        allData = cachedData;
-        processData();
-        renderAll(container);
-      }
-
-      (async function refreshData() {
-        try {
-          const data = await getInfoList();
-          const normalized = Array.isArray(data) ? data : (data?.data || []);
-
-          if (normalized && normalized.length > 0) {
-            const freshData = await fetchWithCache('getInfoList', {}, CACHE_KEY, CACHE_AGE, true);
-
-            if (JSON.stringify(allData) !== JSON.stringify(freshData)) {
-              allData = Array.isArray(freshData) ? freshData : (freshData?.data || []);
-              processData();
-              renderAll(container);
-            }
-          } else {
-            if (!cachedData || cachedData.length === 0) {
-              renderEmptyState(container);
-            }
-          }
-        } catch (e) {
-          console.warn('Gagal fetch info di background:', e);
-          if (!cachedData || cachedData.length === 0) {
-            renderEmptyState(container);
-          }
-        }
-      })();
-    }
-
-    // ==========================================================
-    //   BOOT
-    // ==========================================================
+    // ============================================================
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      updateNavbarMenu();
-      await loadInfoData();
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
+      // ⚡ CREATE PUBLIC CACHE
+      cacheInstance = createPublicCache({
+        cacheKey: 'informasi_public_v1',
+        action: 'getInfoList',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const container = document.getElementById('infoContainer');
+          if (!container) return;
+
+          const normalized = Array.isArray(data) ? data : (data?.data || []);
+          allData = normalized;
+
+          if (!normalized || normalized.length === 0) {
+            renderEmptyState(container);
+          } else {
+            processData();
+            renderAll(container);
+          }
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          } else if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Informasi] Cache error:', err.message);
+        },
+      });
+
+      if (!cacheInstance) {
+        console.error('[Informasi] Failed to create cache instance');
+        setCacheIndicator('', 'Error');
+        return;
+      }
+
+      await cacheInstance.boot();
+
+      const stats = cacheInstance.getStats();
+      if (stats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
+      }
+
+      console.log('[Informasi] ✅ Boot complete');
     })();
 
-    // Skeleton sebelum kode lain
-    document.addEventListener('DOMContentLoaded', function() {
-      const container = document.getElementById('infoContainer');
-      if (container) {
-        renderSkeletonInfo(container);
+    // ============================================================
+    //   CLEANUP ON UNLOAD
+    // ============================================================
+    window.addEventListener('beforeunload', function () {
+      if (cacheInstance) {
+        try { cacheInstance.destroy(); }
+        catch (e) { /* silent */ }
+        cacheInstance = null;
+      }
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
       }
     });
 
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__informasiDebug = {
+      getData: () => allData,
+      getFlyers: () => flyers,
+      getTimelines: () => timelines,
+      getCacheStats: () => cacheInstance?.getStats() || null,
+      forceRefresh: () => cacheInstance?.forceRefresh(),
+      clearCache: () => cacheInstance?.clearCache(),
+    };
+
     console.log(
-      '%c informasi.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c informasi.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

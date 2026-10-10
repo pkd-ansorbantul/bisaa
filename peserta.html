@@ -9,7 +9,6 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Form Data Peserta · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v28.0.1 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -19,7 +18,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <!-- ✅ Deferred libraries -->
   <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -105,6 +103,31 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
     /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
@@ -133,15 +156,15 @@
 
     /* ============ SKELETON ============ */
     .skeleton-box {
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
       border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
+      animation: shimmer 1.5s infinite linear;
       display: inline-block;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
 
     /* ============ SIGNATURE ============ */
@@ -375,6 +398,7 @@
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
       .signature-area canvas { min-height: 140px; }
       .section-title { font-size: 1.2rem; padding-left: 0.9rem; border-left-width: 5px; }
+      .cache-indicator { font-size: 0.65rem; }
     }
 
     @media print {
@@ -387,10 +411,8 @@
 </head>
 <body>
 
-  <!-- ============ SKIP LINK ============ -->
   <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-  <!-- ============ HEADER ============ -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -409,41 +431,42 @@
     </div>
   </header>
 
-  <!-- ============ MAIN CONTENT ============ -->
   <main id="main-content" class="container" style="padding: 2rem 0; max-width: 1000px; flex: 1;">
     <div class="glass-card p-4 fade-up">
-      <h1 class="section-title">
-        <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Form Data Peserta PKD
-      </h1>
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <h1 class="section-title mb-0" style="border-left: none; padding-left: 0;">
+          <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Form Data Peserta PKD
+        </h1>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
+      </div>
 
       <div id="pesertaFormContainer" aria-live="polite" aria-busy="true">
-        <!-- Initial skeleton — akan diisi oleh JS -->
+        <!-- Skeleton initial -->
+        <div class="mb-3">
+          <div class="skeleton-box" style="height:24px;width:60%;margin-bottom:16px;"></div>
+          <div class="skeleton-box" style="height:16px;width:80%;margin-bottom:10px;"></div>
+          <div class="skeleton-box" style="height:40px;width:100%;border-radius:12px;margin-bottom:16px;"></div>
+          <div class="skeleton-box" style="height:16px;width:60%;margin-bottom:10px;"></div>
+          <div class="skeleton-box" style="height:40px;width:100%;border-radius:12px;margin-bottom:16px;"></div>
+        </div>
       </div>
     </div>
   </main>
 
-  <!-- ============ CAMERA MODAL ============ -->
   <div class="modal fade" id="cameraModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content bg-dark">
         <div class="modal-header border-0">
           <h5 class="modal-title text-white" id="cameraModalTitle">Ambil Foto</h5>
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="modal"
-            aria-label="Tutup kamera"
-          ></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup kamera"></button>
         </div>
         <div class="modal-body">
           <video id="cameraVideo" autoplay playsinline muted aria-label="Preview kamera"></video>
           <div class="camera-controls text-center">
-            <button
-              type="button"
-              class="btn"
-              id="capturePhotoBtn"
-              aria-label="Ambil foto"
-            >
+            <button type="button" class="btn" id="capturePhotoBtn" aria-label="Ambil foto">
               <i class="bi bi-camera-fill" aria-hidden="true"></i>
             </button>
           </div>
@@ -452,7 +475,6 @@
     </div>
   </div>
 
-  <!-- ============ FOOTER ============ -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
       <i class="bi bi-c-circle" aria-hidden="true"></i>
@@ -460,13 +482,13 @@
     </div>
   </footer>
 
-  <!-- ============ SCRIPTS ============ -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ============================================================
-    //   IMPORTS — v28.0.1
+    //   peserta.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
     // ============================================================
+
     import {
       guardPublicAccess,
       callApi,
@@ -475,7 +497,6 @@
       submitPeserta,
       updateNavbarMenu,
       fileToBase64,
-      getAngkatanPKDList,
     } from '/bisaa/js/core/api.js';
 
     import {
@@ -484,6 +505,7 @@
     } from '/bisaa/js/core/form-defaults.js';
 
     import { BASE_PATH } from '/bisaa/js/core/config.js';
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
 
     // ============================================================
     //   STATE
@@ -495,16 +517,35 @@
     let currentCameraTarget = '';
     let sigPad = null;
     let resizeTimer = null;
+    let formCacheInstance = null;
+    let angkatanCacheInstance = null;
+    let cacheIndicatorTimer = null;
 
-    const FORM_STATE_KEY = 'pkd_peserta_form_state_v3';
+    const FORM_STATE_KEY = 'pkd_peserta_form_state_v4';
     const MAX_FILE_SIZE_MB = 5;
 
     // ============================================================
-    //   UTILITY
+    //   CACHE INDICATOR
     // ============================================================
-    function safeLS(fn) {
-      try { return fn(); }
-      catch (e) { return null; }
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
     }
 
     // ============================================================
@@ -522,11 +563,14 @@
         data[k] = v;
       });
 
-      safeLS(() => localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data)));
+      try { localStorage.setItem(FORM_STATE_KEY, JSON.stringify(data)); }
+      catch (e) { /* quota */ }
     }
 
     function restorePesertaFormState() {
-      const saved = safeLS(() => localStorage.getItem(FORM_STATE_KEY));
+      let saved = null;
+      try { saved = localStorage.getItem(FORM_STATE_KEY); }
+      catch (e) { /* silent */ }
       if (!saved) return;
 
       try {
@@ -549,54 +593,18 @@
           });
         });
 
-        // Trigger utusan toggle
         const utusanSelect = form.querySelector('select[name="utusan"]');
         if (utusanSelect) utusanSelect.dispatchEvent(new Event('change'));
       } catch (e) { /* silent */ }
     }
 
     function clearPesertaFormState() {
-      safeLS(() => localStorage.removeItem(FORM_STATE_KEY));
+      try { localStorage.removeItem(FORM_STATE_KEY); }
+      catch (e) { /* silent */ }
     }
 
     // ============================================================
-    //   SKELETON
-    // ============================================================
-    function renderSkeletonPeserta(container) {
-      if (!container) return;
-      container.setAttribute('aria-busy', 'true');
-
-      let html = `
-        <h4 class="mb-4">📝 Memuat formulir peserta…</h4>
-        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
-          <div class="admin-contact mb-4">
-            <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
-          </div>
-          ${Array(7).fill(0).map(() => `
-            <div class="mb-3">
-              <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-              <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
-            </div>
-          `).join('')}
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="height: 80px; width: 100%; border-radius: 8px;"></div>
-          </div>
-          <div class="mb-3">
-            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
-            <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
-          </div>
-          <div class="mt-4">
-            <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
-          </div>
-        </div>
-      `;
-      container.innerHTML = html;
-    }
-
-    // ============================================================
-    //   ⭐ QR GENERATION (FIXED)
+    //   QR GENERATION
     // ============================================================
     function generateQR(pesertaId) {
       const container = document.getElementById('qrCodeContainer');
@@ -647,41 +655,15 @@
           }
         }
 
-        // Logo overlay
         const logoSize = 70;
         const logoX = (canvasSize - logoSize) / 2;
         const logoY = (canvasSize - logoSize) / 2;
 
         const logoImg = new Image();
         logoImg.src = `${BASE_PATH}LOGOANSOR.webp`;
-
         logoImg.onload = function () {
           try { ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize); }
           catch (e) { /* silent */ }
-        };
-
-        logoImg.onerror = function () {
-          // Fallback: text logo
-          const fallbackCanvas = document.createElement('canvas');
-          fallbackCanvas.width = logoSize;
-          fallbackCanvas.height = logoSize;
-          const fCtx = fallbackCanvas.getContext('2d');
-
-          fCtx.fillStyle = '#14994c';
-          fCtx.beginPath();
-          fCtx.moveTo(logoSize / 2, 0);
-          fCtx.lineTo(logoSize, logoSize);
-          fCtx.lineTo(0, logoSize);
-          fCtx.closePath();
-          fCtx.fill();
-
-          fCtx.fillStyle = '#ffffff';
-          fCtx.font = 'bold 22px Inter';
-          fCtx.textAlign = 'center';
-          fCtx.textBaseline = 'middle';
-          fCtx.fillText('ANSOR', logoSize / 2, logoSize / 2 - 2);
-
-          ctx.drawImage(fallbackCanvas, logoX, logoY, logoSize, logoSize);
         };
 
         ctx.strokeStyle = '#ffffff';
@@ -692,67 +674,6 @@
       } catch (err) {
         console.error('[PesertaView] QR generate error:', err);
         container.innerHTML = '<div class="text-muted small text-center p-3">QR error</div>';
-      }
-    }
-
-    // ============================================================
-    //   LOAD ANGKATAN PKD (untuk dropdown)
-    // ============================================================
-    async function loadAngkatanPKDList() {
-      try {
-        const res = await getAngkatanPKDList();
-        let list = [];
-        if (res && res.success && Array.isArray(res.data)) list = res.data;
-        else if (Array.isArray(res)) list = res;
-
-        angkatanPKDList = list;
-        console.log(`[PesertaView] Loaded ${list.length} angkatan PKD`);
-        return list;
-      } catch (e) {
-        console.warn('[PesertaView] loadAngkatanPKDList error:', e);
-        angkatanPKDList = [];
-        return [];
-      }
-    }
-
-    // ============================================================
-    //   LOAD FORM
-    // ============================================================
-    async function loadPesertaForm() {
-      const container = document.getElementById('pesertaFormContainer');
-
-      try {
-        // Load angkatan + form settings parallel
-        const [angkatanResult, settingsRes] = await Promise.allSettled([
-          loadAngkatanPKDList(),
-          callApi('getFormSettings', {}, 'GET'),
-        ]);
-
-        let raw = null;
-        if (settingsRes.status === 'fulfilled' && settingsRes.value && settingsRes.value.success) {
-          let data = settingsRes.value.data;
-          if (typeof data === 'string') {
-            try { data = JSON.parse(data); }
-            catch (e) { data = null; }
-          }
-          raw = data;
-        }
-
-        formStructure = normalizeFormStructure(raw);
-        buildForm(container);
-      } catch (e) {
-        console.error('[PesertaView] load form error:', e);
-        container.innerHTML = `
-          <div class="alert alert-danger text-center py-5">
-            <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-            Gagal memuat form dari server.<br>
-            <small>Silakan refresh halaman. Jika tetap error, hubungi Admin.</small>
-            <br>
-            <button class="btn btn-outline-danger mt-3" onclick="window.location.reload()">
-              <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Refresh Halaman
-            </button>
-          </div>`;
-        container.setAttribute('aria-busy', 'false');
       }
     }
 
@@ -879,7 +800,7 @@
         }
       });
 
-      // ============ Angkatan PKD field (jika tidak ada di formStructure) ============
+      // Angkatan PKD field
       const hasAngkatanField = formStructure.some(f => f.id === 'lokasi_pkd');
       if (!hasAngkatanField) {
         html += `
@@ -901,7 +822,7 @@
         `;
       }
 
-      // ============ Signature ============
+      // Signature
       html += `
           <div class="mb-3">
             <label class="form-label fw-bold">✍️ Tanda Tangan Digital <span class="text-danger">*</span></label>
@@ -978,7 +899,7 @@
       container.setAttribute('aria-busy', 'false');
       container.classList.add('fade-up');
 
-      // Bind file previews
+      // File previews
       document.querySelectorAll('#formPesertaDinamis input[type="file"]').forEach(input => {
         input.addEventListener('change', function (e) {
           const file = e.target.files[0];
@@ -1040,10 +961,8 @@
           el.addEventListener('change', savePesertaFormState);
         });
 
-      // Restore state
       restorePesertaFormState();
 
-      // Submit
       document.getElementById('formPesertaDinamis')
         ?.addEventListener('submit', submitPesertaForm);
     }
@@ -1122,7 +1041,6 @@
         }
       });
 
-      // Resize handler — debounced
       window.removeEventListener('resize', window._pesertaResizeHandler);
       window._pesertaResizeHandler = () => {
         clearTimeout(resizeTimer);
@@ -1232,7 +1150,7 @@
     });
 
     // ============================================================
-    //   ⭐ SUBMIT FORM — FIXED v28.0.1
+    //   SUBMIT FORM
     // ============================================================
     async function submitPesertaForm(e) {
       e.preventDefault();
@@ -1262,7 +1180,6 @@
         }
       });
 
-      // Validasi Angkatan PKD (kalau tidak ada di formStructure)
       const hasAngkatanField = formStructure.some(f => f.id === 'lokasi_pkd');
       if (!hasAngkatanField) {
         const angkatanVal = formData.get('lokasi_pkd');
@@ -1276,7 +1193,6 @@
         return;
       }
 
-      // File size validation
       const fotoFile = formData.get('foto');
       if (fotoFile && fotoFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showToast(`Ukuran foto maksimal ${MAX_FILE_SIZE_MB} MB`, 'error');
@@ -1288,7 +1204,6 @@
         return;
       }
 
-      // Signature validation
       if (!sigPad || sigPad.isEmpty()) {
         showToast('Tanda tangan digital wajib diisi', 'warning');
         const sigArea = document.getElementById('signatureAreaContainer');
@@ -1296,7 +1211,6 @@
         return;
       }
 
-      // Disable form
       const submitBtn = form.querySelector('button[type="submit"]');
       const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
 
@@ -1309,7 +1223,6 @@
       }
 
       try {
-        // Read files as base64
         if (fotoFile && fotoFile.size > 0) {
           data.foto = await fileToBase64(fotoFile);
         }
@@ -1317,10 +1230,8 @@
           data.surat_rekomendasi = await fileToBase64(suratFile);
         }
 
-        // Signature
         data.tanda_tangan = sigPad.toDataURL('image/jpeg', 0.2);
 
-        // Map form structure
         const coreFields = [
           'nama_lengkap', 'tempat_tgl_lahir', 'pekerjaan',
           'pendidikan_terakhir', 'alamat', 'no_hp', 'email',
@@ -1338,17 +1249,14 @@
           }
         });
 
-        // Angkatan PKD — dari field dinamis
         if (hasAngkatanField) {
           const angkatanVal = formData.get('lokasi_pkd');
           if (angkatanVal) data.lokasi_pkd = String(angkatanVal).trim();
         } else {
-          // Dari field tambahan
           const angkatanVal = formData.get('lokasi_pkd');
           if (angkatanVal) data.lokasi_pkd = String(angkatanVal).trim();
         }
 
-        // Handle utusan "Lainnya"
         if (data.utusan === 'Lainnya') {
           const luarValue = formData.get('utusan_luar');
           const luarInput = typeof luarValue === 'string' ? luarValue.trim() : '';
@@ -1356,7 +1264,6 @@
         }
         delete data.utusan_luar;
 
-        // Submit
         const result = await submitPeserta(data);
         console.log('[DEBUG] Submit response:', result);
 
@@ -1364,7 +1271,6 @@
           throw new Error((result && result.error) || 'Gagal mengirim');
         }
 
-        // ⭐ FIX v28.0.1: Ambil ID dari result.id ATAU result.data.id
         const newId = result.id
           || (result.data && result.data.id)
           || (result.data && result.data.pesertaId)
@@ -1376,7 +1282,6 @@
 
         showToast('✅ Data peserta berhasil dikirim!', 'success');
 
-        // Show ID card
         const qrResult = document.getElementById('qrResult');
         if (qrResult) qrResult.style.display = 'block';
 
@@ -1384,14 +1289,12 @@
         const nameDisplay = document.getElementById('idCardNama');
         const alamatDisplay = document.getElementById('idCardAlamat');
 
-        // ⭐ FIX: pakai newId (fallback ke 'Menunggu...')
         if (idDisplay) {
           idDisplay.textContent = newId ? String(newId) : 'Menunggu...';
         }
         if (nameDisplay) nameDisplay.textContent = data.nama_lengkap || '-';
         if (alamatDisplay) alamatDisplay.textContent = data.alamat || '-';
 
-        // ⭐ FIX: generate QR dengan newId (kalau ada)
         if (newId) {
           generateQR(newId);
         } else {
@@ -1401,7 +1304,6 @@
           }
         }
 
-        // Reset form
         form.reset();
         document.querySelectorAll('#formPesertaDinamis img[id^="preview_"]')
           .forEach(el => el.style.display = 'none');
@@ -1415,10 +1317,8 @@
         const utusanLuar = document.getElementById('utusanLuarContainer');
         if (utusanLuar) utusanLuar.style.display = 'none';
 
-        // Scroll ke kartu ID
         qrResult?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // Bind download ID card
         bindDownloadIdCard(data.nama_lengkap);
       } catch (err) {
         console.error('[PesertaView] Submit error:', err);
@@ -1478,25 +1378,170 @@
     }
 
     // ============================================================
-    //   BOOT
+    //   RENDER SKELETON
+    // ============================================================
+    function renderSkeletonPeserta(container) {
+      if (!container) return;
+      container.setAttribute('aria-busy', 'true');
+
+      let html = `
+        <h4 class="mb-4">📝 Memuat formulir peserta…</h4>
+        <div class="glass-card" style="background: #f8fafc; padding: 1.5rem;">
+          <div class="admin-contact mb-4">
+            <div class="skeleton-box" style="height: 16px; width: 150px; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="height: 40px; width: 250px; border-radius: 8px;"></div>
+          </div>
+          ${Array(7).fill(0).map(() => `
+            <div class="mb-3">
+              <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+              <div class="skeleton-box" style="height: 40px; width: 100%; border-radius: 8px;"></div>
+            </div>
+          `).join('')}
+          <div class="mb-3">
+            <div class="skeleton-box" style="height: 16px; width: 100px; margin-bottom: 6px;"></div>
+            <div class="skeleton-box" style="width: 100%; max-width: 400px; height: 150px; border-radius: 16px; margin: 0 auto;"></div>
+          </div>
+          <div class="mt-4">
+            <div class="skeleton-box" style="height: 50px; width: 100%; border-radius: 50px;"></div>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    // ============================================================
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
     // ============================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      updateNavbarMenu();
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
 
       const container = document.getElementById('pesertaFormContainer');
-      if (container) {
-        renderSkeletonPeserta(container);
+      renderSkeletonPeserta(container);
+
+      // ⚡ CACHE 1: Form Settings
+      formCacheInstance = createPublicCache({
+        cacheKey: 'peserta_form_settings_v1',
+        action: 'getFormSettings',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          let raw = data;
+          if (typeof raw === 'string') {
+            try { raw = JSON.parse(raw); } catch (e) { raw = null; }
+          }
+          formStructure = normalizeFormStructure(raw);
+          // Build form hanya jika angkatan juga ready
+          tryBuildForm();
+        },
+        onError: (err) => {
+          console.warn('[Peserta] Form settings error:', err.message);
+          if (!formStructure.length) {
+            formStructure = getDefaultFormFields();
+          }
+        },
+      });
+
+      // ⚡ CACHE 2: Angkatan PKD List
+      angkatanCacheInstance = createPublicCache({
+        cacheKey: 'peserta_angkatan_pkd_v1',
+        action: 'getAngkatanPKDList',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const list = Array.isArray(data) ? data : (data?.data || []);
+          angkatanPKDList = list;
+          tryBuildForm();
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Peserta] Angkatan error:', err.message);
+          angkatanPKDList = [];
+        },
+      });
+
+      // Boot kedua cache paralel
+      await Promise.allSettled([
+        formCacheInstance.boot(),
+        angkatanCacheInstance.boot(),
+      ]);
+
+      // Set indicator
+      const formStats = formCacheInstance.getStats();
+      const angStats = angkatanCacheInstance.getStats();
+      if (formStats.hasCache || angStats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
       }
 
-      await loadPesertaForm();
+      console.log('[Peserta] ✅ Boot complete');
     })();
 
+    // ============================================================
+    //   TRY BUILD FORM (setelah kedua cache ready)
+    // ============================================================
+    let formBuilt = false;
+    function tryBuildForm() {
+      if (formBuilt) return;
+      if (!formStructure.length) return;
+
+      const container = document.getElementById('pesertaFormContainer');
+      if (!container) return;
+
+      formBuilt = true;
+      buildForm(container);
+    }
+
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      [formCacheInstance, angkatanCacheInstance].forEach(inst => {
+        if (inst) {
+          try { inst.destroy(); }
+          catch (e) { /* silent */ }
+        }
+      });
+      closeCamera();
+      if (sigPad) {
+        try { sigPad.off(); }
+        catch (e) { /* silent */ }
+        sigPad = null;
+      }
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+    });
+
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__pesertaDebug = {
+      getFormStructure: () => formStructure,
+      getAngkatanList: () => angkatanPKDList,
+      getFormCacheStats: () => formCacheInstance?.getStats() || null,
+      getAngkatanCacheStats: () => angkatanCacheInstance?.getStats() || null,
+      forceRefresh: async () => {
+        await Promise.allSettled([
+          formCacheInstance?.forceRefresh(),
+          angkatanCacheInstance?.forceRefresh(),
+        ]);
+      },
+    };
+
     console.log(
-      '%c peserta.html v28.0.1 — Public Form + Angkatan PKD Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c peserta.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

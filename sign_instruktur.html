@@ -9,7 +9,7 @@
 
   <title>Tanda Tangan Instruktur · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.2.1 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <!-- ✅ v28.3.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -23,7 +23,9 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
-    /* ⚡ v26.2.1: Style disederhanakan (sama untuk ketiga sign pages) */
+    /* ============================================================
+       v28.3.0 — SIGN INSTRUKTUR — SIGNATURE QUEUE EDITION
+       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -34,6 +36,7 @@
     }
     body { display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
 
+    /* ============ PAGE HEADER ============ */
     .page-header {
       max-width: 720px;
       width: 100%;
@@ -79,6 +82,7 @@
     .page-header h1 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
     .page-header h1 small { display: block; font-size: 0.8rem; font-weight: 400; color: #64748b; margin-top: 2px; }
 
+    /* ============ SIGN CARD ============ */
     .sign-card {
       max-width: 720px; width: 100%; background: #fff;
       border-radius: 24px; padding: 2rem 1.75rem;
@@ -88,17 +92,19 @@
       animation-delay: 0.1s;
     }
 
+    /* ============ ROLE BANNER ============ */
     .role-banner {
-      background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
       color: #fff; padding: 0.85rem 1.25rem; border-radius: 16px;
       display: flex; align-items: center; gap: 0.75rem;
       margin-bottom: 1.25rem;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
     }
     .role-banner i { font-size: 1.5rem; }
     .role-banner .role-text strong { display: block; font-size: 1rem; font-weight: 700; }
     .role-banner .role-text span { font-size: 0.8rem; opacity: 0.85; }
 
+    /* ============ ORDER STEP ============ */
     .order-info {
       display: flex; align-items: center; justify-content: center;
       gap: 0.35rem; margin-bottom: 1.25rem; flex-wrap: wrap;
@@ -119,24 +125,57 @@
       font-size: 0.7rem; font-weight: 700;
     }
     .order-step.active {
-      background: #2563eb; color: #fff; border-color: #2563eb;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      background: #16a34a; color: #fff; border-color: #16a34a;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
     }
     .order-step.active .num { background: rgba(255, 255, 255, 0.25); color: #fff; }
     .order-step.done { background: #dcfce7; color: #166534; border-color: #86efac; }
     .order-step.done .num { background: #16a34a; color: #fff; }
     .order-info .arrow { color: #cbd5e1; font-size: 0.85rem; }
 
+    /* ============ INFO BANNER ============ */
     .info-banner {
       display: flex; align-items: flex-start; gap: 0.6rem;
-      background: #eff6ff; border-left: 4px solid #2563eb;
+      background: #f0fdf4; border-left: 4px solid #16a34a;
       padding: 0.75rem 0.9rem; border-radius: 10px;
-      font-size: 0.82rem; color: #1e40af;
+      font-size: 0.82rem; color: #14532d;
       margin-bottom: 1.25rem; line-height: 1.5;
     }
     .info-banner i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
-    .info-banner code { background: rgba(37, 99, 235, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
+    .info-banner code { background: rgba(22, 163, 74, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
+    .info-banner strong { font-weight: 700; }
 
+    /* ============ QUEUE STATUS BADGE ============ */
+    .queue-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #14532d;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #86efac;
+      margin-left: 0.5rem;
+    }
+    .queue-status-badge.empty {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+      border-color: #fcd34d;
+    }
+    .queue-status-badge.ready {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1e40af;
+      border-color: #93c5fd;
+    }
+    .queue-status-badge .spinner-border-sm {
+      width: 12px;
+      height: 12px;
+      border-width: 1.5px;
+    }
+
+    /* ============ WELCOME BANNER ============ */
     .welcome-banner {
       display: none;
       align-items: flex-start;
@@ -171,6 +210,7 @@
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* ============ PASSWORD LIVE HINT ============ */
     .password-hint-live {
       display: none;
       margin-top: 0.5rem;
@@ -187,6 +227,7 @@
     .password-hint-live.loading { background: #eff6ff; color: #1e40af; border-left: 4px solid #2563eb; }
     .password-hint-live.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
 
+    /* ============ SIGNATURE AREA ============ */
     .signature-area.locked {
       position: relative;
       opacity: 0.55;
@@ -211,6 +252,7 @@
     .btn-submit.locked { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
     .btn-submit.locked:hover { transform: none !important; box-shadow: none; }
 
+    /* ============ FORM CONTROLS ============ */
     .form-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; margin-bottom: 0.5rem; display: block; }
     .form-label .req { color: #dc2626; margin-left: 2px; }
 
@@ -220,19 +262,20 @@
       transition: all 0.2s; background: #fff; width: 100%;
     }
     .form-control:focus, .form-select:focus {
-      border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); outline: none;
+      border-color: #16a34a; box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1); outline: none;
     }
     .form-control::placeholder { color: #94a3b8; }
     .form-text { font-size: 0.8rem; color: #64748b; margin-top: 0.35rem; }
     .form-text code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; }
 
+    /* ============ SIGNATURE PAD ============ */
     .signature-area {
       border: 2px dashed #cbd5e1; border-radius: 16px; background: #fff;
       padding: 8px; transition: border-color 0.2s; position: relative;
       min-height: 200px; display: flex; align-items: center; justify-content: center;
       touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
     }
-    .signature-area:hover, .signature-area.drawing { border-color: #2563eb; }
+    .signature-area:hover, .signature-area.drawing { border-color: #16a34a; }
     .signature-area canvas {
       width: 100%; height: 200px; display: block; border-radius: 12px;
       touch-action: none; cursor: crosshair; background: #fff;
@@ -244,6 +287,7 @@
     }
     .signature-area.drawing .signature-hint { opacity: 0; }
 
+    /* ============ SIGN CONTROLS ============ */
     .sign-controls { display: flex; gap: 0.5rem; margin-top: 0.65rem; flex-wrap: wrap; }
     .sign-controls .btn {
       border-radius: 9999px; padding: 0.4rem 1rem; font-size: 0.8rem; font-weight: 500;
@@ -253,20 +297,22 @@
     .sign-controls .btn-clear { border-color: #e2e8f0; color: #64748b; }
     .sign-controls .btn-clear:hover { border-color: #dc2626; color: #dc2626; background: #fee2e2; }
     .sign-controls .btn-undo { border-color: #e2e8f0; color: #64748b; }
-    .sign-controls .btn-undo:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .sign-controls .btn-undo:hover { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
 
+    /* ============ SUBMIT BUTTON ============ */
     .btn-submit {
       border-radius: 9999px; padding: 0.85rem 1.75rem; font-weight: 600; font-size: 0.95rem;
-      background: linear-gradient(135deg, #2563eb, #1e4bb3); border: none; color: #fff;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      background: linear-gradient(135deg, #16a34a, #15803d); border: none; color: #fff;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
       width: 100%; margin-top: 1.5rem; cursor: pointer;
     }
-    .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); color: #fff; }
+    .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(22, 163, 74, 0.4); color: #fff; }
     .btn-submit:active:not(:disabled) { transform: translateY(0) scale(0.98); }
     .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none !important; }
 
+    /* ============ ALERTS ============ */
     .alert-custom {
       border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.875rem;
       display: flex; align-items: flex-start; gap: 0.5rem; border: none;
@@ -278,6 +324,7 @@
     .alert-custom.info    { background: #cffafe; color: #155e75; }
     .alert-custom.warning { background: #fef3c7; color: #92400e; }
 
+    /* ============ PAGE LOADING ============ */
     .page-loading {
       position: fixed; inset: 0; background: rgba(248, 250, 252, 0.9);
       backdrop-filter: blur(4px); display: flex; flex-direction: column;
@@ -285,8 +332,8 @@
     }
     .page-loading.hidden { opacity: 0; pointer-events: none; }
     .page-loading .spinner {
-      width: 48px; height: 48px; border: 4px solid rgba(37, 99, 235, 0.15);
-      border-top-color: #2563eb; border-radius: 50%;
+      width: 48px; height: 48px; border: 4px solid rgba(22, 163, 74, 0.15);
+      border-top-color: #16a34a; border-radius: 50%;
       animation: spin 0.8s linear infinite; margin-bottom: 1rem;
     }
     .page-loading p { color: #64748b; font-size: 0.9rem; }
@@ -298,6 +345,8 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
+
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .sign-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
@@ -308,6 +357,7 @@
       .order-step { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
       .order-step .num { width: 16px; height: 16px; font-size: 0.65rem; }
       .header-top { flex-direction: column; align-items: stretch; }
+      .queue-status-badge { margin-left: 0; margin-top: 0.5rem; }
     }
   </style>
 </head>
@@ -368,9 +418,12 @@
       <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
       <div>
         <strong>Halaman ini dilindungi password TTD.</strong>
-        Hanya peserta yang sudah ditandatangani <strong>Ketua PC &amp; Sekretaris</strong> yang muncul.
-        Pastikan Anda adalah <strong>Instruktur</strong> yang berwenang.
-        Setelah Anda TTD, sertifikat peserta siap digenerate.
+        Peserta yang muncul di daftar adalah <strong>peserta yang sudah ditandatangani Ketua PC &amp; Sekretaris</strong>.
+        Ini adalah tahap terakhir — setelah Anda TTD, sertifikat peserta siap digenerate.
+        <span id="queueStatusBadge" class="queue-status-badge empty">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Memuat status…
+        </span>
       </div>
     </div>
 
@@ -450,11 +503,16 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   v26.2.1 — Pakai shared module (deduplication)
-    // ==========================================================
+    // ============================================================
+    //   v28.3.0 — Pakai shared module (Signature Queue Edition)
+    // ============================================================
     import { initSignPage } from '/bisaa/js/components/sign-page.js';
+    import {
+      getSignatureQueue,
+      getSignatureOrderStatus,
+    } from '/bisaa/js/core/api.js';
 
+    // Init sign page
     initSignPage({
       role: 'instruktur',
       roleLabel: 'Instruktur',
@@ -463,9 +521,87 @@
       orderStep: 3,
     });
 
+    // ✅ v28.3.0: Live update status badge — hitung peserta yang ready untuk instruktur
+    (async function updateStatusBadge() {
+      const badgeEl = document.getElementById('queueStatusBadge');
+      if (!badgeEl) return;
+
+      function normalizeKey(s) {
+        return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      }
+
+      async function refresh() {
+        try {
+          const [queueRes, statusRes] = await Promise.all([
+            getSignatureQueue(),
+            getSignatureOrderStatus(),
+          ]);
+
+          const queueList = (queueRes && queueRes.success && Array.isArray(queueRes.data)) ? queueRes.data : [];
+          const statusMap = (statusRes && statusRes.success && statusRes.data) ? statusRes.data : {};
+
+          // Normalize statusMap
+          const normalized = {};
+          Object.keys(statusMap).forEach(k => {
+            const nk = normalizeKey(k);
+            if (nk) normalized[nk] = statusMap[nk];
+          });
+
+          // Hitung peserta yang ready untuk instruktur:
+          // - Ada di queue
+          // - Sudah TTD ketua_pc DAN sekretaris
+          // - Belum TTD instruktur
+          let readyCount = 0;
+          let waitingCount = 0;
+
+          queueList.forEach(q => {
+            const key = normalizeKey(q.peserta_nama);
+            const row = normalized[key] || {};
+
+            if (row.ketua_pc && row.sekretaris && !row.instruktur) {
+              readyCount++;
+            } else if (!row.ketua_pc || !row.sekretaris) {
+              waitingCount++;
+            }
+          });
+
+          if (readyCount === 0 && waitingCount === 0) {
+            badgeEl.className = 'queue-status-badge empty';
+            badgeEl.innerHTML = `
+              <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+              Belum ada peserta siap
+            `;
+          } else if (readyCount === 0) {
+            badgeEl.className = 'queue-status-badge empty';
+            badgeEl.innerHTML = `
+              <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+              Menunggu ${waitingCount} peserta (Ketua + Sekretaris)
+            `;
+          } else {
+            badgeEl.className = 'queue-status-badge ready';
+            badgeEl.innerHTML = `
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              ${readyCount} peserta siap Anda TTD
+            `;
+          }
+        } catch (e) {
+          badgeEl.className = 'queue-status-badge empty';
+          badgeEl.innerHTML = `
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            Gagal memuat status
+          `;
+        }
+      }
+
+      await refresh();
+
+      // Refresh setiap 15 detik (auto-detect peserta ready)
+      setInterval(refresh, 15000);
+    })();
+
     console.log(
-      '%c sign_instruktur.html v26.2.1 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c sign_instruktur.html v28.3.0 — Full Fix + Queue Edition ',
+      'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>
 

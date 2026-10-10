@@ -7,7 +7,6 @@
   <meta name="description" content="Data Kader per PAC — PKD GP Ansor Kabupaten Bantul">
   <title>Data Kader per PAC · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -27,7 +26,7 @@
       flex-direction: column;
     }
 
-    /* ============ NAVBAR ELEGAN ============ */
+    /* ============ NAVBAR ============ */
     .navbar {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -174,10 +173,51 @@
       font-size: 0.9rem;
       margin-bottom: 1.5rem;
     }
+
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    /* ============ SKELETON ============ */
+    .skeleton-box {
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
+      border-radius: 8px;
+      animation: shimmer 1.5s infinite linear;
+      display: inline-block;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     @media (max-width: 576px) {
       .container-card { padding: 1rem; }
       .brand-title { font-size: 1.1rem; }
       .brand-sub { font-size: 0.7rem; }
+      .section-title { font-size: 1.35rem; }
+      .cache-indicator { font-size: 0.65rem; }
     }
   </style>
 </head>
@@ -217,7 +257,15 @@
   <!-- ================= KONTEN ================= -->
   <div id="contentArea">
     <section class="container container-card">
-      <h2 class="section-title"><i class="bi bi-people-fill me-2"></i>Data Kader per PAC</h2>
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <h2 class="section-title mb-0" style="border-left: none; padding-left: 0;">
+          <i class="bi bi-people-fill me-2"></i>Data Kader per PAC
+        </h2>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
+      </div>
 
       <!-- Filter & Pencarian -->
       <div class="row mb-4 g-2">
@@ -237,10 +285,7 @@
           </div>
         </div>
         <div class="col-md-6 text-md-end">
-          <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
-            <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
-          </button>
-          <span id="cacheStatus" class="cache-status ms-2">Memuat...</span>
+          <span id="cacheStatus" class="cache-status">Memuat...</span>
         </div>
       </div>
 
@@ -267,24 +312,24 @@
     </div>
   </footer>
 
-  <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
-    // ==========================================================
+    // ============================================================
+    //   kader.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+
     import {
-      callApi,
-      showToast,
-      escapeHtml,
       guardPublicAccess,
-      updateNavbarMenu
+      updateNavbarMenu,
+      escapeHtml,
     } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
+
+    // ============================================================
     //   STATE
-    // ==========================================================
+    // ============================================================
     const STATE = {
       pesertaList: [],
       filteredList: [],
@@ -293,20 +338,45 @@
       currentPage: 1,
       itemsPerPage: 20,
       sortColumn: null,
-      sortDirection: 'asc'
+      sortDirection: 'asc',
+      cacheInstance: null,
+      cacheIndicatorTimer: null,
     };
 
     let searchDebounceTimer = null;
 
-    // ==========================================================
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        STATE.cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
+
+    // ============================================================
     //   UTILITY
-    // ==========================================================
+    // ============================================================
     function updateCacheStatus(status) {
       const el = document.getElementById('cacheStatus');
-      if (el) {
-        el.textContent = status;
-        el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
-      }
+      if (!el) return;
+      el.textContent = status;
+      el.className = 'cache-status ' + (status === 'Live' ? 'live' : '');
     }
 
     function debounce(fn, delay) {
@@ -317,47 +387,9 @@
       };
     }
 
-    // ==========================================================
-    //   LOAD DATA
-    // ==========================================================
-    async function loadKaderData(forceRefresh = false) {
-      const container = document.getElementById('kaderTableContainer');
-      if (container) {
-        container.innerHTML = `
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary"></div>
-            <p class="mt-2 text-muted small">Memuat data kader...</p>
-          </div>
-        `;
-      }
-
-      try {
-        const res = await callApi('getPesertaList', {}, 'GET');
-        const freshData = res?.data || res;
-
-        if (freshData && Array.isArray(freshData) && freshData.length > 0) {
-          STATE.pesertaList = freshData;
-          renderUtusanFilter();
-          applyFiltersAndSort();
-          updateCacheStatus('Live');
-        } else {
-          if (container) {
-            container.innerHTML = `<div class="alert alert-info text-center">Belum ada data kader.</div>`;
-          }
-          updateCacheStatus('Empty');
-        }
-      } catch (e) {
-        console.warn('Gagal load kader:', e);
-        if (container) {
-          container.innerHTML = `<div class="alert alert-danger text-center">Gagal memuat data.</div>`;
-        }
-        updateCacheStatus('Error');
-      }
-    }
-
-    // ==========================================================
-    //   FILTER & SORT
-    // ==========================================================
+    // ============================================================
+    //   FILTER
+    // ============================================================
     function getFilteredPeserta(query = '', utusan = '') {
       let filtered = STATE.pesertaList;
 
@@ -400,11 +432,12 @@
 
       renderTable(filtered.slice(start, end), totalItems);
       renderTotalBadge(totalItems);
+      updateCacheStatus('Live');
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER TOTAL BADGE
-    // ==========================================================
+    // ============================================================
     function renderTotalBadge(total) {
       const container = document.getElementById('totalBadgeContainer');
       if (!container) return;
@@ -416,9 +449,9 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER TABEL
-    // ==========================================================
+    // ============================================================
     function renderTable(data, totalItems) {
       const container = document.getElementById('kaderTableContainer');
       if (!container) return;
@@ -443,7 +476,7 @@
           <tr>
             <td colspan="5" class="text-center py-3 text-muted">
               <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-              Tidak ada data kader untuk PAC ini.
+              Tidak ada data kader untuk filter ini.
             </td>
           </tr>
         `;
@@ -474,23 +507,22 @@
           <div class="btn-group">
       `;
 
-      // Pagination dengan max 7 tombol
       const maxButtons = 7;
       let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
       let endPage = Math.min(totalPages, startPage + maxButtons - 1);
       if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
       if (startPage > 1) {
-        html += `<button class="btn btn-sm btn-outline-secondary" onclick="goToPage(1)" aria-label="Halaman 1">1</button>`;
-        if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+        html += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToPage(1)" aria-label="Halaman 1">1</button>`;
+        if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
       }
       for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary active' : 'btn-outline-secondary'}"
+        html += `<button type="button" class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary active' : 'btn-outline-secondary'}"
                           onclick="goToPage(${i})" aria-label="Halaman ${i}">${i}</button>`;
       }
       if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-        html += `<button class="btn btn-sm btn-outline-secondary" onclick="goToPage(${totalPages})" aria-label="Halaman terakhir">${totalPages}</button>`;
+        if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+        html += `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="goToPage(${totalPages})" aria-label="Halaman terakhir">${totalPages}</button>`;
       }
       html += `</div></div>`;
 
@@ -508,11 +540,19 @@
           }
         });
       });
+
+      // Update sort header class
+      container.querySelectorAll('[data-sort]').forEach(th => {
+        th.classList.remove('asc', 'desc');
+        if (th.dataset.sort === STATE.sortColumn) {
+          th.classList.add(STATE.sortDirection);
+        }
+      });
     }
 
-    // ==========================================================
+    // ============================================================
     //   SORT & PAGINATION (GLOBAL)
-    // ==========================================================
+    // ============================================================
     window.sortTable = function(col) {
       if (STATE.sortColumn === col) {
         STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -532,9 +572,9 @@
       applyFiltersAndSort();
     };
 
-    // ==========================================================
+    // ============================================================
     //   RENDER DROPDOWN FILTER UTUSAN
-    // ==========================================================
+    // ============================================================
     function renderUtusanFilter() {
       const select = document.getElementById('filterUtusan');
       if (!select) return;
@@ -559,28 +599,9 @@
       });
     }
 
-    // ==========================================================
+    // ============================================================
     //   BIND EVENTS
-    // ==========================================================
-    document.getElementById('refreshDataBtn')?.addEventListener('click', function() {
-      const btn = this;
-      const original = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-      btn.disabled = true;
-
-      loadKaderData(true)
-        .then(() => {
-          btn.innerHTML = original;
-          btn.disabled = false;
-          showToast('Data berhasil disegarkan', 'success');
-        })
-        .catch(() => {
-          btn.innerHTML = original;
-          btn.disabled = false;
-          showToast('Gagal menyegarkan', 'error');
-        });
-    });
-
+    // ============================================================
     document.getElementById('searchInput')?.addEventListener('input', debounce(function(e) {
       STATE.searchQuery = e.target.value;
       STATE.currentPage = 1;
@@ -593,20 +614,105 @@
       applyFiltersAndSort();
     });
 
-    // ==========================================================
-    //   BOOT
-    // ==========================================================
+    // ============================================================
+    //   RENDER DATA (dari cache / network)
+    // ============================================================
+    function renderDataFromList(list) {
+      // Filter hanya approved/active
+      const filtered = (list || []).filter(p => {
+        const s = String(p.status || '').toLowerCase().trim();
+        return s === 'approved' || s === 'active';
+      });
+
+      STATE.pesertaList = filtered;
+      renderUtusanFilter();
+      applyFiltersAndSort();
+      updateCacheStatus('Live');
+    }
+
+    // ============================================================
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      updateNavbarMenu();
-      loadKaderData();
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
+      // ⚡ CREATE PUBLIC CACHE
+      STATE.cacheInstance = createPublicCache({
+        cacheKey: 'kader_public_v1',
+        action: 'getPesertaList',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const normalized = Array.isArray(data) ? data : (data?.data || []);
+          renderDataFromList(normalized);
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          } else if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Kader] Cache error:', err.message);
+        },
+      });
+
+      if (!STATE.cacheInstance) {
+        console.error('[Kader] Failed to create cache instance');
+        setCacheIndicator('', 'Error');
+        return;
+      }
+
+      await STATE.cacheInstance.boot();
+
+      const stats = STATE.cacheInstance.getStats();
+      if (stats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
+      }
+
+      console.log('[Kader] ✅ Boot complete');
     })();
 
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', function () {
+      if (STATE.cacheInstance) {
+        try { STATE.cacheInstance.destroy(); }
+        catch (e) { /* silent */ }
+        STATE.cacheInstance = null;
+      }
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+      }
+    });
+
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__kaderDebug = {
+      getList: () => STATE.pesertaList,
+      getFiltered: () => STATE.filteredList,
+      getCacheStats: () => STATE.cacheInstance?.getStats() || null,
+      forceRefresh: () => STATE.cacheInstance?.forceRefresh(),
+      clearCache: () => STATE.cacheInstance?.clearCache(),
+    };
+
     console.log(
-      '%c kader.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c kader.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

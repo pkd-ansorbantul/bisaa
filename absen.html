@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="description" content="Absen digital PKD GP Ansor Kabupaten Bantul">
 
-  <!-- ✅ Preconnect + DNS-prefetch untuk percepat -->
   <link rel="preconnect" href="https://script.google.com" crossorigin>
   <link rel="preconnect" href="https://drive.google.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +16,6 @@
   <link rel="dns-prefetch" href="https://drive.google.com">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
-  <!-- ✅ Preload critical assets -->
   <link rel="preload" href="/bisaa/LOGOANSOR.webp" as="image" type="image/webp">
 
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
@@ -27,10 +25,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <!-- ✅ SignaturePad: defer supaya tidak blocking -->
   <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
-  <!-- ✅ INLINE PRELOAD CACHE (baca localStorage SEBELUM JS utama) -->
+  <!-- ⚡ Inline preload cache SEBELUM JS utama -->
   <script>
     (function preloadAbsenCache() {
       try {
@@ -97,6 +94,31 @@
       border-radius: 24px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
     }
 
     /* ============ FORM ============ */
@@ -205,11 +227,7 @@
       font-size: 0.9rem;
     }
 
-    /* ============ ANIMASI ============ */
-    .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* ============ SKELETON (Instant) ============ */
+    /* ============ SKELETON ============ */
     .absen-skeleton { padding: 1rem 0; }
     .absen-skeleton .skel-box {
       background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
@@ -227,6 +245,10 @@
     .absen-skeleton .skel-sig { height: 180px; width: 100%; margin-bottom: 16px; border-radius: 20px; }
     .absen-skeleton .skel-btn { height: 52px; width: 100%; border-radius: 50px; }
 
+    /* ============ ANIMASI ============ */
+    .fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
     /* ============ FOOTER ============ */
     .footer-modern {
       font-size: 0.85rem;
@@ -238,7 +260,6 @@
       background: white;
     }
 
-    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
@@ -246,12 +267,12 @@
       .brand-title-mini, .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
       .signature-area { height: 140px; }
+      .cache-indicator { font-size: 0.65rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -270,14 +291,19 @@
     </div>
   </header>
 
-  <!-- ================= KONTEN ================= -->
   <div class="container" style="padding: 2rem 0; max-width: 800px; flex: 1;">
     <div class="glass-card p-4 fade-up">
-      <h2 class="section-title mb-3" style="font-weight: 650; font-size: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1rem;">
-        <i class="bi bi-pen me-2"></i>Absen Digital per Sesi
-      </h2>
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <h2 class="section-title mb-0" style="font-weight: 650; font-size: 1.5rem; border-left: 6px solid #2563eb; padding-left: 1rem;">
+          <i class="bi bi-pen me-2"></i>Absen Digital per Sesi
+        </h2>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
+      </div>
       <div id="absenContainer" class="mt-3">
-        <!-- Skeleton — instant render -->
+        <!-- Skeleton — akan di-replace -->
         <div class="absen-skeleton">
           <div class="skel-box skel-line"></div>
           <div class="skel-box skel-input"></div>
@@ -292,7 +318,6 @@
     </div>
   </div>
 
-  <!-- ================= FOOTER ================= -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
       <i class="bi bi-c-circle"></i>
@@ -303,9 +328,10 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS — v27.0.0 FAST LOAD EDITION
-    // ==========================================================
+    // ============================================================
+    //   absen.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+
     import {
       guardPublicAccess,
       getSesiAbsen,
@@ -313,22 +339,22 @@
       showToast,
       updateNavbarMenu,
       callApi,
-      escapeHtml
+      escapeHtml,
     } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
+    // ============================================================
     //   CONSTANTS
-    // ==========================================================
+    // ============================================================
     const CACHE_KEY_SESI = 'pkd_absen_cache_sesi';
     const CACHE_KEY_PESERTA = 'pkd_absen_cache_peserta';
     const CACHE_KEY_TS = 'pkd_absen_cache_ts';
     const CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
     const STORAGE_KEY = 'absenFormState_v2';
-    const SIG_QUALITY = 0.15; // ⭐ Turunkan dari 0.2 → 0.15
+    const SIG_QUALITY = 0.15;
 
-    // ==========================================================
+    // ============================================================
     //   STATE
-    // ==========================================================
+    // ============================================================
     const STATE = {
       sesiList: [],
       daftarPesertaValid: [],
@@ -342,17 +368,42 @@
       isFormRendered: false,
       isDataFresh: false,
       loadToken: 0,
+      cacheIndicatorTimer: null,
     };
 
-    // ==========================================================
-    //   CACHE HELPERS
-    // ==========================================================
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        STATE.cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
+
+    // ============================================================
+    //   CACHE HELPERS (localStorage manual)
+    // ============================================================
     function saveCache(sesi, peserta) {
       try {
         localStorage.setItem(CACHE_KEY_SESI, JSON.stringify(sesi));
         localStorage.setItem(CACHE_KEY_PESERTA, JSON.stringify(peserta));
         localStorage.setItem(CACHE_KEY_TS, String(Date.now()));
-      } catch (e) { /* quota exceeded — silent */ }
+      } catch (e) { /* quota exceeded */ }
     }
 
     function loadCache() {
@@ -369,11 +420,9 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   UTILITY
-    // ==========================================================
-    function showToastLocal(msg, type) { showToast(msg, type); }
-
+    // ============================================================
     function safeLocalStorage(fn) {
       try { return fn(); } catch (e) { return null; }
     }
@@ -394,9 +443,9 @@
       return ` (${dateStr} ${startTime}${endTime})`;
     }
 
-    // ==========================================================
+    // ============================================================
     //   FETCH — PARALLEL & CACHE-FIRST
-    // ==========================================================
+    // ============================================================
     async function fetchSesiAbsen() {
       try {
         const response = await getSesiAbsen();
@@ -423,9 +472,9 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   SIGNATURE PAD — Optimized
-    // ==========================================================
+    // ============================================================
     function initSignaturePad() {
       const canvas = document.getElementById('signatureCanvasAbsen');
       if (!canvas) return;
@@ -495,9 +544,9 @@
       }, 200);
     });
 
-    // ==========================================================
+    // ============================================================
     //   FORM STATE PERSISTENCE
-    // ==========================================================
+    // ============================================================
     function saveFormState() {
       if (STATE.isBrokenQr) return;
       const select = document.getElementById('pilihSesiAbsen');
@@ -543,11 +592,9 @@
       safeLocalStorage(() => localStorage.removeItem(STORAGE_KEY));
     }
 
-    // ==========================================================
+    // ============================================================
     //   PESERTA AUTO-FILL
-    // ==========================================================
-    let lastResolvedId = null;
-
+    // ============================================================
     function updatePesertaInfo(id) {
       const namaInput = document.getElementById('namaAbsen');
       const hpInput = document.getElementById('hpAbsen');
@@ -560,7 +607,6 @@
         namaInput.value = '';
         hpInput.value = '';
         if (statusIcon) statusIcon.classList.remove('show');
-        lastResolvedId = null;
         updateSubmitButtonState();
         return;
       }
@@ -575,7 +621,6 @@
           statusIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
           statusIcon.classList.add('show');
         }
-        lastResolvedId = trimmed;
       } else {
         namaInput.value = '';
         hpInput.value = '';
@@ -583,7 +628,6 @@
           statusIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
           statusIcon.classList.add('show');
         }
-        lastResolvedId = null;
       }
       updateSubmitButtonState();
     }
@@ -594,9 +638,9 @@
       btn.disabled = STATE.isSubmitting;
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER BROKEN QR STATE
-    // ==========================================================
+    // ============================================================
     function renderBrokenQrState() {
       const container = document.getElementById('absenContainer');
       if (!container) return;
@@ -621,9 +665,9 @@
       container.classList.add('fade-up');
     }
 
-    // ==========================================================
-    //   RENDER FORM — INSTANT
-    // ==========================================================
+    // ============================================================
+    //   RENDER FORM
+    // ============================================================
     function renderForm() {
       const container = document.getElementById('absenContainer');
       if (!container) return;
@@ -740,9 +784,9 @@
       bindFormEvents();
     }
 
-    // ==========================================================
+    // ============================================================
     //   BIND EVENTS
-    // ==========================================================
+    // ============================================================
     function bindFormEvents() {
       const idInput = document.getElementById('pesertaIdAbsen');
       if (idInput) {
@@ -781,9 +825,9 @@
       document.getElementById('submitAbsenBtn')?.addEventListener('click', handleSubmit);
     }
 
-    // ==========================================================
+    // ============================================================
     //   SUBMIT HANDLER
-    // ==========================================================
+    // ============================================================
     async function handleSubmit() {
       if (STATE.isSubmitting) return;
 
@@ -803,26 +847,26 @@
       const qrToken = qrTokenInput ? qrTokenInput.value.trim() : '';
 
       if (!pesertaId) {
-        showToastLocal('Masukkan ID Peserta terlebih dahulu.', 'warning');
+        showToast('Masukkan ID Peserta terlebih dahulu.', 'warning');
         idInput?.focus();
         return;
       }
       if (!nama || !hp) {
-        showToastLocal('ID Peserta tidak valid. Pastikan ID benar dan peserta sudah disetujui admin.', 'error');
+        showToast('ID Peserta tidak valid. Pastikan ID benar dan peserta sudah disetujui admin.', 'error');
         idInput?.focus();
         return;
       }
       if (!sesiId) {
-        showToastLocal('Pilih sesi absen terlebih dahulu.', 'warning');
+        showToast('Pilih sesi absen terlebih dahulu.', 'warning');
         return;
       }
       if (!STATE.isQRMode && !password) {
-        showToastLocal('Password sesi wajib diisi.', 'warning');
+        showToast('Password sesi wajib diisi.', 'warning');
         passwordInput?.focus();
         return;
       }
       if (!STATE.sigPad || STATE.sigPad.isEmpty()) {
-        showToastLocal('Harap isi tanda tangan terlebih dahulu.', 'warning');
+        showToast('Harap isi tanda tangan terlebih dahulu.', 'warning');
         document.getElementById('signatureAreaContainer')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
@@ -832,7 +876,6 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
 
-      // ⭐ OPTIMASI: Signature WebP 0.15 (upload 2-3x lebih cepat)
       let tandaTangan;
       try {
         tandaTangan = STATE.sigPad.toDataURL('image/webp', SIG_QUALITY);
@@ -847,7 +890,7 @@
         const result = await submitAbsen(nama, sesiId, tandaTangan, password || null, qrToken || null, pesertaId);
 
         if (result && result.success) {
-          showToastLocal('✅ Absen berhasil tercatat!', 'success');
+          showToast('✅ Absen berhasil tercatat!', 'success');
 
           STATE.sigPad.clear();
           document.getElementById('signatureAreaContainer')?.classList.remove('drawing');
@@ -868,17 +911,17 @@
       } catch (e) {
         const msg = String(e.message || 'Terjadi kesalahan');
         if (msg.includes('Sudah absen')) {
-          showToastLocal('⚠️ Anda sudah melakukan absen pada sesi ini.', 'warning');
+          showToast('⚠️ Anda sudah melakukan absen pada sesi ini.', 'warning');
         } else if (msg.includes('Password salah')) {
-          showToastLocal('❌ Password salah. Silakan coba lagi.', 'error');
+          showToast('❌ Password salah. Silakan coba lagi.', 'error');
         } else if (msg.includes('Token QR tidak valid')) {
-          showToastLocal('❌ Token QR tidak valid. Silakan scan ulang.', 'error');
+          showToast('❌ Token QR tidak valid. Silakan scan ulang.', 'error');
         } else if (msg.includes('sedang ditutup')) {
-          showToastLocal('⛔ Sesi absen sedang ditutup oleh panitia.', 'warning');
+          showToast('⛔ Sesi absen sedang ditutup oleh panitia.', 'warning');
         } else if (msg.includes('waktu absen') || msg.includes('belum dimulai') || msg.includes('sudah berakhir')) {
-          showToastLocal('⏰ ' + msg, 'warning');
+          showToast('⏰ ' + msg, 'warning');
         } else {
-          showToastLocal('❌ ' + msg, 'error');
+          showToast('❌ ' + msg, 'error');
         }
       } finally {
         STATE.isSubmitting = false;
@@ -887,9 +930,9 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   LOAD DATA — CACHE-FIRST + PARALLEL
-    // ==========================================================
+    // ============================================================
     async function loadAbsenSesi() {
       const container = document.getElementById('absenContainer');
 
@@ -898,11 +941,12 @@
       STATE.tokenFromUrl = urlParams.get('token');
       STATE.isQRMode = !!(STATE.sesiIdFromUrl && STATE.tokenFromUrl);
 
-      // FIX: Deteksi QR link rusak
+      // Deteksi QR link rusak
       if (STATE.sesiIdFromUrl && !STATE.tokenFromUrl) {
         STATE.isBrokenQr = true;
         console.warn('[Absen] QR link rusak: sesi_id ada, token hilang');
         renderBrokenQrState();
+        setCacheIndicator('instant', '⚠ QR Rusak');
         return;
       }
 
@@ -928,11 +972,13 @@
               <i class="bi bi-info-circle me-1"></i>
               Belum ada sesi absen tersedia. Silakan hubungi panitia.
             </div>`;
+          setCacheIndicator('instant', '⚡ Instan');
           return;
         }
 
         renderForm();
         STATE.isDataFresh = true;
+        setCacheIndicator('instant', '⚡ Instan');
 
         // ⭐ Background refresh (non-blocking)
         refreshInBackground();
@@ -941,6 +987,7 @@
 
       // ⭐ STEP 2: Cache kosong atau expired
       console.log('[Absen] 🌐 No fresh cache — fetching...');
+      setCacheIndicator('loading', 'Memuat data…');
 
       // Kalau ada cache lama (expired), tampilkan dulu
       if (cached.sesi && cached.sesi.length > 0) {
@@ -979,10 +1026,12 @@
               <i class="bi bi-info-circle me-1"></i>
               Belum ada sesi absen tersedia. Silakan hubungi panitia.
             </div>`;
+          setCacheIndicator('instant', '⚡ Instan');
           return;
         }
 
         renderForm();
+        setCacheIndicator('instant', 'Baru dimuat');
         console.log(`✅ Absen: ${STATE.sesiList.length} sesi, ${STATE.daftarPesertaValid.length} peserta dimuat.`);
       } catch (e) {
         console.error('[loadAbsenSesi]', e);
@@ -996,6 +1045,7 @@
               </button>
             </div>
           </div>`;
+        setCacheIndicator('', 'Error');
       }
     }
 
@@ -1027,6 +1077,8 @@
 
         if (changed && STATE.isFormRendered) {
           console.log('[Absen] 🔄 Background refresh — data changed, re-render');
+          setCacheIndicator('updated', '✓ Diperbarui');
+
           const currentSesiValue = document.getElementById('pilihSesiAbsen')?.value;
           const currentPesertaId = document.getElementById('pesertaIdAbsen')?.value;
 
@@ -1051,27 +1103,56 @@
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   BOOT — Fast path
-    // ==========================================================
+    // ============================================================
     (async function boot() {
-      // ⭐ PARALLEL: guard + navbar (tidak blocking)
-      const [canAccess] = await Promise.all([
-        guardPublicAccess(),
-        Promise.resolve(updateNavbarMenu())
-      ]);
-
+      const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      // ⭐ Load data — cache-first, instant render
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
       await loadAbsenSesi();
 
       console.log('[Absen] ✅ Boot complete');
     })();
 
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      if (STATE.sigPad) {
+        try { STATE.sigPad.off(); } catch (e) { /* silent */ }
+        STATE.sigPad = null;
+      }
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+    });
+
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__absenDebug = {
+      getSesi: () => STATE.sesiList,
+      getPeserta: () => STATE.daftarPesertaValid,
+      isQRMode: () => STATE.isQRMode,
+      isBrokenQr: () => STATE.isBrokenQr,
+      clearCache: () => {
+        try {
+          localStorage.removeItem(CACHE_KEY_SESI);
+          localStorage.removeItem(CACHE_KEY_PESERTA);
+          localStorage.removeItem(CACHE_KEY_TS);
+          console.log('[Absen] Cache cleared');
+        } catch (e) { /* silent */ }
+      },
+      refresh: () => refreshInBackground(),
+    };
+
     console.log(
-      '%c absen.html v27.0.0 — FAST LOAD Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c absen.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

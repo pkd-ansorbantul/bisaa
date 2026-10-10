@@ -9,7 +9,7 @@
 
   <title>Tanda Tangan Ketua PC · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.2.1 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <!-- ✅ v28.3.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -23,6 +23,9 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
+    /* ============================================================
+       v28.3.0 — SIGN KETUA PC — SIGNATURE QUEUE EDITION
+       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -33,6 +36,7 @@
     }
     body { display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
 
+    /* ============ PAGE HEADER ============ */
     .page-header {
       max-width: 720px;
       width: 100%;
@@ -78,6 +82,7 @@
     .page-header h1 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
     .page-header h1 small { display: block; font-size: 0.8rem; font-weight: 400; color: #64748b; margin-top: 2px; }
 
+    /* ============ SIGN CARD ============ */
     .sign-card {
       max-width: 720px; width: 100%; background: #fff;
       border-radius: 24px; padding: 2rem 1.75rem;
@@ -87,6 +92,7 @@
       animation-delay: 0.1s;
     }
 
+    /* ============ ROLE BANNER ============ */
     .role-banner {
       background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
       color: #fff; padding: 0.85rem 1.25rem; border-radius: 16px;
@@ -98,6 +104,7 @@
     .role-banner .role-text strong { display: block; font-size: 1rem; font-weight: 700; }
     .role-banner .role-text span { font-size: 0.8rem; opacity: 0.85; }
 
+    /* ============ ORDER STEP ============ */
     .order-info {
       display: flex; align-items: center; justify-content: center;
       gap: 0.35rem; margin-bottom: 1.25rem; flex-wrap: wrap;
@@ -126,6 +133,7 @@
     .order-step.done .num { background: #16a34a; color: #fff; }
     .order-info .arrow { color: #cbd5e1; font-size: 0.85rem; }
 
+    /* ============ INFO BANNER ============ */
     .info-banner {
       display: flex; align-items: flex-start; gap: 0.6rem;
       background: #eff6ff; border-left: 4px solid #2563eb;
@@ -135,7 +143,39 @@
     }
     .info-banner i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
     .info-banner code { background: rgba(37, 99, 235, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
+    .info-banner strong { font-weight: 700; }
 
+    /* ============ QUEUE STATUS BADGE ============ */
+    .queue-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #14532d;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #86efac;
+      margin-left: 0.5rem;
+    }
+    .queue-status-badge.empty {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+      border-color: #fcd34d;
+    }
+    .queue-status-badge.info {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1e40af;
+      border-color: #93c5fd;
+    }
+    .queue-status-badge .spinner-border-sm {
+      width: 12px;
+      height: 12px;
+      border-width: 1.5px;
+    }
+
+    /* ============ WELCOME BANNER ============ */
     .welcome-banner {
       display: none;
       align-items: flex-start;
@@ -170,6 +210,7 @@
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* ============ PASSWORD LIVE HINT ============ */
     .password-hint-live {
       display: none;
       margin-top: 0.5rem;
@@ -186,6 +227,7 @@
     .password-hint-live.loading { background: #eff6ff; color: #1e40af; border-left: 4px solid #2563eb; }
     .password-hint-live.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
 
+    /* ============ SIGNATURE AREA ============ */
     .signature-area.locked {
       position: relative;
       opacity: 0.55;
@@ -210,6 +252,7 @@
     .btn-submit.locked { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
     .btn-submit.locked:hover { transform: none !important; box-shadow: none; }
 
+    /* ============ FORM CONTROLS ============ */
     .form-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; margin-bottom: 0.5rem; display: block; }
     .form-label .req { color: #dc2626; margin-left: 2px; }
 
@@ -225,6 +268,7 @@
     .form-text { font-size: 0.8rem; color: #64748b; margin-top: 0.35rem; }
     .form-text code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; }
 
+    /* ============ SIGNATURE PAD ============ */
     .signature-area {
       border: 2px dashed #cbd5e1; border-radius: 16px; background: #fff;
       padding: 8px; transition: border-color 0.2s; position: relative;
@@ -243,6 +287,7 @@
     }
     .signature-area.drawing .signature-hint { opacity: 0; }
 
+    /* ============ SIGN CONTROLS ============ */
     .sign-controls { display: flex; gap: 0.5rem; margin-top: 0.65rem; flex-wrap: wrap; }
     .sign-controls .btn {
       border-radius: 9999px; padding: 0.4rem 1rem; font-size: 0.8rem; font-weight: 500;
@@ -254,6 +299,7 @@
     .sign-controls .btn-undo { border-color: #e2e8f0; color: #64748b; }
     .sign-controls .btn-undo:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
 
+    /* ============ SUBMIT BUTTON ============ */
     .btn-submit {
       border-radius: 9999px; padding: 0.85rem 1.75rem; font-weight: 600; font-size: 0.95rem;
       background: linear-gradient(135deg, #2563eb, #1e4bb3); border: none; color: #fff;
@@ -266,6 +312,7 @@
     .btn-submit:active:not(:disabled) { transform: translateY(0) scale(0.98); }
     .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none !important; }
 
+    /* ============ ALERTS ============ */
     .alert-custom {
       border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.875rem;
       display: flex; align-items: flex-start; gap: 0.5rem; border: none;
@@ -277,6 +324,69 @@
     .alert-custom.info    { background: #cffafe; color: #155e75; }
     .alert-custom.warning { background: #fef3c7; color: #92400e; }
 
+    /* ============ KETUA QUEUE PANEL (dari sign-page.js) ============ */
+    #ketuaQueuePanel {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+      border: 1.5px solid #93c5fd !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+    }
+    #ketuaQueuePanel h6 {
+      color: #1e40af;
+    }
+    #ketuaQueuePanel .badge.bg-primary {
+      background: #2563eb !important;
+    }
+    #ketuaQueuePanel .badge.bg-primary-subtle {
+      background: rgba(37, 99, 235, 0.15) !important;
+      color: #1e40af !important;
+      border: 1px solid rgba(37, 99, 235, 0.3);
+    }
+    #ketuaQueuePanel .queue-candidate-checkbox {
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    #ketuaQueuePanel .queue-candidate-checkbox:checked {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+    #ketuaQueuePanel label:hover {
+      background: #fff !important;
+      border-color: #2563eb !important;
+      transform: translateY(-1px);
+      transition: all 0.15s;
+    }
+    #ketuaQueuePanel .row.g-2 {
+      scrollbar-width: thin;
+    }
+    #ketuaQueuePanel .row.g-2::-webkit-scrollbar {
+      width: 6px;
+    }
+    #ketuaQueuePanel .row.g-2::-webkit-scrollbar-thumb {
+      background: #93c5fd;
+      border-radius: 3px;
+    }
+    #ketuaQueuePanel .btn-close-sm {
+      padding: 0;
+      opacity: 0.7;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+    }
+    #ketuaQueuePanel .btn-close-sm::before {
+      content: '×';
+      font-size: 1rem;
+      line-height: 1;
+      color: #1e40af;
+      font-weight: 700;
+    }
+    #ketuaQueuePanel .btn-close-sm:hover {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    /* ============ PAGE LOADING ============ */
     .page-loading {
       position: fixed; inset: 0; background: rgba(248, 250, 252, 0.9);
       backdrop-filter: blur(4px); display: flex; flex-direction: column;
@@ -297,6 +407,8 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
+
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .sign-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
@@ -307,6 +419,11 @@
       .order-step { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
       .order-step .num { width: 16px; height: 16px; font-size: 0.65rem; }
       .header-top { flex-direction: column; align-items: stretch; }
+      .queue-status-badge { margin-left: 0; margin-top: 0.5rem; }
+      #ketuaQueuePanel .row.g-2 > div {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
     }
   </style>
 </head>
@@ -367,13 +484,21 @@
       <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
       <div>
         <strong>Halaman ini dilindungi password TTD.</strong>
-        Pastikan Anda adalah <strong>Ketua PC</strong> yang berwenang.
-        Setelah Anda TTD, <strong>Sekretaris</strong> baru bisa melanjutkan.
-        Pilih <strong>📋 SEMUA PESERTA</strong> untuk TTD massal 1× klik.
+        Anda adalah <strong>tahap pertama</strong> — pilih peserta di panel bawah, tambahkan ke queue,
+        lalu TTD. Peserta yang Anda pilih akan muncul di dropdown <strong>Sekretaris &amp; Instruktur</strong>.
+        <span id="queueStatusBadge" class="queue-status-badge empty">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Memuat queue…
+        </span>
       </div>
     </div>
 
     <div class="welcome-banner" id="welcomeBanner" role="status" aria-live="polite"></div>
+
+    <!-- ============================================================
+         KETUA QUEUE PANEL — di-render oleh sign-page.js
+         (auto-injected setelah .info-banner)
+         ============================================================ -->
 
     <form id="signForm" autocomplete="off" novalidate>
 
@@ -449,11 +574,14 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   v26.2.1 — Pakai shared module (deduplication)
-    // ==========================================================
+    // ============================================================
+    //   v28.3.0 — Pakai shared module (Signature Queue Edition)
+    // ============================================================
     import { initSignPage } from '/bisaa/js/components/sign-page.js';
+    import { getSignatureQueue } from '/bisaa/js/core/api.js';
 
+    // Init sign page
+    // → sign-page.js akan auto-render panel queue karena role === 'ketua_pc'
     initSignPage({
       role: 'ketua_pc',
       roleLabel: 'Ketua PC',
@@ -462,9 +590,48 @@
       orderStep: 1,
     });
 
+    // ✅ v28.3.0: Live update queue badge di info-banner
+    (async function updateQueueBadge() {
+      const badgeEl = document.getElementById('queueStatusBadge');
+      if (!badgeEl) return;
+
+      async function refresh() {
+        try {
+          const res = await getSignatureQueue();
+          const list = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+          const count = list.length;
+
+          if (count === 0) {
+            badgeEl.className = 'queue-status-badge empty';
+            badgeEl.innerHTML = `
+              <i class="bi bi-inbox" aria-hidden="true"></i>
+              Belum ada peserta di queue
+            `;
+          } else {
+            badgeEl.className = 'queue-status-badge';
+            badgeEl.innerHTML = `
+              <i class="bi bi-list-check" aria-hidden="true"></i>
+              ${count} peserta di queue
+            `;
+          }
+        } catch (e) {
+          badgeEl.className = 'queue-status-badge empty';
+          badgeEl.innerHTML = `
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            Gagal memuat queue
+          `;
+        }
+      }
+
+      await refresh();
+
+      // Auto-refresh tiap 15 detik
+      setInterval(refresh, 15000);
+    })();
+
     console.log(
-      '%c sign_ketua_pc.html v26.2.1 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c sign_ketua_pc.html v28.3.0 — Full Fix + Queue Edition ',
+      'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>
 

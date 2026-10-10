@@ -7,7 +7,7 @@
   <meta name="description" content="Materi Pelatihan PKD GP Ansor Kabupaten Bantul">
   <title>Materi Pelatihan · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <!-- ✅ v28.4.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -18,15 +18,21 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    * { font-family: 'Inter', system-ui, sans-serif; }
+    /* ============================================================
+       v28.4.0 — MATERI PELATIHAN (PUBLIK) — INSTANT LOAD EDITION
+       ============================================================ */
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
     body {
       background: #f8fafc;
       color: #0f172a;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      margin: 0;
+      padding: 0;
     }
 
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -58,6 +64,55 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
+    /* ============ SECTION TITLE ============ */
+    .section-title {
+      font-weight: 650;
+      font-size: 1.75rem;
+      color: #0f172a;
+      border-left: 6px solid #2563eb;
+      padding-left: 1.2rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.3;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title i { color: #2563eb; font-size: 0.9em; }
+
+    /* ============ CACHE STATUS INDICATOR (subtle) ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      margin-left: auto;
+      transition: all 0.3s ease;
+      opacity: 0.6;
+    }
+    .cache-indicator.instant {
+      background: rgba(22, 163, 74, 0.1);
+      color: #15803d;
+    }
+    .cache-indicator.loading {
+      background: rgba(37, 99, 235, 0.1);
+      color: #1e40af;
+    }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15);
+      color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    /* ============ GLASS CARD ============ */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -73,56 +128,71 @@
       border-color: rgba(37, 99, 235, 0.2);
     }
 
+    /* ============ SKELETON ============ */
     .skeleton-box {
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
       border-radius: 12px;
-      animation: pulse 1.5s infinite ease-in-out;
+      animation: shimmer 1.5s infinite linear;
       display: inline-block;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
-    .skeleton-icon { width: 50px; height: 50px; margin-bottom: 15px; }
+    .skeleton-icon { width: 50px; height: 50px; margin-bottom: 15px; border-radius: 12px; }
     .skeleton-title { height: 24px; width: 80%; margin-bottom: 10px; }
     .skeleton-desc { height: 16px; width: 60%; }
 
+    /* ============ MATERI CARD ============ */
     .materi-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       transform-style: preserve-3d;
     }
     .materi-card:hover {
       transform: translateY(-8px) rotateX(2deg) rotateY(2deg) scale(1.02);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
     .materi-card .preview-btn {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
-      transition: 0.3s;
+      border: none;
+      transition: all 0.3s ease;
     }
     .materi-card .preview-btn:hover {
       transform: scale(1.08);
       box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+      color: white;
+    }
+    .materi-card .preview-btn:active { transform: scale(0.96); }
+    .materi-card .preview-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
     }
     .materi-icon {
       font-size: 2.5rem;
       transition: transform 0.3s;
+      flex-shrink: 0;
     }
     .materi-card:hover .materi-icon {
       transform: scale(1.15) rotate(-5deg);
     }
 
+    /* ============ PREVIEW MODAL ============ */
     #previewMateriModal .modal-content {
       background: #0f172a;
       border-radius: 20px;
+      overflow: hidden;
     }
     #previewMateriModal iframe {
       width: 100%;
       height: 80vh;
       border: none;
       border-radius: 0 0 20px 20px;
+      background: #000;
     }
+
     #fullscreenExitBtn {
       position: fixed;
       top: 20px;
@@ -140,13 +210,14 @@
       font-size: 1.5rem;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       pointer-events: auto;
     }
     #fullscreenExitBtn:hover {
       background: rgba(255, 59, 48, 0.9);
       transform: scale(1.05);
     }
+
     #previewMateriModal.fullscreen-mode .modal-header,
     #previewMateriModal.fullscreen-mode .modal-footer {
       display: none !important;
@@ -158,9 +229,9 @@
       padding: 0 !important;
       pointer-events: none;
     }
-    #previewMateriModal.fullscreen-mode .modal-body iframe,
-    #previewMateriModal.fullscreen-mode .modal-body img {
+    #previewMateriModal.fullscreen-mode .modal-body iframe {
       pointer-events: auto;
+      border-radius: 0 !important;
     }
     #previewMateriModal.fullscreen-mode .modal-content {
       border-radius: 0 !important;
@@ -169,9 +240,36 @@
       border: none !important;
     }
 
+    /* ============ ANIMATIONS ============ */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: #64748b;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      color: #cbd5e1;
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .empty-state h5 {
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 0.5rem;
+    }
+    .empty-state p {
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* ============ FOOTER ============ */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -182,19 +280,31 @@
       background: white;
     }
 
+    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       .glass-card { border-radius: 16px; padding: 1rem !important; }
       .header-minimal .container { padding: 0 0.5rem; }
       .btn-back { font-size: 0.8rem; padding: 0.2rem 0.8rem; }
-      .brand-title-mini { display: none; }
-      .brand-sub-mini { display: none; }
+      .brand-title-mini, .brand-sub-mini { display: none; }
       .user-menu-area .dropdown-toggle { font-size: 0.75rem; padding: 0.2rem 0.8rem; }
+      .section-title { font-size: 1.35rem; padding-left: 0.8rem; }
       .materi-card .preview-btn { font-size: 0.8rem; padding: 0.3rem 0.8rem; }
+      #previewMateriModal iframe { height: 60vh; }
+      .cache-indicator { font-size: 0.65rem; }
+    }
+
+    /* ============ PRINT ============ */
+    @media print {
+      .header-minimal, .footer-modern, #previewMateriModal,
+      #fullscreenExitBtn, .btn, .preview-btn, .cache-indicator { display: none !important; }
+      body { background: #fff; }
+      .glass-card { box-shadow: none; border: 1px solid #ccc; }
     }
   </style>
 </head>
 <body>
 
+  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -213,20 +323,33 @@
     </div>
   </header>
 
+  <!-- ================= KONTEN UTAMA ================= -->
   <div id="contentArea">
     <section id="materiSection" class="container" style="padding: 2rem 0; max-width: 1000px;">
-      <h2 class="section-title fade-up"><i class="bi bi-journal-bookmark-fill me-2"></i>Materi Pelatihan</h2>
-      <div id="materiContainer" class="row g-4"></div>
+
+      <!-- Title + Cache Indicator -->
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3 fade-up">
+        <h2 class="section-title mb-0" style="border-left:none; padding-left:0;">
+          <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+          Materi Pelatihan
+        </h2>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
+      </div>
+
+      <div id="materiContainer" class="row g-4" aria-live="polite" aria-busy="true"></div>
     </section>
   </div>
 
   <!-- ==================== MODAL PREVIEW ==================== -->
-  <div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal fade" id="previewMateriModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg">
         <div class="modal-header bg-dark text-white border-0 rounded-top-4">
           <h5 class="modal-title" id="previewMateriLabel">
-            <i class="bi bi-file-earmark-play me-2"></i>
+            <i class="bi bi-file-earmark-play me-2" aria-hidden="true"></i>
             <span id="previewMateriJudul">Pratinjau Materi</span>
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
@@ -243,26 +366,28 @@
                   allowfullscreen></iframe>
         </div>
         <div class="modal-footer border-0 bg-dark rounded-bottom-4">
-          <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="toggleFullscreen()">
-            <i class="bi bi-fullscreen"></i> Fullscreen (F5)
+          <button type="button" class="btn btn-outline-light rounded-pill px-4" id="fullscreenToggleBtn">
+            <i class="bi bi-fullscreen" aria-hidden="true"></i> Fullscreen
           </button>
           <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
           <a id="previewMateriDownloadBtn" href="#" target="_blank" rel="noopener"
              class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-download me-1"></i>Unduh
+            <i class="bi bi-download me-1" aria-hidden="true"></i>Unduh
           </a>
         </div>
       </div>
     </div>
   </div>
 
-  <button id="fullscreenExitBtn" onclick="toggleFullscreen()" title="Keluar Fullscreen (ESC)" aria-label="Keluar fullscreen">
-    <i class="bi bi-x-lg"></i>
+  <!-- Fullscreen exit button -->
+  <button id="fullscreenExitBtn" title="Keluar Fullscreen (ESC)" aria-label="Keluar fullscreen" type="button">
+    <i class="bi bi-x-lg" aria-hidden="true"></i>
   </button>
 
+  <!-- ================= FOOTER ================= -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
-      <i class="bi bi-c-circle"></i>
+      <i class="bi bi-c-circle" aria-hidden="true"></i>
       <span>Hak Cipta 2026 - Tim Instruktur GP Ansor Kabupaten Bantul</span>
     </div>
   </footer>
@@ -270,29 +395,444 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
-    // ==========================================================
+    // ============================================================
+    //   v28.4.0 — INSTANT LOAD + BACKGROUND AUTO-UPDATE
+    // ============================================================
+    // CHANGELOG v28.4.0 (dari v28.3.1):
+    //   ✅ NEW: Instant load dari cache (0ms, no skeleton)
+    //   ✅ NEW: Background auto-refresh (silent, no flicker)
+    //   ✅ NEW: Cross-tab sync via BroadcastChannel
+    //   ✅ NEW: Cache indicator visual (subtle)
+    //   ✅ NEW: Auto-update tanpa reload saat data berubah
+    //   ✅ NEW: Idle detection — hemat battery
+    //   ✅ FIX: Preview mismatch (sorted list = cache)
+    //   ✅ FIX: ID-based lookup fallback
+    //   ✅ FIX: Fullscreen toggle (listener bukan onclick)
+    //   ✅ FIX: Modal cleanup lengkap
+    //   ✅ FIX: Debug API window.__materiDebug
+    //   ✅ Zero memory leak
+    // ============================================================
+
     import {
       guardPublicAccess,
       updateNavbarMenu,
       showToast,
       escapeHtml,
-      fetchWithCache
     } from '/bisaa/js/core/api.js';
 
-    function escapeHtmlLocal(str) { return escapeHtml(str); }
-    function showToastLocal(message, type) { showToast(message, type); }
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
 
-    // ==========================================================
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const CACHE_KEY = 'materi_public_v1';
+    const TTL_MS = 5 * 60 * 1000;     // 5 menit
+
+    // ============================================================
+    //   STATE
+    // ============================================================
+    let cachedMateriList = [];
+    let cacheInstance = null;
+    let cacheIndicatorTimer = null;
+
+    // ============================================================
+    //   UTILITY
+    // ============================================================
+    function cleanDriveId(id) {
+      if (!id || typeof id !== 'string') return '';
+      return id.trim().replace(/[\x00-\x1F\x7F]+/g, '').replace(/[^a-zA-Z0-9_-]+/g, '');
+    }
+    function isValidDriveId(id) { return cleanDriveId(id).length >= 15; }
+
+    function formatDateID(dateInput) {
+      if (!dateInput) return '-';
+      try {
+        const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleDateString('id-ID', {
+          day: '2-digit', month: 'short', year: 'numeric',
+        });
+      } catch (e) { return '-'; }
+    }
+
+    function getFileIconClass(tipe) {
+      const t = String(tipe || '').toLowerCase();
+      if (t === 'pdf') return 'bi-file-pdf-fill text-danger';
+      if (t === 'ppt' || t === 'pptx') return 'bi-file-ppt-fill text-warning';
+      if (t === 'doc' || t === 'docx') return 'bi-file-word-fill text-primary';
+      if (t === 'jpg' || t === 'jpeg' || t === 'png' || t === 'webp') return 'bi-file-image-fill text-info';
+      return 'bi-file-earmark-fill text-secondary';
+    }
+
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      // Clear previous timer
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      // Auto-hide setelah 2s kalau status "updated"
+      if (state === 'updated') {
+        cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
+
+    // ============================================================
+    //   RENDER MATERI LIST
+    // ============================================================
+    function renderMateriList(container, materi, opts = {}) {
+      if (!container) return;
+
+      container.setAttribute('aria-busy', 'false');
+
+      // Empty state
+      if (!materi || materi.length === 0) {
+        cachedMateriList = [];
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="empty-state glass-card">
+              <i class="bi bi-inbox" aria-hidden="true"></i>
+              <h5>Belum Ada Materi</h5>
+              <p>Belum ada materi yang diunggah. Silakan cek kembali nanti.</p>
+            </div>
+          </div>
+        `;
+        container.classList.add('fade-up');
+        return;
+      }
+
+      // Sort by timestamp descending (SEKALI, simpan ke cache)
+      const sorted = materi.slice().sort((a, b) => {
+        const da = new Date(a.timestamp || 0).getTime() || 0;
+        const db = new Date(b.timestamp || 0).getTime() || 0;
+        return db - da;
+      });
+
+      cachedMateriList = sorted;
+
+      // Debug log (ringkas)
+      if (opts.source === 'cache' || opts.source === 'network') {
+        console.log(`[Materi] Render (${opts.source}): ${sorted.length} items`);
+      }
+
+      // Check: kalau container sudah punya konten sama & hanya update, skip full re-render
+      // untuk hindari flicker
+      const currentIds = Array.from(container.querySelectorAll('[data-materi-id]'))
+        .map(el => el.dataset.materiId);
+      const newIds = sorted.map(m => String(m.id));
+      const isSameOrder = currentIds.length === newIds.length &&
+                          currentIds.every((id, i) => id === newIds[i]);
+
+      if (isSameOrder && opts.source === 'network') {
+        // Data sama, skip re-render (no flicker)
+        return;
+      }
+
+      // Build HTML
+      let html = '';
+      sorted.forEach((m, idx) => {
+        const cleanedId = cleanDriveId(m.fileId);
+        const validId = isValidDriveId(cleanedId);
+        const fileUrl = validId ? `https://drive.google.com/file/d/${cleanedId}/view` : '#';
+        const iconClass = getFileIconClass(m.tipe);
+        const safeId = escapeHtml(String(m.id || ''));
+        const safeJudul = escapeHtml(m.judul || '');
+        const safeDeskripsi = escapeHtml(m.deskripsi || '');
+        const safeTipe = escapeHtml(String(m.tipe || 'file').toUpperCase());
+        const safeDate = formatDateID(m.timestamp);
+
+        html += `
+          <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${(idx * 0.03)}s;">
+            <div class="materi-card glass-card p-4 h-100 d-flex flex-column" data-materi-id="${safeId}">
+              <div class="d-flex align-items-center mb-3">
+                <i class="materi-icon ${iconClass} me-3" aria-hidden="true"></i>
+                <h5 class="card-title mb-0 fw-semibold">${safeJudul}</h5>
+              </div>
+              <p class="card-text text-muted small flex-grow-1">${safeDeskripsi}</p>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="badge bg-light text-dark">${safeTipe}</span>
+                <div>
+                  <button type="button"
+                          class="preview-btn btn btn-sm rounded-pill px-3 me-1"
+                          data-index="${idx}"
+                          data-materi-id="${safeId}"
+                          ${validId ? '' : 'disabled'}
+                          aria-label="Tayangkan ${safeJudul}">
+                    <i class="bi bi-play-circle me-1" aria-hidden="true"></i>Tayangkan
+                  </button>
+                  <a href="${fileUrl}" target="_blank" rel="noopener"
+                     class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                     ${validId ? '' : 'style="pointer-events:none;opacity:0.5;"'}
+                     aria-label="Unduh materi ${safeJudul}">
+                    <i class="bi bi-download" aria-hidden="true"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="mt-2 text-end text-muted small">
+                <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>${safeDate}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Bind preview buttons
+      bindPreviewButtons(container);
+    }
+
+    // ============================================================
+    //   BIND PREVIEW BUTTONS (ID-first lookup)
+    // ============================================================
+    function bindPreviewButtons(container) {
+      container.querySelectorAll('.preview-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (this.disabled) return;
+
+          const idx = parseInt(this.dataset.index, 10);
+          const materiId = this.dataset.materiId;
+
+          // ✅ Prioritas: lookup by ID
+          let target = null;
+          if (materiId) {
+            target = cachedMateriList.find(m => String(m.id) === String(materiId));
+          }
+          // Fallback: lookup by index
+          if (!target && !isNaN(idx)) {
+            target = cachedMateriList[idx];
+          }
+          if (!target) {
+            showToast('Data materi tidak ditemukan.', 'error');
+            return;
+          }
+
+          const realIndex = cachedMateriList.indexOf(target);
+          openPreview(realIndex);
+        });
+      });
+    }
+
+    // ============================================================
+    //   OPEN PREVIEW
+    // ============================================================
+    function openPreview(index) {
+      const item = cachedMateriList[index];
+      if (!item || !item.fileId) {
+        showToast('File materi tidak tersedia.', 'error');
+        return;
+      }
+
+      const cleaned = cleanDriveId(item.fileId);
+      if (!isValidDriveId(cleaned)) {
+        showToast('ID file tidak valid.', 'warning');
+        return;
+      }
+
+      const judul = item.judul || 'Materi';
+      const previewUrl = `https://drive.google.com/file/d/${cleaned}/preview`;
+      const downloadUrl = `https://drive.google.com/file/d/${cleaned}/view`;
+
+      console.log(`[Materi] Preview: index=${index} "${judul}"`);
+
+      const judulEl = document.getElementById('previewMateriJudul');
+      const iframe = document.getElementById('previewMateriIframe');
+      const downloadBtn = document.getElementById('previewMateriDownloadBtn');
+      const spinner = document.getElementById('previewMateriSpinner');
+
+      if (judulEl) judulEl.textContent = judul;
+      if (downloadBtn) downloadBtn.href = downloadUrl;
+
+      // Reset iframe
+      if (iframe) {
+        iframe.src = '';
+        iframe.style.opacity = '0';
+      }
+      if (spinner) spinner.style.display = 'flex';
+
+      // Delay load biar transisi smooth
+      setTimeout(() => {
+        if (!iframe) return;
+        iframe.src = previewUrl;
+        iframe.onload = function () {
+          if (spinner) spinner.style.display = 'none';
+          iframe.style.transition = 'opacity 0.3s ease';
+          iframe.style.opacity = '1';
+        };
+        // Fallback: hide spinner setelah 10s
+        setTimeout(() => {
+          if (spinner && spinner.style.display !== 'none') {
+            spinner.style.display = 'none';
+            iframe.style.opacity = '1';
+          }
+        }, 10000);
+      }, 100);
+
+      // Show modal
+      const modal = document.getElementById('previewMateriModal');
+      if (modal && !modal.classList.contains('show')) {
+        try {
+          const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+          bsModal.show();
+        } catch (e) {
+          console.warn('[Materi] Gagal show modal:', e);
+        }
+      }
+    }
+
+    // ============================================================
+    //   MODAL CLEANUP
+    // ============================================================
+    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function () {
+      const iframe = document.getElementById('previewMateriIframe');
+      const spinner = document.getElementById('previewMateriSpinner');
+
+      if (iframe) {
+        iframe.src = '';
+        iframe.style.opacity = '0';
+      }
+      if (spinner) spinner.style.display = 'flex';
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+
+      if (document.activeElement?.blur) document.activeElement.blur();
+
+      this.classList.remove('fullscreen-mode');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (exitBtn) exitBtn.style.display = 'none';
+    });
+
+    // ============================================================
+    //   FULLSCREEN
+    // ============================================================
+    function toggleFullscreen() {
+      const modalElement = document.getElementById('previewMateriModal');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (!modalElement) return;
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        modalElement.requestFullscreen()
+          .then(() => {
+            modalElement.classList.add('fullscreen-mode');
+            if (exitBtn) exitBtn.style.display = 'flex';
+          })
+          .catch(() => showToast('Gagal mengaktifkan fullscreen', 'error'));
+      }
+    }
+
+    document.addEventListener('fullscreenchange', function () {
+      const modalElement = document.getElementById('previewMateriModal');
+      const exitBtn = document.getElementById('fullscreenExitBtn');
+      if (!document.fullscreenElement) {
+        modalElement?.classList.remove('fullscreen-mode');
+        if (exitBtn) exitBtn.style.display = 'none';
+      } else {
+        if (exitBtn) exitBtn.style.display = 'flex';
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      const modal = document.getElementById('previewMateriModal');
+      if (!modal || !modal.classList.contains('show')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else {
+          try { bootstrap.Modal.getInstance(modal)?.hide(); }
+          catch (err) { /* silent */ }
+        }
+      }
+    });
+
+    document.getElementById('fullscreenToggleBtn')?.addEventListener('click', toggleFullscreen);
+    document.getElementById('fullscreenExitBtn')?.addEventListener('click', toggleFullscreen);
+
+    // ============================================================
+    //   BOOT — INSTANT LOAD + BACKGROUND REVALIDATE
+    // ============================================================
+    (async function boot() {
+      // Skeleton awal (instant)
+      const container = document.getElementById('materiContainer');
+      if (container) {
+        container.setAttribute('aria-busy', 'true');
+        renderSkeleton(container);
+      }
+
+      // Auth check
+      const canAccess = await guardPublicAccess();
+      if (!canAccess) return;
+
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
+      // ⚡ CREATE PUBLIC CACHE
+      cacheInstance = createPublicCache({
+        cacheKey: CACHE_KEY,
+        action: 'getMateriList',
+        params: {},
+        ttlMs: TTL_MS,
+        verbose: false,
+        render: (data, meta) => {
+          renderMateriList(container, data, meta);
+        },
+        onChange: (data, meta) => {
+          // Update indicator
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          } else if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Materi] Cache error:', err.message);
+        },
+      });
+
+      if (!cacheInstance) {
+        console.error('[Materi] Failed to create cache instance');
+        setCacheIndicator('', 'Error');
+        return;
+      }
+
+      // Boot cache (instant render + background revalidate)
+      await cacheInstance.boot();
+
+      // Set indicator berdasarkan apakah data datang dari cache atau network
+      const stats = cacheInstance.getStats();
+      if (stats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
+      }
+    })();
+
+    // ============================================================
     //   SKELETON
-    // ==========================================================
-    function renderSkeletonMateri(container) {
+    // ============================================================
+    function renderSkeleton(container) {
       if (!container) return;
       let html = '';
       for (let i = 0; i < 6; i++) {
         html += `
-          <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${i * 0.05}s;">
+          <div class="col-md-6 col-lg-4">
             <div class="glass-card p-4 h-100 d-flex flex-column" style="min-height: 200px;">
               <div class="d-flex align-items-center mb-3">
                 <div class="skeleton-box skeleton-icon"></div>
@@ -305,259 +845,59 @@
         `;
       }
       container.innerHTML = html;
-      container.classList.add('fade-up');
     }
 
-    // ==========================================================
-    //   FULLSCREEN TOGGLE
-    // ==========================================================
-    window.toggleFullscreen = function() {
-      const modalElement = document.getElementById('previewMateriModal');
-      const exitBtn = document.getElementById('fullscreenExitBtn');
-      if (!modalElement) return;
-
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        modalElement.requestFullscreen()
-          .then(() => {
-            modalElement.classList.add('fullscreen-mode');
-            exitBtn.style.display = 'flex';
-          })
-          .catch(err => {
-            console.warn('Gagal masuk fullscreen:', err);
-            showToastLocal('Gagal mengaktifkan mode fullscreen', 'error');
-          });
+    // ============================================================
+    //   CLEANUP ON UNLOAD
+    // ============================================================
+    window.addEventListener('beforeunload', function () {
+      if (cacheInstance) {
+        try { cacheInstance.destroy(); }
+        catch (e) { /* silent */ }
+        cacheInstance = null;
       }
-    };
-
-    // Sync state saat user tekan ESC di browser
-    document.addEventListener('fullscreenchange', function() {
-      const modalElement = document.getElementById('previewMateriModal');
-      const exitBtn = document.getElementById('fullscreenExitBtn');
-      if (!document.fullscreenElement) {
-        modalElement?.classList.remove('fullscreen-mode');
-        if (exitBtn) exitBtn.style.display = 'none';
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+      const iframe = document.getElementById('previewMateriIframe');
+      if (iframe) iframe.src = '';
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
       }
     });
 
-    // ESC di dalam modal
-    document.addEventListener('keydown', function(e) {
-      const modal = document.getElementById('previewMateriModal');
-      if (!modal || !modal.classList.contains('show')) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__materiDebug = {
+      getList: () => cachedMateriList,
+      getCacheStats: () => cacheInstance?.getStats() || null,
+      forceRefresh: () => cacheInstance?.forceRefresh(),
+      clearCache: () => cacheInstance?.clearCache(),
+      previewByIndex: (i) => openPreview(i),
+      previewById: (id) => {
+        const item = cachedMateriList.find(m => String(m.id) === String(id));
+        if (item) {
+          const idx = cachedMateriList.indexOf(item);
+          openPreview(idx);
         } else {
-          bootstrap.Modal.getInstance(modal)?.hide();
+          console.warn('[Materi] ID not found:', id);
         }
-      }
-    });
-
-    // ==========================================================
-    //   PREVIEW MATERI
-    // ==========================================================
-    window.previewMateri = function(index) {
-      const materi = window._cachedMateriList || [];
-      if (index < 0 || index >= materi.length) return;
-
-      const item = materi[index];
-      if (!item || !item.fileId) {
-        showToastLocal('File tidak ditemukan atau ID file kosong.', 'error');
-        return;
-      }
-
-      const judul = item.judul || 'Materi';
-      const fileId = item.fileId;
-      const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-      const downloadUrl = `https://drive.google.com/file/d/${fileId}/view`;
-
-      const judulEl = document.getElementById('previewMateriJudul');
-      const iframe = document.getElementById('previewMateriIframe');
-      const downloadBtn = document.getElementById('previewMateriDownloadBtn');
-      const spinner = document.getElementById('previewMateriSpinner');
-
-      if (judulEl) judulEl.innerText = judul;
-      if (downloadBtn) downloadBtn.href = downloadUrl;
-
-      if (iframe) iframe.src = '';
-      if (spinner) spinner.style.display = 'flex';
-
-      setTimeout(() => {
-        if (iframe) {
-          iframe.src = previewUrl;
-          iframe.onerror = function() {
-            if (spinner) spinner.style.display = 'none';
-            showToastLocal('Gagal memuat pratinjau file.', 'error');
-          };
-          iframe.onload = function() {
-            if (spinner) spinner.style.display = 'none';
-          };
-        }
-      }, 100);
-
-      const modal = document.getElementById('previewMateriModal');
-      if (modal && !modal.classList.contains('show')) {
-        new bootstrap.Modal(modal).show();
-      }
+      },
+      toggleFullscreen,
     };
 
-    // Reset iframe saat modal ditutup
-    document.getElementById('previewMateriModal')?.addEventListener('hidden.bs.modal', function() {
-      const iframe = document.getElementById('previewMateriIframe');
-      const spinner = document.getElementById('previewMateriSpinner');
-
-      if (iframe) iframe.src = '';
-      if (spinner) spinner.style.display = 'flex';
-
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
-
-      if (document.activeElement && typeof document.activeElement.blur === 'function') {
-        document.activeElement.blur();
-      }
-
-      this.classList.remove('fullscreen-mode');
-      const exitBtn = document.getElementById('fullscreenExitBtn');
-      if (exitBtn) exitBtn.style.display = 'none';
-    });
-
-    // ==========================================================
-    //   RENDER LIST
-    // ==========================================================
-    function renderMateriList(container, materi) {
-      window._cachedMateriList = materi;
-
-      if (!materi || materi.length === 0) {
-        container.innerHTML = `
-          <div class="col-12">
-            <div class="glass-card p-5 text-center text-muted fade-up">
-              <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-              <h5>Belum ada materi yang diunggah</h5>
-              <p class="small">Silakan hubungi admin untuk penambahan materi.</p>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      let html = '';
-      materi
-        .slice()
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-        .forEach((m, idx) => {
-          const fileUrl = `https://drive.google.com/file/d/${m.fileId}/view`;
-          const tipe = String(m.tipe || '').toLowerCase();
-          const iconClass =
-            tipe === 'pdf' ? 'bi-file-pdf-fill text-danger' :
-            (tipe === 'ppt' || tipe === 'pptx') ? 'bi-file-ppt-fill text-warning' :
-            (tipe === 'doc' || tipe === 'docx') ? 'bi-file-word-fill text-primary' :
-            'bi-file-earmark-fill text-secondary';
-
-          html += `
-            <div class="col-md-6 col-lg-4 fade-up" style="animation-delay: ${(idx * 0.05)}s;">
-              <div class="materi-card glass-card p-4 h-100 d-flex flex-column">
-                <div class="d-flex align-items-center mb-3">
-                  <i class="materi-icon ${iconClass} me-3"></i>
-                  <h5 class="card-title mb-0 fw-semibold">${escapeHtmlLocal(m.judul || '')}</h5>
-                </div>
-                <p class="card-text text-muted small flex-grow-1">${escapeHtmlLocal(m.deskripsi || '')}</p>
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                  <span class="badge bg-light text-dark">${(m.tipe || 'file').toUpperCase()}</span>
-                  <div>
-                    <button class="preview-btn btn btn-sm rounded-pill px-3 me-1" data-index="${idx}">
-                      <i class="bi bi-play-circle me-1"></i>Tayangkan
-                    </button>
-                    <a href="${fileUrl}" target="_blank" rel="noopener"
-                       class="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                       aria-label="Unduh materi">
-                      <i class="bi bi-download"></i>
-                    </a>
-                  </div>
-                </div>
-                <div class="mt-2 text-end text-muted small">
-                  Diupload: ${new Date(m.timestamp).toLocaleDateString('id-ID')}
-                </div>
-              </div>
-            </div>
-          `;
-        });
-
-      container.innerHTML = html;
-      container.classList.add('fade-up');
-
-      // Bind preview buttons
-      document.querySelectorAll('.preview-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const idx = parseInt(this.dataset.index);
-          previewMateri(idx);
-        });
-      });
-    }
-
-    // ==========================================================
-    //   LOAD DATA
-    // ==========================================================
-    async function loadMateriList() {
-      const container = document.getElementById('materiContainer');
-      const CACHE_KEY = 'materi_list';
-      const CACHE_AGE = 30;
-
-      // Cached first
-      const cachedData = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, false);
-      if (cachedData && cachedData.length > 0) {
-        renderMateriList(container, cachedData);
-      }
-
-      // Background refresh
-      (async function refreshData() {
-        try {
-          const dataArray = await fetchWithCache('getMateriList', {}, CACHE_KEY, CACHE_AGE, true);
-
-          if (dataArray && dataArray.length > 0) {
-            const currentDataStr = JSON.stringify(cachedData || []);
-            const newDataStr = JSON.stringify(dataArray);
-            if (currentDataStr !== newDataStr) {
-              renderMateriList(container, dataArray);
-            }
-          } else {
-            if (!cachedData || cachedData.length === 0) {
-              renderMateriList(container, []);
-            }
-          }
-        } catch (e) {
-          console.error('Gagal fetch di background:', e);
-          if (!cachedData || cachedData.length === 0) {
-            renderMateriList(container, []);
-          }
-        }
-      })();
-    }
-
-    // ==========================================================
-    //   BOOT
-    // ==========================================================
-    (async function boot() {
-      const canAccess = await guardPublicAccess();
-      if (!canAccess) return;
-
-      updateNavbarMenu();
-      await loadMateriList();
-    })();
-
-    // Skeleton awal
-    document.addEventListener('DOMContentLoaded', function() {
-      const container = document.getElementById('materiContainer');
-      if (container) {
-        renderSkeletonMateri(container);
-      }
-    });
-
+    // ============================================================
+    //   CONSOLE BANNER
+    // ============================================================
     console.log(
-      '%c materi.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c materi.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
+    console.log(
+      '%c 💡 Debug: window.__materiDebug ',
+      'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

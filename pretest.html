@@ -9,7 +9,6 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Pre-test · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.3.2 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -60,6 +59,31 @@
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
 
     /* ============ GLASS CARD ============ */
     .glass-card {
@@ -201,6 +225,7 @@
       .kahoot-options-grid { grid-template-columns: 1fr; }
       .quiz-header { flex-direction: column; align-items: stretch; text-align: center; }
       .question-text { font-size: 1.2rem; }
+      .cache-indicator { font-size: 0.65rem; }
     }
   </style>
 </head>
@@ -226,7 +251,15 @@
 
   <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 900px;">
     <div class="glass-card p-4 fade-up">
-      <h2 class="section-title"><i class="bi bi-arrow-repeat me-2"></i>Pre-test — Kahoot Style</h2>
+      <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <h2 class="section-title mb-0" style="border-left: none; padding-left: 0;">
+          <i class="bi bi-arrow-repeat me-2"></i>Pre-test — Kahoot Style
+        </h2>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
+      </div>
       <div id="pretestContainer" aria-live="polite"></div>
     </div>
   </div>
@@ -242,23 +275,23 @@
 
   <script type="module">
     // ============================================================
-    //   IMPORTS
+    //   pretest.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
     // ============================================================
+
     import {
       guardPublicAccess,
-      getPretestQuestions,
       submitPretest,
       showToast,
       escapeHtml,
       updateNavbarMenu,
     } from '/bisaa/js/core/api.js';
 
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
+
     // ============================================================
     //   CONSTANTS
     // ============================================================
-    const FORM_STATE_KEY = 'pkd_pretest_state_v1';
-    const CACHE_KEY = 'pkd_cache_pretest_data_v1';
-    const CACHE_AGE_MIN = 10;
+    const FORM_STATE_KEY = 'pkd_pretest_state_v2';
     const TIMER_WARNING_THRESHOLD = 10;
 
     // ============================================================
@@ -270,7 +303,33 @@
       timer: null,
       isMounted: false,
       isSubmitting: false,
+      cacheInstance: null,
+      cacheIndicatorTimer: null,
     };
+
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        STATE.cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
 
     // ============================================================
     //   UTILITY — Safe localStorage
@@ -290,6 +349,7 @@
         alamat: STATE.quiz.alamat,
         started: STATE.quiz.started,
         isFinished: STATE.quiz.isFinished,
+        questionIds: STATE.questions.map(q => String(q.id)),
         ts: Date.now(),
       };
       safeLS(() => localStorage.setItem(FORM_STATE_KEY, JSON.stringify(snapshot)));
@@ -305,49 +365,23 @@
           clearState();
           return null;
         }
+        // Cek apakah questionIds masih relevan dengan questions yang ada
+        if (Array.isArray(s.questionIds) && STATE.questions.length > 0) {
+          const currentIds = STATE.questions.map(q => String(q.id));
+          const sameSet = s.questionIds.length === currentIds.length &&
+                          s.questionIds.every((id, i) => id === currentIds[i]);
+          if (!sameSet && s.started && !s.isFinished) {
+            console.warn('[Pretest] Question set changed — resetting quiz state');
+            clearState();
+            return null;
+          }
+        }
         return s;
       } catch { return null; }
     }
 
     function clearState() {
       safeLS(() => localStorage.removeItem(FORM_STATE_KEY));
-    }
-
-    // ============================================================
-    //   UTILITY — Cache
-    // ============================================================
-    function getCache() {
-      const raw = safeLS(() => localStorage.getItem(CACHE_KEY));
-      if (!raw) return null;
-      try {
-        const { data, ts } = JSON.parse(raw);
-        if ((Date.now() - ts) > CACHE_AGE_MIN * 60 * 1000) {
-          safeLS(() => localStorage.removeItem(CACHE_KEY));
-          return null;
-        }
-        return data;
-      } catch { return null; }
-    }
-
-    function setCache(data) {
-      safeLS(() => localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })));
-    }
-
-    // ============================================================
-    //   SKELETON
-    // ============================================================
-    function renderSkeleton() {
-      const c = document.getElementById('pretestContainer');
-      if (!c) return;
-      c.innerHTML = `
-        <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
-          <div class="skeleton-box" style="height:24px;width:60%;margin-bottom:16px;"></div>
-          <div class="skeleton-box" style="height:16px;width:80%;margin-bottom:10px;"></div>
-          <div class="skeleton-box" style="height:16px;width:50%;margin-bottom:24px;"></div>
-          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;margin-bottom:12px;"></div>
-          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;"></div>
-        </div>
-      `;
     }
 
     // ============================================================
@@ -374,7 +408,8 @@
         c.innerHTML = `
           <div class="alert alert-warning text-center">
             <i class="bi bi-exclamation-triangle fs-4 d-block mb-2" aria-hidden="true"></i>
-            Belum ada soal pretest yang tersedia.
+            <strong>Belum ada soal pretest yang tersedia.</strong>
+            <p class="small mb-0 mt-2">Silakan hubungi admin atau coba refresh halaman.</p>
           </div>
         `;
         return;
@@ -391,9 +426,6 @@
             <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
             ${STATE.questions.length} soal siap
           </span>
-          <button class="btn btn-sm btn-outline-secondary rounded-pill" id="refreshBtn" type="button">
-            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Segarkan
-          </button>
         </div>
 
         <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
@@ -425,7 +457,6 @@
         </div>
       `;
 
-      // Start
       document.getElementById('startBtn')?.addEventListener('click', () => {
         const nama = document.getElementById('pretestNama').value.trim();
         const nohp = document.getElementById('pretestNohp').value.trim();
@@ -437,7 +468,7 @@
         }
 
         STATE.quiz = {
-          questions: STATE.questions,
+          questions: STATE.questions.slice(),
           currentIndex: 0,
           score: 0,
           answers: [],
@@ -449,36 +480,11 @@
         renderQuestion();
       });
 
-      // Refresh
-      document.getElementById('refreshBtn')?.addEventListener('click', async function () {
-        const btn = this;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-        try {
-          safeLS(() => localStorage.removeItem(CACHE_KEY));
-          const fresh = await getPretestQuestions();
-          const arr = Array.isArray(fresh) ? fresh : (fresh?.data || []);
-          if (arr.length > 0) {
-            STATE.questions = arr;
-            setCache(arr);
-            renderFormDataDiri();
-            showToast('Data diperbarui', 'success');
-          } else {
-            showToast('Tidak ada soal baru dari server', 'info');
-          }
-        } catch (e) {
-          showToast('Gagal refresh: ' + e.message, 'error');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Segarkan';
-        }
-      });
-
-      // Resume
+      // Resume quiz jika ada
       if (saved && !saved.isFinished && saved.started) {
         if (confirm('Anda memiliki Pretest yang belum selesai. Lanjutkan?')) {
           STATE.quiz = {
-            questions: STATE.questions,
+            questions: STATE.questions.slice(),
             currentIndex: saved.currentIndex || 0,
             score: saved.score || 0,
             answers: saved.answers || [],
@@ -489,7 +495,6 @@
             isFinished: false,
           };
           renderQuestion();
-          return;
         } else {
           clearState();
         }
@@ -709,56 +714,24 @@
     }
 
     // ============================================================
-    //   LOAD DATA
+    //   SKELETON
     // ============================================================
-    async function loadData() {
-      renderSkeleton();
-
-      // 1. Show cache first (instant)
-      const cached = getCache();
-      if (cached && cached.length > 0) {
-        STATE.questions = cached;
-        renderFormDataDiri();
-      }
-
-      // 2. Fetch fresh
-      try {
-        const res = await getPretestQuestions();
-        const arr = Array.isArray(res) ? res : (res?.data || []);
-
-        if (arr.length > 0) {
-          const changed = JSON.stringify(arr) !== JSON.stringify(STATE.questions);
-          STATE.questions = arr;
-          setCache(arr);
-          if (changed || !cached || cached.length === 0) {
-            renderFormDataDiri();
-          }
-        } else if (!cached || cached.length === 0) {
-          renderFormDataDiri();
-        }
-      } catch (e) {
-        console.warn('[Pretest] fetch error:', e);
-        if (!cached || cached.length === 0) {
-          const c = document.getElementById('pretestContainer');
-          if (c) {
-            c.innerHTML = `
-              <div class="alert alert-danger text-center">
-                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-                Gagal memuat soal: ${escapeHtml(e.message)}
-                <div class="mt-2">
-                  <button class="btn btn-sm btn-outline-danger" onclick="location.reload()">
-                    <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
-                  </button>
-                </div>
-              </div>
-            `;
-          }
-        }
-      }
+    function renderSkeleton() {
+      const c = document.getElementById('pretestContainer');
+      if (!c) return;
+      c.innerHTML = `
+        <div class="glass-card" style="background:#f8fafc;padding:1.5rem;">
+          <div class="skeleton-box" style="height:24px;width:60%;margin-bottom:16px;"></div>
+          <div class="skeleton-box" style="height:16px;width:80%;margin-bottom:10px;"></div>
+          <div class="skeleton-box" style="height:16px;width:50%;margin-bottom:24px;"></div>
+          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;margin-bottom:12px;"></div>
+          <div class="skeleton-box" style="height:48px;width:100%;border-radius:50px;"></div>
+        </div>
+      `;
     }
 
     // ============================================================
-    //   BOOT
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
     // ============================================================
     (async function boot() {
       if (STATE.isMounted) return;
@@ -767,13 +740,101 @@
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      updateNavbarMenu();
-      await loadData();
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
+      // Skeleton awal (instant)
+      renderSkeleton();
+
+      // ⚡ CREATE PUBLIC CACHE
+      STATE.cacheInstance = createPublicCache({
+        cacheKey: 'pretest_questions_public_v1',
+        action: 'getPretestQuestions',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const normalized = Array.isArray(data) ? data : (data?.data || []);
+          const questions = normalized.slice().sort((a, b) =>
+            (parseInt(a.urutan) || 0) - (parseInt(b.urutan) || 0)
+          );
+
+          const changed = JSON.stringify(questions.map(q => q.id).slice(0, 3)) !==
+                          JSON.stringify(STATE.questions.map(q => q.id).slice(0, 3));
+
+          STATE.questions = questions;
+
+          // Kalau quiz sudah mulai, jangan render ulang form
+          if (STATE.quiz && STATE.quiz.started && !STATE.quiz.isFinished) {
+            if (changed) {
+              console.warn('[Pretest] Questions updated mid-quiz — will apply on next restart');
+              showToast('Soal diperbarui. Restart untuk menerapkan soal baru.', 'info');
+            }
+            return;
+          }
+
+          renderFormDataDiri();
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          } else if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Pretest] Cache error:', err.message);
+        },
+      });
+
+      if (!STATE.cacheInstance) {
+        console.error('[Pretest] Failed to create cache instance');
+        setCacheIndicator('', 'Error');
+        return;
+      }
+
+      await STATE.cacheInstance.boot();
+
+      const stats = STATE.cacheInstance.getStats();
+      if (stats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
+      }
+
+      console.log('[Pretest] ✅ Boot complete');
     })();
 
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      stopTimer();
+      if (STATE.cacheInstance) {
+        try { STATE.cacheInstance.destroy(); }
+        catch (e) { /* silent */ }
+        STATE.cacheInstance = null;
+      }
+      if (STATE.cacheIndicatorTimer) {
+        clearTimeout(STATE.cacheIndicatorTimer);
+        STATE.cacheIndicatorTimer = null;
+      }
+    });
+
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__pretestDebug = {
+      getQuestions: () => STATE.questions,
+      getQuiz: () => STATE.quiz,
+      getCacheStats: () => STATE.cacheInstance?.getStats() || null,
+      forceRefresh: () => STATE.cacheInstance?.forceRefresh(),
+      clearCache: () => STATE.cacheInstance?.clearCache(),
+      resetQuizState: () => clearState(),
+    };
+
     console.log(
-      '%c Pretest v26.3.2 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c pretest.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>

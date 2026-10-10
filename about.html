@@ -7,7 +7,6 @@
   <meta name="description" content="Tentang & Kontak Tim Instruktur PKD GP Ansor Kabupaten Bantul">
   <title>Tentang &amp; Kontak · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
   <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
@@ -62,6 +61,31 @@
     #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
+
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
 
     /* ============ GLASS CARD ============ */
     .glass-card {
@@ -215,46 +239,22 @@
       flex-direction: column;
       align-items: center;
     }
-    .instructor-skeleton .skel-photo {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      margin-bottom: 1rem;
-    }
-    .instructor-skeleton .skel-name {
-      height: 18px;
-      width: 70%;
-      margin-bottom: 8px;
-      border-radius: 4px;
-    }
-    .instructor-skeleton .skel-role {
-      height: 14px;
-      width: 55%;
-      margin-bottom: 12px;
-      border-radius: 4px;
-    }
-    .instructor-skeleton .skel-desc {
-      height: 12px;
-      width: 90%;
-      margin-bottom: 8px;
-      border-radius: 4px;
-    }
-    .instructor-skeleton .skel-desc-2 {
-      height: 12px;
-      width: 70%;
-      border-radius: 4px;
-    }
     .skeleton-box {
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+      background-size: 200% 100%;
       border-radius: 8px;
-      animation: pulse 1.5s infinite ease-in-out;
+      animation: shimmer 1.5s infinite linear;
       display: inline-block;
     }
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
+    .instructor-skeleton .skel-photo { width: 110px; height: 110px; border-radius: 50%; margin-bottom: 1rem; }
+    .instructor-skeleton .skel-name { height: 18px; width: 70%; margin-bottom: 8px; }
+    .instructor-skeleton .skel-role { height: 14px; width: 55%; margin-bottom: 12px; }
+    .instructor-skeleton .skel-desc { height: 12px; width: 90%; margin-bottom: 8px; }
+    .instructor-skeleton .skel-desc-2 { height: 12px; width: 70%; }
 
     /* ============ EMPTY STATE ============ */
     .empty-instructor {
@@ -338,6 +338,7 @@
       .instructor-photo-wrapper { width: 90px; height: 90px; }
       .instructor-card { padding: 1.25rem 1rem; }
       .instructor-skeleton .skel-photo { width: 90px; height: 90px; }
+      .cache-indicator { font-size: 0.65rem; }
     }
   </style>
 </head>
@@ -379,11 +380,17 @@
 
     <!-- ============ TIM INSTRUKTUR (DINAMIS) ============ -->
     <section class="mb-5 fade-up">
-      <div class="d-flex align-items-center mb-3">
-        <i class="bi bi-people-fill text-primary fs-4 me-2" aria-hidden="true"></i>
-        <h4 class="fw-bold mb-0">Tim Instruktur PKD</h4>
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people-fill text-primary fs-4 me-2" aria-hidden="true"></i>
+          <h4 class="fw-bold mb-0">Tim Instruktur PKD</h4>
+        </div>
+        <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+          <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+          <span id="cacheIndicatorText">Memuat…</span>
+        </span>
       </div>
-      <div id="timInstrukturContainer" class="row g-3" aria-live="polite">
+      <div id="timInstrukturContainer" class="row g-3" aria-live="polite" aria-busy="true">
         <!-- Skeleton awal -->
         <div class="col-md-4">
           <div class="instructor-skeleton">
@@ -474,26 +481,55 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
-    // ==========================================================
+    // ============================================================
+    //   about.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+
     import {
       guardPublicAccess,
       callApi,
       showToast,
       getUserData,
       updateNavbarMenu,
-      escapeHtml
+      escapeHtml,
     } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
-    //   STATE
-    // ==========================================================
-    let currentCaptchaResult = 0;
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
 
-    // ==========================================================
+    // ============================================================
+    //   STATE
+    // ============================================================
+    let currentCaptchaResult = 0;
+    let timInstrukturCache = null;
+    let cacheIndicatorTimer = null;
+
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
+
+    // ============================================================
     //   CAPTCHA
-    // ==========================================================
+    // ============================================================
     function generateCaptcha() {
       const a = Math.floor(Math.random() * 9) + 1;
       const b = Math.floor(Math.random() * 9) + 1;
@@ -505,9 +541,9 @@
       if (aEl) aEl.value = '';
     }
 
-    // ==========================================================
+    // ============================================================
     //   TIM INSTRUKTUR RENDER
-    // ==========================================================
+    // ============================================================
     function normalizeWaNumber(wa) {
       if (!wa) return '';
       const digits = String(wa).replace(/\D/g, '');
@@ -575,59 +611,34 @@
         </div>`;
     }
 
-    function renderEmptyInstructor() {
-      const container = document.getElementById('timInstrukturContainer');
-      if (!container) return;
-      container.innerHTML = `
-        <div class="empty-instructor">
-          <i class="bi bi-people" aria-hidden="true"></i>
-          <h6 class="fw-bold mb-2">Data Tim Instruktur Belum Tersedia</h6>
-          <p class="small mb-0">Informasi tim instruktur PKD akan segera ditampilkan di sini.</p>
-        </div>`;
-    }
-
-    function renderErrorInstructor(message) {
-      const container = document.getElementById('timInstrukturContainer');
-      if (!container) return;
-      container.innerHTML = `
-        <div class="empty-instructor">
-          <i class="bi bi-exclamation-triangle text-warning" aria-hidden="true"></i>
-          <h6 class="fw-bold mb-2">Gagal Memuat Data</h6>
-          <p class="small mb-0">${escapeHtml(message || 'Silakan muat ulang halaman.')}</p>
-        </div>`;
-    }
-
-    async function loadTimInstruktur() {
+    function renderInstructorList(list) {
       const container = document.getElementById('timInstrukturContainer');
       if (!container) return;
 
-      try {
-        const res = await callApi('getTimInstrukturList', {}, 'GET');
-        const list = (res && res.success && Array.isArray(res.data))
-          ? res.data
-          : (Array.isArray(res) ? res : []);
+      container.setAttribute('aria-busy', 'false');
 
-        if (!list || list.length === 0) {
-          renderEmptyInstructor();
-          return;
-        }
-
-        // Sort by urutan
-        list.sort((a, b) =>
-          (parseInt(a.urutan) || 999) - (parseInt(b.urutan) || 999)
-        );
-
-        container.innerHTML = list.map(renderInstructorCard).join('');
-        console.log(`[About] Rendered ${list.length} tim instruktur`);
-      } catch (e) {
-        console.error('[About] Gagal load tim instruktur:', e);
-        renderErrorInstructor(e.message);
+      if (!list || list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-instructor">
+            <i class="bi bi-people" aria-hidden="true"></i>
+            <h6 class="fw-bold mb-2">Data Tim Instruktur Belum Tersedia</h6>
+            <p class="small mb-0">Informasi tim instruktur PKD akan segera ditampilkan di sini.</p>
+          </div>`;
+        return;
       }
+
+      // Sort by urutan
+      const sorted = list.slice().sort((a, b) =>
+        (parseInt(a.urutan) || 999) - (parseInt(b.urutan) || 999)
+      );
+
+      container.innerHTML = sorted.map(renderInstructorCard).join('');
+      console.log(`[About] Rendered ${sorted.length} tim instruktur`);
     }
 
-    // ==========================================================
+    // ============================================================
     //   HANDLE CONTACT FORM SUBMIT
-    // ==========================================================
+    // ============================================================
     async function handleContactForm(e) {
       e.preventDefault();
 
@@ -678,26 +689,87 @@
       }
     }
 
-    // ==========================================================
-    //   BOOT
-    // ==========================================================
+    // ============================================================
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
-      updateNavbarMenu();
+      try { updateNavbarMenu(); } catch (e) { /* silent */ }
+
       generateCaptcha();
       document.getElementById('contactForm')?.addEventListener('submit', handleContactForm);
 
-      // Load tim instruktur (paralel, tidak block)
-      loadTimInstruktur().catch(e => {
-        console.warn('[About] loadTimInstruktur error:', e);
+      // ⚡ CREATE PUBLIC CACHE
+      timInstrukturCache = createPublicCache({
+        cacheKey: 'about_tim_instruktur_v1',
+        action: 'getTimInstrukturList',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const list = Array.isArray(data) ? data : (data?.data || []);
+          renderInstructorList(list);
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          } else if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onError: (err) => {
+          console.warn('[About] Cache error:', err.message);
+        },
       });
+
+      if (!timInstrukturCache) {
+        console.error('[About] Failed to create cache instance');
+        setCacheIndicator('', 'Error');
+        return;
+      }
+
+      await timInstrukturCache.boot();
+
+      const stats = timInstrukturCache.getStats();
+      if (stats.hasCache) {
+        setCacheIndicator('instant', '⚡ Instan');
+      } else {
+        setCacheIndicator('instant', 'Baru dimuat');
+      }
+
+      console.log('[About] ✅ Boot complete');
     })();
 
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      if (timInstrukturCache) {
+        try { timInstrukturCache.destroy(); }
+        catch (e) { /* silent */ }
+        timInstrukturCache = null;
+      }
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+    });
+
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__aboutDebug = {
+      getCacheStats: () => timInstrukturCache?.getStats() || null,
+      forceRefresh: () => timInstrukturCache?.forceRefresh(),
+      clearCache: () => timInstrukturCache?.clearCache(),
+      getCaptcha: () => currentCaptchaResult,
+    };
+
     console.log(
-      '%c about.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
-      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+      '%c about.html v28.4.0 — Instant Load + Auto-Update ',
+      'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 </body>
