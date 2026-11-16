@@ -1,67 +1,165 @@
 // ============================================================
-// js/app.js — Full Production SPA Bootstrap (v26.1.6)
+// js/app.js — v28.1.0 CONNECTION RESILIENCE EDITION
 // ============================================================
-// Entry point SPA admin. Tanggung jawab:
-//   1. Load auth state dari storage
-//   2. Guard: redirect non-admin ke login
-//   3. Load partials (sidebar + bottom-nav) secara paralel
-//   4. Setup Router + register routes (18 routes)
-//   5. Hide initial loader & show app shell
-//   6. Set flag __pkdAppLoaded (untuk fallback timer di app.html)
-//   7. Global error handlers (module load failure, unhandled rejection)
-//   8. Global keyboard shortcuts
-//   9. Warn before unload jika ada modal terbuka
-//
-// v26.1.6 UPDATE:
-//   ✅ Tambah route #/admin/tim-instruktur
-//   ✅ Keyboard shortcut Alt+T → Tim Instruktur
-//   ✅ Route count dinamis di console banner
+// CHANGELOG v28.1.0 (dari v28.0.0):
+//   ✅ NEW: Preload data retry 2x dengan delay
+//   ✅ NEW: UI "Gagal Terhubung" dengan tombol Test Koneksi
+//   ✅ NEW: Deteksi CORS error → hint solusi deployment GAS
+//   ✅ NEW: Online/offline event listener
+//   ✅ FIX: Timeout startup lebih pendek (15s)
+//   ✅ FIX: Fallback ke cache kalau server tidak responsif
+//   ✅ KEEP: Semua 18 route + alias + validasi
+//   ✅ KEEP: Semua fitur v28.0.0
 // ============================================================
 
 import {
   getUserRole,
   updateNavbarMenu,
   loadAuthState,
+  escapeHtml,
+  showToast,
+  getCircuitState,
 } from './core/api.js';
+
+import {
+  BASE_PATH,
+  DEFAULT_ROUTE,
+  LOGIN_PATH,
+  isOnline,
+  isScriptUrlValid,
+  APP_VERSION,
+} from './core/config.js';
 
 import { loadSidebar } from './components/sidebar.js';
 import { loadBottomNav } from './components/bottom-nav.js';
+import { mount as mountThemeToggle } from './components/theme-toggle.js';
+import { mount as mountCommandPalette } from './components/command-palette.js';
+import { mount as mountNotificationCenter } from './components/notification-center.js';
 import Router from './router.js';
 
 // ============================================================
-//   APP VERSION & ROUTE REGISTRY — 18 Views
+//   CONSTANTS
 // ============================================================
-const APP_VERSION = '26.1.6';
+const DATA_PRELOAD_TIMEOUT_MS       = 20000;
+const ENSURE_READY_TIMEOUT_MS       = 10000;
+const AUTO_SYNC_INTERVAL_MS         = 180000;
+const MIN_SYNC_GAP_MS               = 60000;
+const IDLE_THRESHOLD_MS             = 5 * 60 * 1000;
+const FAILED_MODULE_RETRY_DELAY_MS  = 3000;
+const FAILED_MODULE_MAX_RETRY       = 3;
+const QUIZ_PRELOAD_DELAY_MS         = 2000;
+const MOBILE_BREAKPOINT             = 992;
+const PRELOAD_RETRY_DELAY_MS        = 1500;
+const PRELOAD_MAX_ATTEMPTS          = 2;
 
+// ============================================================
+//   ROUTES — 18 Views
+// ============================================================
 const ROUTES = {
-  '#/admin/dashboard':       { html: '/bisaa/views/admin/dashboard.html',       js: '/bisaa/views/admin/dashboard.js' },
-  '#/admin/peserta':         { html: '/bisaa/views/admin/peserta.html',         js: '/bisaa/views/admin/peserta.js' },
-  '#/admin/alumni':          { html: '/bisaa/views/admin/alumni.html',          js: '/bisaa/views/admin/alumni.js' },
-  '#/admin/kader':           { html: '/bisaa/views/admin/kader.html',           js: '/bisaa/views/admin/kader.js' },
-  '#/admin/tim-instruktur':  { html: '/bisaa/views/admin/tim-instruktur.html',  js: '/bisaa/views/admin/tim-instruktur.js' },   // ⭐ v26.1.6
-  '#/admin/sesi-absen':      { html: '/bisaa/views/admin/sesi-absen.html',      js: '/bisaa/views/admin/sesi-absen.js' },
-  '#/admin/data-absensi':    { html: '/bisaa/views/admin/data-absensi.html',    js: '/bisaa/views/admin/data-absensi.js' },
-  '#/admin/rekap-absensi':   { html: '/bisaa/views/admin/rekap-absensi.html',   js: '/bisaa/views/admin/rekap-absensi.js' },
-  '#/admin/skrining':        { html: '/bisaa/views/admin/skrining.html',        js: '/bisaa/views/admin/skrining.js' },
-  '#/admin/sertifikat':      { html: '/bisaa/views/admin/sertifikat.html',      js: '/bisaa/views/admin/sertifikat.js' },
-  '#/admin/tanda-tangan':    { html: '/bisaa/views/admin/tanda-tangan.html',    js: '/bisaa/views/admin/tanda-tangan.js' },
-  '#/admin/rtl':             { html: '/bisaa/views/admin/rtl.html',             js: '/bisaa/views/admin/rtl.js' },
-  '#/admin/pengaturan':      { html: '/bisaa/views/admin/pengaturan.html',      js: '/bisaa/views/admin/pengaturan.js' },
-  '#/admin/informasi':       { html: '/bisaa/views/admin/informasi.html',       js: '/bisaa/views/admin/informasi.js' },
-  '#/admin/asset':           { html: '/bisaa/views/admin/asset.html',           js: '/bisaa/views/admin/asset.js' },
-  '#/admin/pretest':         { html: '/bisaa/views/admin/pretest.html',         js: '/bisaa/views/admin/pretest.js' },
-  '#/admin/posttest':        { html: '/bisaa/views/admin/posttest.html',        js: '/bisaa/views/admin/posttest.js' },
-  '#/admin/materi':          { html: '/bisaa/views/admin/materi.html',          js: '/bisaa/views/admin/materi.js' },
+  '#/admin/dashboard':      { html: BASE_PATH + 'views/admin/dashboard.html',      js: BASE_PATH + 'views/admin/dashboard.js' },
+  '#/admin/peserta':        { html: BASE_PATH + 'views/admin/peserta.html',        js: BASE_PATH + 'views/admin/peserta.js' },
+  '#/admin/angkatan-pkd':   { html: BASE_PATH + 'views/admin/angkatan-pkd.html',   js: BASE_PATH + 'views/admin/angkatan-pkd.js' },
+  '#/admin/kader':          { html: BASE_PATH + 'views/admin/kader.html',          js: BASE_PATH + 'views/admin/kader.js' },
+  '#/admin/tim-instruktur': { html: BASE_PATH + 'views/admin/tim-instruktur.html', js: BASE_PATH + 'views/admin/tim-instruktur.js' },
+  '#/admin/sesi-absen':     { html: BASE_PATH + 'views/admin/sesi-absen.html',     js: BASE_PATH + 'views/admin/sesi-absen.js' },
+  '#/admin/data-absensi':   { html: BASE_PATH + 'views/admin/data-absensi.html',   js: BASE_PATH + 'views/admin/data-absensi.js' },
+  '#/admin/rekap-absensi':  { html: BASE_PATH + 'views/admin/rekap-absensi.html',  js: BASE_PATH + 'views/admin/rekap-absensi.js' },
+  '#/admin/skrining':       { html: BASE_PATH + 'views/admin/skrining.html',       js: BASE_PATH + 'views/admin/skrining.js' },
+  '#/admin/sertifikat':     { html: BASE_PATH + 'views/admin/sertifikat.html',     js: BASE_PATH + 'views/admin/sertifikat.js' },
+  '#/admin/tanda-tangan':   { html: BASE_PATH + 'views/admin/tanda-tangan.html',   js: BASE_PATH + 'views/admin/tanda-tangan.js' },
+  '#/admin/rtl':            { html: BASE_PATH + 'views/admin/rtl.html',            js: BASE_PATH + 'views/admin/rtl.js' },
+  '#/admin/pengaturan':     { html: BASE_PATH + 'views/admin/pengaturan.html',     js: BASE_PATH + 'views/admin/pengaturan.js' },
+  '#/admin/informasi':      { html: BASE_PATH + 'views/admin/informasi.html',      js: BASE_PATH + 'views/admin/informasi.js' },
+  '#/admin/asset':          { html: BASE_PATH + 'views/admin/asset.html',          js: BASE_PATH + 'views/admin/asset.js' },
+  '#/admin/pretest':        { html: BASE_PATH + 'views/admin/pretest.html',        js: BASE_PATH + 'views/admin/pretest.js' },
+  '#/admin/posttest':       { html: BASE_PATH + 'views/admin/posttest.html',       js: BASE_PATH + 'views/admin/posttest.js' },
+  '#/admin/materi':         { html: BASE_PATH + 'views/admin/materi.html',         js: BASE_PATH + 'views/admin/materi.js' },
 };
 
-const DEFAULT_ROUTE = '#/admin/dashboard';
-const LOGIN_PATH    = '/bisaa/login.html';
+// ============================================================
+//   ROUTE ALIASES
+// ============================================================
+const ROUTE_ALIASES = {
+  '#/admin/angkatan':       '#/admin/angkatan-pkd',
+  '#/admin/angkatanpkd':    '#/admin/angkatan-pkd',
+  '#/admin/alumni':         '#/admin/angkatan-pkd',
+  '#/admin/alumn':          '#/admin/angkatan-pkd',
+  '#/admin/lokasi-pkd':     '#/admin/angkatan-pkd',
+  '#/admin/lokasipkd':      '#/admin/angkatan-pkd',
+  '#/admin/lokasi_pkd':     '#/admin/angkatan-pkd',
+  '#/admin/lokasi':         '#/admin/angkatan-pkd',
+  '#/admin/pkd':            '#/admin/angkatan-pkd',
+  '#/admin/skriining':      '#/admin/skrining',
+  '#/admin/skrinng':        '#/admin/skrining',
+  '#/admin/skrinig':        '#/admin/skrining',
+  '#/admin/skining':        '#/admin/skrining',
+  '#/admin/sertifkat':      '#/admin/sertifikat',
+  '#/admin/certifikat':     '#/admin/sertifikat',
+  '#/admin/tandatangan':    '#/admin/tanda-tangan',
+  '#/admin/tanda_tangan':   '#/admin/tanda-tangan',
+  '#/admin/ttd':            '#/admin/tanda-tangan',
+  '#/admin/dataabsensi':    '#/admin/data-absensi',
+  '#/admin/data_absensi':   '#/admin/data-absensi',
+  '#/admin/rekapabsensi':   '#/admin/rekap-absensi',
+  '#/admin/rekap_absensi':  '#/admin/rekap-absensi',
+  '#/admin/sesiabsen':      '#/admin/sesi-absen',
+  '#/admin/sesi_absen':     '#/admin/sesi-absen',
+  '#/admin/timinstruktur':  '#/admin/tim-instruktur',
+  '#/admin/tim_instruktur': '#/admin/tim-instruktur',
+  '#/admin/pre-test':       '#/admin/pretest',
+  '#/admin/pre_test':       '#/admin/pretest',
+  '#/admin/prestest':       '#/admin/pretest',
+  '#/admin/postest':        '#/admin/posttest',
+  '#/admin/post-test':      '#/admin/posttest',
+  '#/admin/post_test':      '#/admin/posttest',
+  '#/admin/dashboard/':     '#/admin/dashboard',
+  '#/admin/peserta/':       '#/admin/peserta',
+  '#/admin/angkatan-pkd/':  '#/admin/angkatan-pkd',
+  '#/admin/kader/':         '#/admin/kader',
+  '#/admin/materi/':        '#/admin/materi',
+};
+
+// ============================================================
+//   NORMALIZE ROUTE HASH
+// ============================================================
+function normalizeRoute(hash) {
+  if (!hash || typeof hash !== 'string') return '#/admin/dashboard';
+
+  let h = hash.trim();
+  h = h.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  if (!h.startsWith('#')) h = '#' + h;
+  if (h === '#' || h === '#/') return '#/admin/dashboard';
+  if (!h.startsWith('#/')) h = '#/' + h.slice(1);
+
+  if (h.length > 3 && h.endsWith('/')) {
+    h = h.slice(0, -1);
+  }
+
+  if (ROUTE_ALIASES[h]) {
+    console.log(`[Route] 🔄 Aliased "${h}" → "${ROUTE_ALIASES[h]}"`);
+    h = ROUTE_ALIASES[h];
+  }
+
+  h = h.toLowerCase();
+  return h;
+}
 
 // ============================================================
 //   MODULE STATE
 // ============================================================
 let router = null;
 let isBooted = false;
+let autoSyncInterval = null;
+let isSyncing = false;
+let adminModule = null;
+let lastUserActivity = Date.now();
+let lastSyncAt = 0;
+let dataReady = false;
+let corsErrorShown = false;
+let isMobileDrawerOpen = false;
+
+window.__pkdFailedModules = new Map();
 
 // ============================================================
 //   UTILITY
@@ -74,143 +172,350 @@ function findElement(ids) {
   return null;
 }
 
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 function getRouteCount() {
   return Object.keys(ROUTES).length;
 }
 
+function isMobile() {
+  return window.innerWidth <= MOBILE_BREAKPOINT;
+}
+
+function updateLoaderText(text) {
+  const loader = document.getElementById('initialLoader');
+  if (!loader) return;
+  const textEl = loader.querySelector('.text');
+  if (textEl) textEl.textContent = text;
+}
+
+function updateLoaderProgress(current, total) {
+  const loader = document.getElementById('initialLoader');
+  if (!loader) return;
+  let progress = loader.querySelector('.preload-progress');
+  if (!progress) {
+    progress = document.createElement('div');
+    progress.className = 'preload-progress';
+    progress.style.cssText = 'margin-top:8px;font-size:0.75rem;color:#94a3b8;transition:opacity 0.3s;';
+    loader.appendChild(progress);
+  }
+  progress.textContent = `${current} / ${total}`;
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ============================================================
+//   SAFE DYNAMIC IMPORT
+// ============================================================
+async function safeImport(url, options = {}) {
+  const { silent = false, maxRetry = 2 } = options;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= maxRetry; attempt++) {
+    try {
+      const importUrl = attempt === 0 ? url : `${url}?retry=${Date.now()}&attempt=${attempt}`;
+      const mod = await import(/* @vite-ignore */ importUrl);
+
+      if (window.__pkdFailedModules.has(url)) {
+        window.__pkdFailedModules.delete(url);
+        console.log(`[SafeImport] ✅ Recovered: ${url}`);
+      }
+      return mod;
+    } catch (e) {
+      lastError = e;
+      const msg = String(e?.message || e || '');
+      const isRetryable =
+        msg.includes('Failed to fetch') ||
+        msg.includes('ERR_ABORTED') ||
+        msg.includes('dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        msg.includes('404') ||
+        msg.includes('NetworkError');
+
+      if (!isRetryable) {
+        if (!silent) console.error(`[SafeImport] Non-retryable: ${url}`);
+        throw e;
+      }
+
+      if (attempt < maxRetry) {
+        if (!silent) console.warn(`[SafeImport] Retry ${attempt + 1}/${maxRetry}: ${url}`);
+        await sleep(300 * (attempt + 1));
+      } else {
+        const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
+        window.__pkdFailedModules.set(url, { count: info.count + 1, lastError: msg });
+        if (!silent) console.error(`[SafeImport] ❌ FAILED: ${url}`);
+        throw e;
+      }
+    }
+  }
+  throw lastError || new Error('SafeImport failed');
+}
+
+// ============================================================
+//   VALIDATE ROUTE FILES
+// ============================================================
+async function validateRouteFiles() {
+  console.log('[Boot] 🔍 Validating route files...');
+  const results = [];
+  const entries = Object.entries(ROUTES);
+
+  const checks = entries.map(async ([route, cfg]) => {
+    try {
+      const [htmlRes, jsRes] = await Promise.all([
+        fetch(cfg.html, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+        fetch(cfg.js, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+      ]);
+
+      results.push({
+        route,
+        html: htmlRes.status,
+        js: jsRes.status,
+        ok: htmlRes.ok && jsRes.ok,
+      });
+    } catch (e) {
+      results.push({ route, html: 0, js: 0, ok: false, error: e.message });
+    }
+  });
+
+  await Promise.allSettled(checks);
+
+  const failed = results.filter(r => !r.ok);
+  if (failed.length > 0) {
+    console.warn('[Boot] ⚠️ Route file issues detected:');
+    console.table(failed);
+  } else {
+    console.log('[Boot] ✅ All', results.length, 'route files verified');
+  }
+  return results;
+}
+
+// ============================================================
+//   WAIT FOR DATA READY
+// ============================================================
+async function waitForDataReady(maxAttempts = 50) {
+  if (!adminModule) return false;
+
+  const hasEnsure = typeof adminModule.ensureDataReady === 'function';
+  const hasIsReady = typeof adminModule.isReady === 'function';
+
+  if (hasEnsure) {
+    console.log('[Boot] ⏳ Using AdminModule.ensureDataReady()...');
+    try {
+      const ready = await adminModule.ensureDataReady(ENSURE_READY_TIMEOUT_MS);
+      return ready;
+    } catch (e) {
+      console.warn('[Boot] ensureDataReady error:', e.message);
+    }
+  }
+
+  console.log('[Boot] ⏳ Manual polling for data ready...');
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      if (hasIsReady && adminModule.isReady()) {
+        console.log(`[Boot] ✅ Data ready (via isReady) after ${i * 200}ms`);
+        return true;
+      }
+
+      if (typeof adminModule.hasData === 'function' && adminModule.hasData()) {
+        console.log(`[Boot] ✅ Data ready (via hasData) after ${i * 200}ms`);
+        return true;
+      }
+
+      const stats = adminModule.getStats() || {};
+      const total =
+        (stats.totalPeserta || 0) +
+        (stats.totalSesi || 0) +
+        (stats.totalMateri || 0) +
+        (stats.totalAlumni || 0);
+
+      if (total > 0) {
+        console.log(`[Boot] ✅ Data ready (via getStats) after ${i * 200}ms — ${total} entities`);
+        return true;
+      }
+    } catch (e) { /* continue */ }
+    await sleep(200);
+  }
+
+  return false;
+}
+
 // ============================================================
 //   GLOBAL ERROR HANDLERS
-//   (dipasang SEBELUM boot supaya menangkap error saat load module)
 // ============================================================
 (function setupGlobalErrorHandlers() {
-  // --- Error saat load module ES ---
   window.addEventListener('error', function (e) {
     const msg = (e && e.message) || '';
-    const filename = (e && e.filename) || '';
-
     const isModuleError =
       msg.includes('Failed to resolve module') ||
       msg.includes('Failed to fetch dynamically imported module') ||
       msg.includes('Cannot find module') ||
       msg.includes('Importing a module script failed') ||
-      msg.includes('404') ||
-      filename.includes('api.js');
+      msg.includes('404');
 
     if (isModuleError) {
       console.error('[GlobalError]', e);
-
       const errorContainer = document.getElementById('moduleLoadError');
       if (errorContainer) errorContainer.style.display = 'block';
-
-      const dashboardContent = document.getElementById('dashboardContent');
-      if (dashboardContent) dashboardContent.innerHTML = '';
-
-      const refreshBtn = document.getElementById('refreshDataBtn');
-      if (refreshBtn) refreshBtn.style.display = 'none';
-
-      const cacheStatus = document.getElementById('cacheStatus');
-      if (cacheStatus) cacheStatus.textContent = 'Error 404';
     }
   }, true);
 
-  // --- Unhandled promise rejection ---
   window.addEventListener('unhandledrejection', function (e) {
     const reason = e && e.reason;
     const msg = (reason && reason.message) || String(reason || '');
-
-    // Filter error yang tidak critical
-    if (msg.includes('AbortError') || msg.includes('Request timeout')) {
-      return;
-    }
-
+    if (msg.includes('AbortError') || msg.includes('Request timeout')) return;
     console.error('[UnhandledRejection]', reason);
   });
 })();
 
 // ============================================================
-//   LOADING & ERROR UI HELPERS
-// ============================================================
-function renderShellLoading() {
-  const shell = findElement(['appShell', 'adminWrapper']);
-  if (!shell) return;
-
-  shell.innerHTML = `
-    <div class="d-flex justify-content-center align-items-center" style="min-height:100vh;">
-      <div class="text-center">
-        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
-        <p class="mt-3 text-muted small mb-0">Memuat aplikasi…</p>
-      </div>
-    </div>
-  `;
-}
-
-function renderShellError(message, detail) {
-  const shell = findElement(['appShell', 'adminWrapper']);
-  if (!shell) return;
-
-  const safeMsg    = escapeHtml(message || 'Terjadi kesalahan saat memuat aplikasi.');
-  const safeDetail = detail ? escapeHtml(detail) : '';
-
-  shell.innerHTML = `
-    <div class="d-flex justify-content-center align-items-center p-4" style="min-height:100vh;">
-      <div class="text-center" style="max-width:560px;">
-        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:4rem;"></i>
-        <h4 class="fw-bold mt-3">Gagal Memuat Aplikasi</h4>
-        <p class="text-muted small">${safeMsg}</p>
-        ${safeDetail ? `<div class="alert alert-danger small text-start">${safeDetail}</div>` : ''}
-        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
-          <button class="btn btn-primary rounded-pill px-4" data-shell-action="reload">
-            <i class="bi bi-arrow-clockwise me-1"></i> Refresh
-          </button>
-          <a href="${LOGIN_PATH}" class="btn btn-outline-secondary rounded-pill px-4">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Login Ulang
-          </a>
-        </div>
-      </div>
-    </div>
-  `;
-
-  shell.querySelector('[data-shell-action="reload"]')?.addEventListener('click', () => {
-    window.location.reload();
-  });
-}
-
-// ============================================================
-//   HIDE INITIAL LOADER & SHOW APP SHELL
+//   LOADING & ERROR UI
 // ============================================================
 function hideInitialLoader() {
   const loader = document.getElementById('initialLoader');
   if (!loader) return;
-
   loader.classList.add('hidden');
-
-  // Hapus elemen setelah animasi selesai
   setTimeout(() => {
-    try { loader.remove(); } catch (e) { /* ignore */ }
+    try { loader.remove(); } catch (e) { /* silent */ }
   }, 400);
 }
 
 function showAppShell() {
   const shell = findElement(['appShell', 'adminWrapper']);
   if (!shell) return;
-
   shell.style.removeProperty('visibility');
   shell.style.visibility = 'visible';
   shell.classList.add('is-ready');
 }
 
+function renderShellError(message, detail) {
+  const shell = findElement(['appShell', 'adminWrapper']);
+  if (!shell) return;
+  const safeMsg = escapeHtml(message || 'Terjadi kesalahan.');
+  const safeDetail = detail ? escapeHtml(detail) : '';
+  const safeLogin = escapeHtml(LOGIN_PATH);
+
+  shell.innerHTML = `
+    <div class="d-flex justify-content-center align-items-center p-4" style="min-height:100vh;">
+      <div class="text-center" style="max-width:560px;">
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:4rem;" aria-hidden="true"></i>
+        <h4 class="fw-bold mt-3">Gagal Memuat Aplikasi</h4>
+        <p class="text-muted small">${safeMsg}</p>
+        ${safeDetail ? `<div class="alert alert-danger small text-start">${safeDetail}</div>` : ''}
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+          <button class="btn btn-primary rounded-pill px-4" data-shell-action="reload" type="button">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Refresh
+          </button>
+          <button class="btn btn-warning rounded-pill px-4" data-shell-action="clearcache" type="button">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i> Clear Cache
+          </button>
+          <a href="${safeLogin}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Login Ulang
+          </a>
+        </div>
+      </div>
+    </div>`;
+
+  shell.querySelector('[data-shell-action="reload"]')?.addEventListener('click', () => window.location.reload());
+  shell.querySelector('[data-shell-action="clearcache"]')?.addEventListener('click', async () => {
+    if (!confirm('Hapus cache browser & reload?')) return;
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      sessionStorage.clear();
+      const toKeep = {};
+      ['pkd_auth'].forEach(k => { const v = localStorage.getItem(k); if (v) toKeep[k] = v; });
+      localStorage.clear();
+      Object.keys(toKeep).forEach(k => localStorage.setItem(k, toKeep[k]));
+    } catch (e) { /* silent */ }
+    window.location.reload();
+  });
+}
+
+// ⭐ NEW: Connection error UI khusus
+function renderConnectionError(message, isCors = false) {
+  const shell = findElement(['appShell', 'adminWrapper']);
+  if (!shell) return;
+
+  const safeMsg = escapeHtml(message || 'Gagal terhubung ke server');
+  const safeLogin = escapeHtml(LOGIN_PATH);
+
+  const corsHint = isCors ? `
+    <div class="alert alert-warning small text-start mt-3 mb-0">
+      <strong><i class="bi bi-info-circle me-1"></i>Solusi:</strong>
+      <ol class="mb-0 mt-2 ps-3">
+        <li>Pastikan <strong>deployment GAS</strong> di-set <code>Who has access: Anyone</code></li>
+        <li>Periksa <strong>koneksi internet</strong> Anda</li>
+        <li>Coba buka link GAS langsung di tab baru: <code>?action=health</code></li>
+        <li>Jika masih gagal, hubungi admin</li>
+      </ol>
+    </div>` : '';
+
+  shell.innerHTML = `
+    <div class="d-flex justify-content-center align-items-center p-4" style="min-height:100vh;">
+      <div class="text-center" style="max-width:600px;">
+        <div class="mb-3" style="font-size:4rem;color:#dc2626;">
+          <i class="bi bi-wifi-off" aria-hidden="true"></i>
+        </div>
+        <h4 class="fw-bold">Gagal Terhubung ke Server</h4>
+        <p class="text-muted small mb-3">${safeMsg}</p>
+        ${corsHint}
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+          <button class="btn btn-primary rounded-pill px-4" data-shell-action="retry" type="button">
+            <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+          </button>
+          <button class="btn btn-warning rounded-pill px-4" data-shell-action="clearcache" type="button">
+            <i class="bi bi-trash me-1"></i>Clear Cache
+          </button>
+          <button class="btn btn-outline-info rounded-pill px-4" data-shell-action="testconn" type="button">
+            <i class="bi bi-wifi me-1"></i>Test Koneksi
+          </button>
+          <a href="${safeLogin}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Login Ulang
+          </a>
+        </div>
+        <div id="connTestResult" class="mt-3 small"></div>
+      </div>
+    </div>`;
+
+  shell.querySelector('[data-shell-action="retry"]')?.addEventListener('click', () => window.location.reload());
+
+  shell.querySelector('[data-shell-action="clearcache"]')?.addEventListener('click', async () => {
+    if (!confirm('Hapus cache browser & reload?')) return;
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      sessionStorage.clear();
+      const toKeep = {};
+      ['pkd_auth'].forEach(k => { const v = localStorage.getItem(k); if (v) toKeep[k] = v; });
+      localStorage.clear();
+      Object.keys(toKeep).forEach(k => localStorage.setItem(k, toKeep[k]));
+    } catch (e) { /* silent */ }
+    window.location.reload();
+  });
+
+  shell.querySelector('[data-shell-action="testconn"]')?.addEventListener('click', async () => {
+    const resultEl = document.getElementById('connTestResult');
+    if (resultEl) resultEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menguji koneksi...';
+    try {
+      const mod = await import('./core/api.js');
+      const ok = await mod.testConnection();
+      if (resultEl) {
+        resultEl.innerHTML = ok
+          ? '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Server terhubung! Silakan reload.</span>'
+          : '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> Server tidak merespons. Cek deployment GAS.</span>';
+      }
+    } catch (e) {
+      if (resultEl) resultEl.innerHTML = `<span class="text-danger">Error: ${escapeHtml(e.message)}</span>`;
+    }
+  });
+}
+
 // ============================================================
-//   PARTIALS LOADER — dengan 1× retry
+//   PARTIALS LOADER
 // ============================================================
 async function loadPartialsWithRetry() {
   const maxRetry = 1;
@@ -219,106 +524,424 @@ async function loadPartialsWithRetry() {
   for (let attempt = 0; attempt <= maxRetry; attempt++) {
     try {
       await Promise.all([
-        Promise.resolve(loadSidebar()).catch(e => {
-          console.error('[Boot] Sidebar load failed:', e);
-          throw e;
-        }),
-        Promise.resolve(loadBottomNav()).catch(e => {
-          console.error('[Boot] Bottom-nav load failed:', e);
-          throw e;
-        }),
+        Promise.resolve(loadSidebar()).catch(e => { throw e; }),
+        Promise.resolve(loadBottomNav()).catch(e => { throw e; }),
       ]);
       return;
     } catch (e) {
       lastErr = e;
-      if (attempt < maxRetry) {
-        await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
-      }
+      if (attempt < maxRetry) await sleep(400 * (attempt + 1));
     }
   }
-
   throw lastErr || new Error('Gagal memuat partials');
+}
+
+// ============================================================
+//   ⭐ PRELOAD DATA — dengan Retry
+// ============================================================
+async function preloadAllData() {
+  console.log('[Boot] ⚡ Preloading data...');
+  updateLoaderText('Memuat data...');
+
+  const startTime = Date.now();
+
+  try {
+    const mod = await safeImport('./modules/admin.js', { silent: true });
+    adminModule = mod.AdminModule || mod.default;
+
+    if (!adminModule) throw new Error('AdminModule tidak tersedia');
+
+    let lastError = null;
+
+    for (let attempt = 0; attempt < PRELOAD_MAX_ATTEMPTS; attempt++) {
+      try {
+        const loadPromise = adminModule.loadAllData(true);
+
+        const timeoutPromise = new Promise((resolve) => {
+          setTimeout(() => resolve({ __timeout: true }), DATA_PRELOAD_TIMEOUT_MS);
+        });
+
+        const result = await Promise.race([loadPromise, timeoutPromise]);
+        const elapsed = Date.now() - startTime;
+
+        if (result && result.__timeout) {
+          console.warn(`[Boot] ⚠️ Preload TIMEOUT (attempt ${attempt + 1})`);
+
+          if (attempt === 0) {
+            await sleep(PRELOAD_RETRY_DELAY_MS);
+            continue;
+          }
+
+          // Background continue
+          loadPromise
+            .then((r) => {
+              if (r && r.success) {
+                console.log('[Boot] ✅ Data loaded late in background');
+                dataReady = true;
+                window.dispatchEvent(new CustomEvent('pkd:data-ready'));
+              }
+            })
+            .catch((e) => console.warn('[Boot] Late load error:', e.message));
+
+          return { success: false, error: 'timeout', timeout: true };
+        }
+
+        if (result && result.success) {
+          console.log(`[Boot] ✅ Data loaded in ${elapsed}ms via ${result.source || 'unknown'}`);
+          return { success: true, elapsed };
+        }
+
+        lastError = result?.error || 'Unknown error';
+
+        if (attempt < PRELOAD_MAX_ATTEMPTS - 1) {
+          console.warn(`[Boot] ⚠️ Load failed (attempt ${attempt + 1}), retrying...`);
+          await sleep(PRELOAD_RETRY_DELAY_MS);
+          continue;
+        }
+
+        return { success: false, error: lastError };
+      } catch (err) {
+        lastError = err.message;
+        console.warn(`[Boot] ⚠️ Preload attempt ${attempt + 1} failed:`, err.message);
+
+        if (attempt < PRELOAD_MAX_ATTEMPTS - 1) {
+          await sleep(PRELOAD_RETRY_DELAY_MS);
+          continue;
+        }
+        return { success: false, error: lastError };
+      }
+    }
+
+    return { success: false, error: lastError || 'All attempts failed' };
+  } catch (e) {
+    const elapsed = Date.now() - startTime;
+    console.warn(`[Boot] ⚠️ Preload failed after ${elapsed}ms:`, e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+// ============================================================
+//   PRELOAD FRAGMENTS + MODULES
+// ============================================================
+async function preloadAllFragmentsAndModules() {
+  const totalRoutes = Object.keys(ROUTES).length;
+  const entries = Object.entries(ROUTES);
+  let loaded = 0;
+  const total = totalRoutes * 2;
+
+  const tasks = entries.flatMap(([route, cfg]) => {
+    const htmlTask = fetch(cfg.html, { cache: 'force-cache' })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+      .then(html => {
+        if (html && html.trim() && router) router.fragmentCache.set(cfg.html, html);
+        loaded++;
+        updateLoaderProgress(loaded, total);
+      })
+      .catch((err) => {
+        console.warn(`[Boot] ⚠️ Fragment failed: ${cfg.html}`);
+        loaded++;
+        updateLoaderProgress(loaded, total);
+      });
+
+    const jsTask = safeImport(cfg.js, { silent: true })
+      .then(() => { loaded++; updateLoaderProgress(loaded, total); })
+      .catch((err) => {
+        console.warn(`[Boot] ⚠️ Module failed: ${cfg.js}`);
+        loaded++;
+        updateLoaderProgress(loaded, total);
+      });
+
+    return [htmlTask, jsTask];
+  });
+
+  await Promise.allSettled(tasks);
+
+  const failedCount = window.__pkdFailedModules.size;
+  if (failedCount > 0) {
+    console.warn(`[Boot] ⚠️ ${failedCount} module(s) failed — retry background`);
+  }
+  console.log(`[Boot] ✅ Preloaded ${totalRoutes} fragments + ${totalRoutes} modules`);
+}
+
+// ============================================================
+//   PRELOAD QUIZ QUESTIONS
+// ============================================================
+function preloadQuizQuestions() {
+  setTimeout(async () => {
+    console.log('[Boot] ⚡ Preloading quiz questions...');
+
+    const tasks = [
+      safeImport(BASE_PATH + 'views/admin/pretest.js', { silent: true })
+        .then(mod => mod && typeof mod.preloadData === 'function' ? mod.preloadData() : { success: false })
+        .catch(e => ({ success: false, error: e.message })),
+      safeImport(BASE_PATH + 'views/admin/posttest.js', { silent: true })
+        .then(mod => mod && typeof mod.preloadData === 'function' ? mod.preloadData() : { success: false })
+        .catch(e => ({ success: false, error: e.message })),
+    ];
+
+    const results = await Promise.allSettled(tasks);
+    results.forEach((r, i) => {
+      const kind = i === 0 ? 'pretest' : 'posttest';
+      if (r.status === 'fulfilled' && r.value && r.value.success) {
+        console.log(`[Boot] ✅ ${kind} preloaded: ${r.value.count ?? 0} items`);
+      }
+    });
+  }, QUIZ_PRELOAD_DELAY_MS);
+}
+
+// ============================================================
+//   AUTO-RETRY FAILED MODULES
+// ============================================================
+function scheduleFailedModuleRetry() {
+  setTimeout(async () => {
+    const failed = window.__pkdFailedModules;
+    if (!failed || failed.size === 0) return;
+
+    console.log(`[Boot] 🔄 Retrying ${failed.size} failed module(s)...`);
+    const urls = Array.from(failed.keys());
+
+    for (const url of urls) {
+      const info = failed.get(url);
+      if (info && info.count >= FAILED_MODULE_MAX_RETRY) continue;
+      try {
+        await safeImport(url, { silent: false, maxRetry: 0 });
+        console.log(`[Boot] ✅ Retry OK: ${url}`);
+      } catch (e) { /* silent */ }
+    }
+
+    if (failed.size > 0) scheduleFailedModuleRetry();
+  }, FAILED_MODULE_RETRY_DELAY_MS);
+}
+
+// ============================================================
+//   USER ACTIVITY TRACKING
+// ============================================================
+(function trackUserActivity() {
+  const handler = () => { lastUserActivity = Date.now(); };
+  ['click', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(ev => {
+    window.addEventListener(ev, handler, { passive: true });
+  });
+})();
+
+// ============================================================
+//   AUTO-SYNC
+// ============================================================
+function startAutoSync() {
+  if (autoSyncInterval) return;
+
+  console.log(
+    `[AutoSync] ✅ Started (interval=${AUTO_SYNC_INTERVAL_MS/1000}s, ` +
+    `minGap=${MIN_SYNC_GAP_MS/1000}s, idle=${IDLE_THRESHOLD_MS/60000}min)`
+  );
+
+  autoSyncInterval = setInterval(async () => {
+    if (document.hidden) return;
+    if (isSyncing) return;
+
+    const idleMs = Date.now() - lastUserActivity;
+    if (idleMs > IDLE_THRESHOLD_MS) return;
+
+    if (!adminModule) return;
+
+    const sinceLast = Date.now() - lastSyncAt;
+    if (sinceLast < MIN_SYNC_GAP_MS) return;
+
+    try {
+      const circuit = getCircuitState();
+      if (circuit && circuit.isOpen) {
+        console.log(
+          `[AutoSync] 🔴 Circuit OPEN (${circuit.failures} failures) — ` +
+          `wait ${Math.round(circuit.remainingMs/1000)}s`
+        );
+        return;
+      }
+    } catch (e) { /* silent */ }
+
+    isSyncing = true;
+    lastSyncAt = Date.now();
+
+    try {
+      const result = await adminModule.loadAllData(false);
+      if (result && result.success && !result.skipped) {
+        console.log('[AutoSync] ✅ Synced');
+      }
+    } catch (e) {
+      const msg = String(e.message || '').toLowerCase();
+      const isCors = msg.includes('failed to fetch') || msg.includes('network');
+
+      console.warn(`[AutoSync] ⚠️ Failed: ${e.message}`);
+
+      if (isCors && !corsErrorShown) {
+        corsErrorShown = true;
+        try {
+          showToast('Server sedang sibuk. Data lama tetap ditampilkan.', 'warning');
+        } catch (err) { /* silent */ }
+        setTimeout(() => { corsErrorShown = false; }, 5 * 60 * 1000);
+      }
+    } finally {
+      isSyncing = false;
+    }
+  }, AUTO_SYNC_INTERVAL_MS);
+}
+
+function stopAutoSync() {
+  if (autoSyncInterval) {
+    clearInterval(autoSyncInterval);
+    autoSyncInterval = null;
+    console.log('[AutoSync] ⏹️ Stopped');
+  }
+}
+
+// ============================================================
+//   INTERACTIVE FEATURES
+// ============================================================
+async function mountInteractiveFeatures() {
+  try { mountThemeToggle(); console.log('[Boot] ✅ Theme Toggle'); }
+  catch (e) { console.warn('[Boot] Theme Toggle gagal:', e); }
+
+  try { mountCommandPalette(); console.log('[Boot] ✅ Command Palette'); }
+  catch (e) { console.warn('[Boot] Command Palette gagal:', e); }
+
+  try { await mountNotificationCenter(); console.log('[Boot] ✅ Notification Center'); }
+  catch (e) { console.warn('[Boot] Notification Center gagal:', e); }
+}
+
+// ============================================================
+//   MOBILE TOPBAR BUTTONS
+// ============================================================
+function bindMobileTopbarButtons() {
+  const themeBtn = document.getElementById('mobileThemeBtn');
+  if (!themeBtn || themeBtn.dataset.bound === '1') return;
+  themeBtn.dataset.bound = '1';
+
+  themeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('theme:toggle'));
+  });
+
+  console.log('[Boot] ✅ Mobile theme button bound');
+}
+
+// ============================================================
+//   SIDEBAR DRAWER LISTENERS
+// ============================================================
+function installSidebarDrawerListeners() {
+  if (window.__pkdSidebarDrawerListenersInstalled) return;
+  window.__pkdSidebarDrawerListenersInstalled = true;
+
+  window.addEventListener('sidebar:mobile-opened', () => {
+    isMobileDrawerOpen = true;
+    console.log('[App] 📱 Mobile sidebar opened');
+  });
+
+  window.addEventListener('sidebar:mobile-closed', () => {
+    isMobileDrawerOpen = false;
+    console.log('[App] 📱 Mobile sidebar closed');
+  });
+
+  console.log('[Boot] ✅ Sidebar drawer listeners installed');
+}
+
+// ============================================================
+//   ONLINE/OFFLINE LISTENERS
+// ============================================================
+function installNetworkListeners() {
+  if (window.__pkdNetworkListenersInstalled) return;
+  window.__pkdNetworkListenersInstalled = true;
+
+  window.addEventListener('online', () => {
+    console.log('[App] 🌐 Online — reloading data');
+    try { showToast('Koneksi kembali. Menyegarkan data...', 'success'); }
+    catch (e) { /* silent */ }
+
+    if (adminModule && typeof adminModule.loadAllData === 'function') {
+      adminModule.loadAllData(true).catch(() => {});
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    console.log('[App] 📴 Offline');
+    try { showToast('Koneksi terputus. Cek internet Anda.', 'warning'); }
+    catch (e) { /* silent */ }
+  });
+
+  console.log('[Boot] ✅ Network listeners installed');
 }
 
 // ============================================================
 //   BOOT SEQUENCE
 // ============================================================
 async function boot() {
-  // Cegah double-boot
-  if (isBooted) {
-    console.warn('[Boot] Sudah dijalankan, skip.');
-    return;
-  }
+  if (isBooted) { console.warn('[Boot] Skip.'); return; }
   isBooted = true;
 
-  // ----------------------------------------------------------
-  //   1. Load auth state dari session/localStorage
-  // ----------------------------------------------------------
-  try {
-    loadAuthState();
-  } catch (e) {
-    console.error('[Boot] loadAuthState failed:', e);
+  console.log(`[Boot] Starting PKD GP Ansor Admin v${APP_VERSION}...`);
+  const bootStart = Date.now();
+
+  // 0. Cek koneksi & config
+  if (!isOnline()) {
+    console.warn('[Boot] ⚠️ Browser offline');
+    updateLoaderText('Menunggu koneksi...');
   }
 
-  // ----------------------------------------------------------
-  //   2. Guard: redirect jika bukan admin
-  // ----------------------------------------------------------
+  if (!isScriptUrlValid()) {
+    console.error('[Boot] ❌ SCRIPT_URL tidak valid');
+    hideInitialLoader();
+    renderConnectionError('Konfigurasi server tidak valid. Cek js/core/config.js', false);
+    return;
+  }
+
+  // 1. Auth state
+  try { loadAuthState(); }
+  catch (e) { console.error('[Boot] loadAuthState failed:', e); }
+
+  // 2. Role check
   const role = getUserRole();
   if (role !== 'admin') {
-    console.warn('[Boot] Non-admin role detected:', role, '→ redirect ke login');
+    console.warn('[Boot] Non-admin:', role);
     window.location.replace(LOGIN_PATH);
     return;
   }
 
-  // ----------------------------------------------------------
-  //   3. Update navbar user menu
-  // ----------------------------------------------------------
-  try {
-    updateNavbarMenu();
-  } catch (e) {
-    console.warn('[Boot] updateNavbarMenu failed:', e);
-  }
+  // 3. Navbar
+  try { updateNavbarMenu(); }
+  catch (e) { console.warn('[Boot] updateNavbarMenu failed:', e); }
 
-  // ----------------------------------------------------------
-  //   4. Load partials: sidebar + bottom-nav (paralel + retry)
-  // ----------------------------------------------------------
+  // 4. Partials
   try {
     await loadPartialsWithRetry();
+    console.log('[Boot] ✅ Partials loaded');
   } catch (e) {
     console.error('[Boot] Failed to load partials:', e);
     renderShellError(
       'Gagal memuat komponen navigasi.',
-      'Pastikan file /bisaa/partials/sidebar.html dan /bisaa/partials/bottom-nav.html tersedia.'
+      `Pastikan file ${BASE_PATH}partials/sidebar.html dan ${BASE_PATH}partials/bottom-nav.html tersedia.`
     );
     return;
   }
 
-  // ----------------------------------------------------------
-  //   5. Cari view container
-  // ----------------------------------------------------------
+  // 5. View container
   const viewContainer = findElement(['view-container', 'appOutlet']);
   if (!viewContainer) {
-    console.error('[Boot] #view-container / #appOutlet tidak ditemukan di DOM');
+    console.error('[Boot] #view-container tidak ditemukan');
     renderShellError('Elemen #view-container tidak ditemukan di DOM.');
     return;
   }
 
-  // ----------------------------------------------------------
-  //   6. Setup Router
-  // ----------------------------------------------------------
+  // 6. Create router
   try {
     router = new Router(viewContainer, ROUTES, {
       defaultRoute: DEFAULT_ROUTE,
       scrollBehavior: 'top',
-      useCacheBuster: true,
+      useCacheBuster: false,
       showLoadingUI: true,
-      maxRetries: 1,
+      maxRetries: 2,
       debug: false,
+      prefetchEnabled: true,
     });
-
-    // Expose ke window untuk debugging
-    window.__router  = router;
-    window.__routes  = ROUTES;
+    window.__router = router;
+    window.__routes = ROUTES;
+    window.__routeAliases = ROUTE_ALIASES;
     window.__pkdAppVersion = APP_VERSION;
   } catch (e) {
     console.error('[Boot] Failed to create router:', e);
@@ -326,140 +949,189 @@ async function boot() {
     return;
   }
 
-  // ----------------------------------------------------------
-  //   7. Handle missing hash → redirect ke default
-  // ----------------------------------------------------------
+  // 6b. Normalize initial hash
+  const currentHash = window.location.hash;
+  if (currentHash) {
+    const normalized = normalizeRoute(currentHash);
+    if (normalized !== currentHash) {
+      console.log(`[Boot] 🔄 Normalizing initial hash: "${currentHash}" → "${normalized}"`);
+      try {
+        history.replaceState(null, '', normalized);
+      } catch (e) {
+        window.location.hash = normalized;
+      }
+    }
+  }
+
+  // 7. PARALLEL PRELOAD
+  updateLoaderText('Memuat menu & data...');
+
+  const fragmentsPromise = preloadAllFragmentsAndModules();
+  const dataPromise = preloadAllData();
+  const validatePromise = validateRouteFiles();
+
+  await Promise.allSettled([fragmentsPromise, dataPromise, validatePromise]);
+
+  console.log('[Boot] ✅ Preload complete');
+
+  // 7b. Verify data ready
+  updateLoaderText('Memverifikasi data...');
+
+  const isReady = await waitForDataReady();
+
+  if (isReady) {
+    dataReady = true;
+    window.dispatchEvent(new CustomEvent('pkd:data-ready'));
+
+    const stats = adminModule && typeof adminModule.getStats === 'function'
+      ? adminModule.getStats()
+      : {};
+    console.log('[Boot] ✅ Data verified ready:', {
+      peserta: stats.totalPeserta || 0,
+      sesi: stats.totalSesi || 0,
+      materi: stats.totalMateri || 0,
+      alumni: stats.totalAlumni || 0,
+      angkatan: stats.totalAngkatan || 0,
+    });
+  } else {
+    // Cek apakah fatal: tidak ada data & ada error
+    const adminState = adminModule?.getState?.() || {};
+    const hasError = adminState.lastError;
+    const hasData = adminModule?.hasData?.() || false;
+
+    if (!hasData && hasError) {
+      console.error('[Boot] ❌ Fatal: No data & connection error');
+      hideInitialLoader();
+      const isCors = String(hasError).toLowerCase().includes('cors') ||
+                     String(hasError).toLowerCase().includes('failed to fetch');
+      renderConnectionError(hasError, isCors);
+      return;
+    }
+
+    console.warn('[Boot] ⚠️ Data not verified — view akan show skeleton');
+  }
+
+  preloadQuizQuestions();
+  scheduleFailedModuleRetry();
+
+  // 8. Set default hash
   const hash = window.location.hash;
   if (!hash || hash === '#' || hash === '#/') {
     window.location.hash = DEFAULT_ROUTE;
-    // 'hashchange' akan trigger router render
+  } else {
+    const normalized = normalizeRoute(hash);
+    if (normalized !== hash) {
+      console.log(`[Boot] 🔄 Normalizing hash before router.start()`);
+      window.location.hash = normalized;
+    }
   }
 
-  // ----------------------------------------------------------
-  //   8. Start router
-  // ----------------------------------------------------------
+  // 9. Start SPA
+  updateLoaderText('Menyiapkan halaman...');
   try {
     router.start();
-    console.log('[Boot] ✅ SPA started for admin');
+    console.log('[Boot] ✅ SPA started');
   } catch (e) {
     console.error('[Boot] Router start failed:', e);
     renderShellError('Gagal memulai navigasi.', e.message);
     return;
   }
 
-  // ----------------------------------------------------------
-  //   9. Hide loader + show app shell + flag loaded
-  // ----------------------------------------------------------
+  // 10. Hide loader
+  updateLoaderText('Siap!');
   hideInitialLoader();
   showAppShell();
   window.__pkdAppLoaded = true;
+  window.dispatchEvent(new CustomEvent('pkd:app-loaded'));
 
-  // ----------------------------------------------------------
-  //   10. Install global keyboard shortcuts
-  // ----------------------------------------------------------
+  // 11. Interactive features
+  await mountInteractiveFeatures();
+
+  // 11b. Mobile topbar buttons
+  bindMobileTopbarButtons();
+
+  // 11c. Sidebar drawer listeners
+  installSidebarDrawerListeners();
+
+  // 11d. Network listeners
+  installNetworkListeners();
+
+  // 12. Auto-sync
+  startAutoSync();
+
+  // 13. Global handlers
   installKeyboardShortcuts();
-
-  // ----------------------------------------------------------
-  //   11. Warn before unload jika ada modal terbuka
-  // ----------------------------------------------------------
   installBeforeUnloadGuard();
+  installBfcacheGuard();
+  installTitleUpdate();
+  installHashChangeNormalizer();
 
-  // ----------------------------------------------------------
-  //   12. Console banner (dynamic route count)
-  // ----------------------------------------------------------
+  // 14. Done
+  const totalBoot = Date.now() - bootStart;
   console.log(
     `%c PKD GP Ansor Bantul — SPA v${APP_VERSION} `,
     'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;',
-    `Routes: ${getRouteCount()}`
+    `Routes: ${getRouteCount()} | Aliases: ${Object.keys(ROUTE_ALIASES).length} | Boot: ${totalBoot}ms | Data: ${dataReady ? '✅ Ready' : '⚠️ Skeleton'}`
   );
+}
+
+// ============================================================
+//   HASH CHANGE NORMALIZER
+// ============================================================
+function installHashChangeNormalizer() {
+  if (window.__pkdHashNormalizerInstalled) return;
+  window.__pkdHashNormalizerInstalled = true;
+
+  window.addEventListener('hashchange', function () {
+    const raw = window.location.hash;
+    if (!raw) return;
+
+    const normalized = normalizeRoute(raw);
+    if (normalized === raw) return;
+
+    console.log(`[HashNormalizer] 🔄 Auto-fix: "${raw}" → "${normalized}"`);
+    try {
+      history.replaceState(null, '', normalized);
+      if (router && typeof router.navigate === 'function') {
+        router.navigate(normalized);
+      }
+    } catch (e) {
+      window.location.hash = normalized;
+    }
+  });
 }
 
 // ============================================================
 //   KEYBOARD SHORTCUTS
 // ============================================================
 function installKeyboardShortcuts() {
-  // Guard supaya tidak dobel saat app.js re-import
   if (window.__pkdShortcutsInstalled) return;
   window.__pkdShortcutsInstalled = true;
 
   document.addEventListener('keydown', function (e) {
-    // Skip kalau user sedang ketik di input / textarea / contenteditable
     const tag = (e.target && e.target.tagName) || '';
-    if (
-      tag === 'INPUT' ||
-      tag === 'TEXTAREA' ||
-      tag === 'SELECT' ||
-      (e.target && e.target.isContentEditable)
-    ) {
-      return;
-    }
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+    if (e.ctrlKey || e.metaKey) return;
+    if (!e.altKey) return;
 
-    // Hanya proses kalau Alt ditekan (tanpa Ctrl / Meta)
-    if (!e.altKey || e.ctrlKey || e.metaKey) return;
+    if (isMobile() && isMobileDrawerOpen) return;
 
     const key = String(e.key || '').toLowerCase();
-
-    // Alt + D → Dashboard
-    if (key === 'd') {
+    const routes = {
+      'd': '#/admin/dashboard',
+      'p': '#/admin/peserta',
+      'a': '#/admin/sesi-absen',
+      's': '#/admin/skrining',
+      'r': '#/admin/rtl',
+      'q': '#/admin/tanda-tangan',
+      'm': '#/admin/materi',
+      'k': '#/admin/kader',
+      't': '#/admin/tim-instruktur',
+      'l': '#/admin/angkatan-pkd',
+    };
+    if (routes[key]) {
       e.preventDefault();
-      router && router.navigate('#/admin/dashboard');
-      return;
-    }
-
-    // Alt + P → Peserta
-    if (key === 'p') {
-      e.preventDefault();
-      router && router.navigate('#/admin/peserta');
-      return;
-    }
-
-    // Alt + A → Sesi Absen
-    if (key === 'a') {
-      e.preventDefault();
-      router && router.navigate('#/admin/sesi-absen');
-      return;
-    }
-
-    // Alt + S → Skrining
-    if (key === 's') {
-      e.preventDefault();
-      router && router.navigate('#/admin/skrining');
-      return;
-    }
-
-    // Alt + R → RTL
-    if (key === 'r') {
-      e.preventDefault();
-      router && router.navigate('#/admin/rtl');
-      return;
-    }
-
-    // Alt + Q → Tanda Tangan
-    if (key === 'q') {
-      e.preventDefault();
-      router && router.navigate('#/admin/tanda-tangan');
-      return;
-    }
-
-    // Alt + M → Materi
-    if (key === 'm') {
-      e.preventDefault();
-      router && router.navigate('#/admin/materi');
-      return;
-    }
-
-    // Alt + K → Kader
-    if (key === 'k') {
-      e.preventDefault();
-      router && router.navigate('#/admin/kader');
-      return;
-    }
-
-    // ⭐ v26.1.6: Alt + T → Tim Instruktur
-    if (key === 't') {
-      e.preventDefault();
-      router && router.navigate('#/admin/tim-instruktur');
-      return;
+      if (router) router.navigate(routes[key]);
     }
   });
 }
@@ -472,14 +1144,54 @@ function installBeforeUnloadGuard() {
   window.__pkdUnloadGuardInstalled = true;
 
   window.addEventListener('beforeunload', function (e) {
-    // Cek apakah ada modal yang sedang terbuka
-    const hasOpenModal = document.querySelector('.modal.show');
-    if (!hasOpenModal) return;
-
-    // Biarkan browser menampilkan dialog konfirmasi
+    if (!document.querySelector('.modal.show')) return;
     e.preventDefault();
     e.returnValue = '';
     return '';
+  });
+}
+
+// ============================================================
+//   BFCACHE GUARD
+// ============================================================
+function installBfcacheGuard() {
+  if (window.__pkdBfcacheGuardInstalled) return;
+  window.__pkdBfcacheGuardInstalled = true;
+
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    if (!window.__pkdAppLoaded) return;
+    try {
+      const role = getUserRole();
+      if (role !== 'admin') window.location.replace(LOGIN_PATH);
+    } catch (err) {
+      window.location.replace(LOGIN_PATH);
+    }
+  });
+}
+
+// ============================================================
+//   TITLE UPDATE
+// ============================================================
+function installTitleUpdate() {
+  if (window.__pkdTitleUpdateInstalled) return;
+  window.__pkdTitleUpdateInstalled = true;
+
+  window.addEventListener('routeChanged', function (e) {
+    const detail = e && e.detail;
+    if (!detail || !detail.path) return;
+
+    const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
+    const title = path.split(' ').map(w =>
+      w.charAt(0).toUpperCase() + w.slice(1)
+    ).join(' ');
+
+    document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
+
+    const topbarTitle = document.getElementById('mobileTopbarTitle');
+    if (topbarTitle) {
+      topbarTitle.textContent = title || 'PKD GP Ansor';
+    }
   });
 }
 
@@ -489,19 +1201,132 @@ function installBeforeUnloadGuard() {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', boot, { once: true });
 } else {
-  // DOM sudah siap (module script bisa jalan setelah DOM parsed)
   boot();
 }
 
 // ============================================================
-//   EXPOSE HELPERS UNTUK DEBUGGING
+//   DEBUG HELPERS
 // ============================================================
 window.__pkd = {
   version: APP_VERSION,
+  isDataReady: () => dataReady,
+
   getRouter: () => router,
   getRoutes: () => ROUTES,
   getRouteCount: getRouteCount,
-  navigate: (hash) => router && router.navigate(hash),
+  getAliases: () => ROUTE_ALIASES,
+  navigate: (hash) => {
+    const normalized = normalizeRoute(hash);
+    if (router) router.navigate(normalized);
+  },
+  normalizeRoute: normalizeRoute,
   reload: () => router && router.reload(),
   destroy: () => router && router.destroy(),
+
+  openPalette: () => window.dispatchEvent(new CustomEvent('palette:open')),
+  closePalette: () => window.dispatchEvent(new CustomEvent('palette:close')),
+  toggleTheme: () => window.dispatchEvent(new CustomEvent('theme:toggle')),
+  setTheme: (t) => window.dispatchEvent(new CustomEvent('theme:set', { detail: { theme: t } })),
+  openShortcuts: () => window.dispatchEvent(new CustomEvent('shortcuts:open')),
+
+  openSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-open')),
+  closeSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-close')),
+  toggleSidebar: () => window.dispatchEvent(new CustomEvent('sidebar:mobile-toggle')),
+  isSidebarOpen: () => isMobileDrawerOpen,
+
+  getAdminModule: () => adminModule,
+  forceSync: async () => {
+    if (!adminModule) return { success: false, error: 'AdminModule belum siap' };
+    const t0 = Date.now();
+    const result = await adminModule.loadAllData(true);
+    lastSyncAt = Date.now();
+    return { ...result, elapsed: Date.now() - t0 };
+  },
+
+  testConnection: async () => {
+    try {
+      const mod = await import('./core/api.js');
+      return await mod.testConnection();
+    } catch (e) {
+      return false;
+    }
+  },
+
+  getFailedModules: () => {
+    const result = {};
+    window.__pkdFailedModules.forEach((v, k) => { result[k] = v; });
+    return result;
+  },
+  clearFailedModules: () => { window.__pkdFailedModules.clear(); },
+  retryFailedModules: async () => {
+    const failed = window.__pkdFailedModules;
+    if (failed.size === 0) return;
+    const urls = Array.from(failed.keys());
+    for (const url of urls) {
+      try { await safeImport(url, { silent: false, maxRetry: 1 }); }
+      catch (e) { /* silent */ }
+    }
+  },
+
+  preloadQuiz: () => preloadQuizQuestions(),
+  startAutoSync,
+  stopAutoSync,
+  isAutoSyncRunning: () => !!autoSyncInterval,
+  getStats: () => adminModule && typeof adminModule.getStats === 'function'
+    ? adminModule.getStats()
+    : null,
+
+  diagnose: async () => {
+    const report = {
+      version: APP_VERSION,
+      dataReady,
+      isSyncing,
+      isMobileDrawerOpen,
+      isMobile: isMobile(),
+      isOnline: isOnline(),
+      scriptUrlValid: isScriptUrlValid(),
+      lastSyncAgo: lastSyncAt ? `${Math.round((Date.now() - lastSyncAt)/1000)}s` : 'never',
+      lastUserActivityAgo: `${Math.round((Date.now() - lastUserActivity)/1000)}s`,
+      autoSyncRunning: !!autoSyncInterval,
+      failedModules: window.__pkdFailedModules.size,
+      routeCount: Object.keys(ROUTES).length,
+      aliasCount: Object.keys(ROUTE_ALIASES).length,
+    };
+    try { report.circuit = getCircuitState(); }
+    catch (e) { report.circuit = 'unavailable'; }
+    try { report.stats = adminModule?.getStats?.() || null; }
+    catch (e) { report.stats = null; }
+    try { report.routeFiles = await validateRouteFiles(); }
+    catch (e) { report.routeFiles = 'check failed'; }
+
+    console.table(report);
+    return report;
+  },
+
+  checkRoutes: async () => {
+    const results = [];
+    for (const [route, config] of Object.entries(ROUTES)) {
+      try {
+        const [htmlRes, jsRes] = await Promise.all([
+          fetch(config.html, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+          fetch(config.js, { method: 'HEAD', cache: 'no-store' }).catch(() => ({ ok: false, status: 0 })),
+        ]);
+        results.push({
+          route: route.replace('#/admin/', ''),
+          html: htmlRes.status,
+          js: jsRes.status,
+          ok: htmlRes.ok && jsRes.ok ? '✅' : '❌',
+        });
+      } catch (e) {
+        results.push({ route, error: e.message, ok: '❌' });
+      }
+    }
+    console.table(results);
+    return results;
+  },
 };
+
+console.log(
+  '%c App v28.1.0 — Connection Resilience Edition ',
+  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);

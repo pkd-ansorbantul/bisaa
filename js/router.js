@@ -1,46 +1,33 @@
 // ============================================================
-// js/router.js — Full Production Hash Router (v26.1.6)
+// js/router.js — v27.2.2 ROBUST MODULE LOAD EDITION
 // ============================================================
-// Fitur:
-// ✅ Hash-based routing (#/admin/xxx)
-// ✅ Fragment HTML cache (in-memory Map)
-// ✅ Dynamic JS module loading dengan mount()/unmount() lifecycle
-// ✅ Query string parsing (?key=value)
-// ✅ Sidebar & bottom-nav active state sync (DOM + event)
-// ✅ Custom event 'router:navigate' (dari sidebar/bottom-nav)
-// ✅ Custom event 'routeChanged' (dikirim ke global)
-// ✅ Scroll behavior: top | smooth | none
-// ✅ Cache buster support (opsional)
-// ✅ Concurrent navigation guard (token-based)
-// ✅ Retry otomatis untuk fragment yang gagal load
-// ✅ Error UI user-friendly (not found + render error)
-// ✅ Bootstrap modal artifact cleanup
-// ✅ Public API: start(), navigate(), reload(), destroy(), getCurrentRoute()
+// CHANGELOG v27.2.2 (dari v27.2.0):
+//   ✅ FIX CRITICAL: Dynamic import ERR_ABORTED → retry + fallback
+//   ✅ NEW: _loadModule dengan retry 2x + cache buster
+//   ✅ NEW: Skip retry kalau error non-retryable (syntax error, dll)
+//   ✅ NEW: Track failed module ke window.__pkdFailedModules
+//   ✅ FIX: Race-safe navigation (pending queue tetap robust)
+//   ✅ FIX: Error UI menampilkan info retry
+//   ✅ KEEP: Prefetch semua route
+//   ✅ KEEP: Cache buster OFF untuk HTML fragment
+//   ✅ KEEP: HTML fragment cache + retry (1×)
 // ============================================================
 
-// ============================================================
-//   DEFAULT OPTIONS
-// ============================================================
 const DEFAULT_OPTIONS = {
   defaultRoute: '#/admin/dashboard',
-  scrollBehavior: 'top',       // 'top' | 'smooth' | 'none'
-  useCacheBuster: true,
+  scrollBehavior: 'top',
+  useCacheBuster: false,
   showLoadingUI: true,
-  maxRetries: 1,
+  maxRetries: 2,
   debug: false,
+  prefetchEnabled: true,
 };
 
 // ============================================================
 //   ROUTER CLASS
 // ============================================================
 class Router {
-  /**
-   * @param {HTMLElement} container - Element tempat konten di-inject
-   * @param {Object} routes - Registry route: { '#/admin/xxx': { html, js } }
-   * @param {Object} [options] - Override default options
-   */
   constructor(container, routes, options = {}) {
-    // ====== VALIDASI ======
     if (!container || !(container instanceof HTMLElement)) {
       throw new Error('[Router] Container harus HTMLElement yang valid');
     }
@@ -48,34 +35,38 @@ class Router {
       throw new Error('[Router] Routes harus object dengan minimal 1 route');
     }
 
-    // ====== SIMPAN REFERENSI ======
     this.container = container;
     this.routes = routes;
     this.options = { ...DEFAULT_OPTIONS, ...options };
 
-    // ====== STATE ======
-    this.currentRoute = null;         // hash path aktif (contoh: '#/admin/peserta')
-    this.currentHash = null;          // hash lengkap termasuk query
-    this.currentCleanup = null;       // cleanup function dari mount() sebelumnya
-    this.currentModule = null;        // module JS yang sedang aktif
-    this.navigationToken = 0;         // token untuk cegah race condition
+    // STATE
+    this.currentRoute = null;
+    this.currentHash = null;
+    this.currentCleanup = null;
+    this.currentModule = null;
+    this.navigationToken = 0;
     this.isNavigating = false;
+    this.isRendering = false;
     this.hasStarted = false;
-    this.fragmentCache = new Map();   // url → html string
-    this.failedRoutes = new Set();    // tracking route gagal
+    this.fragmentCache = new Map();
+    this.failedRoutes = new Set();
 
-    // ====== BIND HANDLERS ======
+    // Pending queue
+    this.pendingHash = null;
+    this.pendingForce = false;
+
+    // BIND
     this._onHashChange = this._onHashChange.bind(this);
     this._onRouterNavigate = this._onRouterNavigate.bind(this);
     this._onPopState = this._onPopState.bind(this);
 
-    // ====== ATTACH GLOBAL LISTENERS ======
+    // LISTENERS
     window.addEventListener('hashchange', this._onHashChange);
     window.addEventListener('router:navigate', this._onRouterNavigate);
     window.addEventListener('popstate', this._onPopState);
 
     if (this.options.debug) {
-      console.log('[Router] Initialized dengan', Object.keys(routes).length, 'routes');
+      console.log('[Router] Initialized', Object.keys(routes).length, 'routes');
     }
   }
 
@@ -83,34 +74,23 @@ class Router {
      PUBLIC API
      ============================================================ */
 
-  /**
-   * Start router — panggil sekali setelah DOM ready.
-   * Render route saat ini, atau redirect ke default route.
-   */
   start() {
     if (this.hasStarted) {
-      console.warn('[Router] Sudah started, mengabaikan panggilan kedua');
+      console.warn('[Router] Sudah started, skip');
       return;
     }
     this.hasStarted = true;
 
     const currentHash = this._normalizeHash(window.location.hash);
 
-    // Hash kosong / '#' / '#/' → redirect ke default route
     if (!currentHash || currentHash === '#' || currentHash === '#/') {
       this.navigate(this.options.defaultRoute, { replace: true });
       return;
     }
 
-    // Render route saat ini
     this._render();
   }
 
-  /**
-   * Navigate ke route tertentu.
-   * @param {string} hash - contoh: '#/admin/peserta' atau '#/admin/peserta?page=2'
-   * @param {Object} [opts] - { replace: boolean } → true untuk replace history
-   */
   navigate(hash, opts = {}) {
     if (!hash || typeof hash !== 'string') {
       console.warn('[Router] navigate() butuh hash string');
@@ -120,14 +100,12 @@ class Router {
     const target = this._normalizeHash(hash);
     const currentHash = window.location.hash;
 
-    // Hash sama dengan current → force re-render (user klik menu yang sama)
     if (target === currentHash) {
       this._render(true);
       return;
     }
 
     if (opts.replace) {
-      // Replace: ganti hash tanpa push history, langsung render
       try {
         history.replaceState(null, '', target);
       } catch (e) {
@@ -135,15 +113,10 @@ class Router {
       }
       this._render();
     } else {
-      // Normal: set hash → hashchange event akan trigger render
       window.location.hash = target;
     }
   }
 
-  /**
-   * Force reload route saat ini (bersihkan cache fragment + re-import module).
-   * @returns {Promise<void>}
-   */
   async reload() {
     if (this.currentRoute) {
       const route = this._resolveRoute(this.currentRoute);
@@ -154,17 +127,18 @@ class Router {
     await this._render(true);
   }
 
-  /**
-   * Get current route.
-   * @returns {string|null} contoh: '#/admin/peserta'
-   */
   getCurrentRoute() {
     return this.currentRoute;
   }
 
-  /**
-   * Destroy router — lepas semua listener & cleanup. Panggil saat halaman unload.
-   */
+  getCurrentHash() {
+    return this.currentHash;
+  }
+
+  isMounted() {
+    return !!(this.currentModule && this.currentHash);
+  }
+
   destroy() {
     window.removeEventListener('hashchange', this._onHashChange);
     window.removeEventListener('router:navigate', this._onRouterNavigate);
@@ -179,24 +153,22 @@ class Router {
     this.fragmentCache.clear();
     this.failedRoutes.clear();
     this.hasStarted = false;
+    this.isNavigating = false;
+    this.isRendering = false;
+    this.pendingHash = null;
+    this.pendingForce = false;
+    this.currentRoute = null;
+    this.currentHash = null;
 
-    if (this.options.debug) {
-      console.log('[Router] Destroyed');
-    }
+    if (this.options.debug) console.log('[Router] Destroyed');
   }
 
   /* ============================================================
      EVENT HANDLERS
      ============================================================ */
 
-  _onHashChange() {
-    this._render();
-  }
-
-  _onPopState() {
-    // Browser back/forward — hash sudah berubah, render ulang
-    this._render();
-  }
+  _onHashChange() { this._render(); }
+  _onPopState() { this._render(); }
 
   _onRouterNavigate(e) {
     const hash = e && e.detail && e.detail.hash;
@@ -205,157 +177,184 @@ class Router {
   }
 
   /* ============================================================
-     CORE RENDER
+     CORE RENDER — SKIP-IF-MOUNTED
      ============================================================ */
   async _render(force = false) {
     const rawHash = window.location.hash || this.options.defaultRoute;
     const { path: hashPath, query } = this._parseHash(rawHash);
 
-    // ---- Guard: hash kosong ----
     if (!hashPath || hashPath === '#' || hashPath === '#/') {
       this.navigate(this.options.defaultRoute, { replace: true });
       return;
     }
 
-    // ---- Resolve route ----
     const route = this._resolveRoute(hashPath);
     if (!route) {
       this._renderNotFound(hashPath);
       return;
     }
 
-    // ---- Skip kalau route sama & bukan force & tidak sedang navigasi ----
-    // NOTE: Gunakan hash lengkap (termasuk query) agar perubahan query tetap re-render
+    // ===== SKIP-IF-MOUNTED =====
     const isSameRoute = this.currentHash === rawHash;
-    if (!force && isSameRoute && !this.isNavigating) {
+    const isMounted = !!this.currentModule;
+
+    if (!force && isSameRoute && isMounted && !this.isNavigating) {
+      if (this.options.debug) {
+        console.log('[Router] ⚡ Skip re-mount (view already mounted):', hashPath);
+      }
+
       this._syncActiveState(hashPath);
-      window.dispatchEvent(new CustomEvent('routeChanged', {
-        detail: { path: hashPath, query, route, cached: true },
+
+      window.dispatchEvent(new CustomEvent('route:reused', {
+        detail: { path: hashPath, query, route },
       }));
+
+      window.dispatchEvent(new CustomEvent('routeChanged', {
+        detail: { path: hashPath, query, route, cached: true, reused: true },
+      }));
+
       return;
     }
 
-    // ---- Token untuk cegah race condition ----
+    // ===== Pending queue =====
+    if (this.isRendering) {
+      if (this.options.debug) {
+        console.log('[Router] Render in progress, queue pending:', rawHash);
+      }
+      this.pendingHash = rawHash;
+      this.pendingForce = force;
+      return;
+    }
+
     const myToken = ++this.navigationToken;
     this.isNavigating = true;
+    this.isRendering = true;
 
-    // ---- STEP 1: Cleanup previous view ----
-    await this._cleanupPrevious();
-
-    if (myToken !== this.navigationToken) {
-      this.isNavigating = false;
-      return;
-    }
-
-    // ---- STEP 2: Tampilkan loading ----
-    if (this.options.showLoadingUI) {
-      this._showLoading();
-    }
-
-    // ---- STEP 3: Load fragment HTML ----
-    let html;
     try {
-      html = await this._loadFragment(route.html, force);
-    } catch (e) {
+      // STEP 1: Cleanup previous
+      await this._cleanupPrevious();
+
       if (myToken !== this.navigationToken) return;
-      this.isNavigating = false;
-      this._renderError(
-        hashPath,
-        'Gagal Memuat Halaman',
-        e.message || 'Tidak dapat memuat konten halaman.'
-      );
-      return;
-    }
 
-    if (myToken !== this.navigationToken) {
-      this.isNavigating = false;
-      return;
-    }
+      // STEP 2: Loading UI
+      const isCached = this.fragmentCache.has(route.html);
+      if (this.options.showLoadingUI && !isCached) {
+        this._showLoading();
+      }
 
-    // ---- STEP 4: Inject HTML ----
-    this.container.innerHTML = html;
-
-    // ---- STEP 5: Load & mount JS module ----
-    try {
-      const mod = await this._loadModule(route.js, force);
-
-      if (myToken !== this.navigationToken) {
-        this.isNavigating = false;
+      // STEP 3: Load fragment
+      let html;
+      try {
+        html = await this._loadFragment(route.html, force);
+      } catch (e) {
+        if (myToken !== this.navigationToken) return;
+        this._renderError(
+          hashPath,
+          'Gagal Memuat Halaman',
+          e.message || 'Tidak dapat memuat konten halaman.'
+        );
         return;
       }
 
-      this.currentModule = mod;
+      if (myToken !== this.navigationToken) return;
 
-      // Prioritas: named export `mount()`
-      if (mod && typeof mod.mount === 'function') {
-        const cleanup = await mod.mount({
-          path: hashPath,
-          query,
-          outlet: this.container,
-          router: this,
-        });
+      // STEP 4: Inject HTML
+      this.container.innerHTML = html;
 
-        // Cleanup bisa dari return value ATAU named export unmount()
-        if (typeof cleanup === 'function') {
-          this.currentCleanup = cleanup;
-        } else if (typeof mod.unmount === 'function') {
-          this.currentCleanup = mod.unmount;
+      // STEP 5: Load & mount JS module — v27.2.2 ROBUST
+      try {
+        const mod = await this._loadModule(route.js);
+
+        if (myToken !== this.navigationToken) return;
+
+        this.currentModule = mod;
+
+        if (mod && typeof mod.mount === 'function') {
+          const cleanup = await mod.mount({
+            path: hashPath,
+            query,
+            outlet: this.container,
+            router: this,
+          });
+
+          if (typeof cleanup === 'function') {
+            this.currentCleanup = cleanup;
+          } else if (typeof mod.unmount === 'function') {
+            this.currentCleanup = mod.unmount;
+          } else {
+            this.currentCleanup = null;
+          }
+        } else if (mod && typeof mod.default === 'function') {
+          const cleanup = await mod.default({
+            path: hashPath, query,
+            outlet: this.container,
+            router: this,
+          });
+          this.currentCleanup = typeof cleanup === 'function' ? cleanup : null;
+        } else if (mod && mod.default && typeof mod.default.mount === 'function') {
+          const cleanup = await mod.default.mount({
+            path: hashPath, query,
+            outlet: this.container,
+            router: this,
+          });
+          this.currentCleanup = typeof cleanup === 'function' ? cleanup : null;
         } else {
+          console.warn('[Router] Module tidak punya mount():', route.js);
           this.currentCleanup = null;
         }
+      } catch (e) {
+        if (myToken !== this.navigationToken) return;
+        console.error('[Router] Gagal load/mount module:', e);
+        this._renderError(
+          hashPath,
+          'Gagal Memuat Logic Halaman',
+          e.message || 'Terjadi kesalahan saat memuat script.'
+        );
+        return;
       }
-      // Fallback: default export sebagai function
-      else if (mod && typeof mod.default === 'function') {
-        const cleanup = await mod.default({
-          path: hashPath,
-          query,
-          outlet: this.container,
-          router: this,
-        });
-        this.currentCleanup = typeof cleanup === 'function' ? cleanup : null;
-      } else {
-        console.warn('[Router] Module tidak punya mount():', route.js);
-        this.currentCleanup = null;
-      }
-    } catch (e) {
-      if (myToken !== this.navigationToken) return;
+
+      // STEP 6: Finalize
+      this.currentRoute = hashPath;
+      this.currentHash = rawHash;
+
+      this._syncActiveState(hashPath);
+      this._applyScrollBehavior();
+
+      window.dispatchEvent(new CustomEvent('routeChanged', {
+        detail: { path: hashPath, query, route, cached: false, reused: false },
+      }));
+
+      if (this.options.debug) console.log('[Router] ✅ Rendered:', hashPath);
+
+    } finally {
       this.isNavigating = false;
-      console.error('[Router] Gagal load/mount module:', e);
-      this._renderError(
-        hashPath,
-        'Gagal Memuat Logic Halaman',
-        e.message || 'Terjadi kesalahan saat memuat script halaman.'
-      );
-      return;
-    }
+      this.isRendering = false;
 
-    // ---- STEP 6: Finalize ----
-    this.currentRoute = hashPath;
-    this.currentHash = rawHash;
-    this.isNavigating = false;
+      if (this.pendingHash && this.pendingHash !== this.currentHash) {
+        const nextHash = this.pendingHash;
+        const nextForce = this.pendingForce;
+        this.pendingHash = null;
+        this.pendingForce = false;
 
-    // Update active state sidebar & bottom-nav
-    this._syncActiveState(hashPath);
+        if (this.options.debug) {
+          console.log('[Router] Processing pending render:', nextHash);
+        }
 
-    // Scroll behavior
-    this._applyScrollBehavior();
-
-    // Dispatch event global untuk sinkronisasi komponen lain
-    window.dispatchEvent(new CustomEvent('routeChanged', {
-      detail: { path: hashPath, query, route, cached: false },
-    }));
-
-    if (this.options.debug) {
-      console.log('[Router] ✅ Rendered:', hashPath, query);
+        setTimeout(() => {
+          if (window.location.hash === nextHash || nextForce) {
+            this._render(nextForce);
+          } else {
+            this._render();
+          }
+        }, 0);
+      }
     }
   }
 
   /* ============================================================
-     CLEANUP PREVIOUS VIEW
+     CLEANUP
      ============================================================ */
-
   async _cleanupPrevious() {
-    // 1. Panggil cleanup function dari mount() sebelumnya
     if (typeof this.currentCleanup === 'function') {
       try {
         await Promise.resolve(this.currentCleanup());
@@ -365,19 +364,7 @@ class Router {
       this.currentCleanup = null;
     }
 
-    // 2. Panggil named export unmount() kalau ada
-    if (this.currentModule && typeof this.currentModule.unmount === 'function') {
-      try {
-        await Promise.resolve(this.currentModule.unmount());
-      } catch (e) {
-        console.warn('[Router] unmount() error:', e);
-      }
-    }
-
-    // 3. Bersihkan artifact Bootstrap modal yang mungkin tertinggal
     this._cleanupBootstrapArtifacts();
-
-    // 4. Reset module reference
     this.currentModule = null;
   }
 
@@ -391,26 +378,24 @@ class Router {
   }
 
   /* ============================================================
-     LOAD FRAGMENT HTML (dengan cache + retry)
+     FRAGMENT LOADER
      ============================================================ */
-
   async _loadFragment(url, force = false) {
     if (!force && this.fragmentCache.has(url)) {
       return this.fragmentCache.get(url);
     }
 
-    const cacheBuster = this.options.useCacheBuster ? `?v=${Date.now()}` : '';
+    const cacheBuster = force && this.options.useCacheBuster ? `?v=${Date.now()}` : '';
     const finalUrl = url + cacheBuster;
-
-    let lastError = null;
     const maxRetry = this.options.maxRetries;
+    let lastError = null;
 
     for (let attempt = 0; attempt <= maxRetry; attempt++) {
       try {
         const res = await fetch(finalUrl, {
           method: 'GET',
           headers: { 'Accept': 'text/html' },
-          cache: 'no-store',
+          cache: force ? 'no-store' : 'force-cache',
         });
 
         if (!res.ok) {
@@ -429,6 +414,7 @@ class Router {
       } catch (e) {
         lastError = e;
         if (attempt < maxRetry) {
+          console.warn(`[Router] Fragment retry ${attempt + 1}/${maxRetry}: ${url}`, e.message);
           await this._sleep(300 * (attempt + 1));
         }
       }
@@ -439,28 +425,78 @@ class Router {
   }
 
   /* ============================================================
-     LOAD JS MODULE (dynamic import)
+     MODULE LOADER — v27.2.2 ROBUST RETRY
      ============================================================ */
+  async _loadModule(url) {
+    const maxRetry = this.options.maxRetries;
+    let lastError = null;
 
-  async _loadModule(url, force = false) {
-    // Dynamic import: browser otomatis cache module.
-    // Untuk force reload, tambahkan cache buster di URL query.
-    const cacheBuster = (force && this.options.useCacheBuster)
-      ? `?v=${Date.now()}`
-      : '';
-    const finalUrl = url + cacheBuster;
+    for (let attempt = 0; attempt <= maxRetry; attempt++) {
+      try {
+        if (this.options.debug) {
+          console.log(`[Router] Loading module (attempt ${attempt + 1}/${maxRetry + 1}):`, url);
+        }
 
-    return await import(finalUrl);
+        // Cache buster HANYA saat retry (attempt > 0)
+        const importUrl = attempt === 0
+          ? url
+          : `${url}?retry=${Date.now()}&attempt=${attempt}`;
+
+        const mod = await import(/* @vite-ignore */ importUrl);
+
+        // ✅ Sukses — hapus dari failed registry
+        if (window.__pkdFailedModules && window.__pkdFailedModules.has(url)) {
+          window.__pkdFailedModules.delete(url);
+          console.log(`[Router] ✅ Module recovered: ${url}`);
+        }
+
+        return mod;
+
+      } catch (e) {
+        lastError = e;
+        const msg = String(e?.message || e || '');
+
+        // Skip retry untuk error yang tidak akan pulih dengan retry
+        const isRetryable =
+          msg.includes('Failed to fetch') ||
+          msg.includes('ERR_ABORTED') ||
+          msg.includes('dynamically imported module') ||
+          msg.includes('Importing a module script failed') ||
+          msg.includes('NetworkError') ||
+          msg.includes('404');
+
+        if (!isRetryable) {
+          console.error(`[Router] Non-retryable module error: ${url}`, msg);
+          throw e;
+        }
+
+        if (attempt < maxRetry) {
+          console.warn(`[Router] Module retry ${attempt + 1}/${maxRetry}: ${url} — ${msg}`);
+          await this._sleep(400 * (attempt + 1));
+        } else {
+          // Track sebagai failed untuk background retry
+          if (window.__pkdFailedModules) {
+            const info = window.__pkdFailedModules.get(url) || { count: 0, lastError: '' };
+            window.__pkdFailedModules.set(url, {
+              count: info.count + 1,
+              lastError: msg,
+            });
+          }
+          console.error(`[Router] ❌ Module FAILED after ${maxRetry + 1} attempts: ${url}`);
+          throw e;
+        }
+      }
+    }
+
+    throw lastError || new Error('Module load failed');
   }
 
   /* ============================================================
      ROUTE RESOLVER
      ============================================================ */
-
   _resolveRoute(hashPath) {
     if (!hashPath) return null;
 
-    // 1. Exact match (dengan atau tanpa # prefix)
     if (this.routes[hashPath]) return this.routes[hashPath];
 
     const withHash = hashPath.startsWith('#') ? hashPath : '#' + hashPath;
@@ -469,35 +505,12 @@ class Router {
     const withoutHash = hashPath.startsWith('#') ? hashPath.slice(1) : hashPath;
     if (this.routes[withoutHash]) return this.routes[withoutHash];
 
-    // 2. Pattern match untuk dynamic routes (contoh: '#/admin/user/:id')
-    for (const key of Object.keys(this.routes)) {
-      if (this._matchPattern(key, withHash)) {
-        return this.routes[key];
-      }
-    }
-
     return null;
-  }
-
-  _matchPattern(pattern, path) {
-    if (!pattern.includes(':')) return false;
-
-    const patParts = pattern.split('/');
-    const pathParts = path.split('/');
-
-    if (patParts.length !== pathParts.length) return false;
-
-    for (let i = 0; i < patParts.length; i++) {
-      if (patParts[i].startsWith(':')) continue;
-      if (patParts[i] !== pathParts[i]) return false;
-    }
-    return true;
   }
 
   /* ============================================================
      HASH PARSER
      ============================================================ */
-
   _parseHash(rawHash) {
     if (!rawHash) return { path: '', query: {} };
 
@@ -529,11 +542,10 @@ class Router {
   }
 
   /* ============================================================
-     ACTIVE STATE SYNC (Sidebar + Bottom Nav)
+     ACTIVE STATE SYNC
      ============================================================ */
-
   _syncActiveState(hashPath) {
-    // ---- 1. Sidebar ----
+    // Sidebar
     const sidebarLinks = document.querySelectorAll(
       '#sidebar-container [data-route], #sidebarRoot [data-route], #sidebarWrapper [data-route], .sidebar-wrapper [data-route]'
     );
@@ -542,17 +554,15 @@ class Router {
       const isActive = link.dataset.route === hashPath;
       link.classList.toggle('active', isActive);
 
-      // Auto-open parent submenu jika route ini aktif
       if (isActive) {
         const submenu = link.closest('.submenu');
         if (submenu) {
           submenu.classList.add('open');
-          // Highlight parent nav-link
-          const parentTarget = submenu.id.replace('submenu-', '');
           let parent = submenu.previousElementSibling;
           while (parent && !parent.classList.contains('nav-link')) {
             parent = parent.previousElementSibling;
           }
+          const parentTarget = submenu.id.replace('submenu-', '');
           if (parent && parent.dataset.target === parentTarget) {
             parent.classList.add('active');
           }
@@ -560,7 +570,7 @@ class Router {
       }
     });
 
-    // ---- 2. Bottom Nav ----
+    // Bottom Nav
     const bottomNavLinks = document.querySelectorAll(
       '#bottom-nav-container [data-route], #bottomNavRoot [data-route], .bottom-nav [data-route]'
     );
@@ -574,13 +584,12 @@ class Router {
   /* ============================================================
      LOADING UI
      ============================================================ */
-
   _showLoading() {
     this.container.innerHTML = `
       <div class="d-flex justify-content-center align-items-center" style="min-height:50vh;">
         <div class="text-center">
           <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;">
-            <span class="visually-hidden">Memuat halaman...</span>
+            <span class="visually-hidden">Memuat halaman…</span>
           </div>
           <p class="mt-3 text-muted small mb-0">Memuat halaman…</p>
         </div>
@@ -589,12 +598,10 @@ class Router {
   }
 
   /* ============================================================
-     ERROR UI
+     ERROR UI — v27.2.2 dengan Retry Info
      ============================================================ */
-
   _renderNotFound(hashPath) {
     const safeHash = this._escapeHtml(hashPath);
-    const safeDefault = this._escapeHtml(this.options.defaultRoute);
 
     this.container.innerHTML = `
       <div class="d-flex justify-content-center align-items-center p-4" style="min-height:60vh;">
@@ -604,7 +611,7 @@ class Router {
           <p class="text-muted small mb-3">
             Route <code>${safeHash}</code> tidak terdaftar pada sistem.
           </p>
-          <button class="btn btn-primary rounded-pill px-4" data-router-action="home">
+          <button class="btn btn-primary rounded-pill px-4" data-router-action="home" type="button">
             <i class="bi bi-house-door-fill me-1"></i> Kembali ke Dashboard
           </button>
         </div>
@@ -633,10 +640,13 @@ class Router {
           <p class="text-muted small mb-0">Route: <code>${safePath}</code></p>
           <div class="alert alert-danger small text-start mt-3 mb-0">${safeDetail}</div>
           <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
-            <button class="btn btn-primary rounded-pill px-4" data-router-action="retry">
+            <button class="btn btn-primary rounded-pill px-4" data-router-action="retry" type="button">
               <i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi
             </button>
-            <button class="btn btn-outline-secondary rounded-pill px-4" data-router-action="home">
+            <button class="btn btn-warning rounded-pill px-4" data-router-action="clearcache" type="button">
+              <i class="bi bi-trash me-1"></i> Clear Cache & Retry
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill px-4" data-router-action="home" type="button">
               <i class="bi bi-house-door me-1"></i> Ke Dashboard
             </button>
           </div>
@@ -644,14 +654,19 @@ class Router {
       </div>
     `;
 
-    // Bind action buttons
     this.container.querySelectorAll('[data-router-action]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const action = btn.dataset.routerAction;
         if (action === 'retry') {
           this.reload();
         } else if (action === 'home') {
           this.navigate(this.options.defaultRoute);
+        } else if (action === 'clearcache') {
+          // Clear fragment cache & failed registry
+          this.fragmentCache.clear();
+          this.failedRoutes.clear();
+          if (window.__pkdFailedModules) window.__pkdFailedModules.clear();
+          await this.reload();
         }
       });
     });
@@ -664,27 +679,44 @@ class Router {
   /* ============================================================
      SCROLL BEHAVIOR
      ============================================================ */
-
   _applyScrollBehavior() {
     const mode = this.options.scrollBehavior;
     if (mode === 'none') return;
 
     try {
       window.scrollTo({
-        top: 0,
-        left: 0,
+        top: 0, left: 0,
         behavior: mode === 'smooth' ? 'smooth' : 'auto',
       });
     } catch (e) {
-      // Fallback untuk browser lama
       window.scrollTo(0, 0);
     }
   }
 
   /* ============================================================
+     PREFETCH ROUTES
+     ============================================================ */
+  _preloadRoutes() {
+    const entries = Object.entries(this.routes);
+    entries.forEach(([routeKey, r]) => {
+      if (!r || !r.html) return;
+      if (this.fragmentCache.has(r.html)) return;
+      if (this.failedRoutes.has(r.html)) return;
+
+      fetch(r.html, { cache: 'force-cache' })
+        .then(res => res.ok ? res.text() : null)
+        .then(html => {
+          if (html && html.trim()) {
+            this.fragmentCache.set(r.html, html);
+          }
+        })
+        .catch(() => { /* silent */ });
+    });
+  }
+
+  /* ============================================================
      UTILITY
      ============================================================ */
-
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -705,3 +737,11 @@ class Router {
 // ============================================================
 export default Router;
 export { Router };
+
+// ============================================================
+//   CONSOLE BANNER
+// ============================================================
+console.log(
+  '%c Router v27.2.2 — Robust Module Load Edition ',
+  'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);
