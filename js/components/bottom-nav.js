@@ -1,20 +1,13 @@
-// ============================================================
-// js/components/bottom-nav.js — v27.1.0 MOBILE MODAL FIX
-// ============================================================
-// CHANGELOG v27.1.0 (dari v26.2.1):
-//   ✅ FIX CRITICAL: Tombol "Lainnya" tidak membuka modal
-//     → Pakai data-bs-toggle sebagai PRIMARY (Bootstrap native)
-//     → JS handler jadi SECONDARY (auto-cleanup + logging)
-//   ✅ FIX: wireMoreMenuModal() idempotent + tidak silent-fail
-//   ✅ FIX: Modal backdrop cleanup kalau stuck
-//   ✅ FIX: Auto-close modal saat route berubah
-//   ✅ FIX: Active state sync untuk tombol "Lainnya"
-//   ✅ FIX: Null-safe untuk semua element
-//   ✅ NEW: Logging untuk debugging modal state
-//   ✅ KEEP: 5 nav items, more menu modal, logout, active state
-// ============================================================
+// js/components/bottom-nav.js — Full Fix Bottom Nav Loader (Final)
+// Fitur:
+// - Load partials/bottom-nav.html via fetch dengan fallback HTML
+// - Router integration via custom event 'router:navigate'
+// - Active state sync dari hash
+// - Logout dari mobile "More" menu
+// - Auto-init "More Menu" modal behavior
+// - Cleanup lifecycle
 
-import { logout as apiLogout } from '../core/api.js';
+import { logout as apiLogout, getUserRole, getUserData } from '../core/api.js';
 import { BASE_PATH } from '../core/config.js';
 
 // ============================================================
@@ -22,78 +15,44 @@ import { BASE_PATH } from '../core/config.js';
 // ============================================================
 const CONTAINER_ID = 'bottom-nav-container';
 const MODAL_ID = 'moreMenuModal';
-const MODAL_BTN_ID = 'moreMenuBtn';
 
+// Fallback HTML jika fetch partials gagal
 const FALLBACK_BOTTOM_NAV_HTML = `
-<nav class="bottom-nav" role="navigation" aria-label="Navigasi mobile">
-  <a href="#/admin/dashboard" class="nav-item" data-route="#/admin/dashboard" title="Dashboard" aria-label="Buka Dashboard">
-    <i class="bi bi-speedometer2" aria-hidden="true"></i>
-    <span>Dashboard</span>
+<div class="bottom-nav">
+  <a href="#/admin/dashboard" class="nav-item" data-route="#/admin/dashboard">
+    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
   </a>
-  <a href="#/admin/peserta" class="nav-item" data-route="#/admin/peserta" title="Peserta" aria-label="Buka Manajemen Peserta">
-    <i class="bi bi-person-badge" aria-hidden="true"></i>
-    <span>Peserta</span>
+  <a href="#/admin/peserta" class="nav-item" data-route="#/admin/peserta">
+    <i class="bi bi-person-badge"></i><span>Peserta</span>
   </a>
-  <a href="#/admin/sesi-absen" class="nav-item" data-route="#/admin/sesi-absen" title="Sesi Absen" aria-label="Buka Sesi Absen">
-    <i class="bi bi-calendar-event" aria-hidden="true"></i>
-    <span>Absen</span>
+  <a href="#/admin/sesi-absen" class="nav-item" data-route="#/admin/sesi-absen">
+    <i class="bi bi-calendar-event"></i><span>Absen</span>
   </a>
-  <a href="#/admin/sertifikat" class="nav-item" data-route="#/admin/sertifikat" title="Sertifikat" aria-label="Buka Sertifikat">
-    <i class="bi bi-patch-check" aria-hidden="true"></i>
-    <span>Sertifikat</span>
+  <a href="#/admin/sertifikat" class="nav-item" data-route="#/admin/sertifikat">
+    <i class="bi bi-patch-check"></i><span>Sertifikat</span>
   </a>
-  <button
-    type="button"
-    class="nav-item"
-    id="${MODAL_BTN_ID}"
-    title="Menu Lainnya"
-    aria-label="Buka menu lainnya"
-    aria-haspopup="dialog"
-    data-bs-toggle="modal"
-    data-bs-target="#${MODAL_ID}"
-  >
-    <i class="bi bi-grid" aria-hidden="true"></i>
-    <span>Lainnya</span>
-  </button>
-</nav>`;
+  <a href="#" class="nav-item" id="moreMenuBtn" data-bs-toggle="modal" data-bs-target="#moreMenuModal">
+    <i class="bi bi-grid"></i><span>Lainnya</span>
+  </a>
+</div>`;
 
 // ============================================================
-//   MODULE STATE
+//   STATE
 // ============================================================
 const listeners = [];
 let isBottomNavLoaded = false;
-let isBehaviorInitialized = false;
-let moreMenuBound = false;
-let modalInstance = null;
 
 // ============================================================
 //   UTILITY
 // ============================================================
-function on(el, ev, handler, options) {
-  if (!el) return null;
-  el.addEventListener(ev, handler, options);
-  listeners.push({ el, ev, handler, options });
-  return handler;
+function on(el, ev, handler) {
+  if (!el) return;
+  el.addEventListener(ev, handler);
+  listeners.push({ el, ev, handler });
 }
 
-function safeHideModal(modalEl) {
-  if (!modalEl) return;
-  try {
-    const inst = bootstrap.Modal.getInstance(modalEl);
-    if (inst) inst.hide();
-  } catch (e) { /* silent */ }
-}
-
-function cleanupModalBackdrop() {
-  try {
-    // Kalau tidak ada modal yang benar-benar terbuka, hapus backdrop yang tertinggal
-    if (!document.querySelector('.modal.show')) {
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-      document.body.classList.remove('modal-open');
-      document.body.style.removeProperty('overflow');
-      document.body.style.removeProperty('padding-right');
-    }
-  } catch (e) { /* silent */ }
+function safeLocalStorage(fn) {
+  try { return fn(); } catch (e) { return null; }
 }
 
 // ============================================================
@@ -110,6 +69,7 @@ export async function loadBottomNav() {
 
   let htmlText = null;
 
+  // Coba fetch partials
   try {
     const res = await fetch(`${BASE_PATH}partials/bottom-nav.html?v=${Date.now()}`);
     if (res.ok) {
@@ -121,6 +81,7 @@ export async function loadBottomNav() {
     console.warn('[BottomNav] Fetch failed:', e.message, '→ using fallback');
   }
 
+  // Fallback
   if (!htmlText || !htmlText.trim()) {
     console.warn('[BottomNav] Using fallback HTML');
     htmlText = FALLBACK_BOTTOM_NAV_HTML;
@@ -128,19 +89,16 @@ export async function loadBottomNav() {
 
   container.innerHTML = htmlText;
 
+  // Init behavior
   initBottomNavBehavior();
-  isBottomNavLoaded = true;
 
-  console.log('[BottomNav] ✅ Loaded');
+  isBottomNavLoaded = true;
 }
 
 // ============================================================
 //   INIT BEHAVIOR
 // ============================================================
 function initBottomNavBehavior() {
-  if (isBehaviorInitialized) return;
-  isBehaviorInitialized = true;
-
   const bottomNav = document.querySelector('.bottom-nav');
   if (!bottomNav) {
     console.warn('[BottomNav] .bottom-nav not found');
@@ -148,68 +106,45 @@ function initBottomNavBehavior() {
   }
 
   // --------------------------------------------------------
-  //   ROUTE NAVIGATION via data-route (event delegation)
+  //   ROUTE NAVIGATION via data-route
   // --------------------------------------------------------
-  on(bottomNav, 'click', (e) => {
-    const link = e.target.closest('[data-route]');
-    if (!link) return;
+  const routeLinks = bottomNav.querySelectorAll('[data-route]');
+  routeLinks.forEach(link => {
+    on(link, 'click', (e) => {
+      // Skip jika ini tombol "more menu" (bukan navigasi)
+      if (link.id === 'moreMenuBtn') return;
 
-    // Skip kalau ini tombol "more menu" (punya data-bs-toggle)
-    if (link.id === MODAL_BTN_ID) return;
+      e.preventDefault();
+      const route = link.dataset.route;
+      if (!route) return;
 
-    e.preventDefault();
-    const route = link.dataset.route;
-    if (!route) return;
-
-    window.dispatchEvent(new CustomEvent('router:navigate', {
-      detail: { hash: route },
-    }));
+      // Dispatch custom event untuk router
+      window.dispatchEvent(new CustomEvent('router:navigate', {
+        detail: { hash: route },
+      }));
+    });
   });
 
   // --------------------------------------------------------
-  //   MORE MENU BUTTON — Bootstrap native handle klik via
-  //   data-bs-toggle. Handler ini hanya untuk logging.
+  //   MORE MENU BUTTON: handle bootstrap modal + wire logout
   // --------------------------------------------------------
-  const moreMenuBtn = document.getElementById(MODAL_BTN_ID);
-  if (moreMenuBtn) {
-    on(moreMenuBtn, 'click', () => {
-      console.log('[BottomNav] More menu button clicked');
-      // Beri waktu Bootstrap untuk buka modal
-      setTimeout(() => {
-        wireMoreMenuModal();
-      }, 100);
-    });
-  }
+  const moreMenuBtn = document.getElementById('moreMenuBtn');
+  on(moreMenuBtn, 'click', (e) => {
+    // Bootstrap modal di-trigger via data-bs-toggle, tapi kita
+    // perlu wire logout button di dalamnya.
+    // Delay sedikit agar modal sudah render
+    setTimeout(wireMoreMenuModal, 50);
+  });
 
-  // Wire sekali saat init (untuk cleanup listeners)
-  setTimeout(wireMoreMenuModal, 150);
+  // --------------------------------------------------------
+  //   WIRE "MORE MENU" MODAL (jika ada di DOM)
+  // --------------------------------------------------------
+  wireMoreMenuModal();
 
   // --------------------------------------------------------
   //   INITIAL ACTIVE STATE
   // --------------------------------------------------------
   updateBottomNavActive(window.location.hash || '#/admin/dashboard');
-
-  // --------------------------------------------------------
-  //   AUTO-CLOSE MODAL SAAT ROUTE BERUBAH
-  //   (Bootstrap native akan close via data-bs-dismiss, tapi ini backup)
-  // --------------------------------------------------------
-  on(window, 'routeChanged', () => {
-    const modalEl = document.getElementById(MODAL_ID);
-    if (!modalEl) return;
-    // Cek apakah modal sedang terbuka
-    const isShown = modalEl.classList.contains('show');
-    if (isShown) {
-      safeHideModal(modalEl);
-      setTimeout(cleanupModalBackdrop, 300);
-    }
-  });
-
-  // --------------------------------------------------------
-  //   NOTIFY COMPONENTS
-  // --------------------------------------------------------
-  try {
-    window.dispatchEvent(new CustomEvent('bottomnav:ready'));
-  } catch (e) { /* silent */ }
 }
 
 // ============================================================
@@ -217,73 +152,54 @@ function initBottomNavBehavior() {
 // ============================================================
 function wireMoreMenuModal() {
   const modalEl = document.getElementById(MODAL_ID);
-  if (!modalEl) {
-    console.warn('[BottomNav] #' + MODAL_ID + ' tidak ditemukan di DOM');
-    return;
-  }
+  if (!modalEl) return;
 
-  // Idempotent — cek flag dataset
+  // Skip jika sudah di-wire
   if (modalEl.dataset.wired === 'true') return;
   modalEl.dataset.wired = 'true';
-  moreMenuBound = true;
-
-  console.log('[BottomNav] Wiring more menu modal');
 
   // --------------------------------------------------------
-  //   Inisialisasi Bootstrap Modal instance (untuk API access)
+  //   NAVIGATION LINKS di dalam modal
   // --------------------------------------------------------
-  try {
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-      modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl, {
-        backdrop: true,
-        keyboard: true,
-        focus: true,
-      });
-    } else {
-      console.warn('[BottomNav] Bootstrap Modal tidak tersedia');
-    }
-  } catch (e) {
-    console.warn('[BottomNav] Gagal init modal:', e);
-  }
+  const routeLinks = modalEl.querySelectorAll('[data-route]');
+  routeLinks.forEach(link => {
+    on(link, 'click', (e) => {
+      const route = link.dataset.route;
+      if (!route) return;
 
-  // --------------------------------------------------------
-  //   Navigation links di dalam modal (event delegation)
-  //   Bootstrap native juga handle via data-bs-dismiss,
-  //   ini untuk memastikan route navigate terpanggil
-  // --------------------------------------------------------
-  on(modalEl, 'click', (e) => {
-    const link = e.target.closest('[data-route]');
-    if (!link) return;
+      // Close modal dulu
+      try {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      } catch (err) {}
 
-    const route = link.dataset.route;
-    if (!route) return;
+      // Navigate
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('router:navigate', {
+          detail: { hash: route },
+        }));
+      }, 150);
 
-    e.preventDefault();
-
-    // Hide modal dulu
-    safeHideModal(modalEl);
-
-    // Navigate setelah modal tertutup
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('router:navigate', {
-        detail: { hash: route },
-      }));
-    }, 180);
+      e.preventDefault();
+    });
   });
 
   // --------------------------------------------------------
-  //   Logout di dalam modal
+  //   LOGOUT di dalam modal
   // --------------------------------------------------------
-  const logoutBtn = modalEl.querySelector('#mobileLogoutBtn')
-                 || document.getElementById('mobileLogoutBtn');
-
+  const logoutBtn = modalEl.querySelector('#mobileLogoutBtn') || document.getElementById('mobileLogoutBtn');
   on(logoutBtn, 'click', (e) => {
     e.preventDefault();
 
     if (!confirm('Yakin ingin logout dari sistem?')) return;
 
-    safeHideModal(modalEl);
+    // Close modal
+    try {
+      const inst = bootstrap.Modal.getInstance(modalEl);
+      if (inst) inst.hide();
+    } catch (err) {}
 
+    // Logout
     setTimeout(() => {
       try {
         apiLogout();
@@ -293,28 +209,10 @@ function wireMoreMenuModal() {
       }
     }, 200);
   });
-
-  // --------------------------------------------------------
-  //   Cleanup on hidden — remove stray backdrops
-  // --------------------------------------------------------
-  on(modalEl, 'hidden.bs.modal', () => {
-    cleanupModalBackdrop();
-  });
-
-  // --------------------------------------------------------
-  //   Ensure modal bisa dibuka — force re-init kalau perlu
-  // --------------------------------------------------------
-  on(modalEl, 'show.bs.modal', () => {
-    console.log('[BottomNav] Modal showing');
-  });
-
-  on(modalEl, 'shown.bs.modal', () => {
-    console.log('[BottomNav] Modal shown');
-  });
 }
 
 // ============================================================
-//   UPDATE ACTIVE STATE
+//   UPDATE ACTIVE STATE (dipanggil dari router)
 // ============================================================
 export function updateBottomNavActive(route) {
   if (!route) return;
@@ -322,20 +220,24 @@ export function updateBottomNavActive(route) {
   const bottomNav = document.querySelector('.bottom-nav');
   if (!bottomNav) return;
 
+  // Update active state di bottom nav utama
   const routeLinks = bottomNav.querySelectorAll('[data-route]');
   routeLinks.forEach(link => {
     const isActive = link.dataset.route === route;
     link.classList.toggle('active', isActive);
   });
 
-  // Jika route aktif tidak ada di menu utama, highlight "More Menu"
+  // Jika route aktif tidak ada di 4 menu utama (mis. berada di
+  // menu sekunder), highlight tombol "More Menu"
   const primaryRoutes = Array.from(routeLinks).map(l => l.dataset.route);
   const isPrimaryActive = primaryRoutes.includes(route);
 
-  const moreBtn = document.getElementById(MODAL_BTN_ID);
-  if (moreBtn) {
-    if (!isPrimaryActive) moreBtn.classList.add('active');
-    else moreBtn.classList.remove('active');
+  if (!isPrimaryActive) {
+    const moreBtn = document.getElementById('moreMenuBtn');
+    if (moreBtn) moreBtn.classList.add('active');
+  } else {
+    const moreBtn = document.getElementById('moreMenuBtn');
+    if (moreBtn) moreBtn.classList.remove('active');
   }
 }
 
@@ -344,81 +246,21 @@ export function updateBottomNavActive(route) {
 // ============================================================
 export function closeMoreMenu() {
   const modalEl = document.getElementById(MODAL_ID);
-  safeHideModal(modalEl);
-  setTimeout(cleanupModalBackdrop, 300);
-}
-
-// ============================================================
-//   MANUAL: Open "More Menu" modal (public API untuk debug)
-// ============================================================
-export function openMoreMenu() {
-  const modalEl = document.getElementById(MODAL_ID);
-  if (!modalEl) {
-    console.warn('[BottomNav] #' + MODAL_ID + ' tidak ditemukan');
-    return;
-  }
+  if (!modalEl) return;
 
   try {
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-      const inst = bootstrap.Modal.getOrCreateInstance(modalEl, {
-        backdrop: true,
-        keyboard: true,
-        focus: true,
-      });
-      inst.show();
-    } else {
-      console.warn('[BottomNav] Bootstrap Modal tidak tersedia');
-    }
-  } catch (e) {
-    console.error('[BottomNav] Gagal open modal:', e);
-  }
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+  } catch (e) {}
 }
 
 // ============================================================
 //   UNLOAD: Cleanup
 // ============================================================
 export function unloadBottomNav() {
-  // Close modal kalau terbuka
-  try {
-    const modalEl = document.getElementById(MODAL_ID);
-    if (modalEl) safeHideModal(modalEl);
-  } catch (e) { /* silent */ }
-
-  listeners.forEach(({ el, ev, handler, options }) => {
-    try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
+  listeners.forEach(({ el, ev, handler }) => {
+    try { el.removeEventListener(ev, handler); } catch (e) {}
   });
   listeners.length = 0;
-
   isBottomNavLoaded = false;
-  isBehaviorInitialized = false;
-  moreMenuBound = false;
-  modalInstance = null;
 }
-
-// ============================================================
-//   DEBUG HELPER — accessible via window
-// ============================================================
-if (typeof window !== 'undefined') {
-  window.__bottomNav = {
-    open: openMoreMenu,
-    close: closeMoreMenu,
-    isLoaded: () => isBottomNavLoaded,
-    isBound: () => moreMenuBound,
-  };
-}
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default {
-  loadBottomNav,
-  updateBottomNavActive,
-  closeMoreMenu,
-  openMoreMenu,
-  unloadBottomNav,
-};
-
-console.log(
-  '%c Bottom Nav v27.1.0 — Mobile Modal Fix ',
-  'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);
