@@ -1,18 +1,12 @@
-// ============================================================
-// js/modules/member.js — v27.0.0 MEMBER MODULE
-// ============================================================
-// CHANGELOG v27.0.0:
-//   ✅ NEW: Scope context (kapanewon, lokasiScope, lokasiPkd, utusan)
-//   ✅ NEW: TTD status (3 role) dengan progress
-//   ✅ NEW: getCertificateVerifyUrl()
-//   ✅ NEW: getLokasiPKDInfo()
-//   ✅ NEW: getProgressSummary() — 5 tahapan
-//   ✅ NEW: getProfileCompleteness() — 8 field
-//   ✅ FIX: Race-safe load (token guard)
-//   ✅ FIX: Cache TTL 5 menit
-//   ✅ FIX: normalizeResult robust
-//   ✅ KEEP: Skrining, quiz, absensi, sertifikat, materi
-// ============================================================
+// js/modules/member.js — Full Fix Member Module (Final)
+// Modul state untuk halaman Member (peserta PKD).
+// Fitur:
+// - Load data member dari username (dari userData)
+// - Cache data terkait (skrining, pretest, posttest, absensi, sertifikat, materi, informasi)
+// - Update profil
+// - Cache dengan TTL (5 menit)
+// - Custom event untuk sinkronisasi view
+// - Lifecycle mount/unmount
 
 import {
   showToast,
@@ -27,35 +21,24 @@ import {
   getPretestResponses as apiGetPretestResponses,
   getPosttestResponses as apiGetPosttestResponses,
   getSesiAbsen as apiGetSesiAbsen,
-  getAllDigitalApprovals as apiGetAllDigitalApprovals,
 } from '../core/api.js';
-import { BASE_PATH } from '../core/config.js';
 
 // ============================================================
 //   CONSTANTS
 // ============================================================
 const CACHE_PREFIX = 'pkd_member_cache_';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 menit
-const SIGN_ROLES = ['ketua_pc', 'sekretaris', 'instruktur'];
 
 // ============================================================
 //   STATE
 // ============================================================
 const STATE = {
   // Data member
-  memberData: null,
-  pesertaData: null,
-
-  // Scope context (mirror dari userData + peserta)
-  scopeContext: {
-    kapanewon: '',
-    lokasiScope: [],
-    lokasiPkd: '',
-    utusan: '',
-  },
+  memberData: null,     // { username, nama_lengkap, email, no_hp, pesertaId }
+  pesertaData: null,    // full peserta record
 
   // Data terkait
-  skrining: null,
+  skrining: null,       // single object
   pretest: [],
   posttest: [],
   absensi: [],
@@ -64,26 +47,14 @@ const STATE = {
   materi: [],
   sesi: [],
 
-  // TTD status
-  ttdStatus: {
-    ketua_pc: false,
-    sekretaris: false,
-    instruktur: false,
-    complete: false,
-    progress: 0,
-  },
-
   // Meta
   isLoading: false,
   lastSync: null,
   lastError: null,
 };
 
-// Subscribers
+// Track subscribers
 const subscribers = new Set();
-
-// Race-safe token
-let loadToken = 0;
 
 // ============================================================
 //   UTILITY
@@ -119,88 +90,30 @@ function normalizeForCompare(s) {
 
 function getUsername() {
   try {
-    const u = getUserData() || {};
-    return safeString(u.username || u.pesertaId || '');
+    const userData = getUserData() || {};
+    return safeString(userData.username || userData.pesertaId || '');
   } catch (e) { return ''; }
 }
 
 function getNamaLengkap() {
-  const u = getUserData() || {};
+  const userData = getUserData() || {};
   return safeString(
     STATE.memberData?.nama_lengkap ||
     STATE.pesertaData?.nama_lengkap ||
-    u.nama ||
+    userData.nama ||
     ''
   );
 }
 
 // ============================================================
-//   SCOPE CONTEXT
-// ============================================================
-function buildScopeContext() {
-  try {
-    const userData = getUserData() || {};
-    const peserta = STATE.pesertaData || {};
-
-    STATE.scopeContext = {
-      kapanewon: safeString(userData.kapanewon || ''),
-      lokasiScope: Array.isArray(userData.lokasiScope) ? userData.lokasiScope : [],
-      lokasiPkd: safeString(peserta.lokasi_pkd || userData.lokasi_pkd || ''),
-      utusan: safeString(peserta.utusan || userData.utusan || ''),
-    };
-  } catch (e) {
-    console.warn('[MemberModule] buildScopeContext error:', e);
-  }
-}
-
-// ============================================================
-//   TTD STATUS
-// ============================================================
-async function computeTTDStatus() {
-  const nama = getNamaLengkap();
-  if (!nama) {
-    STATE.ttdStatus = {
-      ketua_pc: false, sekretaris: false, instruktur: false,
-      complete: false, progress: 0,
-    };
-    return;
-  }
-
-  try {
-    const res = await apiGetAllDigitalApprovals();
-    const list = normalizeData(res);
-    const namaLower = normalizeForCompare(nama);
-
-    const filtered = list.filter(a =>
-      normalizeForCompare(a.peserta_nama || '') === namaLower
-    );
-
-    const status = { ketua_pc: false, sekretaris: false, instruktur: false };
-    filtered.forEach(a => {
-      const role = String(a.role || '').toLowerCase();
-      if (SIGN_ROLES.indexOf(role) !== -1) status[role] = true;
-    });
-
-    const progress = SIGN_ROLES.filter(r => status[r]).length;
-    STATE.ttdStatus = {
-      ...status,
-      progress,
-      complete: progress === SIGN_ROLES.length,
-    };
-  } catch (e) {
-    console.warn('[MemberModule] computeTTDStatus error:', e);
-  }
-}
-
-// ============================================================
-//   CACHE
+//   CACHE HELPERS
 // ============================================================
 function saveCache(key, data) {
   try {
     localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({
       data, ts: Date.now(),
     }));
-  } catch (e) { /* quota exceeded — silent */ }
+  } catch (e) { /* ignore */ }
 }
 
 function loadCache(key) {
@@ -225,7 +138,7 @@ function clearAllCache() {
       if (k && k.startsWith(CACHE_PREFIX)) keysToRemove.push(k);
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-  } catch (e) { /* silent */ }
+  } catch (e) { /* ignore */ }
 }
 
 async function safeCall(fn, fallback = null, label = '') {
@@ -239,28 +152,24 @@ async function safeCall(fn, fallback = null, label = '') {
 }
 
 // ============================================================
-//   NOTIFY
+//   NOTIFY SUBSCRIBERS
 // ============================================================
 function notifySubscribers(type) {
   subscribers.forEach(fn => {
-    try { fn(type, getPublicState()); }
-    catch (e) { console.warn('[MemberModule] Subscriber error:', e); }
+    try { fn(type, getPublicState()); } catch (e) {
+      console.warn('[MemberModule] Subscriber error:', e);
+    }
   });
 
-  try {
-    window.dispatchEvent(new CustomEvent('memberDataUpdated', {
-      detail: { type, state: getPublicState() },
-    }));
-  } catch (e) { /* silent */ }
+  window.dispatchEvent(new CustomEvent('memberDataUpdated', {
+    detail: { type, state: getPublicState() },
+  }));
 }
 
 function getPublicState() {
   return {
     memberData: STATE.memberData,
     pesertaData: STATE.pesertaData,
-    scopeContext: { ...STATE.scopeContext },
-    ttdStatus: { ...STATE.ttdStatus },
-
     skrining: STATE.skrining,
     pretest: STATE.pretest.slice(),
     posttest: STATE.posttest.slice(),
@@ -269,7 +178,6 @@ function getPublicState() {
     informasi: STATE.informasi.slice(),
     materi: STATE.materi.slice(),
     sesi: STATE.sesi.slice(),
-
     isLoading: STATE.isLoading,
     lastSync: STATE.lastSync,
     lastError: STATE.lastError,
@@ -277,28 +185,27 @@ function getPublicState() {
 }
 
 // ============================================================
-//   PUBLIC MODULE
+//   EXPORTED MODULE
 // ============================================================
 export const MemberModule = {
 
   // ==========================================================
   //   STATE ACCESSORS
   // ==========================================================
-  getState() { return getPublicState(); },
+  getState() {
+    return getPublicState();
+  },
 
-  getMemberData()    { return STATE.memberData; },
-  getPesertaData()   { return STATE.pesertaData; },
-  getScopeContext()  { return { ...STATE.scopeContext }; },
-  getTTDStatus()     { return { ...STATE.ttdStatus }; },
-
-  getSkrining()      { return STATE.skrining; },
-  getPretest()       { return STATE.pretest || []; },
-  getPosttest()      { return STATE.posttest || []; },
-  getAbsensi()       { return STATE.absensi || []; },
-  getSertifikat()    { return STATE.sertifikat || []; },
-  getInformasi()     { return STATE.informasi || []; },
-  getMateri()        { return STATE.materi || []; },
-  getSesi()          { return STATE.sesi || []; },
+  getMemberData() { return STATE.memberData; },
+  getPesertaData() { return STATE.pesertaData; },
+  getSkrining() { return STATE.skrining; },
+  getPretest() { return STATE.pretest || []; },
+  getPosttest() { return STATE.posttest || []; },
+  getAbsensi() { return STATE.absensi || []; },
+  getSertifikat() { return STATE.sertifikat || []; },
+  getInformasi() { return STATE.informasi || []; },
+  getMateri() { return STATE.materi || []; },
+  getSesi() { return STATE.sesi || []; },
 
   getStats() {
     return {
@@ -309,10 +216,6 @@ export const MemberModule = {
       sertifikatCount: STATE.sertifikat.length,
       materiCount: STATE.materi.length,
       infoCount: STATE.informasi.length,
-
-      ttdProgress: STATE.ttdStatus.progress,
-      ttdComplete: STATE.ttdStatus.complete,
-
       lastSync: STATE.lastSync,
     };
   },
@@ -321,102 +224,6 @@ export const MemberModule = {
     if (typeof fn !== 'function') return () => {};
     subscribers.add(fn);
     return () => subscribers.delete(fn);
-  },
-
-  // ==========================================================
-  //   UTILITY GETTERS
-  // ==========================================================
-  getCertificateVerifyUrl() {
-    const cert = (STATE.sertifikat && STATE.sertifikat[0]) || null;
-    if (!cert || !cert.nomor_sertifikat) return null;
-    return `${window.location.origin}${BASE_PATH}verifikasi.html?nomor=${encodeURIComponent(cert.nomor_sertifikat)}`;
-  },
-
-  getLokasiPKDInfo() {
-    if (STATE.scopeContext.lokasiPkd) {
-      return {
-        hasLokasi: true,
-        nama: STATE.scopeContext.lokasiPkd,
-        utusan: STATE.scopeContext.utusan,
-      };
-    }
-    return {
-      hasLokasi: false,
-      nama: '-',
-      utusan: STATE.scopeContext.utusan,
-    };
-  },
-
-  getNamaSesi(sesiId) {
-    const s = (STATE.sesi || []).find(x => String(x.id) === String(sesiId));
-    return s ? (s.nama || '(Sesi tidak diketahui)') : '(Sesi tidak diketahui)';
-  },
-
-  getSesiById(sesiId) {
-    return (STATE.sesi || []).find(s => String(s.id) === String(sesiId)) || null;
-  },
-
-  canAccessIdCard() {
-    const status = safeString(STATE.pesertaData?.status || '').toLowerCase();
-    return status === 'approved' || status === 'active';
-  },
-
-  hasSkrining() {
-    return !!STATE.skrining;
-  },
-
-  getProfileCompleteness() {
-    const data = STATE.pesertaData || {};
-    const fields = [
-      'nama_lengkap', 'email', 'no_hp', 'alamat',
-      'pekerjaan', 'pendidikan_terakhir', 'tempat_tgl_lahir', 'lokasi_pkd',
-    ];
-    const filled = fields.filter(f => safeString(data[f]).length > 0).length;
-    return Math.round((filled / fields.length) * 100);
-  },
-
-  getProgressSummary() {
-    return {
-      hasSkrining: !!STATE.skrining,
-      hasPretest: STATE.pretest.length > 0,
-      hasPosttest: STATE.posttest.length > 0,
-      hasAbsen: STATE.absensi.length > 0,
-      hasSertifikat: STATE.sertifikat.length > 0,
-      total: [
-        !!STATE.skrining,
-        STATE.pretest.length > 0,
-        STATE.posttest.length > 0,
-        STATE.absensi.length > 0,
-        STATE.sertifikat.length > 0,
-      ].filter(Boolean).length,
-      max: 5,
-    };
-  },
-
-  // ==========================================================
-  //   LOAD FROM CACHE
-  // ==========================================================
-  loadFromCache() {
-    const cached = loadCache('all');
-    if (!cached) return false;
-
-    STATE.memberData = cached.memberData || null;
-    STATE.pesertaData = cached.pesertaData || null;
-    STATE.scopeContext = cached.scopeContext || {
-      kapanewon: '', lokasiScope: [], lokasiPkd: '', utusan: '',
-    };
-    STATE.skrining = cached.skrining || null;
-    STATE.pretest = cached.pretest || [];
-    STATE.posttest = cached.posttest || [];
-    STATE.absensi = cached.absensi || [];
-    STATE.sertifikat = cached.sertifikat || [];
-    STATE.materi = cached.materi || [];
-    STATE.informasi = cached.informasi || [];
-    STATE.sesi = cached.sesi || [];
-    STATE.lastSync = cached.lastSync || null;
-
-    notifySubscribers('cache-loaded');
-    return true;
   },
 
   // ==========================================================
@@ -435,20 +242,19 @@ export const MemberModule = {
       return { success: false, error: err };
     }
 
-    const myToken = ++loadToken;
     STATE.isLoading = true;
     STATE.lastError = null;
 
     try {
-      // ---- STEP 1: Member data ----
+      // ==========================================================
+      //   LANGKAH 1: Ambil memberData (butuh username)
+      // ==========================================================
       let memberRes;
       try {
         memberRes = await apiGetMemberData(username);
       } catch (e) {
         memberRes = { success: false, error: e.message };
       }
-
-      if (myToken !== loadToken) return { success: false, aborted: true };
 
       if (!memberRes || !memberRes.success) {
         STATE.isLoading = false;
@@ -458,67 +264,64 @@ export const MemberModule = {
         return { success: false, error: err };
       }
 
-      // Handle both shapes
-      STATE.memberData = memberRes.member
-        || (memberRes.data && memberRes.data.member)
-        || null;
-      STATE.pesertaData = memberRes.peserta
-        || (memberRes.data && memberRes.data.peserta)
-        || null;
-
-      // Build scope context
-      buildScopeContext();
+      STATE.memberData = memberRes.member || null;
+      STATE.pesertaData = memberRes.peserta || null;
 
       const namaLengkap = getNamaLengkap();
       const canFetchByName = !!namaLengkap;
 
-      // ---- STEP 2: Parallel fetch ----
+      // ==========================================================
+      //   LANGKAH 2: Ambil data terkait (paralel)
+      // ==========================================================
       const tasks = [
+        // Skrining — single object
         canFetchByName
-          ? safeCall(
-              () => apiGetMemberSkrining({ nama: namaLengkap }),
-              { data: null },
-              'getMemberSkrining'
-            )
+          ? safeCall(() => apiGetMemberSkrining({ nama: namaLengkap }), { data: null }, 'getMemberSkrining')
           : Promise.resolve({ data: null }),
 
+        // Pretest (semua, filter by nama nanti)
         safeCall(() => apiGetPretestResponses(), [], 'getPretestResponses'),
+
+        // Posttest (semua, filter by nama nanti)
         safeCall(() => apiGetPosttestResponses(), [], 'getPosttestResponses'),
 
+        // Absensi
         canFetchByName
-          ? safeCall(
-              () => apiGetMemberAbsensi({ nama: namaLengkap }),
-              [],
-              'getMemberAbsensi'
-            )
+          ? safeCall(() => apiGetMemberAbsensi({ nama: namaLengkap }), [], 'getMemberAbsensi')
           : Promise.resolve([]),
 
+        // Sertifikat
         canFetchByName
-          ? safeCall(
-              () => apiGetMemberSertifikat({ nama: namaLengkap }),
-              [],
-              'getMemberSertifikat'
-            )
+          ? safeCall(() => apiGetMemberSertifikat({ nama: namaLengkap }), [], 'getMemberSertifikat')
           : Promise.resolve([]),
 
+        // Materi (publik)
         safeCall(() => apiGetMateriList(), [], 'getMateriList'),
+
+        // Informasi (publik)
         safeCall(() => apiGetInfoList(), [], 'getInfoList'),
+
+        // Sesi absen (publik)
         safeCall(() => apiGetSesiAbsen(), [], 'getSesiAbsen'),
       ];
 
       const [
-        skriningRes, pretestAll, posttestAll,
-        absensiRes, sertifikatRes,
-        materiRes, infoRes, sesiRes,
+        skriningRes,
+        pretestAll,
+        posttestAll,
+        absensiRes,
+        sertifikatRes,
+        materiRes,
+        infoRes,
+        sesiRes,
       ] = await Promise.all(tasks);
 
-      if (myToken !== loadToken) return { success: false, aborted: true };
+      // ==========================================================
+      //   LANGKAH 3: Assign hasil
+      // ==========================================================
+      STATE.skrining = (skriningRes && skriningRes.data) ? skriningRes.data : null;
 
-      // ---- STEP 3: Assign ----
-      STATE.skrining = (skriningRes && skriningRes.data)
-        ? skriningRes.data
-        : null;
-
+      // Pretest & Posttest — filter by nama
       if (canFetchByName) {
         const namaLower = normalizeForCompare(namaLengkap);
         STATE.pretest = (pretestAll || []).filter(d =>
@@ -532,25 +335,19 @@ export const MemberModule = {
         STATE.posttest = [];
       }
 
-      STATE.absensi    = Array.isArray(absensiRes) ? absensiRes : [];
+      STATE.absensi = Array.isArray(absensiRes) ? absensiRes : [];
       STATE.sertifikat = Array.isArray(sertifikatRes) ? sertifikatRes : [];
-      STATE.materi     = Array.isArray(materiRes) ? materiRes : [];
-      STATE.informasi  = Array.isArray(infoRes) ? infoRes : [];
-      STATE.sesi       = Array.isArray(sesiRes) ? sesiRes : [];
-
-      // ---- STEP 4: TTD status (fire & forget) ----
-      computeTTDStatus()
-        .then(() => notifySubscribers('ttd'))
-        .catch(() => {});
+      STATE.materi = Array.isArray(materiRes) ? materiRes : [];
+      STATE.informasi = Array.isArray(infoRes) ? infoRes : [];
+      STATE.sesi = Array.isArray(sesiRes) ? sesiRes : [];
 
       STATE.lastSync = new Date().toISOString();
       STATE.isLoading = false;
 
-      // Save cache
+      // Simpan ke cache
       saveCache('all', {
         memberData: STATE.memberData,
         pesertaData: STATE.pesertaData,
-        scopeContext: STATE.scopeContext,
         skrining: STATE.skrining,
         pretest: STATE.pretest,
         posttest: STATE.posttest,
@@ -576,6 +373,29 @@ export const MemberModule = {
   },
 
   // ==========================================================
+  //   LOAD FROM CACHE (untuk render awal cepat)
+  // ==========================================================
+  loadFromCache() {
+    const cached = loadCache('all');
+    if (!cached) return false;
+
+    STATE.memberData = cached.memberData || null;
+    STATE.pesertaData = cached.pesertaData || null;
+    STATE.skrining = cached.skrining || null;
+    STATE.pretest = cached.pretest || [];
+    STATE.posttest = cached.posttest || [];
+    STATE.absensi = cached.absensi || [];
+    STATE.sertifikat = cached.sertifikat || [];
+    STATE.materi = cached.materi || [];
+    STATE.informasi = cached.informasi || [];
+    STATE.sesi = cached.sesi || [];
+    STATE.lastSync = cached.lastSync || null;
+
+    notifySubscribers('cache-loaded');
+    return true;
+  },
+
+  // ==========================================================
   //   REFRESH PER SECTION
   // ==========================================================
   async refreshSection(section) {
@@ -590,34 +410,20 @@ export const MemberModule = {
         case 'profil': {
           const res = await apiGetMemberData(username);
           if (res && res.success) {
-            STATE.memberData = res.member
-              || (res.data && res.data.member)
-              || null;
-            STATE.pesertaData = res.peserta
-              || (res.data && res.data.peserta)
-              || null;
-            buildScopeContext();
+            STATE.memberData = res.member || null;
+            STATE.pesertaData = res.peserta || null;
             notifySubscribers('profil');
           }
           break;
         }
 
-        case 'ttd':
-          await computeTTDStatus();
-          notifySubscribers('ttd');
-          break;
-
         case 'materi':
-          STATE.materi = await safeCall(
-            () => apiGetMateriList(), [], 'refreshMateri'
-          );
+          STATE.materi = await safeCall(() => apiGetMateriList(), [], 'refreshMateri');
           notifySubscribers('materi');
           break;
 
         case 'informasi':
-          STATE.informasi = await safeCall(
-            () => apiGetInfoList(), [], 'refreshInformasi'
-          );
+          STATE.informasi = await safeCall(() => apiGetInfoList(), [], 'refreshInformasi');
           notifySubscribers('informasi');
           break;
 
@@ -632,9 +438,7 @@ export const MemberModule = {
 
         case 'pretest': {
           const nama = getNamaLengkap();
-          const all = await safeCall(
-            () => apiGetPretestResponses(), [], 'refreshPretest'
-          );
+          const all = await safeCall(() => apiGetPretestResponses(), [], 'refreshPretest');
           const namaLower = normalizeForCompare(nama);
           STATE.pretest = (all || []).filter(d =>
             normalizeForCompare(d.nama || '') === namaLower
@@ -645,9 +449,7 @@ export const MemberModule = {
 
         case 'posttest': {
           const nama = getNamaLengkap();
-          const all = await safeCall(
-            () => apiGetPosttestResponses(), [], 'refreshPosttest'
-          );
+          const all = await safeCall(() => apiGetPosttestResponses(), [], 'refreshPosttest');
           const namaLower = normalizeForCompare(nama);
           STATE.posttest = (all || []).filter(d =>
             normalizeForCompare(d.nama || '') === namaLower
@@ -659,9 +461,7 @@ export const MemberModule = {
         case 'absensi': {
           const nama = getNamaLengkap();
           if (!nama) throw new Error('Nama peserta tidak ditemukan');
-          STATE.absensi = await safeCall(
-            () => apiGetMemberAbsensi({ nama }), [], 'refreshAbsensi'
-          );
+          STATE.absensi = await safeCall(() => apiGetMemberAbsensi({ nama }), [], 'refreshAbsensi');
           notifySubscribers('absensi');
           break;
         }
@@ -669,9 +469,7 @@ export const MemberModule = {
         case 'sertifikat': {
           const nama = getNamaLengkap();
           if (!nama) throw new Error('Nama peserta tidak ditemukan');
-          STATE.sertifikat = await safeCall(
-            () => apiGetMemberSertifikat({ nama }), [], 'refreshSertifikat'
-          );
+          STATE.sertifikat = await safeCall(() => apiGetMemberSertifikat({ nama }), [], 'refreshSertifikat');
           notifySubscribers('sertifikat');
           break;
         }
@@ -681,6 +479,20 @@ export const MemberModule = {
       }
 
       STATE.lastSync = new Date().toISOString();
+      saveCache('all', {
+        memberData: STATE.memberData,
+        pesertaData: STATE.pesertaData,
+        skrining: STATE.skrining,
+        pretest: STATE.pretest,
+        posttest: STATE.posttest,
+        absensi: STATE.absensi,
+        sertifikat: STATE.sertifikat,
+        materi: STATE.materi,
+        informasi: STATE.informasi,
+        sesi: STATE.sesi,
+        lastSync: STATE.lastSync,
+      });
+
       return { success: true };
     } catch (e) {
       console.warn('[MemberModule] refreshSection error:', e.message);
@@ -700,12 +512,11 @@ export const MemberModule = {
 
     try {
       const res = await apiUpdateMemberProfile(username, data);
-
       if (res && res.success) {
         // Refresh profil lokal
         await this.refreshSection('profil');
 
-        // Update userData di memory
+        // Update userData di memori juga
         try {
           const userData = getUserData() || {};
           const newUserData = {
@@ -714,12 +525,15 @@ export const MemberModule = {
             email: data.email || userData.email,
             nohp: data.no_hp || userData.nohp,
           };
+          // Simpan ke storage
           const serialized = { role: 'member', data: newUserData };
-          try { sessionStorage.setItem('pkd_auth', JSON.stringify(serialized)); }
-          catch (e) { /* silent */ }
-          try { localStorage.setItem('pkd_auth', JSON.stringify(serialized)); }
-          catch (e) { /* silent */ }
-        } catch (e) { /* silent */ }
+          try {
+            sessionStorage.setItem('pkd_auth', JSON.stringify(serialized));
+          } catch (e) {}
+          try {
+            localStorage.setItem('pkd_auth', JSON.stringify(serialized));
+          } catch (e) {}
+        } catch (e) { /* ignore */ }
 
         showToast('Profil berhasil diperbarui', 'success');
         notifySubscribers('profil-updated');
@@ -736,14 +550,11 @@ export const MemberModule = {
   },
 
   // ==========================================================
-  //   CLEAR STATE
+  //   UTILITY HELPERS
   // ==========================================================
   clearState() {
     STATE.memberData = null;
     STATE.pesertaData = null;
-    STATE.scopeContext = {
-      kapanewon: '', lokasiScope: [], lokasiPkd: '', utusan: '',
-    };
     STATE.skrining = null;
     STATE.pretest = [];
     STATE.posttest = [];
@@ -752,10 +563,6 @@ export const MemberModule = {
     STATE.materi = [];
     STATE.informasi = [];
     STATE.sesi = [];
-    STATE.ttdStatus = {
-      ketua_pc: false, sekretaris: false, instruktur: false,
-      complete: false, progress: 0,
-    };
     STATE.lastSync = null;
     STATE.isLoading = false;
     STATE.lastError = null;
@@ -764,6 +571,58 @@ export const MemberModule = {
     notifySubscribers('cleared');
     console.log('[MemberModule] State cleared');
   },
+
+  /**
+   * Cek apakah user boleh akses ID Card.
+   */
+  canAccessIdCard() {
+    const status = safeString(STATE.pesertaData?.status || '').toLowerCase();
+    return status === 'approved' || status === 'active';
+  },
+
+  hasSkrining() {
+    return !!STATE.skrining;
+  },
+
+  getSesiById(sesiId) {
+    return STATE.sesi.find(s => String(s.id) === String(sesiId)) || null;
+  },
+
+  getNamaSesi(sesiId) {
+    const s = this.getSesiById(sesiId);
+    return s ? (s.nama || '(Sesi tidak diketahui)') : '(Sesi tidak diketahui)';
+  },
+
+  // Persentase kelengkapan profil
+  getProfileCompleteness() {
+    const data = STATE.pesertaData || {};
+    const fields = ['nama_lengkap', 'email', 'no_hp', 'alamat', 'pekerjaan',
+      'pendidikan_terakhir', 'tempat_tgl_lahir'];
+    const filled = fields.filter(f => safeString(data[f]).length > 0).length;
+    return Math.round((filled / fields.length) * 100);
+  },
+
+  // Total progress aktivitas
+  getProgressSummary() {
+    return {
+      hasSkrining: !!STATE.skrining,
+      hasPretest: STATE.pretest.length > 0,
+      hasPosttest: STATE.posttest.length > 0,
+      hasAbsen: STATE.absensi.length > 0,
+      hasSertifikat: STATE.sertifikat.length > 0,
+      total: [
+        !!STATE.skrining,
+        STATE.pretest.length > 0,
+        STATE.posttest.length > 0,
+        STATE.absensi.length > 0,
+        STATE.sertifikat.length > 0,
+      ].filter(Boolean).length,
+      max: 5,
+    };
+  },
 };
 
+// ============================================================
+//   DEFAULT EXPORT
+// ============================================================
 export default MemberModule;
