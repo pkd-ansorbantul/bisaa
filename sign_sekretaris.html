@@ -9,9 +9,8 @@
 
   <title>Tanda Tangan Sekretaris · PKD GP Ansor Bantul</title>
 
-  <!-- ✅ v28.3.0 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
-  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,9 +22,6 @@
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
   <style>
-    /* ============================================================
-       v28.3.0 — SIGN SECRETARIS — SIGNATURE QUEUE EDITION
-       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -36,7 +32,6 @@
     }
     body { display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
 
-    /* ============ PAGE HEADER ============ */
     .page-header {
       max-width: 720px;
       width: 100%;
@@ -82,7 +77,6 @@
     .page-header h1 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
     .page-header h1 small { display: block; font-size: 0.8rem; font-weight: 400; color: #64748b; margin-top: 2px; }
 
-    /* ============ SIGN CARD ============ */
     .sign-card {
       max-width: 720px; width: 100%; background: #fff;
       border-radius: 24px; padding: 2rem 1.75rem;
@@ -92,7 +86,6 @@
       animation-delay: 0.1s;
     }
 
-    /* ============ ROLE BANNER ============ */
     .role-banner {
       background: linear-gradient(135deg, #2563eb 0%, #1e4bb3 100%);
       color: #fff; padding: 0.85rem 1.25rem; border-radius: 16px;
@@ -104,7 +97,6 @@
     .role-banner .role-text strong { display: block; font-size: 1rem; font-weight: 700; }
     .role-banner .role-text span { font-size: 0.8rem; opacity: 0.85; }
 
-    /* ============ ORDER STEP ============ */
     .order-info {
       display: flex; align-items: center; justify-content: center;
       gap: 0.35rem; margin-bottom: 1.25rem; flex-wrap: wrap;
@@ -133,7 +125,6 @@
     .order-step.done .num { background: #16a34a; color: #fff; }
     .order-info .arrow { color: #cbd5e1; font-size: 0.85rem; }
 
-    /* ============ INFO BANNER ============ */
     .info-banner {
       display: flex; align-items: flex-start; gap: 0.6rem;
       background: #eff6ff; border-left: 4px solid #2563eb;
@@ -143,34 +134,8 @@
     }
     .info-banner i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
     .info-banner code { background: rgba(37, 99, 235, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
-    .info-banner strong { font-weight: 700; }
 
-    /* ============ QUEUE STATUS BADGE ============ */
-    .queue-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.35rem 0.75rem;
-      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-      color: #14532d;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: 1px solid #86efac;
-      margin-left: 0.5rem;
-    }
-    .queue-status-badge.empty {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      color: #92400e;
-      border-color: #fcd34d;
-    }
-    .queue-status-badge .spinner-border-sm {
-      width: 12px;
-      height: 12px;
-      border-width: 1.5px;
-    }
-
-    /* ============ WELCOME BANNER ============ */
+    /* WELCOME BANNER */
     .welcome-banner {
       display: none;
       align-items: flex-start;
@@ -198,14 +163,22 @@
       font-size: 1.4rem;
       box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
     }
-    .welcome-banner .welcome-text { flex: 1; font-size: 0.9rem; line-height: 1.55; font-weight: 500; }
-    .welcome-banner .welcome-text strong { color: #14532d; font-weight: 700; }
+    .welcome-banner .welcome-text {
+      flex: 1;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      font-weight: 500;
+    }
+    .welcome-banner .welcome-text strong {
+      color: #14532d;
+      font-weight: 700;
+    }
     @keyframes welcomeIn {
       0%   { opacity: 0; transform: translateY(-12px) scale(0.96); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ============ PASSWORD LIVE HINT ============ */
+    /* PASSWORD LIVE HINT */
     .password-hint-live {
       display: none;
       margin-top: 0.5rem;
@@ -218,11 +191,22 @@
       animation: fadeUp 0.3s ease both;
     }
     .password-hint-live.show { display: flex; }
-    .password-hint-live.error { background: #fee2e2; color: #991b1b; border-left: 4px solid #dc2626; }
-    .password-hint-live.loading { background: #eff6ff; color: #1e40af; border-left: 4px solid #2563eb; }
-    .password-hint-live.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
+    .password-hint-live.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid #dc2626;
+    }
+    .password-hint-live.loading {
+      background: #eff6ff;
+      color: #1e40af;
+      border-left: 4px solid #2563eb;
+    }
+    .password-hint-live.success {
+      background: #dcfce7;
+      color: #166534;
+      border-left: 4px solid #16a34a;
+    }
 
-    /* ============ SIGNATURE AREA ============ */
     .signature-area.locked {
       position: relative;
       opacity: 0.55;
@@ -244,10 +228,13 @@
       z-index: 5;
       white-space: nowrap;
     }
-    .btn-submit.locked { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+    .btn-submit.locked {
+      background: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
     .btn-submit.locked:hover { transform: none !important; box-shadow: none; }
 
-    /* ============ FORM CONTROLS ============ */
     .form-label { font-weight: 600; font-size: 0.9rem; color: #0f172a; margin-bottom: 0.5rem; display: block; }
     .form-label .req { color: #dc2626; margin-left: 2px; }
 
@@ -263,7 +250,6 @@
     .form-text { font-size: 0.8rem; color: #64748b; margin-top: 0.35rem; }
     .form-text code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; }
 
-    /* ============ SIGNATURE PAD ============ */
     .signature-area {
       border: 2px dashed #cbd5e1; border-radius: 16px; background: #fff;
       padding: 8px; transition: border-color 0.2s; position: relative;
@@ -282,7 +268,6 @@
     }
     .signature-area.drawing .signature-hint { opacity: 0; }
 
-    /* ============ SIGN CONTROLS ============ */
     .sign-controls { display: flex; gap: 0.5rem; margin-top: 0.65rem; flex-wrap: wrap; }
     .sign-controls .btn {
       border-radius: 9999px; padding: 0.4rem 1rem; font-size: 0.8rem; font-weight: 500;
@@ -294,7 +279,6 @@
     .sign-controls .btn-undo { border-color: #e2e8f0; color: #64748b; }
     .sign-controls .btn-undo:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
 
-    /* ============ SUBMIT BUTTON ============ */
     .btn-submit {
       border-radius: 9999px; padding: 0.85rem 1.75rem; font-weight: 600; font-size: 0.95rem;
       background: linear-gradient(135deg, #2563eb, #1e4bb3); border: none; color: #fff;
@@ -307,7 +291,6 @@
     .btn-submit:active:not(:disabled) { transform: translateY(0) scale(0.98); }
     .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none !important; }
 
-    /* ============ ALERTS ============ */
     .alert-custom {
       border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.875rem;
       display: flex; align-items: flex-start; gap: 0.5rem; border: none;
@@ -319,7 +302,6 @@
     .alert-custom.info    { background: #cffafe; color: #155e75; }
     .alert-custom.warning { background: #fef3c7; color: #92400e; }
 
-    /* ============ PAGE LOADING ============ */
     .page-loading {
       position: fixed; inset: 0; background: rgba(248, 250, 252, 0.9);
       backdrop-filter: blur(4px); display: flex; flex-direction: column;
@@ -340,8 +322,6 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
-
-    /* ============ RESPONSIVE ============ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .sign-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
@@ -352,7 +332,6 @@
       .order-step { font-size: 0.72rem; padding: 0.3rem 0.6rem; }
       .order-step .num { width: 16px; height: 16px; font-size: 0.65rem; }
       .header-top { flex-direction: column; align-items: stretch; }
-      .queue-status-badge { margin-left: 0; margin-top: 0.5rem; }
     }
   </style>
 </head>
@@ -375,7 +354,7 @@
       </div>
     </div>
     <div class="brand-row">
-      <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
+      <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
       <div>
         <h1>
           Tanda Tangan Digital
@@ -413,16 +392,22 @@
       <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
       <div>
         <strong>Halaman ini dilindungi password TTD.</strong>
-        Peserta yang muncul di daftar adalah <strong>peserta yang sudah dipilih &amp; di-TTD oleh Ketua PC</strong>.
-        Jika daftar kosong, tunggu Ketua PC menyelesaikan TTD
-        <span id="queueStatusBadge" class="queue-status-badge empty">
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          Memuat queue…
-        </span>
+        Hanya peserta yang sudah ditandatangani <strong>Ketua PC</strong> yang muncul di daftar.
+        Pastikan Anda adalah <strong>Sekretaris</strong> yang berwenang.
+        Setelah Anda selesai, <strong>Instruktur</strong> baru bisa melanjutkan.
       </div>
     </div>
 
-    <div class="welcome-banner" id="welcomeBanner" role="status" aria-live="polite"></div>
+    <!-- WELCOME BANNER (muncul setelah password benar) -->
+    <div class="welcome-banner" id="welcomeBanner" role="status" aria-live="polite">
+      <div class="welcome-icon">
+        <i class="bi bi-award-fill" aria-hidden="true"></i>
+      </div>
+      <div class="welcome-text">
+        <strong>Sudah siap Sekretaris PC GP Ansor Kabupaten Bantul Sahabat "Fatolani",</strong><br>
+        Selamat datang dan Semoga Selalu dilimpahkan keberkahan. Aamiin 🤲
+      </div>
+    </div>
 
     <form id="signForm" autocomplete="off" novalidate>
 
@@ -434,7 +419,7 @@
           <option value="">Memuat daftar peserta…</option>
         </select>
         <div class="form-text" id="pesertaHint">
-          Menunggu Ketua PC memilih &amp; menandatangani peserta.
+          Hanya peserta yang sudah di-TTD Ketua PC yang muncul.
         </div>
       </div>
 
@@ -498,63 +483,465 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ============================================================
-    //   v28.3.0 — Pakai shared module (Signature Queue Edition)
-    // ============================================================
-    import { initSignPage } from '/bisaa/js/components/sign-page.js';
-    import { getSignatureQueue } from '/bisaa/js/core/api.js';
+    import {
+      callApi,
+      showToast,
+      escapeHtml,
+      getUserRole,
+      getUserData,
+      loadAuthState,
+      submitDigitalSignature,
+      bulkSignForRole,
+      getSignatureOrderStatus,
+      verifySignPassword,
+    } from '/bisaa/js/core/api.js';
 
-    // Init sign page
-    initSignPage({
-      role: 'sekretaris',
-      roleLabel: 'Sekretaris',
-      welcomeName: 'Fatolani',
-      welcomeEmoji: '🤲',
-      orderStep: 2,
-    });
+    const ROLE = 'sekretaris';
+    const ROLE_LABEL = 'Sekretaris';
+    const ORDER_STEP = 2;
 
-    // ✅ v28.3.0: Live update queue status badge
-    (async function updateQueueBadge() {
-      const badgeEl = document.getElementById('queueStatusBadge');
-      if (!badgeEl) return;
+    const pageLoadingEl   = document.getElementById('pageLoading');
+    const formEl          = document.getElementById('signForm');
+    const pesertaEl       = document.getElementById('pesertaSelect');
+    const pesertaHintEl   = document.getElementById('pesertaHint');
+    const namaEl          = document.getElementById('namaInput');
+    const passEl          = document.getElementById('passwordInput');
+    const togglePassBtn   = document.getElementById('togglePassBtn');
+    const signAreaEl      = document.getElementById('signatureArea');
+    const canvasEl        = document.getElementById('sigCanvas');
+    const clearBtn        = document.getElementById('clearSign');
+    const undoBtn         = document.getElementById('undoSign');
+    const submitBtn       = document.getElementById('submitBtn');
+    const submitText      = document.getElementById('submitText');
+    const resultMsgEl     = document.getElementById('resultMsg');
+    const userInfoEl      = document.getElementById('signPageUserInfo');
+    const welcomeBannerEl = document.getElementById('welcomeBanner');
+    const passLiveHintEl  = document.getElementById('passLiveHint');
 
-      async function refresh() {
-        try {
-          const res = await getSignatureQueue();
-          const list = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-          const count = list.length;
+    let sigPad = null;
+    let isSubmitting = false;
+    let eligibleList = [];
+    let pacGroups = {};
+    let passwordVerified = false;
+    let passwordCheckTimer = null;
 
-          if (count === 0) {
-            badgeEl.className = 'queue-status-badge empty';
-            badgeEl.innerHTML = `
-              <i class="bi bi-hourglass-split" aria-hidden="true"></i>
-              0 peserta di queue
-            `;
-          } else {
-            badgeEl.className = 'queue-status-badge';
-            badgeEl.innerHTML = `
-              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-              ${count} peserta dari Ketua PC
-            `;
-          }
-        } catch (e) {
-          badgeEl.className = 'queue-status-badge empty';
-          badgeEl.innerHTML = `
-            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
-            Gagal memuat queue
+    function showPage() {
+      if (pageLoadingEl) pageLoadingEl.classList.add('hidden');
+      setTimeout(() => {
+        try { pageLoadingEl?.remove(); } catch (e) {}
+      }, 400);
+    }
+
+    function showResult(message, type = 'info') {
+      const icons = {
+        success: 'bi-check-circle-fill',
+        danger:  'bi-x-circle-fill',
+        warning: 'bi-exclamation-triangle-fill',
+        info:    'bi-info-circle-fill',
+      };
+      const icon = icons[type] || icons.info;
+      resultMsgEl.innerHTML = `
+        <div class="alert-custom ${type}">
+          <i class="bi ${icon}"></i>
+          <div>${message}</div>
+        </div>
+      `;
+    }
+
+    function clearResult() { resultMsgEl.innerHTML = ''; }
+
+    function renderUserInfo() {
+      if (!userInfoEl) return;
+      try {
+        loadAuthState();
+        const role = getUserRole();
+        const userData = getUserData() || {};
+
+        if (role === 'admin' || role === 'ketua_pac') {
+          userInfoEl.className = 'user-info-badge logged';
+          userInfoEl.innerHTML = `
+            <i class="bi bi-person-check-fill"></i>
+            <span>Login: <strong>${escapeHtml(userData.nama || role)}</strong></span>
+          `;
+        } else {
+          userInfoEl.className = 'user-info-badge locked';
+          userInfoEl.innerHTML = `
+            <i class="bi bi-shield-lock-fill"></i>
+            <span>Mode <strong>Password TTD</strong></span>
           `;
         }
+      } catch (e) {
+        userInfoEl.className = 'user-info-badge locked';
+        userInfoEl.innerHTML = `
+          <i class="bi bi-shield-lock-fill"></i>
+          <span>Mode <strong>Password TTD</strong></span>
+        `;
+      }
+    }
+
+    function initSignaturePad() {
+      if (typeof SignaturePad === 'undefined') {
+        showResult('Library tanda tangan tidak tersedia. Cek koneksi.', 'danger');
+        return;
       }
 
-      await refresh();
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = canvasEl.getBoundingClientRect();
+      const w = Math.max(rect.width, 300);
+      const h = 200;
 
-      // Refresh setiap 15 detik (auto-detect peserta baru dari Ketua)
-      setInterval(refresh, 15000);
+      canvasEl.width = w * ratio;
+      canvasEl.height = h * ratio;
+      canvasEl.style.width = w + 'px';
+      canvasEl.style.height = h + 'px';
+
+      const ctx = canvasEl.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(ratio, ratio);
+
+      sigPad = new SignaturePad(canvasEl, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: '#0f172a',
+        minWidth: 1.5,
+        maxWidth: 3,
+      });
+
+      sigPad.addEventListener('beginStroke', () => {
+        signAreaEl.classList.add('drawing');
+      });
+
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (!sigPad) return;
+          const data = sigPad.toData();
+          const newRatio = Math.max(window.devicePixelRatio || 1, 1);
+          const newRect = canvasEl.getBoundingClientRect();
+          const newW = Math.max(newRect.width, 300);
+
+          canvasEl.width = newW * newRatio;
+          canvasEl.height = h * newRatio;
+          canvasEl.style.width = newW + 'px';
+          canvasEl.style.height = h + 'px';
+
+          const newCtx = canvasEl.getContext('2d');
+          newCtx.setTransform(1, 0, 0, 1, 0, 0);
+          newCtx.scale(newRatio, newRatio);
+
+          sigPad.clear();
+          if (data && data.length) {
+            try { sigPad.fromData(data); } catch (e) {}
+          }
+        }, 200);
+      });
+    }
+
+    async function loadPeserta() {
+      try {
+        const [pesertaRes, statusRes] = await Promise.all([
+          callApi('getPesertaList', { status: 'approved' }, 'GET'),
+          getSignatureOrderStatus(),
+        ]);
+
+        const list = (pesertaRes && pesertaRes.data) ? pesertaRes.data
+                   : (Array.isArray(pesertaRes) ? pesertaRes : []);
+        const statusMap = (statusRes && statusRes.success && statusRes.data) ? statusRes.data : {};
+
+        eligibleList = list.filter(p => {
+          const st = String(p.status || '').toLowerCase();
+          if (st !== 'approved' && st !== 'active') return false;
+          const key = String(p.nama_lengkap || '').toLowerCase().trim();
+          const row = statusMap[key] || {};
+          // Wajib sudah TTD ketua_pc
+          if (!row.ketua_pc) return false;
+          // Belum TTD sekretaris
+          if (row[ROLE]) return false;
+          return true;
+        });
+
+        pacGroups = {};
+        eligibleList.forEach(p => {
+          const pac = String(p.utusan || 'Tidak diketahui').trim() || 'Tidak diketahui';
+          if (!pacGroups[pac]) pacGroups[pac] = [];
+          pacGroups[pac].push(p);
+        });
+
+        renderPesertaDropdown();
+      } catch (e) {
+        console.error('[SignSekretaris] Load peserta error:', e);
+        pesertaEl.innerHTML = '<option value="">Gagal memuat peserta</option>';
+      }
+    }
+
+    function renderPesertaDropdown() {
+      if (eligibleList.length === 0) {
+        pesertaEl.innerHTML = '<option value="">⏳ Menunggu Ketua PC / sudah selesai</option>';
+        pesertaHintEl.innerHTML =
+          '<i class="bi bi-hourglass-split text-warning"></i> ' +
+          'Belum ada peserta yang siap Anda TTD. Pastikan <strong>Ketua PC</strong> sudah menandatangani.';
+        return;
+      }
+
+      let html = '<option value="">-- Pilih Peserta --</option>';
+      html += `<option value="__ALL__">📋 SEMUA PESERTA (${eligibleList.length} orang)</option>`;
+
+      const pacNames = Object.keys(pacGroups).sort();
+      if (pacNames.length > 1) {
+        html += '<optgroup label="📁 Bulk per PAC">';
+        pacNames.forEach(pac => {
+          html += `<option value="__PAC__:${escapeHtml(pac)}">📁 ${escapeHtml(pac)} (${pacGroups[pac].length} orang)</option>`;
+        });
+        html += '</optgroup>';
+      }
+
+      html += '<optgroup label="👤 Peserta Individual">';
+      eligibleList.sort((a, b) =>
+        String(a.nama_lengkap || '').localeCompare(String(b.nama_lengkap || ''))
+      );
+      eligibleList.forEach(p => {
+        html += `<option value="${escapeHtml(p.nama_lengkap)}">${escapeHtml(p.nama_lengkap)} — ${escapeHtml(p.utusan || '-')}</option>`;
+      });
+      html += '</optgroup>';
+
+      pesertaEl.innerHTML = html;
+      pesertaHintEl.innerHTML = `Tersedia <strong>${eligibleList.length} peserta</strong> siap Anda TTD 
+        (sudah di-TTD Ketua PC). Pilih <strong>📋 SEMUA PESERTA</strong> untuk bulk, atau per PAC, atau individual.`;
+    }
+
+    function bindEvents() {
+      togglePassBtn?.addEventListener('click', () => {
+        const isPassword = passEl.type === 'password';
+        passEl.type = isPassword ? 'text' : 'password';
+        const icon = togglePassBtn.querySelector('i');
+        if (icon) icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        togglePassBtn.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        sigPad?.clear();
+        signAreaEl.classList.remove('drawing');
+      });
+
+      undoBtn?.addEventListener('click', () => {
+        if (!sigPad) return;
+        const data = sigPad.toData();
+        if (data && data.length > 0) {
+          data.pop();
+          sigPad.fromData(data);
+          if (data.length === 0) signAreaEl.classList.remove('drawing');
+        }
+      });
+
+      // ⭐ LIVE VERIFY PASSWORD
+      passEl?.addEventListener('input', function () {
+        clearTimeout(passwordCheckTimer);
+        const pwd = this.value;
+
+        passwordVerified = false;
+        welcomeBannerEl?.classList.remove('show');
+        signAreaEl?.classList.add('locked');
+        submitBtn?.classList.add('locked');
+        submitBtn.disabled = true;
+
+        if (passLiveHintEl) {
+          passLiveHintEl.className = 'password-hint-live';
+          passLiveHintEl.innerHTML = '';
+        }
+
+        if (!pwd) return;
+
+        if (passLiveHintEl) {
+          passLiveHintEl.className = 'password-hint-live loading show';
+          passLiveHintEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memeriksa password…';
+        }
+
+        passwordCheckTimer = setTimeout(async () => {
+          try {
+            const res = await verifySignPassword(ROLE, pwd);
+
+            if (res && res.success) {
+              passwordVerified = true;
+              welcomeBannerEl?.classList.add('show');
+              signAreaEl?.classList.remove('locked');
+              submitBtn?.classList.remove('locked');
+              submitBtn.disabled = false;
+
+              if (passLiveHintEl) {
+                passLiveHintEl.className = 'password-hint-live success show';
+                passLiveHintEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> Password benar — silakan tanda tangan.';
+              }
+
+              welcomeBannerEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+              passwordVerified = false;
+              welcomeBannerEl?.classList.remove('show');
+              signAreaEl?.classList.add('locked');
+              submitBtn?.classList.add('locked');
+              submitBtn.disabled = true;
+
+              if (passLiveHintEl) {
+                passLiveHintEl.className = 'password-hint-live error show';
+                passLiveHintEl.innerHTML = '<i class="bi bi-emoji-smile-fill"></i> Password salah — silakan coba lagi sampai dapat <strong>piring cantik</strong> :D';
+              }
+            }
+          } catch (e) {
+            if (passLiveHintEl) {
+              passLiveHintEl.className = 'password-hint-live error show';
+              passLiveHintEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Gagal verifikasi: ' + escapeHtml(e.message);
+            }
+          }
+        }, 600);
+      });
+
+      formEl?.addEventListener('submit', handleSubmit);
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      if (isSubmitting) return;
+      clearResult();
+
+      if (!passwordVerified) {
+        showResult('Verifikasi password TTD terlebih dahulu sebelum submit.', 'warning');
+        passEl?.focus();
+        return;
+      }
+
+      const pesertaVal = (pesertaEl?.value || '').trim();
+      const nama = (namaEl?.value || '').trim();
+      const password = passEl?.value || '';
+
+      if (!pesertaVal) { showResult('Pilih peserta terlebih dahulu.', 'warning'); pesertaEl.focus(); return; }
+      if (!nama) { showResult('Nama penanda tangan wajib diisi.', 'warning'); namaEl.focus(); return; }
+      if (!password) { showResult('Password TTD wajib diisi.', 'warning'); passEl.focus(); return; }
+      if (!sigPad || sigPad.isEmpty()) {
+        showResult('Tanda tangan wajib diisi.', 'warning');
+        signAreaEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      let mode = 'single';
+      let targetLabel = pesertaVal;
+      let filterPac = null;
+
+      if (pesertaVal === '__ALL__') {
+        mode = 'bulk';
+        targetLabel = `SEMUA PESERTA (${eligibleList.length} orang)`;
+      } else if (pesertaVal.startsWith('__PAC__:')) {
+        mode = 'bulk';
+        filterPac = pesertaVal.slice('__PAC__:'.length);
+        const cnt = (pacGroups[filterPac] || []).length;
+        targetLabel = `SEMUA PESERTA ${filterPac} (${cnt} orang)`;
+      }
+
+      if (mode === 'bulk') {
+        const ok = confirm(
+          `⚠️ KONFIRMASI BULK SIGN\n\n` +
+          `Anda akan menandatangani:\n${targetLabel}\n\n` +
+          `Tanda tangan & password Anda akan dipakai untuk semua peserta tersebut.\n` +
+          `Pastikan Ketua PC sudah TTD peserta tersebut.`
+        );
+        if (!ok) return;
+      }
+
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      const originalText = submitText.textContent;
+      submitText.textContent = mode === 'bulk' ? 'Memproses bulk…' : 'Menyimpan…';
+
+      try {
+        let signatureDataURL;
+        try {
+          signatureDataURL = sigPad.toDataURL('image/jpeg', 0.3);
+        } catch (err) {
+          signatureDataURL = sigPad.toDataURL('image/png');
+        }
+
+        if (!signatureDataURL || !signatureDataURL.startsWith('data:image/')) {
+          throw new Error('Gagal memproses tanda tangan.');
+        }
+
+        let res;
+        if (mode === 'bulk') {
+          res = await bulkSignForRole(ROLE, nama, signatureDataURL, password, filterPac, 'Verifikasi sertifikat PKD');
+        } else {
+          res = await submitDigitalSignature(ROLE, nama, signatureDataURL, password, pesertaVal, 'Verifikasi sertifikat PKD');
+        }
+
+        if (res && res.success) {
+          if (mode === 'bulk') {
+            showResult(
+              `✅ <strong>Berhasil!</strong> TTD Anda tersimpan untuk <strong>${res.count} peserta</strong>.<br>` +
+              `<small>Selanjutnya: <strong>Instruktur</strong> dapat melanjutkan TTD peserta tersebut.</small>`,
+              'success'
+            );
+            showToast(`Berhasil TTD ${res.count} peserta`, 'success');
+          } else {
+            showResult(
+              `✅ Tanda tangan <strong>${ROLE_LABEL}</strong> berhasil disimpan untuk peserta "<strong>${escapeHtml(pesertaVal)}</strong>".<br>` +
+              `<small>Peserta ini siap dilanjutkan oleh <strong>Instruktur</strong>.</small>`,
+              'success'
+            );
+            showToast(`Tanda tangan ${ROLE_LABEL} berhasil`, 'success');
+          }
+
+          sigPad.clear();
+          signAreaEl.classList.remove('drawing');
+          passwordVerified = false;
+          welcomeBannerEl?.classList.remove('show');
+          signAreaEl?.classList.add('locked');
+          submitBtn?.classList.add('locked');
+          submitBtn.disabled = true;
+          if (passLiveHintEl) { passLiveHintEl.className = 'password-hint-live'; passLiveHintEl.innerHTML = ''; }
+          clearTimeout(passwordCheckTimer);
+
+          passEl.value = '';
+          pesertaEl.value = '';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+
+          await loadPeserta();
+        } else {
+          throw new Error((res && res.error) || 'Gagal menyimpan tanda tangan.');
+        }
+      } catch (err) {
+        console.error('[SignSekretaris] Submit error:', err);
+        const msg = err.message || 'Terjadi kesalahan.';
+
+        if (msg.toLowerCase().includes('password')) {
+          showResult('Password TTD salah. Periksa kembali password Anda.', 'danger');
+        } else if (msg.toLowerCase().includes('tunggu') ||
+                   msg.toLowerCase().includes('ketua') ||
+                   msg.toLowerCase().includes('sudah')) {
+          showResult(escapeHtml(msg), 'warning');
+        } else {
+          showResult('Gagal: ' + escapeHtml(msg), 'danger');
+        }
+        showToast('Gagal menyimpan tanda tangan', 'error');
+      } finally {
+        isSubmitting = false;
+        submitBtn.disabled = !passwordVerified;
+        submitText.textContent = originalText;
+      }
+    }
+
+    (async function boot() {
+      renderUserInfo();
+
+      try {
+        const userData = getUserData() || {};
+        if (userData.nama && namaEl) namaEl.value = userData.nama;
+      } catch (e) {}
+
+      initSignaturePad();
+      bindEvents();
+      await loadPeserta();
+      showPage();
     })();
 
     console.log(
-      '%c sign_sekretaris.html v28.3.0 — Full Fix + Queue Edition ',
-      'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+      '%c Sign Sekretaris v26.1.5 — Tanpa Login + Urutan + Bulk + Welcome ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
 

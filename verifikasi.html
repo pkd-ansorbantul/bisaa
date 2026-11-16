@@ -9,17 +9,23 @@
 
   <title>Verifikasi Sertifikat · PKD GP Ansor Bantul</title>
 
-  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 
+  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
+    /* ============================================================
+       RESET & LAYOUT
+       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -27,6 +33,7 @@
       color: #0f172a;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     body {
       display: flex;
@@ -35,7 +42,9 @@
       padding: 2rem 1rem;
     }
 
-    /* BRAND HEADER */
+    /* ============================================================
+       HEADER BRAND
+       ============================================================ */
     .brand-header {
       text-align: center;
       margin-bottom: 1.5rem;
@@ -58,7 +67,9 @@
       margin-bottom: 0;
     }
 
-    /* VERIFY CARD */
+    /* ============================================================
+       VERIFY CARD
+       ============================================================ */
     .verify-card {
       max-width: 560px;
       width: 100%;
@@ -91,7 +102,9 @@
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
       outline: none;
     }
-    .form-control::placeholder { color: #94a3b8; }
+    .form-control::placeholder {
+      color: #94a3b8;
+    }
 
     .btn-verify {
       border-radius: 9999px;
@@ -124,7 +137,12 @@
       transform: none !important;
     }
 
-    .result-area { margin-top: 1.25rem; }
+    /* ============================================================
+       RESULT CARD
+       ============================================================ */
+    .result-area {
+      margin-top: 1.25rem;
+    }
 
     .result-box {
       border-radius: 16px;
@@ -162,7 +180,9 @@
       align-items: center;
       gap: 0.5rem;
     }
-    .result-box .result-title i { font-size: 1.4rem; }
+    .result-box .result-title i {
+      font-size: 1.4rem;
+    }
 
     .result-detail {
       background: rgba(255, 255, 255, 0.6);
@@ -179,7 +199,9 @@
       padding: 0.4rem 0;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
-    .result-detail .row-line:last-child { border-bottom: none; }
+    .result-detail .row-line:last-child {
+      border-bottom: none;
+    }
     .result-detail .label {
       color: #64748b;
       font-weight: 500;
@@ -225,6 +247,9 @@
       transform: translateY(-1px);
     }
 
+    /* ============================================================
+       LOADING
+       ============================================================ */
     .loading-state {
       text-align: center;
       padding: 1.5rem 0;
@@ -243,8 +268,13 @@
       color: #64748b;
       margin: 0;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
+    /* ============================================================
+       FOOTER
+       ============================================================ */
     .footer-links {
       margin-top: 1.5rem;
       text-align: center;
@@ -267,9 +297,18 @@
       background: rgba(37, 99, 235, 0.06);
     }
 
+    /* ============================================================
+       ANIMATIONS
+       ============================================================ */
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -279,11 +318,23 @@
       }
     }
 
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
     @media (max-width: 576px) {
-      body { padding: 1rem 0.75rem; }
-      .verify-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
-      .brand-header img { height: 52px; }
-      .brand-header h1 { font-size: 1.15rem; }
+      body {
+        padding: 1rem 0.75rem;
+      }
+      .verify-card {
+        padding: 1.5rem 1.25rem;
+        border-radius: 20px;
+      }
+      .brand-header img {
+        height: 52px;
+      }
+      .brand-header h1 {
+        font-size: 1.15rem;
+      }
       .result-detail {
         padding: 0.7rem 0.85rem;
         font-size: 0.8rem;
@@ -293,14 +344,21 @@
 </head>
 <body>
 
+  <!-- ============================================================
+       BRAND HEADER
+       ============================================================ -->
   <div class="brand-header">
-    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
+    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
     <h1>Verifikasi Sertifikat</h1>
     <p>PKD GP Ansor Kabupaten Bantul</p>
   </div>
 
+  <!-- ============================================================
+       VERIFY CARD
+       ============================================================ -->
   <div class="verify-card">
 
+    <!-- Form -->
     <form id="verifyForm" autocomplete="off" novalidate>
       <label class="form-label" for="nomorInput">
         <i class="bi bi-upc-scan me-1"></i> Nomor Sertifikat
@@ -323,10 +381,14 @@
       </button>
     </form>
 
+    <!-- Result Area -->
     <div class="result-area" id="resultArea" aria-live="polite" aria-atomic="true"></div>
 
   </div>
 
+  <!-- ============================================================
+       FOOTER LINKS
+       ============================================================ -->
   <div class="footer-links">
     <a href="/bisaa/index.html">
       <i class="bi bi-arrow-left"></i>
@@ -334,13 +396,15 @@
     </a>
   </div>
 
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ============================================================
-    //   verifikasi.html v28.4.0 — FULL FIX
+    //   IMPORTS
     // ============================================================
-
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
     // ============================================================
@@ -353,6 +417,9 @@
     const btnTextEl    = document.getElementById('verifyBtnText');
     const resultAreaEl = document.getElementById('resultArea');
 
+    // ============================================================
+    //   STATE
+    // ============================================================
     let isVerifying = false;
 
     // ============================================================
@@ -453,6 +520,9 @@
       `;
     }
 
+    // ============================================================
+    //   BUTTON STATE
+    // ============================================================
     function setBtnLoading(loading) {
       if (loading) {
         btnEl.disabled = true;
@@ -483,6 +553,7 @@
       try {
         const res = await callApi('verifyCertificate', { nomor: nomor.trim() }, 'GET');
 
+        // Backend: { success: true, data: {...} | null }
         if (res && res.success === true) {
           if (res.data && res.data.nomor_sertifikat) {
             renderSuccess(res.data);
@@ -502,7 +573,7 @@
     }
 
     // ============================================================
-    //   FORM SUBMIT
+    //   EVENT: Form Submit
     // ============================================================
     formEl.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -510,7 +581,8 @@
     });
 
     // ============================================================
-    //   AUTO-FROM QUERY STRING (?nomor=xxx)
+    //   QUERY STRING AUTO-FILL & AUTO-VERIFY
+    //   Support: ?nomor=XXX
     // ============================================================
     (function autoFromQuery() {
       try {
@@ -518,6 +590,7 @@
         const nomor = params.get('nomor');
         if (nomor) {
           inputEl.value = nomor;
+          // Auto-verify setelah DOM ready
           setTimeout(() => verify(nomor), 200);
         }
       } catch (e) {
@@ -525,12 +598,18 @@
       }
     })();
 
+    // ============================================================
+    //   AUTO-FOCUS INPUT
+    // ============================================================
     if (!new URLSearchParams(window.location.search).get('nomor')) {
       setTimeout(() => inputEl.focus(), 300);
     }
 
+    // ============================================================
+    //   CONSOLE BANNER
+    // ============================================================
     console.log(
-      '%c verifikasi.html v28.4.0 — Full Fix ',
+      '%c Verifikasi Sertifikat — PKD GP Ansor Bantul ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
