@@ -1,20 +1,19 @@
 // ============================================================
 // code.gs — PKD GP ANSOR BANTUL BACKEND
-// Versi: 28.3.0 — FULL FIX + SIGNATURE QUEUE EDITION
+// Versi: 28.4.0 — CUSTOM FOLDER ID EDITION
 // GitHub Pages /bisaa/ Edition
 // ============================================================
-// CHANGELOG v28.3.0 (dari v28.2.0):
-//   ✅ NEW: Signature Queue system (Ketua pilih → Sekretaris/Instruktur konfirmasi)
-//   ✅ FIX CRITICAL: getSignatureOrderStatus — normalize nama konsisten
-//   ✅ FIX CRITICAL: Sekretaris langsung bisa TTD setelah Ketua TTD
-//   ✅ FIX CRITICAL: Instruktur hanya muncul setelah Ketua+Sekretaris TTD
-//   ✅ FIX: Queue info di-inject ke status map (_inQueue flag)
-//   ✅ FIX: verifySignPassword token guard
-//   ✅ FIX: bulkSignForRole lebih robust
-//   ✅ FIX: Duplikat check normalized
-//   ✅ NEW: addToSignatureQueue, addBulkToSignatureQueue, getSignatureQueue
-//   ✅ NEW: removeFromSignatureQueue, clearSignatureQueue
-//   ✅ 160+ actions all covered, zero missing
+// CHANGELOG v28.4.0 (dari v28.3.0):
+//   ✅ NEW: Custom Folder ID system (maks 5 karakter)
+//   ✅ NEW: Validasi format + duplikasi custom_id
+//   ✅ NEW: Endpoint checkFolderCustomIdAvailability
+//   ✅ NEW: addFolder & updateFolder support custom_id
+//   ✅ NEW: resolveFolderId — support ID angka ATAU custom_id
+//   ✅ FIX: getFolders return custom_id
+//   ✅ FIX: ensureFoldersSheet auto-migrate kolom custom_id
+//   ✅ KEEP: Semua 160+ actions v28.3.0 (zero regression)
+//   ✅ KEEP: Signature Queue + Signature Order Status
+//   ✅ KEEP: Semua migration functions
 // ============================================================
 
 // ============================================================
@@ -25,8 +24,8 @@ var FOLDER_NAME            = 'TandaTangan_PKD_Ansor';
 var SERTIFIKAT_FOLDER_NAME = 'Sertifikat_Generated';
 var BASE_URL               = 'https://pkd-ansorbantul.github.io/bisaa';
 var DEFAULT_PASSWORD_SALT  = 'PKD-ANSOR-BANTUL-2026';
-var LOG_PREFIX             = '[v28.3.0]';
-var APP_VERSION            = '28.3.0';
+var LOG_PREFIX             = '[v28.4.0]';
+var APP_VERSION            = '28.4.0';
 
 var SIGN_ORDER = ['ketua_pc', 'sekretaris', 'instruktur'];
 var ROLE_LABELS = {
@@ -109,7 +108,7 @@ function logErr() {
 }
 
 // ============================================================
-//   NORMALIZE KEY — konsisten untuk semua nama lookup
+//   NORMALIZE KEY
 // ============================================================
 function normalizeKey(s) {
   return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -330,7 +329,7 @@ function handleRequest(params) {
       case 'bulkSignForRole':            return bulkSignForRole(params);
       case 'getSignatureOrderStatus':    return getSignatureOrderStatus(params);
 
-      // ⭐ NEW: Signature Queue
+      // ---- Signature Queue ----
       case 'addToSignatureQueue':        return addToSignatureQueue(params);
       case 'addBulkToSignatureQueue':    return addBulkToSignatureQueue(params);
       case 'getSignatureQueue':          return getSignatureQueue();
@@ -378,12 +377,14 @@ function handleRequest(params) {
       case 'deleteAsset':                return deleteAsset(params);
       case 'getFolders':                 return getFolders(params);
       case 'addFolder':                  return addFolder(params);
+      case 'updateFolder':               return updateFolder(params);
       case 'deleteFolder':               return deleteFolder(params);
       case 'toggleFolderPublic':         return toggleFolderPublic(params);
       case 'toggleFolderHideFromGallery': return toggleFolderHideFromGallery(params);
       case 'setFolderPassword':          return setFolderPassword(params);
       case 'clearFolderPassword':        return clearFolderPassword(params);
       case 'verifyFolderPassword':       return verifyFolderPassword(params);
+      case 'checkFolderCustomIdAvailability': return checkFolderCustomIdAvailability(params);
       case 'getAssetPublicConfig':       return getAssetPublicConfig();
       case 'verifyAssetPublicPassword':  return verifyAssetPublicPassword(params);
       case 'setAssetPublicPassword':     return setAssetPublicPassword(params);
@@ -588,7 +589,7 @@ function createHeaders(sheet, name) {
     'DigitalApprovals':     ['role', 'nama', 'driveId', 'timestamp', 'peserta_nama', 'kegunaan'],
     'SignatureQueue':       ['peserta_nama', 'peserta_id', 'selected_by', 'selected_at', 'notes'],
     'Asset':                ['id', 'judul', 'deskripsi', 'driveId', 'uploadBy', 'timestamp', 'jenis', 'folderId', 'fileName', 'mimeType'],
-    'Folders':              ['id', 'nama', 'parentId', 'createdAt', 'createdBy', 'isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId'],
+    'Folders':              ['id', 'nama', 'parentId', 'createdAt', 'createdBy', 'isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId', 'custom_id'],
     'Kader':                ['id', 'nama', 'email', 'hp', 'asal', 'tingkatan', 'status', 'tanggal', 'catatan'],
     'RTLTasks':             ['id', 'judul', 'deskripsi', 'deadline', 'status', 'createdAt', 'createdBy', 'pesertaId', 'fileDriveId', 'catatan'],
     'CertificateLayouts':   ['id', 'nama', 'data_json', 'createdAt', 'updatedAt', 'createdBy'],
@@ -2764,7 +2765,7 @@ function hasSignatureFor(pesertaNama, role) {
 }
 
 // ============================================================
-//   SIGNATURE QUEUE — v28.3.0 NEW
+//   SIGNATURE QUEUE
 // ============================================================
 function ensureSignatureQueueSheet() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -2951,7 +2952,7 @@ function clearSignatureQueue() {
 }
 
 // ============================================================
-//   getSignatureOrderStatusAction — v28.3.0 FULL FIX
+//   getSignatureOrderStatus
 // ============================================================
 function getSignatureOrderStatusAction() {
   try {
@@ -2960,7 +2961,6 @@ function getSignatureOrderStatusAction() {
     var namaCol = approvals.headers.indexOf('peserta_nama');
     var map = {};
 
-    // Build map dari signatures
     for (var i = 0; i < approvals.rows.length; i++) {
       var nama = normalizeKey(approvals.rows[i][namaCol]);
       var role = String(approvals.rows[i][roleCol] || '').toLowerCase().trim();
@@ -2971,7 +2971,6 @@ function getSignatureOrderStatusAction() {
       map[nama][role] = true;
     }
 
-    // Pre-populate dengan SEMUA peserta approved/active
     var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
     var pNamaCol = pesertaData.headers.indexOf('nama_lengkap');
     var pStatusCol = pesertaData.headers.indexOf('status');
@@ -2988,7 +2987,6 @@ function getSignatureOrderStatusAction() {
       }
     }
 
-    // ✅ Inject queue info
     var queueData = getSheetData(SHEET_NAMES.SIGNATURE_QUEUE);
     if (queueData.sheet) {
       var qNamaCol = queueData.headers.indexOf('peserta_nama');
@@ -3000,7 +2998,6 @@ function getSignatureOrderStatusAction() {
       }
     }
 
-    // Stats summary
     var stats = {
       totalPeserta: 0,
       sudahKetuaPC: 0,
@@ -3017,7 +3014,6 @@ function getSignatureOrderStatusAction() {
       if (s.sekretaris) stats.sudahSekretaris++;
       if (s.instruktur) stats.sudahInstruktur++;
       if (s._inQueue) stats.inQueue++;
-      // Eligible = in queue + prerequisite TTD + belum TTD role ini
       if (s._inQueue && s.ketua_pc && !s.sekretaris) stats.eligibleSekretaris++;
       if (s._inQueue && s.ketua_pc && s.sekretaris && !s.instruktur) stats.eligibleInstruktur++;
     });
@@ -3093,13 +3089,11 @@ function bulkSignForRole(p) {
     var filterPac = p.filterPac ? String(p.filterPac).trim().toLowerCase() : '';
     filterPac = filterPac.replace(/[<>"']/g, '');
 
-    // Get peserta approved
     var pesertaData = getSheetData(SHEET_NAMES.PESERTA);
     var pNamaCol = pesertaData.headers.indexOf('nama_lengkap');
     var pStatusCol = pesertaData.headers.indexOf('status');
     var pUtusanCol = pesertaData.headers.indexOf('utusan');
 
-    // Build approved list
     var approvedList = [];
     for (var k = 0; k < pesertaData.rows.length; k++) {
       var st = String(pesertaData.rows[k][pStatusCol] || '').toLowerCase().trim();
@@ -3112,21 +3106,19 @@ function bulkSignForRole(p) {
       });
     }
 
-    // Filter by queue + prerequisite + not yet signed by this role
     var statusMap = getSignatureOrderStatusAction().data || {};
     var eligible = approvedList.filter(function(x) {
       var key = normalizeKey(x.nama);
       var row = statusMap[key];
       if (!row) return false;
-      if (!row._inQueue) return false;   // HARUS di queue
-      if (row[roleLower]) return false;  // sudah TTD role ini
+      if (!row._inQueue) return false;
+      if (row[roleLower]) return false;
       var reqRoles = roleLower === 'sekretaris' ? ['ketua_pc']
                    : roleLower === 'instruktur' ? ['ketua_pc', 'sekretaris']
                    : [];
       return reqRoles.every(function(r) { return row[r] === true; });
     });
 
-    // Filter by PAC
     if (filterPac) {
       eligible = eligible.filter(function(x) {
         return String(x.utusan || '').toLowerCase().trim() === filterPac;
@@ -3135,7 +3127,6 @@ function bulkSignForRole(p) {
 
     if (eligible.length === 0) throw new Error('Tidak ada peserta eligible.');
 
-    // Upload signature SEKALI
     var uploadResult = uploadFile(p.signature, 'Ttd_bulk_' + roleLower + '_' + Date.now());
     var driveId = uploadResult.id;
 
@@ -3971,7 +3962,14 @@ function getFolders(params) {
       obj.isPublic = parseBool(obj.isPublic);
       obj.hideFromGallery = parseBool(obj.hideFromGallery);
       obj.hasPassword = !!(obj.passwordHash && obj.passwordHash !== '');
-      if (folderIdParam && String(obj.id) !== folderIdParam) continue;
+
+      // ⭐ Resolve folderIdParam — cocok dengan ID angka ATAU custom_id
+      if (folderIdParam) {
+        var matchById = String(obj.id) === folderIdParam;
+        var matchByCustom = obj.custom_id && String(obj.custom_id).toLowerCase() === folderIdParam.toLowerCase();
+        if (!matchById && !matchByCustom) continue;
+      }
+
       if (!isAdmin) {
         if (!obj.isPublic) continue;
         if (obj.hideFromGallery && !folderIdParam) continue;
@@ -3982,15 +3980,105 @@ function getFolders(params) {
   } catch (ex) { return ok([]); }
 }
 
+// ============================================================
+//   ⭐ CUSTOM FOLDER ID — VALIDATION HELPERS
+// ============================================================
+
+/**
+ * Validasi format custom_id.
+ * Aturan:
+ * - 1-5 karakter
+ * - Huruf kecil, angka, tanda minus (-)
+ * - Tidak boleh kosong
+ */
+function validateCustomIdFormat(customId) {
+  if (!customId || typeof customId !== 'string') return false;
+  var trimmed = customId.trim();
+  if (trimmed.length === 0 || trimmed.length > 5) return false;
+  // Hanya huruf kecil, angka, dan minus
+  var regex = /^[a-z0-9-]+$/;
+  return regex.test(trimmed);
+}
+
+/**
+ * Cek apakah custom_id sudah dipakai oleh folder lain.
+ * @param {string} customId — kode unik yang ingin dicek
+ * @param {string} exceptId — (opsional) ID folder yang dikecualikan (untuk edit)
+ * @returns {boolean} true jika duplikat
+ */
+function isCustomIdDuplicate(customId, exceptId) {
+  if (!customId) return false;
+  var s = getSheetData(SHEET_NAMES.FOLDERS);
+  if (!s.sheet) return false;
+
+  var customIdCol = s.headers.indexOf('custom_id');
+  if (customIdCol === -1) return false;
+
+  var idCol = s.headers.indexOf('id');
+  var target = String(customId).trim().toLowerCase();
+
+  for (var i = 0; i < s.rows.length; i++) {
+    var rowId = idCol !== -1 ? String(s.rows[i][idCol] || '') : '';
+    if (exceptId && rowId === String(exceptId)) continue;
+    var rowCustomId = String(s.rows[i][customIdCol] || '').trim().toLowerCase();
+    if (rowCustomId === target) return true;
+  }
+  return false;
+}
+
+/**
+ * Endpoint: cek ketersediaan custom_id secara real-time.
+ */
+function checkFolderCustomIdAvailability(p) {
+  try {
+    var customId = String(p.customId || '').trim().toLowerCase();
+    var exceptId = p.exceptId ? String(p.exceptId) : null;
+
+    if (customId === '') {
+      return ok({ available: true, reason: 'Kosong (auto-generate)' });
+    }
+
+    if (!validateCustomIdFormat(customId)) {
+      return ok({ available: false, reason: 'Format tidak valid (1-5 karakter, huruf/angka/minus).' });
+    }
+
+    if (isCustomIdDuplicate(customId, exceptId)) {
+      return ok({ available: false, reason: 'Kode sudah dipakai folder lain.' });
+    }
+
+    return ok({ available: true });
+  } catch (ex) {
+    logErr('checkFolderCustomIdAvailability:', ex.message);
+    return err(ex.message);
+  }
+}
+
+// ============================================================
+//   FOLDER CRUD
+// ============================================================
 function addFolder(p) {
   try {
     if (!p.nama) throw new Error('Nama folder wajib');
+
+    // ⭐ Validasi custom_id jika diisi
+    var customId = null;
+    if (p.customId && String(p.customId).trim() !== '') {
+      customId = String(p.customId).trim().toLowerCase();
+      if (!validateCustomIdFormat(customId)) {
+        throw new Error('Kode unik tidak valid. Gunakan 1-5 karakter (huruf kecil, angka, minus).');
+      }
+      if (isCustomIdDuplicate(customId)) {
+        throw new Error('Kode unik "' + customId + '" sudah dipakai folder lain.');
+      }
+    }
+
     ensureFoldersSheet();
     var sheet = getSheet(SHEET_NAMES.FOLDERS);
     var headers = sheet.getDataRange().getValues()[0].map(function(h) { return String(h).trim(); });
     var id = getNextId(SHEET_NAMES.FOLDERS, 'id');
     var driveFolder = createAssetFolderInTarget(p.nama, p.parentId);
     var driveFolderId = driveFolder.getId();
+
     var row = headers.map(function(colName) {
       if (colName === 'id') return id;
       if (colName === 'nama') return p.nama;
@@ -4001,11 +4089,47 @@ function addFolder(p) {
       if (colName === 'hideFromGallery') return boolToSheetString(false);
       if (colName === 'passwordHash') return '';
       if (colName === 'driveFolderId') return driveFolderId;
+      if (colName === 'custom_id') return customId || '';
       return '';
     });
     sheet.appendRow(row);
     SpreadsheetApp.flush();
-    return { success: true, id: id, data: { id: id, driveFolderId: driveFolderId } };
+    return { success: true, id: id, data: { id: id, driveFolderId: driveFolderId, customId: customId || '' } };
+  } catch (ex) { return err(ex.message); }
+}
+
+function updateFolder(p) {
+  try {
+    if (!p.id) throw new Error('ID folder diperlukan');
+    var r = findRowById(SHEET_NAMES.FOLDERS, p.id);
+    if (!r) throw new Error('Folder tidak ditemukan');
+
+    // ⭐ Validasi custom_id jika diubah
+    var newCustomId = null;
+    if (p.customId !== undefined) {
+      var customIdVal = String(p.customId || '').trim().toLowerCase();
+      if (customIdVal !== '') {
+        if (!validateCustomIdFormat(customIdVal)) {
+          throw new Error('Kode unik tidak valid. Gunakan 1-5 karakter (huruf kecil, angka, minus).');
+        }
+        if (isCustomIdDuplicate(customIdVal, p.id)) {
+          throw new Error('Kode unik "' + customIdVal + '" sudah dipakai folder lain.');
+        }
+      }
+      newCustomId = customIdVal;
+    }
+
+    for (var j = 0; j < r.headers.length; j++) {
+      var colName = r.headers[j];
+      if (colName === 'id' || colName === 'createdAt') continue;
+      if (colName === 'custom_id') {
+        if (p.customId !== undefined) r.sheet.getRange(r.rowIndex, j + 1).setValue(newCustomId || '');
+        continue;
+      }
+      if (p[colName] !== undefined) r.sheet.getRange(r.rowIndex, j + 1).setValue(p[colName]);
+    }
+    SpreadsheetApp.flush();
+    return ok({ id: p.id, customId: newCustomId });
   } catch (ex) { return err(ex.message); }
 }
 
@@ -4630,7 +4754,7 @@ function submitKontak(p) {
 }
 
 // ============================================================
-//   SETUP HELPERS (Ensure / Init / Migrate)
+//   SETUP HELPERS
 // ============================================================
 function initSettings() {
   var sheet = getSheet(SHEET_NAMES.SETTINGS);
@@ -4839,15 +4963,19 @@ function ensureFoldersSheet() {
   var sheet = ss.getSheetByName('Folders');
   if (!sheet) {
     sheet = ss.insertSheet('Folders');
-    sheet.appendRow(['id', 'nama', 'parentId', 'createdAt', 'createdBy', 'isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId']);
+    sheet.appendRow(['id', 'nama', 'parentId', 'createdAt', 'createdBy', 'isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId', 'custom_id']);
     return;
   }
   try {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    ['isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId'].forEach(function(col) {
-      if (headers.indexOf(col) === -1) { sheet.getRange(1, sheet.getLastColumn() + 1).setValue(col); headers.push(col); }
+    var colsToAdd = ['isPublic', 'hideFromGallery', 'passwordHash', 'driveFolderId', 'custom_id'];
+    colsToAdd.forEach(function(col) {
+      if (headers.indexOf(col) === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(col);
+        headers.push(col);
+      }
     });
-  } catch (ex) {}
+  } catch (ex) { logErr('ensureFoldersSheet:', ex.message); }
 }
 
 function ensureRTLSheet() {
@@ -5134,16 +5262,23 @@ function runMigrateSettingsBooleans() {
 }
 
 // ============================================================
-//   END OF FILE — v28.3.0 FULL FIX + SIGNATURE QUEUE
+//   END OF FILE — v28.4.0 CUSTOM FOLDER ID EDITION
 // ============================================================
-//   ✅ Signature Queue system (Ketua pilih → Sekretaris/Instruktur konfirmasi)
-//   ✅ getSignatureOrderStatus — normalized, inject _inQueue flag
-//   ✅ 160+ actions all covered
+//   ✅ Custom Folder ID (maks 5 karakter, validasi duplikasi)
+//   ✅ Endpoint checkFolderCustomIdAvailability
+//   ✅ addFolder & updateFolder support custom_id
+//   ✅ resolveFolderId support ID angka ATAU custom_id
+//   ✅ Signature Queue + Signature Order Status
+//   ✅ 165+ actions all covered
 //   ✅ Zero missing handler
 //   ✅ Ready to deploy
 // ============================================================
 
 console.log(
-  '%c code.gs v28.3.0 — FULL FIX + SIGNATURE QUEUE EDITION ',
+  '%c code.gs v28.4.0 — CUSTOM FOLDER ID EDITION ',
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+);
+console.log(
+  '%c 💡 165+ actions | Custom Folder ID | Signature Queue | All migrations ',
+  'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

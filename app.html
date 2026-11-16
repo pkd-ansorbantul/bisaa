@@ -6,38 +6,70 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="description" content="Admin Panel PKD GP Ansor Kabupaten Bantul — Kelola peserta, absensi, skrining, sertifikat, dan RTL.">
   <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
 
   <title>Admin Panel · PKD GP Ansor Bantul</title>
 
-  <!-- ================= FAVICON ================= -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
+  <!-- FAVICON -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
-  <!-- ================= FONTS ================= -->
+  <!-- PRECONNECT -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://drive.google.com">
+
+  <!-- FONTS -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
 
-  <!-- ================= BOOTSTRAP 5 + ICONS ================= -->
+  <!-- BOOTSTRAP 5 + ICONS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-  <!-- ================= GLOBAL THEME ================= -->
+  <!-- GLOBAL THEME -->
   <link rel="stylesheet" href="/bisaa/assets/theme.css">
 
-  <!-- ================= LIBRARIES ================= -->
+  <!-- ============================================================
+       LIBRARIES (deferred) — v28.1.0 FULL STACK
+       ============================================================ -->
+  <!-- Bootstrap JS -->
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Signature Pad (untuk absen & TTD) -->
   <script defer src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+  <!-- QR Generator (untuk ID Card & QR Sesi) -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+  <!-- HTML2Canvas (untuk download ID Card & Screenshot) -->
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- ⭐ NEW: HTML5-QRCode (untuk scan QR di Dashboard) -->
   <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-  <!-- ================= INLINE CRITICAL STYLES ================= -->
+  <!-- EARLY THEME APPLY (anti-FOUC) -->
+  <script>
+    (function earlyThemeApply() {
+      try {
+        var saved = localStorage.getItem('pkd_theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        } else {
+          var prefersDark = window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        }
+      } catch (e) { /* silent */ }
+    })();
+  </script>
+
+  <!-- CRITICAL INLINE STYLES -->
   <style>
-    /* ============================================================
-       INITIAL LOADER
-       ============================================================ */
+    /* Initial Loader */
     #initialLoader {
       position: fixed;
       inset: 0;
@@ -49,10 +81,8 @@
       z-index: 9999;
       transition: opacity 0.35s ease;
     }
-    #initialLoader.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    [data-theme="dark"] #initialLoader { background: #020617; }
+    #initialLoader.hidden { opacity: 0; pointer-events: none; }
     #initialLoader .logo {
       height: 64px;
       margin-bottom: 24px;
@@ -72,17 +102,17 @@
       font-size: 0.9rem;
       font-weight: 500;
     }
-    @keyframes pkdSpin {
-      to { transform: rotate(360deg); }
+    #initialLoader .preload-progress {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-family: 'Courier New', monospace;
+      min-height: 18px;
     }
-    @keyframes pkdPulse {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
-    }
+    @keyframes pkdSpin { to { transform: rotate(360deg); } }
+    @keyframes pkdPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
-    /* ============================================================
-       SKIP LINK — Accessibility
-       ============================================================ */
+    /* Skip Link */
     .skip-link {
       position: absolute;
       top: -40px;
@@ -96,38 +126,19 @@
       font-weight: 600;
       transition: top 0.2s ease;
       cursor: pointer;
+      border: 0;
     }
-    .skip-link:focus {
-      top: 0;
-      color: #fff;
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
+    .skip-link:focus { top: 0; outline: 2px solid #fff; outline-offset: 2px; }
 
-    /* ============================================================
-       SHELL HIDDEN until ready
-       ============================================================ */
-    #appShell {
-      visibility: hidden;
-    }
-    #appShell.is-ready {
-      visibility: visible;
-    }
+    /* App Shell visibility */
+    #appShell { visibility: hidden; }
+    #appShell.is-ready { visibility: visible; }
 
-    /* ============================================================
-       View container needs focus for skip-link
-       ============================================================ */
-    #view-container:focus {
-      outline: none;
-    }
+    /* View container */
+    #view-container:focus { outline: none; }
+    #view-container { min-height: 60vh; }
 
-    #view-container {
-      min-height: 60vh;
-    }
-
-    /* ============================================================
-       MORE MENU MODAL — Compact Grid
-       ============================================================ */
+    /* More menu modal */
     #moreMenuModal .modal-body .btn {
       font-size: 0.8rem;
       padding: 0.55rem 0.5rem;
@@ -138,46 +149,304 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      width: 100%;
     }
-    #moreMenuModal .modal-body .btn i {
-      flex-shrink: 0;
-    }
-    #moreMenuModal .modal-body .btn span,
-    #moreMenuModal .modal-body .btn:not(:has(span)) {
+    #moreMenuModal .modal-body .btn i { flex-shrink: 0; }
+    #moreMenuModal .modal-body .btn span {
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 400px) {
+      #moreMenuModal .modal-body .btn {
+        font-size: 0.72rem;
+        padding: 0.5rem 0.35rem;
+        gap: 0.25rem;
+      }
+      #moreMenuModal .modal-body .btn i { font-size: 0.9rem; }
+    }
+
+    /* Shortcuts Modal */
+    .shortcut-group { margin-bottom: 1.25rem; }
+    .shortcut-group:last-child { margin-bottom: 0; }
+    .shortcut-group-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      margin-bottom: 0.65rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    [data-theme="dark"] .shortcut-group-title {
+      color: #94a3b8;
+      border-color: #1e293b;
+    }
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+    }
+    .shortcut-row:hover { background: #f8fafc; }
+    [data-theme="dark"] .shortcut-row:hover { background: #1e293b; }
+    .shortcut-row .shortcut-label {
+      font-size: 0.87rem;
+      font-weight: 500;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    [data-theme="dark"] .shortcut-row .shortcut-label { color: #cbd5e1; }
+    .shortcut-row .shortcut-label i {
+      color: #64748b;
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+    [data-theme="dark"] .shortcut-row .shortcut-label i { color: #94a3b8; }
+    .shortcut-keys { display: inline-flex; gap: 4px; flex-shrink: 0; }
+    .shortcut-keys kbd {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #475569;
+      min-width: 26px;
+      text-align: center;
+      display: inline-block;
+      line-height: 1;
+    }
+    [data-theme="dark"] .shortcut-keys kbd {
+      background: #1e293b;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+
+    /* Floating shortcut trigger button */
+    .shortcut-trigger-btn {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 1035;
+      opacity: 0.7;
+    }
+    .shortcut-trigger-btn:hover {
+      opacity: 1;
+      background: #2563eb;
+      transform: translateY(-2px) scale(1.05);
+    }
+    .shortcut-trigger-btn:active { transform: scale(0.95); }
+    .shortcut-trigger-btn:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 3px;
+    }
+    @media (max-width: 991px) {
+      .shortcut-trigger-btn {
+        bottom: 80px;
+        left: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+    }
+
+    /* ⭐ Filter Angkatan PKD section */
+    #moreMenuModal .pkd-filter-section {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 0.85rem;
+      border: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] #moreMenuModal .pkd-filter-section {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    #moreMenuModal .pkd-filter-section h6 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    [data-theme="dark"] #moreMenuModal .pkd-filter-section h6 {
+      color: #94a3b8;
+    }
+    #moreMenuModal .pkd-filter-btn {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      border-radius: 10px !important;
+      transition: all 0.2s ease;
+    }
+    #moreMenuModal .pkd-filter-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+    #moreMenuModal .pkd-filter-btn .pkd-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      text-align: left;
+      min-width: 0;
+    }
+    #moreMenuModal .pkd-filter-btn .badge {
+      flex-shrink: 0;
+      font-size: 0.68rem;
+    }
+
+    /* ⭐ Scanner Modal Styling (Fix) */
+    #scanQrModal .modal-body {
+      background: #0f172a;
+      color: #fff;
+      padding: 1.5rem;
+    }
+    #scannerVideoContainer {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #scannerVideoContainer video {
+      width: 100% !important;
+      height: auto !important;
+      border-radius: 16px;
+    }
+    #scannerVideoContainer canvas {
+      display: none !important;
+    }
+    .scanner-status {
+      text-align: center;
+      margin-top: 1rem;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      min-height: 1.5rem;
+    }
+    #manualSessionContainer {
+      display: none;
+      margin-bottom: 1rem;
+    }
+    #manualSessionContainer label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    #manualSessionContainer select {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      display: block;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 0.6rem 1rem;
+    }
+    .scan-stop-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+    }
+    #modeSelectionContainer {
+      color: #fff;
+    }
+    #modeSelectionContainer .btn-check + label {
+      border-radius: 50px;
+      padding: 0.3rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    /* Scanner loading state */
+    .scanner-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 1rem;
+    }
+    .scanner-loading .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      color: #3b82f6;
     }
   </style>
 </head>
 <body>
 
-  <!-- ================= SKIP LINK ================= -->
+  <!-- SKIP LINK -->
   <button
     type="button"
-    class="skip-link border-0"
+    class="skip-link"
     id="skipToContent"
     aria-label="Lewati ke konten utama"
-  >
-    Lewati ke konten utama
-  </button>
+  >Lewati ke konten utama</button>
 
-  <!-- ================= INITIAL LOADER ================= -->
+  <!-- INITIAL LOADER -->
   <div id="initialLoader" role="status" aria-live="polite">
-    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="logo">
+    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="logo">
     <div class="spinner"></div>
     <div class="text">Memuat aplikasi…</div>
+    <div class="preload-progress" aria-live="polite"></div>
   </div>
 
   <!-- ================= SPA SHELL ================= -->
   <div class="admin-wrapper" id="appShell">
 
-    <!-- Sidebar root — diisi oleh components/sidebar.js -->
-    <div id="sidebar-container" aria-label="Navigasi utama"></div>
+    <!-- Backdrop untuk mobile drawer -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
-    <!-- Bottom nav root (mobile) — diisi oleh components/bottom-nav.js -->
+    <div id="sidebar-container" aria-label="Navigasi utama"></div>
     <div id="bottom-nav-container" aria-label="Navigasi mobile"></div>
 
-    <!-- Main outlet — konten dinamis per view (di-inject oleh router.js) -->
     <main
       class="content-wrapper"
       id="view-container"
@@ -185,7 +454,33 @@
       tabindex="-1"
       aria-label="Konten halaman"
     >
-      <!-- Skeleton placeholder — akan diganti oleh router -->
+      <!-- Mobile topbar dengan hamburger -->
+      <div class="mobile-topbar" id="mobileTopbar">
+        <button
+          type="button"
+          class="mobile-topbar-btn"
+          id="mobileMenuBtn"
+          aria-label="Buka menu navigasi"
+          title="Menu"
+        >
+          <i class="bi bi-list" aria-hidden="true"></i>
+        </button>
+
+        <div class="mobile-topbar-title" id="mobileTopbarTitle">
+          PKD GP Ansor
+        </div>
+
+        <button
+          type="button"
+          class="mobile-topbar-btn"
+          id="mobileThemeBtn"
+          aria-label="Toggle tema"
+          title="Toggle tema"
+        >
+          <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+        </button>
+      </div>
+
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Memuat halaman...</span>
@@ -193,10 +488,9 @@
         <p class="mt-3 text-muted">Menyiapkan halaman...</p>
       </div>
     </main>
-
   </div>
 
-  <!-- ================= TOAST GLOBAL ================= -->
+  <!-- TOAST GLOBAL -->
   <div
     class="toast-container position-fixed top-0 end-0 p-3"
     id="toastContainer"
@@ -224,7 +518,9 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: MENU LAINNYA (MOBILE) ================= -->
+  <!-- ============================================================
+       MODAL: MENU LAINNYA (MOBILE BOTTOM NAV)
+       ============================================================ -->
   <div class="modal fade" id="moreMenuModal" tabindex="-1" aria-labelledby="moreMenuModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow-lg">
@@ -235,8 +531,26 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
         <div class="modal-body p-4">
-          <div class="row g-2">
 
+          <!-- ⭐ FILTER PER ANGKATAN PKD -->
+          <div class="pkd-filter-section mb-3">
+            <h6>
+              <i class="bi bi-mortarboard-fill text-primary" aria-hidden="true"></i>
+              Filter per Angkatan PKD
+            </h6>
+            <div id="modalAngkatanPKDList" class="row g-2">
+              <!-- Diisi dinamis oleh JS -->
+              <div class="col-12 text-muted small text-center py-2">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Memuat angkatan…
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- ============ MENU UTAMA (18 items) ============ -->
+          <div class="row g-2">
             <div class="col-6">
               <a href="#/admin/dashboard" class="btn btn-outline-primary w-100" data-route="#/admin/dashboard">
                 <i class="bi bi-speedometer2" aria-hidden="true"></i>
@@ -250,9 +564,9 @@
               </a>
             </div>
             <div class="col-6">
-              <a href="#/admin/alumni" class="btn btn-outline-primary w-100" data-route="#/admin/alumni">
-                <i class="bi bi-award" aria-hidden="true"></i>
-                <span>Alumni</span>
+              <a href="#/admin/angkatan-pkd" class="btn btn-outline-primary w-100" data-route="#/admin/angkatan-pkd">
+                <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+                <span>Angkatan PKD</span>
               </a>
             </div>
             <div class="col-6">
@@ -261,7 +575,6 @@
                 <span>Kader</span>
               </a>
             </div>
-            <!-- ⭐ v26.1.6: Tim Instruktur -->
             <div class="col-6">
               <a href="#/admin/tim-instruktur" class="btn btn-outline-primary w-100" data-route="#/admin/tim-instruktur">
                 <i class="bi bi-person-vcard" aria-hidden="true"></i>
@@ -346,17 +659,31 @@
                 <span>Pengaturan</span>
               </a>
             </div>
-
           </div>
+
           <hr class="my-3">
-          <div class="row">
-            <div class="col-12">
+
+          <!-- ============ ACTIONS ============ -->
+          <div class="row g-2">
+            <div class="col-6">
+              <button
+                type="button"
+                class="btn btn-outline-info w-100"
+                id="shortcutTriggerBtnMobile"
+                data-shortcuts-trigger
+              >
+                <i class="bi bi-keyboard me-1" aria-hidden="true"></i>
+                <span>Shortcuts</span>
+              </button>
+            </div>
+            <div class="col-6">
               <button
                 type="button"
                 class="btn btn-outline-danger w-100"
                 id="mobileLogoutBtn"
               >
-                <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Logout / Keluar
+                <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
+                <span>Logout</span>
               </button>
             </div>
           </div>
@@ -365,7 +692,159 @@
     </div>
   </div>
 
-  <!-- ================= GLOBAL ERROR BANNER ================= -->
+  <!-- ============================================================
+       MODAL: KEYBOARD SHORTCUTS
+       ============================================================ -->
+  <div class="modal fade" id="shortcutsModal" tabindex="-1"
+       aria-labelledby="shortcutsModalLabel" aria-hidden="true"
+       data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+
+        <div class="modal-header bg-primary text-white border-0 rounded-top-4">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="shortcutsModalLabel">
+            <i class="bi bi-keyboard" aria-hidden="true"></i>
+            Keyboard Shortcuts
+          </h5>
+          <button type="button" class="btn-close btn-close-white"
+                  data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+
+        <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto;">
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-compass" aria-hidden="true"></i> Navigasi Cepat
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-speedometer2"></i>Dashboard</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>D</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-person-badge"></i>Peserta</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>P</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-mortarboard-fill"></i>Angkatan PKD</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>L</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-calendar-event"></i>Sesi Absen</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>A</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-clipboard-check"></i>Skrining</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>S</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-file-earmark-text"></i>RTL &amp; Tugas</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>R</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-pencil-square"></i>Tanda Tangan</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>Q</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-file-earmark-pdf"></i>Materi</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>M</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-people-fill"></i>Kader</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>K</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-person-vcard"></i>Tim Instruktur</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>T</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Fitur Interaktif
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-search"></i>Command Palette</span>
+              <span class="shortcut-keys"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-keyboard"></i>Buka Shortcuts (ini)</span>
+              <span class="shortcut-keys"><kbd>Shift</kbd><kbd>?</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-moon-stars"></i>Toggle Dark Mode</span>
+              <span class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>D</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-terminal" aria-hidden="true"></i> Di Command Palette
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-up"></i>Item Sebelumnya</span>
+              <span class="shortcut-keys"><kbd>↑</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-down"></i>Item Selanjutnya</span>
+              <span class="shortcut-keys"><kbd>↓</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-return-left"></i>Pilih Item</span>
+              <span class="shortcut-keys"><kbd>Enter</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-x-circle"></i>Tutup</span>
+              <span class="shortcut-keys"><kbd>Esc</kbd></span>
+            </div>
+          </div>
+
+          <div class="shortcut-group">
+            <div class="shortcut-group-title">
+              <i class="bi bi-signpost-2" aria-hidden="true"></i> Navigasi Umum
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-left"></i>Halaman Sebelumnya</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>←</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-right"></i>Halaman Selanjutnya</span>
+              <span class="shortcut-keys"><kbd>Alt</kbd><kbd>→</kbd></span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-label"><i class="bi bi-arrow-clockwise"></i>Refresh Halaman</span>
+              <span class="shortcut-keys"><kbd>F5</kbd></span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 justify-content-between">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            Tips: Tekan <kbd style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.7rem;border:1px solid #e2e8f0;">Shift</kbd>+<kbd style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:0.7rem;border:1px solid #e2e8f0;">?</kbd> kapan saja
+          </small>
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+            Tutup
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING SHORTCUT TRIGGER -->
+  <button
+    type="button"
+    class="shortcut-trigger-btn"
+    id="shortcutTriggerBtn"
+    data-shortcuts-trigger
+    title="Keyboard Shortcuts (Shift + ?)"
+    aria-label="Buka daftar keyboard shortcuts"
+  >
+    <i class="bi bi-keyboard" aria-hidden="true"></i>
+  </button>
+
+  <!-- GLOBAL ERROR BANNER -->
   <div
     id="globalErrorBanner"
     class="alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg border-0"
@@ -387,94 +866,351 @@
     </div>
   </div>
 
-  <!-- ================= ENTRY POINT SPA ================= -->
+  <!-- ==================== ENTRY POINT SPA ==================== -->
   <script type="module" src="/bisaa/js/app.js"></script>
 
-  <!-- ================= FALLBACK + GLOBAL ERROR HANDLER ================= -->
-  <script>
-    (function () {
-      'use strict';
+  <!-- ==================== INLINE FALLBACK v28.1.0 ==================== -->
+  <script type="module">
+    'use strict';
 
-      // Flag untuk cek apakah app.js sudah load
-      window.__pkdAppLoaded = window.__pkdAppLoaded || false;
+    // ============================================================
+    //   FALLBACK MOUNT: SHORTCUTS MODAL
+    // ============================================================
+    (async function mountShortcutsModalFallback() {
+      try {
+        const mod = await import('/bisaa/js/components/shortcuts-modal.js');
+        if (mod && typeof mod.mount === 'function') {
+          mod.mount();
+          console.log('[app.html] ✅ Shortcuts Modal mounted via fallback');
+        }
+      } catch (e) {
+        console.warn('[app.html] Gagal mount shortcuts-modal:', e);
+      }
+    })();
 
-      // ============================================================
-      //   SKIP LINK — smooth scroll ke konten utama (tanpa hash)
-      // ============================================================
-      document.getElementById('skipToContent')?.addEventListener('click', function (e) {
+    // ============================================================
+    //   SKIP LINK
+    // ============================================================
+    document.getElementById('skipToContent')?.addEventListener('click', function (e) {
+      e.preventDefault();
+      const main = document.getElementById('view-container');
+      if (!main) return;
+      main.focus({ preventScroll: true });
+      main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // ============================================================
+    //   FALLBACK TIMER 20s
+    // ============================================================
+    const fallbackTimer = setTimeout(function () {
+      if (window.__pkdAppLoaded) return;
+      const loader = document.getElementById('initialLoader');
+      if (!loader || loader.classList.contains('hidden')) return;
+
+      loader.innerHTML = ''
+        + '<div style="text-align:center;max-width:400px;padding:24px;font-family:Inter,system-ui,sans-serif;">'
+        +   '<i class="bi bi-exclamation-triangle-fill" style="font-size:3rem;color:#f59e0b;"></i>'
+        +   '<h4 style="margin-top:16px;color:#0f172a;font-weight:700;">Gagal Memuat Aplikasi</h4>'
+        +   '<p style="color:#64748b;margin-top:8px;font-size:0.9rem;">'
+        +     'Aplikasi tidak dapat dimuat. Periksa koneksi internet &amp; coba muat ulang.'
+        +   '</p>'
+        +   '<button onclick="location.reload()" '
+        +     'style="margin-top:16px;background:#2563eb;color:white;border:none;padding:10px 24px;border-radius:50px;font-weight:600;cursor:pointer;font-family:inherit;">'
+        +     '<i class="bi bi-arrow-clockwise"></i> Muat Ulang'
+        +   '</button>'
+        + '</div>';
+    }, 20000);
+
+    window.addEventListener('pkd:app-loaded', () => {
+      clearTimeout(fallbackTimer);
+    }, { once: true });
+
+    // ============================================================
+    //   GLOBAL ERROR HANDLER
+    // ============================================================
+    let errorBannerTimer = null;
+
+    function showErrorBanner(msg) {
+      const banner = document.getElementById('globalErrorBanner');
+      const msgEl = document.getElementById('globalErrorMsg');
+      if (!banner || !msgEl) return;
+      msgEl.textContent = msg || 'Terjadi kesalahan';
+      banner.style.display = 'block';
+      clearTimeout(errorBannerTimer);
+      errorBannerTimer = setTimeout(function () {
+        banner.style.display = 'none';
+      }, 8000);
+    }
+
+    window.addEventListener('error', function (e) {
+      if (!e.filename) return;
+      if (e.filename.indexOf('chrome-extension') !== -1) return;
+      if (e.filename.indexOf('moz-extension') !== -1) return;
+      console.error('[Global Error]', e.message, e.filename, e.lineno);
+      showErrorBanner(e.message);
+    });
+
+    window.addEventListener('unhandledrejection', function (e) {
+      const reason = e && e.reason;
+      const msg = (reason && reason.message) || String(reason || '');
+      console.error('[Unhandled Promise]', reason);
+
+      if (msg.includes('Failed to fetch dynamically')) return;
+      if (msg.includes('AbortError')) return;
+      if (msg.includes('Request timeout')) return;
+
+      showErrorBanner(msg);
+    });
+
+    // ============================================================
+    //   TITLE UPDATE ON ROUTE CHANGE
+    // ============================================================
+    window.addEventListener('routeChanged', function (e) {
+      const detail = e && e.detail;
+      if (!detail || !detail.path) return;
+      const path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
+      const title = path.split(' ').map(w =>
+        w.charAt(0).toUpperCase() + w.slice(1)
+      ).join(' ');
+
+      document.title = (title || 'Admin') + ' · PKD GP Ansor Bantul';
+
+      const topbarTitle = document.getElementById('mobileTopbarTitle');
+      if (topbarTitle) {
+        topbarTitle.textContent = title || 'PKD GP Ansor';
+      }
+    });
+
+    // ============================================================
+    //   GLOBAL KEYBOARD: Ctrl+Shift+D → dark mode fallback
+    // ============================================================
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && String(e.key).toLowerCase() === 'd') {
+        if (window.__themeToggleMounted) return;
         e.preventDefault();
-        var main = document.getElementById('view-container');
-        if (!main) return;
-        main.focus({ preventScroll: true });
-        main.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+        window.dispatchEvent(new CustomEvent('theme:toggle'));
+      }
+    });
 
-      // ============================================================
-      //   FALLBACK TIMER: Jika app.js tidak load dalam 10 detik
-      // ============================================================
-      setTimeout(function () {
-        if (window.__pkdAppLoaded) return;
+    // ============================================================
+    //   POLL APP LOADED FLAG
+    // ============================================================
+    (function pollAppLoaded() {
+      let attempts = 0;
+      const maxAttempts = 40;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.__pkdAppLoaded) {
+          clearTimeout(fallbackTimer);
+          clearInterval(interval);
+          return;
+        }
+        if (attempts >= maxAttempts) clearInterval(interval);
+      }, 500);
+    })();
 
-        var loader = document.getElementById('initialLoader');
-        if (!loader || loader.classList.contains('hidden')) return;
+    // ============================================================
+    //   DEBUG: More menu modal fallback wiring
+    // ============================================================
+    (function ensureMoreMenuModalWorks() {
+      setTimeout(() => {
+        const btn = document.getElementById('moreMenuBtn');
+        const modal = document.getElementById('moreMenuModal');
 
-        loader.innerHTML = ''
-          + '<div style="text-align:center;max-width:400px;padding:24px;font-family:Inter,system-ui,sans-serif;">'
-          +   '<i class="bi bi-exclamation-triangle-fill" style="font-size:3rem;color:#f59e0b;"></i>'
-          +   '<h4 style="margin-top:16px;color:#0f172a;font-weight:700;">Gagal Memuat Aplikasi</h4>'
-          +   '<p style="color:#64748b;margin-top:8px;font-size:0.9rem;">'
-          +     'Aplikasi tidak dapat dimuat. Periksa koneksi internet Anda &amp; coba muat ulang.'
-          +   '</p>'
-          +   '<button onclick="location.reload()" '
-          +     'style="margin-top:16px;background:#2563eb;color:white;border:none;padding:10px 24px;border-radius:50px;font-weight:600;cursor:pointer;font-family:inherit;">'
-          +     '<i class="bi bi-arrow-clockwise"></i> Muat Ulang'
-          +   '</button>'
-          + '</div>';
-      }, 10000);
+        if (!btn || !modal) {
+          console.warn('[app.html] #moreMenuBtn atau #moreMenuModal tidak ditemukan');
+          return;
+        }
 
-      // ============================================================
-      //   GLOBAL ERROR HANDLER
-      // ============================================================
-      function showErrorBanner(msg) {
-        var banner = document.getElementById('globalErrorBanner');
-        var msgEl = document.getElementById('globalErrorMsg');
-        if (!banner || !msgEl) return;
-        msgEl.textContent = msg || 'Terjadi kesalahan';
-        banner.style.display = 'block';
-        clearTimeout(window.__pkdErrorBannerTimer);
-        window.__pkdErrorBannerTimer = setTimeout(function () {
-          banner.style.display = 'none';
-        }, 8000);
+        if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+          console.warn('[app.html] Bootstrap Modal tidak tersedia');
+          return;
+        }
+
+        const hasToggle = btn.getAttribute('data-bs-toggle') === 'modal';
+        if (hasToggle) {
+          console.log('[app.html] ✅ More menu modal: Bootstrap native handle aktif');
+        } else {
+          console.log('[app.html] ⚠️ Fallback bind manual for more menu');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const inst = bootstrap.Modal.getOrCreateInstance(modal);
+            inst.show();
+          });
+        }
+      }, 800);
+    })();
+
+    // ============================================================
+    //   LOAD ANGKATAN PKD KE MODAL LAINNYA
+    // ============================================================
+    async function loadAngkatanPKDToModal() {
+      const container = document.getElementById('modalAngkatanPKDList');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="col-12 text-muted small text-center py-2">
+          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Memuat angkatan…
+        </div>`;
+
+      try {
+        const { getAngkatanPKDWithCount } = await import('/bisaa/js/core/api.js');
+        const res = await getAngkatanPKDWithCount();
+        const list = (res && res.success && Array.isArray(res.data))
+          ? res.data
+          : (Array.isArray(res) ? res : []);
+
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="col-12 text-muted small text-center py-2">
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+              Belum ada Angkatan PKD
+            </div>`;
+          return;
+        }
+
+        let currentFilter = '';
+        try { currentFilter = sessionStorage.getItem('pkd_filter_lokasi') || ''; }
+        catch (e) { /* silent */ }
+
+        let html = '';
+
+        const isAllActive = currentFilter === '';
+        html += `
+          <div class="col-12">
+            <button type="button"
+                    class="btn ${isAllActive ? 'btn-primary' : 'btn-outline-primary'} pkd-filter-btn"
+                    data-pkd-filter="">
+              <i class="bi bi-collection" aria-hidden="true"></i>
+              <span class="pkd-name">Semua Angkatan</span>
+              ${isAllActive ? '<i class="bi bi-check-circle-fill" aria-hidden="true"></i>' : ''}
+            </button>
+          </div>`;
+
+        list.forEach(function (angkatan) {
+          const total = parseInt(angkatan.totalPeserta) || 0;
+          const pending = parseInt(angkatan.totalPending) || 0;
+          const badgeClass = pending > 0 ? 'bg-warning text-dark' : 'bg-info text-dark';
+          const isActive = currentFilter === angkatan.nama;
+          const tahunText = angkatan.tahun ? ` (${angkatan.tahun})` : '';
+
+          html += `
+            <div class="col-6">
+              <button type="button"
+                      class="btn ${isActive ? 'btn-primary' : 'btn-outline-info'} pkd-filter-btn"
+                      data-pkd-filter="${escapeHtmlLocal(angkatan.nama)}"
+                      title="${escapeHtmlLocal(angkatan.nama)}${tahunText} — ${total} peserta">
+                <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+                <span class="pkd-name">${escapeHtmlLocal(angkatan.nama)}</span>
+                <span class="badge ${badgeClass}">${total}</span>
+              </button>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+
+        container.querySelectorAll('[data-pkd-filter]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            const filter = btn.dataset.pkdFilter || '';
+
+            try {
+              if (filter) {
+                sessionStorage.setItem('pkd_filter_lokasi', filter);
+              } else {
+                sessionStorage.removeItem('pkd_filter_lokasi');
+              }
+            } catch (e) { /* silent */ }
+
+            console.log('[app.html] 🎯 Filter Angkatan PKD:', filter || '(semua)');
+
+            container.querySelectorAll('[data-pkd-filter]').forEach(b => {
+              const isThis = b === btn;
+              b.classList.toggle('btn-primary', isThis);
+              b.classList.toggle('btn-outline-primary', isThis && !b.dataset.pkdFilter);
+              b.classList.toggle('btn-outline-info', !isThis && b.dataset.pkdFilter);
+              const oldIcon = b.querySelector('.bi-check-circle-fill');
+              if (oldIcon) oldIcon.remove();
+            });
+
+            const modalEl = document.getElementById('moreMenuModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+              const inst = bootstrap.Modal.getInstance(modalEl);
+              if (inst) inst.hide();
+            }
+
+            setTimeout(function () {
+              window.dispatchEvent(new CustomEvent('router:navigate', {
+                detail: { hash: '#/admin/peserta' },
+              }));
+            }, 250);
+          });
+        });
+
+      } catch (e) {
+        console.warn('[app.html] loadAngkatanPKDToModal:', e);
+        container.innerHTML = `
+          <div class="col-12 text-danger small text-center py-2">
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+            Gagal memuat.
+            <a href="#" id="retryAngkatanModalBtn" class="text-decoration-underline">Coba lagi</a>
+          </div>`;
+        document.getElementById('retryAngkatanModalBtn')?.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          loadAngkatanPKDToModal();
+        });
+      }
+    }
+
+    function escapeHtmlLocal(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('moreMenuModal')?.addEventListener('show.bs.modal', function () {
+      loadAngkatanPKDToModal();
+    });
+
+    window.addEventListener('pkd:lokasi-updated', function () {
+      const modalEl = document.getElementById('moreMenuModal');
+      if (modalEl && modalEl.classList.contains('show')) {
+        loadAngkatanPKDToModal();
+      }
+    });
+
+    // ============================================================
+    //   MOBILE LOGOUT (di modal)
+    // ============================================================
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', function () {
+      if (!confirm('Yakin ingin logout dari sistem?')) return;
+
+      const modalEl = document.getElementById('moreMenuModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
       }
 
-      window.addEventListener('error', function (e) {
-        if (!e.filename || e.filename.indexOf('chrome-extension') !== -1) return;
-        if (e.filename.indexOf('moz-extension') !== -1) return;
-        console.error('[Global Error]', e.message, e.filename, e.lineno);
-        showErrorBanner(e.message);
-      });
+      setTimeout(() => {
+        import('/bisaa/js/core/api.js')
+          .then(mod => {
+            if (mod && typeof mod.logout === 'function') mod.logout();
+            else window.location.href = '/bisaa/index.html';
+          })
+          .catch(() => {
+            window.location.href = '/bisaa/index.html';
+          });
+      }, 200);
+    });
 
-      window.addEventListener('unhandledrejection', function (e) {
-        var reason = e && e.reason;
-        var msg = (reason && reason.message) || String(reason || '');
-        console.error('[Unhandled Promise]', reason);
-        if (msg.includes('Failed to fetch dynamically')) return;
-        if (msg.includes('AbortError')) return;
-        if (msg.includes('Request timeout')) return;
-        showErrorBanner(msg);
-      });
-
-      // ============================================================
-      //   LISTEN routeChanged — update document.title
-      // ============================================================
-      window.addEventListener('routeChanged', function (e) {
-        var detail = e && e.detail;
-        if (!detail || !detail.path) return;
-        var path = detail.path.replace('#/admin/', '').replace(/\//g, ' ');
-        var title = path.charAt(0).toUpperCase() + path.slice(1);
-        document.title = title + ' · PKD GP Ansor Bantul';
-      });
-    })();
+    console.log(
+      '%c app.html inline v28.1.0 — Connection + QR Scanner Edition ',
+      'background:#8b5cf6;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+    );
   </script>
 
 </body>

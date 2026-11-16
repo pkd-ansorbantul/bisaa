@@ -9,23 +9,17 @@
 
   <title>Verifikasi TTD Digital · PKD GP Ansor Bantul</title>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ============================================================
-       RESET & LAYOUT
-       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -42,9 +36,7 @@
       padding: 2rem 1rem;
     }
 
-    /* ============================================================
-       BRAND HEADER
-       ============================================================ */
+    /* BRAND HEADER */
     .brand-header {
       text-align: center;
       margin-bottom: 1.5rem;
@@ -75,9 +67,7 @@
       margin-bottom: 0;
     }
 
-    /* ============================================================
-       VERIFY CARD
-       ============================================================ */
+    /* VERIFY CARD */
     .verify-card {
       max-width: 560px;
       width: 100%;
@@ -90,9 +80,7 @@
       animation-delay: 0.1s;
     }
 
-    /* ============================================================
-       TTD PREVIEW
-       ============================================================ */
+    /* TTD PREVIEW */
     .ttd-preview {
       text-align: center;
       padding: 1rem;
@@ -121,9 +109,7 @@
       font-size: 0.85rem;
     }
 
-    /* ============================================================
-       RESULT BOX
-       ============================================================ */
+    /* RESULT BOX */
     .result-box {
       border-radius: 16px;
       padding: 1.25rem;
@@ -239,9 +225,7 @@
       transform: translateY(-1px);
     }
 
-    /* ============================================================
-       LOADING
-       ============================================================ */
+    /* LOADING */
     .loading-state {
       text-align: center;
       padding: 2rem 0;
@@ -264,9 +248,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* ============================================================
-       EMPTY STATE
-       ============================================================ */
+    /* EMPTY STATE */
     .empty-state {
       text-align: center;
       padding: 2rem 1rem;
@@ -317,9 +299,7 @@
       box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
     }
 
-    /* ============================================================
-       FOOTER
-       ============================================================ */
+    /* FOOTER */
     .footer-links {
       margin-top: 1.5rem;
       text-align: center;
@@ -342,9 +322,6 @@
       background: rgba(37, 99, 235, 0.06);
     }
 
-    /* ============================================================
-       ANIMATIONS
-       ============================================================ */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -357,9 +334,6 @@
       }
     }
 
-    /* ============================================================
-       RESPONSIVE
-       ============================================================ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .verify-card {
@@ -381,11 +355,8 @@
 </head>
 <body>
 
-  <!-- ============================================================
-       BRAND HEADER
-       ============================================================ -->
   <div class="brand-header">
-    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
+    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
     <h1>
       <i class="bi bi-vector-pen" aria-hidden="true"></i>
       Verifikasi TTD Digital
@@ -393,9 +364,6 @@
     <p>PKD GP Ansor Kabupaten Bantul</p>
   </div>
 
-  <!-- ============================================================
-       VERIFY CARD
-       ============================================================ -->
   <div class="verify-card">
 
     <!-- Loading (default) -->
@@ -409,9 +377,6 @@
 
   </div>
 
-  <!-- ============================================================
-       FOOTER LINKS
-       ============================================================ -->
   <div class="footer-links">
     <a href="/bisaa/index.html">
       <i class="bi bi-arrow-left"></i>
@@ -419,15 +384,13 @@
     </a>
   </div>
 
-  <!-- ============================================================
-       SCRIPTS
-       ============================================================ -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ============================================================
-    //   IMPORTS
+    //   verifikasi_signature.html v28.4.0 — FULL FIX
     // ============================================================
+
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
     // ============================================================
@@ -565,7 +528,7 @@
       showResult();
     }
 
-    function renderEmptyState(params) {
+    function renderEmptyState() {
       resultAreaEl.innerHTML = `
         <div class="empty-state">
           <div class="icon-wrap">
@@ -593,7 +556,6 @@
       isVerifying = true;
 
       try {
-        // Ambil semua digital approvals dari backend
         const res = await callApi('getAllDigitalApprovals', {}, 'GET');
         const list = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
 
@@ -602,7 +564,6 @@
           return;
         }
 
-        // Normalisasi role & driveId untuk perbandingan
         const cleanRole = String(role || '').toLowerCase().trim();
         const cleanDriveId = String(driveId || '').trim();
 
@@ -646,7 +607,7 @@
 
       if (!role || !finalDriveId) {
         console.log('[VerifikasiSignature] Parameter tidak lengkap:', { role, driveId: finalDriveId });
-        renderEmptyState(params);
+        renderEmptyState();
         return;
       }
 
@@ -654,11 +615,8 @@
       verifySignature(role, finalDriveId);
     })();
 
-    // ============================================================
-    //   CONSOLE BANNER
-    // ============================================================
     console.log(
-      '%c Verifikasi TTD Digital — PKD GP Ansor Bantul ',
+      '%c verifikasi_signature.html v28.4.0 — Full Fix ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>

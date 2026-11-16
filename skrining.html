@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Skrining PKD · GP Ansor Bantul</title>
 
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
+  <!-- ✅ v26.1.8 GITHUB PAGES: /bisaa/LOGOANSOR.webp -->
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -15,7 +16,6 @@
     * { font-family: 'Inter', system-ui, sans-serif; }
     body { background: #f8fafc; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* HEADER */
     .header-minimal {
       background: rgba(255,255,255,0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -40,7 +40,6 @@
     .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
     .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* GLASS CARD */
     .glass-card {
       background: rgba(255,255,255,0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -59,7 +58,6 @@
       border-color: rgba(37,99,235,0.2);
     }
 
-    /* SKELETON */
     .skeleton-box {
       background: #e2e8f0;
       border-radius: 8px;
@@ -68,7 +66,6 @@
     }
     @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
-    /* MODE SWITCH */
     .mode-switch-wrapper { display: flex; justify-content: center; margin-bottom: 1.5rem; }
     .mode-switch-btn { background: #f1f5f9; border-radius: 9999px; padding: 4px; display: inline-flex; }
     .mode-switch-btn .btn-option {
@@ -78,7 +75,6 @@
     .mode-switch-btn .btn-option.active { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); color: #2563eb; }
     .mode-switch-btn .btn-option:hover:not(.active) { background: rgba(255,255,255,0.5); }
 
-    /* SIGNATURE AREA */
     .signature-area {
       border: 2px dashed #cbd5e1; border-radius: 20px; background: white; padding: 12px;
       transition: border-color 0.2s;
@@ -89,7 +85,6 @@
       background: white; display: block; border-radius: 12px; margin: 0 auto; touch-action: none;
     }
 
-    /* WIZARD INDICATOR */
     .wizard-indicator { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
     .wizard-indicator .dot {
       width: 12px; height: 12px; border-radius: 50%;
@@ -108,17 +103,14 @@
     .radio-group .form-check { margin-right: 1.5rem; }
     .radio-group .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
 
-    /* FOOTER */
     .footer-modern {
       font-size: 0.85rem; color: #64748b; margin-top: auto; text-align: center;
       padding: 1.5rem 0; border-top: 1px solid #e2e8f0; background: white;
     }
 
-    /* TOAST */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast { background: #fff; border-left: 5px solid; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 16px; }
 
-    /* FADE */
     .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -134,7 +126,6 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
@@ -142,7 +133,7 @@
           <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
         <a href="/bisaa/index.html" class="brand-minimal text-decoration-none d-flex align-items-center ms-1">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
@@ -153,7 +144,6 @@
     </div>
   </header>
 
-  <!-- KONTEN -->
   <div id="contentArea" class="container" style="padding: 2rem 0; max-width: 1000px;">
     <div class="glass-card p-4 fade-up">
       <h2 class="section-title" style="font-weight:650;font-size:1.75rem;margin-bottom:1.5rem;border-left:6px solid #2563eb;padding-left:1.2rem;">
@@ -177,7 +167,6 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2">
       <i class="bi bi-c-circle"></i>
@@ -185,7 +174,6 @@
     </div>
   </footer>
 
-  <!-- TOAST -->
   <div class="toast-container">
     <div id="notificationToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
       <div class="toast-header bg-white border-0">
@@ -197,7 +185,6 @@
     </div>
   </div>
 
-  <!-- MODAL PREVIEW & KONFIRMASI -->
   <div class="modal fade" id="previewModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg">
@@ -226,9 +213,9 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ============================================================
-    //   IMPORTS
-    // ============================================================
+    // ==========================================================
+    //   IMPORTS (v26.1.8 GITHUB PAGES: /bisaa/js/core/api.js)
+    // ==========================================================
     import {
       guardPublicAccess,
       getSkriningQuestions,
@@ -236,11 +223,8 @@
       showToast,
       updateNavbarMenu,
       escapeHtml,
-    } from './js/core/api.js';
+    } from '/bisaa/js/core/api.js';
 
-    // ============================================================
-    //   STATE
-    // ============================================================
     const STATE = {
       questions: [],
       sigPad: null,
@@ -255,9 +239,6 @@
 
     const listeners = [];
 
-    // ============================================================
-    //   UTILITY
-    // ============================================================
     function on(el, ev, handler) {
       if (!el) return;
       el.addEventListener(ev, handler);
@@ -292,9 +273,6 @@
       try { return fn(); } catch (e) { return null; }
     }
 
-    // ============================================================
-    //   FORM STATE PERSISTENCE
-    // ============================================================
     function saveFormState() {
       const form = document.getElementById('formSkriningDinamis');
       if (!form) return;
@@ -320,7 +298,6 @@
         if (data.currentMode) STATE.currentMode = data.currentMode;
         if (typeof data.currentStep === 'number') STATE.currentStep = data.currentStep;
 
-        // Sync mode switch button
         document.getElementById('modeWizardBtn')?.classList.toggle('active', STATE.currentMode === 'wizard');
         document.getElementById('modeAllBtn')?.classList.toggle('active', STATE.currentMode === 'all');
 
@@ -348,9 +325,6 @@
       safeLocalStorage(() => localStorage.removeItem(FORM_STATE_KEY));
     }
 
-    // ============================================================
-    //   SKELETON
-    // ============================================================
     function renderSkeletonForm() {
       const container = document.getElementById('skriningFormContainer');
       if (!container) return;
@@ -368,15 +342,11 @@
         </div>`;
     }
 
-    // ============================================================
-    //   RENDER MODE: WIZARD
-    // ============================================================
     function renderFormWizard(sorted) {
       const container = document.getElementById('skriningFormContainer');
 
       const totalSteps = sorted.length + 1;
 
-      // Indicator
       let indicatorHtml = `<div class="wizard-indicator" id="wizardIndicatorContainer">`;
       for (let i = 0; i < totalSteps; i++) {
         const cls = i === STATE.currentStep ? 'active' : (i < STATE.currentStep ? 'completed' : '');
@@ -384,7 +354,6 @@
       }
       indicatorHtml += `</div>`;
 
-      // Steps
       const stepsArray = [];
       let idx = 0;
       sorted.forEach(q => {
@@ -431,7 +400,6 @@
         idx++;
       });
 
-      // Signature step
       const sigDisplay = idx === STATE.currentStep ? 'block' : 'none';
       let sigHtml = `<div id="step-${idx}" class="skrining-step" style="display:${sigDisplay};width:100%;position:relative;min-height:150px;margin-top:15px;">`;
       sigHtml += `
@@ -476,7 +444,6 @@
       bindPreviewButton();
       bindSubmitForm();
 
-      // Bind dot indicators
       container.querySelectorAll('.wizard-indicator .dot').forEach(dot => {
         dot.addEventListener('click', (e) => {
           e.preventDefault();
@@ -484,13 +451,9 @@
         });
       });
 
-      // Restore state
       setTimeout(restoreFormState, 80);
     }
 
-    // ============================================================
-    //   RENDER MODE: ALL-AT-ONCE
-    // ============================================================
     function renderFormAll(sorted) {
       const container = document.getElementById('skriningFormContainer');
 
@@ -559,9 +522,6 @@
       setTimeout(restoreFormState, 50);
     }
 
-    // ============================================================
-    //   SIGNATURE PAD
-    // ============================================================
     function initSignaturePad() {
       const canvas = document.getElementById('signatureCanvasSkrining');
       if (!canvas) return;
@@ -607,9 +567,6 @@
       STATE.sigPad.addEventListener('endStroke', saveFormState);
     }
 
-    // ============================================================
-    //   WIZARD NAVIGATION
-    // ============================================================
     function bindWizardNavigation() {
       const container = document.getElementById('skriningFormContainer');
 
@@ -686,9 +643,6 @@
       });
     }
 
-    // ============================================================
-    //   EXTRACT FORM DATA
-    // ============================================================
     function extractCurrentFormData() {
       const form = document.getElementById('formSkriningDinamis');
       const formData = new FormData(form);
@@ -725,9 +679,6 @@
       return { params, sorted, answers };
     }
 
-    // ============================================================
-    //   PREVIEW & SUBMIT
-    // ============================================================
     function bindPreviewButton() {
       on(document.getElementById('previewAnswersBtn'), 'click', () => {
         if (!STATE.sigPad || STATE.sigPad.isEmpty()) {
@@ -749,7 +700,6 @@
         const data = extractCurrentFormData();
         const { params, sorted, answers } = data;
 
-        // Validate all required inputs
         const inputs = Array.from(form.querySelectorAll('input[required], textarea[required], select[required]'));
         let valid = true;
         let firstEmpty = null;
@@ -817,7 +767,6 @@
       summaryContainer.innerHTML = html;
 
       const finalBtn = document.getElementById('modalFinalSubmitBtn');
-      // Re-create to remove old listeners
       const newFinalBtn = finalBtn.cloneNode(true);
       finalBtn.parentNode.replaceChild(newFinalBtn, finalBtn);
 
@@ -845,7 +794,6 @@
               if (STATE.sigPad) STATE.sigPad.clear();
               STATE.currentStep = 0;
               bootstrap.Modal.getInstance(modalEl)?.hide();
-              // Reload after short delay
               setTimeout(() => window.location.reload(), 1200);
             } else {
               throw new Error((result && result.error) || 'Gagal mengirim');
@@ -863,9 +811,6 @@
       new bootstrap.Modal(modalEl).show();
     }
 
-    // ============================================================
-    //   MODE SWITCH
-    // ============================================================
     function switchMode(mode) {
       if (mode === STATE.currentMode) return;
       STATE.currentMode = mode;
@@ -888,13 +833,9 @@
       else renderFormAll(sorted);
     }
 
-    // ============================================================
-    //   LOAD QUESTIONS (dengan cache)
-    // ============================================================
     async function loadQuestions() {
       renderSkeletonForm();
 
-      // 1. Coba dari cache dulu
       let cached = null;
       try {
         const item = localStorage.getItem(CACHE_KEY);
@@ -913,7 +854,6 @@
         renderForm();
       }
 
-      // 2. Fetch dari API di background
       (async () => {
         try {
           const res = await getSkriningQuestions();
@@ -945,23 +885,22 @@
       })();
     }
 
-    // ============================================================
-    //   BOOT
-    // ============================================================
     (async function boot() {
       const canAccess = await guardPublicAccess();
       if (!canAccess) return;
 
       updateNavbarMenu();
 
-      // Bind mode switch
       on(document.getElementById('modeWizardBtn'), 'click', () => switchMode('wizard'));
       on(document.getElementById('modeAllBtn'), 'click', () => switchMode('all'));
 
-      // Load
       await loadQuestions();
     })();
 
+    console.log(
+      '%c skrining.html v26.1.8 — GitHub Pages /bisaa/ Edition ',
+      'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
+    );
   </script>
 </body>
 </html>

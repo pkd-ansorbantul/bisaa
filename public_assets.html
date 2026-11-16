@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-  <title>Galeri Aset Publik - PKD GP Ansor Bantul</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Galeri Aset Publik — PKD GP Ansor Kabupaten Bantul">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <title>Galeri Aset Publik · PKD GP Ansor Bantul</title>
 
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
     * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
@@ -19,8 +27,10 @@
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      z-index: 1030; padding: 0.75rem 0;
+      z-index: 1030;
+      padding: 0.75rem 0;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
     }
     .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
@@ -28,13 +38,14 @@
     .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
     .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; letter-spacing: 0.02em; }
 
-    /* CONTENT */
     .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
     .section-title {
       font-weight: 650; font-size: 1.75rem;
       border-left: 6px solid #2563eb;
-      padding-left: 1.2rem; margin-bottom: 1.8rem;
+      padding-left: 1.2rem; margin-bottom: 1.5rem;
       color: #0f172a;
+      display: flex; align-items: center; gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     /* FOLDER SIDEBAR */
@@ -48,16 +59,16 @@
       padding: 0.5rem 0.75rem; border-radius: 8px;
       cursor: pointer; transition: background 0.15s;
       margin-bottom: 0.25rem; color: #0f172a;
+      user-select: none;
     }
     .folder-item:hover { background: #f1f5f9; }
     .folder-item.active { background: #dbeafe; font-weight: 600; color: #2563eb; }
-    .folder-item > i.bi-folder-fill { margin-right: 0.5rem; color: #2563eb; }
+    .folder-item > i.bi-folder-fill { margin-right: 0.5rem; color: #2563eb; flex-shrink: 0; }
     .folder-item .lock-icon { margin-left: auto; color: #f59e0b; font-size: 0.75rem; }
     .breadcrumb { background: transparent; padding: 0; margin-bottom: 1rem; }
     .breadcrumb a { color: #2563eb; text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
 
-    /* TOOLBAR */
     .asset-toolbar {
       display: flex; justify-content: space-between;
       align-items: center; margin-bottom: 1rem;
@@ -107,11 +118,23 @@
       padding: 1rem; flex: 1;
       display: flex; flex-direction: column;
     }
-    .asset-card .card-title { font-weight: 600; margin-bottom: 0.25rem; word-break: break-word; color: #0f172a; }
-    .asset-card .card-text { font-size: 0.85rem; color: #64748b; margin: 0; flex: 1; word-break: break-word; }
+    .asset-card .card-title {
+      font-weight: 600; margin-bottom: 0.25rem;
+      word-break: break-word; color: #0f172a;
+      overflow: hidden; text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .asset-card .card-text {
+      font-size: 0.85rem; color: #64748b; margin: 0;
+      flex: 1; word-break: break-word;
+    }
     .asset-card .card-actions {
       display: flex; gap: 4px; margin-top: 8px;
       justify-content: flex-end; align-items: center;
+      flex-wrap: wrap;
     }
     .asset-card .card-actions .btn {
       padding: 0.2rem 0.4rem; font-size: 0.75rem;
@@ -125,7 +148,7 @@
     }
     .asset-card .card-actions .btn-download:hover { background: #15803d; }
 
-    /* PLAYER MODAL (IFRAME) */
+    /* PLAYER OVERLAY */
     .player-overlay {
       position: fixed; inset: 0;
       background: rgba(0, 0, 0, 0.92);
@@ -193,73 +216,24 @@
       font-weight: 500; display: inline-flex;
       align-items: center; gap: 0.35rem;
       cursor: pointer; transition: all 0.2s;
+      text-decoration: none;
     }
-    .player-btn:hover { background: rgba(255, 255, 255, 0.2); }
+    .player-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
     .player-btn.primary {
       background: #16a34a; border-color: #16a34a;
     }
     .player-btn.primary:hover { background: #15803d; }
 
-    /* PREVIEW MODAL */
-    .custom-preview-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 99999;
-    }
-    .custom-preview-box {
-      background: #ffffff; border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      max-width: 90vw; max-height: 90vh;
-      width: 100%; height: 100%;
-      display: flex; flex-direction: column;
-      overflow: hidden; position: relative;
-    }
-    .custom-preview-header {
-      background: #0f172a; color: #fff; padding: 16px 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-shrink: 0;
-    }
-    .custom-preview-header h5 { margin: 0; font-weight: 600; font-size: 1.1rem; }
-    .custom-preview-header button {
-      background: rgba(255, 255, 255, 0.1); border: none; color: #fff;
-      border-radius: 50%; width: 36px; height: 36px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; cursor: pointer; transition: 0.2s;
-    }
-    .custom-preview-header button:hover { background: #dc3545; transform: scale(1.1); }
-    .custom-preview-body {
-      flex: 1; background: #0f172a;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden; position: relative; padding: 0;
-    }
-    .custom-preview-body iframe {
-      width: 100%; height: 100%; border: none;
-      transition: opacity 0.3s; opacity: 0; background: #0f172a;
-    }
-    .custom-preview-body iframe.show { opacity: 1; }
-    .custom-preview-spinner {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff; z-index: 10;
-    }
-    .custom-preview-error {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff; text-align: center;
-      display: none; z-index: 10;
-    }
-    .custom-preview-error i { font-size: 3rem; color: #f59e0b; }
-
-    /* PASSWORD OVERLAYS */
-    #passwordLockOverlay, #folderPasswordOverlay {
+    /* PASSWORD LOCK OVERLAY */
+    .password-lock-overlay {
       position: fixed; inset: 0; z-index: 999999;
       background: rgba(15, 23, 42, 0.9);
       display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
     }
     .lock-box {
       background: white; border-radius: 24px; padding: 2rem;
-      max-width: 400px; width: 90%;
+      max-width: 400px; width: 100%;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       text-align: center;
     }
@@ -267,75 +241,119 @@
     /* SKELETON */
     .skeleton-box {
       background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
-      background-size: 200% 100%; border-radius: 8px;
-      animation: shimmer 1.2s infinite; display: inline-block;
+      background-size: 200% 100%;
+      border-radius: 8px;
+      animation: shimmer 1.2s infinite linear;
+      display: inline-block;
     }
     @keyframes shimmer {
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-    .asset-card.skeleton { border: 1px solid #e2e8f0; background: #f8fafc; box-shadow: none; cursor: default; }
+    .asset-card.skeleton {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      box-shadow: none;
+      cursor: default;
+    }
     .asset-card.skeleton:hover { transform: none; box-shadow: none; }
-    .asset-card.skeleton .skeleton-img { width: 100%; height: 150px; border-radius: 16px 16px 0 0; display: block; }
-    .asset-card.skeleton .skeleton-title { height: 1.2rem; width: 70%; margin: 0.5rem auto 0.3rem; border-radius: 4px; display: block; }
-    .asset-card.skeleton .skeleton-desc { height: 0.9rem; width: 50%; margin: 0 auto; border-radius: 4px; display: block; }
+    .asset-card.skeleton .skeleton-img {
+      width: 100%; height: 150px; border-radius: 16px 16px 0 0; display: block;
+    }
+    .asset-card.skeleton .skeleton-title {
+      height: 1.2rem; width: 70%; margin: 0.5rem auto 0.3rem; border-radius: 4px; display: block;
+    }
+    .asset-card.skeleton .skeleton-desc {
+      height: 0.9rem; width: 50%; margin: 0 auto; border-radius: 4px; display: block;
+    }
+
+    .empty-state {
+      text-align: center; padding: 3rem 1.5rem; color: #64748b;
+    }
+    .empty-state i {
+      font-size: 4rem; color: #cbd5e1;
+      display: block; margin-bottom: 1rem;
+    }
+    .empty-state h5 {
+      font-weight: 700; color: #334155; margin-bottom: 0.5rem;
+    }
+    .empty-state p { font-size: 0.9rem; margin: 0; }
 
     @media (max-width: 576px) {
-      .custom-preview-box { max-width: 100vw; max-height: 100vh; border-radius: 0; }
-      .asset-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
       .content-wrapper { padding: 1rem; }
-      .brand-title-mini { display: none; }
-      .brand-sub-mini { display: none; }
+      .asset-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .brand-title-mini, .brand-sub-mini { display: none; }
       .player-box { border-radius: 12px; max-height: 95vh; }
       .player-body { min-height: 250px; }
       .player-body iframe { min-height: 250px; }
       .player-footer { padding: 0.75rem 1rem; }
+      .section-title { font-size: 1.35rem; }
     }
+
+    /* DARK MODE */
+    [data-theme="dark"] body { background: #020617; color: #f1f5f9; }
+    [data-theme="dark"] .header-minimal {
+      background: rgba(15, 23, 42, 0.72) !important;
+      border-bottom-color: rgba(51, 65, 85, 0.5);
+    }
+    [data-theme="dark"] .brand-title-mini { color: #e2e8f0; }
+    [data-theme="dark"] .brand-sub-mini { color: #94a3b8; }
+    [data-theme="dark"] .folder-sidebar,
+    [data-theme="dark"] .asset-card,
+    [data-theme="dark"] .btn-toolbar,
+    [data-theme="dark"] .lock-box {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #f1f5f9;
+    }
+    [data-theme="dark"] .folder-item { color: #cbd5e1; }
+    [data-theme="dark"] .folder-item:hover { background: #1e293b; }
+    [data-theme="dark"] .folder-item.active { background: #1e3a8a; color: #dbeafe; }
+    [data-theme="dark"] .btn-toolbar { color: #cbd5e1; }
+    [data-theme="dark"] .btn-toolbar:hover { background: #1e293b; color: #f1f5f9; }
+    [data-theme="dark"] .asset-card .card-title { color: #f1f5f9; }
+    [data-theme="dark"] .asset-card .card-text { color: #94a3b8; }
   </style>
 </head>
 <body>
 
-  <header class="header-minimal shadow-sm">
+  <header class="header-minimal">
     <div class="container d-flex justify-content-between align-items-center">
       <a href="/bisaa/index.html" class="d-flex align-items-center text-decoration-none">
-        <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+        <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
         <div>
           <div class="brand-title-mini">PKD GP Ansor</div>
           <span class="brand-sub-mini">Kabupaten Bantul</span>
         </div>
       </a>
-      <a href="/bisaa/index.html" class="btn btn-outline-secondary rounded-pill btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Kembali
-      </a>
+      <div id="navbarUserMenu"></div>
     </div>
   </header>
 
-  <div id="passwordLockOverlay" style="display:none;">
-    <div class="lock-box">
-      <i class="bi bi-lock-fill fs-1 text-primary mb-3"></i>
-      <h5 class="fw-bold">Galeri Terproteksi</h5>
-      <p class="text-muted small">Masukkan password untuk mengakses galeri publik.</p>
-      <div class="input-group mb-3">
-        <input type="password" class="form-control" id="publicAccessPassword" placeholder="Masukkan password" autocomplete="off">
-        <button class="btn btn-outline-secondary" type="button" id="togglePassOverlay"><i class="bi bi-eye"></i></button>
-      </div>
-      <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold" id="unlockPublicBtn">
-        <i class="bi bi-unlock-fill me-1"></i> Buka Kunci
-      </button>
-      <div id="publicLockError" class="text-danger small mt-2" style="display:none;"></div>
-      <a href="/bisaa/index.html" class="btn btn-link btn-sm text-muted mt-2">Kembali ke Beranda</a>
-    </div>
-  </div>
-
   <div class="content-wrapper">
-    <h2 class="section-title"><i class="bi bi-images me-2"></i>Galeri Aset Publik</h2>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h2 class="section-title" id="pageTitle">
+        <i class="bi bi-images" aria-hidden="true"></i>Galeri Aset Publik
+      </h2>
+      <a href="/bisaa/index.html" class="btn btn-sm btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left me-1"></i>Kembali ke Beranda
+      </a>
+    </div>
+
     <div class="row g-3">
       <div class="col-md-3" id="sidebarContainer">
         <div class="folder-sidebar">
-          <h6 class="fw-bold mb-3"><i class="bi bi-folder-fill me-2"></i>Folder</h6>
-          <div id="folderList"></div>
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-folder-fill me-2" aria-hidden="true"></i>Folder
+          </h6>
+          <div id="folderList">
+            <div class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            </div>
+          </div>
         </div>
       </div>
+
       <div class="col-md-9" id="contentContainer">
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb" id="breadcrumb">
@@ -346,12 +364,17 @@
         <div class="asset-toolbar" id="assetToolbar" style="display:none;">
           <div class="asset-count" id="assetCount"></div>
           <button type="button" class="btn-toolbar" id="downloadAllBtn">
-            <i class="bi bi-cloud-arrow-down-fill"></i>
+            <i class="bi bi-cloud-arrow-down-fill" aria-hidden="true"></i>
             <span>Download Semua</span>
           </button>
         </div>
 
-        <div id="assetContainer"></div>
+        <div id="assetContainer">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted small">Memuat aset…</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -359,41 +382,69 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    import { callApi, showToast, escapeHtml } from './js/core/api.js';
+    // ============================================================
+    //   PUBLIC ASSETS — v28.2.0 CUSTOM ID EDITION
+    // ============================================================
+    // CHANGELOG v28.2.0 (dari v28.1.0):
+    //   ✅ NEW: Support kode unik custom folder (?folderId=pkd-2026)
+    //   ✅ FIX: Sort by createdAt (stabil untuk ID apa pun)
+    //   ✅ FIX: String compare untuk folder ID (angka/uuid/custom)
+    //   ✅ KEEP: Semua fitur v28.1.0 (password, player, download)
+    // ============================================================
 
-    // ==========================================================
+    import {
+      callApi,
+      showToast,
+      escapeHtml,
+      updateNavbarMenu,
+    } from '/bisaa/js/core/api.js';
+
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const SESSION_AUTH_KEY = 'public_asset_auth_v1';
+    const CACHE_KEY_FOLDERS = 'pkd_public_folders_v1';
+    const CACHE_KEY_ASSETS = 'pkd_public_assets_v1';
+    const CACHE_AGE_MIN = 5;
+    const DOWNLOAD_DELAY_MS = 1000;
+
+    // ============================================================
     //   STATE
-    // ==========================================================
+    // ============================================================
     const STATE = {
       assetList: [],
       folderList: [],
       currentFolderId: '',
-      folderPasswordRequired: false,
-      folderPasswordAttempted: false,
-      isSingleFolderMode: false,
       unlockedFolders: new Set(),
-      rawAssetsData: null,
-      rawFoldersData: null,
-      rawConfigData: null,
-      pendingFolderId: null,
       isDownloadingAll: false,
+      isLoading: false,
+      globalConfig: null,
+      isLockedMode: false,
+      lockedFolderIdFromUrl: '',
     };
 
-    // ==========================================================
+    // ============================================================
     //   UTILITY
-    // ==========================================================
+    // ============================================================
+    function safeLS(fn) { try { return fn(); } catch (e) { return null; } }
+    function safeSS(fn) { try { return fn(); } catch (e) { return null; } }
+
     function cleanDriveId(id) {
       if (!id || typeof id !== 'string') return '';
       return id.trim().replace(/[\x00-\x1F\x7F]+/g, '').replace(/[^a-zA-Z0-9_-]+/g, '');
     }
+
     function isValidDriveId(id) { return cleanDriveId(id).length >= 15; }
+
     function parseBool(v) {
       if (v === true) return true;
       if (v === false) return false;
       if (v === undefined || v === null) return false;
-      const s = String(v).toLowerCase().trim();
+      let s = String(v).toLowerCase().trim();
+      if (s.startsWith("'")) s = s.substring(1);
       return s === 'true' || s === 'yes' || s === '1';
     }
+
     function formatDate(timestamp) {
       if (!timestamp) return '-';
       try {
@@ -401,12 +452,7 @@
         return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('id-ID');
       } catch { return '-'; }
     }
-    function normalizeResult(res) {
-      if (!res) return [];
-      if (Array.isArray(res)) return res;
-      if (res.data && Array.isArray(res.data)) return res.data;
-      return [];
-    }
+
     function sanitizeFilename(name) {
       return String(name || 'asset')
         .replace(/[\\/:*?"<>|]/g, '_')
@@ -414,59 +460,121 @@
         .substring(0, 100) || 'asset';
     }
 
-    // ✅ URL yang WORKS untuk download (browser navigasi, bukan fetch)
+    function getCache(key) {
+      const raw = safeLS(() => localStorage.getItem(key));
+      if (!raw) return null;
+      try {
+        const { data, ts } = JSON.parse(raw);
+        if ((Date.now() - ts) > CACHE_AGE_MIN * 60 * 1000) {
+          safeLS(() => localStorage.removeItem(key));
+          return null;
+        }
+        return data;
+      } catch { return null; }
+    }
+
+    function setCache(key, data) {
+      safeLS(() => localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() })));
+    }
+
+    function normalizeResult(res) {
+      if (!res) return [];
+      if (Array.isArray(res)) return res;
+      if (res.data && Array.isArray(res.data)) return res.data;
+      return [];
+    }
+
     function buildDriveViewUrl(driveId) {
       return `https://drive.google.com/file/d/${cleanDriveId(driveId)}/view`;
     }
     function buildDriveDownloadUrl(driveId) {
-      // Format klasik yang masih works untuk anchor tag download
       return `https://drive.google.com/uc?export=download&id=${cleanDriveId(driveId)}`;
     }
     function buildDrivePreviewUrl(driveId) {
-      // Untuk iframe — works untuk audio, video, pdf, image
       return `https://drive.google.com/file/d/${cleanDriveId(driveId)}/preview`;
     }
 
-    // ==========================================================
+    function copyToClipboard(text) {
+      if (!text || typeof text !== 'string') {
+        showToast('Link tidak valid', 'error');
+        return;
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+          .then(() => showToast('Link disalin!', 'success'))
+          .catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const input = document.createElement('textarea');
+      input.value = text;
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.select();
+      try {
+        document.execCommand('copy');
+        showToast('Link disalin!', 'success');
+      } catch (e) {
+        showToast('Gagal menyalin link', 'error');
+      }
+      document.body.removeChild(input);
+    }
+
+    // ⭐ Sort folders by createdAt (stabil untuk custom ID)
+    function sortFolders(list) {
+      return (list || []).slice().sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (isNaN(ta)) return 1;
+        if (isNaN(tb)) return -1;
+        if (tb !== ta) return tb - ta; // terbaru dulu
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+    }
+
+    // ============================================================
     //   SKELETON
-    // ==========================================================
+    // ============================================================
     function renderSkeletonFolderList() {
       const c = document.getElementById('folderList');
+      if (!c) return;
       let html = '';
       for (let i = 0; i < 4; i++) {
         html += `<div class="folder-item"><div class="skeleton-box" style="height:1.5rem;width:100%;border-radius:8px;"></div></div>`;
       }
       c.innerHTML = html;
     }
+
     function renderSkeletonAssets() {
       const c = document.getElementById('assetContainer');
+      if (!c) return;
       let html = '<div class="asset-grid">';
       for (let i = 0; i < 8; i++) {
-        html += `<div class="asset-card skeleton"><div class="skeleton-box skeleton-img"></div><div class="card-body"><div class="skeleton-box skeleton-title"></div><div class="skeleton-box skeleton-desc"></div></div></div>`;
+        html += `<div class="asset-card skeleton">
+          <div class="skeleton-box skeleton-img"></div>
+          <div class="card-body">
+            <div class="skeleton-box skeleton-title"></div>
+            <div class="skeleton-box skeleton-desc"></div>
+          </div>
+        </div>`;
       }
       html += '</div>';
       c.innerHTML = html;
     }
 
-    // ==========================================================
-    //   TOGGLE PASSWORD
-    // ==========================================================
-    document.getElementById('togglePassOverlay')?.addEventListener('click', function() {
-      const input = document.getElementById('publicAccessPassword');
-      if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-      const icon = this.querySelector('i');
-      if (icon) icon.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
-    });
-
-    // ==========================================================
-    //   ✅ PLAYER MODAL — Universal iframe player
-    //   Works untuk: audio, video, PDF, image
-    //   Google Drive render player-nya sendiri di iframe
-    // ==========================================================
-    window.openAssetPlayer = function(judul, driveId, jenis, mimeType) {
+    // ============================================================
+    //   ASSET PLAYER
+    // ============================================================
+    function openAssetPlayer(judul, driveId, jenis, mimeType) {
       const cleaned = cleanDriveId(driveId);
-      if (!isValidDriveId(cleaned)) { showToast('ID file tidak valid.', 'warning'); return; }
+      if (!isValidDriveId(cleaned)) {
+        showToast('ID file tidak valid.', 'warning');
+        return;
+      }
 
       document.getElementById('assetPlayerOverlay')?.remove();
 
@@ -483,37 +591,39 @@
       const overlay = document.createElement('div');
       overlay.className = 'player-overlay';
       overlay.id = 'assetPlayerOverlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-label', `Pemutar: ${judul}`);
       overlay.innerHTML = `
         <div class="player-box">
           <div class="player-header">
-            <h5><i class="bi bi-${iconClass} me-2"></i>${escapeHtml(judul || 'Pemutar')}</h5>
-            <button type="button" data-close-player aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+            <h5><i class="bi bi-${iconClass} me-2" aria-hidden="true"></i>${escapeHtml(judul || 'Pemutar')}</h5>
+            <button type="button" data-close-player aria-label="Tutup">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="player-body">
-            <iframe src="${embedUrl}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+            <iframe src="${embedUrl}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="Pemutar ${escapeHtml(judul)}"></iframe>
             <div class="player-loading" data-loading>
-              <div class="spinner-border" role="status"></div>
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Memuat...</span>
+              </div>
               <div>Memuat pemutar...</div>
             </div>
           </div>
           <div class="player-footer">
-            <div class="d-flex gap-2 flex-wrap">
-              <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" class="player-btn" style="text-decoration:none;">
-                <i class="bi bi-box-arrow-up-right"></i>
-                <span>Buka di Tab Baru</span>
-              </a>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <a href="${downloadUrl}" download class="player-btn primary" style="text-decoration:none;">
-                <i class="bi bi-download"></i>
-                <span>Download</span>
-              </a>
-            </div>
+            <a href="${viewUrl}" target="_blank" rel="noopener noreferrer" class="player-btn">
+              <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+              <span>Buka di Tab Baru</span>
+            </a>
+            <a href="${downloadUrl}" download class="player-btn primary">
+              <i class="bi bi-download" aria-hidden="true"></i>
+              <span>Download</span>
+            </a>
           </div>
         </div>`;
       document.body.appendChild(overlay);
 
-      // Hide loading saat iframe load
       const iframe = overlay.querySelector('iframe');
       const loadingEl = overlay.querySelector('[data-loading]');
       let loaded = false;
@@ -523,99 +633,38 @@
         if (loadingEl) loadingEl.style.display = 'none';
       });
 
-      // Fallback: kalau 6 detik belum load, hilangkan spinner (user mungkin bisa interaksi)
       setTimeout(() => {
         if (!loaded && loadingEl) loadingEl.style.display = 'none';
       }, 6000);
 
-      // Close handlers
-      const closeOverlay = () => overlay.remove();
+      const closeOverlay = () => {
+        overlay.remove();
+        document.removeEventListener('keydown', escHandler);
+      };
+
       overlay.querySelector('[data-close-player]')?.addEventListener('click', closeOverlay);
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeOverlay();
+      });
 
       const escHandler = (e) => {
-        if (e.key === 'Escape') {
-          closeOverlay();
-          document.removeEventListener('keydown', escHandler);
-        }
+        if (e.key === 'Escape') closeOverlay();
       };
       document.addEventListener('keydown', escHandler);
-    };
+    }
 
-    // ==========================================================
-    //   PREVIEW MODAL (untuk PDF & image)
-    // ==========================================================
-    window.previewAsset = function(judul, driveId) {
+    // ============================================================
+    //   ASSET ACTIONS
+    // ============================================================
+    function downloadAsset(driveId, judul, fileName) {
       const cleaned = cleanDriveId(driveId);
-      if (!isValidDriveId(cleaned)) { showToast('ID File tidak valid.', 'warning'); return; }
-
-      document.getElementById('customPreviewModal')?.remove();
-
-      const embedUrl = buildDrivePreviewUrl(cleaned);
-
-      const overlay = document.createElement('div');
-      overlay.id = 'customPreviewModal';
-      overlay.className = 'custom-preview-overlay';
-      overlay.innerHTML = `
-        <div class="custom-preview-box">
-          <div class="custom-preview-header">
-            <h5><i class="bi bi-eye me-2"></i>${escapeHtml(judul || 'Pratinjau')}</h5>
-            <button type="button" aria-label="Tutup" data-close-preview><i class="bi bi-x-lg"></i></button>
-          </div>
-          <div class="custom-preview-body">
-            <div class="custom-preview-spinner" id="customPreviewSpinner">
-              <div class="spinner-border text-light" role="status"><span class="visually-hidden">Memuat...</span></div>
-            </div>
-            <div class="custom-preview-error" id="customPreviewError">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-              <p class="text-light mt-2">Gagal memuat file.<br><small>Pastikan file publik.</small></p>
-            </div>
-            <iframe id="previewContent" src="${embedUrl}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-          </div>
-        </div>`;
-      document.body.appendChild(overlay);
-
-      const iframe = document.getElementById('previewContent');
-      const spinner = document.getElementById('customPreviewSpinner');
-      const errorDiv = document.getElementById('customPreviewError');
-      const hideSpinner = () => { if (spinner) spinner.style.display = 'none'; };
-      const showError = () => { hideSpinner(); if (errorDiv) errorDiv.style.display = 'block'; };
-
-      if (iframe) {
-        iframe.addEventListener('load', () => {
-          setTimeout(() => { hideSpinner(); iframe.classList.add('show'); }, 300);
-        });
-        iframe.addEventListener('error', showError);
-        setTimeout(() => { if (spinner && spinner.style.display !== 'none') showError(); }, 12000);
+      if (!isValidDriveId(cleaned)) {
+        showToast('ID file tidak valid.', 'warning');
+        return;
       }
-
-      overlay.querySelector('[data-close-preview]')?.addEventListener('click', () => overlay.remove());
-      overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
-      const escHandler = (e) => {
-        if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escHandler); }
-      };
-      document.addEventListener('keydown', escHandler);
-    };
-
-    // ==========================================================
-    //   SMART OPEN — pilih modal berdasarkan jenis
-    // ==========================================================
-    window.openAssetSmart = function(judul, driveId, jenis, mimeType) {
-      window.openAssetPlayer(judul, driveId, jenis, mimeType);
-    };
-
-    // ==========================================================
-    //   DOWNLOAD (via anchor — works)
-    // ==========================================================
-    window.downloadAssetPublic = function(driveId, judul, fileName) {
-      const cleaned = cleanDriveId(driveId);
-      if (!isValidDriveId(cleaned)) { showToast('ID file tidak valid.', 'warning'); return; }
-
       showToast('Menyiapkan unduhan...', 'info');
-
       const downloadUrl = buildDriveDownloadUrl(cleaned);
       const safeName = sanitizeFilename(fileName || judul);
-
       try {
         const a = document.createElement('a');
         a.href = downloadUrl;
@@ -630,76 +679,72 @@
         const win = window.open(downloadUrl, '_blank', 'noopener,noreferrer');
         if (!win) showToast('Popup diblokir. Izinkan popup untuk mengunduh.', 'warning');
       }
-    };
+    }
 
-    // ==========================================================
-    //   SHARE / COPY
-    // ==========================================================
-    window.copyAssetLinkPublic = function(driveId, judul) {
+    function copyAssetLink(driveId, judul) {
       if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
-      const url = buildDriveViewUrl(driveId);
-      const fallbackCopy = () => {
-        const input = document.createElement('input');
-        input.value = url;
-        input.style.position = 'fixed';
-        input.style.opacity = '0';
-        document.body.appendChild(input);
-        input.select();
-        try { document.execCommand('copy'); showToast('Link disalin!', 'success'); }
-        catch (e) { showToast('Gagal menyalin link.', 'error'); }
-        document.body.removeChild(input);
-      };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(url).then(() => showToast('Link disalin!', 'success')).catch(fallbackCopy);
-      } else { fallbackCopy(); }
-    };
+      copyToClipboard(buildDriveViewUrl(driveId));
+    }
 
-    window.shareAssetPublic = function(driveId, judul) {
+    function shareAsset(driveId, judul) {
       if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
       const url = buildDriveViewUrl(driveId);
       if (navigator.share) {
         navigator.share({ title: judul || 'Aset PKD GP Ansor', url }).catch(() => {});
-      } else { window.copyAssetLinkPublic(driveId, judul); }
-    };
+      } else {
+        copyAssetLink(driveId, judul);
+      }
+    }
 
-    window.shareViaWhatsAppPublic = function(driveId, judul) {
+    function shareViaWhatsApp(driveId, judul) {
       if (!driveId) { showToast('ID file tidak valid.', 'warning'); return; }
       const url = buildDriveViewUrl(driveId);
       const text = encodeURIComponent(`Berbagi aset digital PKD GP Ansor Bantul:\n${judul}\n${url}`);
       window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
-    };
+    }
 
-    // ==========================================================
+    // ============================================================
     //   DOWNLOAD ALL
-    // ==========================================================
-    window.downloadAllInFolder = async function() {
+    // ============================================================
+    async function downloadAllInFolder() {
       if (STATE.isDownloadingAll) return;
+
       const filtered = STATE.assetList.filter(item =>
         String(item.folderId || '') === String(STATE.currentFolderId || '')
       );
-      if (filtered.length === 0) { showToast('Tidak ada aset untuk diunduh.', 'info'); return; }
+
+      if (filtered.length === 0) {
+        showToast('Tidak ada aset untuk diunduh.', 'info');
+        return;
+      }
 
       const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
       const folderName = folder ? folder.nama : 'Semua Aset';
 
-      if (!confirm(`Unduh ${filtered.length} file dari "${folderName}"?\n\n` +
+      if (!confirm(
+        `Unduh ${filtered.length} file dari "${folderName}"?\n\n` +
         `Browser akan membuka ${filtered.length} tab unduhan berurutan.\n` +
-        `Pastikan popup tidak diblokir.`)) return;
+        `Pastikan popup tidak diblokir.`
+      )) return;
 
       STATE.isDownloadingAll = true;
       const btn = document.getElementById('downloadAllBtn');
-      const originalHtml = btn.innerHTML;
-      btn.disabled = true;
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="bi bi-cloud-arrow-down-fill"></i> <span>Memproses…</span>`;
+      }
 
       let successCount = 0;
-      const DELAY_MS = 1000;
 
       for (let i = 0; i < filtered.length; i++) {
         const item = filtered[i];
         const cleaned = cleanDriveId(item.driveId);
         if (!isValidDriveId(cleaned)) continue;
 
-        btn.innerHTML = `<i class="bi bi-cloud-arrow-down-fill"></i> <span>${i + 1}/${filtered.length}...</span>`;
+        if (btn) {
+          btn.innerHTML = `<i class="bi bi-cloud-arrow-down-fill"></i> <span>${i + 1}/${filtered.length}…</span>`;
+        }
 
         try {
           const url = buildDriveDownloadUrl(cleaned);
@@ -712,85 +757,114 @@
           a.click();
           document.body.removeChild(a);
           successCount++;
-        } catch (e) { console.warn('Gagal:', item.judul, e.message); }
+        } catch (e) {
+          console.warn('Gagal unduh:', item.judul, e.message);
+        }
 
         if (i < filtered.length - 1) {
-          await new Promise(r => setTimeout(r, DELAY_MS));
+          await new Promise(r => setTimeout(r, DOWNLOAD_DELAY_MS));
         }
       }
 
-      btn.innerHTML = originalHtml;
-      btn.disabled = false;
+      if (btn) {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
       STATE.isDownloadingAll = false;
       showToast(`${successCount}/${filtered.length} file di-trigger untuk diunduh`, 'success');
-    };
+    }
 
-    document.getElementById('downloadAllBtn')?.addEventListener('click', () => {
-      window.downloadAllInFolder();
-    });
-
-    // ==========================================================
+    // ============================================================
     //   RENDER FOLDER LIST
-    // ==========================================================
+    // ============================================================
     function renderFolderList() {
       const c = document.getElementById('folderList');
+      if (!c) return;
+
+      if (STATE.isLockedMode) {
+        c.innerHTML = `<div class="text-center text-muted small py-3">
+          <i class="bi bi-lock-fill d-block mb-1" aria-hidden="true"></i>
+          Mode folder tunggal
+        </div>`;
+        return;
+      }
+
       if (!STATE.folderList || STATE.folderList.length === 0) {
         c.innerHTML = `<div class="text-center text-muted small py-3">Belum ada folder publik.</div>`;
         return;
       }
+
       let html = '';
       STATE.folderList.forEach(f => {
         const hasPassword = parseBool(f.hasPassword);
         const isUnlocked = STATE.unlockedFolders.has(String(f.id));
-        const isActive = STATE.currentFolderId == f.id;
+        const isActive = String(STATE.currentFolderId) === String(f.id);
+
         let lockIcon = '';
         if (hasPassword && !isUnlocked) {
-          lockIcon = '<i class="bi bi-lock-fill lock-icon" title="Terproteksi"></i>';
+          lockIcon = '<i class="bi bi-lock-fill lock-icon" title="Terproteksi" aria-label="Terproteksi"></i>';
         } else if (hasPassword && isUnlocked) {
-          lockIcon = '<i class="bi bi-unlock-fill lock-icon text-success" title="Sudah dibuka"></i>';
+          lockIcon = '<i class="bi bi-unlock-fill lock-icon text-success" title="Sudah dibuka" aria-label="Sudah dibuka"></i>';
         }
+
+        const safeId = escapeHtml(String(f.id || ''));
+        const safeNama = escapeHtml(f.nama || '-');
+
         html += `
-          <div class="folder-item ${isActive ? 'active' : ''}" data-folder-id="${f.id}" onclick="navigateFolder('${f.id}')">
-            <i class="bi bi-folder-fill"></i>
-            <span>${escapeHtml(f.nama || '-')}</span>
+          <div class="folder-item ${isActive ? 'active' : ''}"
+               data-folder-id="${safeId}"
+               role="button"
+               tabindex="0">
+            <i class="bi bi-folder-fill" aria-hidden="true"></i>
+            <span>${safeNama}</span>
             ${lockIcon}
           </div>`;
       });
       c.innerHTML = html;
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER BREADCRUMB
-    // ==========================================================
+    // ============================================================
     function renderBreadcrumb() {
       const c = document.getElementById('breadcrumb');
+      if (!c) return;
+
+      if (STATE.isLockedMode && STATE.currentFolderId) {
+        const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
+        c.innerHTML = `
+          <li class="breadcrumb-item"><a href="/bisaa/public_assets.html">Galeri Utama</a></li>
+          <li class="breadcrumb-item active">${escapeHtml(folder ? folder.nama : 'Folder')}</li>`;
+        return;
+      }
+
       if (STATE.currentFolderId === '') {
         c.innerHTML = `<li class="breadcrumb-item active">Semua Aset</li>`;
         return;
       }
-      const folder = STATE.folderList.find(f => f.id == STATE.currentFolderId);
+
+      const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
       if (folder) {
         c.innerHTML = `
-          <li class="breadcrumb-item"><a href="#" onclick="navigateFolder(''); return false;">Semua Aset</a></li>
+          <li class="breadcrumb-item"><a href="#" data-goto-root>Semua Aset</a></li>
           <li class="breadcrumb-item active">${escapeHtml(folder.nama)}</li>`;
+        c.querySelector('[data-goto-root]')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateFolder('');
+        });
       } else {
         c.innerHTML = `<li class="breadcrumb-item active">Semua Aset</li>`;
       }
     }
 
-    // ==========================================================
+    // ============================================================
     //   RENDER ASSETS
-    // ==========================================================
+    // ============================================================
     function renderAssets() {
       const c = document.getElementById('assetContainer');
       const toolbar = document.getElementById('assetToolbar');
       const countEl = document.getElementById('assetCount');
-
-      if (STATE.folderPasswordRequired && !STATE.folderPasswordAttempted) {
-        c.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-lock-fill fs-4 d-block mb-2"></i>Folder ini dilindungi password.</div>`;
-        if (toolbar) toolbar.style.display = 'none';
-        return;
-      }
+      if (!c) return;
 
       const filtered = STATE.assetList.filter(item =>
         String(item.folderId || '') === String(STATE.currentFolderId || '')
@@ -798,7 +872,12 @@
       filtered.sort((a, b) => String(a.judul || '').localeCompare(String(b.judul || '')));
 
       if (filtered.length === 0) {
-        c.innerHTML = `<div class="alert alert-info text-center"><i class="bi bi-image fs-4 d-block mb-2"></i>Belum ada aset di folder ini.</div>`;
+        c.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-image" aria-hidden="true"></i>
+            <h5>Belum Ada Aset</h5>
+            <p>Folder ini belum memiliki aset yang dipublikasikan.</p>
+          </div>`;
         if (toolbar) toolbar.style.display = 'none';
         return;
       }
@@ -807,7 +886,7 @@
       if (countEl) countEl.innerHTML = `<strong>${filtered.length}</strong> file tersedia`;
 
       let html = '<div class="asset-grid">';
-      filtered.forEach(item => {
+      filtered.forEach((item, idx) => {
         const cleaned = cleanDriveId(item.driveId);
         const valid = isValidDriveId(cleaned);
         const imgUrl = valid ? `https://drive.google.com/thumbnail?id=${cleaned}&sz=w400` : '';
@@ -821,45 +900,53 @@
         let previewContent = '';
         if (valid) {
           if (isPdf) {
-            previewContent = `<div class="thumbnail-container"><div class="fallback" style="display:flex;"><i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size:2.5rem;"></i><div class="small text-muted mt-2">PDF</div></div></div>`;
+            previewContent = `<div class="thumbnail-container"><div class="fallback" style="display:flex;"><i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size:2.5rem;" aria-hidden="true"></i><div class="small text-muted mt-2">PDF</div></div></div>`;
           } else if (isAudio) {
-            previewContent = `<div class="thumbnail-container" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);"><div class="fallback" style="background:transparent;"><i class="bi bi-music-note-beamed text-primary" style="font-size:3rem;"></i><div class="small text-muted mt-2">🎵 Tap untuk putar</div></div></div>`;
+            previewContent = `<div class="thumbnail-container" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);"><div class="fallback" style="background:transparent;"><i class="bi bi-music-note-beamed text-primary" style="font-size:3rem;" aria-hidden="true"></i><div class="small text-muted mt-2">🎵 Tap untuk putar</div></div></div>`;
           } else if (isVideo) {
-            previewContent = `<div class="thumbnail-container"><img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fallback" style="display:none;background:linear-gradient(135deg,#1e293b,#0f172a);color:white;"><i class="bi bi-play-circle-fill" style="font-size:3rem;color:#60a5fa;"></i><div class="small mt-2">▶️ Tap untuk putar</div></div></div>`;
+            previewContent = `<div class="thumbnail-container"><img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fallback" style="display:none;background:linear-gradient(135deg,#1e293b,#0f172a);color:white;"><i class="bi bi-play-circle-fill" style="font-size:3rem;color:#60a5fa;" aria-hidden="true"></i><div class="small mt-2">▶️ Tap untuk putar</div></div></div>`;
           } else {
-            previewContent = `<div class="thumbnail-container"><img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fallback" style="display:none;"><i class="bi bi-file-earmark-fill text-secondary" style="font-size:2.5rem;"></i><div class="small text-muted mt-2">Thumbnail gagal</div></div></div>`;
+            previewContent = `<div class="thumbnail-container"><img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="fallback" style="display:none;"><i class="bi bi-file-earmark-fill text-secondary" style="font-size:2.5rem;" aria-hidden="true"></i><div class="small text-muted mt-2">Thumbnail gagal</div></div></div>`;
           }
         } else {
-          previewContent = `<div class="thumbnail-container" style="background:#f8fafc;"><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;"><i class="bi bi-file-earmark-fill text-secondary" style="font-size:2.5rem;"></i><div class="small text-muted mt-2">ID rusak</div></div></div>`;
+          previewContent = `<div class="thumbnail-container" style="background:#f8fafc;"><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;"><i class="bi bi-file-earmark-fill text-secondary" style="font-size:2.5rem;" aria-hidden="true"></i><div class="small text-muted mt-2">ID rusak</div></div></div>`;
         }
 
-        const safeJudul = escapeHtml(item.judul || '');
-        const safeJudulForAttr = String(item.judul || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeFileNameForAttr = String(item.fileName || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeMimeForAttr = String(item.mimeType || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeJenisForAttr = String(item.jenis || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
         html += `
-          <div class="asset-card" onclick="openAssetSmart('${safeJudulForAttr}', '${cleaned}', '${safeJenisForAttr}', '${safeMimeForAttr}')">
+          <div class="asset-card" data-index="${idx}">
             ${previewContent}
             <div class="card-body">
-              <div class="card-title">${safeJudul}</div>
+              <div class="card-title">${escapeHtml(item.judul || '-')}</div>
               <div class="card-text">${escapeHtml(item.deskripsi || '')}</div>
               <div class="card-actions">
-                ${valid ? `
-                  <button class="btn btn-sm btn-download" onclick="event.stopPropagation(); downloadAssetPublic('${cleaned}', '${safeJudulForAttr}', '${safeFileNameForAttr}')" title="Download" aria-label="Download">
-                    <i class="bi bi-download"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); copyAssetLinkPublic('${cleaned}', '${safeJudulForAttr}')" title="Salin Link" aria-label="Salin Link">
-                    <i class="bi bi-link-45deg"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); shareAssetPublic('${cleaned}', '${safeJudulForAttr}')" title="Bagikan" aria-label="Bagikan">
-                    <i class="bi bi-share"></i>
-                  </button>
-                  <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); shareViaWhatsAppPublic('${cleaned}', '${safeJudulForAttr}')" title="WhatsApp" aria-label="WhatsApp">
-                    <i class="bi bi-whatsapp"></i>
-                  </button>
-                ` : ''}
+                <button class="btn btn-sm btn-download"
+                        data-action="download"
+                        data-index="${idx}"
+                        title="Download"
+                        aria-label="Download ${escapeHtml(item.judul || '')}">
+                  <i class="bi bi-download" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-action="copy"
+                        data-index="${idx}"
+                        title="Salin Link"
+                        aria-label="Salin link">
+                  <i class="bi bi-link-45deg" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary"
+                        data-action="share"
+                        data-index="${idx}"
+                        title="Bagikan"
+                        aria-label="Bagikan">
+                  <i class="bi bi-share" aria-hidden="true"></i>
+                </button>
+                <button class="btn btn-sm btn-success"
+                        data-action="whatsapp"
+                        data-index="${idx}"
+                        title="WhatsApp"
+                        aria-label="Bagikan ke WhatsApp">
+                  <i class="bi bi-whatsapp" aria-hidden="true"></i>
+                </button>
               </div>
               <div class="mt-2 text-end text-muted small">${formatDate(item.timestamp)}</div>
             </div>
@@ -867,87 +954,120 @@
       });
       html += '</div>';
       c.innerHTML = html;
+
+      c.querySelectorAll('.asset-card').forEach(card => {
+        const idx = parseInt(card.dataset.index, 10);
+        const item = filtered[idx];
+        if (!item) return;
+
+        card.querySelector('.thumbnail-container')?.addEventListener('click', () => {
+          openAssetPlayer(item.judul, item.driveId, item.jenis, item.mimeType);
+        });
+
+        card.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            if (action === 'download') downloadAsset(item.driveId, item.judul, item.fileName);
+            else if (action === 'copy') copyAssetLink(item.driveId, item.judul);
+            else if (action === 'share') shareAsset(item.driveId, item.judul);
+            else if (action === 'whatsapp') shareViaWhatsApp(item.driveId, item.judul);
+          });
+        });
+      });
     }
 
-    // ==========================================================
-    //   NAVIGATE FOLDER
-    // ==========================================================
-    window.navigateFolder = function(folderId) {
-      STATE.currentFolderId = folderId || '';
-      STATE.folderPasswordAttempted = false;
-      STATE.folderPasswordRequired = false;
+    // ============================================================
+    //   FOLDER NAVIGATION
+    // ============================================================
+    function navigateFolder(folderId) {
+      STATE.currentFolderId = String(folderId || '').trim();
 
-      const folder = STATE.folderList.find(f => String(f.id) === String(folderId));
+      const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
       if (folder) {
         const hasPassword = parseBool(folder.hasPassword);
         const isUnlocked = STATE.unlockedFolders.has(String(folder.id));
+
         if (hasPassword && !isUnlocked) {
-          STATE.folderPasswordRequired = true;
           renderFolderList();
           renderBreadcrumb();
           renderAssets();
-          showFolderPasswordOverlay(folderId);
+          showFolderPasswordOverlay(STATE.currentFolderId);
           return;
         }
       }
-      STATE.folderPasswordAttempted = true;
+
       renderFolderList();
       renderBreadcrumb();
       renderAssets();
-    };
+    }
 
-    // ==========================================================
+    // ============================================================
     //   FOLDER PASSWORD OVERLAY
-    // ==========================================================
+    // ============================================================
     function showFolderPasswordOverlay(folderId) {
       document.getElementById('folderPasswordOverlay')?.remove();
+
       const overlay = document.createElement('div');
       overlay.id = 'folderPasswordOverlay';
+      overlay.className = 'password-lock-overlay';
       overlay.innerHTML = `
         <div class="lock-box">
-          <i class="bi bi-folder-lock fs-1 text-warning mb-3"></i>
+          <i class="bi bi-folder-lock fs-1 text-warning mb-3" aria-hidden="true"></i>
           <h5 class="fw-bold">Folder Terproteksi</h5>
           <p class="text-muted small">Masukkan password untuk mengakses folder ini.</p>
           <div class="input-group mb-3">
-            <input type="password" class="form-control" id="folderPasswordInputPublic" placeholder="Password folder" autocomplete="off">
-            <button class="btn btn-outline-secondary" type="button" id="toggleFolderPassBtn"><i class="bi bi-eye"></i></button>
+            <input type="password" class="form-control" id="folderPasswordInput"
+                   placeholder="Password folder" autocomplete="off" aria-label="Password folder">
+            <button class="btn btn-outline-secondary" type="button" id="toggleFolderPassBtn" aria-label="Tampilkan password">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
           </div>
           <button class="btn btn-primary w-100 rounded-pill py-2" id="unlockFolderBtn">
-            <i class="bi bi-unlock-fill me-1"></i> Buka Kunci
+            <i class="bi bi-unlock-fill me-1" aria-hidden="true"></i> Buka Kunci
           </button>
           <div id="folderPasswordError" class="text-danger small mt-2" style="display:none;"></div>
-          <button class="btn btn-link btn-sm text-muted mt-2" id="cancelFolderUnlockBtn">Kembali ke Semua Aset</button>
+          <a href="/bisaa/public_assets.html" class="btn btn-link btn-sm text-muted mt-2">
+            ${STATE.isLockedMode ? 'Kembali ke Galeri Utama' : 'Kembali ke Semua Aset'}
+          </a>
         </div>`;
       document.body.appendChild(overlay);
 
-      const input = document.getElementById('folderPasswordInputPublic');
+      const input = document.getElementById('folderPasswordInput');
       const errDiv = document.getElementById('folderPasswordError');
       const unlockBtn = document.getElementById('unlockFolderBtn');
       const toggleBtn = document.getElementById('toggleFolderPassBtn');
 
       input?.focus();
+
       toggleBtn?.addEventListener('click', () => {
         input.type = input.type === 'password' ? 'text' : 'password';
         const i = toggleBtn.querySelector('i');
         if (i) i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
       });
-      input?.addEventListener('keypress', (e) => { if (e.key === 'Enter') unlockBtn?.click(); });
-      document.getElementById('cancelFolderUnlockBtn')?.addEventListener('click', () => window.cancelFolderUnlock());
 
-      unlockBtn?.addEventListener('click', async function() {
+      input?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') unlockBtn?.click();
+      });
+
+      unlockBtn?.addEventListener('click', async function () {
         const pass = input.value.trim();
-        if (!pass) { errDiv.style.display = 'block'; errDiv.innerText = 'Password wajib diisi.'; return; }
+        if (!pass) {
+          errDiv.style.display = 'block';
+          errDiv.innerText = 'Password wajib diisi.';
+          return;
+        }
+
         const btn = this;
         btn.disabled = true;
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memeriksa...';
+
         try {
           const result = await callApi('verifyFolderPassword', { id: folderId, password: pass }, 'GET');
           if (result && result.success) {
             STATE.unlockedFolders.add(String(folderId));
-            document.getElementById('folderPasswordOverlay')?.remove();
-            STATE.folderPasswordAttempted = true;
-            STATE.folderPasswordRequired = false;
+            overlay.remove();
             renderFolderList();
             renderBreadcrumb();
             renderAssets();
@@ -967,89 +1087,78 @@
       });
     }
 
-    window.cancelFolderUnlock = function() {
-      document.getElementById('folderPasswordOverlay')?.remove();
-      STATE.currentFolderId = '';
-      STATE.folderPasswordRequired = false;
-      STATE.folderPasswordAttempted = true;
-      renderFolderList();
-      renderBreadcrumb();
-      renderAssets();
-    };
+    // ============================================================
+    //   GLOBAL PASSWORD OVERLAY
+    // ============================================================
+    function showGlobalPasswordOverlay() {
+      document.getElementById('globalPasswordOverlay')?.remove();
 
-    // ==========================================================
-    //   PROCESS & RENDER
-    // ==========================================================
-    function processAndRender(targetFolderId) {
-      if (targetFolderId) {
-        STATE.folderList = STATE.rawFoldersData.filter(f =>
-          String(f.id) === String(targetFolderId) && parseBool(f.isPublic)
-        );
-      } else {
-        STATE.folderList = STATE.rawFoldersData.filter(f =>
-          parseBool(f.isPublic) && !parseBool(f.hideFromGallery)
-        );
-      }
-      STATE.assetList = STATE.rawAssetsData;
-      STATE.currentFolderId = targetFolderId ? String(targetFolderId) : '';
+      const overlay = document.createElement('div');
+      overlay.id = 'globalPasswordOverlay';
+      overlay.className = 'password-lock-overlay';
+      overlay.innerHTML = `
+        <div class="lock-box">
+          <i class="bi bi-lock-fill fs-1 text-primary mb-3" aria-hidden="true"></i>
+          <h5 class="fw-bold">Galeri Terproteksi</h5>
+          <p class="text-muted small">Masukkan password untuk mengakses galeri publik.</p>
+          <div class="input-group mb-3">
+            <input type="password" class="form-control" id="globalPasswordInput"
+                   placeholder="Password" autocomplete="off" aria-label="Password galeri">
+            <button class="btn btn-outline-secondary" type="button" id="toggleGlobalPassBtn" aria-label="Tampilkan password">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          <button class="btn btn-primary w-100 rounded-pill py-2" id="unlockGlobalBtn">
+            <i class="bi bi-unlock-fill me-1" aria-hidden="true"></i> Buka Kunci
+          </button>
+          <div id="globalPasswordError" class="text-danger small mt-2" style="display:none;"></div>
+          <a href="/bisaa/index.html" class="btn btn-link btn-sm text-muted mt-2">Kembali ke Beranda</a>
+        </div>`;
+      document.body.appendChild(overlay);
 
-      if (STATE.isSingleFolderMode) {
-        const sb = document.getElementById('sidebarContainer');
-        if (sb) sb.style.display = 'none';
-        const cc = document.getElementById('contentContainer');
-        if (cc) { cc.classList.remove('col-md-9'); cc.classList.add('col-md-12'); }
-      }
+      const input = document.getElementById('globalPasswordInput');
+      const errDiv = document.getElementById('globalPasswordError');
+      const unlockBtn = document.getElementById('unlockGlobalBtn');
+      const toggleBtn = document.getElementById('toggleGlobalPassBtn');
 
-      if (STATE.isSingleFolderMode && STATE.currentFolderId) {
-        const folder = STATE.folderList[0];
-        if (folder && parseBool(folder.hasPassword) && !STATE.unlockedFolders.has(String(folder.id))) {
-          STATE.folderPasswordRequired = true;
-          STATE.folderPasswordAttempted = false;
-          renderFolderList();
-          renderBreadcrumb();
-          renderAssets();
-          showFolderPasswordOverlay(STATE.currentFolderId);
+      input?.focus();
+
+      toggleBtn?.addEventListener('click', () => {
+        input.type = input.type === 'password' ? 'text' : 'password';
+        const i = toggleBtn.querySelector('i');
+        if (i) i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+      });
+
+      input?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') unlockBtn?.click();
+      });
+
+      unlockBtn?.addEventListener('click', async function () {
+        const pass = input.value.trim();
+        if (!pass) {
+          errDiv.style.display = 'block';
+          errDiv.innerText = 'Password wajib diisi.';
           return;
         }
-      }
 
-      STATE.folderPasswordAttempted = true;
-      renderFolderList();
-      renderBreadcrumb();
-      renderAssets();
-    }
-
-    // ==========================================================
-    //   GLOBAL PASSWORD OVERLAY
-    // ==========================================================
-    function showGlobalPasswordOverlay() {
-      const overlay = document.getElementById('passwordLockOverlay');
-      const input = document.getElementById('publicAccessPassword');
-      const errDiv = document.getElementById('publicLockError');
-      const unlockBtn = document.getElementById('unlockPublicBtn');
-
-      overlay.style.display = 'flex';
-      input.value = '';
-      errDiv.style.display = 'none';
-      input.focus();
-
-      const newBtn = unlockBtn.cloneNode(true);
-      unlockBtn.parentNode.replaceChild(newBtn, unlockBtn);
-
-      newBtn.addEventListener('click', async function() {
-        const pass = input.value.trim();
-        if (!pass) { errDiv.style.display = 'block'; errDiv.innerText = 'Password wajib diisi.'; return; }
         const btn = this;
         btn.disabled = true;
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memeriksa...';
+
         try {
           const result = await callApi('verifyAssetPublicPassword', { password: pass }, 'GET');
           if (result && result.success) {
-            sessionStorage.setItem('public_asset_auth', 'true');
-            errDiv.style.display = 'none';
-            overlay.style.display = 'none';
-            processAndRender(STATE.pendingFolderId);
+            safeSS(() => sessionStorage.setItem(SESSION_AUTH_KEY, 'true'));
+            overlay.remove();
+            await loadData();
+            // Setelah loadData selesai, kalau ada folderId dari URL → navigate
+            if (STATE.lockedFolderIdFromUrl) {
+              const found = STATE.folderList.find(f => String(f.id) === String(STATE.lockedFolderIdFromUrl));
+              if (found) {
+                navigateFolder(STATE.lockedFolderIdFromUrl);
+              }
+            }
           } else {
             errDiv.style.display = 'block';
             errDiv.innerText = (result && result.error) || 'Password salah.';
@@ -1063,72 +1172,176 @@
           btn.innerHTML = originalHtml;
         }
       });
-      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') newBtn.click(); });
     }
 
-    // ==========================================================
-    //   BOOT — tanpa Service Worker
-    // ==========================================================
-    (async function boot() {
-      renderSkeletonFolderList();
-      renderSkeletonAssets();
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetFolderId = urlParams.get('folderId');
-      STATE.isSingleFolderMode = !!targetFolderId;
-      STATE.pendingFolderId = targetFolderId;
+    // ============================================================
+    //   LOAD DATA
+    // ============================================================
+    async function loadData() {
+      STATE.isLoading = true;
 
       try {
-        const [configRes, assetsRes, foldersRes] = await Promise.all([
-          callApi('getAssetPublicConfig', {}, 'GET'),
-          callApi('getAssetList', { _t: Date.now() }, 'GET'),
-          callApi('getFolders', { _t: Date.now(), all: 'true' }, 'GET')
-        ]);
+        const configRes = await callApi('getAssetPublicConfig', {}, 'GET');
+        const configData = configRes?.data || configRes;
+        STATE.globalConfig = configData;
 
-        STATE.rawConfigData = configRes;
-        STATE.rawAssetsData = normalizeResult(assetsRes);
-        STATE.rawFoldersData = normalizeResult(foldersRes);
+        const globalEnabled = configRes && configRes.success && configData && configData.enabled;
 
-        const globalEnabled = configRes && configRes.success && configRes.enabled;
         if (!globalEnabled) {
           document.getElementById('assetContainer').innerHTML = `
-            <div class="alert alert-info text-center">
-              <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
-              <strong>Galeri publik tidak aktif.</strong><br>
-              <small>Hubungi admin untuk informasi lebih lanjut.</small>
+            <div class="empty-state">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <h5>Galeri Publik Tidak Aktif</h5>
+              <p>Hubungi admin untuk informasi lebih lanjut.</p>
             </div>`;
           document.getElementById('sidebarContainer').style.display = 'none';
           document.getElementById('contentContainer').classList.remove('col-md-9');
           document.getElementById('contentContainer').classList.add('col-md-12');
+          STATE.isLoading = false;
           return;
         }
 
-        const needsGlobalPassword = parseBool(configRes.hasPassword);
-        const sessionAuth = sessionStorage.getItem('public_asset_auth') === 'true';
+        const needsGlobalPassword = configData ? parseBool(configData.hasPassword) : false;
+        const sessionAuth = safeSS(() => sessionStorage.getItem(SESSION_AUTH_KEY)) === 'true';
+
         if (needsGlobalPassword && !sessionAuth) {
           showGlobalPasswordOverlay();
+          STATE.isLoading = false;
           return;
         }
 
-        processAndRender(targetFolderId);
+        const [assetsRes, foldersRes] = await Promise.all([
+          callApi('getAssetList', {}, 'GET'),
+          callApi('getFolders', { all: 'true' }, 'GET'),
+        ]);
+
+        const rawFolders = normalizeResult(foldersRes);
+        STATE.folderList = sortFolders(
+          rawFolders.filter(f => parseBool(f.isPublic) && !parseBool(f.hideFromGallery))
+        );
+        STATE.assetList = normalizeResult(assetsRes);
+
+        setCache(CACHE_KEY_FOLDERS, STATE.folderList);
+        setCache(CACHE_KEY_ASSETS, STATE.assetList);
+
+        // Kalau mode locked, cek folder dulu
+        if (STATE.isLockedMode && STATE.currentFolderId) {
+          const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
+          if (folder) {
+            const hasPassword = parseBool(folder.hasPassword);
+            const isUnlocked = STATE.unlockedFolders.has(String(folder.id));
+            if (hasPassword && !isUnlocked) {
+              renderBreadcrumb();
+              showFolderPasswordOverlay(STATE.currentFolderId);
+              STATE.isLoading = false;
+              return;
+            }
+          } else {
+            // Folder tidak ada / tidak publik
+            document.getElementById('assetContainer').innerHTML = `
+              <div class="empty-state">
+                <i class="bi bi-folder-x" aria-hidden="true"></i>
+                <h5>Folder Tidak Tersedia</h5>
+                <p>Folder ini tidak ditemukan atau tidak dipublikasikan.</p>
+                <a href="/bisaa/public_assets.html" class="btn btn-primary rounded-pill mt-3 px-4">
+                  <i class="bi bi-grid me-1"></i>Buka Galeri Utama
+                </a>
+              </div>`;
+            STATE.isLoading = false;
+            return;
+          }
+        }
+
+        renderFolderList();
+        renderBreadcrumb();
+        renderAssets();
       } catch (e) {
-        console.error('[public_assets] Boot error:', e);
+        console.error('[PublicAssets] loadData error:', e);
         document.getElementById('assetContainer').innerHTML = `
           <div class="alert alert-danger text-center">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Gagal memuat data.<br>
-            <small>${escapeHtml(e.message || 'Network error')}</small>
+            <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+            Gagal memuat data: ${escapeHtml(e.message || 'Network error')}
             <div class="mt-2">
               <button class="btn btn-sm btn-outline-danger" onclick="location.reload()">
                 <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
               </button>
             </div>
           </div>`;
+      } finally {
+        STATE.isLoading = false;
       }
+    }
+
+    // ============================================================
+    //   BIND TOP EVENTS
+    // ============================================================
+    document.getElementById('downloadAllBtn')?.addEventListener('click', downloadAllInFolder);
+
+    // ============================================================
+    //   BOOT
+    // ============================================================
+    (async function boot() {
+      updateNavbarMenu();
+
+      // ⭐ Deteksi folderId di URL (support custom ID)
+      const urlParams = new URLSearchParams(window.location.search);
+      const folderIdFromUrl = String(urlParams.get('folderId') || '').trim();
+
+      if (folderIdFromUrl) {
+        STATE.isLockedMode = true;
+        STATE.currentFolderId = folderIdFromUrl;
+        STATE.lockedFolderIdFromUrl = folderIdFromUrl;
+
+        document.getElementById('sidebarContainer').style.display = 'none';
+        document.getElementById('contentContainer').classList.remove('col-md-9');
+        document.getElementById('contentContainer').classList.add('col-md-12');
+
+        const titleEl = document.getElementById('pageTitle');
+        if (titleEl) {
+          titleEl.innerHTML = `<i class="bi bi-images" aria-hidden="true"></i>Galeri Folder`;
+        }
+
+        console.log('[PublicAssets] 🎯 Mode folder tunggal:', folderIdFromUrl);
+      }
+
+      renderSkeletonFolderList();
+      renderSkeletonAssets();
+
+      // ⚡ Instant cache render
+      const cachedFolders = getCache(CACHE_KEY_FOLDERS);
+      const cachedAssets = getCache(CACHE_KEY_ASSETS);
+
+      if (cachedFolders && cachedFolders.length > 0) {
+        STATE.folderList = sortFolders(cachedFolders);
+        STATE.assetList = cachedAssets || [];
+
+        if (STATE.isLockedMode && STATE.currentFolderId) {
+          const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
+          if (folder) {
+            const hasPassword = parseBool(folder.hasPassword);
+            const isUnlocked = STATE.unlockedFolders.has(String(folder.id));
+            if (hasPassword && !isUnlocked) {
+              renderBreadcrumb();
+              showFolderPasswordOverlay(STATE.currentFolderId);
+            } else {
+              renderFolderList();
+              renderBreadcrumb();
+              renderAssets();
+            }
+          }
+        } else {
+          renderFolderList();
+          renderBreadcrumb();
+          renderAssets();
+        }
+      }
+
+      // Fresh load
+      await loadData();
     })();
 
     console.log(
-      '%c Public Assets v26.2.1 — Iframe Player (Fix 403) ',
+      '%c Public Assets v28.2.0 — Custom ID Edition ',
       'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>

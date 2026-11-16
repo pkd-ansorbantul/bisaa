@@ -9,23 +9,17 @@
 
   <title>Verifikasi QR · PKD GP Ansor Bantul</title>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ============================================================
-       RESET & LAYOUT
-       ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -33,7 +27,6 @@
       color: #0f172a;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
     body {
       display: flex;
@@ -42,9 +35,7 @@
       padding: 2rem 1rem;
     }
 
-    /* ============================================================
-       BRAND HEADER
-       ============================================================ */
+    /* ============ BRAND HEADER ============ */
     .brand-header {
       text-align: center;
       margin-bottom: 1.5rem;
@@ -75,11 +66,9 @@
       margin-bottom: 0;
     }
 
-    /* ============================================================
-       VERIFY CARD
-       ============================================================ */
+    /* ============ VERIFY CARD ============ */
     .verify-card {
-      max-width: 560px;
+      max-width: 640px;
       width: 100%;
       background: #ffffff;
       border-radius: 24px;
@@ -90,9 +79,7 @@
       animation-delay: 0.1s;
     }
 
-    /* ============================================================
-       RESULT BOX
-       ============================================================ */
+    /* ============ RESULT BOX ============ */
     .result-box {
       border-radius: 16px;
       padding: 1.25rem;
@@ -113,11 +100,6 @@
       background: #fef3c7;
       border-left: 5px solid #f59e0b;
       color: #92400e;
-    }
-    .result-box.info {
-      background: #cffafe;
-      border-left: 5px solid #0891b2;
-      color: #155e75;
     }
 
     .result-box .result-title {
@@ -195,9 +177,7 @@
       transform: translateY(-1px);
     }
 
-    /* ============================================================
-       LOADING
-       ============================================================ */
+    /* ============ LOADING ============ */
     .loading-state {
       text-align: center;
       padding: 2rem 0;
@@ -220,62 +200,7 @@
       to { transform: rotate(360deg); }
     }
 
-    /* ============================================================
-       EMPTY STATE (no params)
-       ============================================================ */
-    .empty-state {
-      text-align: center;
-      padding: 2rem 1rem;
-    }
-    .empty-state .icon-wrap {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: #eff6ff;
-      color: #2563eb;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    .empty-state h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 0.5rem;
-    }
-    .empty-state p {
-      font-size: 0.85rem;
-      color: #64748b;
-      max-width: 340px;
-      margin: 0 auto 1.25rem;
-      line-height: 1.5;
-    }
-    .empty-state .btn-manual {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: #2563eb;
-      color: #fff;
-      padding: 0.6rem 1.5rem;
-      border-radius: 9999px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      border: none;
-    }
-    .empty-state .btn-manual:hover {
-      background: #1e4bb3;
-      color: #fff;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
-    }
-
-    /* ============================================================
-       FOOTER
-       ============================================================ */
+    /* ============ FOOTER ============ */
     .footer-links {
       margin-top: 1.5rem;
       text-align: center;
@@ -298,9 +223,6 @@
       background: rgba(37, 99, 235, 0.06);
     }
 
-    /* ============================================================
-       ANIMATIONS
-       ============================================================ */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -313,9 +235,6 @@
       }
     }
 
-    /* ============================================================
-       RESPONSIVE
-       ============================================================ */
     @media (max-width: 576px) {
       body { padding: 1rem 0.75rem; }
       .verify-card {
@@ -328,47 +247,33 @@
         padding: 0.7rem 0.85rem;
         font-size: 0.8rem;
       }
-      .empty-state .icon-wrap {
-        width: 60px;
-        height: 60px;
-        font-size: 1.75rem;
-      }
     }
   </style>
 </head>
 <body>
 
-  <!-- ============================================================
-       BRAND HEADER
-       ============================================================ -->
   <div class="brand-header">
-    <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
+    <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
     <h1>
       <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
-      Verifikasi QR
+      Verifikasi Sertifikat
     </h1>
     <p>PKD GP Ansor Kabupaten Bantul</p>
   </div>
 
-  <!-- ============================================================
-       VERIFY CARD
-       ============================================================ -->
   <div class="verify-card">
 
-    <!-- Loading (default) -->
+    <!-- Loading -->
     <div id="loadingState" class="loading-state">
       <div class="spinner"></div>
       <p>Memproses verifikasi…</p>
     </div>
 
-    <!-- Result area (diisi oleh JS) -->
+    <!-- Result area -->
     <div id="resultArea" aria-live="polite" aria-atomic="true" style="display:none;"></div>
 
   </div>
 
-  <!-- ============================================================
-       FOOTER LINKS
-       ============================================================ -->
   <div class="footer-links">
     <a href="/bisaa/index.html">
       <i class="bi bi-arrow-left"></i>
@@ -376,55 +281,296 @@
     </a>
   </div>
 
-  <!-- ============================================================
-       SCRIPTS
-       ============================================================ -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
     // ============================================================
-    //   IMPORTS
+    //   verifikasi_qr.html — v28.7.0 ROLE-SPECIFIC EDITION
+    //   - Jika URL ada ?role=xxx → HANYA tampilkan role tersebut
+    //   - Jika URL tanpa role → tampilkan semua role (TTD lengkap)
     // ============================================================
+
     import { callApi, escapeHtml } from '/bisaa/js/core/api.js';
 
-    // ============================================================
-    //   DOM REFS
-    // ============================================================
     const loadingStateEl = document.getElementById('loadingState');
     const resultAreaEl   = document.getElementById('resultArea');
 
-    // ============================================================
-    //   STATE
-    // ============================================================
     let isVerifying = false;
 
+    const ROLE_LABEL_MAP = {
+      ketua_pc: 'Ketua PC',
+      sekretaris: 'Sekretaris',
+      instruktur: 'Instruktur',
+    };
+
+    const ROLE_ICON_MAP = {
+      ketua_pc: 'bi-shield-fill-check',
+      sekretaris: 'bi-journal-text',
+      instruktur: 'bi-mortarboard-fill',
+    };
+
+    const ROLE_COLOR_MAP = {
+      ketua_pc: '#2563eb',
+      sekretaris: '#16a34a',
+      instruktur: '#7c3aed',
+    };
+
     // ============================================================
-    //   RENDER HELPERS
+    //   HELPERS
     // ============================================================
     function showResult() {
-      loadingStateEl.style.display = 'none';
-      resultAreaEl.style.display = 'block';
+      if (loadingStateEl) loadingStateEl.style.display = 'none';
+      if (resultAreaEl) resultAreaEl.style.display = 'block';
     }
 
-    function renderSuccess(data) {
+    function formatTanggal(iso) {
+      if (!iso) return '-';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleString('id-ID', {
+          day: '2-digit', month: 'long', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) { return '-'; }
+    }
+
+    function formatTanggalOnly(iso) {
+      if (!iso) return '-';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleDateString('id-ID', {
+          day: '2-digit', month: 'long', year: 'numeric'
+        });
+      } catch (e) { return '-'; }
+    }
+
+    function normalizeKey(s) {
+      return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    // ============================================================
+    //   TTD ROW — info nama + waktu, TANPA gambar mentahan
+    // ============================================================
+    function renderTTDRow(roleKey, ttdData, highlight = false) {
+      const label = ROLE_LABEL_MAP[roleKey] || roleKey;
+      const icon = ROLE_ICON_MAP[roleKey] || 'bi-person';
+      const color = ROLE_COLOR_MAP[roleKey] || '#64748b';
+
+      // Belum TTD
+      if (!ttdData || !ttdData.driveId) {
+        return `
+          <div style="
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px; border-radius: 12px;
+            background: #f8fafc; border: 1px dashed #cbd5e1;
+            margin-bottom: 10px; opacity: 0.75;
+          ">
+            <div style="
+              width: 44px; height: 44px; flex-shrink: 0;
+              border-radius: 10px; background: #e2e8f0;
+              display: flex; align-items: center; justify-content: center;
+              color: #94a3b8; font-size: 1.2rem;
+            ">
+              <i class="bi ${icon}" aria-hidden="true"></i>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700; font-size: 0.9rem; color: #64748b;">
+                ${escapeHtml(label)}
+              </div>
+              <div style="font-size: 0.78rem; color: #94a3b8; font-style: italic;">
+                Belum ditandatangani
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // Sudah TTD
+      const safeNama = escapeHtml(ttdData.nama || '-');
+      const tanggal = formatTanggal(ttdData.timestamp);
+
+      const borderColor = highlight ? color : `${color}44`;
+      const bgColor = highlight ? `${color}0d` : '#fff';
+      const borderWidth = highlight ? '2px' : '1.5px';
+
+      return `
+        <div style="
+          display: flex; align-items: center; gap: 12px;
+          padding: 12px; border-radius: 12px;
+          background: ${bgColor}; border: ${borderWidth} solid ${borderColor};
+          margin-bottom: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        ">
+          <div style="
+            width: 44px; height: 44px; flex-shrink: 0;
+            border-radius: 10px; background: ${color}18;
+            display: flex; align-items: center; justify-content: center;
+            color: ${color}; font-size: 1.2rem;
+          ">
+            <i class="bi ${icon}" aria-hidden="true"></i>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+              <span style="
+                display: inline-flex; align-items: center; gap: 4px;
+                font-size: 0.7rem; font-weight: 700;
+                padding: 2px 8px; border-radius: 9999px;
+                background: ${color}18; color: ${color};
+                text-transform: uppercase; letter-spacing: 0.03em;
+              ">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                ${escapeHtml(label)}
+              </span>
+              ${highlight ? `
+                <span style="
+                  font-size: 0.65rem; font-weight: 700;
+                  padding: 2px 6px; border-radius: 9999px;
+                  background: #fef3c7; color: #92400e;
+                ">DIPINDAI</span>
+              ` : ''}
+            </div>
+            <div style="font-weight: 700; font-size: 0.92rem; color: #0f172a; margin-top: 2px;">
+              ${safeNama}
+            </div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
+              <i class="bi bi-clock me-1" aria-hidden="true"></i>${escapeHtml(tanggal)}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ============================================================
+    //   RENDER SUCCESS — Role-specific mode
+    // ============================================================
+    function renderSuccess(data, opts = {}) {
+      const highlightRole = opts.highlightRole || null;
+      const ttd = data.ttd || {};
+
       const nama = escapeHtml(data.nama_peserta || '-');
       const nomor = escapeHtml(data.nomor_sertifikat || '-');
       const lokasi = escapeHtml(data.lokasi || 'Kabupaten Bantul');
-      const tanggal = data.createdAt
-        ? new Date(data.createdAt).toLocaleDateString('id-ID', {
-            day: '2-digit', month: 'long', year: 'numeric'
-          })
-        : '-';
+      const pengesahan = escapeHtml(data.pengesahan || 'Pengesahan PKD GP Ansor Kabupaten Bantul');
+      const tanggalTerbit = formatTanggalOnly(data.createdAt);
       const pdfUrl = data.pdf_url ? escapeHtml(data.pdf_url) : '';
+
+      // ⭐ Tentukan apakah mode role-specific atau mode sertifikat lengkap
+      const isRoleSpecific = !!highlightRole;
+
+      // ⭐ Cek TTD role yang diminta (untuk mode role-specific)
+      const targetTTD = isRoleSpecific ? ttd[highlightRole] : null;
+      const roleSigned = !!(targetTTD && targetTTD.driveId);
+
+      // ⭐ Cek TTD lengkap (untuk mode sertifikat)
+      const ttdLengkap = !!(ttd.ketua_pc && ttd.ketua_pc.driveId &&
+                             ttd.sekretaris && ttd.sekretaris.driveId &&
+                             ttd.instruktur && ttd.instruktur.driveId);
+
+      // ⭐ Untuk mode role-specific: kalau role belum TTD → tampilkan not found
+      if (isRoleSpecific && !roleSigned) {
+        resultAreaEl.innerHTML = `
+          <div class="result-box warning">
+            <div class="result-title">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              TTD ${escapeHtml(ROLE_LABEL_MAP[highlightRole])} Belum Ada
+            </div>
+            <p class="mb-0 small">
+              Tanda tangan <strong>${escapeHtml(ROLE_LABEL_MAP[highlightRole])}</strong>
+              untuk peserta <strong>${nama}</strong> belum tercatat di sistem.
+            </p>
+            <div class="result-detail">
+              <div class="row-line">
+                <span class="label">Nama Peserta</span>
+                <span class="value">${nama}</span>
+              </div>
+              <div class="row-line">
+                <span class="label">Nomor Sertifikat</span>
+                <span class="value"><code>${nomor}</code></span>
+              </div>
+            </div>
+          </div>
+        `;
+        showResult();
+        return;
+      }
+
+      // ===== TITLE & SUBTITLE berdasarkan mode =====
+      const titleText = isRoleSpecific
+        ? `Verifikasi TTD ${ROLE_LABEL_MAP[highlightRole]}`
+        : 'Sertifikat Valid & Terverifikasi';
+
+      const subtitleText = isRoleSpecific
+        ? `Tanda tangan <strong>${ROLE_LABEL_MAP[highlightRole]}</strong> pada sertifikat ini <strong>SAH & TERDAFTAR</strong> di PKD GP Ansor Kabupaten Bantul.`
+        : `Sertifikat ini <strong>terdaftar dan sah</strong> dikeluarkan oleh <strong>PKD GP Ansor Kabupaten Bantul</strong>.`;
+
+      // ===== TTD SECTION =====
+      // ⭐ Mode role-specific: hanya tampilkan role tersebut
+      // ⭐ Mode sertifikat: tampilkan semua role
+      let ttdSectionHTML = '';
+      let ttdHeaderHTML = '';
+
+      if (isRoleSpecific) {
+        // Header khusus role tunggal
+        ttdHeaderHTML = `
+          <div style="
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+          ">
+            <h6 style="font-weight: 700; font-size: 0.9rem; margin: 0; color: #0f172a;">
+              <i class="bi bi-vector-pen me-1" style="color: #2563eb;" aria-hidden="true"></i>
+              Ditandatangani Oleh:
+            </h6>
+          </div>
+        `;
+        ttdSectionHTML = renderTTDRow(highlightRole, targetTTD, true);
+      } else {
+        // Header lengkap
+        ttdHeaderHTML = `
+          <div style="
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+          ">
+            <h6 style="font-weight: 700; font-size: 0.9rem; margin: 0; color: #0f172a;">
+              <i class="bi bi-vector-pen me-1" style="color: #2563eb;" aria-hidden="true"></i>
+              Sudah Ditandatangani Oleh:
+            </h6>
+            ${ttdLengkap
+              ? `<span style="
+                   display: inline-flex; align-items: center; gap: 4px;
+                   font-size: 0.7rem; font-weight: 700;
+                   padding: 3px 10px; border-radius: 9999px;
+                   background: #dcfce7; color: #166534;
+                 ">
+                   <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                   TTD Lengkap
+                 </span>`
+              : `<span style="
+                   display: inline-flex; align-items: center; gap: 4px;
+                   font-size: 0.7rem; font-weight: 700;
+                   padding: 3px 10px; border-radius: 9999px;
+                   background: #fef3c7; color: #92400e;
+                 ">
+                   <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+                   Belum Lengkap
+                 </span>`}
+          </div>
+        `;
+        ttdSectionHTML = `
+          ${renderTTDRow('ketua_pc', ttd.ketua_pc, false)}
+          ${renderTTDRow('sekretaris', ttd.sekretaris, false)}
+          ${renderTTDRow('instruktur', ttd.instruktur, false)}
+        `;
+      }
 
       resultAreaEl.innerHTML = `
         <div class="result-box success">
           <div class="result-title">
             <i class="bi bi-patch-check-fill"></i>
-            Sertifikat Valid
+            ${escapeHtml(titleText)}
           </div>
-          <p class="mb-0 small">Sertifikat ini terdaftar dan sah dikeluarkan oleh PKD GP Ansor Kabupaten Bantul.</p>
+          <p class="mb-3 small">${subtitleText}</p>
 
+          <!-- INFO SERTIFIKAT -->
           <div class="result-detail">
             <div class="row-line">
               <span class="label">Nama Peserta</span>
@@ -439,13 +585,24 @@
               <span class="value">${lokasi}</span>
             </div>
             <div class="row-line">
-              <span class="label">Tanggal Terbit</span>
-              <span class="value">${escapeHtml(tanggal)}</span>
+              <span class="label">Tanggal Disahkan</span>
+              <span class="value">${escapeHtml(tanggalTerbit)}</span>
+            </div>
+            <div class="row-line">
+              <span class="label">Pengesahan</span>
+              <span class="value">${pengesahan}</span>
             </div>
           </div>
 
-          ${pdfUrl ? `
-            <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" class="result-action primary">
+          <!-- TTD DIGITAL -->
+          <div style="margin-top: 20px;">
+            ${ttdHeaderHTML}
+            ${ttdSectionHTML}
+          </div>
+
+          ${!isRoleSpecific && pdfUrl ? `
+            <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer"
+               class="result-action primary" style="margin-top: 16px;">
               <i class="bi bi-download"></i> Unduh Sertifikat PDF
             </a>
           ` : ''}
@@ -462,7 +619,7 @@
             Sertifikat Tidak Ditemukan
           </div>
           <p class="mb-0 small">
-            Nomor <strong><code>${escapeHtml(nomor)}</code></strong> tidak terdaftar
+            Nomor <strong><code>${escapeHtml(nomor || '-')}</code></strong> tidak terdaftar
             di sistem kami. Periksa kembali atau hubungi panitia PKD.
           </p>
         </div>
@@ -483,36 +640,43 @@
       showResult();
     }
 
-    function renderEmptyState(params) {
-      const hasNama = params.get('nama');
-      const nomorHint = hasNama
-        ? `Verifikasi untuk <strong>${escapeHtml(hasNama)}</strong> memerlukan nomor sertifikat.`
-        : 'QR code tidak memuat data sertifikat yang valid.';
+    // ============================================================
+    //   FETCH TTD DATA (join dengan certificates)
+    // ============================================================
+    async function fetchTTDForPeserta(namaPeserta) {
+      if (!namaPeserta) return {};
+      try {
+        const res = await callApi('getAllDigitalApprovals', {}, 'GET');
+        const all = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+        const targetKey = normalizeKey(namaPeserta);
+        const filtered = all.filter(a => normalizeKey(a.peserta_nama) === targetKey);
 
-      resultAreaEl.innerHTML = `
-        <div class="empty-state">
-          <div class="icon-wrap">
-            <i class="bi bi-qr-code"></i>
-          </div>
-          <h3>Scan QR Code Sertifikat</h3>
-          <p>
-            ${nomorHint}<br><br>
-            Silakan scan ulang QR code di sertifikat, atau verifikasi
-            manual dengan memasukkan nomor sertifikat.
-          </p>
-          <a href="/bisaa/verifikasi.html" class="btn-manual">
-            <i class="bi bi-keyboard"></i>
-            Verifikasi Manual
-          </a>
-        </div>
-      `;
-      showResult();
+        // Ambil yang terbaru per role
+        const roleMap = { ketua_pc: null, sekretaris: null, instruktur: null };
+        filtered.forEach(a => {
+          const role = String(a.role || '').toLowerCase().trim();
+          if (!roleMap.hasOwnProperty(role)) return;
+          const existing = roleMap[role];
+          if (!existing || new Date(a.timestamp) > new Date(existing.timestamp)) {
+            roleMap[role] = a;
+          }
+        });
+
+        return {
+          ketua_pc: roleMap.ketua_pc ? { nama: roleMap.ketua_pc.nama, driveId: roleMap.ketua_pc.driveId, timestamp: roleMap.ketua_pc.timestamp } : null,
+          sekretaris: roleMap.sekretaris ? { nama: roleMap.sekretaris.nama, driveId: roleMap.sekretaris.driveId, timestamp: roleMap.sekretaris.timestamp } : null,
+          instruktur: roleMap.instruktur ? { nama: roleMap.instruktur.nama, driveId: roleMap.instruktur.driveId, timestamp: roleMap.instruktur.timestamp } : null,
+        };
+      } catch (e) {
+        console.warn('[VerifikasiQR] fetchTTDForPeserta error:', e);
+        return {};
+      }
     }
 
     // ============================================================
     //   VERIFY LOGIC
     // ============================================================
-    async function verifyByNomor(nomor) {
+    async function verifyByNomor(nomor, opts = {}) {
       if (isVerifying) return;
       isVerifying = true;
 
@@ -521,7 +685,10 @@
 
         if (res && res.success === true) {
           if (res.data && res.data.nomor_sertifikat) {
-            renderSuccess(res.data);
+            // ⭐ Ambil data TTD dan gabungkan
+            const ttd = await fetchTTDForPeserta(res.data.nama_peserta);
+            const mergedData = { ...res.data, ttd };
+            renderSuccess(mergedData, opts);
           } else {
             renderNotFound(nomor);
           }
@@ -537,7 +704,7 @@
     }
 
     // ============================================================
-    //   MAIN: Parse query string & verify
+    //   MAIN
     // ============================================================
     (async function main() {
       let params;
@@ -549,18 +716,40 @@
       }
 
       const nomor = params.get('nomor');
-      const id    = params.get('id');       // fallback: peserta ID
-      const nama  = params.get('nama');     // fallback: nama peserta
+      const role = params.get('role');
+      const nama = params.get('nama');
+      const id = params.get('id');
 
-      // Priority 1: verify by nomor
-      if (nomor) {
-        console.log('[VerifikasiQR] Nomor ditemukan:', nomor);
-        return verifyByNomor(nomor);
+      // Priority 1: nomor langsung
+      if (nomor && nomor.trim() !== '') {
+        const opts = (role && ROLE_LABEL_MAP[role]) ? { highlightRole: role } : {};
+        return verifyByNomor(nomor, opts);
       }
 
-      // Priority 2: verify by ID (lookup dulu via getUploadedCertificates)
-      if (id) {
-        console.log('[VerifikasiQR] ID peserta ditemukan:', id);
+      // Priority 2: role + nama (cari nomor via API)
+      if (role && nama) {
+        isVerifying = true;
+        try {
+          const res = await callApi('getUploadedCertificates', {}, 'GET');
+          const list = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+          const found = list.find(c =>
+            String(c.nama_peserta || '').toLowerCase() === String(nama).toLowerCase()
+          );
+          if (found && found.nomor_sertifikat) {
+            isVerifying = false;
+            return verifyByNomor(found.nomor_sertifikat, { highlightRole: role });
+          }
+          isVerifying = false;
+          renderNotFound('Peserta: ' + nama);
+        } catch (e) {
+          isVerifying = false;
+          renderError('Gagal mencari sertifikat: ' + e.message);
+        }
+        return;
+      }
+
+      // Priority 3: id
+      if (id && id.trim() !== '') {
         isVerifying = true;
         try {
           const res = await callApi('getUploadedCertificates', {}, 'GET');
@@ -579,25 +768,15 @@
         return;
       }
 
-      // Priority 3: nama only — show empty state
-      if (nama) {
-        console.log('[VerifikasiQR] Hanya nama, tidak bisa auto-verify:', nama);
-        return renderEmptyState(params);
-      }
-
-      // No params at all
-      console.log('[VerifikasiQR] Tidak ada parameter verifikasi di URL');
-      return renderEmptyState(params);
+      // Tanpa parameter → redirect ke verifikasi manual
+      console.log('[VerifikasiQR] Redirect ke verifikasi.html');
+      window.location.replace('/bisaa/verifikasi.html');
     })();
 
-    // ============================================================
-    //   CONSOLE BANNER
-    // ============================================================
     console.log(
-      '%c Verifikasi QR — PKD GP Ansor Bantul ',
+      '%c verifikasi_qr.html v28.7.0 — Role-Specific Edition ',
       'background:#2563eb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
-
 </body>
 </html>

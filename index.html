@@ -5,24 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <meta name="theme-color" content="#2563eb">
   <meta name="description" content="Platform digital resmi PKD GP Ansor Kabupaten Bantul — Pendaftaran, materi, absensi, dan sertifikat digital.">
-  
+
   <title>PKD GP Ansor Kabupaten Bantul</title>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/bisaa/LOGO%20ANSOR.webp">
-  <link rel="apple-touch-icon" href="/bisaa/LOGO%20ANSOR.webp">
+  <link rel="icon" type="image/webp" href="/bisaa/LOGOANSOR.webp">
+  <link rel="apple-touch-icon" href="/bisaa/LOGOANSOR.webp">
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap 5 + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
-    /* ===== UNIVERSAL PREMIUM (GLASSMORPHISM) ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
@@ -34,7 +30,7 @@
       flex-direction: column;
     }
 
-    /* ===== HEADER ===== */
+    /* ============ HEADER ============ */
     .header-minimal {
       background: rgba(255, 255, 255, 0.72) !important;
       backdrop-filter: blur(20px) saturate(180%);
@@ -44,50 +40,17 @@
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
       padding: 0 !important;
     }
-    .header-minimal .container {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
-    .brand-logo-mini { 
-      height: 40px; 
-      width: auto; 
-      margin-right: 14px; 
-      transition: transform 0.2s;
-    }
+    .header-minimal .container { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .brand-logo-mini { height: 40px; width: auto; margin-right: 14px; transition: transform 0.2s; }
     .brand-logo-mini:hover { transform: scale(1.05); }
-    .brand-title-mini { 
-      font-weight: 700; 
-      color: #0a3d62; 
-      font-size: 1.3rem; 
-      line-height: 1.2; 
-      letter-spacing: -0.02em;
-    }
-    .brand-sub-mini { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      display: block; 
-      margin-top: 0; 
-      letter-spacing: 0.02em;
-    }
+    .brand-title-mini { font-weight: 700; color: #0a3d62; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-sub-mini { font-size: 0.8rem; color: #64748b; display: block; letter-spacing: 0.02em; }
 
-    /* ===== USER MENU AREA ===== */
-    #navbarUserMenu {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .user-menu-area .dropdown-toggle { 
-      border-radius: 50px; 
-      padding: 0.3rem 1rem; 
-      font-size: 0.9rem; 
-    }
-    .user-menu-area .btn-outline-primary { 
-      border-radius: 50px; 
-      padding: 0.3rem 1.2rem; 
-      font-size: 0.9rem; 
-    }
+    #navbarUserMenu { display: flex; align-items: center; gap: 8px; }
+    .user-menu-area .dropdown-toggle { border-radius: 50px; padding: 0.3rem 1rem; font-size: 0.9rem; }
+    .user-menu-area .btn-outline-primary { border-radius: 50px; padding: 0.3rem 1.2rem; font-size: 0.9rem; }
 
-    /* ===== HERO SECTION ===== */
+    /* ============ HERO ============ */
     .hero-wrapper {
       background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
       border-bottom: 1px solid rgba(203, 213, 225, 0.4);
@@ -98,20 +61,16 @@
     .hero-wrapper::before {
       content: '';
       position: absolute;
-      top: -30%;
-      left: -10%;
-      width: 60%;
-      height: 120%;
+      top: -30%; left: -10%;
+      width: 60%; height: 120%;
       background: radial-gradient(ellipse at 30% 40%, rgba(37, 99, 235, 0.04) 0%, transparent 70%);
       pointer-events: none;
     }
     .hero-wrapper::after {
       content: '';
       position: absolute;
-      bottom: -20%;
-      right: -5%;
-      width: 50%;
-      height: 100%;
+      bottom: -20%; right: -5%;
+      width: 50%; height: 100%;
       background: radial-gradient(ellipse at 70% 60%, rgba(37, 99, 235, 0.03) 0%, transparent 60%);
       pointer-events: none;
     }
@@ -126,24 +85,10 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .hero-sub {
-      font-size: 1.2rem;
-      color: #475569;
-      font-weight: 400;
-      max-width: 540px;
-    }
-    .hero-logo {
-      max-width: 180px;
-      opacity: 0.92;
-      filter: drop-shadow(0 8px 24px rgba(37, 99, 235, 0.10));
-    }
-    .hero-tagline {
-      font-size: 1rem;
-      color: #64748b;
-      margin-top: 0.25rem;
-    }
+    .hero-sub { font-size: 1.2rem; color: #475569; font-weight: 400; max-width: 540px; }
+    .hero-logo { max-width: 180px; opacity: 0.92; filter: drop-shadow(0 8px 24px rgba(37, 99, 235, 0.10)); }
+    .hero-tagline { font-size: 1rem; color: #64748b; margin-top: 0.25rem; }
 
-    /* ===== GLASS CARD ===== */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px) saturate(180%);
@@ -153,22 +98,15 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .glass-card:hover {
-      transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.08);
-      border-color: rgba(37, 99, 235, 0.2);
-    }
 
-    /* ===== MENU GRID ===== */
     .menu-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 1.5rem;
       margin-top: 0.5rem;
     }
-    @media (min-width: 768px) { 
-      .menu-grid { grid-template-columns: repeat(4, 1fr); } 
-    }
+    @media (min-width: 768px) { .menu-grid { grid-template-columns: repeat(4, 1fr); } }
+
     .menu-card {
       text-align: center;
       cursor: pointer;
@@ -196,15 +134,11 @@
     }
     .menu-card:active { transform: scale(0.96); }
     .menu-card .icon-wrapper {
-      width: 72px;
-      height: 72px;
+      width: 72px; height: 72px;
       border-radius: 24px;
       background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      color: #2563eb;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: #2563eb;
       margin-bottom: 1rem;
       transition: all 0.3s;
       border: 1px solid rgba(37, 99, 235, 0.05);
@@ -215,19 +149,9 @@
       box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
       transform: scale(1.05);
     }
-    .menu-card .card-label { 
-      font-weight: 600; 
-      font-size: 1.05rem; 
-      letter-spacing: -0.01em; 
-      margin-bottom: 0.15rem; 
-    }
-    .menu-card .card-desc { 
-      font-size: 0.8rem; 
-      color: #64748b; 
-      font-weight: 400; 
-    }
+    .menu-card .card-label { font-weight: 600; font-size: 1.05rem; letter-spacing: -0.01em; margin-bottom: 0.15rem; }
+    .menu-card .card-desc { font-size: 0.8rem; color: #64748b; font-weight: 400; }
 
-    /* ===== TOTAL KADER BADGE ===== */
     .total-badge-premium {
       display: inline-flex;
       align-items: center;
@@ -245,20 +169,34 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       white-space: nowrap;
     }
-    .total-badge-premium::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
-      pointer-events: none;
-    }
     .total-badge-premium i { font-size: 1.3rem; margin-right: 0.1rem; }
     .total-badge-premium .badge-number { font-weight: 700; font-size: 1.2rem; }
 
-    /* ===== LOGIN PROMPT ===== */
+    /* ============ CACHE INDICATOR ============ */
+    .cache-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+    .cache-indicator.instant { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+    .cache-indicator.loading { background: rgba(37, 99, 235, 0.1); color: #1e40af; }
+    .cache-indicator.updated {
+      background: rgba(22, 163, 74, 0.15); color: #15803d;
+      opacity: 1;
+      animation: pulse-badge 0.5s ease;
+    }
+    @keyframes pulse-badge {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
     #loginPrompt {
       display: none;
       text-align: center;
@@ -272,7 +210,6 @@
     }
     #loginPrompt h5 { font-weight: 600; color: #0f172a; }
 
-    /* ===== NOTIF BADGE ===== */
     .badge-notification {
       font-size: 0.7rem;
       padding: 0.2rem 0.5rem;
@@ -283,34 +220,26 @@
       box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
     }
 
-    /* ===== FAQ CHATBOT ===== */
     .chatbot-button {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 64px;
-      height: 64px;
+      bottom: 30px; right: 30px;
+      width: 64px; height: 64px;
       border-radius: 50%;
       background: linear-gradient(135deg, #2563eb, #1e4bb3);
       color: white;
       border: none;
       box-shadow: 0 8px 32px rgba(37, 99, 235, 0.35);
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 30px;
       z-index: 1032;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .chatbot-button:hover { 
-      transform: scale(1.08); 
-      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.45); 
-    }
+    .chatbot-button:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(37, 99, 235, 0.45); }
+
     .chatbot-panel {
       position: fixed;
-      bottom: 100px;
-      right: 30px;
+      bottom: 100px; right: 30px;
       width: 380px;
       max-width: calc(100vw - 60px);
       background: rgba(255, 255, 255, 0.85);
@@ -330,54 +259,32 @@
       color: white;
       padding: 16px 20px;
       font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       flex-shrink: 0;
     }
-    .chatbot-header button { 
-      background: none; 
-      border: none; 
-      color: white; 
-      font-size: 22px; 
-      cursor: pointer; 
-      opacity: 0.8; 
-      transition: opacity 0.2s; 
+    .chatbot-header button {
+      background: none; border: none; color: white;
+      font-size: 22px; cursor: pointer;
+      opacity: 0.8; transition: opacity 0.2s;
     }
     .chatbot-header button:hover { opacity: 1; }
-    .faq-content { 
-      padding: 20px; 
-      overflow-y: auto; 
-      max-height: 380px; 
-      background: transparent; 
-    }
-    .faq-item { 
-      margin-bottom: 1.25rem; 
-      padding-bottom: 0.75rem; 
-      border-bottom: 1px solid rgba(203, 213, 225, 0.3); 
+    .faq-content { padding: 20px; overflow-y: auto; max-height: 380px; background: transparent; }
+    .faq-item {
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.3);
     }
     .faq-item:last-child { border-bottom: none; }
-    .faq-item .fw-bold { 
-      color: #0f172a; 
-      margin-bottom: 4px; 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-    }
+    .faq-item .fw-bold { color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .faq-item .text-muted { font-size: 0.9rem; color: #475569; }
 
-    /* ===== ANIMASI ===== */
     .fade-up { animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes fadeUp { 
-      from { opacity: 0; transform: translateY(30px); } 
-      to { opacity: 1; transform: translateY(0); } 
-    }
-    .delay-1 { animation-delay: 0.05s; } 
-    .delay-2 { animation-delay: 0.1s; } 
-    .delay-3 { animation-delay: 0.15s; } 
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
     .delay-4 { animation-delay: 0.2s; }
 
-    /* ===== FOOTER ===== */
     .footer-modern {
       font-size: 0.85rem;
       color: #64748b;
@@ -389,7 +296,6 @@
       backdrop-filter: blur(4px);
     }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 576px) {
       .hero-title { font-size: 2rem; }
       .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
@@ -402,22 +308,22 @@
       .header-minimal .container { padding-top: 0.5rem; padding-bottom: 0.5rem; }
       .brand-title-mini { font-size: 1.1rem; }
       .brand-sub-mini { font-size: 0.7rem; }
-      .total-badge-premium { 
-        width: 100%; 
-        justify-content: center; 
-        border-radius: 20px; 
-        padding: 0.5rem 1rem; 
-        font-size: 0.85rem; 
-        white-space: normal; 
-        text-align: center; 
+      .total-badge-premium {
+        width: 100%;
+        justify-content: center;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        white-space: normal;
+        text-align: center;
       }
+      .cache-indicator { font-size: 0.65rem; }
     }
 
     @media (min-width: 577px) and (max-width: 991px) {
       .menu-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     }
 
-    /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 10px; }
@@ -426,26 +332,22 @@
 </head>
 <body>
 
-  <!-- ================= HEADER ================= -->
   <header class="header-minimal sticky-top shadow-sm">
     <div class="container d-flex justify-content-between align-items-center py-3">
       <div class="d-flex align-items-center gap-2">
         <a href="/bisaa/index.html" class="d-flex align-items-center text-decoration-none">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
+          <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor" class="brand-logo-mini">
           <div>
             <div class="brand-title-mini">PKD GP Ansor</div>
             <span class="brand-sub-mini">Kabupaten Bantul</span>
           </div>
         </a>
       </div>
-      <!-- Area User Menu (diisi oleh api.js) -->
       <div id="navbarUserMenu" class="user-menu-area"></div>
     </div>
   </header>
 
-  <!-- ================= CONTENT ================= -->
   <div id="contentArea">
-    <!-- HERO -->
     <section class="hero-wrapper">
       <div class="container hero-content">
         <div class="row align-items-center g-4">
@@ -453,7 +355,6 @@
             <div class="d-flex align-items-start flex-column">
               <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
                 <h1 class="hero-title fade-up">Pelatihan Kepemimpinan Dasar</h1>
-                <!-- Total Peserta Badge -->
                 <span class="total-badge-premium d-none" id="totalPesertaBadge">
                   <i class="bi bi-people-fill" aria-hidden="true"></i>
                   <span>Total Kader</span>
@@ -463,22 +364,25 @@
               <p class="hero-sub fade-up delay-1">
                 Platform digital resmi <strong>PKD GP Ansor Kabupaten Bantul</strong> — mencetak kader pemimpin yang berakhlak, nasionalis, dan berwawasan kebangsaan.
               </p>
-              <div class="mt-3 fade-up delay-2">
+              <div class="mt-3 fade-up delay-2 d-flex align-items-center gap-2 flex-wrap">
                 <a href="#menu-section" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
                   <i class="bi bi-grid me-2" aria-hidden="true"></i>Mulai Jelajahi
                 </a>
+                <span id="cacheIndicator" class="cache-indicator loading" aria-live="polite">
+                  <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:1.5px;" role="status" aria-hidden="true"></span>
+                  <span id="cacheIndicatorText">Memuat…</span>
+                </span>
               </div>
             </div>
           </div>
           <div class="col-lg-5 text-center fade-up delay-2">
-            <img src="/bisaa/LOGO%20ANSOR.webp" alt="Logo Ansor" class="hero-logo">
+            <img src="/bisaa/LOGOANSOR.webp" alt="Logo Ansor" class="hero-logo">
             <div class="hero-tagline">"Berdaya, Berkhidmat, Berkemajuan"</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- MENU SECTION -->
     <section id="menu-section" class="container" style="margin-top: -20px; position: relative; z-index: 2;">
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h2 class="mb-0" style="font-weight: 650; font-size: 1.75rem; border-left: 6px solid #2563eb; padding-left: 1.2rem; color: #0f172a;">
@@ -486,7 +390,6 @@
         </h2>
       </div>
 
-      <!-- Login Prompt (jika mode wajib login) -->
       <div id="loginPrompt" class="fade-up">
         <h5><i class="bi bi-shield-lock" aria-hidden="true"></i> Akses Terbatas</h5>
         <p class="text-muted">Anda harus login untuk mengakses seluruh menu.</p>
@@ -495,9 +398,8 @@
         </button>
       </div>
 
-      <!-- Menu Grid -->
       <div class="menu-grid" id="menuGrid">
-        
+
         <div class="menu-card fade-up delay-1" onclick="navigateTo('pretest.html', 'pretest')" role="button" tabindex="0" aria-label="Buka Pre-test">
           <span class="position-absolute top-0 start-100 translate-middle badge-notification" id="badge-pretest" style="display:none;">0</span>
           <div class="icon-wrapper"><i class="bi bi-pencil-square" aria-hidden="true"></i></div>
@@ -574,7 +476,6 @@
     </div>
   </div>
 
-  <!-- ================= FOOTER ================= -->
   <footer class="footer-modern container">
     <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
       <i class="bi bi-c-circle" aria-hidden="true"></i>
@@ -582,7 +483,6 @@
     </div>
   </footer>
 
-  <!-- ================= MODAL GALERI ASET PUBLIK ================= -->
   <div class="modal fade" id="publicFolderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg">
@@ -607,7 +507,6 @@
     </div>
   </div>
 
-  <!-- ================= FAQ PANEL ================= -->
   <div>
     <button class="chatbot-button" id="chatbotToggleBtn" aria-label="Buka FAQ">
       <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
@@ -643,42 +542,74 @@
     </div>
   </div>
 
-  <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
-    // ==========================================================
-    //   IMPORTS
-    // ==========================================================
+    // ============================================================
+    //   index.html v28.4.0 — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+
     import {
       callApi,
       getLoginMode,
       updateNavbarMenu,
       showToast,
       getUserRole,
-      escapeHtml
-    } from './js/core/api.js';
-    import { BASE_PATH } from './js/core/config.js';
+      escapeHtml,
+    } from '/bisaa/js/core/api.js';
 
-    // ==========================================================
+    import { createPublicCache } from '/bisaa/js/core/public-cache.js';
+
+    // ============================================================
+    //   CONSTANTS
+    // ============================================================
+    const BASE_PATH = '/bisaa/';
+    const LOGIN_PATH = BASE_PATH + 'login.html';
+
+    // ============================================================
     //   STATE
-    // ==========================================================
+    // ============================================================
     let requireLogin = false;
-    let bgSyncInterval = null;
     let publicFolders = [];
+    let totalCacheInstance = null;
+    let foldersCacheInstance = null;
+    let cacheIndicatorTimer = null;
 
-    // ==========================================================
-    //   NAVIGASI DENGAN BADGE CLEAR
-    // ==========================================================
+    // ============================================================
+    //   CACHE INDICATOR
+    // ============================================================
+    function setCacheIndicator(state, text) {
+      const el = document.getElementById('cacheIndicator');
+      const textEl = document.getElementById('cacheIndicatorText');
+      if (!el || !textEl) return;
+
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
+
+      el.className = 'cache-indicator ' + state;
+      textEl.textContent = text || '';
+
+      if (state === 'updated') {
+        cacheIndicatorTimer = setTimeout(() => {
+          el.className = 'cache-indicator instant';
+          textEl.textContent = 'Instan';
+        }, 2000);
+      }
+    }
+
+    // ============================================================
+    //   NAVIGASI
+    // ============================================================
     window.navigateTo = function(url, badgeId = null) {
-      // Tandai badge sebagai sudah dibaca
       if (badgeId) {
         const badgeEl = document.getElementById(`badge-${badgeId}`);
         if (badgeEl) {
           const currentCount = parseInt(badgeEl.textContent) || 0;
           try {
-            localStorage.setItem(`pkd_notif_${badgeId}`, JSON.stringify({ 
-              count: currentCount, 
+            localStorage.setItem(`pkd_notif_${badgeId}`, JSON.stringify({
+              count: currentCount,
               read: true,
               timestamp: Date.now()
             }));
@@ -687,23 +618,23 @@
         }
       }
 
-      // Navigate
-      const cleanUrl = url.replace(/^\/bisaa\//, '');
+      const cleanUrl = String(url).replace(/^\/+/, '');
+      const finalUrl = BASE_PATH + cleanUrl;
+
       if (requireLogin && !getUserRole()) {
-        window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(BASE_PATH + cleanUrl);
+        window.location.href = LOGIN_PATH + '?redirect=' + encodeURIComponent(finalUrl);
       } else {
-        window.location.href = BASE_PATH + cleanUrl;
+        window.location.href = finalUrl;
       }
     };
 
-    // ==========================================================
-    //   BADGE NOTIFICATIONS (FIXED v26.1.5)
-    // ==========================================================
+    // ============================================================
+    //   BADGE COUNTS — untuk admin
+    // ============================================================
     async function updateBadgeCounts() {
       const role = getUserRole();
       const menuIds = ['peserta', 'materi', 'skrining', 'informasi', 'pretest', 'posttest', 'absen'];
 
-      // Non-admin: sembunyikan semua badge
       if (role !== 'admin') {
         menuIds.forEach(id => {
           const el = document.getElementById(`badge-${id}`);
@@ -713,7 +644,10 @@
       }
 
       try {
-        const [pesertaRes, materiRes, skriningRes, infoRes, pretestRes, posttestRes, absenRes] = await Promise.all([
+        const [
+          pesertaRes, materiRes, skriningRes, infoRes,
+          pretestRes, posttestRes, absenRes
+        ] = await Promise.all([
           callApi('getTotalPeserta', {}, 'GET'),
           callApi('getMateriList', {}, 'GET'),
           callApi('getSkriningResponses', {}, 'GET'),
@@ -723,7 +657,6 @@
           callApi('getSesiAbsen', {}, 'GET')
         ]);
 
-        // ✅ FIXED: cek nested data.total dulu, baru flat, baru array
         const getCount = (res) => {
           if (!res) return 0;
           if (res.data && res.data.total !== undefined) return res.data.total;
@@ -747,78 +680,43 @@
           const el = document.getElementById(`badge-${id}`);
           if (!el) return;
 
-          let savedCount = 0;
+          let lastSeenCount = 0;
           try {
             const saved = localStorage.getItem(`pkd_notif_${id}`);
             if (saved) {
               const parsed = JSON.parse(saved);
-              savedCount = parsed.count || 0;
+              if (parsed.read) {
+                lastSeenCount = parsed.count || 0;
+              }
             }
           } catch (e) {}
 
           const count = counts[id];
-          if (count > savedCount) {
+          if (count > lastSeenCount) {
             el.textContent = count > 99 ? '99+' : count;
             el.style.display = 'inline-block';
-            try {
-              localStorage.setItem(`pkd_notif_${id}`, JSON.stringify({ 
-                count: count, read: false, timestamp: Date.now() 
-              }));
-            } catch (e) {}
           } else {
             el.style.display = 'none';
           }
         });
       } catch (e) {
-        console.warn('Gagal memuat notifikasi:', e);
+        console.warn('[Index] Gagal memuat notifikasi:', e);
       }
     }
 
-    // ==========================================================
-    //   TOTAL PESERTA (HERO SECTION) — FIXED v26.1.5
-    // ==========================================================
-    async function updateTotalPeserta() {
-      try {
-        const res = await callApi('getTotalPeserta', { _t: Date.now() }, 'GET');
-        // ✅ FIXED: Backend return { success, data: { total: N } }
-        const total = res?.data?.total ?? res?.total ?? 0;
-        
-        const badge = document.getElementById('totalPesertaBadge');
-        const countSpan = document.getElementById('totalCount');
-        if (badge && countSpan) {
-          badge.classList.remove('d-none');
-          countSpan.textContent = total;
-        }
-        return total;
-      } catch (e) {
-        console.warn('Gagal memuat total peserta:', e);
-        return 0;
-      }
-    }
-
-    // ==========================================================
-    //   BACKGROUND SYNC
-    // ==========================================================
-    function startBackgroundSync() {
-      if (bgSyncInterval) clearInterval(bgSyncInterval);
-      bgSyncInterval = setInterval(async () => {
-        if (document.hidden) return;
-        await updateTotalPeserta();
-        await updateBadgeCounts();
-      }, 15000);
-    }
-
-    // ==========================================================
+    // ============================================================
     //   LOGIN MODE CHECK
-    // ==========================================================
+    // ============================================================
     async function checkLoginMode() {
       try {
         const res = await getLoginMode();
         requireLogin = res.success ? res.enabled : false;
-        
+
         const menuGrid = document.getElementById('menuGrid');
         const loginPrompt = document.getElementById('loginPrompt');
         const isMobile = window.innerWidth <= 768;
+
+        if (!menuGrid || !loginPrompt) return;
 
         if (requireLogin && !getUserRole()) {
           if (isMobile) {
@@ -834,41 +732,20 @@
           loginPrompt.style.display = 'none';
         }
       } catch (e) {
-        console.warn('Gagal check login mode:', e);
+        console.warn('[Index] Gagal check login mode:', e);
         requireLogin = false;
       }
     }
 
-    // ==========================================================
-    //   PUBLIC FOLDERS
-    // ==========================================================
-    async function loadPublicFolders() {
-      try {
-        const res = await callApi('getFolders', { _t: Date.now() }, 'GET');
-        publicFolders = (res?.data || []).filter(f => f.isPublic === true || f.isPublic === 'true');
-        
-        const badge = document.getElementById('publicFolderCount');
-        if (badge) {
-          if (publicFolders.length > 0) {
-            badge.textContent = publicFolders.length;
-            badge.style.display = 'inline-block';
-          } else {
-            badge.style.display = 'none';
-          }
-        }
-      } catch (e) {
-        console.warn('Gagal memuat folder publik:', e);
-        publicFolders = [];
-      }
-    }
-
-    // ==========================================================
+    // ============================================================
     //   OPEN PUBLIC FOLDER MODAL
-    // ==========================================================
+    // ============================================================
     window.openPublicFolderModal = async function() {
-      const modal = new bootstrap.Modal(document.getElementById('publicFolderModal'));
+      const modalEl = document.getElementById('publicFolderModal');
+      if (!modalEl) return;
+      const modal = new bootstrap.Modal(modalEl);
       const content = document.getElementById('publicFolderModalContent');
-      
+
       content.innerHTML = `
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
@@ -879,8 +756,11 @@
       `;
       modal.show();
 
-      if (publicFolders.length === 0) {
-        await loadPublicFolders();
+      // Kalau belum ada cache, tunggu sebentar
+      if (publicFolders.length === 0 && foldersCacheInstance) {
+        try {
+          await foldersCacheInstance.forceRefresh();
+        } catch (e) { /* silent */ }
       }
 
       let html = '';
@@ -889,9 +769,10 @@
       } else {
         html = `<div class="row g-3">`;
         publicFolders.forEach(f => {
+          const folderUrl = BASE_PATH + 'public_assets.html?folderId=' + encodeURIComponent(f.id);
           html += `
             <div class="col-md-4 col-6">
-              <a href="${BASE_PATH}public_assets.html?folderId=${f.id}" class="text-decoration-none">
+              <a href="${folderUrl}" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm text-center p-3" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(4px); border-radius: 16px; transition: transform 0.2s;">
                   <div class="mb-2" style="width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.02)); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #2563eb; margin: 0 auto;">
                     <i class="bi bi-folder-fill" aria-hidden="true"></i>
@@ -908,17 +789,17 @@
       content.innerHTML = html;
     };
 
-    // ==========================================================
+    // ============================================================
     //   WA CONTACT & CAPTCHA
-    // ==========================================================
+    // ============================================================
     function updateWAContact() {
       const waItem = document.getElementById('waContactItem');
       if (!waItem) return;
-      
+
       const num1 = Math.floor(Math.random() * 10) + 1;
       const num2 = Math.floor(Math.random() * 10) + 1;
       waItem.dataset.correctAnswer = num1 + num2;
-      
+
       waItem.innerHTML = `
         <div class="fw-bold mb-2"><i class="bi bi-whatsapp me-2" aria-hidden="true"></i>Kontak Admin via WhatsApp</div>
         <div class="text-muted small mb-2">Isi data, pesan akan langsung terkirim ke admin.</div>
@@ -932,64 +813,160 @@
           <i class="bi bi-whatsapp" aria-hidden="true"></i> Kirim ke WhatsApp
         </button>
       `;
-      
+
       document.getElementById('waSendBtn')?.addEventListener('click', function() {
         const name = document.getElementById('waName').value.trim();
         const message = document.getElementById('waMessage').value.trim();
         const captcha = document.getElementById('waCaptcha').value.trim();
-        
-        if (!name || !message || !captcha) { 
+
+        if (!name || !message || !captcha) {
           showToast('Mohon isi semua field.', 'warning');
-          return; 
+          return;
         }
-        if (parseInt(captcha) !== parseInt(waItem.dataset.correctAnswer)) { 
-          showToast('Verifikasi salah.', 'error'); 
-          return; 
+        if (parseInt(captcha) !== parseInt(waItem.dataset.correctAnswer)) {
+          showToast('Verifikasi salah.', 'error');
+          return;
         }
-        
+
         const waktu = new Date().toLocaleString('id-ID');
         const pesan = `*Pesan dari FAQ PKD GP Ansor Kabupaten Bantul*%0A%0A*Nama:* ${encodeURIComponent(name)}%0A*Waktu:* ${encodeURIComponent(waktu)}%0A*Pesan:*%0A${encodeURIComponent(message)}`;
         window.open(`https://wa.me/6283866675521?text=${pesan}`, '_blank');
       });
     }
 
-    // ==========================================================
+    // ============================================================
     //   FAQ TOGGLE
-    // ==========================================================
+    // ============================================================
     (function() {
       const toggleBtn = document.getElementById('chatbotToggleBtn');
       const panel = document.getElementById('chatbotPanel');
       const closeBtn = document.getElementById('chatbotCloseBtn');
-      
+
       toggleBtn?.addEventListener('click', () => panel.classList.toggle('show'));
       closeBtn?.addEventListener('click', () => panel.classList.remove('show'));
-      
+
       document.addEventListener('click', function(e) {
-        if (panel && toggleBtn && !panel.contains(e.target) && 
+        if (panel && toggleBtn && !panel.contains(e.target) &&
             !toggleBtn.contains(e.target) && panel.classList.contains('show')) {
           panel.classList.remove('show');
         }
       });
     })();
 
-    // ==========================================================
-    //   BOOT
-    // ==========================================================
-    document.addEventListener('DOMContentLoaded', function() {
+    // ============================================================
+    //   BOOT — INSTANT LOAD + AUTO UPDATE
+    // ============================================================
+    (async function boot() {
+      // Navbar + login mode + WA contact (parallel-safe)
       updateNavbarMenu();
-      updateTotalPeserta();
-      updateBadgeCounts();
-      startBackgroundSync();
-      checkLoginMode();
       updateWAContact();
-      loadPublicFolders();
+
+      checkLoginMode().catch(() => {});
+      updateBadgeCounts().catch(() => {});
+
+      // ⚡ CACHE 1: Total Peserta (SWR)
+      totalCacheInstance = createPublicCache({
+        cacheKey: 'index_total_peserta_v1',
+        action: 'getTotalPeserta',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const total = (data && data.total !== undefined)
+            ? data.total
+            : (typeof data === 'number' ? data : 0);
+
+          const badge = document.getElementById('totalPesertaBadge');
+          const countSpan = document.getElementById('totalCount');
+          if (badge && countSpan) {
+            badge.classList.remove('d-none');
+            countSpan.textContent = total;
+          }
+
+          if (meta.source === 'cache') {
+            setCacheIndicator('instant', '⚡ Instan');
+          }
+        },
+        onChange: (data, meta) => {
+          if (meta.source === 'network' && meta.changed) {
+            setCacheIndicator('updated', '✓ Diperbarui');
+          }
+        },
+        onError: (err) => {
+          console.warn('[Index] Total cache error:', err.message);
+        },
+      });
+
+      // ⚡ CACHE 2: Public Folders (SWR)
+      foldersCacheInstance = createPublicCache({
+        cacheKey: 'index_public_folders_v1',
+        action: 'getFolders',
+        params: {},
+        ttlMs: 5 * 60 * 1000,
+        verbose: false,
+        render: (data, meta) => {
+          const list = Array.isArray(data) ? data : (data?.data || []);
+          publicFolders = list.filter(f =>
+            f.isPublic === true || f.isPublic === 'true'
+          );
+
+          const badge = document.getElementById('publicFolderCount');
+          if (badge) {
+            if (publicFolders.length > 0) {
+              badge.textContent = publicFolders.length;
+              badge.style.display = 'inline-block';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        },
+        onError: (err) => {
+          console.warn('[Index] Folders cache error:', err.message);
+        },
+      });
+
+      // Boot kedua cache paralel
+      await Promise.allSettled([
+        totalCacheInstance.boot(),
+        foldersCacheInstance.boot(),
+      ]);
+
+      console.log('[Index] ✅ Boot complete');
+    })();
+
+    // ============================================================
+    //   CLEANUP
+    // ============================================================
+    window.addEventListener('beforeunload', () => {
+      [totalCacheInstance, foldersCacheInstance].forEach(inst => {
+        if (inst) {
+          try { inst.destroy(); }
+          catch (e) { /* silent */ }
+        }
+      });
+      if (cacheIndicatorTimer) {
+        clearTimeout(cacheIndicatorTimer);
+        cacheIndicatorTimer = null;
+      }
     });
 
-    // ==========================================================
-    //   CONSOLE BANNER
-    // ==========================================================
+    // ============================================================
+    //   DEBUG API
+    // ============================================================
+    window.__indexDebug = {
+      getTotalCacheStats: () => totalCacheInstance?.getStats() || null,
+      getFoldersCacheStats: () => foldersCacheInstance?.getStats() || null,
+      getPublicFolders: () => publicFolders,
+      forceRefresh: async () => {
+        await Promise.allSettled([
+          totalCacheInstance?.forceRefresh(),
+          foldersCacheInstance?.forceRefresh(),
+        ]);
+      },
+    };
+
     console.log(
-      '%c index.html v26.1.5 — Full Fix Production Ready ',
+      '%c index.html v28.4.0 — Instant Load + Auto-Update ',
       'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
     );
   </script>
