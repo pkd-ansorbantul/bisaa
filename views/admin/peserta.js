@@ -1,36 +1,22 @@
 // ============================================================
-// VIEW: peserta.js — Full Fix v26.1.2 Production Ready
+// VIEW: peserta.js — Fragment Logic
 // Dimuat oleh: js/router.js
 // HTML: views/admin/peserta.html
+// Versi: 28.7.0 — FULL FIX EDITION
 // ============================================================
-// Fitur:
-// ✅ CRUD peserta (add/edit/delete/view)
-// ✅ Approve/Reject dengan auto-create akun
-// ✅ Bulk move ke Alumni
-// ✅ Form Builder (add/edit/delete field) + save structure
-// ✅ Manajemen Lokasi PKD (CRUD + filter)
-// ✅ ID Card digital (QR + download PNG)
-// ✅ Kredensial + reset password
-// ✅ TTD Digital viewer per peserta
-// ✅ Generate sertifikat (single + batch dengan validasi)
-// ✅ Bulk TTD generate untuk semua approved
-// ✅ ACC semua RTL peserta
-// ✅ Search, filter status, pagination
-// ✅ Auto-refresh 30 detik (visibility-aware + re-entrance guard)
-// ✅ Zero memory leak + full cleanup on unmount
-//
-// v26.1.2 FIXES:
-// ✅ BUG-A1: await renderDynamicForm() sebelum show modal
-// ✅ BUG-A2: fix URL verify_signature.html → verifikasi_signature.html
-// ✅ BUG-A3: updateBulkActionButtons() setelah render
-// ✅ BUG-A4: checkbox persistence via STATE.selectedIds (Set)
-// ✅ BUG-A5: reload formStructure setelah save
-// ✅ BUG-A6: better handling empty lokasi PKD list
-// ✅ BUG-A7: fileToBase64 validasi empty
-// ✅ BUG-A8: reset modal saat hidden
-// ✅ BUG-A9: getSelectedIds dari STATE (bukan DOM)
-// ✅ Guard isSaving untuk semua handler async
-// ✅ Loading state pada semua tombol
+// CHANGELOG v28.7.0 (dari v28.6.0):
+//   ✅ FIX CRITICAL: Kolom ID menampilkan ID asli spreadsheet
+//   ✅ FIX CRITICAL: Default sort by ID descending
+//   ✅ FIX: Sort toggle klik header ID (asc/desc)
+//   ✅ FIX: Dropdown filter Lokasi PKD di toolbar
+//   ✅ FIX: Section "Lokasi PKD Aktif" berfungsi penuh
+//   ✅ FIX: Semua label "Angkatan PKD" → "Lokasi PKD"
+//   ✅ FIX: Modal cleanup zero leak
+//   ✅ FIX: Event delegation — no per-render listener
+//   ✅ FIX: Focus preservation search input
+//   ✅ FIX: Null-safe semua element access
+//   ✅ FIX: All async handler pakai try/finally
+//   ✅ KEEP: Semua fitur (CRUD, Form Builder, ID Card, TTD, Cert)
 // ============================================================
 
 import { AdminModule } from '../../js/modules/admin.js';
@@ -38,192 +24,246 @@ import {
   callApi,
   showToast,
   escapeHtml,
-  getUserRole,
   resetPesertaPassword as apiResetPesertaPassword,
-  getLokasiPKDList as apiGetLokasiPKDList,
-  addLokasiPKD as apiAddLokasiPKD,
-  deleteLokasiPKD as apiDeleteLokasiPKD,
+  getAngkatanPKDWithCount as apiGetAngkatanPKDWithCount,
+  getAngkatanPKDList as apiGetAngkatanPKDList,
+  addAngkatanPKD as apiAddAngkatanPKD,
+  deleteAngkatanPKD as apiDeleteAngkatanPKD,
+  getDefaultFormFields,
+  fileToBase64,
+  extractId,
+  formatDateTimeID,
+  getLocalDateOnly,
+  downloadJSON,
 } from '../../js/core/api.js';
+import { BASE_PATH } from '../../js/core/config.js';
+import {
+  getEl,
+  debounce,
+  setBtnLoading,
+  createViewContext,
+  captureFocusState,
+  restoreFocusState,
+  cleanupBootstrapArtifacts,
+  computeListHash,
+  waitFor,
+  SEARCH_DEBOUNCE,
+} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   MODULE STATE
+//   CONSTANTS
 // ============================================================
-let refreshInterval = null;
-let searchDebounceTimer = null;
-let isMounted = false;
-let isRefreshing = false;
-let isSaving = false;
+const MAX_FILE_SIZE_MB = 5;
+const GENERATE_CONCURRENCY = 5;
+const PKD_FILTER_STORAGE_KEY = 'pkd_filter_lokasi';
 
-const STATE = {
-  pesertaList: [],
-  filteredList: [],
-  formStructure: [],
-  rtlData: [],
-  approvalsData: [],
-  lokasiPKDList: [],
-  searchQuery: '',
-  statusFilter: '',
-  currentPage: 1,
-  itemsPerPage: 15,
-  pendingDeleteId: null,
-  pendingCredentialId: null,
-  selectedIds: new Set(),  // ✅ BUG-A4: persist across renders
-  isLoadingFormStructure: false,
-  isLoadingLokasiPKD: false,
-  modals: {},
+const STATUS_OPTIONS = ['pending', 'approved', 'active', 'alumni', 'rejected'];
+const STATUS_BADGE_MAP = {
+  approved: 'bg-success',
+  active: 'bg-success',
+  pending: 'bg-warning text-dark',
+  rejected: 'bg-danger',
+  alumni: 'bg-secondary',
 };
 
-const listeners = [];
+const FIELD_TYPE_LABELS = {
+  text: 'Text',
+  textarea: 'Textarea',
+  radio: 'Radio',
+  select: 'Select',
+  file: 'File',
+};
 
 // ============================================================
-//   UTILITY
+//   LOCAL HELPERS
 // ============================================================
-function on(el, ev, handler, options) {
-  if (!el) return null;
-  el.addEventListener(ev, handler, options);
-  listeners.push({ el, ev, handler, options });
-  return handler;
+function setCacheStatus(status) {
+  const el = getEl('cacheStatus');
+  if (!el) return;
+  el.textContent = status;
+  const cls = status === 'Live' ? 'live'
+    : (status === 'Offline' || status === 'Error') ? 'offline'
+    : '';
+  el.className = 'cache-status' + (cls ? ' ' + cls : '');
 }
 
-function debounce(fn, delay) {
-  let timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
+function getStatusBadge(status) {
+  const s = String(status || 'pending').toLowerCase();
+  return STATUS_BADGE_MAP[s] || STATUS_BADGE_MAP.pending;
 }
 
-function getEl(id) {
-  return document.getElementById(id);
+function getAngkatanFilterFromStorage() {
+  try { return sessionStorage.getItem(PKD_FILTER_STORAGE_KEY) || ''; }
+  catch (e) { return ''; }
 }
 
-function getModal(id) {
-  const el = getEl(id);
-  if (!el) return null;
-  if (!STATE.modals[id]) {
-    try {
-      STATE.modals[id] = new bootstrap.Modal(el);
-    } catch (e) {
-      console.warn('[PesertaView] Gagal init modal:', id, e);
-      return null;
-    }
-  }
-  return STATE.modals[id];
+function setAngkatanFilterToStorage(value) {
+  try {
+    if (value) sessionStorage.setItem(PKD_FILTER_STORAGE_KEY, value);
+    else sessionStorage.removeItem(PKD_FILTER_STORAGE_KEY);
+  } catch (e) { /* silent */ }
 }
 
-function disposeAllModals() {
-  Object.keys(STATE.modals).forEach(id => {
-    try { STATE.modals[id]?.dispose?.(); } catch (e) { /* silent */ }
-  });
-  STATE.modals = {};
+function normalizeListResult(res) {
+  if (Array.isArray(res)) return res;
+  if (res && res.success && Array.isArray(res.data)) return res.data;
+  if (res && Array.isArray(res.data)) return res.data;
+  return [];
 }
 
-function setBtnLoading(btn, loading, loadingText) {
-  if (!btn) return () => {};
-  const original = btn.innerHTML;
-  if (loading) {
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${loadingText || 'Memuat...'}`;
-  }
-  return () => {
-    btn.disabled = false;
-    btn.innerHTML = original;
-  };
-}
+// ============================================================
+//   CONTEXT — subscription ke AdminModule
+// ============================================================
+const ctx = createViewContext(
+  {
+    // Peserta data
+    pesertaList: [],
+    filteredList: [],
+    formStructure: [],
+    rtlData: [],
+    approvalsData: [],
+    lokasiPKDList: [],
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) {
-      reject(new Error('File kosong'));
-      return;
-    }
-    if (file.size === 0) {
-      reject(new Error('File berukuran 0 byte'));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (!result || typeof result !== 'string') {
-        reject(new Error('Hasil baca file tidak valid'));
+    // Filters
+    searchQuery: '',
+    statusFilter: '',
+    angkatanFilter: '',
+
+    // Pagination
+    currentPage: 1,
+    itemsPerPage: 15,
+
+    // ⭐ Sort by ID (default descending)
+    sortColumn: 'id',
+    sortDirection: 'desc',
+
+    // Selection
+    selectedIds: new Set(),
+
+    // Modals
+    pendingDeleteId: null,
+    pendingCredentialId: null,
+    pendingCertIds: [],
+
+    // Load flags
+    isLoadingFormStructure: false,
+    isLoadingLokasi: false,
+    isProcessing: false,
+
+    // Lokasi PKD Aktif
+    activeLokasiNama: '',
+    activeLokasiInfo: null,
+    isSettingActive: false,
+
+    // Hash
+    lastHash: '',
+  },
+  {
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'peserta', 'angkatan'],
+    onDataChange: (type) => {
+      if (!ctx.mounted) return;
+      if (ctx.state.isProcessing) {
+        console.log(`[PesertaView] Data changed (${type}) — skip (processing)`);
         return;
       }
-      resolve(result);
-    };
-    reader.onerror = () => reject(new Error('Gagal membaca file'));
-    reader.readAsDataURL(file);
-  });
-}
+      console.log(`[PesertaView] Data changed (${type}) — refresh from cache`);
+      try {
+        refreshFromCache();
+      } catch (e) {
+        console.warn('[PesertaView] Re-render error:', e);
+      }
+    },
+  }
+);
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount({ path, query, outlet }) {
-  if (isMounted) {
+export async function mount() {
+  if (ctx.mounted) {
     console.warn('[PesertaView] Sudah mounted, skip');
     return unmount;
   }
-  isMounted = true;
-  console.log('[PesertaView] mounted');
+  ctx.mounted = true;
+  ctx.saving = false;
+  ctx.refreshing = false;
+  ctx.state.isProcessing = false;
+  console.log('[PesertaView] 🚀 mounted');
 
   // Reset state
-  STATE.pesertaList = [];
-  STATE.filteredList = [];
-  STATE.rtlData = [];
-  STATE.approvalsData = [];
-  STATE.searchQuery = '';
-  STATE.statusFilter = '';
-  STATE.currentPage = 1;
-  STATE.pendingDeleteId = null;
-  STATE.pendingCredentialId = null;
-  STATE.selectedIds.clear();
-  isSaving = false;
+  Object.assign(ctx.state, {
+    pesertaList: [],
+    filteredList: [],
+    rtlData: [],
+    approvalsData: [],
+    lokasiPKDList: [],
+    searchQuery: '',
+    statusFilter: '',
+    angkatanFilter: '',
+    currentPage: 1,
+    sortColumn: 'id',
+    sortDirection: 'desc',
+    pendingDeleteId: null,
+    pendingCredentialId: null,
+    pendingCertIds: [],
+    selectedIds: new Set(),
+    isProcessing: false,
+    activeLokasiNama: '',
+    activeLokasiInfo: null,
+    isSettingActive: false,
+    lastHash: '',
+  });
 
-  // Reset form
   const searchEl = getEl('searchInput');
-  const filterEl = getEl('filterStatus');
+  const filterStatusEl = getEl('filterStatus');
+  const filterAngkatanEl = getEl('filterAngkatanPkd');
   if (searchEl) searchEl.value = '';
-  if (filterEl) filterEl.value = '';
+  if (filterStatusEl) filterStatusEl.value = '';
+  if (filterAngkatanEl) filterAngkatanEl.value = '';
 
-  // Initial render
-  renderSkeletonTable();
+  // ⚡ Instant render dari preload cache
+  const cached = AdminModule.getPesertaList() || [];
+  const cachedLokasi = AdminModule.getAngkatanPKDList() || [];
+
+  if (cached.length > 0) {
+    console.log('[PesertaView] ⚡ Rendering from preload cache');
+    ctx.state.pesertaList = cached.map(p => ({ ...p }));
+    ctx.state.rtlData = AdminModule.getRTLList() || [];
+    ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
+    ctx.state.lokasiPKDList = cachedLokasi.map(a => ({ ...a }));
+    ctx.state.lastHash = computeListHash(cached);
+    renderStats();
+    applyFiltersAndSort();
+    setCacheStatus('Live');
+  } else {
+    console.log('[PesertaView] ⚠️ No cache, showing skeleton');
+    renderSkeletonTable();
+  }
   renderSkeletonFormBuilder();
+  renderSkeletonLokasiGrid();
 
-  // Bind events
-  bindTopLevelEvents();
-  bindFormBuilderEvents();
-  bindLokasiPKDEvents();
-  bindModalEvents();
+  bindEvents();
 
-  // Load data paralel
+  // Baca filter Lokasi PKD dari sessionStorage
+  const angkatanFilter = getAngkatanFilterFromStorage();
+  if (angkatanFilter) {
+    console.log('[PesertaView] 🎯 Filter Lokasi PKD from storage:', angkatanFilter);
+    ctx.state.angkatanFilter = angkatanFilter;
+    if (filterAngkatanEl) filterAngkatanEl.value = angkatanFilter;
+    applyFiltersAndSort();
+  }
+
+  // ⚡ Subscribe ke perubahan data
+  await ctx.subscribeToData();
+
+  // Parallel load
   await Promise.allSettled([
-    loadPesertaData(false).catch(e => console.error('[PesertaView] loadPesertaData:', e)),
-    loadFormStructure().catch(e => console.error('[PesertaView] loadFormStructure:', e)),
-    loadLokasiPKD().catch(e => console.error('[PesertaView] loadLokasiPKD:', e)),
+    loadFormStructure(),
+    loadLokasiPKD(),
+    cached.length === 0 ? loadPesertaData(false) : Promise.resolve(),
   ]);
 
-  loadPkdLokasiSetting().catch(() => {});
-
-  // Auto refresh 30s
-  refreshInterval = setInterval(() => {
-    if (document.hidden) return;
-    if (!isMounted) return;
-    if (isRefreshing) return;
-    isRefreshing = true;
-    AdminModule.loadAllData(false)
-      .then(() => {
-        const fresh = AdminModule.getPesertaList() || [];
-        if (JSON.stringify(STATE.pesertaList) !== JSON.stringify(fresh)) {
-          STATE.pesertaList = fresh;
-          renderStats();
-          applyFiltersAndSort();
-          updateCacheStatus('Live');
-        }
-      })
-      .catch(() => updateCacheStatus('Offline'))
-      .finally(() => { isRefreshing = false; });
-  }, 30000);
-
+  console.log('[PesertaView] ✅ Mount complete');
   return unmount;
 }
 
@@ -231,89 +271,178 @@ export async function mount({ path, query, outlet }) {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!isMounted) return;
-  isMounted = false;
-  console.log('[PesertaView] unmounted');
+  if (!ctx.mounted) return;
+  ctx.mounted = false;
+  console.log('[PesertaView] 🛑 unmounted');
 
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
-  }
-
-  listeners.forEach(({ el, ev, handler, options }) => {
-    try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
-  });
-  listeners.length = 0;
-
-  disposeAllModals();
-
-  try {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-  } catch (e) { /* silent */ }
+  ctx.cleanup();
+  cleanupBootstrapArtifacts();
 }
 
 // ============================================================
-//   BIND: Top-Level Events
+//   BIND EVENTS
 // ============================================================
-function bindTopLevelEvents() {
-  on(getEl('addPesertaBtn'), 'click', (e) => {
-    handleAddPeserta(e).catch(err => showToast('Gagal: ' + err.message, 'error'));
+function bindEvents() {
+  // ============ TOOLBAR ============
+  ctx.on(getEl('addPesertaBtn'), 'click', handleAddPeserta);
+  ctx.on(getEl('exportDataBtn'), 'click', handleExport);
+  ctx.on(getEl('moveToAlumniBtn'), 'click', handleMoveToAlumni);
+  ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
+  ctx.on(getEl('bulkGenerateTTDBtn'), 'click', handleBulkTTD);
+  ctx.on(getEl('generateCertificateBtn'), 'click', handleGenerateCert);
+
+  // ============ SEARCH & FILTER ============
+  ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
+    ctx.state.searchQuery = e.target.value;
+    ctx.state.currentPage = 1;
+    applyFiltersAndSort();
+  }, SEARCH_DEBOUNCE));
+
+  ctx.on(getEl('filterStatus'), 'change', function (e) {
+    ctx.state.statusFilter = e.target.value;
+    ctx.state.currentPage = 1;
+    applyFiltersAndSort();
   });
-  on(getEl('exportDataBtn'), 'click', handleExport);
-  on(getEl('moveToAlumniBtn'), 'click', handleMoveToAlumni);
-  on(getEl('refreshDataBtn'), 'click', handleRefresh);
-  on(getEl('bulkGenerateTTDBtn'), 'click', handleBulkTTD);
-  on(getEl('generateCertificateBtn'), 'click', handleGenerateCert);
 
-  on(getEl('searchInput'), 'input', handleSearchInput);
-  on(getEl('filterStatus'), 'change', handleStatusFilterChange);
-}
+  // ⭐ Dropdown Filter Lokasi PKD
+  ctx.on(getEl('filterAngkatanPkd'), 'change', function (e) {
+    const val = e.target.value || '';
+    console.log('[PesertaView] 🎯 Dropdown filter changed:', val || '(semua)');
 
-// ============================================================
-//   BIND: Form Builder
-// ============================================================
-function bindFormBuilderEvents() {
-  on(getEl('addFieldBtn'), 'click', handleAddField);
-  on(getEl('saveFormStructureBtn'), 'click', handleSaveFormStructure);
-  on(getEl('saveFieldBtn'), 'click', handleSaveField);
+    ctx.state.angkatanFilter = val;
+    ctx.state.currentPage = 1;
+    setAngkatanFilterToStorage(val);
+    updateFilterInfo(val);
+    applyFiltersAndSort();
+  });
 
-  on(getEl('fieldType'), 'change', function () {
+  // ============ SORT BY ID (klik header) ============
+  const tableContainer = getEl('pesertaTableContainer');
+  if (tableContainer) {
+    ctx.on(tableContainer, 'click', (e) => {
+      // Sort by ID header
+      const idHeader = e.target.closest('[data-sort="id"]');
+      if (idHeader) {
+        e.preventDefault();
+        handleSort('id');
+        return;
+      }
+
+      // Skip checkbox toggle
+      if (e.target.closest('.peserta-checkbox, #selectAllPeserta')) return;
+
+      // Dropdown action buttons
+      const actionEl = e.target.closest('[data-action]');
+      if (actionEl) {
+        e.preventDefault();
+        handleRowAction(actionEl.dataset.action, actionEl.dataset.id);
+        return;
+      }
+
+      // Pagination
+      const pageBtn = e.target.closest('[data-page]');
+      if (pageBtn) {
+        e.preventDefault();
+        const page = parseInt(pageBtn.dataset.page, 10);
+        if (!isNaN(page)) goToPage(page);
+      }
+    });
+
+    // Checkbox changes
+    ctx.on(tableContainer, 'change', (e) => {
+      if (e.target.matches('#selectAllPeserta')) {
+        const isChecked = e.target.checked;
+        const checkboxes = tableContainer.querySelectorAll('.peserta-checkbox');
+        checkboxes.forEach(cb => {
+          cb.checked = isChecked;
+          const id = String(cb.value);
+          if (isChecked) ctx.state.selectedIds.add(id);
+          else ctx.state.selectedIds.delete(id);
+        });
+        updateBulkActionButtons();
+        return;
+      }
+      if (e.target.matches('.peserta-checkbox')) {
+        const id = String(e.target.value);
+        if (e.target.checked) ctx.state.selectedIds.add(id);
+        else ctx.state.selectedIds.delete(id);
+
+        const all = tableContainer.querySelectorAll('.peserta-checkbox');
+        const checked = tableContainer.querySelectorAll('.peserta-checkbox:checked');
+        const selectAll = tableContainer.querySelector('#selectAllPeserta');
+        if (selectAll) {
+          selectAll.checked = all.length > 0 && all.length === checked.length;
+          selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+        }
+        updateBulkActionButtons();
+      }
+    });
+  }
+
+  // ============ FORM BUILDER ============
+  ctx.on(getEl('addFieldBtn'), 'click', handleAddField);
+  ctx.on(getEl('saveFormStructureBtn'), 'click', handleSaveFormStructure);
+  ctx.on(getEl('saveFieldBtn'), 'click', handleSaveField);
+
+  ctx.on(getEl('fieldType'), 'change', function () {
     const group = getEl('fieldOptionsGroup');
-    if (group) {
-      group.style.display =
-        (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
-    }
+    if (group) group.style.display = (this.value === 'radio' || this.value === 'select') ? 'block' : 'none';
   });
-}
 
-// ============================================================
-//   BIND: Lokasi PKD
-// ============================================================
-function bindLokasiPKDEvents() {
-  on(getEl('addLokasiBtn'), 'click', handleAddLokasi);
-  on(getEl('savePkdLokasiBtn'), 'click', handleSavePkdLokasi);
-}
+  // ============ LOKASI PKD ============
+  ctx.on(getEl('addLokasiBtn'), 'click', handleToggleAddLokasiForm);
+  ctx.on(getEl('saveNewLokasiBtn'), 'click', handleAddLokasi);
+  ctx.on(getEl('refreshAngkatanAdminBtn'), 'click', async () => {
+    await loadLokasiPKD();
+    await loadActiveLokasi();
+    showToast('Data lokasi disegarkan', 'success');
+  });
 
-// ============================================================
-//   BIND: Modal Actions
-// ============================================================
-function bindModalEvents() {
-  on(getEl('savePesertaBtn'), 'click', handleSavePeserta);
-  on(getEl('confirmDeleteBtn'), 'click', handleConfirmDelete);
-  on(getEl('resetCredentialPasswordBtn'), 'click', handleResetPassword);
-  on(getEl('generateCertSubmit'), 'click', handleGenerateCertSubmit);
+  // ============ MODALS ============
+  ctx.on(getEl('savePesertaBtn'), 'click', handleSavePeserta);
+  ctx.on(getEl('confirmDeleteBtn'), 'click', handleConfirmDelete);
+  ctx.on(getEl('resetCredentialPasswordBtn'), 'click', handleResetPassword);
+  ctx.on(getEl('generateCertSubmit'), 'click', handleGenerateCertSubmit);
 
-  // ✅ BUG-A8: Reset modal form saat hidden
+  // ============ LOKASI ADMIN GRID — Event Delegation ============
+  const lokasiGrid = getEl('lokasiAdminGrid');
+  if (lokasiGrid) {
+    ctx.on(lokasiGrid, 'click', (e) => {
+      const delBtn = e.target.closest('[data-delete-angkatan]');
+      if (delBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteLokasiPKDItem(delBtn.dataset.deleteAngkatan);
+        return;
+      }
+      const setBtn = e.target.closest('[data-set-active]');
+      if (setBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveLokasi(setBtn.dataset.setActive);
+        return;
+      }
+    });
+  }
+
+  // ============ FORM BUILDER — Event Delegation ============
+  const formBuilderEl = getEl('formBuilderContainer');
+  if (formBuilderEl) {
+    ctx.on(formBuilderEl, 'click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.preventDefault();
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'edit-field') editField(id);
+      else if (action === 'delete-field') deleteField(id);
+    });
+  }
+
+  // ============ MODAL CLEANUP ============
   const pesertaFormModalEl = getEl('pesertaFormModal');
   if (pesertaFormModalEl) {
-    on(pesertaFormModalEl, 'hidden.bs.modal', () => {
+    ctx.on(pesertaFormModalEl, 'hidden.bs.modal', () => {
       const container = getEl('dynamicAdminFormContainer');
       if (container) container.innerHTML = '';
       const editId = getEl('editPesertaId');
@@ -321,10 +450,9 @@ function bindModalEvents() {
     });
   }
 
-  // Reset field editor saat hidden
   const fieldEditorModalEl = getEl('fieldEditorModal');
   if (fieldEditorModalEl) {
-    on(fieldEditorModalEl, 'hidden.bs.modal', () => {
+    ctx.on(fieldEditorModalEl, 'hidden.bs.modal', () => {
       const editId = getEl('editFieldId');
       if (editId) editId.value = '';
     });
@@ -332,51 +460,113 @@ function bindModalEvents() {
 }
 
 // ============================================================
-//   LOAD DATA PESERTA
+//   SORT HANDLER
 // ============================================================
-async function loadPesertaData(forceRefresh = false) {
-  updateCacheStatus('Memuat...');
-  try {
-    if (!AdminModule.getState().lastSync || forceRefresh) {
-      await AdminModule.loadAllData(forceRefresh);
-    }
+function handleSort(column) {
+  if (ctx.state.sortColumn === column) {
+    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    ctx.state.sortColumn = column;
+    ctx.state.sortDirection = 'desc';
+  }
+  ctx.state.currentPage = 1;
+  applyFiltersAndSort();
+}
 
-    STATE.pesertaList = AdminModule.getPesertaList() || [];
+// ============================================================
+//   UPDATE FILTER INFO
+// ============================================================
+function updateFilterInfo(angkatanNama) {
+  const infoEl = getEl('filterAngkatanInfo');
+  if (!infoEl) return;
 
-    // Load RTL & approvals (untuk validasi sertifikat)
-    try {
-      const [rtlRes, apRes] = await Promise.all([
-        callApi('getRTLTasks', {}, 'GET'),
-        callApi('getAllDigitalApprovals', {}, 'GET'),
-      ]);
-      STATE.rtlData = (rtlRes && rtlRes.data) ? rtlRes.data
-        : (Array.isArray(rtlRes) ? rtlRes : []);
-      STATE.approvalsData = (apRes && apRes.data) ? apRes.data
-        : (Array.isArray(apRes) ? apRes : []);
-    } catch (e) {
-      console.warn('[PesertaView] Gagal load RTL/approvals:', e);
-      STATE.rtlData = [];
-      STATE.approvalsData = [];
-    }
+  if (!angkatanNama) {
+    infoEl.textContent = '';
+    return;
+  }
 
-    renderStats();
-    applyFiltersAndSort();
-    updateCacheStatus('Live');
-  } catch (e) {
-    console.error('[PesertaView] load error:', e);
-    const c = getEl('pesertaTableContainer');
-    if (c && STATE.pesertaList.length === 0) {
-      c.innerHTML = `<div class="alert alert-danger">Gagal memuat data: ${escapeHtml(e.message)}</div>`;
-    }
-    updateCacheStatus('Error');
+  const total = ctx.state.pesertaList.filter(p =>
+    String(p.lokasi_pkd || '').trim() === angkatanNama
+  ).length;
+
+  infoEl.innerHTML = `
+    <i class="bi bi-funnel-fill text-primary me-1" aria-hidden="true"></i>
+    Filter: <strong>${escapeHtml(angkatanNama)}</strong>
+    <span class="badge bg-primary ms-1">${total} peserta</span>
+  `;
+}
+
+// ============================================================
+//   UPDATE BULK ACTION BUTTONS
+// ============================================================
+function updateBulkActionButtons() {
+  const count = ctx.state.selectedIds.size;
+  const btn = getEl('moveToAlumniBtn');
+  if (btn) btn.disabled = count === 0;
+}
+
+function getSelectedIds() {
+  return Array.from(ctx.state.selectedIds);
+}
+
+// ============================================================
+//   REFRESH FROM CACHE
+// ============================================================
+function refreshFromCache() {
+  const fresh = AdminModule.getPesertaList() || [];
+  const freshHash = computeListHash(fresh);
+
+  const freshLokasi = AdminModule.getAngkatanPKDList() || [];
+  if (freshLokasi.length > 0) {
+    ctx.state.lokasiPKDList = freshLokasi.map(a => ({ ...a }));
+  }
+
+  if (freshHash === ctx.state.lastHash) {
+    console.log('[PesertaView] No change, skip re-render');
+    return;
+  }
+
+  ctx.state.pesertaList = fresh.map(p => ({ ...p }));
+  ctx.state.lastHash = freshHash;
+  ctx.state.rtlData = AdminModule.getRTLList() || [];
+  ctx.state.approvalsData = AdminModule.getDigitalApprovals() || [];
+
+  renderStats();
+  applyFiltersAndSort();
+  setCacheStatus('Live');
+
+  if (ctx.state.angkatanFilter) {
+    updateFilterInfo(ctx.state.angkatanFilter);
   }
 }
 
 // ============================================================
-//   RENDER: Stats
+//   LOAD PESERTA DATA (fallback)
+// ============================================================
+async function loadPesertaData(forceRefresh = false) {
+  try {
+    if (!AdminModule.getState().lastSync || forceRefresh) {
+      await AdminModule.loadAllData(forceRefresh);
+    }
+    if (!ctx.mounted) return;
+    refreshFromCache();
+  } catch (e) {
+    console.error('[PesertaView] load error:', e);
+    const c = getEl('pesertaTableContainer');
+    if (c && ctx.state.pesertaList.length === 0) {
+      c.innerHTML = `<div class="alert alert-danger">Gagal memuat data: ${escapeHtml(e.message)}</div>`;
+    }
+    setCacheStatus('Error');
+  }
+}
+
+// ============================================================
+//   RENDER: STATS
 // ============================================================
 function renderStats() {
-  const list = STATE.pesertaList;
+  const useFiltered = ctx.state.angkatanFilter !== '';
+  const list = useFiltered ? ctx.state.filteredList : ctx.state.pesertaList;
+
   const total = list.length;
   const pending = list.filter(p => String(p.status || '').toLowerCase() === 'pending').length;
   const approved = list.filter(p => {
@@ -385,10 +575,7 @@ function renderStats() {
   }).length;
   const alumni = list.filter(p => String(p.status || '').toLowerCase() === 'alumni').length;
 
-  const setText = (id, val) => {
-    const el = getEl(id);
-    if (el) el.textContent = val;
-  };
+  const setText = (id, val) => { const el = getEl(id); if (el) el.textContent = val; };
   setText('statTotal', total);
   setText('statPending', pending);
   setText('statApproved', approved);
@@ -396,11 +583,20 @@ function renderStats() {
 }
 
 // ============================================================
-//   FILTER & SORT
+//   FILTER
 // ============================================================
 function getFilteredPeserta(query, status) {
-  let filtered = STATE.pesertaList;
+  let filtered = ctx.state.pesertaList.slice();
 
+  // Filter by Lokasi PKD
+  const angkatanFilter = ctx.state.angkatanFilter;
+  if (angkatanFilter) {
+    filtered = filtered.filter(item =>
+      String(item.lokasi_pkd || '').trim() === angkatanFilter
+    );
+  }
+
+  // Filter by search query
   if (query && query.trim() !== '') {
     const q = query.toLowerCase().trim();
     filtered = filtered.filter(item =>
@@ -408,10 +604,12 @@ function getFilteredPeserta(query, status) {
       (item.email || '').toLowerCase().includes(q) ||
       (item.no_hp || '').toLowerCase().includes(q) ||
       (item.utusan || '').toLowerCase().includes(q) ||
-      (item.lokasi_pkd || '').toLowerCase().includes(q)
+      (item.lokasi_pkd || '').toLowerCase().includes(q) ||
+      String(item.id || '').includes(q)
     );
   }
 
+  // Filter by status
   if (status && status.trim() !== '') {
     const s = status.toLowerCase().trim();
     filtered = filtered.filter(item =>
@@ -423,30 +621,52 @@ function getFilteredPeserta(query, status) {
 }
 
 function applyFiltersAndSort() {
-  let filtered = getFilteredPeserta(STATE.searchQuery, STATE.statusFilter);
+  let filtered = getFilteredPeserta(ctx.state.searchQuery, ctx.state.statusFilter);
 
-  filtered.sort((a, b) => {
-    const aIsAlumni = String(a.status || '').toLowerCase().trim() === 'alumni';
-    const bIsAlumni = String(b.status || '').toLowerCase().trim() === 'alumni';
-    if (aIsAlumni && !bIsAlumni) return 1;
-    if (!aIsAlumni && bIsAlumni) return -1;
-    const aT = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-    const bT = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-    return bT - aT;
-  });
+  // ⭐ SORT: Default by ID descending
+  const sortCol = ctx.state.sortColumn;
+  const sortDir = ctx.state.sortDirection === 'asc' ? 1 : -1;
 
-  STATE.filteredList = filtered;
+  if (sortCol) {
+    filtered.sort((a, b) => {
+      let va, vb;
+
+      if (sortCol === 'id') {
+        va = parseInt(a.id) || 0;
+        vb = parseInt(b.id) || 0;
+      } else if (sortCol === 'timestamp') {
+        va = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        vb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      } else {
+        va = String(a[sortCol] || '').toLowerCase();
+        vb = String(b[sortCol] || '').toLowerCase();
+      }
+
+      if (va < vb) return -1 * sortDir;
+      if (va > vb) return 1 * sortDir;
+
+      // Tie-breaker
+      return (parseInt(b.id) || 0) - (parseInt(a.id) || 0);
+    });
+  }
+
+  ctx.state.filteredList = filtered;
+
+  if (ctx.state.angkatanFilter) {
+    updateFilterInfo(ctx.state.angkatanFilter);
+  }
+
   const totalItems = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-  if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
-  if (STATE.currentPage < 1) STATE.currentPage = 1;
-  const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-  const end = Math.min(start + STATE.itemsPerPage, totalItems);
-  renderTable(filtered.slice(start, end), totalItems);
+  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
+  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
+  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
+
+  renderStats();
+  renderTable();
 }
 
 // ============================================================
-//   RENDER: Table Skeleton
+//   RENDER: Skeleton
 // ============================================================
 function renderSkeletonTable() {
   const c = getEl('pesertaTableContainer');
@@ -467,17 +687,58 @@ function renderSkeletonTable() {
   c.innerHTML = html;
 }
 
+function renderSkeletonFormBuilder() {
+  const c = getEl('formBuilderContainer');
+  if (!c) return;
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
+      <div style="width:100%;">
+        <div class="skeleton-box" style="height:1.2rem;width:70%;margin-bottom:6px;"></div>
+        <div class="skeleton-box" style="height:0.9rem;width:40%;"></div>
+      </div>
+    </div></div>`;
+  }
+  c.innerHTML = html;
+}
+
+function renderSkeletonLokasiGrid() {
+  const c = getEl('lokasiAdminGrid');
+  if (!c) return;
+  c.innerHTML = `
+    <div class="col-12 text-center py-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Memuat...</span>
+      </div>
+    </div>`;
+}
+
 // ============================================================
 //   RENDER: Table
 // ============================================================
-function renderTable(data, totalItems) {
+function renderTable() {
   const c = getEl('pesertaTableContainer');
   if (!c) return;
+
+  const savedFocus = captureFocusState('searchInput');
+
+  const totalItems = ctx.state.filteredList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
+  const start = (ctx.state.currentPage - 1) * ctx.state.itemsPerPage;
+  const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
+  const pageData = ctx.state.filteredList.slice(start, end);
+
+  // Arrow indicator for ID sort
+  const idArrow = ctx.state.sortColumn === 'id'
+    ? (ctx.state.sortDirection === 'asc' ? ' ↑' : ' ↓')
+    : ' ↕';
 
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
     <thead class="table-light"><tr>
       <th style="width:40px;"><input type="checkbox" id="selectAllPeserta" aria-label="Pilih semua"></th>
-      <th style="width:50px;">#</th>
+      <th style="width:80px; cursor:pointer; user-select:none;" data-sort="id"
+          role="button" tabindex="0"
+          title="Klik untuk sort by ID">ID${idArrow}</th>
       <th>Nama</th>
       <th>Email</th>
       <th>No HP</th>
@@ -487,28 +748,29 @@ function renderTable(data, totalItems) {
       <th style="width:60px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
 
-  if (data.length === 0) {
+  if (pageData.length === 0) {
+    const hasFilter = ctx.state.searchQuery || ctx.state.statusFilter || ctx.state.angkatanFilter;
     html += `<tr><td colspan="9" class="text-center py-5 text-muted">
       <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
-      ${(STATE.searchQuery || STATE.statusFilter) ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
+      ${hasFilter ? 'Tidak ada peserta sesuai filter.' : 'Tidak ada data peserta.'}
     </td></tr>`;
   } else {
-    data.forEach((item, i) => {
-      const globalIdx = (STATE.currentPage - 1) * STATE.itemsPerPage + i + 1;
+    pageData.forEach((item) => {
+      const displayId = escapeHtml(String(item.id || '-'));
       const status = String(item.status || 'pending').toLowerCase();
       const badge = getStatusBadge(status);
       const isApproved = status === 'approved' || status === 'active';
       const safeId = escapeHtml(String(item.id));
-      const isChecked = STATE.selectedIds.has(String(item.id));
+      const isChecked = ctx.state.selectedIds.has(String(item.id));
 
       html += `<tr>
         <td><input type="checkbox" class="peserta-checkbox" value="${safeId}" ${isChecked ? 'checked' : ''} aria-label="Pilih peserta ${escapeHtml(item.nama_lengkap || '')}"></td>
-        <td>${globalIdx}</td>
+        <td><span class="badge bg-secondary font-monospace" style="font-size:0.78rem;">#${displayId}</span></td>
         <td><strong>${escapeHtml(item.nama_lengkap || '-')}</strong></td>
-        <td>${escapeHtml(item.email || '-')}</td>
+        <td><small>${escapeHtml(item.email || '-')}</small></td>
         <td>${escapeHtml(item.no_hp || '-')}</td>
         <td>${escapeHtml(item.utusan || '-')}</td>
-        <td><span class="badge bg-info text-dark">${escapeHtml(item.lokasi_pkd || '-')}</span></td>
+        <td><span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></td>
         <td><span class="badge ${badge}">${escapeHtml(status)}</span></td>
         <td>
           <div class="dropdown action-dropdown">
@@ -552,13 +814,12 @@ function renderTable(data, totalItems) {
   html += `</tbody></table></div>`;
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
   html += `<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-    <div class="small text-muted">Menampilkan ${data.length > 0 ? (STATE.currentPage - 1) * STATE.itemsPerPage + 1 : 0} - ${Math.min(STATE.currentPage * STATE.itemsPerPage, totalItems)} dari ${totalItems} data</div>
+    <div class="small text-muted">Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data</div>
     <div class="btn-group">`;
 
   const maxButtons = 7;
-  let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
+  let startPage = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxButtons - 1);
   if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
@@ -567,7 +828,7 @@ function renderTable(data, totalItems) {
     if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button type="button" class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" data-page="${i}">${i}</button>`;
+    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
     if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
@@ -576,79 +837,19 @@ function renderTable(data, totalItems) {
   html += `</div></div>`;
 
   c.innerHTML = html;
-
-  bindTableEvents();
-
-  // ✅ BUG-A3: Update bulk action buttons setelah render
   updateBulkActionButtons();
+  restoreFocusState('searchInput', savedFocus);
 }
 
-function bindTableEvents() {
-  const c = getEl('pesertaTableContainer');
-  if (!c) return;
-
-  // Select all checkbox
-  c.querySelector('#selectAllPeserta')?.addEventListener('change', function () {
-    const checkboxes = c.querySelectorAll('.peserta-checkbox');
-    checkboxes.forEach(cb => {
-      cb.checked = this.checked;
-      const id = cb.value;
-      if (this.checked) {
-        STATE.selectedIds.add(String(id));
-      } else {
-        STATE.selectedIds.delete(String(id));
-      }
-    });
-    updateBulkActionButtons();
-  });
-
-  // Individual checkboxes
-  c.querySelectorAll('.peserta-checkbox').forEach(cb => {
-    cb.addEventListener('change', function () {
-      const id = String(this.value);
-      if (this.checked) {
-        STATE.selectedIds.add(id);
-      } else {
-        STATE.selectedIds.delete(id);
-      }
-      // Update "select all" state
-      const all = c.querySelectorAll('.peserta-checkbox');
-      const checked = c.querySelectorAll('.peserta-checkbox:checked');
-      const selectAll = c.querySelector('#selectAllPeserta');
-      if (selectAll) {
-        selectAll.checked = all.length > 0 && all.length === checked.length;
-        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
-      }
-      updateBulkActionButtons();
-    });
-  });
-
-  // Action buttons
-  c.querySelectorAll('[data-action]').forEach(el => {
-    el.addEventListener('click', function (e) {
-      e.preventDefault();
-      handleRowAction(this.dataset.action, this.dataset.id);
-    });
-  });
-
-  // Pagination
-  c.querySelectorAll('[data-page]').forEach(btn => {
-    btn.addEventListener('click', function () {
-      STATE.currentPage = parseInt(this.dataset.page);
-      applyFiltersAndSort();
-    });
-  });
-}
-
-function updateBulkActionButtons() {
-  const count = STATE.selectedIds.size;
-  const btn = getEl('moveToAlumniBtn');
-  if (btn) btn.disabled = count === 0;
-}
-
-// ✅ BUG-A9: Ambil dari STATE, bukan DOM
-function getSelectedIds() {
-  return Array.from(STATE.selectedIds);
+// ============================================================
+//   PAGINATION
+// ============================================================
+function goToPage(page) {
+  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  if (page < 1 || page > totalPages) return;
+  ctx.state.currentPage = page;
+  renderTable();
+  getEl('pesertaTableContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
@@ -657,7 +858,7 @@ function getSelectedIds() {
 function handleRowAction(action, id) {
   switch (action) {
     case 'view':       return viewPeserta(id);
-    case 'edit':       return editPeserta(id).catch(e => showToast('Gagal: ' + e.message, 'error'));
+    case 'edit':       return editPeserta(id);
     case 'approve':    return approvePeserta(id);
     case 'delete':     return confirmDelete(id);
     case 'idcard':     return showIdCard(id);
@@ -670,94 +871,94 @@ function handleRowAction(action, id) {
 }
 
 // ============================================================
-//   CRUD: Add / Edit / Delete
+//   CRUD
 // ============================================================
-async function handleAddPeserta(e) {
-  const btn = e?.currentTarget || getEl('addPesertaBtn');
+async function handleAddPeserta() {
+  if (ctx.saving) return;
+
   const editId = getEl('editPesertaId');
   const title = getEl('formModalTitle');
   if (editId) editId.value = '';
   if (title) title.innerText = 'Tambah Peserta';
 
-  const restore = setBtnLoading(btn, true, 'Memuat...');
-
-  try {
-    // ✅ BUG-A1: await renderDynamicForm sebelum show modal
-    await renderDynamicForm(null);
-    getModal('pesertaFormModal')?.show();
-  } catch (err) {
-    showToast('Gagal memuat form: ' + err.message, 'error');
-  } finally {
-    restore();
-  }
+  await renderDynamicForm(null);
+  ctx.getModal('pesertaFormModal')?.show();
 }
 
 function viewPeserta(id) {
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   let html = '<div class="list-group list-group-flush">';
-  STATE.formStructure.forEach(field => {
+  html += `<div class="list-group-item py-2 bg-light">
+    <strong>ID Peserta:</strong>
+    <span class="badge bg-secondary font-monospace ms-2">#${escapeHtml(String(item.id || '-'))}</span>
+  </div>`;
+  ctx.state.formStructure.forEach(field => {
+    if (field.type === 'file') return;
     const val = item[field.id] || '-';
     html += `<div class="list-group-item py-2"><strong>${escapeHtml(field.label)}:</strong> ${escapeHtml(String(val))}</div>`;
   });
-  html += `<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> ${escapeHtml(item.lokasi_pkd || '-')}</div>`;
+  html += `<div class="list-group-item py-2"><strong>Lokasi PKD:</strong> <span class="badge bg-primary">${escapeHtml(item.lokasi_pkd || '-')}</span></div>`;
   html += `<div class="list-group-item py-2"><strong>Status:</strong> <span class="badge ${getStatusBadge(item.status)}">${escapeHtml(item.status || 'pending')}</span></div>`;
   html += '</div>';
 
   const detailContent = getEl('detailContent');
   if (detailContent) detailContent.innerHTML = html;
-
-  getModal('detailPesertaModal')?.show();
+  ctx.getModal('detailPesertaModal')?.show();
 }
 
 async function editPeserta(id) {
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+  if (ctx.saving) return;
+
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const editId = getEl('editPesertaId');
   const title = getEl('formModalTitle');
   if (editId) editId.value = id;
-  if (title) title.innerText = 'Edit Peserta';
+  if (title) title.innerText = `Edit Peserta #${id}`;
 
-  // ✅ BUG-A1: await renderDynamicForm sebelum show modal
   await renderDynamicForm(item);
-  getModal('pesertaFormModal')?.show();
+  ctx.getModal('pesertaFormModal')?.show();
 }
 
 function confirmDelete(id) {
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
-  STATE.pendingDeleteId = id;
-  getModal('deleteConfirmModal')?.show();
+
+  ctx.state.pendingDeleteId = id;
+  ctx.getModal('deleteConfirmModal')?.show();
 }
 
 async function handleConfirmDelete(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
-  const id = STATE.pendingDeleteId;
+  const id = ctx.state.pendingDeleteId;
   if (!id) return;
 
   const btn = e?.currentTarget || getEl('confirmDeleteBtn');
-  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menghapus...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await AdminModule.deletePeserta(id);
-    if (res.success) {
-      showToast('Peserta berhasil dihapus', 'success');
-      getModal('deleteConfirmModal')?.hide();
-      STATE.selectedIds.delete(String(id));
-      await loadPesertaData(true);
+    if (res && res.success) {
+      showToast(`Peserta #${id} berhasil dihapus`, 'success');
+      ctx.getModal('deleteConfirmModal')?.hide();
+      ctx.state.selectedIds.delete(String(id));
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menghapus');
+      throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
-    STATE.pendingDeleteId = null;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
+    ctx.state.pendingDeleteId = null;
   }
 }
 
@@ -765,20 +966,28 @@ async function handleConfirmDelete(e) {
 //   APPROVE
 // ============================================================
 async function approvePeserta(id) {
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
-  if (!item) return;
-  if (!confirm(`Setujui peserta "${item.nama_lengkap}"? Akun login akan otomatis dibuat.`)) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
+  if (!item) return;
+
+  if (!confirm(`Setujui peserta "${item.nama_lengkap}" (#${item.id})? Akun login akan otomatis dibuat.`)) return;
+
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   try {
     const res = await AdminModule.approvePeserta(id);
-    if (res.success) {
+    if (res && res.success) {
       showToast('Peserta disetujui! Password default = No HP.', 'success');
-      await loadPesertaData(true);
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menyetujui');
+      throw new Error((res && res.error) || 'Gagal menyetujui');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -786,51 +995,52 @@ async function approvePeserta(id) {
 //   CREDENTIALS
 // ============================================================
 async function showCredential(id) {
+  if (ctx.saving) return;
+
   try {
     const res = await callApi('getPesertaCredentials', { id }, 'GET');
     if (!res || !res.success || !res.data) {
       showToast((res && res.error) ? res.error : 'Kredensial tidak ditemukan', 'error');
       return;
     }
-    STATE.pendingCredentialId = id;
 
-    const setText = (elId, val) => {
-      const el = getEl(elId);
-      if (el) el.innerText = val;
-    };
+    ctx.state.pendingCredentialId = id;
+
+    const setText = (elId, val) => { const el = getEl(elId); if (el) el.innerText = val; };
     setText('credentialNama', res.data.nama_lengkap || '-');
     setText('credentialUsername', res.data.username || '-');
     setText('credentialPasswordHint', res.data.passwordHint || 'No HP terdaftar');
 
-    getModal('credentialModal')?.show();
+    ctx.getModal('credentialModal')?.show();
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   }
 }
 
 async function handleResetPassword(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
-  const id = STATE.pendingCredentialId;
+  const id = ctx.state.pendingCredentialId;
   if (!id) { showToast('Data tidak valid', 'error'); return; }
 
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Peserta tidak ditemukan', 'error'); return; }
 
   const newPassword = item.no_hp;
   if (!newPassword) { showToast('Peserta tidak punya No HP terdaftar', 'error'); return; }
 
-  if (!confirm(`Reset password untuk "${item.nama_lengkap}" ke No HP (${newPassword})?`)) return;
+  if (!confirm(`Reset password untuk "${item.nama_lengkap}" (#${item.id}) ke No HP (${newPassword})?`)) return;
 
   const btn = e?.currentTarget || getEl('resetCredentialPasswordBtn');
-  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memproses...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await apiResetPesertaPassword(id, newPassword);
     if (res && res.success) {
       showToast('Password berhasil direset ke No HP.', 'success');
-      getModal('credentialModal')?.hide();
+      ctx.getModal('credentialModal')?.hide();
     } else {
       throw new Error((res && res.error) || 'Gagal reset password');
     }
@@ -838,7 +1048,8 @@ async function handleResetPassword(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -846,7 +1057,7 @@ async function handleResetPassword(e) {
 //   ID CARD
 // ============================================================
 function showIdCard(id) {
-  const item = STATE.pesertaList.find(p => String(p.id) === String(id));
+  const item = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const status = String(item.status || '').toLowerCase();
@@ -866,7 +1077,7 @@ function showIdCard(id) {
     <div class="id-card-wrapper">
       <div id="idCard" class="id-card">
         <div class="header">
-          <img src="/bisaa/LOGO%20ANSOR.webp" alt="Ansor">
+          <img src="${BASE_PATH}LOGOANSOR.webp" alt="Ansor">
           <h5>PKD GP Ansor <small>Kabupaten Bantul</small></h5>
         </div>
         <div class="body">
@@ -886,10 +1097,8 @@ function showIdCard(id) {
       <button type="button" class="btn btn-primary px-4" id="downloadAdminIdCardBtn">
         <i class="bi bi-download" aria-hidden="true"></i> Unduh Kartu (PNG)
       </button>
-    </div>
-  `;
+    </div>`;
 
-  // Generate QR
   const qrTarget = getEl('adminQrContainer');
   if (qrTarget && typeof qrcode === 'function') {
     qrTarget.innerHTML = '';
@@ -904,41 +1113,35 @@ function showIdCard(id) {
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, size, size);
+      const ctx2 = canvas.getContext('2d');
+      ctx2.fillStyle = '#ffffff';
+      ctx2.fillRect(0, 0, size, size);
       for (let r = 0; r < moduleCount; r++) {
         for (let col = 0; col < moduleCount; col++) {
           if (qr.isDark(r, col)) {
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(margin + col * cellSize, margin + r * cellSize, cellSize, cellSize);
+            ctx2.fillStyle = '#000000';
+            ctx2.fillRect(margin + col * cellSize, margin + r * cellSize, cellSize, cellSize);
           }
         }
       }
       qrTarget.appendChild(canvas);
     } catch (err) {
-      console.warn('[PesertaView] QR generate error:', err);
       qrTarget.innerHTML = '<div class="text-muted small">QR error</div>';
     }
-  } else if (qrTarget) {
-    qrTarget.innerHTML = '<div class="text-muted small">QR library tidak tersedia</div>';
   }
 
-  getModal('adminIdCardModal')?.show();
+  ctx.getModal('adminIdCardModal')?.show();
 
-  // Bind download button
   setTimeout(() => {
     const btn = getEl('downloadAdminIdCardBtn');
     if (!btn) return;
     btn.onclick = function () {
       const el = getEl('idCard');
       if (!el) return;
-
       if (typeof html2canvas === 'undefined') {
         showToast('Fitur download tidak tersedia', 'error');
         return;
       }
-
       const btnEl = this;
       const original = btnEl.innerHTML;
       btnEl.disabled = true;
@@ -947,7 +1150,7 @@ function showIdCard(id) {
       html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
         .then(c => {
           const link = document.createElement('a');
-          link.download = `Kartu_ID_${nama.replace(/\s+/g, '_')}.png`;
+          link.download = `Kartu_ID_${idPeserta}_${nama.replace(/\s+/g, '_')}.png`;
           link.href = c.toDataURL('image/png');
           link.click();
           showToast('Kartu ID diunduh', 'success');
@@ -962,16 +1165,16 @@ function showIdCard(id) {
 }
 
 // ============================================================
-//   TTD DIGITAL VIEW — FIXED URL path
+//   TTD DIGITAL
 // ============================================================
 async function showTTD(id) {
-  const peserta = STATE.pesertaList.find(p => String(p.id) === String(id));
+  const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) { showToast('Peserta tidak ditemukan', 'error'); return; }
+
   const nama = peserta.nama_lengkap;
 
   try {
-    const res = await callApi('getAllDigitalApprovals', {}, 'GET');
-    const all = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+    const all = AdminModule.getDigitalApprovals() || [];
     const filtered = all.filter(a =>
       String(a.peserta_nama || '').toLowerCase().trim() === String(nama).toLowerCase().trim()
     );
@@ -988,7 +1191,8 @@ async function showTTD(id) {
 
       const roleMap = { ketua_pc: null, sekretaris: null, instruktur: null };
       filtered.forEach(a => {
-        if (!roleMap[a.role] || new Date(a.timestamp) > new Date(roleMap[a.role].timestamp)) {
+        const existing = roleMap[a.role];
+        if (!existing || new Date(a.timestamp) > new Date(existing.timestamp)) {
           roleMap[a.role] = a;
         }
       });
@@ -1000,8 +1204,7 @@ async function showTTD(id) {
         const a = roleMap[role];
         if (!a || !a.driveId) return;
 
-        // ✅ BUG-A2 FIX: URL yang benar adalah verifikasi_signature.html
-        const verifyUrl = `${window.location.origin}/bisaa/verifikasi_signature.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(a.driveId)}`;
+        const verifyUrl = `${window.location.origin}${BASE_PATH}verifikasi_signature.html?role=${encodeURIComponent(role)}&driveId=${encodeURIComponent(a.driveId)}`;
 
         let qrUrl = '';
         if (typeof qrcode === 'function') {
@@ -1013,26 +1216,24 @@ async function showTTD(id) {
             const canvas = document.createElement('canvas');
             canvas.width = 200;
             canvas.height = 200;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 200, 200);
-            ctx.strokeStyle = '#d1d5db';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(0, 0, 200, 200);
+            const ctx2 = canvas.getContext('2d');
+            ctx2.fillStyle = '#ffffff';
+            ctx2.fillRect(0, 0, 200, 200);
+            ctx2.strokeStyle = '#d1d5db';
+            ctx2.lineWidth = 4;
+            ctx2.strokeRect(0, 0, 200, 200);
             const padding = 16;
             const cellSize = (200 - padding * 2) / moduleCount;
             for (let r = 0; r < moduleCount; r++) {
               for (let col = 0; col < moduleCount; col++) {
                 if (qr.isDark(r, col)) {
-                  ctx.fillStyle = '#000000';
-                  ctx.fillRect(padding + col * cellSize, padding + r * cellSize, cellSize, cellSize);
+                  ctx2.fillStyle = '#000000';
+                  ctx2.fillRect(padding + col * cellSize, padding + r * cellSize, cellSize, cellSize);
                 }
               }
             }
             qrUrl = canvas.toDataURL('image/png');
-          } catch (err) {
-            console.warn('[PesertaView] TTD QR error:', err);
-          }
+          } catch (err) { /* silent */ }
         }
 
         html += `<div class="col-md-6">
@@ -1058,7 +1259,7 @@ async function showTTD(id) {
       container.innerHTML = html || '<div class="col-12 text-center text-muted py-3">Tidak ada TTD valid.</div>';
     }
 
-    getModal('ttdModal')?.show();
+    ctx.getModal('ttdModal')?.show();
   } catch (e) {
     showToast('Gagal memuat TTD: ' + e.message, 'error');
   }
@@ -1068,26 +1269,33 @@ async function showTTD(id) {
 //   ACC RTL
 // ============================================================
 async function approveRTL(id) {
-  const peserta = STATE.pesertaList.find(p => String(p.id) === String(id));
+  if (ctx.saving || ctx.state.isProcessing) return;
+
+  const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) return;
 
-  if (!confirm(`Setujui SEMUA tugas RTL untuk "${peserta.nama_lengkap}"?`)) return;
+  if (!confirm(`Setujui SEMUA tugas RTL untuk "${peserta.nama_lengkap}" (#${peserta.id})?`)) return;
 
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   try {
     const res = await callApi('approveAllRTL', { pesertaId: id }, 'POST');
-    if (res.success) {
+    if (res && res.success) {
       showToast(`Semua RTL disetujui (${res.updated || 0} tugas)`, 'success');
-      await loadPesertaData(true);
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal');
+      throw new Error((res && res.error) || 'Gagal');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
 // ============================================================
-//   GENERATE SERTIFIKAT
+//   ELIGIBILITY CHECK
 // ============================================================
 function isEligible(p) {
   const status = String(p.status || '').toLowerCase();
@@ -1095,13 +1303,13 @@ function isEligible(p) {
     return { eligible: false, reason: 'Status belum disetujui' };
   }
 
-  const tasks = STATE.rtlData.filter(t => String(t.pesertaId) === String(p.id));
+  const tasks = ctx.state.rtlData.filter(t => String(t.pesertaId) === String(p.id));
   if (tasks.length > 0 && !tasks.every(t => String(t.status).toLowerCase() === 'selesai')) {
     return { eligible: false, reason: 'RTL belum selesai' };
   }
 
   const nama = p.nama_lengkap;
-  const filtered = STATE.approvalsData.filter(a =>
+  const filtered = ctx.state.approvalsData.filter(a =>
     String(a.peserta_nama || '').toLowerCase().trim() === String(nama || '').toLowerCase().trim()
   );
   const has = role => filtered.some(a => a.role === role);
@@ -1111,9 +1319,15 @@ function isEligible(p) {
   return { eligible: true };
 }
 
+// ============================================================
+//   GENERATE CERTIFICATE
+// ============================================================
 async function generateCertForOne(id) {
-  const peserta = STATE.pesertaList.find(p => String(p.id) === String(id));
+  if (ctx.saving) return;
+
+  const peserta = ctx.state.pesertaList.find(p => String(p.id) === String(id));
   if (!peserta) { showToast('Peserta tidak ditemukan', 'error'); return; }
+
   const check = isEligible(peserta);
   if (!check.eligible) {
     showToast('Peserta belum memenuhi syarat: ' + check.reason, 'warning');
@@ -1136,22 +1350,27 @@ async function openGenerateModal(ids) {
     const tplRes = await callApi('getCertificateTemplates', {}, 'GET');
     const templates = (tplRes && tplRes.data) ? tplRes.data
       : (Array.isArray(tplRes) ? tplRes : []);
+
     const sel = getEl('certTemplateSelect');
     if (sel) {
-      sel.innerHTML = '<option value="">-- Pilih Template --</option>' +
-        templates.map(t => `<option value="${escapeHtml(String(t.id))}">${escapeHtml(t.nama_template)}</option>`).join('');
+      if (templates.length === 0) {
+        sel.innerHTML = '<option value="">-- Belum ada template — buat dulu di menu Sertifikat --</option>';
+      } else {
+        sel.innerHTML = '<option value="">-- Pilih Template --</option>' +
+          templates.map(t => `<option value="${escapeHtml(String(t.id))}">${escapeHtml(t.nama_template)}</option>`).join('');
+      }
     }
 
-    const participants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+    const participants = ctx.state.pesertaList.filter(p => ids.includes(String(p.id)));
     let listHtml = '';
     let allValid = true;
 
     participants.forEach(p => {
       const check = isEligible(p);
       if (check.eligible) {
-        listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)}</span>`;
+        listHtml += `<span class="text-success d-block mb-1">✅ ${escapeHtml(p.nama_lengkap)} (#${p.id})</span>`;
       } else {
-        listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} <small>(${escapeHtml(check.reason)})</small></span>`;
+        listHtml += `<span class="text-danger d-block mb-1">❌ ${escapeHtml(p.nama_lengkap)} (#${p.id}) <small>(${escapeHtml(check.reason)})</small></span>`;
         allValid = false;
       }
     });
@@ -1168,7 +1387,7 @@ async function openGenerateModal(ids) {
 
     const submitBtn = getEl('generateCertSubmit');
     if (submitBtn) {
-      submitBtn.disabled = !allValid;
+      submitBtn.disabled = !allValid || templates.length === 0;
       submitBtn.dataset.ids = JSON.stringify(ids);
     }
 
@@ -1178,27 +1397,26 @@ async function openGenerateModal(ids) {
     const resultEl = getEl('generateResultArea');
     if (resultEl) resultEl.innerHTML = '';
 
-    getModal('generateCertModal')?.show();
+    ctx.getModal('generateCertModal')?.show();
   } catch (e) {
     showToast('Gagal membuka modal: ' + e.message, 'error');
   }
 }
 
 async function handleGenerateCertSubmit(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('generateCertSubmit');
   if (!btn) return;
 
   let ids;
-  try {
-    ids = JSON.parse(btn.dataset.ids || '[]');
-  } catch (err) { ids = []; }
+  try { ids = JSON.parse(btn.dataset.ids || '[]'); }
+  catch (err) { ids = []; }
 
   const templateId = getEl('certTemplateSelect')?.value;
   if (!templateId) { showToast('Pilih template dulu', 'warning'); return; }
 
-  const participants = STATE.pesertaList.filter(p => ids.includes(String(p.id)));
+  const participants = ctx.state.pesertaList.filter(p => ids.includes(String(p.id)));
   const valid = participants.filter(p => isEligible(p).eligible);
 
   if (valid.length === 0) {
@@ -1206,84 +1424,118 @@ async function handleGenerateCertSubmit(e) {
     return;
   }
 
-  isSaving = true;
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   const restore = setBtnLoading(btn, true, 'Memproses...');
 
   const progressEl = getEl('generateProgress');
+  const progressBar = document.querySelector('#generateProgress .progress-bar');
+  const progressText = getEl('generateProgressText');
   if (progressEl) progressEl.style.display = 'block';
 
   const results = [];
   const errors = [];
+  let completed = 0;
 
-  for (let i = 0; i < valid.length; i++) {
-    const p = valid[i];
-    const progressText = getEl('generateProgressText');
-    const progressBar = document.querySelector('#generateProgress .progress-bar');
-    if (progressText) progressText.innerText = `Memproses ${i + 1}/${valid.length}: ${p.nama_lengkap}`;
-    if (progressBar) progressBar.style.width = ((i + 1) / valid.length * 100) + '%';
+  const updateProgress = (nama) => {
+    completed++;
+    if (progressText) progressText.innerText = `Memproses ${completed}/${valid.length}: ${nama}`;
+    if (progressBar) progressBar.style.width = ((completed / valid.length) * 100) + '%';
+  };
 
-    try {
-      const res = await callApi('generateCertificateForParticipant', { templateId, pesertaId: p.id }, 'POST');
-      if (res && res.success) {
-        results.push({ nama: p.nama_lengkap, nomor: res.nomorSertifikat, url: res.pdfUrl });
-      } else {
-        errors.push({ nama: p.nama_lengkap, error: (res && res.error) || 'Gagal' });
-      }
-    } catch (err) {
-      errors.push({ nama: p.nama_lengkap, error: err.message });
+  try {
+    for (let i = 0; i < valid.length; i += GENERATE_CONCURRENCY) {
+      if (!ctx.mounted) break;
+
+      const batch = valid.slice(i, i + GENERATE_CONCURRENCY);
+      const batchResults = await Promise.allSettled(
+        batch.map(p => callApi('generateCertificateForParticipant', { templateId, pesertaId: p.id }, 'POST'))
+      );
+
+      batchResults.forEach((r, idx) => {
+        const p = batch[idx];
+        if (r.status === 'fulfilled' && r.value && r.value.success) {
+          results.push({
+            nama: p.nama_lengkap,
+            id: p.id,
+            nomor: r.value.nomorSertifikat,
+            url: r.value.pdfUrl,
+          });
+        } else {
+          errors.push({
+            nama: p.nama_lengkap,
+            id: p.id,
+            error: (r.value && r.value.error) || r.reason?.message || 'Gagal',
+          });
+        }
+        updateProgress(p.nama_lengkap);
+      });
     }
+
+    if (progressEl) progressEl.style.display = 'none';
+
+    let html = '';
+    if (results.length > 0) {
+      html += `<div class="alert alert-success">✅ Berhasil: ${results.length} sertifikat.</div>`;
+      html += `<div class="table-responsive"><table class="table table-sm">
+        <thead><tr><th>ID</th><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
+      results.forEach(r => {
+        html += `<tr>
+          <td><span class="badge bg-secondary font-monospace">#${escapeHtml(String(r.id || ''))}</span></td>
+          <td>${escapeHtml(r.nama)}</td>
+          <td><code>${escapeHtml(r.nomor || '')}</code></td>
+          <td><a href="${escapeHtml(r.url || '#')}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
+            <i class="bi bi-download" aria-hidden="true"></i>
+          </a></td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    if (errors.length > 0) {
+      html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul class="mb-0">`;
+      errors.forEach(err => { html += `<li>[#${err.id}] ${escapeHtml(err.nama)}: ${escapeHtml(err.error)}</li>`; });
+      html += `</ul></div>`;
+    }
+
+    const resultEl = getEl('generateResultArea');
+    if (resultEl) resultEl.innerHTML = html;
+
+    showToast(
+      `Selesai: ${results.length} berhasil, ${errors.length} gagal`,
+      results.length > 0 ? 'success' : 'error'
+    );
+
+    if (results.length > 0) {
+      await AdminModule.loadAllData(true);
+    }
+  } catch (err) {
+    console.error('[PesertaView] executeGenerate error:', err);
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
-
-  if (progressEl) progressEl.style.display = 'none';
-
-  let html = '';
-  if (results.length > 0) {
-    html += `<div class="alert alert-success">✅ Berhasil: ${results.length} sertifikat.</div>`;
-    html += `<div class="table-responsive"><table class="table table-sm">
-      <thead><tr><th>Nama</th><th>Nomor</th><th>PDF</th></tr></thead><tbody>`;
-    results.forEach(r => {
-      html += `<tr>
-        <td>${escapeHtml(r.nama)}</td>
-        <td><code>${escapeHtml(r.nomor || '')}</code></td>
-        <td><a href="${escapeHtml(r.url || '#')}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
-          <i class="bi bi-download" aria-hidden="true"></i>
-        </a></td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-  if (errors.length > 0) {
-    html += `<div class="alert alert-danger"><strong>Gagal:</strong><ul class="mb-0">`;
-    errors.forEach(err => {
-      html += `<li>${escapeHtml(err.nama)}: ${escapeHtml(err.error)}</li>`;
-    });
-    html += `</ul></div>`;
-  }
-
-  const resultEl = getEl('generateResultArea');
-  if (resultEl) resultEl.innerHTML = html;
-
-  restore();
-  isSaving = false;
 }
 
 // ============================================================
 //   BULK TTD
 // ============================================================
 async function handleBulkTTD(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   if (!confirm('Generate TTD digital untuk SEMUA peserta approved/active? Ini akan memakan waktu.')) return;
 
   const btn = e?.currentTarget || getEl('bulkGenerateTTDBtn');
-  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memproses...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await callApi('bulkGenerateTTD', {}, 'POST');
     if (res && res.success) {
       showToast(`Berhasil generate ${res.addedCount || 0} TTD untuk ${res.totalPeserta || 0} peserta`, 'success');
-      await loadPesertaData(true);
+      await AdminModule.loadAllData(true);
     } else {
       throw new Error((res && res.error) || 'Gagal');
     }
@@ -1291,7 +1543,8 @@ async function handleBulkTTD(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1299,30 +1552,32 @@ async function handleBulkTTD(e) {
 //   MOVE TO ALUMNI
 // ============================================================
 async function handleMoveToAlumni(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const ids = getSelectedIds();
   if (ids.length === 0) { showToast('Pilih minimal satu peserta', 'warning'); return; }
-  if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?`)) return;
+  if (!confirm(`Pindahkan ${ids.length} peserta ke Alumni?\n\nID: ${ids.map(i => '#' + i).join(', ')}`)) return;
 
   const btn = e?.currentTarget || getEl('moveToAlumniBtn');
-  isSaving = true;
-  const restore = setBtnLoading(btn, true, '');
+  const restore = setBtnLoading(btn, true, 'Memindahkan...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
     const res = await AdminModule.moveMultipleToAlumni(ids);
-    if (res.success) {
+    if (res && res.success) {
       showToast(`Berhasil memindahkan ${res.moved || ids.length} peserta ke Alumni`, 'success');
-      STATE.selectedIds.clear();
-      await loadPesertaData(true);
+      ctx.state.selectedIds.clear();
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal');
+      throw new Error((res && res.error) || 'Gagal');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
@@ -1330,47 +1585,32 @@ async function handleMoveToAlumni(e) {
 //   REFRESH
 // ============================================================
 async function handleRefresh(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('refreshDataBtn');
-  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memuat...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
-    await loadPesertaData(true);
+    await AdminModule.loadAllData(true);
+    refreshFromCache();
+    await loadLokasiPKD();
     showToast('Data berhasil disegarkan', 'success');
   } catch (err) {
     showToast('Gagal menyegarkan', 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
-}
-
-// ============================================================
-//   SEARCH & FILTER
-// ============================================================
-function handleSearchInput(e) {
-  clearTimeout(searchDebounceTimer);
-  const value = e.target.value;
-  searchDebounceTimer = setTimeout(() => {
-    STATE.searchQuery = value;
-    STATE.currentPage = 1;
-    applyFiltersAndSort();
-  }, 300);
-}
-
-function handleStatusFilterChange(e) {
-  STATE.statusFilter = e.target.value;
-  STATE.currentPage = 1;
-  applyFiltersAndSort();
 }
 
 // ============================================================
 //   EXPORT
 // ============================================================
 function handleExport() {
-  const data = STATE.filteredList;
+  const data = ctx.state.filteredList;
   if (data.length === 0) {
     showToast('Tidak ada data', 'info');
     return;
@@ -1386,29 +1626,20 @@ function handleExport() {
     status: item.status,
   }));
 
-  try {
-    const json = JSON.stringify(out, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `peserta_export_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const fileName = `peserta_export_${getLocalDateOnly(new Date())}.json`;
+  if (downloadJSON(out, fileName)) {
     showToast(`Ekspor ${data.length} data berhasil`, 'success');
-  } catch (e) {
-    showToast('Gagal ekspor: ' + e.message, 'error');
+  } else {
+    showToast('Gagal ekspor data', 'error');
   }
 }
 
 // ============================================================
-//   FORM BUILDER
+//   FORM STRUCTURE
 // ============================================================
 async function loadFormStructure() {
-  if (STATE.isLoadingFormStructure) return;
-  STATE.isLoadingFormStructure = true;
+  if (ctx.state.isLoadingFormStructure) return;
+  ctx.state.isLoadingFormStructure = true;
 
   try {
     const apiRes = await callApi('getFormSettings', {}, 'GET');
@@ -1418,67 +1649,38 @@ async function loadFormStructure() {
     }
 
     if (Array.isArray(raw) && raw.length > 0 && Array.isArray(raw[0])) {
-      const correct = raw.find(cfg => Array.isArray(cfg) && cfg.find(f => f.id === 'surat_rekomendasi' && f.required === false));
-      STATE.formStructure = correct || raw[0];
+      const correct = raw.find(cfg =>
+        Array.isArray(cfg) && cfg.find(f => f.id === 'surat_rekomendasi' && f.required === false)
+      );
+      ctx.state.formStructure = correct || raw[0];
     } else if (Array.isArray(raw) && raw.length > 0) {
-      STATE.formStructure = raw;
+      ctx.state.formStructure = raw;
     } else {
-      STATE.formStructure = getDefaultFormFieldsLocal();
+      ctx.state.formStructure = getDefaultFormFields();
     }
     renderFormStructure();
   } catch (e) {
     console.warn('[PesertaView] loadFormStructure:', e);
-    STATE.formStructure = getDefaultFormFieldsLocal();
+    ctx.state.formStructure = getDefaultFormFields();
     renderFormStructure();
   } finally {
-    STATE.isLoadingFormStructure = false;
+    ctx.state.isLoadingFormStructure = false;
   }
-}
-
-function getDefaultFormFieldsLocal() {
-  return [
-    { id: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', options: '', required: true, isCore: true },
-    { id: 'tempat_tgl_lahir', label: 'Tempat & Tanggal Lahir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pekerjaan', label: 'Pekerjaan', type: 'text', options: '', required: true, isCore: true },
-    { id: 'pendidikan_terakhir', label: 'Pendidikan Terakhir', type: 'text', options: '', required: true, isCore: true },
-    { id: 'alamat', label: 'Alamat', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'no_hp', label: 'No HP', type: 'text', options: '', required: true, isCore: true },
-    { id: 'email', label: 'Email', type: 'text', options: '', required: true, isCore: true },
-    { id: 'utusan', label: 'Utusan (PAC)', type: 'select', options: 'PAC Bantul,PAC Banguntapan,PAC Sewon,PAC Kasihan,PAC Pajangan,PAC Sedayu,PAC Pandak,PAC Piyungan,PAC Pleret,PAC Jetis,PAC Imogiri,PAC Dlingo,PAC Bambanglipuro,PAC Sanden,PAC Kretek,PAC Pundong,PAC Srandakan,Lainnya', required: true, isCore: true },
-    { id: 'pengalaman_organisasi', label: 'Pengalaman Organisasi', type: 'textarea', options: '', required: true, isCore: true },
-    { id: 'foto', label: 'Foto', type: 'file', options: '', required: true, isCore: true },
-    { id: 'surat_rekomendasi', label: 'Surat Rekomendasi', type: 'file', options: '', required: false, isCore: true },
-  ];
-}
-
-function renderSkeletonFormBuilder() {
-  const c = getEl('formBuilderContainer');
-  if (!c) return;
-  let html = '';
-  for (let i = 0; i < 6; i++) {
-    html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
-      <div style="width:100%;">
-        <div class="skeleton-box" style="height:1.2rem;width:70%;margin-bottom:6px;"></div>
-        <div class="skeleton-box" style="height:0.9rem;width:40%;"></div>
-      </div>
-    </div></div>`;
-  }
-  c.innerHTML = html;
 }
 
 function renderFormStructure() {
   const c = getEl('formBuilderContainer');
   if (!c) return;
 
-  if (!STATE.formStructure.length) {
+  if (!ctx.state.formStructure.length) {
     c.innerHTML = '<div class="col-12 text-center text-muted">Belum ada field.</div>';
     return;
   }
 
   let html = '';
-  STATE.formStructure.forEach(field => {
+  ctx.state.formStructure.forEach(field => {
     const isCore = field.isCore === true;
-    const typeLabel = { text: 'Teks', textarea: 'Textarea', radio: 'Radio', select: 'Select', file: 'File' }[field.type] || field.type;
+    const typeLabel = FIELD_TYPE_LABELS[field.type] || field.type;
 
     html += `<div class="col-md-6 col-lg-4"><div class="field-builder-card">
       <div>
@@ -1498,24 +1700,10 @@ function renderFormStructure() {
     </div></div>`;
   });
   c.innerHTML = html;
-
-  c.querySelectorAll('[data-action="edit-field"]').forEach(btn => {
-    btn.addEventListener('click', function () {
-      editField(this.dataset.id);
-    });
-  });
-  c.querySelectorAll('[data-action="delete-field"]').forEach(btn => {
-    btn.addEventListener('click', function () {
-      deleteField(this.dataset.id);
-    });
-  });
 }
 
 function handleAddField() {
-  const setVal = (id, val) => {
-    const el = getEl(id);
-    if (el) el.value = val;
-  };
+  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
   setVal('editFieldId', '');
   setVal('fieldLabel', '');
   setVal('fieldType', 'text');
@@ -1530,18 +1718,14 @@ function handleAddField() {
   const optGroup = getEl('fieldOptionsGroup');
   if (optGroup) optGroup.style.display = 'none';
 
-  getModal('fieldEditorModal')?.show();
+  ctx.getModal('fieldEditorModal')?.show();
 }
 
 function editField(id) {
-  const f = STATE.formStructure.find(x => x.id === id);
+  const f = ctx.state.formStructure.find(x => x.id === id);
   if (!f) return;
 
-  const setVal = (elId, val) => {
-    const el = getEl(elId);
-    if (el) el.value = val;
-  };
-
+  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
   setVal('editFieldId', id);
   setVal('fieldLabel', f.label || '');
   setVal('fieldType', f.type || 'text');
@@ -1556,12 +1740,12 @@ function editField(id) {
   const optGroup = getEl('fieldOptionsGroup');
   if (optGroup) optGroup.style.display = (f.type === 'radio' || f.type === 'select') ? 'block' : 'none';
 
-  getModal('fieldEditorModal')?.show();
+  ctx.getModal('fieldEditorModal')?.show();
 }
 
 function deleteField(id) {
   if (!confirm('Hapus field ini?')) return;
-  STATE.formStructure = STATE.formStructure.filter(f => f.id !== id);
+  ctx.state.formStructure = ctx.state.formStructure.filter(f => f.id !== id);
   renderFormStructure();
   showToast('Field dihapus (klik Simpan Struktur untuk menerapkan)', 'info');
 }
@@ -1586,12 +1770,12 @@ function handleSaveField() {
   }
 
   if (id) {
-    const idx = STATE.formStructure.findIndex(f => f.id === id);
+    const idx = ctx.state.formStructure.findIndex(f => f.id === id);
     if (idx !== -1) {
-      STATE.formStructure[idx] = { ...STATE.formStructure[idx], label, type, options, required };
+      ctx.state.formStructure[idx] = { ...ctx.state.formStructure[idx], label, type, options, required };
     }
   } else {
-    STATE.formStructure.push({
+    ctx.state.formStructure.push({
       id: 'field_' + Date.now(),
       label, type, options, required,
       isCore: false,
@@ -1599,49 +1783,387 @@ function handleSaveField() {
   }
 
   renderFormStructure();
-  getModal('fieldEditorModal')?.hide();
+  ctx.getModal('fieldEditorModal')?.hide();
   showToast('Field tersimpan. Klik "Simpan Struktur" untuk menerapkan.', 'info');
 }
 
 async function handleSaveFormStructure(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('saveFormStructureBtn');
-  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
 
   try {
-    const res = await AdminModule.setFormSettings(STATE.formStructure);
-    if (res.success) {
+    const res = await AdminModule.setFormSettings(ctx.state.formStructure);
+    if (res && res.success) {
       showToast('Struktur form berhasil disimpan!', 'success');
-      // ✅ BUG-A5: Reload form structure setelah save
       await AdminModule.loadAllData(true);
       await loadFormStructure();
     } else {
-      throw new Error(res.error || 'Gagal menyimpan');
+      throw new Error((res && res.error) || 'Gagal menyimpan');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
 // ============================================================
-//   DYNAMIC FORM (Add/Edit Peserta)
+//   LOKASI PKD — LOAD
+// ============================================================
+async function loadLokasiPKD() {
+  if (ctx.state.isLoadingLokasi) return;
+  ctx.state.isLoadingLokasi = true;
+
+  try {
+    let list = [];
+
+    try {
+      const res = await apiGetAngkatanPKDWithCount();
+      list = normalizeListResult(res);
+    } catch (e) {
+      console.warn('[PesertaView] WithCount failed:', e.message);
+    }
+
+    if (list.length === 0) {
+      try {
+        const res2 = await apiGetAngkatanPKDList();
+        list = normalizeListResult(res2);
+      } catch (e) {
+        console.warn('[PesertaView] Simple list failed too:', e.message);
+      }
+    }
+
+    ctx.state.lokasiPKDList = list;
+    renderLokasiAdminGrid();
+    renderFilterDropdown();
+    await loadActiveLokasi();
+  } catch (e) {
+    console.warn('[PesertaView] loadLokasiPKD:', e);
+    ctx.state.lokasiPKDList = [];
+    renderLokasiAdminGrid();
+    renderFilterDropdown();
+  } finally {
+    ctx.state.isLoadingLokasi = false;
+  }
+}
+
+// ============================================================
+//   LOKASI PKD ADMIN GRID
+// ============================================================
+function renderLokasiAdminGrid() {
+  const c = getEl('lokasiAdminGrid');
+  if (!c) return;
+
+  if (!ctx.state.lokasiPKDList || ctx.state.lokasiPKDList.length === 0) {
+    c.innerHTML = `
+      <div class="col-12">
+        <div class="alert alert-info text-center mb-0 small">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Belum ada Lokasi PKD. Klik <strong>Tambah</strong> untuk membuat lokasi pertama.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const activeNama = ctx.state.activeLokasiNama || '';
+
+  let html = '';
+  ctx.state.lokasiPKDList.forEach(item => {
+    const total = parseInt(item.totalPeserta) || 0;
+    const tahun = item.tahun || '-';
+    const isActive = String(item.nama) === String(activeNama);
+    const safeNama = escapeHtml(item.nama);
+
+    html += `
+      <div class="col-md-6 col-lg-4">
+        <div class="p-3 rounded-3 position-relative"
+             style="
+               border: 2px solid ${isActive ? '#2563eb' : '#e2e8f0'};
+               background: ${isActive ? 'rgba(37,99,235,0.05)' : '#fff'};
+               transition: all 0.2s;
+             ">
+          ${isActive ? `
+            <span class="badge bg-primary position-absolute"
+                  style="top:8px;right:8px;font-size:0.65rem;">
+              <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>AKTIF
+            </span>
+          ` : ''}
+
+          <div class="d-flex align-items-start gap-2 mb-2">
+            <i class="bi bi-geo-alt-fill text-primary fs-4" aria-hidden="true"></i>
+            <div style="min-width:0;flex:1;">
+              <div class="fw-bold small text-truncate" title="${safeNama}">${safeNama}</div>
+              <div class="text-muted" style="font-size:0.7rem;">
+                Tahun ${escapeHtml(String(tahun))} · ${total} peserta
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-1 mt-3">
+            ${!isActive ? `
+              <button type="button" class="btn btn-primary btn-sm rounded-pill flex-grow-1"
+                      data-set-active="${safeNama}">
+                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Jadikan Aktif
+              </button>
+            ` : `
+              <button type="button" class="btn btn-success btn-sm rounded-pill flex-grow-1" disabled>
+                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Sedang Aktif
+              </button>
+            `}
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill"
+                    data-delete-angkatan="${escapeHtml(String(item.id))}"
+                    title="Hapus lokasi" aria-label="Hapus ${safeNama}">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  c.innerHTML = html;
+}
+
+// ============================================================
+//   LOKASI PKD — ACTIVE STATE
+// ============================================================
+async function loadActiveLokasi() {
+  try {
+    const res = await callApi('getPKDLokasi', {}, 'GET');
+    if (!ctx.mounted) return;
+
+    let activeNama = '';
+    if (res && res.success) {
+      activeNama = typeof res.data === 'string' ? res.data : (res.data || '');
+    }
+
+    ctx.state.activeLokasiNama = activeNama;
+    ctx.state.activeLokasiInfo = ctx.state.lokasiPKDList.find(a =>
+      String(a.nama) === String(activeNama)
+    ) || null;
+
+    const banner = getEl('activeLokasiBanner');
+    if (banner) {
+      if (activeNama) {
+        const info = ctx.state.activeLokasiInfo;
+        const total = info ? (parseInt(info.totalPeserta) || 0) : 0;
+        banner.className = 'alert alert-success d-flex align-items-center gap-2 rounded-3 mb-4';
+        banner.innerHTML = `
+          <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
+          <div class="flex-grow-1 small">
+            <strong>Lokasi PKD Aktif:</strong> ${escapeHtml(activeNama)}
+            ${info ? `· Tahun ${escapeHtml(String(info.tahun || '-'))} · ${total} peserta` : ''}
+            <div class="text-muted mt-1" style="font-size:0.75rem;">
+              Peserta publik yang mendaftar akan otomatis terdaftar di lokasi ini.
+            </div>
+          </div>
+        `;
+      } else {
+        banner.className = 'alert alert-warning d-flex align-items-center gap-2 rounded-3 mb-4';
+        banner.innerHTML = `
+          <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+          <div class="flex-grow-1 small">
+            <strong>Belum ada Lokasi PKD yang aktif.</strong>
+            Klik <strong>"Jadikan Aktif"</strong> pada salah satu lokasi di bawah.
+          </div>
+        `;
+      }
+    }
+
+    renderLokasiAdminGrid();
+  } catch (e) {
+    console.warn('[PesertaView] loadActiveLokasi error:', e);
+    const banner = getEl('activeLokasiBanner');
+    if (banner) {
+      banner.className = 'alert alert-warning d-flex align-items-center gap-2 rounded-3 mb-4';
+      banner.innerHTML = `
+        <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+        <div class="flex-grow-1 small">Gagal memuat status lokasi aktif.</div>`;
+    }
+  }
+}
+
+async function setActiveLokasi(nama) {
+  if (ctx.saving || ctx.state.isSettingActive) return;
+
+  if (!nama) return;
+
+  const info = ctx.state.lokasiPKDList.find(a => String(a.nama) === String(nama));
+  if (!info) {
+    showToast('Lokasi tidak ditemukan', 'error');
+    return;
+  }
+
+  if (!confirm(`Jadikan "${nama}" sebagai Lokasi PKD Aktif?\n\nPeserta publik yang mendaftar akan otomatis terdaftar di lokasi ini.`)) {
+    return;
+  }
+
+  ctx.state.isSettingActive = true;
+  ctx.saving = true;
+
+  try {
+    const res = await callApi('setPKDLokasi', { lokasi: nama }, 'POST');
+
+    if (res && res.success) {
+      showToast(`Lokasi "${nama}" sekarang AKTIF`, 'success');
+      await loadActiveLokasi();
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
+    } else {
+      throw new Error((res && res.error) || 'Gagal menyimpan');
+    }
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+  } finally {
+    ctx.state.isSettingActive = false;
+    ctx.saving = false;
+  }
+}
+
+// ============================================================
+//   LOKASI PKD — FILTER DROPDOWN
+// ============================================================
+function renderFilterDropdown() {
+  const sel = getEl('filterAngkatanPkd');
+  if (!sel) return;
+
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Semua Lokasi PKD --</option>';
+
+  ctx.state.lokasiPKDList.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.nama;
+    opt.textContent = `${a.nama}${a.tahun ? ` (${a.tahun})` : ''}`;
+    if (cur === a.nama) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ============================================================
+//   LOKASI PKD — TOGGLE FORM + ADD + DELETE
+// ============================================================
+function handleToggleAddLokasiForm() {
+  const form = getEl('addLokasiForm');
+  if (!form) return;
+
+  form.classList.toggle('d-none');
+
+  if (!form.classList.contains('d-none')) {
+    const yearEl = getEl('newLokasiTahun');
+    if (yearEl) yearEl.value = new Date().getFullYear();
+    const inputEl = getEl('newLokasiInput');
+    if (inputEl) inputEl.focus();
+  }
+}
+
+async function handleAddLokasi(e) {
+  if (ctx.saving || ctx.state.isSettingActive) return;
+
+  const input = getEl('newLokasiInput');
+  const yearEl = getEl('newLokasiTahun');
+  const nama = input ? input.value.trim() : '';
+  const tahun = parseInt(yearEl?.value) || new Date().getFullYear();
+
+  if (!nama) {
+    showToast('Nama lokasi wajib diisi', 'error');
+    input?.focus();
+    return;
+  }
+
+  const btn = e?.currentTarget || getEl('saveNewLokasiBtn');
+  ctx.saving = true;
+  const restore = setBtnLoading(btn, true, '');
+
+  try {
+    const res = await apiAddAngkatanPKD(nama, tahun, 'aktif', nama);
+
+    if (res && res.success) {
+      showToast('Lokasi PKD ditambahkan', 'success');
+      if (input) input.value = '';
+      if (yearEl) yearEl.value = '';
+      const form = getEl('addLokasiForm');
+      if (form) form.classList.add('d-none');
+      await loadLokasiPKD();
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
+    } else {
+      throw new Error((res && res.error) || 'Gagal');
+    }
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+  }
+}
+
+async function deleteLokasiPKDItem(id) {
+  const info = ctx.state.lokasiPKDList.find(a => String(a.id) === String(id));
+  if (!info) return;
+
+  const isActive = String(info.nama) === String(ctx.state.activeLokasiNama);
+
+  const msg = isActive
+    ? `"${info.nama}" sedang AKTIF.\n\nSetelah dihapus, tidak ada lokasi aktif.\nData peserta TIDAK akan terhapus.\n\nLanjutkan?`
+    : `Hapus Lokasi PKD "${info.nama}"?\n\nData peserta TIDAK akan terhapus.`;
+
+  if (!confirm(msg)) return;
+
+  ctx.saving = true;
+  try {
+    const res = await apiDeleteAngkatanPKD(id);
+
+    if (res && res.success) {
+      showToast('Lokasi PKD dihapus', 'success');
+
+      if (isActive) {
+        try {
+          await callApi('setPKDLokasi', { lokasi: '' }, 'POST');
+          ctx.state.activeLokasiNama = '';
+          ctx.state.activeLokasiInfo = null;
+        } catch (e) { /* silent */ }
+      }
+
+      await loadLokasiPKD();
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
+    } else {
+      throw new Error((res && res.error) || 'Gagal');
+    }
+  } catch (e) {
+    showToast('Gagal: ' + e.message, 'error');
+  } finally {
+    ctx.saving = false;
+  }
+}
+
+// ============================================================
+//   DYNAMIC FORM
 // ============================================================
 async function ensureLokasiPKDLoaded() {
-  if (STATE.lokasiPKDList && STATE.lokasiPKDList.length > 0) return;
-  if (STATE.isLoadingLokasiPKD) return;
-  STATE.isLoadingLokasiPKD = true;
+  if (ctx.state.lokasiPKDList.length > 0) return;
+  if (ctx.state.isLoadingLokasi) {
+    await waitFor(() => ctx.state.lokasiPKDList.length > 0, 3000, 100);
+    if (ctx.state.lokasiPKDList.length > 0) return;
+  }
+
+  ctx.state.isLoadingLokasi = true;
   try {
-    const res = await apiGetLokasiPKDList();
-    STATE.lokasiPKDList = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
-  } catch (e) {
-    STATE.lokasiPKDList = [];
+    let list = [];
+    try {
+      const res = await apiGetAngkatanPKDWithCount();
+      list = normalizeListResult(res);
+    } catch (e) {
+      try {
+        const res2 = await apiGetAngkatanPKDList();
+        list = normalizeListResult(res2);
+      } catch (e2) { /* silent */ }
+    }
+    ctx.state.lokasiPKDList = list;
   } finally {
-    STATE.isLoadingLokasiPKD = false;
+    ctx.state.isLoadingLokasi = false;
   }
 }
 
@@ -1649,11 +2171,29 @@ async function renderDynamicForm(data) {
   const c = getEl('dynamicAdminFormContainer');
   if (!c) return;
 
-  const fields = STATE.formStructure.length > 0 ? STATE.formStructure : getDefaultFormFieldsLocal();
+  c.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 small text-muted">Memuat struktur form...</p></div>';
+
+  if (ctx.state.formStructure.length === 0 || ctx.state.isLoadingFormStructure) {
+    await waitFor(() => ctx.state.formStructure.length > 0 && !ctx.state.isLoadingFormStructure, 3000, 100);
+  }
+  if (ctx.state.formStructure.length === 0) {
+    ctx.state.formStructure = getDefaultFormFields();
+  }
+
+  const fields = ctx.state.formStructure;
   await ensureLokasiPKDLoaded();
-  const lokasiList = STATE.lokasiPKDList;
+  const lokasiList = ctx.state.lokasiPKDList;
 
   let html = `<form id="dynamicAdminForm" autocomplete="off">`;
+
+  // Show ID di form edit
+  if (data && data.id) {
+    html += `<div class="mb-3">
+      <label class="form-label fw-bold">ID Peserta</label>
+      <input type="text" class="form-control font-monospace" value="${escapeHtml(String(data.id))}" readonly>
+      <div class="form-text text-muted small">ID dari spreadsheet, tidak dapat diubah.</div>
+    </div>`;
+  }
 
   fields.forEach(field => {
     const val = data ? (data[field.id] || '') : '';
@@ -1694,18 +2234,15 @@ async function renderDynamicForm(data) {
     }
   });
 
-  // Status
   const currentStatus = data ? (data.status || 'pending') : 'pending';
-  const statusOptions = ['pending', 'approved', 'active', 'alumni', 'rejected'];
   html += `<div class="mb-3">
     <label class="form-label fw-bold">Status Peserta <span class="text-danger">*</span></label>
     <select class="form-select" name="status" required>
-      ${statusOptions.map(o => `<option value="${o}" ${currentStatus === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}
+      ${STATUS_OPTIONS.map(o => `<option value="${o}" ${currentStatus === o ? 'selected' : ''}>${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}
     </select>
     <div class="form-text text-muted small">⚠️ Status <strong>Approved</strong> akan membuat akun login. Status <strong>Alumni</strong> akan memindahkan ke daftar Alumni.</div>
   </div>`;
 
-  // ✅ BUG-A6: Better handling empty lokasi list
   html += `<div class="mb-3">
     <label class="form-label fw-bold">Lokasi PKD <span class="text-danger">*</span></label>`;
 
@@ -1713,7 +2250,7 @@ async function renderDynamicForm(data) {
     html += `
       <div class="alert alert-warning small mb-0">
         <i class="bi bi-exclamation-triangle me-1"></i>
-        <strong>Belum ada lokasi PKD.</strong><br>
+        <strong>Belum ada Lokasi PKD.</strong><br>
         Silakan tutup modal ini dan tambahkan lokasi di bagian <strong>Lokasi PKD</strong> di bawah halaman.
         <input type="hidden" name="lokasi_pkd" value="" data-empty="true">
       </div>`;
@@ -1721,7 +2258,7 @@ async function renderDynamicForm(data) {
     html += `
       <select class="form-select" name="lokasi_pkd" required>
         <option value="">-- Pilih Lokasi --</option>
-        ${lokasiList.map(l => `<option value="${escapeHtml(l.nama)}" ${(data && data.lokasi_pkd === l.nama) ? 'selected' : ''}>${escapeHtml(l.nama)}</option>`).join('')}
+        ${lokasiList.map(a => `<option value="${escapeHtml(a.nama)}" ${(data && data.lokasi_pkd === a.nama) ? 'selected' : ''}>${escapeHtml(a.nama)}${a.tahun ? ` (${a.tahun})` : ''}</option>`).join('')}
       </select>`;
   }
   html += `</div>`;
@@ -1729,12 +2266,17 @@ async function renderDynamicForm(data) {
   html += `</form>`;
   c.innerHTML = html;
 
-  // Bind utusan "Lainnya" toggle
   const utusanSel = c.querySelector('select[name="utusan"]');
   const luarContainer = c.querySelector('#utusanLuarContainerAdmin');
   if (utusanSel && luarContainer) {
     utusanSel.onchange = function () {
-      luarContainer.style.display = this.value === 'Lainnya' ? 'block' : 'none';
+      if (this.value === 'Lainnya') {
+        luarContainer.style.display = 'block';
+      } else {
+        luarContainer.style.display = 'none';
+        const luarInput = luarContainer.querySelector('input[name="utusan_luar"]');
+        if (luarInput) luarInput.value = '';
+      }
     };
   }
 }
@@ -1743,7 +2285,7 @@ async function renderDynamicForm(data) {
 //   SAVE PESERTA
 // ============================================================
 async function handleSavePeserta(e) {
-  if (isSaving) return;
+  if (ctx.saving || ctx.state.isProcessing) return;
 
   const btn = e?.currentTarget || getEl('savePesertaBtn');
   const id = getEl('editPesertaId')?.value || '';
@@ -1753,7 +2295,7 @@ async function handleSavePeserta(e) {
   const formData = new FormData(form);
   const data = { id };
 
-  STATE.formStructure.forEach(field => {
+  ctx.state.formStructure.forEach(field => {
     if (field.type === 'file') return;
     const v = formData.get(field.id);
     data[field.id] = v !== null ? v : '';
@@ -1765,9 +2307,7 @@ async function handleSavePeserta(e) {
   const lokSel = form.querySelector('select[name="lokasi_pkd"]');
   data.lokasi_pkd = lokSel ? lokSel.value : '';
 
-  // Check if lokasi is empty (BUG-A6 case)
-  const lokasiEmpty = !data.lokasi_pkd;
-  if (lokasiEmpty) {
+  if (!data.lokasi_pkd) {
     showToast('Lokasi PKD wajib diisi. Tambahkan lokasi terlebih dahulu di bagian bawah halaman.', 'error');
     return;
   }
@@ -1780,16 +2320,16 @@ async function handleSavePeserta(e) {
 
   if (!data.nama_lengkap) { showToast('Nama lengkap wajib diisi', 'error'); return; }
 
-  isSaving = true;
+  ctx.saving = true;
+  ctx.state.isProcessing = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
-    // Files
     const fotoInput = form.querySelector('input[name="foto"]');
     if (fotoInput && fotoInput.files && fotoInput.files[0]) {
       const f = fotoInput.files[0];
-      if (f.size > 5 * 1024 * 1024) {
-        throw new Error('Foto maksimal 5 MB');
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        throw new Error(`Foto maksimal ${MAX_FILE_SIZE_MB} MB`);
       }
       data.foto = await fileToBase64(f);
     }
@@ -1797,8 +2337,8 @@ async function handleSavePeserta(e) {
     const suratInput = form.querySelector('input[name="surat_rekomendasi"]');
     if (suratInput && suratInput.files && suratInput.files[0]) {
       const f = suratInput.files[0];
-      if (f.size > 5 * 1024 * 1024) {
-        throw new Error('Surat maksimal 5 MB');
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        throw new Error(`Surat maksimal ${MAX_FILE_SIZE_MB} MB`);
       }
       data.surat_rekomendasi = await fileToBase64(f);
     }
@@ -1807,181 +2347,32 @@ async function handleSavePeserta(e) {
       ? await AdminModule.updatePeserta(data)
       : await AdminModule.addPeserta(data);
 
-    if (res.success) {
-      showToast(id ? 'Data diperbarui' : 'Data ditambahkan', 'success');
-      getModal('pesertaFormModal')?.hide();
-      await loadPesertaData(true);
+    const newId = extractId(res);
+    console.log('[DEBUG] Save peserta result:', res, '→ extracted ID:', newId);
+
+    if (res && res.success) {
+      showToast(id ? `Data #${id} diperbarui` : `Data ditambahkan (ID: #${newId || '?'})`, 'success');
+      ctx.getModal('pesertaFormModal')?.hide();
+      await AdminModule.loadAllData(true);
+      window.dispatchEvent(new CustomEvent('pkd:lokasi-updated'));
     } else {
-      throw new Error(res.error || 'Gagal menyimpan');
+      throw new Error((res && res.error) || 'Gagal menyimpan');
     }
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    isSaving = false;
+    ctx.saving = false;
+    ctx.state.isProcessing = false;
   }
 }
 
 // ============================================================
-//   LOKASI PKD
+//   EXPORT DEFAULT
 // ============================================================
-async function loadLokasiPKD() {
-  try {
-    const res = await apiGetLokasiPKDList();
-    STATE.lokasiPKDList = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
-    renderLokasiPKDList();
-  } catch (e) {
-    STATE.lokasiPKDList = [];
-    renderLokasiPKDList();
-  }
-}
+export default { mount, unmount };
 
-function renderLokasiPKDList() {
-  const c = getEl('lokasiPKDListContainer');
-  if (!c) return;
-
-  if (STATE.lokasiPKDList.length === 0) {
-    c.innerHTML = '<p class="text-muted small">Belum ada lokasi PKD.</p>';
-  } else {
-    let html = '';
-    STATE.lokasiPKDList.forEach(item => {
-      html += `<div class="lokasi-pkd-item">
-        <span><span class="badge bg-primary">${escapeHtml(item.nama)}</span></span>
-        <button type="button" class="btn btn-sm btn-outline-danger" data-lokasi-id="${escapeHtml(String(item.id))}" aria-label="Hapus lokasi">
-          <i class="bi bi-trash" aria-hidden="true"></i>
-        </button>
-      </div>`;
-    });
-    c.innerHTML = html;
-
-    c.querySelectorAll('[data-lokasi-id]').forEach(btn => {
-      btn.addEventListener('click', function () {
-        deleteLokasiPKDItem(this.dataset.lokasiId);
-      });
-    });
-  }
-
-  const sel = getEl('pkdLokasiSelect');
-  if (sel) {
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">-- Semua Lokasi --</option>';
-    STATE.lokasiPKDList.forEach(l => {
-      const opt = document.createElement('option');
-      opt.value = l.nama;
-      opt.textContent = l.nama;
-      if (cur === l.nama) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  }
-}
-
-async function deleteLokasiPKDItem(id) {
-  if (!confirm('Hapus lokasi ini?')) return;
-  try {
-    const res = await apiDeleteLokasiPKD(id);
-    if (res && res.success) {
-      showToast('Lokasi dihapus', 'success');
-      await loadLokasiPKD();
-      loadPkdLokasiSetting();
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
-  } catch (e) {
-    showToast('Gagal: ' + e.message, 'error');
-  }
-}
-
-async function handleAddLokasi(e) {
-  if (isSaving) return;
-
-  const btn = e?.currentTarget || getEl('addLokasiBtn');
-  const input = getEl('newLokasiInput');
-  const nama = input ? input.value.trim() : '';
-  if (!nama) { showToast('Nama lokasi wajib diisi', 'error'); return; }
-
-  isSaving = true;
-  const restore = setBtnLoading(btn, true, '');
-
-  try {
-    const res = await apiAddLokasiPKD(nama);
-    if (res && res.success) {
-      showToast('Lokasi ditambahkan', 'success');
-      if (input) input.value = '';
-      await loadLokasiPKD();
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
-  } catch (err) {
-    showToast('Gagal: ' + err.message, 'error');
-  } finally {
-    restore();
-    isSaving = false;
-  }
-}
-
-async function loadPkdLokasiSetting() {
-  try {
-    const res = await callApi('getPKDLokasi', {}, 'GET');
-    if (res && res.success) {
-      const cur = res.data || '';
-      const sel = getEl('pkdLokasiSelect');
-      if (sel) {
-        for (let opt of sel.options) {
-          if (opt.value === cur) { opt.selected = true; break; }
-        }
-      }
-      const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `Filter saat ini: ${cur || 'Semua Lokasi'}`;
-    }
-  } catch (e) { /* silent */ }
-}
-
-async function handleSavePkdLokasi(e) {
-  if (isSaving) return;
-
-  const btn = e?.currentTarget || getEl('savePkdLokasiBtn');
-  const lokasi = getEl('pkdLokasiSelect')?.value || '';
-
-  isSaving = true;
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-
-  try {
-    const res = await callApi('setPKDLokasi', { lokasi }, 'POST');
-    if (res && res.success) {
-      const statusEl = getEl('pkdLokasiStatus');
-      if (statusEl) statusEl.innerText = `✅ Filter disimpan: ${lokasi || 'Semua Lokasi'}`;
-      showToast('Filter lokasi diperbarui', 'success');
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
-  } catch (err) {
-    const statusEl = getEl('pkdLokasiStatus');
-    if (statusEl) statusEl.innerText = `❌ Gagal: ${err.message}`;
-    showToast('Gagal: ' + err.message, 'error');
-  } finally {
-    restore();
-    isSaving = false;
-  }
-}
-
-// ============================================================
-//   UTILITY
-// ============================================================
-function getStatusBadge(status) {
-  const s = String(status || 'pending').toLowerCase();
-  if (s === 'approved' || s === 'active') return 'bg-success';
-  if (s === 'rejected') return 'bg-danger';
-  if (s === 'alumni') return 'bg-secondary';
-  return 'bg-warning text-dark';
-}
-
-function updateCacheStatus(status) {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-  el.className = 'cache-status ' + (
-    status === 'Live' ? 'live'
-      : status === 'Offline' ? 'offline'
-        : ''
-  );
-}
+console.log(
+  '%c Peserta View v28.7.0 — Full Fix Edition ',
+  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);

@@ -1,47 +1,76 @@
-<!-- views/admin/asset.html — konten saja -->
+<!-- ============================================================
+     views/admin/asset.html — v28.4.0 CUSTOM FOLDER ID EDITION
+     ============================================================
+     CHANGELOG v28.4.0 (dari v28.2.0):
+     ✅ NEW: Input "Kode Unik" di modal Folder Baru (maks 5 karakter)
+     ✅ NEW: Modal Edit Folder (rename, parent, kode unik)
+     ✅ NEW: Real-time validation kode unik (cek tersedia via API)
+     ✅ NEW: Auto-hide folderId di URL publik (preview link)
+     ✅ FIX: Semua ID unik — tidak bentrok
+     ✅ FIX: Semua tombol pakai type="button"
+     ✅ FIX: ARIA labels lengkap
+     ✅ FIX: Modal cleanup on hide
+     ✅ FIX: Input maxlength=5 untuk kode unik
+     ✅ FIX: Status badge visual (available/duplicate/checking)
+     ✅ KEEP: Semua fitur v28.2.0 (upload, edit, folder, move, delete, preview)
+     ============================================================ -->
 
-<h2 class="section-title"><i class="bi bi-image me-2"></i>Manajemen Aset Digital</h2>
+<h2 class="section-title">
+  <i class="bi bi-image me-2" aria-hidden="true"></i>Manajemen Aset Digital
+</h2>
 
 <!-- ========================================================== -->
-<!-- TOOLBAR                                                     -->
+<!-- TOOLBAR UTAMA                                               -->
 <!-- ========================================================== -->
 <div class="row mb-3 g-2 align-items-center">
   <div class="col-md-6 d-flex flex-wrap gap-2">
-    <button class="btn btn-primary rounded-pill" id="uploadAssetBtn">
-      <i class="bi bi-cloud-upload me-1"></i> Upload Aset
+    <button type="button" class="btn btn-primary rounded-pill" id="uploadAssetBtn"
+            aria-label="Upload aset baru">
+      <i class="bi bi-cloud-upload me-1" aria-hidden="true"></i> Upload Aset
     </button>
-    <button class="btn btn-outline-primary rounded-pill" id="addFolderBtn">
-      <i class="bi bi-folder-plus me-1"></i> Folder Baru
+    <button type="button" class="btn btn-outline-primary rounded-pill" id="addFolderBtn"
+            aria-label="Buat folder baru">
+      <i class="bi bi-folder-plus me-1" aria-hidden="true"></i> Folder Baru
     </button>
-    <button class="btn btn-outline-secondary rounded-pill" id="moveSelectedBtn">
-      <i class="bi bi-folder-symlink me-1"></i> Pindahkan
+    <button type="button" class="btn btn-outline-secondary rounded-pill" id="moveSelectedBtn"
+            aria-label="Pindahkan aset terpilih">
+      <i class="bi bi-folder-symlink me-1" aria-hidden="true"></i> Pindahkan
     </button>
-    <button class="btn btn-danger rounded-pill" id="deleteSelectedBtn">
-      <i class="bi bi-trash3 me-1"></i> Hapus
+    <button type="button" class="btn btn-danger rounded-pill" id="deleteSelectedBtn"
+            aria-label="Hapus aset terpilih">
+      <i class="bi bi-trash3 me-1" aria-hidden="true"></i> Hapus
     </button>
   </div>
   <div class="col-md-6 d-flex justify-content-md-end flex-wrap gap-2">
-    <button class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn">
-      <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+    <button type="button" class="btn btn-outline-secondary rounded-pill" id="refreshDataBtn"
+            aria-label="Segarkan data">
+      <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Segarkan
     </button>
-    <button class="btn btn-outline-info rounded-pill" id="publicConfigBtn">
-      <i class="bi bi-globe me-1"></i> Publikasi
+    <button type="button" class="btn btn-outline-info rounded-pill" id="publicConfigBtn"
+            title="Pengaturan Galeri Publik" aria-label="Pengaturan publikasi galeri">
+      <i class="bi bi-globe me-1" aria-hidden="true"></i> Publikasi
     </button>
-    <span id="cacheStatus" class="cache-status align-self-center">Memuat…</span>
+    <span id="cacheStatus" class="cache-status align-self-center" aria-live="polite">Memuat…</span>
   </div>
 </div>
 
-<!-- SEARCH + FILTER -->
+<!-- ========================================================== -->
+<!-- SEARCH + FILTER                                             -->
+<!-- ========================================================== -->
 <div class="row mb-3 g-2">
   <div class="col-md-6">
     <div class="input-group" style="max-width:340px;">
-      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+      <span class="input-group-text bg-white border-end-0">
+        <i class="bi bi-search text-muted" aria-hidden="true"></i>
+      </span>
       <input type="text" class="form-control border-start-0" id="searchAssetInput"
-             placeholder="Cari judul aset…" autocomplete="off">
+             placeholder="Cari judul aset…" autocomplete="off"
+             aria-label="Cari aset berdasarkan judul">
     </div>
   </div>
   <div class="col-md-6 text-md-end">
-    <select class="form-select d-inline-block" style="width:auto;display:inline-block !important;" id="filterTypeAsset">
+    <select class="form-select d-inline-block" style="width:auto;display:inline-block !important;"
+            id="filterTypeAsset" aria-label="Filter jenis aset">
       <option value="">Semua Jenis</option>
       <option value="gambar">Gambar</option>
       <option value="video">Video</option>
@@ -52,31 +81,35 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- LAYOUT: FOLDER SIDEBAR + ASSET GRID                        -->
+<!-- LAYOUT: FOLDER SIDEBAR + ASSET GRID                         -->
 <!-- ========================================================== -->
 <div class="row g-3">
-  <!-- Folder Sidebar -->
   <div class="col-md-3">
     <div class="settings-card" style="padding:1rem;">
       <div class="card-title" style="font-size:0.9rem;margin-bottom:0.75rem;">
-        <i class="bi bi-folder-fill"></i> Folder
+        <i class="bi bi-folder-fill" aria-hidden="true"></i> Folder
       </div>
-      <div id="folderList">
-        <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+      <div id="folderList" role="navigation" aria-label="Daftar folder aset">
+        <div class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Memuat folder…</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Asset Content -->
   <div class="col-md-9">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" id="breadcrumb">
-        <li class="breadcrumb-item active">Semua Aset</li>
+        <li class="breadcrumb-item active" aria-current="page">Semua Aset</li>
       </ol>
     </nav>
-    <div id="assetContainer">
+    <div id="assetContainer" aria-live="polite">
       <div class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Memuat aset…</span>
+        </div>
         <p class="mt-2 text-muted">Memuat aset…</p>
       </div>
     </div>
@@ -84,32 +117,38 @@
 </div>
 
 
-<!-- ==================== MODAL UPLOAD ==================== -->
-<div class="modal fade" id="uploadAssetModal" tabindex="-1" data-bs-backdrop="static">
+<!-- ========================================================== -->
+<!-- MODAL: UPLOAD ASET                                          -->
+<!-- ========================================================== -->
+<div class="modal fade" id="uploadAssetModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="uploadAssetModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-primary text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i>Upload Aset Digital</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="uploadAssetModalLabel">
+          <i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>Upload Aset Digital
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Tutup"></button>
       </div>
       <div class="modal-body p-4">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Judul</label>
+          <label class="form-label fw-semibold" for="assetJudul">Judul</label>
           <input type="text" class="form-control" id="assetJudul"
                  placeholder="Akan diisi otomatis dari nama file">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Deskripsi</label>
+          <label class="form-label fw-semibold" for="assetDeskripsi">Deskripsi</label>
           <textarea class="form-control" id="assetDeskripsi" rows="2"></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Folder Tujuan</label>
+          <label class="form-label fw-semibold" for="assetFolder">Folder Tujuan</label>
           <select class="form-select" id="assetFolder">
             <option value="">Root (Tanpa Folder)</option>
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Jenis</label>
+          <label class="form-label fw-semibold" for="assetJenis">Jenis</label>
           <select class="form-select" id="assetJenis">
             <option value="gambar">Gambar</option>
             <option value="video">Video</option>
@@ -118,10 +157,11 @@
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">File</label>
+          <label class="form-label fw-semibold" for="assetFile">File</label>
           <input type="file" class="form-control" id="assetFile"
-                 accept="image/*,video/*,audio/*,application/pdf" multiple>
-          <div class="form-text text-muted">
+                 accept="image/*,video/*,audio/*,application/pdf" multiple
+                 aria-label="Pilih file untuk diupload">
+          <div class="form-text text-muted small">
             Format: JPG, PNG, WEBP, GIF, MP4, WEBM, MP3, WAV, PDF (Max 200MB per file).
             Bisa pilih lebih dari satu file.
           </div>
@@ -138,9 +178,11 @@
         </div>
       </div>
       <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+          Batal
+        </button>
         <button type="button" class="btn btn-primary rounded-pill px-4" id="submitUploadBtn">
-          <i class="bi bi-cloud-upload me-1"></i> Upload
+          <i class="bi bi-cloud-upload me-1" aria-hidden="true"></i> Upload
           <span id="uploadCountBadge" class="badge bg-light text-dark ms-1">0</span>
         </button>
       </div>
@@ -149,32 +191,37 @@
 </div>
 
 
-<!-- ==================== MODAL EDIT ASET ==================== -->
-<div class="modal fade" id="editAssetModal" tabindex="-1" data-bs-backdrop="static">
+<!-- ========================================================== -->
+<!-- MODAL: EDIT ASET                                            -->
+<!-- ========================================================== -->
+<div class="modal fade" id="editAssetModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="editAssetModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Aset Digital</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="editAssetModalLabel">
+          <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Edit Aset Digital
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
       <div class="modal-body p-4">
         <input type="hidden" id="editAssetId">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Judul</label>
+          <label class="form-label fw-semibold" for="assetJudulEdit">Judul</label>
           <input type="text" class="form-control" id="assetJudulEdit">
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Deskripsi</label>
+          <label class="form-label fw-semibold" for="assetDeskripsiEdit">Deskripsi</label>
           <textarea class="form-control" id="assetDeskripsiEdit" rows="2"></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Folder Tujuan</label>
+          <label class="form-label fw-semibold" for="assetFolderEdit">Folder Tujuan</label>
           <select class="form-select" id="assetFolderEdit">
             <option value="">Root (Tanpa Folder)</option>
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Jenis</label>
+          <label class="form-label fw-semibold" for="assetJenisEdit">Jenis</label>
           <select class="form-select" id="assetJenisEdit">
             <option value="gambar">Gambar</option>
             <option value="video">Video</option>
@@ -186,7 +233,7 @@
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
         <button type="button" class="btn btn-primary rounded-pill px-4" id="saveEditBtn">
-          <i class="bi bi-save me-1"></i> Simpan Perubahan
+          <i class="bi bi-save me-1" aria-hidden="true"></i> Simpan Perubahan
         </button>
       </div>
     </div>
@@ -194,21 +241,54 @@
 </div>
 
 
-<!-- ==================== MODAL FOLDER BARU ==================== -->
-<div class="modal fade" id="folderModal" tabindex="-1" data-bs-backdrop="static">
+<!-- ========================================================== -->
+<!-- MODAL: FOLDER BARU (dengan kode unik)                       -->
+<!-- ========================================================== -->
+<div class="modal fade" id="folderModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="folderModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-success text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Buat Folder Baru</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="folderModalLabel">
+          <i class="bi bi-folder-plus me-2" aria-hidden="true"></i>Buat Folder Baru
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Tutup"></button>
       </div>
       <div class="modal-body p-4">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Nama Folder <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="folderNama">
+          <label class="form-label fw-semibold" for="folderNama">
+            Nama Folder <span class="text-danger" aria-label="wajib diisi">*</span>
+          </label>
+          <input type="text" class="form-control" id="folderNama" required
+                 placeholder="Contoh: PKD Angkatan 2026" autocomplete="off">
         </div>
+
+        <!-- ⭐ NEW v28.4.0: Kode unik custom -->
         <div class="mb-3">
-          <label class="form-label fw-semibold">Folder Induk (opsional)</label>
+          <label class="form-label fw-semibold" for="folderCustomId">
+            Kode Unik <span class="text-muted small fw-normal">(opsional, maks 5 karakter)</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text" style="font-size:0.8rem;">?folderId=</span>
+            <input type="text" class="form-control font-monospace" id="folderCustomId"
+                   placeholder="pkd26" maxlength="5"
+                   autocomplete="off" spellcheck="false"
+                   aria-label="Kode unik folder, maksimal 5 karakter">
+            <span class="input-group-text" id="folderCustomIdStatus"
+                  style="min-width:42px;justify-content:center;">
+              <i class="bi bi-magic text-muted" aria-hidden="true"></i>
+            </span>
+          </div>
+          <div class="form-text text-muted small">
+            Kosongkan untuk auto-generate. Hanya huruf kecil, angka, dan minus (-).
+            <br>Contoh: <code>pkd26</code>, <code>galeri</code>, <code>sert25</code>
+          </div>
+          <div id="folderCustomIdHint" class="small mt-1" style="display:none;"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="folderParent">Folder Induk (opsional)</label>
           <select class="form-select" id="folderParent">
             <option value="">Root (Tanpa Folder)</option>
           </select>
@@ -217,7 +297,7 @@
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
         <button type="button" class="btn btn-success rounded-pill px-4" id="saveFolderBtn">
-          <i class="bi bi-save me-1"></i> Simpan
+          <i class="bi bi-save me-1" aria-hidden="true"></i> Simpan
         </button>
       </div>
     </div>
@@ -225,13 +305,80 @@
 </div>
 
 
-<!-- ==================== MODAL PINDAHKAN ASET ==================== -->
-<div class="modal fade" id="moveAssetModal" tabindex="-1" data-bs-backdrop="static">
+<!-- ========================================================== -->
+<!-- ⭐ MODAL: EDIT FOLDER (v28.4.0)                             -->
+<!-- ========================================================== -->
+<div class="modal fade" id="editFolderModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="editFolderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+        <h5 class="modal-title" id="editFolderModalLabel">
+          <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Edit Folder
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="editFolderId">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="editFolderNama">
+            Nama Folder <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control" id="editFolderNama" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="editFolderCustomId">
+            Kode Unik <span class="text-muted small fw-normal">(opsional, maks 5 karakter)</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text" style="font-size:0.8rem;">?folderId=</span>
+            <input type="text" class="form-control font-monospace" id="editFolderCustomId"
+                   maxlength="5" autocomplete="off" spellcheck="false"
+                   aria-label="Kode unik folder, maksimal 5 karakter">
+            <span class="input-group-text" id="editFolderCustomIdStatus"
+                  style="min-width:42px;justify-content:center;">
+              <i class="bi bi-check-circle-fill text-muted" aria-hidden="true"></i>
+            </span>
+          </div>
+          <div class="form-text text-muted small">
+            Ubah kode unik folder. Kosongkan untuk menghapus kode unik.
+          </div>
+          <div id="editFolderCustomIdHint" class="small mt-1" style="display:none;"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="editFolderParent">Folder Induk</label>
+          <select class="form-select" id="editFolderParent">
+            <option value="">Root (Tanpa Folder)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="saveEditFolderBtn">
+          <i class="bi bi-save me-1" aria-hidden="true"></i> Simpan Perubahan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================================================== -->
+<!-- MODAL: PINDAHKAN ASET                                       -->
+<!-- ========================================================== -->
+<div class="modal fade" id="moveAssetModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="moveAssetModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-folder-symlink me-2"></i>Pindahkan Aset Terpilih</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="moveAssetModalLabel">
+          <i class="bi bi-folder-symlink me-2" aria-hidden="true"></i>Pindahkan Aset Terpilih
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Tutup"></button>
       </div>
       <div class="modal-body p-4">
         <p class="text-muted small">
@@ -244,7 +391,7 @@
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
         <button type="button" class="btn btn-primary rounded-pill px-4" id="executeMoveBtn">
-          <i class="bi bi-arrow-right me-1"></i> Pindahkan
+          <i class="bi bi-arrow-right me-1" aria-hidden="true"></i> Pindahkan
         </button>
       </div>
     </div>
@@ -252,167 +399,380 @@
 </div>
 
 
-<!-- ==================== MODAL PENGATURAN FOLDER ==================== -->
-<div class="modal fade" id="folderSettingsModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
+<!-- ============================================================ -->
+<!-- MODAL: PENGATURAN GALERI (UNIFIED) — v28.2.0                -->
+<!-- ============================================================ -->
+<div class="modal fade" id="folderSettingsModal" tabindex="-1" data-bs-backdrop="static"
+     aria-labelledby="folderSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
     <div class="modal-content border-0 shadow-lg">
+
       <div class="modal-header bg-secondary text-white border-0 rounded-top-4">
-        <h5 class="modal-title">
-          <i class="bi bi-gear me-2"></i>
-          <span id="folderSettingsTitle">Pengaturan Folder</span>
+        <h5 class="modal-title" id="folderSettingsModalLabel">
+          <i class="bi bi-gear me-2" aria-hidden="true"></i>
+          <span id="folderSettingsTitle">Pengaturan Galeri</span>
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Tutup"></button>
       </div>
-      <div class="modal-body p-4">
+
+      <div class="modal-body p-4" style="max-height: 72vh; overflow-y: auto;">
         <input type="hidden" id="folderSettingsId">
 
-        <div class="mb-4 p-3 bg-light rounded-3">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <label class="form-label fw-bold mb-0">🌐 Publikasikan ke Umum</label>
-            <div class="form-check form-switch p-0 m-0">
-              <input class="form-check-input mt-0" type="checkbox" id="folderSettingPublic"
-                     style="width:36px;height:18px;">
-            </div>
+        <!-- ============================================================
+             SECTION 1 — AKSES PUBLIK GLOBAL
+             ============================================================ -->
+        <div class="settings-block mb-4">
+          <div class="settings-block-title">
+            <i class="bi bi-globe2 text-primary" aria-hidden="true"></i>
+            <span>Akses Publik Global</span>
+            <span id="globalStatusBadge" class="badge bg-secondary ms-auto">Nonaktif</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <label class="form-label fw-bold mb-0">🙈 Sembunyikan dari Index</label>
-            <div class="form-check form-switch p-0 m-0">
-              <input class="form-check-input mt-0" type="checkbox" id="folderSettingHide"
-                     style="width:36px;height:18px;">
-            </div>
-          </div>
-        </div>
+          <p class="small text-muted mb-3">
+            Kontrol utama akses publik. Jika <strong>OFF</strong>, semua folder publik (termasuk yang sudah di-publish) tidak dapat diakses oleh publik.
+          </p>
 
-        <div class="p-3 bg-light rounded-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <label class="form-label fw-bold mb-0">🔒 Password Folder</label>
-            <span id="folderSettingPassStatus" class="badge bg-secondary">—</span>
-          </div>
-          <div class="input-group mb-2">
-            <input type="password" class="form-control" id="folderSettingPassword"
-                   placeholder="Password baru (min 6 karakter)">
-            <button class="btn btn-outline-secondary" type="button" data-toggle-pass="folderSettingPassword">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-danger btn-sm" id="folderClearPasswordBtn">
-              <i class="bi bi-trash me-1"></i> Hapus Password
-            </button>
-            <button type="button" class="btn btn-primary btn-sm" id="folderSavePasswordBtn">
-              <i class="bi bi-save me-1"></i> Simpan Password
-            </button>
-          </div>
-          <div id="folderSettingsStatus" class="small text-muted mt-2"></div>
-        </div>
-      </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-outline-danger rounded-pill px-4" id="deleteFolderBtn">
-          <i class="bi bi-trash me-1"></i> Hapus Folder
-        </button>
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ==================== MODAL PUBLIKASI GLOBAL ==================== -->
-<div class="modal fade" id="publicConfigModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-info text-white border-0 rounded-top-4">
-        <h5 class="modal-title"><i class="bi bi-globe me-2"></i>Pengaturan Galeri Publik</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="mb-3">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="enablePublicGallery">
-            <label class="form-check-label fw-bold" for="enablePublicGallery">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   id="enablePublicGallery" style="width:44px;height:22px;cursor:pointer;">
+            <label class="form-check-label fw-semibold ms-2" for="enablePublicGallery" style="cursor:pointer;">
               Aktifkan Akses Publik (Global)
             </label>
           </div>
-          <div class="form-text text-muted">
-            Jika diaktifkan, galeri publik dapat diakses melalui link di bawah.
+
+          <div id="publicPasswordGroup" class="mb-3" style="display:none;">
+            <label class="form-label fw-semibold small" for="publicAssetPassword">
+              🔒 Password Proteksi Global <span class="text-muted fw-normal">(opsional)</span>
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="password" class="form-control" id="publicAssetPassword"
+                     placeholder="Kosongkan untuk tanpa password" autocomplete="new-password">
+              <button class="btn btn-outline-secondary" type="button"
+                      data-toggle-pass="publicAssetPassword" aria-label="Tampilkan password">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="form-text text-muted small">
+              Password akan diminta saat pengunjung pertama membuka galeri.
+            </div>
+          </div>
+
+          <div class="p-3 bg-light rounded-3 mb-3" id="publicLinkArea" style="display:none;">
+            <label class="form-label fw-semibold small mb-1" for="publicGalleryUrl">
+              <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Link Galeri Publik Utama
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control" id="publicGalleryUrl" readonly>
+              <button class="btn btn-outline-secondary" type="button" id="copyPublicUrlBtn"
+                      title="Salin link" aria-label="Salin link galeri publik">
+                <i class="bi bi-clipboard" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="form-text text-muted small mt-1">
+              Bagikan link ini untuk mengakses semua folder publik.
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" id="savePublicConfigBtn">
+            <i class="bi bi-save me-1" aria-hidden="true"></i> Simpan Pengaturan Global
+          </button>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="d-flex align-items-center my-4" id="settingsDivider">
+          <hr class="flex-grow-1 m-0">
+          <span class="px-3 small text-muted text-uppercase fw-bold"
+                style="letter-spacing:0.05em;">Folder</span>
+          <hr class="flex-grow-1 m-0">
+        </div>
+
+        <!-- ============================================================
+             SECTION 2 — PENGATURAN FOLDER SPESIFIK
+             ============================================================ -->
+        <div class="settings-block" id="folderSettingsBlock">
+
+          <div class="settings-block-title">
+            <i class="bi bi-folder-fill text-warning" aria-hidden="true"></i>
+            <span id="folderSectionName">Pengaturan Folder</span>
+          </div>
+
+          <!-- Empty state -->
+          <div id="folderSectionEmpty" class="alert alert-info small mb-0" style="display:none;">
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+            <strong>Klik ikon gear (⚙️)</strong> pada folder di sidebar kiri untuk mengatur publikasi folder spesifik.
+          </div>
+
+          <!-- Content: folder settings -->
+          <div id="folderSectionContent">
+
+            <!-- ⭐ LINK PUBLIK FOLDER SPESIFIK -->
+            <div class="p-3 bg-primary bg-opacity-10 rounded-3 mb-3" id="folderPublicUrlBox">
+              <label class="form-label fw-semibold small mb-1" for="folderPublicUrl">
+                <i class="bi bi-link-45deg text-primary me-1" aria-hidden="true"></i>
+                Link Publik Folder Ini
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control font-monospace" id="folderPublicUrl" readonly
+                       placeholder="https://.../public_assets.html?folderId=..." />
+                <button class="btn btn-outline-primary" type="button"
+                        id="copyFolderSettingsUrlBtn"
+                        title="Salin link folder" aria-label="Salin link folder publik">
+                  <i class="bi bi-clipboard" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="form-text text-muted small mt-1">
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                Bagikan link ini ke publik untuk mengakses <strong>hanya folder ini</strong>.
+              </div>
+            </div>
+
+            <!-- Tombol Edit Folder -->
+            <div class="mb-3">
+              <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3"
+                      id="openEditFolderBtn">
+                <i class="bi bi-pencil-square me-1" aria-hidden="true"></i> Edit Nama / Kode Unik
+              </button>
+            </div>
+
+            <!-- Toggle Publik & Hide -->
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label fw-bold mb-0" for="folderSettingPublic" style="cursor:pointer;">
+                  🌐 Publikasikan ke Umum
+                </label>
+                <div class="form-check form-switch p-0 m-0">
+                  <input class="form-check-input mt-0" type="checkbox" role="switch"
+                         id="folderSettingPublic" style="width:36px;height:18px;cursor:pointer;">
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <label class="form-label fw-bold mb-0" for="folderSettingHide" style="cursor:pointer;">
+                  🙈 Sembunyikan dari Index
+                </label>
+                <div class="form-check form-switch p-0 m-0">
+                  <input class="form-check-input mt-0" type="checkbox" role="switch"
+                         id="folderSettingHide" style="width:36px;height:18px;cursor:pointer;">
+                </div>
+              </div>
+              <div class="form-text text-muted small mt-2">
+                Toggle <strong>Publish</strong>: mengizinkan folder ini diakses publik.
+                Toggle <strong>Hide</strong>: menyembunyikan folder ini dari daftar galeri publik,
+                tapi tetap bisa diakses via link langsung.
+              </div>
+            </div>
+
+            <!-- Password Folder -->
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-bold mb-0" for="folderSettingPassword">
+                  🔒 Password Folder
+                </label>
+                <span id="folderSettingPassStatus" class="badge bg-secondary">—</span>
+              </div>
+              <div class="input-group input-group-sm mb-2">
+                <input type="password" class="form-control" id="folderSettingPassword"
+                       placeholder="Password baru (min 6 karakter)" autocomplete="new-password">
+                <button class="btn btn-outline-secondary" type="button"
+                        data-toggle-pass="folderSettingPassword" aria-label="Tampilkan password">
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-danger btn-sm rounded-pill" id="folderClearPasswordBtn">
+                  <i class="bi bi-trash me-1" aria-hidden="true"></i> Hapus Password
+                </button>
+                <button type="button" class="btn btn-primary btn-sm rounded-pill" id="folderSavePasswordBtn">
+                  <i class="bi bi-save me-1" aria-hidden="true"></i> Simpan Password
+                </button>
+              </div>
+              <div id="folderSettingsStatus" class="small text-muted mt-2"></div>
+            </div>
+
           </div>
         </div>
-        <div class="mb-3" id="publicPasswordGroup" style="display:none;">
-          <label class="form-label fw-semibold">🔒 Password Proteksi Global</label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="publicAssetPassword"
-                   placeholder="Kosongkan untuk tanpa password">
-            <button class="btn btn-outline-secondary" type="button" data-toggle-pass="publicAssetPassword">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-        </div>
-        <div class="mt-3 p-3 bg-light rounded-3" id="publicLinkArea" style="display:none;">
-          <label class="form-label fw-semibold">Link Galeri Publik</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="publicGalleryUrl" readonly>
-            <button class="btn btn-outline-secondary" type="button" id="copyPublicUrlBtn">
-              <i class="bi bi-clipboard"></i>
-            </button>
-          </div>
-        </div>
+
       </div>
-      <div class="modal-footer border-0">
-        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" id="savePublicConfigBtn">
-          <i class="bi bi-save me-1"></i> Simpan Pengaturan
+
+      <div class="modal-footer border-0 justify-content-between flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-danger rounded-pill px-4" id="deleteFolderBtn">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i> Hapus Folder
+        </button>
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Tutup
         </button>
       </div>
+
     </div>
   </div>
 </div>
 
 
-<!-- ==================== MODAL PREVIEW (FULLSCREEN) ==================== -->
-<div id="customPreviewModal" style="display:none;">
+<!-- ========================================================== -->
+<!-- MODAL PREVIEW FULLSCREEN                                    -->
+<!-- ========================================================== -->
+<div id="customPreviewModal" style="display:none;" role="dialog" aria-modal="true"
+     aria-label="Preview aset">
   <div class="custom-preview-box">
     <div class="custom-preview-header">
       <div>
         <h5 id="previewModalTitle" style="margin:0;font-weight:600;font-size:1.1rem;">
-          <i class="bi bi-eye me-2"></i>Pratinjau Aset
+          <i class="bi bi-eye me-2" aria-hidden="true"></i>Pratinjau Aset
         </h5>
         <div class="small text-light opacity-75 mt-1" id="previewMetaInfo"></div>
       </div>
       <div class="d-flex align-items-center gap-2">
         <button id="autoplayToggleBtn" class="btn btn-sm px-2" title="Putar Otomatis"
-                style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;">
-          <i class="bi bi-play-circle-fill" style="font-size:1.2rem;"></i>
+                aria-label="Autoplay" type="button">
+          <i class="bi bi-play-circle-fill" style="font-size:1.2rem;" aria-hidden="true"></i>
         </button>
-        <button id="closePreviewBtn"
+        <button id="closePreviewBtn" aria-label="Tutup preview" type="button"
                 style="background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:50%;width:36px;height:36px;font-size:1.2rem;cursor:pointer;">
-          <i class="bi bi-x-lg"></i>
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
       </div>
     </div>
     <div class="custom-preview-body">
       <div class="custom-preview-spinner" id="customPreviewSpinner">
-        <div class="spinner-border text-light"></div>
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Memuat…</span>
+        </div>
       </div>
       <div class="custom-preview-error" id="customPreviewError" style="display:none;">
-        <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:3rem;"></i>
-        <p class="text-light mt-2">Gagal memuat file. <br><small>Pastikan file publik.</small></p>
+        <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:3rem;" aria-hidden="true"></i>
+        <p class="text-light mt-2">
+          Gagal memuat file.<br>
+          <small>Pastikan file publik.</small>
+        </p>
       </div>
-      <div class="nav-arrow prev" id="navPrev"><i class="bi bi-chevron-left"></i></div>
-      <div class="nav-arrow next" id="navNext"><i class="bi bi-chevron-right"></i></div>
-      <iframe id="previewContent" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+      <div class="nav-arrow prev" id="navPrev" role="button" tabindex="0" aria-label="Sebelumnya">
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+      </div>
+      <div class="nav-arrow next" id="navNext" role="button" tabindex="0" aria-label="Selanjutnya">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </div>
+      <iframe id="previewContent" allow="autoplay; encrypted-media; fullscreen"
+              allowfullscreen title="Pratinjau aset"></iframe>
     </div>
   </div>
 </div>
 
 
-<!-- ==================== TOAST (lokal fallback) ==================== -->
+<!-- ========================================================== -->
+<!-- TOAST (lokal fallback)                                      -->
+<!-- ========================================================== -->
 <div class="toast-container" id="assetToastContainer">
-  <div id="assetToast" class="toast border-0 shadow-lg" role="alert" data-bs-delay="3000">
+  <div id="assetToast" class="toast border-0 shadow-lg" role="alert"
+       data-bs-delay="3000" data-bs-autohide="true">
     <div class="toast-header bg-white border-0">
-      <i class="bi me-2" id="assetToastIcon"></i>
+      <i class="bi me-2" id="assetToastIcon" aria-hidden="true"></i>
       <strong class="me-auto" id="assetToastTitle">Info</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"
+              aria-label="Tutup"></button>
     </div>
     <div class="toast-body" id="assetToastMessage"></div>
   </div>
 </div>
+
+
+<!-- ============================================================ -->
+<!-- INLINE STYLE — khusus asset.html                             -->
+<!-- ============================================================ -->
+<style>
+  .settings-block { padding: 0; }
+  .settings-block-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-slate-900);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--color-slate-200);
+  }
+  .settings-block-title i { font-size: 1.15rem; }
+
+  /* Dark mode */
+  [data-theme="dark"] .settings-block-title {
+    color: #f1f5f9;
+    border-bottom-color: #1e293b;
+  }
+  [data-theme="dark"] #folderSettingsModal .bg-light {
+    background-color: #1e293b !important;
+    color: #f1f5f9;
+  }
+  [data-theme="dark"] #folderSettingsModal .bg-primary.bg-opacity-10 {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+  }
+  [data-theme="dark"] #folderSettingsModal .modal-body hr {
+    border-color: #334155;
+  }
+  [data-theme="dark"] #folderSettingsModal .form-text {
+    color: #94a3b8 !important;
+  }
+
+  /* Folder settings link input readonly look */
+  #folderPublicUrl[readonly] {
+    background: #fff;
+    cursor: text;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+  }
+  [data-theme="dark"] #folderPublicUrl[readonly] {
+    background: #0f172a;
+    color: #cbd5e1;
+    border-color: #334155;
+  }
+
+  /* Folder list copy & settings buttons */
+  #folderList .folder-item button {
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #folderList .folder-item:hover button {
+    opacity: 1;
+  }
+  #folderList .folder-item button:hover {
+    transform: scale(1.1);
+  }
+
+  /* Breadcrumb copy button */
+  #breadcrumb [data-copy-folder-link] {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+  }
+
+  /* ⭐ Real-time validation status badge */
+  #folderCustomIdStatus,
+  #editFolderCustomIdStatus {
+    transition: background-color 0.2s;
+  }
+  #folderCustomIdStatus.available,
+  #editFolderCustomIdStatus.available {
+    background: #dcfce7;
+  }
+  #folderCustomIdStatus.duplicate,
+  #editFolderCustomIdStatus.duplicate {
+    background: #fee2e2;
+  }
+  #folderCustomIdStatus.checking,
+  #editFolderCustomIdStatus.checking {
+    background: #f1f5f9;
+  }
+
+  /* ⭐ Custom ID input font */
+  #folderCustomId,
+  #editFolderCustomId {
+    letter-spacing: 0.05em;
+  }
+
+  /* ⭐ Hint text */
+  #folderCustomIdHint.success,
+  #editFolderCustomIdHint.success {
+    color: #15803d;
+  }
+  #folderCustomIdHint.error,
+  #editFolderCustomIdHint.error {
+    color: #dc2626;
+  }
+</style>

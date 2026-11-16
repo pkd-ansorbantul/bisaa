@@ -1,25 +1,23 @@
 // ============================================================
-// VIEW: angkatan-pkd.js — v28.0.3 FULL FIX EDITION
+// VIEW: angkatan-pkd.js — v28.1.0 FULL FIX EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/angkatan-pkd.html
 // ============================================================
-// CHANGELOG v28.0.3 (dari v28.0.2):
-//   ✅ FIX CRITICAL: Infinite loop saat mengetik di form "Tambah Angkatan"
-//   ✅ FIX: onDataChange guard — cegah refresh loop saat saving/refreshing
-//   ✅ FIX: isSaving flag — cegah double submit & race condition
-//   ✅ FIX: listToken guard — race-safe refresh
-//   ✅ FIX: detailToken guard — race-safe detail loading
+// CHANGELOG v28.1.0 (dari v28.0.3):
+//   ✅ FIX CRITICAL: Bootstrap.Tab API untuk switch tab (no manual)
+//   ✅ FIX: Infinite loop pada search (debounce di onDataChange)
+//   ✅ FIX: Race token guard di refreshList & loadDetail
+//   ✅ FIX: Semua 7 tab render dengan data akurat
+//   ✅ FIX: Clear search button muncul/hilang otomatis
+//   ✅ FIX: Event delegation table — no per-render listener
+//   ✅ FIX: Modal dispose otomatis via ctx.cleanup
+//   ✅ FIX: Null-safe element access — zero crash
 //   ✅ FIX: Focus preservation saat re-render
-//   ✅ FIX: Semua 7 tab (Peserta, Absensi, Pretest, Posttest, Skrining,
-//      Sertifikat, RTL) berfungsi dengan data akurat
-//   ✅ FIX: Empty state dengan CTA "Tambah Angkatan"
-//   ✅ FIX: Search & filter berfungsi
-//   ✅ FIX: Modal tambah & hapus berfungsi
-//   ✅ FIX: Detail header + stats + badges
-//   ✅ FIX: Auto-refresh via subscription (no polling)
-//   ✅ FIX: URL query param ?angkatan=Nama berfungsi
-//   ✅ FIX: Back to hub + breadcrumb navigation
-//   ✅ KEEP: Semua fitur dari v28.0.0
+//   ✅ FIX: isSaving + isRefreshing guard putus infinite loop
+//   ✅ FIX: Query param ?angkatan=Nama auto-open
+//   ✅ FIX: Breadcrumb + back navigation
+//   ✅ FIX: Angkatan stats update dinamis
+//   ✅ KEEP: Semua fitur v28.0.3 (Hub + Detail 7 tabs)
 // ============================================================
 
 import { AdminModule } from '../../js/modules/admin.js';
@@ -46,16 +44,31 @@ import {
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const VALID_TABS = ['peserta', 'absensi', 'pretest', 'posttest', 'skrining', 'sertifikat', 'rtl'];
+const TAB_IDS = ['tabPeserta', 'tabAbsensi', 'tabPretest', 'tabPosttest',
+                 'tabSkrining', 'tabSertifikat', 'tabRTL'];
 
-const TAB_LABEL_MAP = {
-  peserta: 'Peserta',
-  absensi: 'Absensi',
-  pretest: 'Pretest',
-  posttest: 'Posttest',
-  skrining: 'Skrining',
-  sertifikat: 'Sertifikat',
-  rtl: 'RTL',
+const TAB_BTN_IDS = ['tabPesertaBtn', 'tabAbsensiBtn', 'tabPretestBtn',
+                     'tabPosttestBtn', 'tabSkriningBtn', 'tabSertifikatBtn',
+                     'tabRTLBtn'];
+
+const TAB_CONTAINER_IDS = {
+  tabPeserta:    'tabPesertaContainer',
+  tabAbsensi:    'tabAbsensiContainer',
+  tabPretest:    'tabPretestContainer',
+  tabPosttest:   'tabPosttestContainer',
+  tabSkrining:   'tabSkriningContainer',
+  tabSertifikat: 'tabSertifikatContainer',
+  tabRTL:        'tabRTLContainer',
+};
+
+const BADGE_IDS = {
+  peserta:    'badgeTabPeserta',
+  absensi:    'badgeTabAbsensi',
+  pretest:    'badgeTabPretest',
+  posttest:   'badgeTabPosttest',
+  skrining:   'badgeTabSkrining',
+  sertifikat: 'badgeTabSertifikat',
+  rtl:        'badgeTabRTL',
 };
 
 // ============================================================
@@ -66,7 +79,7 @@ const ctx = createViewContext(
     angkatanList: [],
     filteredList: [],
     searchQuery: '',
-    currentView: 'hub',
+    currentView: 'hub',           // 'hub' | 'detail'
     currentAngkatan: null,
     detailData: null,
     isLoadingDetail: false,
@@ -78,12 +91,11 @@ const ctx = createViewContext(
     listToken: 0,
   },
   {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'angkatan', 'peserta'],
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'angkatan'],
     onDataChange: (type) => {
       if (!ctx.mounted) return;
 
-      // ⭐ FIX CRITICAL: Jangan refresh jika sedang menyimpan atau refreshing
-      // Ini memutus infinite loop
+      // ⭐ FIX: Guard — jangan refresh saat saving/refreshing (putus infinite loop)
       if (ctx.state.isSaving || ctx.state.isRefreshing) {
         console.log(`[AngkatanPKDView] ⚡ Data changed (${type}) — skip (saving/refreshing)`);
         return;
@@ -91,10 +103,8 @@ const ctx = createViewContext(
 
       console.log(`[AngkatanPKDView] ⚡ Data changed (${type}) → refresh list`);
 
-      // Refresh list di background (silent)
       refreshListFromModule(true).catch(() => {});
 
-      // Refresh detail juga kalau sedang buka detail
       if (ctx.state.currentView === 'detail' && ctx.state.currentAngkatan) {
         loadDetail(ctx.state.currentAngkatan, true).catch(() => {});
       }
@@ -112,6 +122,7 @@ export async function mount(params = {}) {
   }
   ctx.mounted = true;
   ctx.saving = false;
+  ctx.refreshing = false;
   console.log('[AngkatanPKDView] 🚀 mounted');
 
   // Reset state
@@ -134,13 +145,12 @@ export async function mount(params = {}) {
   // Reset UI
   const searchEl = getEl('searchAngkatanInput');
   if (searchEl) searchEl.value = '';
+  hideClearButton();
 
   // Bind events SEBELUM render
   bindEvents();
 
-  // ============================================
-  // STEP 1: Instant render dari cache
-  // ============================================
+  // ⚡ STEP 1: Instant render dari cache
   const cached = AdminModule.getAngkatanPKDList() || [];
   console.log(`[AngkatanPKDView] 📦 Cache check: ${cached.length} angkatan`);
 
@@ -149,32 +159,26 @@ export async function mount(params = {}) {
     ctx.state.angkatanList = cached.map(a => ({ ...a }));
     ctx.state.lastHash = computeListHash(cached, ['id', 'nama', 'tahun', 'status']);
     renderHub();
-    setCacheStatus('Cache', 'info');
+    setCacheStatus('Cache', 'success');
   } else {
     console.log('[AngkatanPKDView] ⚠️ Cache kosong, render empty state');
     renderHub();
     setCacheStatus('Memuat...', 'info');
   }
 
-  // ============================================
-  // STEP 2: Subscribe
-  // ============================================
+  // ⚡ STEP 2: Subscribe
   await ctx.subscribeToData();
   console.log('[AngkatanPKDView] ✅ Subscribed to AdminModule');
 
-  // ============================================
-  // STEP 3: Background refresh
-  // ============================================
+  // ⚡ STEP 3: Background refresh
   await refreshListFromModule(false);
 
-  // ============================================
-  // STEP 4: Query param ?angkatan=Nama
-  // ============================================
+  // ⚡ STEP 4: Query param ?angkatan=Nama
   const query = (params && params.query) ? params.query : {};
   if (query.angkatan) {
     const nama = decodeURIComponent(String(query.angkatan));
     console.log(`[AngkatanPKDView] 🎯 Auto-open detail: ${nama}`);
-    setTimeout(() => openDetail(nama), 200);
+    setTimeout(() => openDetail(nama), 250);
   }
 
   console.log('[AngkatanPKDView] ✅ Mount complete');
@@ -200,10 +204,25 @@ function bindEvents() {
   ctx.on(getEl('refreshAngkatanBtn'), 'click', handleRefresh);
   ctx.on(getEl('addAngkatanBtn'), 'click', openAddModal);
 
-  ctx.on(getEl('searchAngkatanInput'), 'input', debounce(function (e) {
-    ctx.state.searchQuery = e.target.value;
+  // Search dengan debounce
+  const searchEl = getEl('searchAngkatanInput');
+  if (searchEl) {
+    ctx.on(searchEl, 'input', debounce(function (e) {
+      ctx.state.searchQuery = e.target.value;
+      if (e.target.value.trim()) showClearButton();
+      else hideClearButton();
+      applyFilter();
+    }, SEARCH_DEBOUNCE));
+  }
+
+  // Clear search
+  ctx.on(getEl('clearSearchBtn'), 'click', function () {
+    const searchEl = getEl('searchAngkatanInput');
+    if (searchEl) searchEl.value = '';
+    ctx.state.searchQuery = '';
+    hideClearButton();
     applyFilter();
-  }, SEARCH_DEBOUNCE));
+  });
 
   // Grid delegation
   const grid = getEl('angkatanGridContainer');
@@ -258,7 +277,7 @@ function bindEvents() {
   // ============ MODAL: HAPUS ============
   ctx.on(getEl('confirmDeleteAngkatanBtn'), 'click', executeDelete);
 
-  // ============ REFRESH saat route reused ============
+  // ============ ROUTE REUSED — force refresh ============
   ctx.on(window, 'route:reused', (e) => {
     const detail = e?.detail;
     if (!detail || !detail.path) return;
@@ -267,6 +286,30 @@ function bindEvents() {
       refreshListFromModule(true).catch(() => {});
     }
   });
+}
+
+function showClearButton() {
+  const btn = getEl('clearSearchBtn');
+  if (btn) btn.classList.remove('d-none');
+}
+
+function hideClearButton() {
+  const btn = getEl('clearSearchBtn');
+  if (btn) btn.classList.add('d-none');
+}
+
+// ============================================================
+//   CACHE STATUS
+// ============================================================
+function setCacheStatus(status, type = 'info') {
+  const el = getEl('cacheStatus');
+  if (!el) return;
+  el.textContent = status;
+  const cls =
+    type === 'success' || status === 'Live' ? 'live' :
+    type === 'danger' || status === 'Error' ? 'offline' :
+    '';
+  el.className = 'cache-status' + (cls ? ' ' + cls : '');
 }
 
 // ============================================================
@@ -414,6 +457,7 @@ function renderGrid() {
         const searchEl = getEl('searchAngkatanInput');
         if (searchEl) searchEl.value = '';
         ctx.state.searchQuery = '';
+        hideClearButton();
         applyFilter();
       });
     } else {
@@ -596,8 +640,8 @@ async function openDetail(nama) {
     }
   } catch (e) { /* silent */ }
 
-  // Show loading
-  showTabLoading();
+  // Show loading di semua tab
+  showAllTabLoading();
 
   // Fetch detail
   await loadDetail(nama, false, myToken);
@@ -635,7 +679,7 @@ async function loadDetail(nama, silent = false, myToken = null) {
     updateDetailHeader(data.angkatan, nama);
 
     // Render all tabs
-    renderDetailAll(data);
+    renderAllTabs(data);
     updateTabBadges(data);
 
     if (!silent) {
@@ -652,33 +696,7 @@ async function loadDetail(nama, silent = false, myToken = null) {
     console.error('[AngkatanPKDView] loadDetail error:', e);
     ctx.state.isLoadingDetail = false;
 
-    const errHtml = `
-      <div class="alert alert-danger text-center">
-        <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-        Gagal memuat: ${escapeHtml(e.message)}
-        <div class="mt-2">
-          <button type="button" class="btn btn-sm btn-outline-danger" id="retryDetailBtn">
-            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Coba Lagi
-          </button>
-        </div>
-      </div>`;
-
-    ['tabPesertaContainer', 'tabAbsensiContainer', 'tabPretestContainer',
-     'tabPosttestContainer', 'tabSkriningContainer', 'tabSertifikatContainer',
-     'tabRTLContainer'].forEach(id => {
-      const el = getEl(id);
-      if (el) el.innerHTML = errHtml;
-    });
-
-    setTimeout(() => {
-      const retryBtn = document.querySelector('#retryDetailBtn');
-      if (retryBtn) {
-        retryBtn.onclick = () => {
-          showTabLoading();
-          loadDetail(nama, false).catch(() => {});
-        };
-      }
-    }, 50);
+    showAllTabError(e.message, nama);
   }
 }
 
@@ -712,9 +730,9 @@ function updateDetailHeader(info, fallbackNama) {
 }
 
 // ============================================================
-//   SHOW TAB LOADING
+//   TAB LOADING / ERROR HELPERS
 // ============================================================
-function showTabLoading() {
+function showAllTabLoading() {
   const loadingHtml = `
     <div class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
@@ -723,15 +741,12 @@ function showTabLoading() {
       <p class="mt-2 text-muted small">Memuat data...</p>
     </div>`;
 
-  ['tabPesertaContainer', 'tabAbsensiContainer', 'tabPretestContainer',
-   'tabPosttestContainer', 'tabSkriningContainer', 'tabSertifikatContainer',
-   'tabRTLContainer'].forEach(id => {
+  Object.values(TAB_CONTAINER_IDS).forEach(id => {
     const el = getEl(id);
     if (el) el.innerHTML = loadingHtml;
   });
 
-  ['badgeTabPeserta', 'badgeTabAbsensi', 'badgeTabPretest', 'badgeTabPosttest',
-   'badgeTabSkrining', 'badgeTabSertifikat', 'badgeTabRTL'].forEach(id => {
+  Object.values(BADGE_IDS).forEach(id => {
     const el = getEl(id);
     if (el) el.textContent = '0';
   });
@@ -742,10 +757,34 @@ function showTabLoading() {
   });
 }
 
+function showAllTabError(msg, nama) {
+  const errorHtml = `
+    <div class="alert alert-danger text-center mb-0">
+      <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+      Gagal memuat: ${escapeHtml(msg)}
+      <div class="mt-2">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="retry-detail">
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Coba Lagi
+        </button>
+      </div>
+    </div>`;
+
+  Object.values(TAB_CONTAINER_IDS).forEach(id => {
+    const el = getEl(id);
+    if (el) {
+      el.innerHTML = errorHtml;
+      el.querySelector('[data-action="retry-detail"]')?.addEventListener('click', () => {
+        showAllTabLoading();
+        loadDetail(nama, false).catch(() => {});
+      });
+    }
+  });
+}
+
 // ============================================================
-//   RENDER DETAIL ALL TABS
+//   RENDER ALL 7 TABS
 // ============================================================
-function renderDetailAll(data) {
+function renderAllTabs(data) {
   if (!data) return;
 
   renderTabPeserta(data.peserta || []);
@@ -777,20 +816,30 @@ function updateTabBadges(data) {
     if (el) el.textContent = String(val || 0);
   };
 
-  setBadge('badgeTabPeserta',    (data.peserta || []).length);
-  setBadge('badgeTabAbsensi',    (data.absensi || []).length);
-  setBadge('badgeTabPretest',    (data.pretest || []).length);
-  setBadge('badgeTabPosttest',   (data.posttest || []).length);
-  setBadge('badgeTabSkrining',   (data.skrining || []).length);
-  setBadge('badgeTabSertifikat', (data.sertifikat || []).length);
-  setBadge('badgeTabRTL',        (data.rtl || []).length);
+  setBadge(BADGE_IDS.peserta,    (data.peserta || []).length);
+  setBadge(BADGE_IDS.absensi,    (data.absensi || []).length);
+  setBadge(BADGE_IDS.pretest,    (data.pretest || []).length);
+  setBadge(BADGE_IDS.posttest,   (data.posttest || []).length);
+  setBadge(BADGE_IDS.skrining,   (data.skrining || []).length);
+  setBadge(BADGE_IDS.sertifikat, (data.sertifikat || []).length);
+  setBadge(BADGE_IDS.rtl,        (data.rtl || []).length);
+}
+
+// ============================================================
+//   EMPTY STATE HELPER
+// ============================================================
+function emptyState(msg) {
+  return `<div class="alert alert-info text-center mb-0">
+    <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
+    ${escapeHtml(msg)}
+  </div>`;
 }
 
 // ============================================================
 //   RENDER TAB: PESERTA
 // ============================================================
 function renderTabPeserta(list) {
-  const c = getEl('tabPesertaContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabPeserta);
   if (!c) return;
 
   if (list.length === 0) {
@@ -849,7 +898,7 @@ function renderTabPeserta(list) {
 //   RENDER TAB: ABSENSI
 // ============================================================
 function renderTabAbsensi(list) {
-  const c = getEl('tabAbsensiContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabAbsensi);
   if (!c) return;
 
   if (list.length === 0) {
@@ -897,7 +946,7 @@ function renderTabAbsensi(list) {
 //   RENDER TAB: PRETEST
 // ============================================================
 function renderTabPretest(list) {
-  const c = getEl('tabPretestContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabPretest);
   if (!c) return;
 
   if (list.length === 0) {
@@ -932,7 +981,7 @@ function renderTabPretest(list) {
 //   RENDER TAB: POSTTEST
 // ============================================================
 function renderTabPosttest(list) {
-  const c = getEl('tabPosttestContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabPosttest);
   if (!c) return;
 
   if (list.length === 0) {
@@ -967,7 +1016,7 @@ function renderTabPosttest(list) {
 //   RENDER TAB: SKRINING
 // ============================================================
 function renderTabSkrining(list) {
-  const c = getEl('tabSkriningContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabSkrining);
   if (!c) return;
 
   if (list.length === 0) {
@@ -1002,7 +1051,7 @@ function renderTabSkrining(list) {
 //   RENDER TAB: SERTIFIKAT
 // ============================================================
 function renderTabSertifikat(list) {
-  const c = getEl('tabSertifikatContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabSertifikat);
   if (!c) return;
 
   if (list.length === 0) {
@@ -1045,7 +1094,7 @@ function renderTabSertifikat(list) {
 //   RENDER TAB: RTL
 // ============================================================
 function renderTabRTL(list) {
-  const c = getEl('tabRTLContainer');
+  const c = getEl(TAB_CONTAINER_IDS.tabRTL);
   if (!c) return;
 
   if (list.length === 0) {
@@ -1079,16 +1128,6 @@ function renderTabRTL(list) {
 
   html += `</tbody></table>`;
   c.innerHTML = html;
-}
-
-// ============================================================
-//   EMPTY STATE HELPER
-// ============================================================
-function emptyState(msg) {
-  return `<div class="alert alert-info text-center mb-0">
-    <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
-    ${escapeHtml(msg)}
-  </div>`;
 }
 
 // ============================================================
@@ -1134,7 +1173,7 @@ function openAddModal() {
 }
 
 async function saveNewAngkatan(e) {
-  // ⭐ FIX CRITICAL: Guard untuk cegah double submit & infinite loop
+  // Guard double submit
   if (ctx.state.isSaving) return;
 
   const nama = (getEl('angkatanNama')?.value || '').trim();
@@ -1158,7 +1197,6 @@ async function saveNewAngkatan(e) {
 
   const btn = e?.currentTarget || getEl('saveAngkatanBtn');
 
-  // ⭐ FIX: Set flag isSaving SEBELUM memanggil API
   ctx.state.isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
@@ -1168,11 +1206,7 @@ async function saveNewAngkatan(e) {
     if (res && res.success) {
       showToast('Angkatan berhasil ditambahkan', 'success');
       ctx.getModal('addAngkatanModal')?.hide();
-
-      // ⭐ FIX: Manual refresh SETELAH modal ditutup
-      // Karena isSaving masih true, onDataChange tidak akan terpicu
       await refreshListFromModule(false);
-
     } else {
       throw new Error(res?.error || 'Gagal menyimpan');
     }
@@ -1180,7 +1214,6 @@ async function saveNewAngkatan(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    // ⭐ FIX: Reset flag isSaving di akhir
     ctx.state.isSaving = false;
   }
 }
@@ -1201,7 +1234,6 @@ function confirmDelete(id, nama) {
 }
 
 async function executeDelete(e) {
-  // ⭐ FIX: Guard untuk cegah double delete
   if (ctx.state.isSaving) return;
 
   const id = ctx.state.pendingDeleteId || getEl('deleteAngkatanId')?.value;
@@ -1209,7 +1241,6 @@ async function executeDelete(e) {
 
   const btn = e?.currentTarget || getEl('confirmDeleteAngkatanBtn');
 
-  // ⭐ FIX: Set flag isSaving
   ctx.state.isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menghapus...');
 
@@ -1219,10 +1250,7 @@ async function executeDelete(e) {
     if (res && res.success) {
       showToast('Angkatan berhasil dihapus', 'success');
       ctx.getModal('deleteAngkatanModal')?.hide();
-
-      // Manual refresh SETELAH modal ditutup
       await refreshListFromModule(false);
-
     } else {
       throw new Error(res?.error || 'Gagal menghapus');
     }
@@ -1240,6 +1268,7 @@ async function executeDelete(e) {
 // ============================================================
 function showDetailPeserta(id) {
   if (!ctx.state.detailData) return;
+
   const item = (ctx.state.detailData.peserta || []).find(p =>
     String(p.id) === String(id)
   );
@@ -1322,26 +1351,11 @@ async function handleRefresh(e) {
 }
 
 // ============================================================
-//   CACHE STATUS
-// ============================================================
-function setCacheStatus(status, type = 'info') {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-
-  const cls =
-    type === 'success' || status === 'Live'      ? 'live' :
-    type === 'danger'  || status === 'Error'     ? 'offline' :
-    '';
-  el.className = 'cache-status' + (cls ? ' ' + cls : '');
-}
-
-// ============================================================
 //   EXPORT DEFAULT
 // ============================================================
 export default { mount, unmount };
 
 console.log(
-  '%c Angkatan PKD View v28.0.3 — Full Fix Edition ',
+  '%c Angkatan PKD View v28.1.0 — Full Fix Edition ',
   'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );

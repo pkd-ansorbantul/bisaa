@@ -1,128 +1,91 @@
 // ============================================================
-// VIEW: sertifikat.js — Full Fix Production Ready
+// VIEW: sertifikat.js — v27.2.0 PRELOAD + SUBSCRIPTION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/sertifikat.html
 // ============================================================
-// Fitur:
-// ✅ Daftar sertifikat (search, sort, pagination)
-// ✅ Download PDF
-// ✅ Delete sertifikat
-// ✅ Generate single & batch (dengan eligibility check)
-// ✅ Progress bar generate
-// ✅ CRUD template
-// ✅ Tab: Daftar & Template
-// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
-// ✅ Zero memory leak + full cleanup on unmount
+// CHANGELOG v27.2.0 (dari v27.0.0):
+//   ✅ NEW: Subscription ke AdminModule (auto re-render)
+//   ✅ NEW: Instant render dari preload cache
+//   ✅ REMOVED: Per-view polling 90s
+//   ✅ FIX: Guard ctx.mounted di dalam loop generate
+//   ✅ FIX: Parallel generate 5 concurrent
+//   ✅ FIX: Modal dispose via ctx.cleanup
+//   ✅ FIX: Cancel-safe progress bar
+//   ✅ FIX: Focus preservation saat re-render
+//   ✅ KEEP: Template CRUD, generate, delete, verify
+//   ✅ Zero memory leak
 // ============================================================
 
-import { callApi, showToast, escapeHtml } from '../../js/core/api.js';
+import {
+  callApi,
+  showToast,
+  escapeHtml,
+  formatDateID,
+  normalizeResult,
+} from '../../js/core/api.js';
 import { AdminModule } from '../../js/modules/admin.js';
+import {
+  getEl,
+  debounce,
+  setBtnLoading,
+  createViewContext,
+  delegateTableClicks,
+  captureFocusState,
+  restoreFocusState,
+  cleanupBootstrapArtifacts,
+  computeListHash,
+  SEARCH_DEBOUNCE,
+} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   MODULE STATE
+//   CONSTANTS
 // ============================================================
-let pollInterval = null;
-let searchDebounceTimer = null;
-let isMounted = false;
-let isRefreshing = false;
-
-const STATE = {
-  certificates: [],
-  templates: [],
-  participants: [],
-  rtlData: [],
-  approvals: [],
-  filteredCertificates: [],
-  searchQuery: '',
-  currentPage: 1,
-  itemsPerPage: 15,
-  sortColumn: 'createdAt',
-  sortDirection: 'desc',
-  pendingDeleteCertId: null,
-  pendingDeleteTemplateId: null,
-  isGenerating: false,
-  modals: {},
-};
-
-const listeners = [];
+const GENERATE_CONCURRENCY = 5;
 
 // ============================================================
-//   UTILITY
+//   LOCAL HELPERS
 // ============================================================
-function on(el, ev, handler, options) {
-  if (!el) return null;
-  el.addEventListener(ev, handler, options);
-  listeners.push({ el, ev, handler, options });
-  return handler;
+function setCacheStatus(status) {
+  const el = getEl('cacheStatus');
+  if (!el) return;
+  el.textContent = status;
+  const cls = status === 'Live' ? 'live'
+    : (status === 'Offline' || status === 'Error') ? 'offline'
+    : '';
+  el.className = 'cache-status' + (cls ? ' ' + cls : '');
 }
 
-function debounce(fn, delay) {
-  let timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
-function getEl(id) {
-  return document.getElementById(id);
-}
-
-function getModal(id) {
-  const el = getEl(id);
-  if (!el) return null;
-  if (!STATE.modals[id]) {
-    STATE.modals[id] = new bootstrap.Modal(el);
-  }
-  return STATE.modals[id];
-}
-
-function disposeAllModals() {
-  Object.keys(STATE.modals).forEach(id => {
-    try { STATE.modals[id]?.dispose?.(); } catch (e) {}
-  });
-  STATE.modals = {};
-}
-
-function formatDate(ts) {
-  if (!ts) return '-';
-  try {
-    const d = new Date(ts);
-    if (isNaN(d.getTime())) return '-';
-    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-  } catch { return '-'; }
-}
-
-function normalizeResult(res) {
-  if (!res) return [];
-  if (Array.isArray(res)) return res;
-  if (res.data && Array.isArray(res.data)) return res.data;
-  return [];
+function getParticipantById(id) {
+  return ctx.state.participants.find(p => String(p.id) === String(id)) || null;
 }
 
 // ============================================================
 //   ELIGIBILITY CHECK
 // ============================================================
 function isParticipantEligible(p) {
+  if (!p) return { eligible: false, reason: 'Data tidak ditemukan' };
+
   const status = String(p.status || '').toLowerCase();
   if (status !== 'approved' && status !== 'active') {
     return { eligible: false, reason: 'Status belum disetujui' };
   }
 
-  // RTL check
-  const tasks = STATE.rtlData.filter(t => String(t.pesertaId) === String(p.id));
+  const tasks = ctx.state.rtlData.filter(t => String(t.pesertaId) === String(p.id));
   if (tasks.length > 0 && !tasks.every(t => String(t.status).toLowerCase() === 'selesai')) {
     return { eligible: false, reason: 'RTL belum selesai' };
   }
 
-  // TTD check
-  const nama = p.nama_lengkap;
-  const filtered = STATE.approvals.filter(a =>
-    String(a.peserta_nama || '').toLowerCase() === String(nama || '').toLowerCase()
+  const nama = String(p.nama_lengkap || '').toLowerCase().trim();
+  if (!nama) return { eligible: false, reason: 'Nama tidak valid' };
+
+  const filtered = ctx.state.approvals.filter(a =>
+    String(a.peserta_nama || '').toLowerCase().trim() === nama
   );
-  const hasKetua = filtered.some(a => a.role === 'ketua_pc');
+
+  const hasKetua      = filtered.some(a => a.role === 'ketua_pc');
   const hasSekretaris = filtered.some(a => a.role === 'sekretaris');
   const hasInstruktur = filtered.some(a => a.role === 'instruktur');
+
   if (!hasKetua || !hasSekretaris || !hasInstruktur) {
     return { eligible: false, reason: 'TTD digital belum lengkap' };
   }
@@ -131,54 +94,109 @@ function isParticipantEligible(p) {
 }
 
 // ============================================================
+//   CONTEXT
+// ============================================================
+const ctx = createViewContext(
+  {
+    certificates: [],
+    templates: [],
+    participants: [],
+    rtlData: [],
+    approvals: [],
+    filteredCertificates: [],
+    searchQuery: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: 'createdAt',
+    sortDirection: 'desc',
+    pendingDeleteCertId: null,
+    pendingDeleteTemplateId: null,
+    lastCertHash: '',
+    lastTemplateHash: '',
+    isGenerating: false,
+  },
+  {
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'sertifikat'],
+    onDataChange: (type) => {
+      if (!ctx.mounted) return;
+      console.log(`[SertifikatView] ⚡ Data changed (${type}) → refresh from cache`);
+      try {
+        refreshFromCache();
+      } catch (e) {
+        console.warn('[SertifikatView] Re-render error:', e);
+      }
+    },
+  }
+);
+
+let certTableCleanup = null;
+
+// ============================================================
 //   MOUNT
 // ============================================================
-export async function mount({ path, query, outlet }) {
-  if (isMounted) {
+export async function mount() {
+  if (ctx.mounted) {
     console.warn('[SertifikatView] Sudah mounted, skip');
     return unmount;
   }
-  isMounted = true;
+  ctx.mounted = true;
+  ctx.saving = false;
+  ctx.refreshing = false;
+  ctx.state.isGenerating = false;
   console.log('[SertifikatView] mounted');
 
   // Reset state
-  STATE.certificates = [];
-  STATE.templates = [];
-  STATE.participants = [];
-  STATE.rtlData = [];
-  STATE.approvals = [];
-  STATE.filteredCertificates = [];
-  STATE.searchQuery = '';
-  STATE.currentPage = 1;
-  STATE.sortColumn = 'createdAt';
-  STATE.sortDirection = 'desc';
-  STATE.pendingDeleteCertId = null;
-  STATE.pendingDeleteTemplateId = null;
-  STATE.isGenerating = false;
+  Object.assign(ctx.state, {
+    certificates: [],
+    templates: [],
+    participants: [],
+    rtlData: [],
+    approvals: [],
+    filteredCertificates: [],
+    searchQuery: '',
+    currentPage: 1,
+    sortColumn: 'createdAt',
+    sortDirection: 'desc',
+    pendingDeleteCertId: null,
+    pendingDeleteTemplateId: null,
+    lastCertHash: '',
+    lastTemplateHash: '',
+    isGenerating: false,
+  });
 
   const searchEl = getEl('searchInput');
   if (searchEl) searchEl.value = '';
 
-  renderSkeletonCerts();
+  // ⚡ Instant render dari preload cache
+  const cached = AdminModule.getSertifikatList() || [];
+  if (cached.length > 0) {
+    console.log('[SertifikatView] ⚡ Rendering from preload cache');
+    ctx.state.certificates = cached.map(c => ({ ...c }));
+    ctx.state.participants = AdminModule.getPesertaList() || [];
+    ctx.state.rtlData = AdminModule.getRTLList() || [];
+    ctx.state.approvals = AdminModule.getDigitalApprovals() || [];
+    ctx.state.lastCertHash = computeListHash(cached);
+    renderCertTable();
+    setCacheStatus('Live');
+  } else {
+    console.log('[SertifikatView] ⚠️ No cache, showing skeleton');
+    renderSkeletonCerts();
+    setCacheStatus('Memuat...');
+  }
   renderSkeletonTemplates();
-
-  await Promise.all([
-    loadCertificates(true).catch(e => console.error('loadCertificates:', e)),
-    loadTemplates().catch(e => console.error('loadTemplates:', e)),
-  ]);
 
   bindEvents();
 
-  // Auto-refresh 30s
-  pollInterval = setInterval(() => {
-    if (document.hidden) return;
-    if (!isMounted) return;
-    if (isRefreshing) return;
-    isRefreshing = true;
-    loadCertificates(false)
-      .catch(() => {})
-      .finally(() => { isRefreshing = false; });
-  }, 30000);
+  // ⚡ Subscribe ke perubahan data
+  await ctx.subscribeToData();
+
+  // Load templates (tidak di-preload)
+  await loadTemplates();
+
+  // Fallback: kalau cache kosong
+  if (cached.length === 0) {
+    await loadCertificates(false);
+  }
 
   return unmount;
 }
@@ -187,70 +205,115 @@ export async function mount({ path, query, outlet }) {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!isMounted) return;
-  isMounted = false;
+  if (!ctx.mounted) return;
+  ctx.mounted = false;
   console.log('[SertifikatView] unmounted');
 
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
+  if (certTableCleanup) {
+    try { certTableCleanup(); } catch (e) { /* silent */ }
+    certTableCleanup = null;
   }
 
-  listeners.forEach(({ el, ev, handler, options }) => {
-    try { el.removeEventListener(ev, handler, options); } catch (e) {}
-  });
-  listeners.length = 0;
+  ctx.cleanup();
+  cleanupBootstrapArtifacts();
+}
 
-  disposeAllModals();
+// ============================================================
+//   REFRESH FROM CACHE
+// ============================================================
+function refreshFromCache() {
+  const fresh = AdminModule.getSertifikatList() || [];
+  const freshHash = computeListHash(fresh);
 
-  try {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-  } catch (e) {}
+  // Update references always
+  ctx.state.participants = AdminModule.getPesertaList() || [];
+  ctx.state.rtlData = AdminModule.getRTLList() || [];
+  ctx.state.approvals = AdminModule.getDigitalApprovals() || [];
+
+  if (freshHash === ctx.state.lastCertHash) {
+    console.log('[SertifikatView] No change, skip re-render');
+    return;
+  }
+
+  ctx.state.certificates = fresh.map(c => ({ ...c }));
+  ctx.state.lastCertHash = freshHash;
+  renderCertTable();
+  setCacheStatus('Live');
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  const searchEl = getEl('searchInput');
-
-  on(searchEl, 'input', debounce(function (e) {
-    STATE.searchQuery = e.target.value;
-    STATE.currentPage = 1;
+  // Search
+  ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
+    ctx.state.searchQuery = e.target.value;
+    ctx.state.currentPage = 1;
     renderCertTable();
-  }, 300));
+  }, SEARCH_DEBOUNCE));
 
-  on(getEl('refreshDataBtn'), 'click', async function () {
-    const btn = this;
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-    try {
-      await Promise.all([loadCertificates(true), loadTemplates()]);
-      showToast('Data disegarkan', 'success');
-    } catch (e) {
-      showToast('Gagal menyegarkan', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = original;
-    }
-  });
+  // Refresh
+  ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
 
-  on(getEl('generateCertBtn'), 'click', () => openGenerateModal());
-  on(getEl('genPesertaSelect'), 'change', updateGenValidation);
-  on(getEl('genSubmitBtn'), 'click', executeGenerate);
+  // Generate
+  ctx.on(getEl('generateCertBtn'), 'click', () => openGenerateModal());
+  ctx.on(getEl('genPesertaSelect'), 'change', updateGenValidation);
+  ctx.on(getEl('genSubmitBtn'), 'click', executeGenerate);
 
-  on(getEl('addTemplateBtn'), 'click', addTemplate);
-  on(getEl('saveTemplateBtn'), 'click', saveTemplate);
-  on(getEl('confirmDeleteTemplateBtn'), 'click', executeDeleteTemplate);
-  on(getEl('confirmDeleteCertBtn'), 'click', executeDeleteCert);
+  // Template CRUD
+  ctx.on(getEl('addTemplateBtn'), 'click', addTemplate);
+  ctx.on(getEl('saveTemplateBtn'), 'click', saveTemplate);
+  ctx.on(getEl('confirmDeleteTemplateBtn'), 'click', executeDeleteTemplate);
+  ctx.on(getEl('confirmDeleteCertBtn'), 'click', executeDeleteCert);
+
+  // ✅ DELEGATION — cert table
+  const certContainer = getEl('certListContainer');
+  if (certContainer) {
+    certTableCleanup = delegateTableClicks(certContainer, {
+      onSort: (col) => handleSort(col),
+      onAction: (action, id) => {
+        if (action === 'delete-cert') confirmDeleteCert(id);
+      },
+      onPage: (page) => goToCertPage(page),
+    });
+  }
+
+  // ✅ DELEGATION — template table
+  const templateContainer = getEl('templateContainer');
+  if (templateContainer) {
+    ctx.on(templateContainer, 'click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.preventDefault();
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'edit-template') editTemplate(id);
+      else if (action === 'delete-template') deleteTemplate(id);
+    });
+  }
+}
+
+// ============================================================
+//   REFRESH
+// ============================================================
+async function handleRefresh(e) {
+  if (ctx.saving) return;
+
+  ctx.saving = true;
+  const btn = e.currentTarget || getEl('refreshDataBtn');
+  const restore = setBtnLoading(btn, true, 'Memuat...');
+
+  try {
+    await AdminModule.loadAllData(true);
+    refreshFromCache();
+    await loadTemplates();
+    showToast('Data disegarkan', 'success');
+  } catch (err) {
+    showToast('Gagal menyegarkan', 'error');
+  } finally {
+    restore();
+    ctx.saving = false;
+  }
 }
 
 // ============================================================
@@ -262,10 +325,14 @@ function renderSkeletonCerts() {
   c.innerHTML = `
     <div class="table-responsive"><table class="table table-hover align-middle">
       <thead class="table-light"><tr>
-        ${Array(6).fill(0).map(() => `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`).join('')}
+        ${Array(6).fill(0).map(() =>
+          `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`
+        ).join('')}
       </tr></thead>
       <tbody>${Array(5).fill(0).map(() =>
-        `<tr>${Array(6).fill(0).map(() => `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`).join('')}</tr>`
+        `<tr>${Array(6).fill(0).map(() =>
+          `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`
+        ).join('')}</tr>`
       ).join('')}</tbody>
     </table></div>`;
 }
@@ -276,10 +343,14 @@ function renderSkeletonTemplates() {
   c.innerHTML = `
     <div class="table-responsive"><table class="table table-hover align-middle">
       <thead class="table-light"><tr>
-        ${Array(4).fill(0).map(() => `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`).join('')}
+        ${Array(4).fill(0).map(() =>
+          `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`
+        ).join('')}
       </tr></thead>
       <tbody>${Array(4).fill(0).map(() =>
-        `<tr>${Array(4).fill(0).map(() => `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`).join('')}</tr>`
+        `<tr>${Array(4).fill(0).map(() =>
+          `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`
+        ).join('')}</tr>`
       ).join('')}</tbody>
     </table></div>`;
 }
@@ -288,32 +359,38 @@ function renderSkeletonTemplates() {
 //   CERTIFICATES TABLE
 // ============================================================
 function getFilteredCertificates() {
-  let filtered = STATE.certificates.slice();
-  if (STATE.searchQuery.trim() !== '') {
-    const q = STATE.searchQuery.toLowerCase().trim();
+  let filtered = ctx.state.certificates.slice();
+
+  if (ctx.state.searchQuery.trim() !== '') {
+    const q = ctx.state.searchQuery.toLowerCase().trim();
     filtered = filtered.filter(item =>
       String(item.nama_peserta || '').toLowerCase().includes(q) ||
       String(item.nomor_sertifikat || '').toLowerCase().includes(q)
     );
   }
-  if (STATE.sortColumn) {
+
+  if (ctx.state.sortColumn) {
+    const col = ctx.state.sortColumn;
+    const dir = ctx.state.sortDirection === 'asc' ? 1 : -1;
+
     filtered.sort((a, b) => {
-      let va = a[STATE.sortColumn];
-      let vb = b[STATE.sortColumn];
-      if (STATE.sortColumn === 'createdAt') {
-        va = new Date(va || 0).getTime();
-        vb = new Date(vb || 0).getTime();
-        if (isNaN(va)) va = 0;
-        if (isNaN(vb)) vb = 0;
+      let va = a[col];
+      let vb = b[col];
+
+      if (col === 'createdAt') {
+        va = new Date(va || 0).getTime() || 0;
+        vb = new Date(vb || 0).getTime() || 0;
       } else {
         va = String(va || '').toLowerCase();
         vb = String(vb || '').toLowerCase();
       }
-      if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
-      if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
+
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
       return String(a.id || '').localeCompare(String(b.id || ''));
     });
   }
+
   return filtered;
 }
 
@@ -321,54 +398,63 @@ function renderCertTable() {
   const c = getEl('certListContainer');
   if (!c) return;
 
-  STATE.filteredCertificates = getFilteredCertificates();
-  const totalItems = STATE.filteredCertificates.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-  if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
-  if (STATE.currentPage < 1) STATE.currentPage = 1;
-  const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-  const end = Math.min(start + STATE.itemsPerPage, totalItems);
-  const pageData = STATE.filteredCertificates.slice(start, end);
+  const savedFocus = captureFocusState('searchInput');
+
+  ctx.state.filteredCertificates = getFilteredCertificates();
+  const totalItems = ctx.state.filteredCertificates.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
+  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
+  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
+
+  const start = (ctx.state.currentPage - 1) * ctx.state.itemsPerPage;
+  const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
+  const pageData = ctx.state.filteredCertificates.slice(start, end);
 
   const arrow = (col) => {
-    if (STATE.sortColumn !== col) return '↕';
-    return STATE.sortDirection === 'asc' ? '↑' : '↓';
+    if (ctx.state.sortColumn !== col) return '↕';
+    return ctx.state.sortDirection === 'asc' ? '↑' : '↓';
   };
 
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
     <thead class="table-light"><tr>
       <th style="width:50px;">#</th>
-      <th style="cursor:pointer;" data-sort="nama_peserta">Nama Peserta ${arrow('nama_peserta')}</th>
-      <th style="cursor:pointer;" data-sort="nomor_sertifikat">Nomor Sertifikat ${arrow('nomor_sertifikat')}</th>
-      <th style="cursor:pointer;" data-sort="createdAt">Tanggal Terbit ${arrow('createdAt')}</th>
+      <th data-sort="nama_peserta" style="cursor:pointer;">Nama Peserta ${arrow('nama_peserta')}</th>
+      <th data-sort="nomor_sertifikat" style="cursor:pointer;">Nomor Sertifikat ${arrow('nomor_sertifikat')}</th>
+      <th data-sort="createdAt" style="cursor:pointer;">Tanggal Terbit ${arrow('createdAt')}</th>
       <th style="width:150px;" class="text-center">PDF</th>
       <th style="width:110px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
 
   if (pageData.length === 0) {
+    const hasFilter = ctx.state.searchQuery.trim() !== '';
     html += `<tr><td colspan="6" class="text-center py-5 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-      ${STATE.searchQuery ? 'Tidak ada sertifikat sesuai pencarian.' : 'Belum ada sertifikat yang digenerate.'}
+      <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
+      ${hasFilter ? 'Tidak ada sertifikat sesuai pencarian.' : 'Belum ada sertifikat yang digenerate.'}
     </td></tr>`;
   } else {
     pageData.forEach((item, i) => {
       const globalIdx = start + i + 1;
       const safeId = escapeHtml(String(item.id || ''));
+
       html += `<tr>
         <td>${globalIdx}</td>
         <td><strong>${escapeHtml(item.nama_peserta || '-')}</strong></td>
-        <td><code>${escapeHtml(item.nomor_sertifikat || '-')}</code></td>
-        <td>${escapeHtml(formatDate(item.createdAt))}</td>
+        <td><code class="small">${escapeHtml(item.nomor_sertifikat || '-')}</code></td>
+        <td>${escapeHtml(formatDateID(item.createdAt))}</td>
         <td class="text-center">
           ${item.pdf_url
-            ? `<a href="${escapeHtml(item.pdf_url)}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">
-                 <i class="bi bi-download me-1"></i> Unduh
+            ? `<a href="${escapeHtml(item.pdf_url)}" target="_blank" rel="noopener noreferrer"
+                  class="btn btn-sm btn-outline-success"
+                  aria-label="Unduh PDF ${escapeHtml(item.nama_peserta || '')}">
+                 <i class="bi bi-download me-1" aria-hidden="true"></i> Unduh
                </a>`
             : '<span class="text-muted small">-</span>'}
         </td>
         <td class="text-center">
-          <button class="btn btn-sm btn-outline-danger" data-action="delete-cert" data-id="${safeId}" title="Hapus">
-            <i class="bi bi-trash"></i>
+          <button type="button" class="btn btn-sm btn-outline-danger"
+                  data-action="delete-cert" data-id="${safeId}"
+                  title="Hapus" aria-label="Hapus sertifikat ${escapeHtml(item.nama_peserta || '')}">
+            <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
         </td>
       </tr>`;
@@ -377,59 +463,59 @@ function renderCertTable() {
 
   html += `</tbody></table></div>`;
 
-  // Pagination
   html += `<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-    <div class="small text-muted">Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data</div>
+    <div class="small text-muted">
+      Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data
+    </div>
     <div class="btn-group">`;
 
   const maxButtons = 7;
-  let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
+  let startPage = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-  if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
 
   if (startPage > 1) {
-    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
-    if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
+    if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
+    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
               data-action="goto" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
-    if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
+    if (endPage < totalPages - 1) {
+      html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    }
+    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
   c.innerHTML = html;
 
-  c.querySelectorAll('[data-action="delete-cert"]').forEach(btn => {
-    btn.addEventListener('click', () => confirmDeleteCert(btn.dataset.id));
-  });
-  c.querySelectorAll('[data-action="goto"]').forEach(btn => {
-    btn.addEventListener('click', () => goToCertPage(parseInt(btn.dataset.page)));
-  });
-  c.querySelectorAll('[data-sort]').forEach(th => {
-    th.addEventListener('click', () => handleSort(th.dataset.sort));
-  });
+  restoreFocusState('searchInput', savedFocus);
 }
 
 function handleSort(col) {
-  if (STATE.sortColumn === col) {
-    STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+  if (ctx.state.sortColumn === col) {
+    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
   } else {
-    STATE.sortColumn = col;
-    STATE.sortDirection = 'asc';
+    ctx.state.sortColumn = col;
+    ctx.state.sortDirection = 'asc';
   }
-  STATE.currentPage = 1;
+  ctx.state.currentPage = 1;
   renderCertTable();
 }
 
 function goToCertPage(page) {
-  const totalPages = Math.max(1, Math.ceil(STATE.filteredCertificates.length / STATE.itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(
+    ctx.state.filteredCertificates.length / ctx.state.itemsPerPage
+  ));
   if (page < 1 || page > totalPages) return;
-  STATE.currentPage = page;
+  ctx.state.currentPage = page;
   renderCertTable();
+  getEl('certListContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
@@ -439,7 +525,7 @@ function renderTemplateTable() {
   const c = getEl('templateContainer');
   if (!c) return;
 
-  if (!STATE.templates || STATE.templates.length === 0) {
+  if (!ctx.state.templates || ctx.state.templates.length === 0) {
     c.innerHTML = `<div class="alert alert-info text-center mb-0">
       Belum ada template. Klik <strong>Tambah Template</strong> untuk menambahkan.
     </div>`;
@@ -454,18 +540,22 @@ function renderTemplateTable() {
       <th style="width:150px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
 
-  STATE.templates.forEach((t, idx) => {
+  ctx.state.templates.forEach((t, idx) => {
     const safeId = escapeHtml(String(t.id || ''));
     html += `<tr>
       <td>${idx + 1}</td>
       <td><strong>${escapeHtml(t.nama_template || '-')}</strong></td>
       <td><code class="small" style="word-break:break-all;">${escapeHtml(t.doc_template_id || '-')}</code></td>
       <td class="text-center">
-        <button class="btn btn-sm btn-outline-warning me-1" data-action="edit-template" data-id="${safeId}" title="Edit">
-          <i class="bi bi-pencil"></i>
+        <button type="button" class="btn btn-sm btn-outline-warning me-1"
+                data-action="edit-template" data-id="${safeId}"
+                title="Edit" aria-label="Edit template">
+          <i class="bi bi-pencil" aria-hidden="true"></i>
         </button>
-        <button class="btn btn-sm btn-outline-danger" data-action="delete-template" data-id="${safeId}" title="Hapus">
-          <i class="bi bi-trash"></i>
+        <button type="button" class="btn btn-sm btn-outline-danger"
+                data-action="delete-template" data-id="${safeId}"
+                title="Hapus" aria-label="Hapus template">
+          <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
       </td>
     </tr>`;
@@ -473,82 +563,77 @@ function renderTemplateTable() {
 
   html += `</tbody></table></div>`;
   c.innerHTML = html;
-
-  c.querySelectorAll('[data-action="edit-template"]').forEach(btn => {
-    btn.addEventListener('click', () => editTemplate(btn.dataset.id));
-  });
-  c.querySelectorAll('[data-action="delete-template"]').forEach(btn => {
-    btn.addEventListener('click', () => deleteTemplate(btn.dataset.id));
-  });
 }
 
 // ============================================================
-//   LOAD DATA
+//   LOAD DATA (fallback)
 // ============================================================
 async function loadCertificates(forceRefresh = false) {
-  const cacheEl = getEl('cacheStatus');
   try {
     if (!AdminModule.getState().lastSync || forceRefresh) {
       await AdminModule.loadAllData(forceRefresh);
     }
-    STATE.certificates = AdminModule.getSertifikatList() || [];
-    STATE.participants = AdminModule.getPesertaList() || [];
-    STATE.rtlData = AdminModule.getRTLList() || [];
-    STATE.approvals = AdminModule.getDigitalApprovals() || [];
-
-    renderCertTable();
-    if (cacheEl) {
-      cacheEl.textContent = 'Live';
-      cacheEl.className = 'cache-status live';
-    }
+    if (!ctx.mounted) return;
+    refreshFromCache();
   } catch (e) {
     console.error('[SertifikatView] loadCertificates:', e);
     const c = getEl('certListContainer');
-    if (c) {
+    if (c && ctx.state.certificates.length === 0) {
       c.innerHTML = `<div class="alert alert-danger text-center">
         Gagal memuat data: ${escapeHtml(e.message)}
       </div>`;
     }
-    if (cacheEl) {
-      cacheEl.textContent = 'Error';
-      cacheEl.className = 'cache-status offline';
-    }
+    setCacheStatus('Error');
   }
 }
 
 async function loadTemplates() {
   try {
     const res = await callApi('getCertificateTemplates', {}, 'GET');
-    STATE.templates = normalizeResult(res);
-    renderTemplateTable();
+    if (!ctx.mounted) return;
+
+    const list = normalizeResult(res);
+    const freshHash = computeListHash(list, ['id', 'nama_template', 'doc_template_id']);
+
+    if (freshHash !== ctx.state.lastTemplateHash) {
+      ctx.state.templates = list;
+      ctx.state.lastTemplateHash = freshHash;
+      renderTemplateTable();
+    }
   } catch (e) {
     console.warn('[SertifikatView] loadTemplates:', e);
     const c = getEl('templateContainer');
-    if (c) {
+    if (c && (!ctx.state.templates || ctx.state.templates.length === 0)) {
       c.innerHTML = `<div class="alert alert-info text-center mb-0">Gagal memuat template.</div>`;
     }
   }
 }
 
 // ============================================================
-//   GENERATE CERTIFICATE
+//   GENERATE MODAL
 // ============================================================
 async function openGenerateModal(preSelectedIds = []) {
   const templateSelect = getEl('genTemplateSelect');
   if (!templateSelect) return;
 
-  if (STATE.templates.length === 0) {
+  if (ctx.state.templates.length === 0) {
     await loadTemplates();
   }
 
+  if (ctx.state.templates.length === 0) {
+    showToast('Belum ada template. Buat template terlebih dahulu di tab Template.', 'warning');
+    return;
+  }
+
   templateSelect.innerHTML = '<option value="">-- Pilih Template --</option>' +
-    STATE.templates.map(t =>
+    ctx.state.templates.map(t =>
       `<option value="${escapeHtml(String(t.id))}">${escapeHtml(t.nama_template)}</option>`
     ).join('');
 
   const pesertaSelect = getEl('genPesertaSelect');
   if (!pesertaSelect) return;
-  const eligibleList = STATE.participants.filter(p => {
+
+  const eligibleList = ctx.state.participants.filter(p => {
     const status = String(p.status || '').toLowerCase();
     return status === 'approved' || status === 'active';
   });
@@ -556,11 +641,14 @@ async function openGenerateModal(preSelectedIds = []) {
   if (eligibleList.length === 0) {
     pesertaSelect.innerHTML = '<option disabled>Tidak ada peserta approved/active</option>';
   } else {
+    const preSet = new Set(preSelectedIds.map(String));
     pesertaSelect.innerHTML = eligibleList.map(p => {
       const check = isParticipantEligible(p);
-      const selected = preSelectedIds.map(String).includes(String(p.id)) ? 'selected' : '';
+      const selected = preSet.has(String(p.id)) ? 'selected' : '';
       const label = `${escapeHtml(p.nama_lengkap)} ${check.eligible ? '✅' : '❌ (' + check.reason + ')'}`;
-      return `<option value="${escapeHtml(String(p.id))}" ${check.eligible ? '' : 'disabled'} ${selected}>${label}</option>`;
+      return `<option value="${escapeHtml(String(p.id))}"
+              ${check.eligible ? '' : 'disabled'}
+              ${selected}>${label}</option>`;
     }).join('');
   }
 
@@ -573,12 +661,13 @@ async function openGenerateModal(preSelectedIds = []) {
   const resultArea = getEl('genResultArea');
   if (resultArea) resultArea.innerHTML = '';
 
-  getModal('generateCertModal')?.show();
+  ctx.getModal('generateCertModal')?.show();
 }
 
 function updateGenValidation() {
   const select = getEl('genPesertaSelect');
   if (!select) return;
+
   const selectedOptions = Array.from(select.selectedOptions);
   const valid = selectedOptions.filter(o => !o.disabled);
 
@@ -602,22 +691,32 @@ function updateGenValidation() {
       statusDiv.innerHTML = `⚠️ ${selectedOptions.length - valid.length} peserta tidak eligible (status/RTL/TTD).`;
       statusDiv.className = 'small text-warning mt-2';
     }
-    if (submitBtn) submitBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = valid.length === 0;
   }
 }
 
+// ============================================================
+//   EXECUTE GENERATE — PARALLEL BATCH 5 CONCURRENT
+// ============================================================
 async function executeGenerate() {
-  if (STATE.isGenerating) return;
+  if (ctx.state.isGenerating || ctx.saving) return;
 
   const templateId = getEl('genTemplateSelect')?.value;
   const select = getEl('genPesertaSelect');
   if (!select) return;
+
   const selectedIds = Array.from(select.selectedOptions).map(o => o.value);
 
-  if (!templateId) { showToast('Pilih template terlebih dahulu', 'warning'); return; }
-  if (selectedIds.length === 0) { showToast('Pilih minimal satu peserta', 'warning'); return; }
+  if (!templateId) {
+    showToast('Pilih template terlebih dahulu', 'warning');
+    return;
+  }
+  if (selectedIds.length === 0) {
+    showToast('Pilih minimal satu peserta', 'warning');
+    return;
+  }
 
-  const eligible = STATE.participants.filter(p =>
+  const eligible = ctx.state.participants.filter(p =>
     selectedIds.map(String).includes(String(p.id)) && isParticipantEligible(p).eligible
   );
 
@@ -626,11 +725,11 @@ async function executeGenerate() {
     return;
   }
 
-  STATE.isGenerating = true;
+  ctx.state.isGenerating = true;
+  ctx.saving = true;
+
   const btn = getEl('genSubmitBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
+  const restore = setBtnLoading(btn, true, 'Memproses...');
 
   const progress = getEl('genProgress');
   const progressBar = document.querySelector('#genProgress .progress-bar');
@@ -640,129 +739,171 @@ async function executeGenerate() {
   if (progress) progress.style.display = 'block';
   if (resultArea) resultArea.innerHTML = '';
 
-  const results = [], errors = [];
+  const results = [];
+  const errors = [];
+  let completed = 0;
 
-  for (let i = 0; i < eligible.length; i++) {
-    const p = eligible[i];
-    if (progressText) progressText.textContent = `Memproses ${i + 1}/${eligible.length}: ${p.nama_lengkap}`;
-    if (progressBar) progressBar.style.width = ((i + 1) / eligible.length * 100) + '%';
-
-    try {
-      const res = await callApi('generateCertificateForParticipant', {
-        templateId,
-        pesertaId: p.id,
-      }, 'POST');
-
-      if (res && res.success) {
-        results.push({
-          nama: p.nama_lengkap,
-          nomor: res.nomorSertifikat || '-',
-          url: res.pdfUrl || '',
-        });
-      } else {
-        errors.push({ nama: p.nama_lengkap, error: (res && res.error) || 'Gagal' });
-      }
-    } catch (e) {
-      errors.push({ nama: p.nama_lengkap, error: e.message });
+  const updateProgress = (nama) => {
+    completed++;
+    if (progressText) {
+      progressText.textContent = `Memproses ${completed}/${eligible.length}: ${nama}`;
     }
+    if (progressBar) {
+      progressBar.style.width = ((completed / eligible.length) * 100) + '%';
+    }
+  };
+
+  try {
+    // ✅ PARALLEL batch CONCURRENCY=5
+    for (let i = 0; i < eligible.length; i += GENERATE_CONCURRENCY) {
+      if (!ctx.mounted) {
+        errors.push({ nama: '(aborted)', error: 'Halaman ditutup sebelum selesai' });
+        break;
+      }
+
+      const batch = eligible.slice(i, i + GENERATE_CONCURRENCY);
+
+      const batchResults = await Promise.allSettled(
+        batch.map(p => callApi(
+          'generateCertificateForParticipant',
+          { templateId, pesertaId: p.id },
+          'POST'
+        ))
+      );
+
+      batchResults.forEach((r, idx) => {
+        const p = batch[idx];
+        if (r.status === 'fulfilled' && r.value && r.value.success) {
+          results.push({
+            nama: p.nama_lengkap,
+            nomor: r.value.nomorSertifikat || '-',
+            url: r.value.pdfUrl || '',
+          });
+        } else {
+          const errMsg = (r.status === 'fulfilled' && r.value && r.value.error)
+            ? r.value.error
+            : (r.reason?.message || 'Gagal');
+          errors.push({ nama: p.nama_lengkap, error: errMsg });
+        }
+        updateProgress(p.nama_lengkap);
+      });
+    }
+
+    let html = '';
+
+    if (results.length > 0) {
+      html += `<div class="alert alert-success">
+        ✅ Berhasil: <strong>${results.length}</strong> sertifikat digenerate.
+      </div>
+      <div class="table-responsive"><table class="table table-sm align-middle">
+        <thead class="table-light"><tr>
+          <th>Nama</th>
+          <th>Nomor</th>
+          <th style="width:100px;">PDF</th>
+        </tr></thead>
+        <tbody>`;
+      results.forEach(r => {
+        html += `<tr>
+          <td>${escapeHtml(r.nama)}</td>
+          <td><code class="small">${escapeHtml(r.nomor)}</code></td>
+          <td>${r.url
+            ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer"
+                  class="btn btn-sm btn-success"
+                  aria-label="Unduh PDF ${escapeHtml(r.nama)}">
+                 <i class="bi bi-download" aria-hidden="true"></i>
+               </a>`
+            : '-'}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+
+    if (errors.length > 0) {
+      html += `<div class="alert alert-danger mt-2">
+        <strong>Gagal (${errors.length}):</strong>
+        <ul class="mb-0 small mt-2">`;
+      errors.forEach(e => {
+        html += `<li>${escapeHtml(e.nama)}: ${escapeHtml(e.error)}</li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    if (resultArea) resultArea.innerHTML = html;
+
+    showToast(
+      `Selesai: ${results.length} berhasil, ${errors.length} gagal`,
+      results.length > 0 ? 'success' : 'error'
+    );
+
+    await AdminModule.loadAllData(true);
+  } catch (err) {
+    console.error('[SertifikatView] executeGenerate error:', err);
+    showToast('Terjadi kesalahan: ' + err.message, 'error');
+  } finally {
+    ctx.state.isGenerating = false;
+    ctx.saving = false;
+    restore();
   }
-
-  // Render hasil
-  let html = '';
-  if (results.length > 0) {
-    html += `<div class="alert alert-success">
-      ✅ Berhasil: <strong>${results.length}</strong> sertifikat digenerate.
-    </div>
-    <div class="table-responsive"><table class="table table-sm align-middle">
-      <thead class="table-light"><tr><th>Nama</th><th>Nomor</th><th style="width:100px;">PDF</th></tr></thead>
-      <tbody>`;
-    results.forEach(r => {
-      html += `<tr>
-        <td>${escapeHtml(r.nama)}</td>
-        <td><code class="small">${escapeHtml(r.nomor)}</code></td>
-        <td>${r.url
-          ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn btn-sm btn-success">
-               <i class="bi bi-download"></i>
-             </a>` : '-'}</td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-  if (errors.length > 0) {
-    html += `<div class="alert alert-danger mt-2">
-      <strong>Gagal (${errors.length}):</strong>
-      <ul class="mb-0 small mt-2">`;
-    errors.forEach(e => {
-      html += `<li>${escapeHtml(e.nama)}: ${escapeHtml(e.error)}</li>`;
-    });
-    html += `</ul></div>`;
-  }
-  if (resultArea) resultArea.innerHTML = html;
-
-  showToast(
-    `Selesai: ${results.length} berhasil, ${errors.length} gagal`,
-    results.length > 0 ? 'success' : 'error'
-  );
-
-  STATE.isGenerating = false;
-  btn.disabled = false;
-  btn.innerHTML = original;
-
-  await loadCertificates(true);
 }
 
 // ============================================================
-//   CRUD TEMPLATE
+//   TEMPLATE CRUD
 // ============================================================
 function addTemplate() {
-  const setVal = (id, val) => {
-    const el = getEl(id);
-    if (el) el.value = val;
-  };
+  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
   setVal('editTemplateId', '');
   setVal('templateNama', '');
   setVal('templateDocId', '');
   setVal('templateConfig', '');
+
   const titleEl = getEl('templateFormTitle');
   if (titleEl) titleEl.textContent = 'Tambah Template';
-  getModal('templateFormModal')?.show();
+
+  ctx.getModal('templateFormModal')?.show();
 }
 
 function editTemplate(id) {
-  const t = STATE.templates.find(item => String(item.id) === String(id));
+  const t = ctx.state.templates.find(item => String(item.id) === String(id));
   if (!t) { showToast('Template tidak ditemukan', 'error'); return; }
 
-  const setVal = (elId, val) => {
-    const el = getEl(elId);
-    if (el) el.value = val;
-  };
+  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
   setVal('editTemplateId', id);
   setVal('templateNama', t.nama_template || '');
   setVal('templateDocId', t.doc_template_id || '');
   setVal('templateConfig', t.config ? JSON.stringify(t.config) : '');
+
   const titleEl = getEl('templateFormTitle');
   if (titleEl) titleEl.textContent = 'Edit Template';
-  getModal('templateFormModal')?.show();
+
+  ctx.getModal('templateFormModal')?.show();
 }
 
 async function saveTemplate() {
+  if (ctx.saving) return;
+
   const id = getEl('editTemplateId')?.value;
   const nama = getEl('templateNama')?.value.trim();
-  const docId = getEl('templateDocId')?.value.trim();
-  const configRaw = getEl('templateConfig')?.value.trim();
+  const docId = getEl('templateDocId')?.value.trim() || '';
+  const configRaw = getEl('templateConfig')?.value.trim() || '';
 
-  if (!nama) { showToast('Nama template wajib diisi', 'error'); return; }
+  if (!nama) {
+    showToast('Nama template wajib diisi', 'error');
+    getEl('templateNama')?.focus();
+    return;
+  }
 
   let config = {};
   if (configRaw) {
     try { config = JSON.parse(configRaw); }
-    catch (e) { showToast('Konfigurasi JSON tidak valid', 'error'); return; }
+    catch (e) {
+      showToast('Konfigurasi JSON tidak valid', 'error');
+      return;
+    }
   }
 
+  ctx.saving = true;
   const btn = getEl('saveTemplateBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+  const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
     const payload = {
@@ -770,13 +911,14 @@ async function saveTemplate() {
       doc_template_id: docId,
       config: JSON.stringify(config),
     };
-    const action = id ? 'updateCertificateTemplate' : 'addCertificateTemplateManual';
     if (id) payload.id = id;
 
+    const action = id ? 'updateCertificateTemplate' : 'addCertificateTemplateManual';
     const res = await callApi(action, payload, 'POST');
+
     if (res && res.success) {
       showToast(id ? 'Template diperbarui' : 'Template ditambahkan', 'success');
-      getModal('templateFormModal')?.hide();
+      ctx.getModal('templateFormModal')?.hide();
       await loadTemplates();
     } else {
       throw new Error((res && res.error) || 'Gagal menyimpan');
@@ -784,41 +926,49 @@ async function saveTemplate() {
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
+    restore();
+    ctx.saving = false;
   }
 }
 
 function deleteTemplate(id) {
-  STATE.pendingDeleteTemplateId = id;
-  getEl('deleteTemplateId').value = id;
-  getModal('deleteTemplateModal')?.show();
+  ctx.state.pendingDeleteTemplateId = id;
+  const el = getEl('deleteTemplateId');
+  if (el) el.value = id;
+  ctx.getModal('deleteTemplateModal')?.show();
 }
 
-async function executeDeleteTemplate() {
-  const id = getEl('deleteTemplateId')?.value;
+async function executeDeleteTemplate(e) {
+  if (ctx.saving) return;
+
+  const id = ctx.state.pendingDeleteTemplateId || getEl('deleteTemplateId')?.value;
   if (!id) return;
 
-  const btn = getEl('confirmDeleteTemplateBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+  ctx.saving = true;
+  const btn = e?.currentTarget || getEl('confirmDeleteTemplateBtn');
+  const restore = setBtnLoading(btn, true, 'Menghapus...');
 
   try {
     const res = await callApi('deleteCertificateTemplate', { id }, 'POST');
     if (res && res.success) {
+      ctx.state.templates = ctx.state.templates.filter(t => String(t.id) !== String(id));
+      ctx.state.lastTemplateHash = computeListHash(
+        ctx.state.templates,
+        ['id', 'nama_template', 'doc_template_id']
+      );
+      renderTemplateTable();
+
       showToast('Template dihapus', 'success');
-      getModal('deleteTemplateModal')?.hide();
-      await loadTemplates();
+      ctx.getModal('deleteTemplateModal')?.hide();
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-    STATE.pendingDeleteTemplateId = null;
+    restore();
+    ctx.saving = false;
+    ctx.state.pendingDeleteTemplateId = null;
   }
 }
 
@@ -826,35 +976,49 @@ async function executeDeleteTemplate() {
 //   DELETE CERTIFICATE
 // ============================================================
 function confirmDeleteCert(id) {
-  STATE.pendingDeleteCertId = id;
-  getEl('deleteCertId').value = id;
-  getModal('deleteCertModal')?.show();
+  ctx.state.pendingDeleteCertId = id;
+  const el = getEl('deleteCertId');
+  if (el) el.value = id;
+  ctx.getModal('deleteCertModal')?.show();
 }
 
-async function executeDeleteCert() {
-  const id = getEl('deleteCertId')?.value;
+async function executeDeleteCert(e) {
+  if (ctx.saving) return;
+
+  const id = ctx.state.pendingDeleteCertId || getEl('deleteCertId')?.value;
   if (!id) return;
 
-  const btn = getEl('confirmDeleteCertBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+  ctx.saving = true;
+  const btn = e?.currentTarget || getEl('confirmDeleteCertBtn');
+  const restore = setBtnLoading(btn, true, 'Menghapus...');
 
   try {
     const res = await callApi('deleteCertificate', { id }, 'POST');
     if (res && res.success) {
-      showToast('Sertifikat berhasil dihapus', 'success');
-      getModal('deleteCertModal')?.hide();
-      STATE.certificates = STATE.certificates.filter(c => String(c.id) !== String(id));
+      ctx.state.certificates = ctx.state.certificates.filter(c => String(c.id) !== String(id));
+      ctx.state.lastCertHash = computeListHash(ctx.state.certificates);
       renderCertTable();
+
+      showToast('Sertifikat berhasil dihapus', 'success');
+      ctx.getModal('deleteCertModal')?.hide();
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-    STATE.pendingDeleteCertId = null;
+    restore();
+    ctx.saving = false;
+    ctx.state.pendingDeleteCertId = null;
   }
 }
+
+// ============================================================
+//   EXPORT DEFAULT
+// ============================================================
+export default { mount, unmount };
+
+console.log(
+  '%c Sertifikat View v27.2.0 — Preload + Subscription Edition ',
+  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);

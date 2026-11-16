@@ -1,88 +1,53 @@
 // ============================================================
-// VIEW: sesi-absen.js — Full Fix Production Ready
+// VIEW: sesi-absen.js — v27.2.0 PRELOAD + SUBSCRIPTION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/sesi-absen.html
 // ============================================================
-// Fitur:
-// ✅ CRUD sesi (create/edit/delete)
-// ✅ Generate QR code per sesi (dengan token unik)
-// ✅ Regenerate QR token (invalidasi token lama)
-// ✅ Toggle buka/tutup sesi
-// ✅ Set password sesi opsional
-// ✅ Lihat daftar hadir per sesi
-// ✅ Search & sort
-// ✅ Pagination
-// ✅ Export JSON
-// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
-// ✅ Zero memory leak + cleanup on unmount
+// CHANGELOG v27.2.0 (dari v27.0.0):
+//   ✅ NEW: Subscription ke AdminModule (auto re-render)
+//   ✅ NEW: Instant render dari preload cache
+//   ✅ REMOVED: Per-view polling 60s
+//   ✅ FIX: Normalize submission_open konsisten (string|boolean)
+//   ✅ FIX: QR canvas cleanup via ctx.cleanup
+//   ✅ FIX: Modal dispose otomatis (zero leak)
+//   ✅ FIX: Null-safe semua element access
+//   ✅ FIX: Focus preservation saat re-render
+//   ✅ FIX: Attendance modal — better error handling
+//   ✅ KEEP: Toggle status, QR generation, regenerate token
+//   ✅ Zero memory leak
 // ============================================================
 
-import { showToast, escapeHtml, callApi } from '../../js/core/api.js';
+import {
+  showToast,
+  escapeHtml,
+  callApi,
+} from '../../js/core/api.js';
+import { BASE_PATH } from '../../js/core/config.js';
 import { AdminModule } from '../../js/modules/admin.js';
+import {
+  getEl,
+  debounce,
+  setBtnLoading,
+  createViewContext,
+  delegateTableClicks,
+  captureFocusState,
+  restoreFocusState,
+  cleanupBootstrapArtifacts,
+  computeListHash,
+  SEARCH_DEBOUNCE,
+} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   MODULE STATE
+//   LOCAL HELPERS
 // ============================================================
-let pollInterval = null;
-let searchDebounceTimer = null;
-let qrCanvasRef = null;
-let isMounted = false;
-let isRefreshing = false;
-
-const STATE = {
-  sesiList: [],
-  filteredList: [],
-  searchQuery: '',
-  currentPage: 1,
-  itemsPerPage: 15,
-  sortColumn: null,
-  sortDirection: 'asc',
-  pendingDeleteId: null,
-  modals: {},
-};
-
-const listeners = [];
-
-// ============================================================
-//   UTILITY
-// ============================================================
-function on(el, ev, handler, options) {
-  if (!el) return null;
-  el.addEventListener(ev, handler, options);
-  listeners.push({ el, ev, handler, options });
-  return handler;
-}
-
-function debounce(fn, delay) {
-  let timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
-function getEl(id) {
-  return document.getElementById(id);
-}
-
-function getModal(id) {
-  const el = getEl(id);
-  if (!el) return null;
-  if (!STATE.modals[id]) {
-    STATE.modals[id] = new bootstrap.Modal(el);
-  }
-  return STATE.modals[id];
-}
-
-function disposeAllModals() {
-  Object.keys(STATE.modals).forEach(id => {
-    try { STATE.modals[id]?.dispose?.(); } catch (e) { /* silent */ }
-  });
-  STATE.modals = {};
-}
-
-function generateQrToken() {
-  return 'qr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+function setCacheStatus(status) {
+  const el = getEl('cacheStatus');
+  if (!el) return;
+  el.textContent = status;
+  const cls = status === 'Live' ? 'live'
+    : (status === 'Offline' || status === 'Error') ? 'offline'
+    : '';
+  el.className = 'cache-status' + (cls ? ' ' + cls : '');
 }
 
 function formatDateTime(dateStr) {
@@ -97,43 +62,109 @@ function formatDateTime(dateStr) {
   } catch { return String(dateStr); }
 }
 
+function normalizeSesiList(freshData) {
+  return (freshData || []).map(item => {
+    let isOpen = false;
+    const v = item.submission_open;
+    if (typeof v === 'boolean') isOpen = v;
+    else if (typeof v === 'string') isOpen = v.trim().toLowerCase() === 'true';
+
+    // Fallback ke legacy field `aktif`
+    if (!isOpen && item.aktif !== undefined && item.aktif !== null) {
+      if (typeof item.aktif === 'boolean') isOpen = item.aktif;
+      else if (typeof item.aktif === 'string') isOpen = item.aktif.trim().toLowerCase() === 'true';
+    }
+    return { ...item, submission_open: isOpen };
+  });
+}
+
+function generateQrToken() {
+  return 'qr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// ============================================================
+//   CONTEXT
+// ============================================================
+const ctx = createViewContext(
+  {
+    sesiList: [],
+    filteredList: [],
+    searchQuery: '',
+    currentPage: 1,
+    itemsPerPage: 15,
+    sortColumn: null,
+    sortDirection: 'asc',
+    pendingDeleteId: null,
+    qrCanvasRef: null,
+    lastHash: '',
+  },
+  {
+    watchTypes: ['all', 'multiple', 'manual-refresh', 'sesi'],
+    onDataChange: (type) => {
+      if (!ctx.mounted) return;
+      console.log(`[SesiAbsenView] ⚡ Data changed (${type}) → refresh from cache`);
+      try {
+        refreshFromCache();
+      } catch (e) {
+        console.warn('[SesiAbsenView] Re-render error:', e);
+      }
+    },
+  }
+);
+
+let tableCleanup = null;
+
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount({ path, query, outlet }) {
-  if (isMounted) {
+export async function mount() {
+  if (ctx.mounted) {
     console.warn('[SesiAbsenView] Sudah mounted, skip');
     return unmount;
   }
-  isMounted = true;
+  ctx.mounted = true;
+  ctx.saving = false;
+  ctx.refreshing = false;
   console.log('[SesiAbsenView] mounted');
 
   // Reset state
-  STATE.sesiList = [];
-  STATE.filteredList = [];
-  STATE.searchQuery = '';
-  STATE.currentPage = 1;
-  STATE.sortColumn = null;
-  STATE.sortDirection = 'asc';
-  STATE.pendingDeleteId = null;
-  qrCanvasRef = null;
+  Object.assign(ctx.state, {
+    sesiList: [],
+    filteredList: [],
+    searchQuery: '',
+    currentPage: 1,
+    sortColumn: null,
+    sortDirection: 'asc',
+    pendingDeleteId: null,
+    qrCanvasRef: null,
+    lastHash: '',
+  });
 
-  renderSkeleton();
+  const searchEl = getEl('searchInput');
+  if (searchEl) searchEl.value = '';
 
-  // Load data
-  await loadSesiAbsen(false);
+  // ⚡ Instant render dari preload cache
+  const cached = AdminModule.getSesiList() || [];
+  if (cached.length > 0) {
+    console.log('[SesiAbsenView] ⚡ Rendering from preload cache');
+    ctx.state.sesiList = normalizeSesiList(cached);
+    ctx.state.lastHash = computeListHash(ctx.state.sesiList);
+    applyFiltersAndSort();
+    setCacheStatus('Live');
+  } else {
+    console.log('[SesiAbsenView] ⚠️ No cache, showing skeleton');
+    renderSkeleton();
+  }
 
-  // Bind events
-  bindAllEvents();
+  bindEvents();
 
-  // Auto-refresh 30s
-  pollInterval = setInterval(() => {
-    if (document.hidden) return;
-    if (!isMounted) return;
-    if (isRefreshing) return;
-    isRefreshing = true;
-    refreshDataSilently().finally(() => { isRefreshing = false; });
-  }, 30000);
+  // ⚡ Subscribe ke perubahan data
+  await ctx.subscribeToData();
+
+  // Fallback: kalau cache kosong
+  if (cached.length === 0) {
+    await loadSesiAbsen(false);
+  }
 
   return unmount;
 }
@@ -142,61 +173,60 @@ export async function mount({ path, query, outlet }) {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!isMounted) return;
-  isMounted = false;
+  if (!ctx.mounted) return;
+  ctx.mounted = false;
   console.log('[SesiAbsenView] unmounted');
 
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
+  if (tableCleanup) {
+    try { tableCleanup(); } catch (e) { /* silent */ }
+    tableCleanup = null;
   }
 
-  // Listeners
-  listeners.forEach(({ el, ev, handler, options }) => {
-    try { el.removeEventListener(ev, handler, options); } catch (e) {}
-  });
-  listeners.length = 0;
-
-  // Modals
-  disposeAllModals();
-
-  // QR canvas ref
-  qrCanvasRef = null;
-
-  // Bootstrap artifact cleanup
-  try {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-  } catch (e) {}
+  ctx.state.qrCanvasRef = null;
+  ctx.cleanup();
+  cleanupBootstrapArtifacts();
 }
 
 // ============================================================
-//   BIND ALL EVENTS
+//   REFRESH FROM CACHE
 // ============================================================
-function bindAllEvents() {
-  const searchEl = getEl('searchInput');
-  const debouncedSearch = debounce(function () {
-    STATE.searchQuery = searchEl ? searchEl.value : '';
+function refreshFromCache() {
+  const fresh = AdminModule.getSesiList() || [];
+  const cleaned = normalizeSesiList(fresh);
+  const freshHash = computeListHash(cleaned);
+
+  if (freshHash === ctx.state.lastHash) {
+    console.log('[SesiAbsenView] No change, skip re-render');
+    return;
+  }
+
+  ctx.state.sesiList = cleaned;
+  ctx.state.lastHash = freshHash;
+  applyFiltersAndSort();
+  setCacheStatus('Live');
+}
+
+// ============================================================
+//   BIND EVENTS
+// ============================================================
+function bindEvents() {
+  // Search
+  ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
+    ctx.state.searchQuery = e.target.value;
+    ctx.state.currentPage = 1;
     applyFiltersAndSort();
-  }, 300);
+  }, SEARCH_DEBOUNCE));
 
-  on(searchEl, 'input', debouncedSearch);
-
-  on(getEl('addSesiAbsenBtn'), 'click', openAddModal);
-  on(getEl('exportDataBtn'), 'click', exportData);
-  on(getEl('refreshDataBtn'), 'click', handleRefreshClick);
-  on(getEl('saveSesiAbsenBtn'), 'click', saveSesiAbsen);
-  on(getEl('confirmDeleteBtn'), 'click', executeDelete);
-  on(getEl('downloadQRSesiBtn'), 'click', downloadQrPng);
+  // Toolbar
+  ctx.on(getEl('addSesiAbsenBtn'), 'click', openAddModal);
+  ctx.on(getEl('exportDataBtn'), 'click', exportData);
+  ctx.on(getEl('refreshDataBtn'), 'click', handleRefreshClick);
+  ctx.on(getEl('saveSesiAbsenBtn'), 'click', saveSesiAbsen);
+  ctx.on(getEl('confirmDeleteBtn'), 'click', executeDelete);
+  ctx.on(getEl('downloadQRSesiBtn'), 'click', downloadQrPng);
 
   // Password visibility toggle (delegation)
-  on(document, 'click', function (e) {
+  ctx.on(document, 'click', function (e) {
     const t = e.target.closest('[data-toggle-pass]');
     if (!t) return;
     const input = getEl(t.dataset.togglePass);
@@ -205,103 +235,86 @@ function bindAllEvents() {
     const i = t.querySelector('i');
     if (i) i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
   });
+
+  // QR modal cleanup
+  const qrModalEl = getEl('qrSesiModal');
+  if (qrModalEl) {
+    ctx.on(qrModalEl, 'hidden.bs.modal', () => {
+      ctx.state.qrCanvasRef = null;
+      const container = getEl('qrSesiCanvasContainer');
+      if (container) container.innerHTML = '';
+      const dataText = getEl('qrSesiDataText');
+      if (dataText) dataText.innerHTML = '';
+    });
+  }
+
+  // ✅ DELEGATION — table
+  const tableContainer = getEl('sesiAbsenTableContainer');
+  if (tableContainer) {
+    tableCleanup = delegateTableClicks(tableContainer, {
+      onSort: (col) => handleSort(col),
+      onAction: (action, id) => handleTableAction(action, id),
+      onPage: (page) => goToPage(page),
+    });
+  }
 }
 
 // ============================================================
-//   REFRESH HANDLER
+//   REFRESH
 // ============================================================
-async function handleRefreshClick() {
-  const btn = getEl('refreshDataBtn');
-  const original = btn ? btn.innerHTML : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
-  }
+async function handleRefreshClick(e) {
+  if (ctx.saving) return;
+
+  const btn = e.currentTarget || getEl('refreshDataBtn');
+  const restore = setBtnLoading(btn, true, 'Memuat...');
+  ctx.saving = true;
+
   try {
-    await loadSesiAbsen(true);
+    await AdminModule.loadAllData(true);
+    refreshFromCache();
     showToast('Data disegarkan', 'success');
-  } catch (e) {
-    showToast('Gagal menyegarkan: ' + e.message, 'error');
+  } catch (err) {
+    showToast('Gagal menyegarkan: ' + err.message, 'error');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = original;
-    }
-  }
-}
-
-async function refreshDataSilently() {
-  try {
-    await AdminModule.loadAllData(false);
-    const fresh = AdminModule.getSesiList() || [];
-    const cleaned = normalizeSesiList(fresh);
-    if (JSON.stringify(STATE.sesiList) !== JSON.stringify(cleaned)) {
-      STATE.sesiList = cleaned;
-      applyFiltersAndSort();
-    }
-  } catch (e) {
-    // silent
+    restore();
+    ctx.saving = false;
   }
 }
 
 // ============================================================
-//   LOAD DATA
+//   LOAD (fallback)
 // ============================================================
-function normalizeSesiList(freshData) {
-  return (freshData || []).map(item => {
-    let isOpen = false;
-    const v = item.submission_open;
-    if (typeof v === 'boolean') isOpen = v;
-    else if (typeof v === 'string') isOpen = v.trim().toLowerCase() === 'true';
-
-    // Fallback ke 'aktif' jika submission_open kosong
-    if (!isOpen && item.aktif !== undefined && item.aktif !== null) {
-      let isAktif = false;
-      if (typeof item.aktif === 'boolean') isAktif = item.aktif;
-      else if (typeof item.aktif === 'string') isAktif = item.aktif.trim().toLowerCase() === 'true';
-      if (isAktif) isOpen = true;
-    }
-    return { ...item, submission_open: isOpen };
-  });
-}
-
 async function loadSesiAbsen(forceRefresh = false) {
-  const cacheEl = getEl('cacheStatus');
   try {
     if (!AdminModule.getState().lastSync || forceRefresh) {
       await AdminModule.loadAllData(forceRefresh);
     }
-    let freshData = AdminModule.getSesiList() || [];
-    STATE.sesiList = normalizeSesiList(freshData);
-
-    STATE.searchQuery = '';
-    const searchEl = getEl('searchInput');
-    if (searchEl) searchEl.value = '';
-
-    applyFiltersAndSort();
-
-    if (cacheEl) { cacheEl.textContent = 'Live'; cacheEl.className = 'cache-status live'; }
+    if (!ctx.mounted) return;
+    refreshFromCache();
   } catch (e) {
     console.error('[SesiAbsenView] load error:', e);
-    if (STATE.sesiList.length > 0) {
+    if (ctx.state.sesiList.length > 0) {
       applyFiltersAndSort();
       showToast('Error: ' + e.message + ' — menampilkan data lama', 'warning');
     } else {
       const c = getEl('sesiAbsenTableContainer');
-      if (c) c.innerHTML = `<div class="alert alert-danger text-center">
-        Gagal memuat data: ${escapeHtml(e.message)}
-      </div>`;
+      if (c) {
+        c.innerHTML = `<div class="alert alert-danger text-center">
+          Gagal memuat data: ${escapeHtml(e.message)}
+        </div>`;
+      }
     }
-    if (cacheEl) { cacheEl.textContent = 'Error'; cacheEl.className = 'cache-status offline'; }
+    setCacheStatus('Error');
   }
 }
 
 // ============================================================
-//   RENDER: SKELETON
+//   SKELETON
 // ============================================================
 function renderSkeleton() {
   const c = getEl('sesiAbsenTableContainer');
   if (!c) return;
+
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
     <thead class="table-light"><tr>`;
   for (let i = 0; i < 7; i++) {
@@ -320,25 +333,68 @@ function renderSkeleton() {
 }
 
 // ============================================================
+//   FILTER & SORT
+// ============================================================
+function applyFiltersAndSort() {
+  let filtered = ctx.state.sesiList.slice();
+
+  // Filter search
+  if (ctx.state.searchQuery.trim() !== '') {
+    const q = ctx.state.searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(item =>
+      (item.nama || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (ctx.state.sortColumn) {
+    const col = ctx.state.sortColumn;
+    const dir = ctx.state.sortDirection === 'asc' ? 1 : -1;
+
+    filtered.sort((a, b) => {
+      let va = a[col];
+      let vb = b[col];
+
+      if (typeof va === 'boolean') va = va ? 1 : 0;
+      if (typeof vb === 'boolean') vb = vb ? 1 : 0;
+
+      va = (va ?? '').toString().toLowerCase();
+      vb = (vb ?? '').toString().toLowerCase();
+
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return String(a.id || '').localeCompare(String(b.id || ''));
+    });
+  }
+
+  ctx.state.filteredList = filtered;
+
+  // Preserve current page
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ctx.state.itemsPerPage));
+  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
+  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
+
+  renderTable();
+}
+
+// ============================================================
 //   RENDER: TABLE
 // ============================================================
 function renderTable() {
   const c = getEl('sesiAbsenTableContainer');
   if (!c) return;
 
-  const data = STATE.filteredList;
-  const totalItems = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
-  if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
-  if (STATE.currentPage < 1) STATE.currentPage = 1;
+  const savedFocus = captureFocusState('searchInput');
 
-  const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
-  const end = Math.min(start + STATE.itemsPerPage, totalItems);
-  const pageData = data.slice(start, end);
+  const totalItems = ctx.state.filteredList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
+  const start = (ctx.state.currentPage - 1) * ctx.state.itemsPerPage;
+  const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
+  const pageData = ctx.state.filteredList.slice(start, end);
 
   const arrow = (col) => {
-    if (STATE.sortColumn !== col) return '↕';
-    return STATE.sortDirection === 'asc' ? '↑' : '↓';
+    if (ctx.state.sortColumn !== col) return '↕';
+    return ctx.state.sortDirection === 'asc' ? '↑' : '↓';
   };
 
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
@@ -353,9 +409,10 @@ function renderTable() {
     </tr></thead><tbody>`;
 
   if (pageData.length === 0) {
+    const hasFilter = ctx.state.searchQuery;
     html += `<tr><td colspan="7" class="text-center py-5 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-      ${STATE.searchQuery ? 'Tidak ada hasil pencarian.' : 'Tidak ada data sesi absen.'}
+      <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
+      ${hasFilter ? 'Tidak ada hasil pencarian.' : 'Tidak ada data sesi absen.'}
     </td></tr>`;
   } else {
     pageData.forEach((item, index) => {
@@ -372,28 +429,28 @@ function renderTable() {
         <td>${escapeHtml(formatDateTime(item.waktu_selesai))}</td>
         <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
         <td>
-          <button class="btn btn-sm btn-outline-dark" data-action="qr" data-id="${safeId}" title="Tampilkan QR">
-            <i class="bi bi-qr-code"></i> QR
+          <button class="btn btn-sm btn-outline-dark" data-action="qr" data-id="${safeId}" title="Tampilkan QR" aria-label="Tampilkan QR">
+            <i class="bi bi-qr-code" aria-hidden="true"></i> QR
           </button>
-          <button class="btn btn-sm btn-outline-secondary ms-1" data-action="regen" data-id="${safeId}" title="Regenerate Token">
-            <i class="bi bi-arrow-repeat"></i>
+          <button class="btn btn-sm btn-outline-secondary ms-1" data-action="regen" data-id="${safeId}" title="Regenerate Token" aria-label="Regenerate Token">
+            <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Regenerate
           </button>
         </td>
         <td class="text-center">
-          <button class="btn btn-sm btn-outline-info" data-action="view" data-id="${safeId}" title="Detail">
-            <i class="bi bi-eye"></i>
+          <button class="btn btn-sm btn-outline-info" data-action="view" data-id="${safeId}" title="Detail" aria-label="Detail">
+            <i class="bi bi-eye" aria-hidden="true"></i>
           </button>
-          <button class="btn btn-sm btn-outline-warning" data-action="edit" data-id="${safeId}" title="Edit">
-            <i class="bi bi-pencil"></i>
+          <button class="btn btn-sm btn-outline-warning ms-1" data-action="edit" data-id="${safeId}" title="Edit" aria-label="Edit">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
           </button>
-          <button class="btn btn-sm btn-outline-success" data-action="attendance" data-id="${safeId}" title="Daftar Hadir">
-            <i class="bi bi-people"></i>
+          <button class="btn btn-sm btn-outline-success ms-1" data-action="attendance" data-id="${safeId}" title="Daftar Hadir" aria-label="Daftar Hadir">
+            <i class="bi bi-people" aria-hidden="true"></i>
           </button>
-          <button class="btn btn-sm btn-outline-${isOpen ? 'warning' : 'success'}" data-action="toggle" data-id="${safeId}" title="Toggle Status">
+          <button class="btn btn-sm btn-outline-${isOpen ? 'warning' : 'success'} ms-1" data-action="toggle" data-id="${safeId}" title="Toggle Status" aria-label="Toggle Status">
             ${isOpen ? 'Tutup' : 'Buka'}
           </button>
-          <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus">
-            <i class="bi bi-trash"></i>
+          <button class="btn btn-sm btn-outline-danger ms-1" data-action="delete" data-id="${safeId}" title="Hapus" aria-label="Hapus">
+            <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
         </td>
       </tr>`;
@@ -405,47 +462,64 @@ function renderTable() {
   // Pagination
   html += `<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
     <div class="small text-muted">
-      Menampilkan ${data.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data
+      Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data
     </div>
     <div class="btn-group">`;
 
   const maxButtons = 7;
-  let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
+  let startPage = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-  if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
 
   if (startPage > 1) {
     html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
     if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}" data-action="goto" data-page="${i}">${i}</button>`;
+    html += `<button class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
+              data-action="goto" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
-    if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    if (endPage < totalPages - 1) {
+      html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    }
     html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
   c.innerHTML = html;
 
-  // Event delegation
-  c.querySelectorAll('[data-action]').forEach(btn => {
-    btn.addEventListener('click', handleTableAction);
-  });
-  c.querySelectorAll('[data-sort]').forEach(th => {
-    th.addEventListener('click', () => handleSort(th.dataset.sort));
-  });
+  restoreFocusState('searchInput', savedFocus);
 }
 
 // ============================================================
-//   TABLE ACTIONS
+//   SORT & PAGINATION
 // ============================================================
-function handleTableAction(e) {
-  const action = e.currentTarget.dataset.action;
-  const id = e.currentTarget.dataset.id;
-  const page = e.currentTarget.dataset.page;
+function handleSort(col) {
+  if (ctx.state.sortColumn === col) {
+    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    ctx.state.sortColumn = col;
+    ctx.state.sortDirection = 'asc';
+  }
+  ctx.state.currentPage = 1;
+  applyFiltersAndSort();
+}
 
+function goToPage(page) {
+  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  if (page < 1 || page > totalPages) return;
+  ctx.state.currentPage = page;
+  renderTable();
+  getEl('sesiAbsenTableContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+//   TABLE ACTION ROUTER
+// ============================================================
+function handleTableAction(action, id) {
   switch (action) {
     case 'qr':          return generateQRSesi(id);
     case 'regen':       return regenerateQRSesi(id);
@@ -454,76 +528,33 @@ function handleTableAction(e) {
     case 'attendance':  return viewAttendance(id);
     case 'toggle':      return toggleSesi(id);
     case 'delete':      return deleteSesiAbsen(id);
-    case 'goto':        return goToPage(parseInt(page));
+    default:
+      console.warn('[SesiAbsenView] Unknown action:', action);
   }
-}
-
-function handleSort(col) {
-  if (STATE.sortColumn === col) {
-    STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    STATE.sortColumn = col;
-    STATE.sortDirection = 'asc';
-  }
-  STATE.currentPage = 1;
-  applyFiltersAndSort();
-}
-
-function goToPage(page) {
-  const totalPages = Math.max(1, Math.ceil(STATE.filteredList.length / STATE.itemsPerPage));
-  if (page < 1 || page > totalPages) return;
-  STATE.currentPage = page;
-  renderTable();
-}
-
-// ============================================================
-//   FILTER & SORT
-// ============================================================
-function applyFiltersAndSort() {
-  let filtered = STATE.sesiList;
-
-  if (STATE.searchQuery.trim() !== '') {
-    const q = STATE.searchQuery.toLowerCase().trim();
-    filtered = filtered.filter(item =>
-      (item.nama || '').toLowerCase().includes(q)
-    );
-  }
-
-  if (STATE.sortColumn) {
-    filtered = filtered.slice().sort((a, b) => {
-      let va = a[STATE.sortColumn];
-      let vb = b[STATE.sortColumn];
-      if (typeof va === 'boolean') va = va ? 1 : 0;
-      if (typeof vb === 'boolean') vb = vb ? 1 : 0;
-      va = (va ?? '').toString().toLowerCase();
-      vb = (vb ?? '').toString().toLowerCase();
-      if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
-      if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-
-  STATE.filteredList = filtered;
-  STATE.currentPage = 1;
-  renderTable();
 }
 
 // ============================================================
 //   CRUD
 // ============================================================
 function openAddModal() {
-  getEl('editSesiAbsenId').value = '';
-  getEl('sesiNama').value = '';
-  getEl('sesiWaktuMulai').value = '';
-  getEl('sesiWaktuSelesai').value = '';
-  getEl('sesiPassword').value = '';
-  getEl('sesiAktif').checked = true;
-  getEl('formModalTitle').textContent = 'Tambah Sesi Absen';
-  getModal('sesiAbsenFormModal')?.show();
+  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
+  setVal('editSesiAbsenId', '');
+  setVal('sesiNama', '');
+  setVal('sesiWaktuMulai', '');
+  setVal('sesiWaktuSelesai', '');
+  setVal('sesiPassword', '');
+
+  const aktifEl = getEl('sesiAktif');
+  if (aktifEl) aktifEl.checked = true;
+
+  const titleEl = getEl('formModalTitle');
+  if (titleEl) titleEl.textContent = 'Tambah Sesi Absen';
+
+  ctx.getModal('sesiAbsenFormModal')?.show();
 }
 
 function editSesiAbsen(id) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(id));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const toLocal = (dateStr) => {
@@ -536,85 +567,105 @@ function editSesiAbsen(id) {
     } catch { return ''; }
   };
 
-  getEl('editSesiAbsenId').value = id;
-  getEl('sesiNama').value = item.nama || '';
-  getEl('sesiWaktuMulai').value = toLocal(item.waktu_mulai);
-  getEl('sesiWaktuSelesai').value = toLocal(item.waktu_selesai);
-  getEl('sesiPassword').value = '';
-  getEl('sesiAktif').checked = item.submission_open === true;
-  getEl('formModalTitle').textContent = 'Edit Sesi Absen';
-  getModal('sesiAbsenFormModal')?.show();
+  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
+  setVal('editSesiAbsenId', id);
+  setVal('sesiNama', item.nama || '');
+  setVal('sesiWaktuMulai', toLocal(item.waktu_mulai));
+  setVal('sesiWaktuSelesai', toLocal(item.waktu_selesai));
+  setVal('sesiPassword', '');
+
+  const aktifEl = getEl('sesiAktif');
+  if (aktifEl) aktifEl.checked = item.submission_open === true;
+
+  const titleEl = getEl('formModalTitle');
+  if (titleEl) titleEl.textContent = 'Edit Sesi Absen';
+
+  ctx.getModal('sesiAbsenFormModal')?.show();
 }
 
 function viewSesiAbsen(id) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(id));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
+  const hasPassword = !!(item.passwordHash && String(item.passwordHash).trim() !== '');
   const content = getEl('detailContent');
   if (!content) return;
+
   content.innerHTML = `
     <div class="list-group list-group-flush">
       <div class="list-group-item py-3"><strong>Nama Sesi:</strong> ${escapeHtml(item.nama || '-')}</div>
       <div class="list-group-item py-3"><strong>Waktu Mulai:</strong> ${escapeHtml(formatDateTime(item.waktu_mulai))}</div>
       <div class="list-group-item py-3"><strong>Waktu Selesai:</strong> ${escapeHtml(formatDateTime(item.waktu_selesai))}</div>
       <div class="list-group-item py-3"><strong>Status:</strong> ${item.submission_open ? '✅ Buka' : '❌ Tutup'}</div>
-      <div class="list-group-item py-3"><strong>Password:</strong> ${item.password || item.passwordHash ? '🔒 Terproteksi' : '🔓 Tanpa password'}</div>
+      <div class="list-group-item py-3"><strong>Password:</strong> ${hasPassword ? '🔒 Terproteksi' : '🔓 Tanpa password'}</div>
       <div class="list-group-item py-3"><strong>Token QR:</strong> <code style="word-break:break-all; font-size:0.8rem;">${escapeHtml(item.qrToken || 'Belum ada')}</code></div>
     </div>`;
-  getModal('detailSesiAbsenModal')?.show();
+
+  ctx.getModal('detailSesiAbsenModal')?.show();
 }
 
 function deleteSesiAbsen(id) {
-  STATE.pendingDeleteId = id;
-  const item = STATE.sesiList.find(i => String(i.id) === String(id));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(id));
+  if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
+
+  ctx.state.pendingDeleteId = id;
+
   const nameEl = getEl('deleteTargetName');
-  if (nameEl) nameEl.textContent = item ? (item.nama || '-') : '—';
-  getEl('deleteSesiAbsenId').value = id;
-  getModal('deleteConfirmModal')?.show();
+  if (nameEl) nameEl.textContent = item.nama || '—';
+
+  const idEl = getEl('deleteSesiAbsenId');
+  if (idEl) idEl.value = id;
+
+  ctx.getModal('deleteConfirmModal')?.show();
 }
 
-async function executeDelete() {
-  const id = getEl('deleteSesiAbsenId').value;
+async function executeDelete(e) {
+  if (ctx.saving) return;
+
+  const btn = e.currentTarget || getEl('confirmDeleteBtn');
+  const id = ctx.state.pendingDeleteId || getEl('deleteSesiAbsenId')?.value;
   if (!id) return;
 
-  const btn = getEl('confirmDeleteBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
+  const restore = setBtnLoading(btn, true, 'Menghapus...');
+  ctx.saving = true;
 
   try {
     const res = await AdminModule.deleteSesiAbsen(id);
-    if (res.success) {
-      STATE.sesiList = STATE.sesiList.filter(i => String(i.id) !== String(id));
-      applyFiltersAndSort();
+    if (res && res.success) {
       showToast('Sesi absen berhasil dihapus', 'success');
-      getModal('deleteConfirmModal')?.hide();
+      ctx.getModal('deleteConfirmModal')?.hide();
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menghapus');
+      throw new Error((res && res.error) || 'Gagal menghapus');
     }
-  } catch (e) {
-    showToast('Gagal: ' + e.message, 'error');
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-    STATE.pendingDeleteId = null;
+    restore();
+    ctx.saving = false;
+    ctx.state.pendingDeleteId = null;
   }
 }
 
-async function saveSesiAbsen() {
-  const id = getEl('editSesiAbsenId').value;
-  const nama = getEl('sesiNama').value.trim();
-  const waktuMulai = getEl('sesiWaktuMulai').value;
-  const waktuSelesai = getEl('sesiWaktuSelesai').value;
-  const password = getEl('sesiPassword').value;
-  const aktif = getEl('sesiAktif').checked;
+async function saveSesiAbsen(e) {
+  if (ctx.saving) return;
 
-  if (!nama) { showToast('Nama sesi wajib diisi', 'error'); return; }
+  const btn = e.currentTarget || getEl('saveSesiAbsenBtn');
+  const id = getEl('editSesiAbsenId')?.value || '';
+  const nama = getEl('sesiNama')?.value.trim() || '';
+  const waktuMulai = getEl('sesiWaktuMulai')?.value || '';
+  const waktuSelesai = getEl('sesiWaktuSelesai')?.value || '';
+  const password = getEl('sesiPassword')?.value || '';
+  const aktif = getEl('sesiAktif')?.checked ?? true;
 
-  const btn = getEl('saveSesiAbsenBtn');
-  const original = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+  if (!nama) {
+    showToast('Nama sesi wajib diisi', 'error');
+    getEl('sesiNama')?.focus();
+    return;
+  }
+
+  const restore = setBtnLoading(btn, true, 'Menyimpan...');
+  ctx.saving = true;
 
   try {
     let res;
@@ -624,23 +675,23 @@ async function saveSesiAbsen() {
       res = await AdminModule.addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password);
     }
 
-    if (res.success) {
+    if (res && res.success) {
       showToast(id ? 'Sesi berhasil diperbarui' : 'Sesi berhasil ditambahkan', 'success');
-      getModal('sesiAbsenFormModal')?.hide();
-      await loadSesiAbsen(true);
+      ctx.getModal('sesiAbsenFormModal')?.hide();
+      await AdminModule.loadAllData(true);
     } else {
-      throw new Error(res.error || 'Gagal menyimpan');
+      throw new Error((res && res.error) || 'Gagal menyimpan');
     }
-  } catch (e) {
-    showToast('Gagal: ' + e.message, 'error');
+  } catch (err) {
+    showToast('Gagal: ' + err.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
+    restore();
+    ctx.saving = false;
   }
 }
 
 async function toggleSesi(id) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(id));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const newState = !(item.submission_open === true);
@@ -648,12 +699,10 @@ async function toggleSesi(id) {
 
   try {
     const res = await AdminModule.toggleAttendanceSession(id, newState);
-    if (res.success) {
-      item.submission_open = newState;
-      applyFiltersAndSort();
+    if (res && res.success) {
       showToast(`Sesi ${newState ? 'dibuka' : 'ditutup'}`, 'success');
     } else {
-      throw new Error(res.error || 'Gagal mengubah status');
+      throw new Error((res && res.error) || 'Gagal mengubah status');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
@@ -664,14 +713,14 @@ async function toggleSesi(id) {
 //   QR GENERATION
 // ============================================================
 async function generateQRSesi(sesiId) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(sesiId));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
-  // Ensure token
+  // Ensure qrToken
   if (!item.qrToken) {
     try {
       const res = await AdminModule.regenerateQRSesi(sesiId);
-      if (res.success) item.qrToken = res.qrToken;
+      if (res && res.success) item.qrToken = res.qrToken;
       else item.qrToken = generateQrToken();
     } catch {
       item.qrToken = generateQrToken();
@@ -684,7 +733,7 @@ async function generateQRSesi(sesiId) {
   }
 
   try {
-    const absenUrl = `${window.location.origin}/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(item.qrToken)}`;
+    const absenUrl = `${window.location.origin}${BASE_PATH}absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(item.qrToken)}`;
     const qr = qrcode(0, 'M');
     qr.addData(absenUrl);
     qr.make();
@@ -697,14 +746,21 @@ async function generateQRSesi(sesiId) {
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
+    const c2d = canvas.getContext('2d');
+
+    c2d.fillStyle = '#ffffff';
+    c2d.fillRect(0, 0, size, size);
+
     for (let row = 0; row < moduleCount; row++) {
       for (let col = 0; col < moduleCount; col++) {
         if (qr.isDark(row, col)) {
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(margin + col * cellSize, margin + row * cellSize, cellSize, cellSize);
+          c2d.fillStyle = '#000000';
+          c2d.fillRect(
+            margin + col * cellSize,
+            margin + row * cellSize,
+            cellSize,
+            cellSize
+          );
         }
       }
     }
@@ -719,7 +775,7 @@ async function generateQRSesi(sesiId) {
     canvas.style.background = 'white';
     canvas.style.maxWidth = '280px';
     container.appendChild(canvas);
-    qrCanvasRef = canvas;
+    ctx.state.qrCanvasRef = canvas;
 
     const dataText = getEl('qrSesiDataText');
     if (dataText) {
@@ -731,26 +787,25 @@ async function generateQRSesi(sesiId) {
       `;
     }
 
-    getModal('qrSesiModal')?.show();
+    ctx.getModal('qrSesiModal')?.show();
   } catch (e) {
     showToast('Gagal generate QR: ' + e.message, 'error');
   }
 }
 
 async function regenerateQRSesi(sesiId) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(sesiId));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   if (!confirm(`Regenerate QR untuk sesi "${item.nama}"? QR lama tidak akan berlaku lagi.`)) return;
 
   try {
     const res = await AdminModule.regenerateQRSesi(sesiId);
-    if (res.success) {
+    if (res && res.success) {
       item.qrToken = res.qrToken;
-      applyFiltersAndSort();
       showToast('QR berhasil diregenerasi', 'success');
     } else {
-      throw new Error(res.error || 'Gagal regenerate');
+      throw new Error((res && res.error) || 'Gagal regenerate');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
@@ -758,12 +813,18 @@ async function regenerateQRSesi(sesiId) {
 }
 
 function downloadQrPng() {
-  if (!qrCanvasRef) { showToast('QR belum tersedia', 'warning'); return; }
+  const canvas = ctx.state.qrCanvasRef;
+  if (!canvas) {
+    showToast('QR belum tersedia', 'warning');
+    return;
+  }
   try {
     const link = document.createElement('a');
     link.download = `QR_Sesi_${Date.now()}.png`;
-    link.href = qrCanvasRef.toDataURL('image/png');
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     showToast('QR berhasil diunduh', 'success');
   } catch (e) {
     showToast('Gagal unduh QR', 'error');
@@ -774,19 +835,20 @@ function downloadQrPng() {
 //   ATTENDANCE LIST
 // ============================================================
 async function viewAttendance(sesiId) {
-  const item = STATE.sesiList.find(i => String(i.id) === String(sesiId));
+  const item = ctx.state.sesiList.find(i => String(i.id) === String(sesiId));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const label = getEl('attendanceModalLabel');
   if (label) {
-    label.innerHTML = `<i class="bi bi-people me-2"></i>Daftar Hadir — ${escapeHtml(item.nama)}`;
+    label.innerHTML = `<i class="bi bi-people me-2" aria-hidden="true"></i>Daftar Hadir — ${escapeHtml(item.nama)}`;
   }
+
   const body = getEl('attendanceModalBody');
   if (body) {
     body.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
   }
 
-  getModal('attendanceModal')?.show();
+  ctx.getModal('attendanceModal')?.show();
 
   try {
     const res = await callApi('getAttendanceBySesi', { sesiId }, 'GET');
@@ -797,26 +859,32 @@ async function viewAttendance(sesiId) {
 
     if (attendees.length === 0) {
       bodyEl.innerHTML = `<div class="alert alert-info text-center mb-0">
-        <i class="bi bi-info-circle me-1"></i>Belum ada peserta yang hadir di sesi ini.
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        Belum ada peserta yang hadir di sesi ini.
       </div>`;
       return;
     }
 
     let html = `<div class="mb-2 small text-muted">Total <strong>${attendees.length}</strong> peserta hadir</div>
       <div class="list-group">`;
+
     attendees.forEach((a, i) => {
       const ts = a.timestamp ? new Date(a.timestamp).toLocaleString('id-ID') : '-';
+      const sig = a.signatureDriveId
+        ? `<a href="https://drive.google.com/file/d/${escapeHtml(a.signatureDriveId)}/view"
+              target="_blank" rel="noopener noreferrer"
+              class="btn btn-sm btn-outline-primary" aria-label="Lihat TTD">
+              <i class="bi bi-eye" aria-hidden="true"></i> TTD
+            </a>`
+        : '';
+
       html += `<div class="list-group-item d-flex justify-content-between align-items-center">
         <div>
           <strong>${i + 1}. ${escapeHtml(a.nama || '-')}</strong>
           ${a.pesertaId ? `<span class="badge bg-secondary ms-2">ID: ${escapeHtml(String(a.pesertaId))}</span>` : ''}
-          <div class="small text-muted mt-1"><i class="bi bi-clock me-1"></i>${escapeHtml(ts)}</div>
+          <div class="small text-muted mt-1"><i class="bi bi-clock me-1" aria-hidden="true"></i>${escapeHtml(ts)}</div>
         </div>
-        ${a.signatureDriveId
-          ? `<a href="https://drive.google.com/file/d/${a.signatureDriveId}/view" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-eye"></i> TTD
-            </a>`
-          : ''}
+        ${sig}
       </div>`;
     });
     html += `</div>`;
@@ -833,8 +901,11 @@ async function viewAttendance(sesiId) {
 //   EXPORT
 // ============================================================
 function exportData() {
-  const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.sesiList;
-  if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
+  const data = ctx.state.filteredList.length > 0 ? ctx.state.filteredList : ctx.state.sesiList;
+  if (data.length === 0) {
+    showToast('Tidak ada data untuk diekspor', 'info');
+    return;
+  }
 
   const exportArr = data.map(item => ({
     id: item.id,
@@ -852,10 +923,22 @@ function exportData() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `sesi_absen_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast(`Berhasil mengekspor ${data.length} data`, 'success');
   } catch (e) {
     showToast('Gagal ekspor: ' + e.message, 'error');
   }
 }
+
+// ============================================================
+//   EXPORT DEFAULT
+// ============================================================
+export default { mount, unmount };
+
+console.log(
+  '%c Sesi Absen View v27.2.0 — Preload + Subscription Edition ',
+  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);

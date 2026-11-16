@@ -1,22 +1,29 @@
 // ============================================================
-// VIEW: dashboard.js — Full Fix Production Ready (Latest)
+// VIEW: dashboard.js — v28.3.0 FULL FIX EDITION
 // Dimuat oleh: js/router.js
 // HTML: views/admin/dashboard.html
 // ============================================================
-// Fitur:
-// ✅ Stat cards (6): peserta, sesi, materi, skrining, pretest, posttest
-// ✅ Trend indicator (naik/turun vs 7 hari sebelumnya)
-// ✅ Chart tren aktivitas 7 hari (Chart.js line) + destroy on unmount
-// ✅ Quick actions (4 tombol)
-// ✅ Activity feed (6 aktivitas terbaru)
-// ✅ Todo list dinamis
-// ✅ Global search (peserta/materi/sesi)
-// ✅ Auto-refresh 30 detik (visibility-aware + re-entrance guard)
-// ✅ Scan QR modal (html5-qrcode) — fullscreen, mode otomatis/manual
-// ✅ Signature modal (Signature Pad) — admin absen on behalf
-// ✅ Floating scan button
-// ✅ Robust mount/unmount lifecycle
-// ✅ Zero memory leak (listener registry + chart destroy + scanner stop)
+// CHANGELOG v28.3.0 (dari v28.2.0):
+//   ✅ FIX CRITICAL: QR Scanner race condition — tunggu DOM ready
+//   ✅ FIX: Html5Qrcode instance reuse (cegah duplicate camera)
+//   ✅ FIX: Stop scanner benar-benar release camera (await)
+//   ✅ FIX: Modal hide → auto stop scanner
+//   ✅ FIX: Scan mode "Otomatis" & "Manual" berfungsi penuh
+//   ✅ FIX: Manual session dropdown refresh saat modal show
+//   ✅ FIX: Signature modal — dispose + cleanup lengkap
+//   ✅ FIX: Chart destroy sebelum recreate (cegah leak)
+//   ✅ FIX: Empty state + error state user-friendly
+//   ✅ FIX: Search click-outside pakai handler reference
+//   ✅ FIX: Timezone-safe chart labels
+//   ✅ FIX: Admin absen fallback (BUG-006) — scan → signature → submit
+//   ✅ FIX: Floating button "show" class
+//   ✅ PERF: O(n) chart lookup via Map
+//   ✅ PERF: Chart hash guard — skip re-render kalau data sama
+//   ✅ PERF: Lazy load Chart.js + Html5Qrcode
+//   ✅ NEW: Retry load library QR (2 CDN fallback)
+//   ✅ NEW: Diagnostic console log per section
+//   ✅ NEW: Empty state di semua sub-section (feed, todo, chart)
+//   ✅ NEW: Safe array validation di semua loop
 // ============================================================
 
 import { AdminModule } from '../../js/modules/admin.js';
@@ -24,166 +31,254 @@ import {
   callApi,
   showToast,
   escapeHtml,
+  getLocalDateOnly,
+  formatDateTimeID,
 } from '../../js/core/api.js';
+import { BASE_PATH } from '../../js/core/config.js';
+import {
+  getEl,
+  debounce,
+  setBtnLoading,
+  createViewContext,
+  computeListHash,
+  setCacheStatus as setCacheStatusHelper,
+  ensureChartJS,
+  cleanupBootstrapArtifacts,
+} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   MODULE-LEVEL STATE
+//   CONSTANTS
 // ============================================================
-let refreshInterval = null;
-let activityChartInstance = null;
-let scanQrInstance = null;
-let isScannerRunning = false;
-let currentScanMode = 'otomatis';
-let pendingScanData = { pesertaId: null, nama: null };
-let searchDebounceTimer = null;
-let signatureModalInstance = null;
-let resultModalInstance = null;
-let scanModalInstance = null;
-let dynamicSignatureModalEl = null;
-
-// Guard: cegah double-mount
-let isMounted = false;
-
-// Guard: cegah auto-refresh spam
-let isRefreshing = false;
-
-// Listener registry untuk cleanup
-const listeners = [];
+const CHART_ID = 'activityChart';
+const SEARCH_DEBOUNCE_MS = 250;
+const QR_LIB_CDN_PRIMARY  = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+const QR_LIB_CDN_FALLBACK = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+const LIB_WAIT_MAX_MS = 5000;
+const LIB_WAIT_STEP_MS = 150;
+const SCAN_MODES = { AUTO: 'otomatis', MANUAL: 'manual' };
 
 // ============================================================
-//   UTILITY
+//   MODULE-LEVEL STATE (hindari kebocoran listener)
 // ============================================================
-function on(el, ev, handler, options) {
-  if (!el) return null;
-  el.addEventListener(ev, handler, options);
-  listeners.push({ el, ev, handler, options });
-  return handler;
-}
+let ctx = null;
+let outsideClickListener = null;
+let signatureResizeListener = null;
 
-function debounce(fn, delay) {
-  let timer;
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
-function getEl(id) {
-  return document.getElementById(id);
-}
+// ============================================================
+//   CONTEXT — subscription ke AdminModule
+// ============================================================
+ctx = createViewContext(
+  {
+    lastChartHash: '',
+    // Scanner
+    scanQrInstance: null,
+    isScannerRunning: false,
+    currentScanMode: SCAN_MODES.AUTO,
+    qrLibLoading: false,
+    qrLibLoadPromise: null,
+    // Signature
+    dynamicSignatureModalEl: null,
+    signatureModalInstance: null,
+    signaturePad: null,
+    isSubmittingAbsen: false,
+    pendingScanData: { pesertaId: null, nama: null },
+    // Search
+    searchDebounceTimer: null,
+    // Charts
+    activityChartInstance: null,
+  },
+  {
+    watchTypes: ['all', 'multiple', 'manual-refresh'],
+    onDataChange: (type) => {
+      if (!ctx.mounted) return;
+      console.log(`[DashboardView] ⚡ Data changed (${type}) → re-render`);
+      try {
+        renderDashboard();
+        setCacheStatus('Live');
+      } catch (e) {
+        console.warn('[DashboardView] Re-render error:', e);
+      }
+    },
+  }
+);
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount({ path, query, outlet }) {
-  if (isMounted) {
-    console.warn('[DashboardView] Sudah mounted, skip double-mount');
+export async function mount() {
+  if (ctx.mounted) {
+    console.warn('[DashboardView] Sudah mounted, skip');
     return unmount;
   }
-  isMounted = true;
-  console.log('[DashboardView] mounted');
+  ctx.mounted = true;
+  ctx.saving = false;
+  ctx.refreshing = false;
 
-  // Guard elemen utama
-  const dashboardContent = getEl('dashboardContent');
-  if (!dashboardContent) {
+  console.log('[DashboardView] 🚀 mounted');
+
+  const container = getEl('dashboardContent');
+  if (!container) {
     console.warn('[DashboardView] #dashboardContent tidak ditemukan');
-    isMounted = false;
-    return;
+    ctx.mounted = false;
+    return unmount;
   }
 
-  // ===== Bind top-level events =====
-  on(getEl('refreshDataBtn'), 'click', handleManualRefresh);
-  on(getEl('globalSearchInput'), 'input', handleGlobalSearch);
-  on(getEl('scanFloatBtn'), 'click', openScanner);
-  on(document, 'click', handleClickOutsideSearch);
+  // Reset state
+  Object.assign(ctx.state, {
+    lastChartHash: '',
+    scanQrInstance: null,
+    isScannerRunning: false,
+    currentScanMode: SCAN_MODES.AUTO,
+    qrLibLoading: false,
+    qrLibLoadPromise: null,
+    dynamicSignatureModalEl: null,
+    signatureModalInstance: null,
+    signaturePad: null,
+    isSubmittingAbsen: false,
+    pendingScanData: { pesertaId: null, nama: null },
+    searchDebounceTimer: null,
+    activityChartInstance: null,
+  });
 
-  // ===== Init scan mode =====
+  // Lazy load libraries (background, tidak blocking)
+  ensureChartJS().catch(e => console.warn('[DashboardView] Chart.js:', e.message));
+  preloadQrLibrary().catch(e => console.warn('[DashboardView] QR lib:', e.message));
+
+  // Bind events
+  bindEvents();
   initScanModeSafe();
 
-  // ===== Initial data load =====
-  await loadData(false);
+  // ⚡ INSTANT RENDER dari preload cache
+  const stats = AdminModule.getStats() || {};
+  const hasData = (stats.totalPeserta || 0) + (stats.totalSesi || 0) + (stats.totalMateri || 0) > 0;
 
-  // ===== Auto-refresh 30 detik =====
-  refreshInterval = setInterval(() => {
-    if (document.hidden) return;
-    if (!isMounted) return;
-    if (isRefreshing) return; // ← guard re-entrance
+  if (hasData) {
+    console.log('[DashboardView] ⚡ Rendering from preload cache');
+    try {
+      renderDashboard();
+      setCacheStatus('Live');
+    } catch (e) {
+      console.error('[DashboardView] Initial render error:', e);
+      await loadData(false);
+    }
+  } else {
+    console.log('[DashboardView] ⚠️ No preload data, showing skeleton');
+    renderSkeleton();
+    await loadData(false);
+  }
 
-    isRefreshing = true;
-    loadData(false)
-      .catch(() => {})
-      .finally(() => { isRefreshing = false; });
-  }, 30000);
+  // ⚡ Subscribe ke perubahan data
+  await ctx.subscribeToData();
+
+  // ⚡ Bind refresh button ke global forceSync
+  ctx.bindRefreshButton('refreshDataBtn', 'Data disegarkan');
 
   return unmount;
 }
 
 // ============================================================
-//   UNMOUNT — cleanup semua resource
+//   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!isMounted) return;
-  isMounted = false;
-  console.log('[DashboardView] unmounted');
+  if (!ctx.mounted) return;
+  ctx.mounted = false;
+  console.log('[DashboardView] 🛑 unmounted');
 
-  // 1. Clear interval
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
+  // Clear search timer
+  if (ctx.state.searchDebounceTimer) {
+    clearTimeout(ctx.state.searchDebounceTimer);
+    ctx.state.searchDebounceTimer = null;
   }
 
-  // 2. Destroy chart
-  if (activityChartInstance) {
-    try { activityChartInstance.destroy(); } catch (e) { /* silent */ }
-    activityChartInstance = null;
+  // Destroy chart
+  if (ctx.state.activityChartInstance) {
+    try { ctx.state.activityChartInstance.destroy(); }
+    catch (e) { /* silent */ }
+    ctx.state.activityChartInstance = null;
   }
 
-  // 3. Stop scanner
-  if (isScannerRunning) {
-    stopScanner();
-  }
-  scanQrInstance = null;
+  // Stop scanner (async cleanup)
+  stopScanner(true).catch(() => {});
 
-  // 4. Clear debounce
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = null;
+  // Reset pending data
+  ctx.state.pendingScanData = { pesertaId: null, nama: null };
+  ctx.state.currentScanMode = SCAN_MODES.AUTO;
+  ctx.state.isSubmittingAbsen = false;
+
+  // Remove resize listener
+  if (signatureResizeListener) {
+    window.removeEventListener('resize', signatureResizeListener);
+    signatureResizeListener = null;
   }
 
-  // 5. Remove listeners
-  listeners.forEach(({ el, ev, handler, options }) => {
-    try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
+  // Remove click-outside handler
+  if (outsideClickListener) {
+    document.removeEventListener('click', outsideClickListener);
+    outsideClickListener = null;
+  }
+
+  // Remove dynamic signature modal
+  if (ctx.state.dynamicSignatureModalEl) {
+    try { ctx.state.dynamicSignatureModalEl.remove(); }
+    catch (e) { /* silent */ }
+    ctx.state.dynamicSignatureModalEl = null;
+  }
+
+  // Dispose modals
+  ['signatureModalInstance'].forEach(key => {
+    if (ctx.state[key]) {
+      try { ctx.state[key]?.dispose?.(); }
+      catch (e) { /* silent */ }
+      ctx.state[key] = null;
+    }
   });
-  listeners.length = 0;
 
-  // 6. Dispose bootstrap modals
-  try { signatureModalInstance?.dispose?.(); } catch (e) {}
-  try { resultModalInstance?.dispose?.(); } catch (e) {}
-  try { scanModalInstance?.dispose?.(); } catch (e) {}
-  signatureModalInstance = null;
-  resultModalInstance = null;
-  scanModalInstance = null;
-
-  // 7. Remove dynamic signature modal
-  if (dynamicSignatureModalEl) {
-    try { dynamicSignatureModalEl.remove(); } catch (e) {}
-    dynamicSignatureModalEl = null;
-  }
-
-  // 8. Hide float button
+  // Hide floating scan button
   getEl('scanFloatBtn')?.classList.remove('show');
 
-  // 9. Cleanup Bootstrap artifacts
-  try {
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('padding-right');
-  } catch (e) { /* silent */ }
+  // Cleanup context
+  ctx.cleanup();
+  cleanupBootstrapArtifacts();
 }
 
 // ============================================================
-//   LOAD DATA
+//   CACHE STATUS
+// ============================================================
+function setCacheStatus(status) {
+  setCacheStatusHelper(status);
+}
+
+// ============================================================
+//   BIND EVENTS
+// ============================================================
+function bindEvents() {
+  // Search input
+  const searchInput = getEl('globalSearchInput');
+  if (searchInput) {
+    ctx.on(searchInput, 'input', handleGlobalSearch);
+    ctx.on(searchInput, 'keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        getEl('globalSearchResults')?.classList.remove('show');
+      }
+    });
+  }
+
+  // Scan float button
+  ctx.on(getEl('scanFloatBtn'), 'click', openScanner);
+
+  // Click-outside untuk close search results
+  outsideClickListener = function (e) {
+    const wrapper = document.querySelector('.global-search-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      getEl('globalSearchResults')?.classList.remove('show');
+    }
+  };
+  document.addEventListener('click', outsideClickListener);
+}
+
+// ============================================================
+//   LOAD DATA (fallback jika cache kosong)
 // ============================================================
 async function loadData(forceRefresh = false) {
   const container = getEl('dashboardContent');
@@ -192,27 +287,40 @@ async function loadData(forceRefresh = false) {
   updateCacheStatus('Memuat...');
 
   try {
-    // Render dari cache dulu (fast paint)
     if (!forceRefresh && AdminModule.getState().lastSync) {
-      try { renderDashboard(); } catch (e) { console.warn('Render cache error:', e); }
+      try { renderDashboard(); }
+      catch (e) { console.warn('Render cache error:', e); }
       updateCacheStatus('Cache');
+      return;
     }
 
-    // Fetch fresh
     await AdminModule.loadAllData(forceRefresh);
+    if (!ctx.mounted) return;
 
-    // Re-render
-    renderDashboard();
+    // Change detection
+    const stats = AdminModule.getStats() || {};
+    const state = AdminModule.getState() || {};
+    const pendingCount = (state.peserta || []).filter(x =>
+      String(x.status || '').toLowerCase() === 'pending'
+    ).length;
+
+    const newHash = computeListHash([
+      { c: stats.totalPeserta, t: 0 },
+      { c: stats.totalSesi, t: 1 },
+      { c: stats.totalMateri, t: 2 },
+      { c: pendingCount, t: 3 },
+    ], ['c']);
+
+    if (forceRefresh || newHash !== ctx.state.lastChartHash) {
+      ctx.state.lastChartHash = newHash;
+      renderDashboard();
+    }
+
     updateCacheStatus('Live');
   } catch (e) {
     console.error('[DashboardView] load error:', e);
-    updateCacheStatus('Offline');
+    updateCacheStatus('Error');
 
-    if (forceRefresh) {
-      showToast('Gagal menyegarkan data dari server', 'error');
-    }
-
-    // Fallback UI kalau belum ada data
     if (!AdminModule.getState().lastSync) {
       container.innerHTML = `
         <div class="alert alert-danger text-center">
@@ -220,7 +328,7 @@ async function loadData(forceRefresh = false) {
           <h5>Gagal Memuat Data</h5>
           <p class="small mb-3">${escapeHtml(e.message || 'Terjadi kesalahan')}</p>
           <button class="btn btn-outline-danger" data-dash-action="reload">
-            <i class="bi bi-arrow-clockwise me-1"></i>Muat Ulang
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Muat Ulang
           </button>
         </div>
       `;
@@ -230,36 +338,54 @@ async function loadData(forceRefresh = false) {
   }
 }
 
-// ============================================================
-//   MANUAL REFRESH
-// ============================================================
-async function handleManualRefresh(e) {
-  const btn = e.currentTarget;
-  const originalHtml = btn.innerHTML;
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Memuat...';
-
-  try {
-    await loadData(true);
-    showToast('Data berhasil disegarkan', 'success');
-  } catch (err) {
-    showToast('Gagal menyegarkan data', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-  }
+function updateCacheStatus(status) {
+  setCacheStatus(status);
 }
 
 // ============================================================
-//   RENDER DASHBOARD
+//   RENDER: SKELETON
+// ============================================================
+function renderSkeleton() {
+  const container = getEl('dashboardContent');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="row g-2 g-sm-3">
+      ${Array(6).fill(0).map(() => `
+        <div class="col-6 col-md-4">
+          <div class="stat-card skeleton">
+            <div class="stat-number"></div>
+            <div class="stat-label"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="row g-2 mt-4">
+      <div class="col-md-8">
+        <div class="stat-card" style="padding:1.2rem;">
+          <div class="skeleton-box" style="height:20px;width:200px;margin-bottom:12px;"></div>
+          <div class="skeleton-box" style="height:220px;width:100%;"></div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card" style="padding:1.2rem;">
+          <div class="skeleton-box" style="height:20px;width:120px;margin-bottom:12px;"></div>
+          <div class="skeleton-box" style="height:80px;width:100%;margin-bottom:8px;"></div>
+          <div class="skeleton-box" style="height:80px;width:100%;"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+//   RENDER: DASHBOARD
 // ============================================================
 function renderDashboard() {
   const container = getEl('dashboardContent');
   if (!container) return;
 
-  // ===== Data =====
-  const stats = AdminModule.getStats() || {};
+  const stats        = AdminModule.getStats() || {};
   const allPeserta   = AdminModule.getPesertaList()  || [];
   const sesiList     = AdminModule.getSesiList()     || [];
   const materiList   = AdminModule.getMateriList()   || [];
@@ -268,7 +394,6 @@ function renderDashboard() {
   const posttestList = AdminModule.getPosttestList() || [];
   const alumniList   = AdminModule.getAlumniList()   || [];
 
-  // ===== Counts =====
   const pendingCount = allPeserta.filter(p =>
     String(p.status || '').toLowerCase() === 'pending'
   ).length;
@@ -287,7 +412,7 @@ function renderDashboard() {
 
   const noMateri = materiList.length === 0;
 
-  // ===== Render =====
+  // ====== Render HTML ======
   container.innerHTML = `
     <!-- ============ STAT CARDS (6) ============ -->
     <div class="row g-2 g-sm-3 fade-in">
@@ -352,7 +477,7 @@ function renderDashboard() {
             <span class="small text-muted">Skrining, Pretest & Posttest</span>
           </div>
           <div class="chart-container" style="position:relative;height:220px;">
-            <canvas id="activityChart" aria-label="Chart tren aktivitas 7 hari"></canvas>
+            <canvas id="${CHART_ID}" aria-label="Chart tren aktivitas 7 hari"></canvas>
           </div>
         </div>
       </div>
@@ -413,8 +538,8 @@ function renderDashboard() {
       <div class="col-12">
         <div class="alert alert-info rounded-4 small mb-0">
           <i class="bi bi-info-circle" aria-hidden="true"></i>
-          Data dari cloud, diperbarui otomatis.
-          ${stats.lastSync ? `<br><small>Terakhir sinkronisasi: ${new Date(stats.lastSync).toLocaleString('id-ID')}</small>` : ''}
+          Data dari cloud, diperbarui otomatis setiap 60 detik.
+          ${stats.lastSync ? `<br><small>Terakhir sinkronisasi: ${escapeHtml(formatDateTimeID(stats.lastSync))}</small>` : ''}
           <br>
           <small>
             <i class="bi bi-check-circle-fill text-success me-1" aria-hidden="true"></i>${approvedCount} Disetujui
@@ -426,7 +551,7 @@ function renderDashboard() {
     </div>
   `;
 
-  // Render sub-components after layout ready
+  // Sub-render setelah DOM tersedia
   requestAnimationFrame(() => {
     try {
       renderActivityChart(pretestList, posttestList, skriningList);
@@ -437,14 +562,16 @@ function renderDashboard() {
     }
   });
 
-  // Show scan float button
+  // Show floating scan button
   getEl('scanFloatBtn')?.classList.add('show');
 }
 
 // ============================================================
-//   TREND HELPER
+//   TREND HELPERS
 // ============================================================
 function calculateTrend(dataList, dateField) {
+  if (!Array.isArray(dataList)) return { trend: 0, direction: 'flat' };
+
   const now = new Date();
   const sevenDaysAgo = new Date(now); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const fourteenDaysAgo = new Date(now); fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
@@ -452,7 +579,7 @@ function calculateTrend(dataList, dateField) {
   let currentWeekCount = 0;
   let previousWeekCount = 0;
 
-  (dataList || []).forEach(item => {
+  dataList.forEach(item => {
     const tsStr = item[dateField] || item.timestamp || item.createdAt;
     if (!tsStr) return;
     const ts = new Date(tsStr);
@@ -484,22 +611,48 @@ function formatTrend(trendObj) {
 }
 
 // ============================================================
-//   RENDER: Activity Chart
+//   ACTIVITY CHART
 // ============================================================
-function renderActivityChart(pretestData, posttestData, skriningData) {
-  const canvas = getEl('activityChart');
+async function renderActivityChart(pretestData, posttestData, skriningData) {
+  const canvas = getEl(CHART_ID);
   if (!canvas) return;
 
-  if (typeof Chart === 'undefined') {
-    console.warn('[DashboardView] Chart.js tidak tersedia');
+  // Lazy load Chart.js
+  try {
+    await ensureChartJS();
+  } catch (e) {
+    console.warn('[DashboardView] Chart.js tidak tersedia:', e.message);
     return;
   }
 
-  // CRITICAL: Destroy instance sebelumnya
-  if (activityChartInstance) {
-    try { activityChartInstance.destroy(); } catch (e) { /* silent */ }
-    activityChartInstance = null;
+  if (typeof Chart === 'undefined') {
+    console.warn('[DashboardView] Chart global tidak tersedia');
+    return;
   }
+
+  // Destroy existing
+  if (ctx.state.activityChartInstance) {
+    try { ctx.state.activityChartInstance.destroy(); }
+    catch (e) { /* silent */ }
+    ctx.state.activityChartInstance = null;
+  }
+
+  // ⚡ Build O(n) lookup maps
+  const buildLookup = (list) => {
+    const map = new Map();
+    (list || []).forEach(d => {
+      const ts = d.timestamp || d.createdAt;
+      if (!ts) return;
+      const key = getLocalDateOnly(new Date(ts));
+      if (!key) return;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return map;
+  };
+
+  const pretestMap  = buildLookup(pretestData);
+  const posttestMap = buildLookup(posttestData);
+  const skriningMap = buildLookup(skriningData);
 
   const labels = [];
   const pretestCount = [];
@@ -509,24 +662,26 @@ function renderActivityChart(pretestData, posttestData, skriningData) {
   for (let i = 6; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = getLocalDateOnly(date);
+
     labels.push(date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }));
-
-    const countByDate = (list) => (list || []).filter(d => {
-      const ts = d.timestamp || d.createdAt;
-      return ts && String(ts).startsWith(dateStr);
-    }).length;
-
-    pretestCount.push(countByDate(pretestData));
-    posttestCount.push(countByDate(posttestData));
-    skriningCount.push(countByDate(skriningData));
+    pretestCount.push(pretestMap.get(dateStr) || 0);
+    posttestCount.push(posttestMap.get(dateStr) || 0);
+    skriningCount.push(skriningMap.get(dateStr) || 0);
   }
 
+  // ⚡ Chart hash — skip recreate jika data sama
+  const chartHash = computeListHash([
+    { l: labels.join(','), p: pretestCount.join(','), po: posttestCount.join(','), s: skriningCount.join(',') },
+  ], ['l', 'p', 'po', 's']);
+  if (chartHash === ctx.state.lastChartHash) return;
+  ctx.state.lastChartHash = chartHash;
+
   try {
-    activityChartInstance = new Chart(canvas.getContext('2d'), {
+    ctx.state.activityChartInstance = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
-        labels: labels,
+        labels,
         datasets: [
           {
             label: 'Pretest',
@@ -581,7 +736,7 @@ function renderActivityChart(pretestData, posttestData, skriningData) {
 }
 
 // ============================================================
-//   RENDER: Activity Feed
+//   ACTIVITY FEED
 // ============================================================
 function renderActivityFeed(pretestData, posttestData, skriningData, pesertaData) {
   const feedContainer = getEl('activityFeed');
@@ -589,20 +744,17 @@ function renderActivityFeed(pretestData, posttestData, skriningData, pesertaData
 
   const activities = [];
 
-  const pushIfValid = (arr, type) => {
+  const pushValid = (arr, type) => {
     (arr || []).forEach(d => {
       const ts = d.timestamp || d.createdAt;
-      if (d.nama && ts) {
-        activities.push({ type, nama: d.nama, timestamp: ts });
-      }
+      if (d.nama && ts) activities.push({ type, nama: d.nama, timestamp: ts });
     });
   };
 
-  pushIfValid(pretestData, 'pretest');
-  pushIfValid(posttestData, 'posttest');
-  pushIfValid(skriningData, 'skrining');
+  pushValid(pretestData, 'pretest');
+  pushValid(posttestData, 'posttest');
+  pushValid(skriningData, 'skrining');
 
-  // Peserta baru (3 hari terakhir)
   (pesertaData || []).forEach(d => {
     const ts = d.timestamp;
     if (d.nama_lengkap && ts) {
@@ -657,7 +809,7 @@ function renderActivityFeed(pretestData, posttestData, skriningData, pesertaData
 }
 
 // ============================================================
-//   RENDER: Todo List
+//   TODO LIST
 // ============================================================
 function renderTodoList(pesertaList, sesiList, closedSessions, noMateri) {
   const container = getEl('todoListContainer');
@@ -733,9 +885,11 @@ function renderTodoList(pesertaList, sesiList, closedSessions, noMateri) {
 //   GLOBAL SEARCH
 // ============================================================
 function handleGlobalSearch(e) {
-  clearTimeout(searchDebounceTimer);
+  if (ctx.state.searchDebounceTimer) {
+    clearTimeout(ctx.state.searchDebounceTimer);
+  }
   const query = e.target.value.trim();
-  searchDebounceTimer = setTimeout(() => performSearch(query), 250);
+  ctx.state.searchDebounceTimer = setTimeout(() => performSearch(query), SEARCH_DEBOUNCE_MS);
 }
 
 function performSearch(q) {
@@ -750,7 +904,6 @@ function performSearch(q) {
   const qLower = q.toLowerCase();
   const results = [];
 
-  // Peserta
   (AdminModule.getPesertaList() || []).forEach(p => {
     if (p.nama_lengkap && p.nama_lengkap.toLowerCase().includes(qLower)) {
       results.push({
@@ -762,7 +915,6 @@ function performSearch(q) {
     }
   });
 
-  // Materi
   (AdminModule.getMateriList() || []).forEach(m => {
     if (m.judul && m.judul.toLowerCase().includes(qLower)) {
       results.push({
@@ -774,7 +926,6 @@ function performSearch(q) {
     }
   });
 
-  // Sesi
   (AdminModule.getSesiList() || []).forEach(s => {
     if (s.nama && s.nama.toLowerCase().includes(qLower)) {
       results.push({
@@ -802,74 +953,217 @@ function performSearch(q) {
       `;
     });
     resultsContainer.innerHTML = html;
+
+    // Bind click → close results
+    resultsContainer.querySelectorAll('.result-item').forEach(item => {
+      item.addEventListener('click', () => {
+        resultsContainer.classList.remove('show');
+        const input = getEl('globalSearchInput');
+        if (input) input.value = '';
+      });
+    });
   }
+
   resultsContainer.classList.add('show');
 }
 
-function handleClickOutsideSearch(e) {
-  const wrapper = document.querySelector('.global-search-wrapper');
-  if (wrapper && !wrapper.contains(e.target)) {
-    getEl('globalSearchResults')?.classList.remove('show');
-  }
+// ============================================================
+//   UTILITY
+// ============================================================
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + ' thn lalu';
+  interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + ' bln lalu';
+  interval = seconds / 86400;   if (interval > 1) return Math.floor(interval) + ' hr lalu';
+  interval = seconds / 3600;    if (interval > 1) return Math.floor(interval) + ' jam lalu';
+  interval = seconds / 60;      if (interval > 1) return Math.floor(interval) + ' mnt lalu';
+  return Math.floor(seconds) + ' dtk lalu';
 }
 
 // ============================================================
-//   SCAN QR — INIT MODE
+//   ⭐ QR SCANNER — v28.3.0 FULL FIX
+// ============================================================
+async function preloadQrLibrary() {
+  if (typeof Html5Qrcode !== 'undefined') {
+    console.log('[Dashboard] ✅ Html5Qrcode sudah tersedia');
+    return true;
+  }
+  console.log('[Dashboard] ⚡ Preloading Html5Qrcode library...');
+  return loadQrLibrary();
+}
+
+async function loadQrLibrary() {
+  if (typeof Html5Qrcode !== 'undefined') return true;
+
+  // Reuse promise kalau sedang loading
+  if (ctx.state.qrLibLoadPromise) {
+    return ctx.state.qrLibLoadPromise;
+  }
+
+  ctx.state.qrLibLoadPromise = (async () => {
+    ctx.state.qrLibLoading = true;
+
+    try {
+      // Coba CDN utama
+      try {
+        await loadScript(QR_LIB_CDN_PRIMARY);
+        if (await waitForLib(1500)) return true;
+      } catch (e) {
+        console.warn('[Dashboard] CDN utama gagal:', e.message);
+      }
+
+      // Fallback CDN
+      try {
+        await loadScript(QR_LIB_CDN_FALLBACK);
+        if (await waitForLib(1500)) return true;
+      } catch (e) {
+        console.warn('[Dashboard] CDN fallback gagal:', e.message);
+      }
+
+      return typeof Html5Qrcode !== 'undefined';
+    } finally {
+      ctx.state.qrLibLoading = false;
+      ctx.state.qrLibLoadPromise = null;
+    }
+  })();
+
+  return ctx.state.qrLibLoadPromise;
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      return resolve();
+    }
+
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    const timer = setTimeout(() => {
+      reject(new Error('Timeout loading script'));
+    }, 8000);
+
+    s.onload = () => { clearTimeout(timer); resolve(); };
+    s.onerror = () => { clearTimeout(timer); reject(new Error('Gagal load script: ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function waitForLib(timeoutMs) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (typeof Html5Qrcode !== 'undefined') return true;
+    await new Promise(r => setTimeout(r, LIB_WAIT_STEP_MS));
+  }
+  return false;
+}
+
+// ============================================================
+//   OPEN SCANNER
+// ============================================================
+async function openScanner() {
+  // Pastikan library ready
+  if (typeof Html5Qrcode === 'undefined') {
+    console.log('[Dashboard] ⏳ Menunggu library Html5Qrcode...');
+    showToast('Memuat scanner…', 'info');
+
+    const ok = await loadQrLibrary();
+    if (!ok || typeof Html5Qrcode === 'undefined') {
+      showToast('Scanner QR tidak dapat dimuat. Periksa koneksi internet Anda.', 'error');
+      return;
+    }
+  }
+
+  const modalEl = getEl('scanQrModal');
+  if (!modalEl) {
+    console.error('[Dashboard] #scanQrModal tidak ditemukan');
+    showToast('Modal scanner tidak ditemukan', 'error');
+    return;
+  }
+
+  // Reset state ke default (otomatis)
+  ctx.state.currentScanMode = SCAN_MODES.AUTO;
+  const radioOtomatis = getEl('modeOtomatis');
+  if (radioOtomatis) radioOtomatis.checked = true;
+  const containerManual = getEl('manualSessionContainer');
+  if (containerManual) containerManual.style.display = 'none';
+
+  // Init modal
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+
+  // Tunggu modal fully shown → baru start scanner
+  const onShown = async () => {
+    modalEl.removeEventListener('shown.bs.modal', onShown);
+    initScanModeSafe();
+    await startScanner();
+  };
+  modalEl.addEventListener('shown.bs.modal', onShown);
+
+  // Auto-stop saat modal hidden
+  const onHidden = () => {
+    modalEl.removeEventListener('hidden.bs.modal', onHidden);
+    stopScanner(true).catch(() => {});
+  };
+  modalEl.addEventListener('hidden.bs.modal', onHidden);
+}
+
+// ============================================================
+//   INIT SCAN MODE (idempotent)
 // ============================================================
 function initScanModeSafe() {
   const modeOtomatis = getEl('modeOtomatis');
-  const modeManual  = getEl('modeManual');
+  const modeManual   = getEl('modeManual');
   const containerManual = getEl('manualSessionContainer');
   const manualSelect = getEl('manualSessionSelect');
+  const stopBtn = getEl('scanStopBtn');
 
+  // Set default state
   if (containerManual) containerManual.style.display = 'none';
 
-  // Bind radio otomatis — guard pakai dataset
+  // Bind otomatis (idempotent)
   if (modeOtomatis && !modeOtomatis.dataset.bound) {
     modeOtomatis.dataset.bound = '1';
-    on(modeOtomatis, 'change', function () {
+    ctx.on(modeOtomatis, 'change', function () {
       if (!this.checked) return;
-      currentScanMode = 'otomatis';
+      ctx.state.currentScanMode = SCAN_MODES.AUTO;
       if (containerManual) containerManual.style.display = 'none';
     });
   }
 
-  // Bind radio manual
+  // Bind manual (idempotent)
   if (modeManual && !modeManual.dataset.bound) {
     modeManual.dataset.bound = '1';
-    on(modeManual, 'change', function () {
+    ctx.on(modeManual, 'change', function () {
       if (!this.checked) return;
-      currentScanMode = 'manual';
-      if (containerManual) {
-        containerManual.style.display = 'block';
-        setTimeout(() => containerManual.classList.add('show'), 10);
-      }
+      ctx.state.currentScanMode = SCAN_MODES.MANUAL;
+      if (containerManual) containerManual.style.display = 'block';
       loadManualSesiDropdown();
     });
   }
 
-  // Bind manual select
+  // Bind dropdown manual (idempotent)
   if (manualSelect && !manualSelect.dataset.bound) {
     manualSelect.dataset.bound = '1';
-    on(manualSelect, 'change', function () {
+    ctx.on(manualSelect, 'change', function () {
       console.log('[Scan] Manual sesi dipilih:', this.value);
     });
   }
 
-  // Bind stop scan button
-  const stopBtn = getEl('scanStopBtn');
+  // Bind stop button (idempotent)
   if (stopBtn && !stopBtn.dataset.bound) {
     stopBtn.dataset.bound = '1';
-    on(stopBtn, 'click', () => {
-      stopScanner();
-      try {
-        const modalEl = getEl('scanQrModal');
-        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
-      } catch (e) { /* silent */ }
+    ctx.on(stopBtn, 'click', async () => {
+      await stopScanner(true);
+      try { bootstrap.Modal.getInstance(getEl('scanQrModal'))?.hide(); }
+      catch (e) { /* silent */ }
     });
   }
 }
 
+// ============================================================
+//   LOAD MANUAL SESI DROPDOWN
+// ============================================================
 async function loadManualSesiDropdown() {
   const select = getEl('manualSessionSelect');
   if (!select) return;
@@ -877,10 +1171,7 @@ async function loadManualSesiDropdown() {
   select.innerHTML = '<option value="">Memuat data sesi...</option>';
 
   try {
-    const sesiRes = await callApi('getSesiAbsen', {}, 'GET');
-    let allSesi = [];
-    if (sesiRes && sesiRes.success && Array.isArray(sesiRes.data)) allSesi = sesiRes.data;
-    else if (Array.isArray(sesiRes)) allSesi = sesiRes;
+    const allSesi = AdminModule.getSesiList() || [];
 
     if (!allSesi || allSesi.length === 0) {
       select.innerHTML = '<option value="">Tidak ada sesi tersedia</option>';
@@ -889,7 +1180,7 @@ async function loadManualSesiDropdown() {
 
     let optionsHtml = '<option value="">-- Pilih Sesi --</option>';
     allSesi.forEach(s => {
-      const isOpen = String(s.submission_open).toLowerCase() === 'true';
+      const isOpen = String(s.submission_open).toLowerCase() === 'true' || s.submission_open === true;
       const statusLabel = isOpen ? '🟢 Aktif' : '🔴 Tutup';
       optionsHtml += `<option value="${escapeHtml(String(s.id))}">${escapeHtml(s.nama)} (${statusLabel})</option>`;
     });
@@ -901,47 +1192,27 @@ async function loadManualSesiDropdown() {
 }
 
 // ============================================================
-//   OPEN SCANNER
+//   START SCANNER
 // ============================================================
-function openScanner() {
+async function startScanner() {
+  // Guard library
   if (typeof Html5Qrcode === 'undefined') {
-    showToast('Scanner QR tidak tersedia. Cek koneksi Anda.', 'error');
+    console.error('[Scanner] Html5Qrcode tidak tersedia');
+    showToast('Scanner QR tidak dapat dimuat. Refresh halaman.', 'error');
     return;
   }
 
-  const modalEl = getEl('scanQrModal');
-  if (!modalEl) return;
-
-  // Reset state
-  currentScanMode = 'otomatis';
-  const radioOtomatis = getEl('modeOtomatis');
-  if (radioOtomatis) radioOtomatis.checked = true;
-  const containerManual = getEl('manualSessionContainer');
-  if (containerManual) containerManual.style.display = 'none';
-
-  // Show modal
-  scanModalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-  scanModalInstance.show();
-
-  // Delay untuk modal animate
-  setTimeout(() => {
-    initScanModeSafe();
-    startScanner();
-  }, 250);
-}
-
-function startScanner() {
   const statusEl = getEl('scannerStatus');
   const videoContainer = getEl('scannerVideoContainer');
-
   if (!videoContainer || !statusEl) return;
 
-  // Guard: kalau sudah running
-  if (isScannerRunning) {
-    stopScanner();
-    setTimeout(startScanner, 300);
-    return;
+  // Kalau scanner sudah berjalan, stop dulu
+  if (ctx.state.isScannerRunning) {
+    await stopScanner(true);
   }
+
+  // Bersihkan container dulu
+  videoContainer.innerHTML = '';
 
   const isDesktop = window.innerWidth >= 992;
   const qrboxSize = isDesktop ? 400 : 250;
@@ -949,7 +1220,7 @@ function startScanner() {
   statusEl.innerText = 'Mengakses kamera...';
 
   try {
-    scanQrInstance = new Html5Qrcode('scannerVideoContainer');
+    ctx.state.scanQrInstance = new Html5Qrcode('scannerVideoContainer');
 
     const config = {
       fps: 30,
@@ -957,90 +1228,74 @@ function startScanner() {
       aspectRatio: 1.0,
     };
 
-    scanQrInstance
-      .start(
-        { facingMode: 'environment' },
-        config,
-        (decodedText) => onQRDetected(decodedText),
-        () => { /* ignore per-frame errors */ }
-      )
-      .then(() => {
-        isScannerRunning = true;
-        statusEl.innerText = 'Memindai QR...';
-      })
-      .catch((err) => {
-        statusEl.innerText = 'Gagal mengakses kamera: ' + (err?.message || 'unknown');
-        showToast('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
-        isScannerRunning = false;
-        scanQrInstance = null;
-      });
-  } catch (err) {
-    statusEl.innerText = 'Error: ' + (err?.message || 'unknown');
-    showToast('Terjadi kesalahan saat memuat scanner.', 'error');
-    isScannerRunning = false;
-    scanQrInstance = null;
-  }
-}
+    await ctx.state.scanQrInstance.start(
+      { facingMode: 'environment' },
+      config,
+      (decodedText) => onQRDetected(decodedText),
+      () => { /* ignore per-frame errors */ }
+    );
 
-function stopScanner() {
-  if (scanQrInstance && isScannerRunning) {
-    try {
-      scanQrInstance
-        .stop()
-        .then(() => {
-          try { scanQrInstance.clear(); } catch (e) {}
-          scanQrInstance = null;
-          isScannerRunning = false;
-          const videoContainer = getEl('scannerVideoContainer');
-          const statusEl = getEl('scannerStatus');
-          if (videoContainer) videoContainer.innerHTML = '';
-          if (statusEl) statusEl.innerText = '';
-        })
-        .catch((e) => {
-          console.warn('[Scanner] stop error:', e);
-          isScannerRunning = false;
-          scanQrInstance = null;
-        });
-    } catch (e) {
-      console.warn('[Scanner] stop exception:', e);
-      isScannerRunning = false;
-      scanQrInstance = null;
-    }
-  } else {
-    const videoContainer = getEl('scannerVideoContainer');
-    const statusEl = getEl('scannerStatus');
-    if (videoContainer) videoContainer.innerHTML = '';
-    if (statusEl) statusEl.innerText = '';
-    isScannerRunning = false;
-    scanQrInstance = null;
+    ctx.state.isScannerRunning = true;
+    statusEl.innerText = 'Memindai QR...';
+
+  } catch (err) {
+    console.error('[Scanner] start error:', err);
+    statusEl.innerText = 'Gagal mengakses kamera: ' + (err?.message || 'unknown');
+    showToast('Gagal mengakses kamera. Mohon izinkan akses kamera.', 'error');
+    ctx.state.isScannerRunning = false;
+    ctx.state.scanQrInstance = null;
   }
 }
 
 // ============================================================
-//   ON QR DETECTED
+//   STOP SCANNER (async, benar-benar release camera)
+// ============================================================
+async function stopScanner(silent = false) {
+  const videoContainer = getEl('scannerVideoContainer');
+  const statusEl = getEl('scannerStatus');
+
+  if (ctx.state.scanQrInstance && ctx.state.isScannerRunning) {
+    try {
+      await ctx.state.scanQrInstance.stop();
+    } catch (e) {
+      if (!silent) console.warn('[Scanner] stop error:', e);
+    }
+    try { ctx.state.scanQrInstance.clear(); }
+    catch (e) { /* silent */ }
+  }
+
+  ctx.state.scanQrInstance = null;
+  ctx.state.isScannerRunning = false;
+
+  if (videoContainer) videoContainer.innerHTML = '';
+  if (statusEl) statusEl.innerText = '';
+}
+
+// ============================================================
+//   QR DETECTED
 // ============================================================
 async function onQRDetected(decodedText) {
-  // Stop scanner & close modal
-  stopScanner();
+  console.log('[Scan] QR detected:', decodedText.substring(0, 100));
 
-  const modalEl = getEl('scanQrModal');
-  if (modalEl) {
-    try {
-      bootstrap.Modal.getInstance(modalEl)?.hide();
-    } catch (e) { /* silent */ }
-  }
+  // Stop scanner dulu
+  await stopScanner(true);
 
-  // ===== Format: sesi (scan dari QR sesi) =====
+  // Hide modal scanner
+  try { bootstrap.Modal.getInstance(getEl('scanQrModal'))?.hide(); }
+  catch (e) { /* silent */ }
+
+  // ===== Sesi QR =====
   const matchSesi = decodedText.match(/sesi_id=([^&]+)/);
   if (matchSesi) {
     const sesiId = matchSesi[1];
     const tokenMatch = decodedText.match(/token=([^&]+)/);
     const token = tokenMatch ? tokenMatch[1] : '';
-    window.location.href = `/bisaa/absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(token)}`;
+
+    window.location.href = `${BASE_PATH}absen.html?sesi_id=${encodeURIComponent(sesiId)}&token=${encodeURIComponent(token)}`;
     return;
   }
 
-  // ===== Format: peserta (scan dari ID card) =====
+  // ===== Peserta QR =====
   const matchPeserta = decodedText.match(/peserta_id=([^&]+)/);
   if (matchPeserta) {
     const pesertaId = matchPeserta[1];
@@ -1048,6 +1303,7 @@ async function onQRDetected(decodedText) {
 
     if (!peserta) {
       console.warn('[Scan] Peserta tidak di cache, sync ulang...');
+      showToast('Mencari peserta...', 'info');
       await AdminModule.loadAllData(true);
       peserta = AdminModule.getPesertaById(pesertaId);
       if (!peserta) {
@@ -1062,8 +1318,8 @@ async function onQRDetected(decodedText) {
       return;
     }
 
-    pendingScanData.pesertaId = pesertaId;
-    pendingScanData.nama = peserta.nama_lengkap;
+    ctx.state.pendingScanData.pesertaId = pesertaId;
+    ctx.state.pendingScanData.nama = peserta.nama_lengkap;
 
     const nameEl = getEl('resultNamaPeserta');
     const statusEl = getEl('resultStatusPeserta');
@@ -1077,42 +1333,51 @@ async function onQRDetected(decodedText) {
   showToast('Format QR tidak dikenali.', 'warning');
 }
 
+// ============================================================
+//   SHOW RESULT MODAL
+// ============================================================
 function showScanResultModal() {
   const resultModal = getEl('scanResultModal');
   if (!resultModal) return;
 
-  resultModalInstance = bootstrap.Modal.getOrCreateInstance(resultModal);
-  resultModalInstance.show();
+  const modal = bootstrap.Modal.getOrCreateInstance(resultModal);
+  modal.show();
 
-  // Bind buttons dengan .onclick (tidak accumulate)
   const btnAbsen = getEl('btnAbsenSekarang');
   const btnBuka = getEl('btnBukaSesi');
 
   if (btnAbsen) {
     btnAbsen.onclick = () => {
-      try { resultModalInstance?.hide(); } catch (e) {}
-      setTimeout(() => showSignatureModalAndAbsen(pendingScanData.pesertaId, pendingScanData.nama), 300);
+      try { modal.hide(); } catch (e) { /* silent */ }
+      setTimeout(() => {
+        showSignatureModalAndAbsen(
+          ctx.state.pendingScanData.pesertaId,
+          ctx.state.pendingScanData.nama
+        );
+      }, 350);
     };
   }
 
   if (btnBuka) {
     btnBuka.onclick = () => {
-      try { resultModalInstance?.hide(); } catch (e) {}
+      try { modal.hide(); } catch (e) { /* silent */ }
       setTimeout(() => { window.location.hash = '#/admin/sesi-absen'; }, 300);
     };
   }
 }
 
 // ============================================================
-//   SIGNATURE MODAL + SUBMIT ABSEN
+//   SIGNATURE MODAL + ADMIN ABSEN
 // ============================================================
 function showSignatureModalAndAbsen(pesertaId, nama) {
-  // Remove old modal
+  // Cleanup old modal
   const oldModal = getEl('adminSignatureModal');
-  if (oldModal) oldModal.remove();
+  if (oldModal) {
+    try { oldModal.remove(); }
+    catch (e) { /* silent */ }
+  }
 
   const safeNama = escapeHtml(nama);
-
   const modalHtml = `
     <div class="modal fade" id="adminSignatureModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -1129,8 +1394,12 @@ function showSignatureModalAndAbsen(pesertaId, nama) {
               <canvas id="adminSignatureCanvas" width="300" height="150" aria-label="Area tanda tangan"></canvas>
             </div>
             <div class="mt-2 d-flex gap-2 justify-content-center">
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAdminSign">Hapus</button>
-              <button type="button" class="btn btn-outline-primary btn-sm" id="undoAdminSign">Undo</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAdminSign">
+                <i class="bi bi-eraser me-1" aria-hidden="true"></i>Hapus
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="undoAdminSign">
+                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Undo
+              </button>
             </div>
           </div>
           <div class="modal-footer border-0 justify-content-center">
@@ -1144,18 +1413,22 @@ function showSignatureModalAndAbsen(pesertaId, nama) {
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', modalHtml);
-  dynamicSignatureModalEl = getEl('adminSignatureModal');
-  if (!dynamicSignatureModalEl) return;
 
-  signatureModalInstance = bootstrap.Modal.getOrCreateInstance(dynamicSignatureModalEl);
-  signatureModalInstance.show();
+  ctx.state.dynamicSignatureModalEl = getEl('adminSignatureModal');
+  if (!ctx.state.dynamicSignatureModalEl) return;
+
+  ctx.state.signatureModalInstance = bootstrap.Modal.getOrCreateInstance(ctx.state.dynamicSignatureModalEl);
+  ctx.state.signatureModalInstance.show();
 
   const canvas = getEl('adminSignatureCanvas');
   if (!canvas) return;
 
-  let sigPad = null;
-  let resizeHandler = null;
+  if (typeof SignaturePad === 'undefined') {
+    showToast('Signature Pad tidak tersedia. Refresh halaman.', 'error');
+    return;
+  }
 
+  // Init signature pad
   const initCanvas = () => {
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -1165,153 +1438,231 @@ function showSignatureModalAndAbsen(pesertaId, nama) {
     canvas.height = h * ratio;
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(ratio, ratio);
+    const c = canvas.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.scale(ratio, ratio);
   };
 
   initCanvas();
 
-  if (typeof SignaturePad === 'undefined') {
-    showToast('Signature Pad tidak tersedia.', 'error');
-    return;
+  // Cleanup old sigPad
+  if (ctx.state.signaturePad) {
+    try { ctx.state.signaturePad.off(); }
+    catch (e) { /* silent */ }
+    ctx.state.signaturePad = null;
   }
 
-  sigPad = new SignaturePad(canvas, {
+  ctx.state.signaturePad = new SignaturePad(canvas, {
     backgroundColor: 'rgb(255,255,255)',
     penColor: '#0f172a',
     minWidth: 1.5,
     maxWidth: 3,
   });
 
-  // Preserve data on resize
-  resizeHandler = () => {
-    if (!sigPad) return;
-    const data = sigPad.toData();
-    initCanvas();
-    sigPad.clear();
-    if (data.length) sigPad.fromData(data);
+  // Resize handler (module-level ref untuk cleanup)
+  let resizeTimer = null;
+  signatureResizeListener = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!ctx.state.signaturePad) return;
+      const data = ctx.state.signaturePad.toData();
+      initCanvas();
+      ctx.state.signaturePad.clear();
+      if (data.length) ctx.state.signaturePad.fromData(data);
+    }, 200);
   };
-  window.addEventListener('resize', resizeHandler);
+  window.addEventListener('resize', signatureResizeListener);
 
-  // Cleanup on modal close
-  dynamicSignatureModalEl.addEventListener('hidden.bs.modal', () => {
-    if (resizeHandler) {
-      window.removeEventListener('resize', resizeHandler);
-      resizeHandler = null;
+  // Modal hide — cleanup
+  ctx.state.dynamicSignatureModalEl.addEventListener('hidden.bs.modal', () => {
+    if (signatureResizeListener) {
+      window.removeEventListener('resize', signatureResizeListener);
+      signatureResizeListener = null;
     }
-    try { sigPad?.off?.(); } catch (e) {}
-    sigPad = null;
-    try { dynamicSignatureModalEl?.remove(); } catch (e) {}
-    dynamicSignatureModalEl = null;
+    clearTimeout(resizeTimer);
+    try { ctx.state.signaturePad?.off?.(); }
+    catch (e) { /* silent */ }
+    ctx.state.signaturePad = null;
+    try { ctx.state.dynamicSignatureModalEl?.remove(); }
+    catch (e) { /* silent */ }
+    ctx.state.dynamicSignatureModalEl = null;
+    ctx.state.signatureModalInstance = null;
   }, { once: true });
 
-  // Bind clear / undo
-  on(getEl('clearAdminSign'), 'click', () => sigPad?.clear());
-  on(getEl('undoAdminSign'), 'click', () => {
-    const data = sigPad?.toData();
+  // Clear/Undo
+  getEl('clearAdminSign')?.addEventListener('click', () => {
+    ctx.state.signaturePad?.clear();
+  });
+  getEl('undoAdminSign')?.addEventListener('click', () => {
+    const data = ctx.state.signaturePad?.toData();
     if (data && data.length > 0) {
       data.pop();
-      sigPad.fromData(data);
+      ctx.state.signaturePad.fromData(data);
     }
   });
 
-  // Bind submit
-  on(getEl('adminSubmitAbsen'), 'click', async function () {
-    if (!sigPad || sigPad.isEmpty()) {
-      showToast('Tanda tangan wajib diisi!', 'warning');
-      return;
-    }
+  // Submit
+  getEl('adminSubmitAbsen')?.addEventListener('click', handleAdminSubmitAbsen);
+}
 
-    const btn = this;
+// ============================================================
+//   HANDLE ADMIN SUBMIT ABSEN
+// ============================================================
+async function handleAdminSubmitAbsen(e) {
+  if (ctx.state.isSubmittingAbsen) return;
+
+  const sigPad = ctx.state.signaturePad;
+  if (!sigPad || sigPad.isEmpty()) {
+    showToast('Tanda tangan wajib diisi!', 'warning');
+    return;
+  }
+
+  const pesertaId = ctx.state.pendingScanData.pesertaId;
+  const nama = ctx.state.pendingScanData.nama;
+
+  if (!pesertaId || !nama) {
+    showToast('Data peserta tidak valid', 'error');
+    return;
+  }
+
+  const btn = e?.currentTarget;
+  const originalHtml = btn?.innerHTML || '';
+  if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+  }
+  ctx.state.isSubmittingAbsen = true;
 
+  try {
+    // ===== Tentukan sesi =====
     let selectedSesiId = null;
 
-    if (currentScanMode === 'otomatis') {
-      const allSesi = AdminModule.getSesiList() || [];
-      const now = new Date();
-      const activeSesi = allSesi.filter(s => {
-        const open = String(s.submission_open).toLowerCase() === 'true';
-        if (!open) return false;
-        if (!s.waktu_mulai || !s.waktu_selesai) return true;
-        const start = new Date(s.waktu_mulai);
-        const end = new Date(s.waktu_selesai);
-        return now >= start && now <= end;
-      });
-
-      if (activeSesi.length === 0) {
-        showToast('Tidak ada sesi aktif saat ini.', 'warning');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Kirim Absen';
-        return;
-      }
-      selectedSesiId = activeSesi[0].id;
-    } else if (currentScanMode === 'manual') {
+    if (ctx.state.currentScanMode === SCAN_MODES.AUTO) {
+      selectedSesiId = await resolveAutoSesi();
+      if (!selectedSesiId) return;
+    } else {
       const manualSelect = getEl('manualSessionSelect');
       if (!manualSelect || !manualSelect.value) {
-        showToast('Pilih sesi manual terlebih dahulu.', 'warning');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Kirim Absen';
+        showToast('Pilih sesi manual terlebih dahulu', 'warning');
         return;
       }
       selectedSesiId = manualSelect.value;
     }
 
+    // ===== Ambil signature =====
+    let signatureDataURL;
     try {
-      const signatureDataURL = sigPad.toDataURL('image/jpeg', 0.2);
-      const result = await callApi('submitAbsen', {
-        nama: nama,
-        sesiId: selectedSesiId,
-        tandaTangan: signatureDataURL,
-        password: null,
-        qrToken: null,
-        pesertaId: pesertaId,
-      }, 'POST');
-
-      if (result && result.success) {
-        showToast(`✅ Absen berhasil untuk ${nama}`, 'success');
-        sigPad.clear();
-        try { signatureModalInstance?.hide(); } catch (e) {}
-        await loadData(true);
-      } else {
-        throw new Error((result && result.error) || 'Gagal submit absen');
-      }
+      signatureDataURL = sigPad.toDataURL('image/jpeg', 0.2);
     } catch (err) {
-      const msg = err.message || 'Terjadi kesalahan';
-      if (msg.includes('Sudah absen')) {
-        showToast('⚠️ Peserta sudah absen di sesi ini.', 'warning');
-      } else {
-        showToast('❌ ' + msg, 'error');
-      }
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Kirim Absen';
+      signatureDataURL = sigPad.toDataURL('image/png');
     }
+
+    // ===== Submit =====
+    const result = await callApi('submitAbsen', {
+      nama,
+      sesiId: selectedSesiId,
+      tandaTangan: signatureDataURL,
+      password: null,
+      qrToken: null,
+      pesertaId,
+    }, 'POST');
+
+    if (result && result.success) {
+      showToast(`✅ Absen berhasil untuk ${nama}`, 'success');
+      sigPad.clear();
+      try { ctx.state.signatureModalInstance?.hide(); }
+      catch (e) { /* silent */ }
+      await AdminModule.loadAllData(true);
+    } else {
+      throw new Error((result && result.error) || 'Gagal submit absen');
+    }
+  } catch (err) {
+    const msg = err.message || 'Terjadi kesalahan';
+    if (msg.includes('Sudah absen')) {
+      showToast('⚠️ Peserta sudah absen di sesi ini.', 'warning');
+    } else if (msg.includes('Pilihan sesi tidak valid')) {
+      showToast('Pilihan sesi tidak valid.', 'warning');
+    } else {
+      showToast('❌ ' + msg, 'error');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+    ctx.state.isSubmittingAbsen = false;
+  }
+}
+
+// ============================================================
+//   RESOLVE AUTO SESI
+// ============================================================
+async function resolveAutoSesi() {
+  const allSesi = AdminModule.getSesiList() || [];
+  const now = new Date();
+
+  // Priority 1: Sesi dalam window waktu
+  const activeSesi = allSesi.filter(s => {
+    const open = String(s.submission_open).toLowerCase() === 'true' || s.submission_open === true;
+    if (!open) return false;
+    if (!s.waktu_mulai || !s.waktu_selesai) return true;
+    const start = new Date(s.waktu_mulai);
+    const end = new Date(s.waktu_selesai);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return true;
+    return now >= start && now <= end;
   });
-}
 
-// ============================================================
-//   UTILITY
-// ============================================================
-function updateCacheStatus(status) {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-  el.className = 'cache-status ' + (
-    status === 'Live' ? 'live'
-    : status === 'Offline' ? 'offline'
-    : ''
+  if (activeSesi.length === 1) {
+    return activeSesi[0].id;
+  }
+
+  if (activeSesi.length > 1) {
+    const optionsText = activeSesi.map((s, i) => `${i + 1}. ${s.nama}`).join('\n');
+    const choice = prompt(
+      'Terdapat ' + activeSesi.length + ' sesi aktif. Pilih nomor sesi:\n\n' +
+      optionsText + '\n\nMasukkan nomor (1-' + activeSesi.length + '):'
+    );
+    const idx = parseInt(choice);
+    if (isNaN(idx) || idx < 1 || idx > activeSesi.length) {
+      showToast('Pilihan sesi tidak valid', 'warning');
+      return null;
+    }
+    return activeSesi[idx - 1].id;
+  }
+
+  // Priority 2: Sesi terbuka (fallback)
+  const openSesi = allSesi.filter(s =>
+    String(s.submission_open).toLowerCase() === 'true' || s.submission_open === true
   );
+
+  if (openSesi.length === 0) {
+    showToast('Tidak ada sesi terbuka. Buka sesi dulu di menu Sesi Absen.', 'warning');
+    return null;
+  }
+
+  if (openSesi.length === 1) {
+    return openSesi[0].id;
+  }
+
+  const optionsText = openSesi.map((s, i) => `${i + 1}. ${s.nama}`).join('\n');
+  const choice = prompt(
+    'Tidak ada sesi dalam waktu aktif. Pilih sesi terbuka:\n\n' +
+    optionsText + '\n\nMasukkan nomor (1-' + openSesi.length + '):'
+  );
+  const idx = parseInt(choice);
+  if (isNaN(idx) || idx < 1 || idx > openSesi.length) {
+    showToast('Pilihan sesi tidak valid', 'warning');
+    return null;
+  }
+  return openSesi[idx - 1].id;
 }
 
-function timeSince(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + ' thn lalu';
-  interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + ' bln lalu';
-  interval = seconds / 86400;   if (interval > 1) return Math.floor(interval) + ' hr lalu';
-  interval = seconds / 3600;    if (interval > 1) return Math.floor(interval) + ' jam lalu';
-  interval = seconds / 60;      if (interval > 1) return Math.floor(interval) + ' mnt lalu';
-  return Math.floor(seconds) + ' dtk lalu';
-}
+// ============================================================
+//   EXPORT DEFAULT
+// ============================================================
+export default { mount, unmount };
+
+console.log(
+  '%c Dashboard View v28.3.0 — Full Fix + QR Scanner Edition ',
+  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
+);

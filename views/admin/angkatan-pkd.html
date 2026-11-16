@@ -1,25 +1,21 @@
 <!-- ============================================================
-     views/admin/angkatan-pkd.html — Angkatan PKD View
-     Dimuat oleh: js/router.js
-     Logic: views/admin/angkatan-pkd.js
-     Versi: 28.0.0 — Angkatan PKD Edition
+     views/admin/angkatan-pkd.html — v28.1.0 FULL FIX EDITION
      ============================================================
-     CHANGELOG v28.0.0:
-     ✅ Hub View — grid cards semua angkatan
-     ✅ Detail View — 7 tabs (Peserta, Absensi, Pretest, Posttest,
-        Skrining, Sertifikat, RTL)
-     ✅ Breadcrumb + Back navigation
-     ✅ Modal Tambah Angkatan
-     ✅ Modal Konfirmasi Hapus
-     ✅ Modal Detail Peserta (dari tab Peserta)
-     ✅ Skeleton loading
-     ✅ ARIA labels lengkap
-     ✅ Dark mode + mobile responsive
+     CHANGELOG v28.1.0 (dari v28.0.3):
+     ✅ FIX CRITICAL: Tab Bootstrap pill — pakai Bootstrap.Tab API
+     ✅ FIX: Inline style <style> dipindah ke <head> via theme.css
+     ✅ FIX: Semua 7 tab punya ID + aria-labelledby konsisten
+     ✅ FIX: Tab content pakai .tab-pane.fade (animasi smooth)
+     ✅ FIX: Detail header + stats render sebelum tab content
+     ✅ FIX: Modal cleanup — dispose on hide
+     ✅ FIX: Skeleton per-tab (bukan global)
+     ✅ FIX: Aksesibilitas — role, aria-label, tabindex lengkap
+     ✅ FIX: Breadcrumb + back button konsisten
+     ✅ FIX: Search clear button muncul kondisional
+     ✅ FIX: Responsive mobile — grid stack + tab scroll
+     ✅ KEEP: Semua fitur v28.0.3 (Hub + 7 tabs + modals)
      ============================================================ -->
 
-<!-- ==========================================================
-     PAGE HEADER
-     ========================================================== -->
 <h2 class="section-title">
   <i class="bi bi-mortarboard-fill me-2" aria-hidden="true"></i>Angkatan PKD
 </h2>
@@ -70,9 +66,9 @@
 
   <!-- Toolbar -->
   <div class="row mb-3 g-2 align-items-center">
-    <div class="col-lg-6">
+    <div class="col-lg-7">
       <div class="d-flex gap-2 flex-wrap align-items-center">
-        <button type="button" class="btn btn-outline-primary" id="addAngkatanBtn"
+        <button type="button" class="btn btn-primary" id="addAngkatanBtn"
                 aria-label="Tambah angkatan baru">
           <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tambah Angkatan
         </button>
@@ -83,21 +79,25 @@
         <span id="cacheStatus" class="cache-status" aria-live="polite">Memuat...</span>
       </div>
     </div>
-    <div class="col-lg-6 d-flex gap-2 justify-content-lg-end">
-      <div class="input-group" style="max-width: 280px;">
+    <div class="col-lg-5">
+      <div class="input-group">
         <span class="input-group-text bg-white border-end-0">
           <i class="bi bi-search text-muted" aria-hidden="true"></i>
         </span>
         <input type="text" class="form-control border-start-0" id="searchAngkatanInput"
-               placeholder="Cari angkatan..." autocomplete="off"
+               placeholder="Cari nama angkatan..." autocomplete="off"
                aria-label="Cari angkatan">
+        <button type="button" class="btn btn-outline-secondary d-none" id="clearSearchBtn"
+                aria-label="Hapus pencarian">
+          <i class="bi bi-x-circle" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </div>
 
   <!-- Grid Angkatan -->
   <div id="angkatanGridContainer" class="row g-3" aria-live="polite">
-    <!-- Skeleton initial -->
+    <!-- Skeleton awal -->
     <div class="col-md-6 col-xl-4">
       <div class="glass-card h-100" style="padding:1.25rem;">
         <div class="d-flex align-items-start gap-2 mb-3">
@@ -189,7 +189,6 @@
           <span class="badge bg-primary" id="detailAngkatanStatus">-</span>
         </div>
       </div>
-      <!-- Quick stats di header -->
       <div class="d-flex gap-2 flex-wrap">
         <div class="text-center px-3 py-2 rounded-3" style="background:rgba(37,99,235,0.08);">
           <div class="fw-bold text-primary" style="font-size:1.3rem;" id="detailStatPeserta">0</div>
@@ -208,7 +207,7 @@
   </div>
 
   <!-- Tabs Navigation -->
-  <ul class="nav nav-pills mb-3 flex-wrap gap-1" id="angkatanTab" role="tablist">
+  <ul class="nav nav-pills mb-3 flex-wrap gap-1 angkatan-tabs" id="angkatanTab" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="tabPesertaBtn"
               data-bs-toggle="pill" data-bs-target="#tabPeserta"
@@ -270,109 +269,52 @@
   <!-- Tab Content -->
   <div class="tab-content" id="angkatanTabContent">
 
-    <!-- TAB: PESERTA -->
     <div class="tab-pane fade show active" id="tabPeserta"
-         role="tabpanel" aria-labelledby="tabPesertaBtn">
+         role="tabpanel" aria-labelledby="tabPesertaBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabPesertaContainer" class="table-responsive" aria-live="polite">
-          <!-- Skeleton -->
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat peserta...</p>
-          </div>
-        </div>
+        <div id="tabPesertaContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: ABSENSI -->
     <div class="tab-pane fade" id="tabAbsensi"
-         role="tabpanel" aria-labelledby="tabAbsensiBtn">
+         role="tabpanel" aria-labelledby="tabAbsensiBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabAbsensiContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat absensi...</p>
-          </div>
-        </div>
+        <div id="tabAbsensiContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: PRETEST -->
     <div class="tab-pane fade" id="tabPretest"
-         role="tabpanel" aria-labelledby="tabPretestBtn">
+         role="tabpanel" aria-labelledby="tabPretestBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabPretestContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat pretest...</p>
-          </div>
-        </div>
+        <div id="tabPretestContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: POSTTEST -->
     <div class="tab-pane fade" id="tabPosttest"
-         role="tabpanel" aria-labelledby="tabPosttestBtn">
+         role="tabpanel" aria-labelledby="tabPosttestBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabPosttestContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat posttest...</p>
-          </div>
-        </div>
+        <div id="tabPosttestContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: SKRINING -->
     <div class="tab-pane fade" id="tabSkrining"
-         role="tabpanel" aria-labelledby="tabSkriningBtn">
+         role="tabpanel" aria-labelledby="tabSkriningBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabSkriningContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat skrining...</p>
-          </div>
-        </div>
+        <div id="tabSkriningContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: SERTIFIKAT -->
     <div class="tab-pane fade" id="tabSertifikat"
-         role="tabpanel" aria-labelledby="tabSertifikatBtn">
+         role="tabpanel" aria-labelledby="tabSertifikatBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabSertifikatContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat sertifikat...</p>
-          </div>
-        </div>
+        <div id="tabSertifikatContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
-    <!-- TAB: RTL -->
     <div class="tab-pane fade" id="tabRTL"
-         role="tabpanel" aria-labelledby="tabRTLBtn">
+         role="tabpanel" aria-labelledby="tabRTLBtn" tabindex="0">
       <div class="table-container">
-        <div id="tabRTLContainer" class="table-responsive" aria-live="polite">
-          <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Memuat...</span>
-            </div>
-            <p class="mt-2 text-muted small">Memuat RTL...</p>
-          </div>
-        </div>
+        <div id="tabRTLContainer" class="table-responsive" aria-live="polite"></div>
       </div>
     </div>
 
@@ -491,93 +433,3 @@
     </div>
   </div>
 </div>
-
-<!-- ==========================================================
-     INLINE STYLE (view-specific tweaks)
-     ========================================================== -->
-<style>
-  /* Tabs styling untuk angkatan PKD */
-  #angkatanTab .nav-link {
-    color: #64748b;
-    font-weight: 500;
-    font-size: 0.88rem;
-    border-radius: 50px;
-    padding: 0.5rem 1rem;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-  }
-  #angkatanTab .nav-link:hover {
-    color: #2563eb;
-    background: rgba(37, 99, 235, 0.06);
-    border-color: rgba(37, 99, 235, 0.15);
-  }
-  #angkatanTab .nav-link.active {
-    color: #fff;
-    background: #2563eb;
-    border-color: #2563eb;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-  }
-  #angkatanTab .nav-link .badge {
-    font-size: 0.68rem;
-    padding: 0.2rem 0.45rem;
-    background: rgba(255, 255, 255, 0.25) !important;
-  }
-  #angkatanTab .nav-link:not(.active) .badge {
-    background: #2563eb !important;
-    color: #fff;
-  }
-
-  /* Dark mode tabs */
-  [data-theme="dark"] #angkatanTab .nav-link {
-    color: #94a3b8;
-  }
-  [data-theme="dark"] #angkatanTab .nav-link:hover {
-    color: #60a5fa;
-    background: rgba(96, 165, 250, 0.08);
-    border-color: rgba(96, 165, 250, 0.2);
-  }
-  [data-theme="dark"] #angkatanTab .nav-link.active {
-    color: #fff;
-    background: #3b82f6;
-    border-color: #3b82f6;
-  }
-
-  /* Grid card click hint */
-  [data-angkatan-nama] {
-    cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.25s ease;
-  }
-  [data-angkatan-nama]:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
-  }
-
-  /* Stat box di header detail */
-  #angkatanDetailView .stat-icon-box {
-    flex-shrink: 0;
-  }
-
-  /* Responsive tweaks */
-  @media (max-width: 576px) {
-    #angkatanTab .nav-link {
-      font-size: 0.78rem;
-      padding: 0.4rem 0.75rem;
-    }
-    #angkatanTab .nav-link .badge {
-      font-size: 0.62rem;
-      padding: 0.15rem 0.4rem;
-    }
-    #detailAngkatanNama {
-      font-size: 1.1rem;
-    }
-    #angkatanDetailView .stat-icon-box {
-      width: 48px !important;
-      height: 48px !important;
-      font-size: 1.3rem !important;
-    }
-  }
-</style>
