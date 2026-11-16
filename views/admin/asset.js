@@ -1,18 +1,19 @@
 // ============================================================
-// VIEW: asset.js — v27.2.0 PRELOAD + SUBSCRIPTION EDITION
+// VIEW: asset.js — Full Fix Production Ready
 // Dimuat oleh: js/router.js
 // HTML: views/admin/asset.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v26.4.0):
-//   ✅ NEW: Subscription ke AdminModule (auto re-render)
-//   ✅ NEW: Instant render dari preload cache
-//   ✅ REMOVED: Per-view polling 45s
-//   ✅ FIX: Autoplay timer cleanup on unmount
-//   ✅ FIX: Preview modal — dispose + cleanup
-//   ✅ FIX: isMounted guard di semua async callbacks
-//   ✅ FIX: Global config cache invalidation
-//   ✅ KEEP: Upload, edit, folder, move, delete, preview
-//   ✅ Zero memory leak
+// Fitur:
+// ✅ Upload multi-file (XHR progress)
+// ✅ Folder CRUD (nested) + publikasi + password
+// ✅ Asset CRUD (edit metadata, delete)
+// ✅ Bulk move & delete
+// ✅ Preview modal (image, video, audio, PDF) + autoplay playlist
+// ✅ Search + filter jenis
+// ✅ Share/copy link/WhatsApp
+// ✅ Public config (global enable + password)
+// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
+// ✅ Zero memory leak + full cleanup
 // ============================================================
 
 import {
@@ -20,76 +21,77 @@ import {
   showToast,
   escapeHtml,
   getDriveToken,
-  fileToBase64,
-  uploadToDrive,
 } from '../../js/core/api.js';
-import { BASE_PATH } from '../../js/core/config.js';
 import { AdminModule } from '../../js/modules/admin.js';
-import {
-  getEl,
-  debounce,
-  setBtnLoading,
-  createViewContext,
-  cleanupBootstrapArtifacts,
-  computeListHash,
-  SEARCH_DEBOUNCE,
-} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   CONSTANTS
+//   MODULE STATE
 // ============================================================
-const GLOBAL_CONFIG_CACHE_MS = 10000;
-const GLOBAL_CONFIG_SAVE_COOLDOWN_MS = 15000;
+let pollInterval = null;
+let isMounted = false;
+let isRefreshing = false;
 
-// ============================================================
-//   CONTEXT
-// ============================================================
-const ctx = createViewContext(
-  {
-    assetList: [],
-    folderList: [],
-    currentFolderId: '',
-    selectedAssets: [],
+const STATE = {
+  assetList: [],
+  folderList: [],
+  currentFolderId: '',
+  selectedAssets: [],
+  selectedFiles: [],
+  editingAssetId: null,
+  // Preview modal
+  playlistItems: [],
+  currentPlaylistIndex: 0,
+  autoplayTimeoutId: null,
+  isAutoplayActive: false,
+  isModalOpen: false,
+  // Flags
+  isUploading: false,
+  isSaving: false,
+  isMoving: false,
+  // Modals cache
+  modals: {},
+};
 
-    playlistItems: [],
-    currentPlaylistIndex: 0,
-    autoplayTimeoutId: null,
-    isAutoplayActive: false,
-    isModalOpen: false,
-
-    globalConfig: null,
-    globalConfigFetchedAt: 0,
-    lastGlobalConfigSaveTime: 0,
-
-    isUploading: false,
-    isSaving: false,
-    isMoving: false,
-    isSavingGlobal: false,
-
-    selectedFiles: [],
-
-    lastAssetHash: '',
-    lastFolderHash: '',
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'asset'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[AssetView] ⚡ Data changed (${type}) → refresh from cache`);
-      try {
-        refreshFromCache();
-      } catch (e) {
-        console.warn('[AssetView] Re-render error:', e);
-      }
-    },
-  }
-);
-
-let keydownHandler = null;
+const listeners = [];
 
 // ============================================================
 //   UTILITY
 // ============================================================
+function on(el, ev, handler, options) {
+  if (!el) return null;
+  el.addEventListener(ev, handler, options);
+  listeners.push({ el, ev, handler, options });
+  return handler;
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getModal(id) {
+  const el = getEl(id);
+  if (!el) return null;
+  if (!STATE.modals[id]) {
+    STATE.modals[id] = new bootstrap.Modal(el);
+  }
+  return STATE.modals[id];
+}
+
+function disposeAllModals() {
+  Object.keys(STATE.modals).forEach(id => {
+    try { STATE.modals[id]?.dispose?.(); } catch (e) {}
+  });
+  STATE.modals = {};
+}
+
 function cleanDriveId(id) {
   if (!id || typeof id !== 'string') return '';
   return id.trim().replace(/[\x00-\x1F\x7F]+/g, '').replace(/[^a-zA-Z0-9_-]+/g, '');
@@ -122,87 +124,55 @@ function getFileTypeFromName(fileName) {
 }
 
 function getAssetById(id) {
-  return ctx.state.assetList.find(a => String(a.id) === String(id));
-}
-
-function updateCacheStatus(status) {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-  el.className = 'cache-status ' + (
-    status === 'Live' ? 'live'
-    : status === 'Offline' || status === 'Error' ? 'offline'
-    : ''
-  );
+  return STATE.assetList.find(a => String(a.id) === String(id));
 }
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount() {
-  if (ctx.mounted) {
+export async function mount({ path, query, outlet }) {
+  if (isMounted) {
     console.warn('[AssetView] Sudah mounted, skip');
     return unmount;
   }
-  ctx.mounted = true;
-  ctx.saving = false;
-  ctx.refreshing = false;
+  isMounted = true;
   console.log('[AssetView] mounted');
 
   // Reset state
-  Object.assign(ctx.state, {
-    assetList: [],
-    folderList: [],
-    currentFolderId: '',
-    selectedAssets: [],
-    playlistItems: [],
-    currentPlaylistIndex: 0,
-    autoplayTimeoutId: null,
-    isAutoplayActive: false,
-    isModalOpen: false,
-    globalConfig: null,
-    globalConfigFetchedAt: 0,
-    lastGlobalConfigSaveTime: 0,
-    isUploading: false,
-    isSaving: false,
-    isMoving: false,
-    isSavingGlobal: false,
-    selectedFiles: [],
-    lastAssetHash: '',
-    lastFolderHash: '',
-  });
+  STATE.assetList = [];
+  STATE.folderList = [];
+  STATE.currentFolderId = '';
+  STATE.selectedAssets = [];
+  STATE.selectedFiles = [];
+  STATE.editingAssetId = null;
+  STATE.playlistItems = [];
+  STATE.currentPlaylistIndex = 0;
+  STATE.autoplayTimeoutId = null;
+  STATE.isAutoplayActive = false;
+  STATE.isModalOpen = false;
+  STATE.isUploading = false;
+  STATE.isSaving = false;
+  STATE.isMoving = false;
 
   const searchEl = getEl('searchAssetInput');
   const filterEl = getEl('filterTypeAsset');
   if (searchEl) searchEl.value = '';
   if (filterEl) filterEl.value = '';
 
-  // ⚡ Instant cache render
-  const cachedAssets = AdminModule.getAssetList() || [];
-  const cachedFolders = AdminModule.getFolders() || [];
-
-  if (cachedAssets.length > 0 || cachedFolders.length > 0) {
-    console.log('[AssetView] ⚡ Rendering from preload cache');
-    ctx.state.assetList = cachedAssets.map(a => ({ ...a }));
-    ctx.state.folderList = cachedFolders.map(f => ({ ...f }));
-    ctx.state.lastAssetHash = computeListHash(ctx.state.assetList, ['id', 'timestamp']);
-    ctx.state.lastFolderHash = computeListHash(ctx.state.folderList, ['id', 'nama']);
-    render();
-    updateCacheStatus('Live');
-  } else {
-    console.log('[AssetView] ⚠️ No cache, showing skeleton');
-    renderSkeletonAssets();
-  }
-
+  renderSkeletonAssets();
+  await loadAllData(true);
   bindEvents();
 
-  // ⚡ Subscribe ke perubahan data
-  await ctx.subscribeToData();
-
-  // Fallback: kalau cache kosong
-  if (cachedAssets.length === 0 && cachedFolders.length === 0) {
-    await loadAllData(false);
-  }
+  // Auto-refresh 30s
+  pollInterval = setInterval(() => {
+    if (document.hidden) return;
+    if (!isMounted) return;
+    if (isRefreshing) return;
+    isRefreshing = true;
+    loadAllData(false)
+      .catch(() => {})
+      .finally(() => { isRefreshing = false; });
+  }, 30000);
 
   return unmount;
 }
@@ -211,106 +181,101 @@ export async function mount() {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!ctx.mounted) return;
-  ctx.mounted = false;
+  if (!isMounted) return;
+  isMounted = false;
   console.log('[AssetView] unmounted');
 
-  if (ctx.state.autoplayTimeoutId) {
-    clearTimeout(ctx.state.autoplayTimeoutId);
-    ctx.state.autoplayTimeoutId = null;
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  if (STATE.autoplayTimeoutId) {
+    clearTimeout(STATE.autoplayTimeoutId);
+    STATE.autoplayTimeoutId = null;
   }
 
+  // Close preview modal
   closePreview();
 
-  if (keydownHandler) {
-    document.removeEventListener('keydown', keydownHandler);
-    keydownHandler = null;
-  }
+  listeners.forEach(({ el, ev, handler, options }) => {
+    try { el.removeEventListener(ev, handler, options); } catch (e) {}
+  });
+  listeners.length = 0;
 
-  ctx.cleanup();
-  cleanupBootstrapArtifacts();
-}
+  disposeAllModals();
 
-// ============================================================
-//   REFRESH FROM CACHE
-// ============================================================
-function refreshFromCache() {
-  const freshAssets = AdminModule.getAssetList() || [];
-  const freshFolders = AdminModule.getFolders() || [];
-
-  const assetHash = computeListHash(freshAssets, ['id', 'timestamp']);
-  const folderHash = computeListHash(freshFolders, ['id', 'nama']);
-
-  const assetChanged = assetHash !== ctx.state.lastAssetHash;
-  const folderChanged = folderHash !== ctx.state.lastFolderHash;
-
-  if (!assetChanged && !folderChanged) {
-    console.log('[AssetView] No change, skip re-render');
-    return;
-  }
-
-  if (assetChanged) {
-    ctx.state.assetList = freshAssets.map(a => ({ ...a }));
-    ctx.state.lastAssetHash = assetHash;
-  }
-  if (folderChanged) {
-    ctx.state.folderList = freshFolders.map(f => ({ ...f }));
-    ctx.state.lastFolderHash = folderHash;
-  }
-
-  render();
-  updateCacheStatus('Live');
+  try {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  } catch (e) {}
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
+  const searchEl = getEl('searchAssetInput');
+  const filterEl = getEl('filterTypeAsset');
+
+  on(searchEl, 'input', debounce(() => renderAssets(), 300));
+  on(filterEl, 'change', () => renderAssets());
+
   // Toolbar
-  ctx.on(getEl('uploadAssetBtn'), 'click', openUploadModal);
-  ctx.on(getEl('addFolderBtn'), 'click', openFolderModal);
-  ctx.on(getEl('moveSelectedBtn'), 'click', openMoveModal);
-  ctx.on(getEl('deleteSelectedBtn'), 'click', deleteSelectedAssets);
-  ctx.on(getEl('publicConfigBtn'), 'click', openPublicConfig);
+  on(getEl('uploadAssetBtn'), 'click', openUploadModal);
+  on(getEl('addFolderBtn'), 'click', openFolderModal);
+  on(getEl('moveSelectedBtn'), 'click', openMoveModal);
+  on(getEl('deleteSelectedBtn'), 'click', deleteSelectedAssets);
+  on(getEl('publicConfigBtn'), 'click', openPublicConfig);
 
-  // Search + filter
-  ctx.on(getEl('searchAssetInput'), 'input', debounce(() => renderAssets(), SEARCH_DEBOUNCE));
-  ctx.on(getEl('filterTypeAsset'), 'change', () => renderAssets());
-
-  // Refresh
-  ctx.on(getEl('refreshDataBtn'), 'click', async function () {
-    if (ctx.saving) return;
-    ctx.saving = true;
-    const restore = setBtnLoading(this, true, 'Memuat...');
+  on(getEl('refreshDataBtn'), 'click', async function () {
+    const btn = this;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
     try {
-      invalidateGlobalConfigCache();
-      updateCacheStatus('Memuat…');
-      await AdminModule.loadAllData(true);
-      refreshFromCache();
+      await loadAllData(true);
       showToast('Data disegarkan', 'success');
     } catch (e) {
       showToast('Gagal menyegarkan: ' + e.message, 'error');
     } finally {
-      restore();
-      ctx.saving = false;
+      btn.disabled = false;
+      btn.innerHTML = original;
     }
   });
 
   // Upload modal
-  ctx.on(getEl('assetFile'), 'change', function () {
-    handleFilesSelected(this.files);
+  on(getEl('assetFile'), 'change', function (e) {
+    handleFilesSelected(e.target.files);
     this.value = '';
   });
-  ctx.on(getEl('submitUploadBtn'), 'click', submitUpload);
+  on(getEl('submitUploadBtn'), 'click', submitUpload);
 
   // Edit modal
-  ctx.on(getEl('saveEditBtn'), 'click', saveEdit);
+  on(getEl('saveEditBtn'), 'click', saveEdit);
 
   // Folder modal
-  ctx.on(getEl('saveFolderBtn'), 'click', saveFolder);
+  on(getEl('saveFolderBtn'), 'click', saveFolder);
 
-  // Global config
-  ctx.on(getEl('enablePublicGallery'), 'change', function () {
+  // Folder settings
+  on(getEl('folderSettingPublic'), 'change', function () {
+    const id = getEl('folderSettingsId').value;
+    if (id) toggleFolderPublic(id, this.checked);
+  });
+  on(getEl('folderSettingHide'), 'change', function () {
+    const id = getEl('folderSettingsId').value;
+    if (id) toggleFolderHide(id, this.checked);
+  });
+  on(getEl('folderSavePasswordBtn'), 'click', saveFolderPassword);
+  on(getEl('folderClearPasswordBtn'), 'click', clearFolderPassword);
+  on(getEl('deleteFolderBtn'), 'click', deleteFolderHandler);
+
+  // Move modal
+  on(getEl('executeMoveBtn'), 'click', executeMove);
+
+  // Public config
+  on(getEl('enablePublicGallery'), 'change', function () {
     const isChecked = this.checked;
     const passGroup = getEl('publicPasswordGroup');
     const linkArea = getEl('publicLinkArea');
@@ -318,47 +283,27 @@ function bindEvents() {
     if (linkArea) linkArea.style.display = isChecked ? 'block' : 'none';
     if (isChecked) {
       const urlEl = getEl('publicGalleryUrl');
-      if (urlEl) urlEl.value = window.location.origin + BASE_PATH + 'public_assets.html';
-    }
-    const badgeEl = getEl('globalStatusBadge');
-    if (badgeEl) {
-      badgeEl.className = isChecked ? 'badge bg-success ms-auto' : 'badge bg-secondary ms-auto';
-      badgeEl.textContent = isChecked ? 'Aktif' : 'Nonaktif';
+      if (urlEl) urlEl.value = window.location.origin + '/bisaa/public_assets.html';
     }
   });
-  ctx.on(getEl('savePublicConfigBtn'), 'click', savePublicConfig);
-  ctx.on(getEl('copyPublicUrlBtn'), 'click', function () {
+  on(getEl('savePublicConfigBtn'), 'click', savePublicConfig);
+  on(getEl('copyPublicUrlBtn'), 'click', function () {
     const url = getEl('publicGalleryUrl')?.value;
     if (url) copyToClipboard(url);
   });
 
-  // Folder settings modal
-  ctx.on(getEl('folderSettingPublic'), 'change', function () {
-    const id = getEl('folderSettingsId')?.value;
-    if (id) toggleFolderPublic(id, this.checked);
-  });
-  ctx.on(getEl('folderSettingHide'), 'change', function () {
-    const id = getEl('folderSettingsId')?.value;
-    if (id) toggleFolderHide(id, this.checked);
-  });
-  ctx.on(getEl('folderSavePasswordBtn'), 'click', saveFolderPassword);
-  ctx.on(getEl('folderClearPasswordBtn'), 'click', clearFolderPassword);
-  ctx.on(getEl('deleteFolderBtn'), 'click', deleteFolderHandler);
+  // Preview
+  on(getEl('closePreviewBtn'), 'click', closePreview);
+  on(getEl('navPrev'), 'click', navPrevPreview);
+  on(getEl('navNext'), 'click', navNextPreview);
+  on(getEl('autoplayToggleBtn'), 'click', toggleAutoplay);
 
-  // Move modal
-  ctx.on(getEl('executeMoveBtn'), 'click', executeMove);
-
-  // Preview modal controls
-  ctx.on(getEl('closePreviewBtn'), 'click', closePreview);
-  ctx.on(getEl('navPrev'), 'click', navPrevPreview);
-  ctx.on(getEl('navNext'), 'click', navNextPreview);
-  ctx.on(getEl('autoplayToggleBtn'), 'click', toggleAutoplay);
-  ctx.on(getEl('customPreviewModal'), 'click', function (e) {
+  on(getEl('customPreviewModal'), 'click', function (e) {
     if (e.target === this) closePreview();
   });
 
-  // Password toggle — delegation
-  ctx.on(document, 'click', function (e) {
+  // Toggle password visibility (delegation)
+  on(document, 'click', function (e) {
     const t = e.target.closest('[data-toggle-pass]');
     if (!t) return;
     const input = getEl(t.dataset.togglePass);
@@ -368,194 +313,10 @@ function bindEvents() {
     if (i) i.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
   });
 
-  // ESC key
-  keydownHandler = function (e) {
-    if (e.key === 'Escape' && ctx.state.isModalOpen) closePreview();
-  };
-  document.addEventListener('keydown', keydownHandler);
-
-  // Folder settings modal — reset on hidden
-  const settingsModalEl = getEl('folderSettingsModal');
-  if (settingsModalEl) {
-    ctx.on(settingsModalEl, 'hidden.bs.modal', () => {
-      const idEl = getEl('folderSettingsId');
-      if (idEl) idEl.value = '';
-      const passEl = getEl('folderSettingPassword');
-      if (passEl) passEl.value = '';
-      const statusEl = getEl('folderSettingsStatus');
-      if (statusEl) statusEl.innerHTML = '';
-      const passGlobal = getEl('publicAssetPassword');
-      if (passGlobal) passGlobal.value = '';
-      try {
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-          document.activeElement.blur();
-        }
-      } catch (e) { /* silent */ }
-    });
-  }
-
-  // ✅ DELEGATION — folder list
-  const folderListEl = getEl('folderList');
-  if (folderListEl) {
-    ctx.on(folderListEl, 'click', (e) => {
-      const settingsBtn = e.target.closest('[data-folder-settings]');
-      if (settingsBtn) {
-        e.stopPropagation();
-        openFolderSettings(settingsBtn.dataset.folderSettings);
-        return;
-      }
-      const item = e.target.closest('[data-folder-id]');
-      if (item) {
-        navigateFolder(item.dataset.folderId || '');
-      }
-    });
-  }
-
-  // ✅ DELEGATION — asset grid
-  const assetContainer = getEl('assetContainer');
-  if (assetContainer) {
-    ctx.on(assetContainer, 'click', (e) => {
-      const actionBtn = e.target.closest('[data-action]');
-      if (actionBtn) {
-        e.stopPropagation();
-        const action = actionBtn.dataset.action;
-        const id = actionBtn.dataset.id;
-        if (action === 'edit') editAsset(id);
-        else if (action === 'share') shareAsset(id);
-        else if (action === 'whatsapp') shareWhatsApp(id);
-        else if (action === 'copy') copyAssetLink(id);
-        else if (action === 'delete') confirmDelete(id);
-        return;
-      }
-
-      const previewEl = e.target.closest('[data-preview-index]');
-      if (previewEl) {
-        const idx = parseInt(previewEl.dataset.previewIndex, 10);
-        if (!isNaN(idx)) openPreviewWithPlaylist(getCurrentFilteredAssets(), idx);
-      }
-    });
-
-    ctx.on(assetContainer, 'change', (e) => {
-      const cb = e.target.closest('.asset-checkbox-input');
-      if (!cb) return;
-      const id = cb.dataset.assetId;
-      if (!id) return;
-      const idx = ctx.state.selectedAssets.indexOf(id);
-      if (cb.checked && idx === -1) ctx.state.selectedAssets.push(id);
-      else if (!cb.checked && idx !== -1) ctx.state.selectedAssets.splice(idx, 1);
-    });
-
-    ctx.on(assetContainer, 'click', (e) => {
-      const gotoRoot = e.target.closest('[data-goto-root]');
-      if (gotoRoot) {
-        e.preventDefault();
-        navigateFolder('');
-        return;
-      }
-      const copyPublic = e.target.closest('[data-copy-public]');
-      if (copyPublic) {
-        e.preventDefault();
-        const folder = ctx.state.folderList.find(f =>
-          String(f.id) === String(ctx.state.currentFolderId));
-        if (folder) {
-          const url = `${window.location.origin}${BASE_PATH}public_assets.html?folderId=${ctx.state.currentFolderId}`;
-          copyToClipboard(url);
-        }
-      }
-    });
-  }
-}
-
-// ============================================================
-//   GLOBAL CONFIG
-// ============================================================
-async function loadGlobalConfig(forceRefresh = false) {
-  const now = Date.now();
-  const isRecentlySaved = (now - ctx.state.lastGlobalConfigSaveTime) < GLOBAL_CONFIG_SAVE_COOLDOWN_MS;
-  if (isRecentlySaved && !forceRefresh) return ctx.state.globalConfig;
-
-  if (!forceRefresh && ctx.state.globalConfig &&
-      (now - ctx.state.globalConfigFetchedAt) < GLOBAL_CONFIG_CACHE_MS) {
-    return ctx.state.globalConfig;
-  }
-
-  try {
-    const res = await callApi('getAssetPublicConfig', {}, 'GET');
-    const configData = res?.data || res;
-
-    ctx.state.globalConfig = {
-      enabled: !!(configData && configData.enabled),
-      hasPassword: !!(configData && configData.hasPassword),
-    };
-    ctx.state.globalConfigFetchedAt = now;
-    return ctx.state.globalConfig;
-  } catch (e) {
-    console.warn('[AssetView] loadGlobalConfig failed:', e);
-    if (!ctx.state.globalConfig) {
-      ctx.state.globalConfig = { enabled: false, hasPassword: false };
-    }
-    return ctx.state.globalConfig;
-  }
-}
-
-function invalidateGlobalConfigCache() {
-  ctx.state.globalConfig = null;
-  ctx.state.globalConfigFetchedAt = 0;
-  ctx.state.lastGlobalConfigSaveTime = 0;
-}
-
-function applyGlobalConfigToUI(globalConfig) {
-  const enabled = !!(globalConfig && globalConfig.enabled);
-
-  const enEl = getEl('enablePublicGallery');
-  if (enEl) enEl.checked = enabled;
-
-  const passGroup = getEl('publicPasswordGroup');
-  if (passGroup) passGroup.style.display = enabled ? 'block' : 'none';
-
-  const linkArea = getEl('publicLinkArea');
-  if (linkArea) linkArea.style.display = enabled ? 'block' : 'none';
-
-  if (enabled) {
-    const urlEl = getEl('publicGalleryUrl');
-    if (urlEl) urlEl.value = window.location.origin + BASE_PATH + 'public_assets.html';
-  }
-
-  const passEl = getEl('publicAssetPassword');
-  if (passEl) passEl.value = '';
-
-  const badgeEl = getEl('globalStatusBadge');
-  if (badgeEl) {
-    if (enabled) {
-      badgeEl.className = 'badge bg-success ms-auto';
-      badgeEl.textContent = 'Aktif';
-    } else {
-      badgeEl.className = 'badge bg-secondary ms-auto';
-      badgeEl.textContent = 'Nonaktif';
-    }
-  }
-}
-
-// ============================================================
-//   LOAD DATA (fallback)
-// ============================================================
-async function loadAllData(forceRefresh = false) {
-  try {
-    if (!AdminModule.getState().lastSync || forceRefresh) {
-      await AdminModule.loadAllData(forceRefresh);
-    }
-    if (!ctx.mounted) return;
-    refreshFromCache();
-  } catch (e) {
-    console.error('[AssetView] loadAllData:', e);
-    const c = getEl('assetContainer');
-    if (c && ctx.state.assetList.length === 0) {
-      c.innerHTML = `<div class="alert alert-danger text-center">
-        Gagal memuat data: ${escapeHtml(e.message)}
-      </div>`;
-    }
-    updateCacheStatus('Error');
-  }
+  // ESC close preview
+  on(document, 'keydown', function (e) {
+    if (e.key === 'Escape' && STATE.isModalOpen) closePreview();
+  });
 }
 
 // ============================================================
@@ -579,6 +340,38 @@ function renderSkeletonAssets() {
 }
 
 // ============================================================
+//   LOAD DATA
+// ============================================================
+async function loadAllData(forceRefresh = false) {
+  const cacheEl = getEl('cacheStatus');
+  if (cacheEl) cacheEl.textContent = 'Memuat…';
+
+  try {
+    if (!AdminModule.getState().lastSync || forceRefresh) {
+      await AdminModule.loadAllData(forceRefresh);
+    }
+    STATE.assetList = AdminModule.getAssetList() || [];
+    STATE.folderList = AdminModule.getFolders() || [];
+
+    render();
+    if (cacheEl) {
+      cacheEl.textContent = 'Live';
+      cacheEl.className = 'cache-status live';
+    }
+  } catch (e) {
+    console.error('[AssetView] loadAllData:', e);
+    if (cacheEl) {
+      cacheEl.textContent = 'Error';
+      cacheEl.className = 'cache-status offline';
+    }
+    const c = getEl('assetContainer');
+    if (c) c.innerHTML = `<div class="alert alert-danger text-center">
+      Gagal memuat data: ${escapeHtml(e.message)}
+    </div>`;
+  }
+}
+
+// ============================================================
 //   RENDER
 // ============================================================
 function render() {
@@ -591,69 +384,94 @@ function renderFolderList() {
   const c = getEl('folderList');
   if (!c) return;
 
-  let html = `<div class="folder-item ${ctx.state.currentFolderId === '' ? 'active' : ''}"
-                    data-folder-id="" role="button" tabindex="0">
-    <i class="bi bi-house-door" aria-hidden="true"></i> Root
+  let html = `<div class="folder-item ${STATE.currentFolderId === '' ? 'active' : ''}"
+                    data-folder-id="" style="cursor:pointer;">
+    <i class="bi bi-house-door"></i> Root
   </div>`;
 
-  ctx.state.folderList.forEach(f => {
-    const isActive = String(ctx.state.currentFolderId) === String(f.id);
+  STATE.folderList.forEach(f => {
+    const isActive = String(STATE.currentFolderId) === String(f.id);
     const safeId = escapeHtml(String(f.id));
-    html += `<div class="folder-item ${isActive ? 'active' : ''}" data-folder-id="${safeId}" role="button" tabindex="0">
+    html += `<div class="folder-item ${isActive ? 'active' : ''}" data-folder-id="${safeId}">
       <div class="d-flex justify-content-between align-items-center w-100">
         <span style="flex:1;min-width:0;">
-          <i class="bi bi-folder-fill" aria-hidden="true"></i>
+          <i class="bi bi-folder-fill"></i>
           <span style="word-break:break-word;">${escapeHtml(f.nama || '-')}</span>
         </span>
-        <button type="button" class="btn btn-sm btn-outline-secondary p-0"
+        <button class="btn btn-sm btn-outline-secondary p-0"
                 data-folder-settings="${safeId}" title="Pengaturan"
-                aria-label="Pengaturan folder"
                 style="width:26px;height:26px;border-radius:50%;">
-          <i class="bi bi-gear" style="font-size:0.8rem;" aria-hidden="true"></i>
+          <i class="bi bi-gear" style="font-size:0.8rem;"></i>
         </button>
       </div>
     </div>`;
   });
 
   c.innerHTML = html;
+
+  c.querySelectorAll('[data-folder-id]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-folder-settings]')) return;
+      navigateFolder(el.dataset.folderId);
+    });
+  });
+
+  c.querySelectorAll('[data-folder-settings]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openFolderSettings(btn.dataset.folderSettings);
+    });
+  });
 }
 
 function renderBreadcrumb() {
   const c = getEl('breadcrumb');
   if (!c) return;
 
-  if (ctx.state.currentFolderId === '') {
+  if (STATE.currentFolderId === '') {
     c.innerHTML = `<li class="breadcrumb-item active">Semua Aset</li>`;
     return;
   }
 
-  const folder = ctx.state.folderList.find(f =>
-    String(f.id) === String(ctx.state.currentFolderId));
-
+  const folder = STATE.folderList.find(f => String(f.id) === String(STATE.currentFolderId));
   if (!folder) {
     c.innerHTML = `<li class="breadcrumb-item active">Semua Aset</li>`;
     return;
   }
 
   const isPublic = folder.isPublic === true || folder.isPublic === 'true';
+  const publicUrl = `${window.location.origin}/bisaa/public_assets.html?folderId=${STATE.currentFolderId}`;
 
   c.innerHTML = `
     <li class="breadcrumb-item"><a href="#" data-goto-root>Semua Aset</a></li>
     <li class="breadcrumb-item active">${escapeHtml(folder.nama || '')}</li>
     ${isPublic ? `<li class="ms-2">
-      <button type="button" class="btn btn-outline-success btn-sm rounded-pill" data-copy-public>
-        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i> Salin Link Publik
+      <button class="btn btn-outline-success btn-sm rounded-pill" data-copy-public>
+        <i class="bi bi-link-45deg me-1"></i> Salin Link Publik
       </button>
     </li>` : ''}
   `;
+
+  c.querySelector('[data-goto-root]')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateFolder('');
+  });
+
+  const copyBtn = c.querySelector('[data-copy-public]');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => copyToClipboard(publicUrl));
+  }
 }
 
-function getCurrentFilteredAssets() {
+function renderAssets() {
+  const c = getEl('assetContainer');
+  if (!c) return;
+
   const searchVal = (getEl('searchAssetInput')?.value || '').toLowerCase().trim();
   const typeVal = getEl('filterTypeAsset')?.value || '';
 
-  let filtered = ctx.state.assetList.filter(item =>
-    String(item.folderId || '') === String(ctx.state.currentFolderId || '')
+  let filtered = STATE.assetList.filter(item =>
+    String(item.folderId || '') === String(STATE.currentFolderId || '')
   );
 
   if (searchVal) {
@@ -666,19 +484,10 @@ function getCurrentFilteredAssets() {
   }
 
   filtered.sort((a, b) => String(a.judul || '').localeCompare(String(b.judul || '')));
-  return filtered;
-}
-
-function renderAssets() {
-  const c = getEl('assetContainer');
-  if (!c) return;
-
-  const searchVal = (getEl('searchAssetInput')?.value || '').toLowerCase().trim();
-  const filtered = getCurrentFilteredAssets();
 
   if (filtered.length === 0) {
     c.innerHTML = `<div class="alert alert-info text-center">
-      <i class="bi bi-image fs-4 d-block mb-2" aria-hidden="true"></i>
+      <i class="bi bi-image fs-4 d-block mb-2"></i>
       Tidak ada aset di folder ini${searchVal ? ' yang cocok dengan pencarian' : ''}.
     </div>`;
     return;
@@ -699,34 +508,35 @@ function renderAssets() {
     let previewContent = '';
     if (isIdValid) {
       if (isVideo) {
-        previewContent = `<div class="thumbnail-container" data-preview-index="${index}" role="button" tabindex="0">
+        previewContent = `<div class="thumbnail-container" data-preview-index="${index}">
           <img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <div class="fallback" style="display:none;">
-            <i class="bi bi-play-circle-fill" style="font-size:2.5rem;color:#64748b;" aria-hidden="true"></i>
+            <i class="bi bi-play-circle-fill" style="font-size:2.5rem;color:#64748b;"></i>
             <div class="small text-muted mt-2">Video</div>
           </div>
         </div>`;
       } else if (isPdf) {
-        previewContent = `<div class="thumbnail-container" data-preview-index="${index}" role="button" tabindex="0">
+        previewContent = `<div class="thumbnail-container" data-preview-index="${index}">
           <div class="fallback" style="display:flex;">
-            <i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size:2.5rem;" aria-hidden="true"></i>
+            <i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size:2.5rem;"></i>
             <div class="small text-muted mt-2">PDF</div>
           </div>
         </div>`;
       } else if (isAudio) {
-        previewContent = `<div class="thumbnail-container" data-preview-index="${index}" role="button" tabindex="0" style="background:#dbeafe;">
+        previewContent = `<div class="thumbnail-container" data-preview-index="${index}"
+                               style="background:#dbeafe;">
           <div class="fallback" style="background:transparent;">
-            <i class="bi bi-music-note-beamed text-primary" style="font-size:3rem;" aria-hidden="true"></i>
+            <i class="bi bi-music-note-beamed text-primary" style="font-size:3rem;"></i>
             <div class="small text-muted mt-2">Audio</div>
           </div>
         </div>`;
       } else {
-        previewContent = `<div class="thumbnail-container" data-preview-index="${index}" role="button" tabindex="0">
+        previewContent = `<div class="thumbnail-container" data-preview-index="${index}">
           <img src="${imgUrl}" alt="${escapeHtml(item.judul)}" loading="lazy"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <div class="fallback" style="display:none;">
-            <i class="bi bi-file-earmark-fill" style="font-size:2.5rem;color:#64748b;" aria-hidden="true"></i>
+            <i class="bi bi-file-earmark-fill" style="font-size:2.5rem;color:#64748b;"></i>
             <div class="small text-muted mt-2">Thumbnail gagal</div>
           </div>
         </div>`;
@@ -734,21 +544,18 @@ function renderAssets() {
     } else {
       previewContent = `<div class="thumbnail-container" style="background:#f8fafc;">
         <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-          <i class="bi bi-file-earmark-fill" style="font-size:2.5rem;color:#94a3b8;" aria-hidden="true"></i>
+          <i class="bi bi-file-earmark-fill" style="font-size:2.5rem;color:#94a3b8;"></i>
           <div class="small text-muted mt-2">ID rusak</div>
         </div>
       </div>`;
     }
 
     const safeId = escapeHtml(String(item.id));
-    const isSelected = ctx.state.selectedAssets.includes(String(item.id));
-
     html += `<div class="asset-card" data-asset-index="${index}">
       ${previewContent}
       <div class="form-check asset-checkbox">
         <input class="form-check-input asset-checkbox-input" type="checkbox"
-               value="${safeId}" data-asset-id="${safeId}" ${isSelected ? 'checked' : ''}
-               aria-label="Pilih ${escapeHtml(item.judul || '')}">
+               value="${safeId}" data-asset-id="${safeId}">
       </div>
       <div class="card-body">
         <div class="card-title">${escapeHtml(item.judul || '')}</div>
@@ -756,20 +563,20 @@ function renderAssets() {
         <div class="card-actions">
           <span class="text-muted small">${escapeHtml(formatDate(item.timestamp))}</span>
           <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-outline-warning" data-action="edit" data-id="${safeId}" title="Edit" aria-label="Edit">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
+            <button class="btn btn-sm btn-outline-warning" data-action="edit" data-id="${safeId}" title="Edit">
+              <i class="bi bi-pencil"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" data-action="share" data-id="${safeId}" title="Bagikan" aria-label="Bagikan">
-              <i class="bi bi-share" aria-hidden="true"></i>
+            <button class="btn btn-sm btn-outline-primary" data-action="share" data-id="${safeId}" title="Bagikan">
+              <i class="bi bi-share"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-success" data-action="whatsapp" data-id="${safeId}" title="WhatsApp" aria-label="WhatsApp">
-              <i class="bi bi-whatsapp" aria-hidden="true"></i>
+            <button class="btn btn-sm btn-success" data-action="whatsapp" data-id="${safeId}" title="WhatsApp">
+              <i class="bi bi-whatsapp"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-dark" data-action="copy" data-id="${safeId}" title="Salin Link" aria-label="Salin">
-              <i class="bi bi-link-45deg" aria-hidden="true"></i>
+            <button class="btn btn-sm btn-outline-dark" data-action="copy" data-id="${safeId}" title="Salin Link">
+              <i class="bi bi-link-45deg"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus" aria-label="Hapus">
-              <i class="bi bi-trash" aria-hidden="true"></i>
+            <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus">
+              <i class="bi bi-trash"></i>
             </button>
           </div>
         </div>
@@ -779,19 +586,52 @@ function renderAssets() {
   html += '</div>';
 
   c.innerHTML = html;
+
+  // Bind checkboxes
+  c.querySelectorAll('.asset-checkbox-input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.assetId;
+      if (cb.checked) {
+        if (!STATE.selectedAssets.includes(id)) STATE.selectedAssets.push(id);
+      } else {
+        STATE.selectedAssets = STATE.selectedAssets.filter(x => x !== id);
+      }
+    });
+  });
+
+  // Bind thumbnail preview
+  c.querySelectorAll('[data-preview-index]').forEach(el => {
+    el.addEventListener('click', () => {
+      openPreviewWithPlaylist(filtered, parseInt(el.dataset.previewIndex));
+    });
+  });
+
+  // Bind action buttons
+  c.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'edit') editAsset(id);
+      else if (action === 'share') shareAsset(id);
+      else if (action === 'whatsapp') shareWhatsApp(id);
+      else if (action === 'copy') copyAssetLink(id);
+      else if (action === 'delete') confirmDelete(id);
+    });
+  });
 }
 
 // ============================================================
 //   NAVIGASI
 // ============================================================
 function navigateFolder(folderId) {
-  ctx.state.currentFolderId = folderId || '';
-  ctx.state.selectedAssets = [];
+  STATE.currentFolderId = folderId || '';
+  STATE.selectedAssets = [];
   render();
 }
 
 // ============================================================
-//   CLIPBOARD & SHARE
+//   CLIPBOARD
 // ============================================================
 function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
@@ -856,11 +696,14 @@ function shareWhatsApp(id) {
 // ============================================================
 function openUploadModal() {
   resetUploadForm();
-  ctx.getModal('uploadAssetModal')?.show();
+  getModal('uploadAssetModal')?.show();
 }
 
 function resetUploadForm() {
-  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
+  const setVal = (id, val) => {
+    const el = getEl(id);
+    if (el) el.value = val;
+  };
   setVal('assetJudul', '');
   setVal('assetDeskripsi', '');
   setVal('assetJenis', 'gambar');
@@ -871,15 +714,15 @@ function resetUploadForm() {
   const progress = getEl('uploadProgressContainer');
   if (progress) progress.style.display = 'none';
 
-  ctx.state.selectedFiles = [];
+  STATE.selectedFiles = [];
 
   const folderSel = getEl('assetFolder');
   if (folderSel) {
     folderSel.innerHTML = '<option value="">Root (Tanpa Folder)</option>' +
-      ctx.state.folderList.map(f =>
+      STATE.folderList.map(f =>
         `<option value="${escapeHtml(String(f.id))}">${escapeHtml(f.nama)}</option>`
       ).join('');
-    if (ctx.state.currentFolderId) folderSel.value = ctx.state.currentFolderId;
+    if (STATE.currentFolderId) folderSel.value = STATE.currentFolderId;
   }
 
   const badge = getEl('uploadCountBadge');
@@ -888,9 +731,10 @@ function resetUploadForm() {
 
 function handleFilesSelected(files) {
   if (!files || files.length === 0) return;
+
   for (const file of files) {
-    const exists = ctx.state.selectedFiles.some(f => f.name === file.name && f.size === file.size);
-    if (!exists) ctx.state.selectedFiles.push(file);
+    const exists = STATE.selectedFiles.some(f => f.name === file.name && f.size === file.size);
+    if (!exists) STATE.selectedFiles.push(file);
   }
   renderUploadFileList();
 }
@@ -902,16 +746,16 @@ function renderUploadFileList() {
   const jenisInput = getEl('assetJenis');
   const badge = getEl('uploadCountBadge');
 
-  if (badge) badge.textContent = ctx.state.selectedFiles.length;
+  if (badge) badge.textContent = STATE.selectedFiles.length;
 
-  if (ctx.state.selectedFiles.length === 0) {
+  if (STATE.selectedFiles.length === 0) {
     if (previewContainer) previewContainer.style.display = 'none';
     return;
   }
 
   if (previewContainer) previewContainer.style.display = 'block';
   let html = '';
-  ctx.state.selectedFiles.forEach((file, idx) => {
+  STATE.selectedFiles.forEach((file, idx) => {
     const sizeKB = (file.size / 1024).toFixed(1);
     const autoTitle = file.name.replace(/\.[^/.]+$/, '');
     html += `<div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2 small">
@@ -920,21 +764,20 @@ function renderUploadFileList() {
         <span class="text-muted ms-1">(${sizeKB} KB)</span>
         <div class="text-muted" style="font-size:0.75rem;">Judul: ${escapeHtml(autoTitle)}</div>
       </div>
-      <button type="button" class="btn btn-sm btn-danger" data-remove-file="${idx}" aria-label="Hapus file">&times;</button>
+      <button type="button" class="btn btn-sm btn-danger" data-remove-file="${idx}">&times;</button>
     </div>`;
   });
   if (fileNameDisplay) fileNameDisplay.innerHTML = html;
 
-  // Local listeners
   fileNameDisplay?.querySelectorAll('[data-remove-file]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ctx.state.selectedFiles.splice(parseInt(btn.dataset.removeFile, 10), 1);
+      STATE.selectedFiles.splice(parseInt(btn.dataset.removeFile), 1);
       renderUploadFileList();
     });
   });
 
-  if (ctx.state.selectedFiles.length === 1) {
-    const file = ctx.state.selectedFiles[0];
+  if (STATE.selectedFiles.length === 1) {
+    const file = STATE.selectedFiles[0];
     if (judulInput) judulInput.value = file.name.replace(/\.[^/.]+$/, '');
     if (jenisInput) jenisInput.value = getFileTypeFromName(file.name);
   } else {
@@ -944,24 +787,26 @@ function renderUploadFileList() {
 }
 
 async function submitUpload() {
-  if (ctx.state.isUploading) return;
+  if (STATE.isUploading) return;
 
   const judul = getEl('assetJudul')?.value.trim() || '';
   const deskripsi = getEl('assetDeskripsi')?.value.trim() || '';
   const folderId = getEl('assetFolder')?.value || '';
 
-  if (ctx.state.selectedFiles.length === 0) {
+  if (STATE.selectedFiles.length === 0) {
     showToast('Pilih minimal satu file', 'error');
     return;
   }
-  if (ctx.state.selectedFiles.length === 1 && !judul) {
+  if (STATE.selectedFiles.length === 1 && !judul) {
     showToast('Judul wajib diisi', 'error');
     return;
   }
 
   const btn = getEl('submitUploadBtn');
-  const restore = setBtnLoading(btn, true, 'Mengupload...');
-  ctx.state.isUploading = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isUploading = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Mengupload...';
 
   const progressContainer = getEl('uploadProgressContainer');
   const progressBar = getEl('uploadProgressBar');
@@ -978,10 +823,10 @@ async function submitUpload() {
     const token = tokenRes.token;
 
     let successCount = 0;
-    const totalFiles = ctx.state.selectedFiles.length;
+    const totalFiles = STATE.selectedFiles.length;
 
     for (let i = 0; i < totalFiles; i++) {
-      const file = ctx.state.selectedFiles[i];
+      const file = STATE.selectedFiles[i];
       const autoTitle = file.name.replace(/\.[^/.]+$/, '');
       const fileJudul = (totalFiles === 1 && judul) ? judul : autoTitle;
       const fileJenis = getFileTypeFromName(file.name);
@@ -989,7 +834,26 @@ async function submitUpload() {
       if (progressBar) progressBar.style.width = Math.round((i / totalFiles) * 100) + '%';
       if (progressText) progressText.textContent = `Upload ${i + 1}/${totalFiles}: ${file.name}`;
 
-      const driveData = await uploadToDrive(token, file);
+      const formData = new FormData();
+      formData.append('metadata', new Blob([JSON.stringify({ name: file.name })], { type: 'application/json' }));
+      formData.append('file', file);
+
+      const driveData = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.onload = () => {
+          if (xhr.status === 200 || xhr.status === 201) {
+            try { resolve(JSON.parse(xhr.responseText)); }
+            catch (e) { reject(new Error('Gagal parsing respons Drive')); }
+          } else {
+            reject(new Error(`Upload ke Drive gagal (${xhr.status})`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error saat upload'));
+        xhr.send(formData);
+      });
+
       const driveId = driveData.id;
       if (!driveId) throw new Error('Drive tidak mengembalikan file ID');
 
@@ -1011,9 +875,9 @@ async function submitUpload() {
 
     if (successCount > 0) {
       showToast(`Berhasil upload ${successCount}/${totalFiles} file`, 'success');
-      ctx.getModal('uploadAssetModal')?.hide();
-      ctx.state.selectedFiles = [];
-      await AdminModule.loadAllData(true);
+      getModal('uploadAssetModal')?.hide();
+      STATE.selectedFiles = [];
+      await loadAllData(true);
     } else {
       throw new Error('Tidak ada file yang berhasil diupload');
     }
@@ -1025,8 +889,9 @@ async function submitUpload() {
       if (progressBar) progressBar.style.width = '0%';
       if (progressText) progressText.textContent = '0%';
     }, 1500);
-    restore();
-    ctx.state.isUploading = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isUploading = false;
   }
 }
 
@@ -1037,7 +902,11 @@ function editAsset(id) {
   const item = getAssetById(id);
   if (!item) { showToast('Aset tidak ditemukan', 'error'); return; }
 
-  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
+  STATE.editingAssetId = id;
+  const setVal = (elId, val) => {
+    const el = getEl(elId);
+    if (el) el.value = val;
+  };
   setVal('editAssetId', id);
   setVal('assetJudulEdit', item.judul || '');
   setVal('assetDeskripsiEdit', item.deskripsi || '');
@@ -1046,25 +915,27 @@ function editAsset(id) {
   const folderSel = getEl('assetFolderEdit');
   if (folderSel) {
     folderSel.innerHTML = '<option value="">Root</option>' +
-      ctx.state.folderList.map(f =>
+      STATE.folderList.map(f =>
         `<option value="${escapeHtml(String(f.id))}">${escapeHtml(f.nama)}</option>`
       ).join('');
     folderSel.value = item.folderId || '';
   }
 
-  ctx.getModal('editAssetModal')?.show();
+  getModal('editAssetModal')?.show();
 }
 
 async function saveEdit() {
-  if (ctx.state.isSaving) return;
+  if (STATE.isSaving) return;
 
   const id = getEl('editAssetId')?.value;
   const judul = getEl('assetJudulEdit')?.value.trim() || '';
   if (!judul) { showToast('Judul wajib diisi', 'error'); return; }
 
   const btn = getEl('saveEditBtn');
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-  ctx.state.isSaving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isSaving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
   try {
     const res = await callApi('updateAsset', {
@@ -1077,16 +948,17 @@ async function saveEdit() {
 
     if (res && res.success) {
       showToast('Aset berhasil diperbarui', 'success');
-      ctx.getModal('editAssetModal')?.hide();
-      await AdminModule.loadAllData(true);
+      getModal('editAssetModal')?.hide();
+      await loadAllData(true);
     } else {
       throw new Error((res && res.error) || 'Gagal memperbarui');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.state.isSaving = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isSaving = false;
   }
 }
 
@@ -1101,18 +973,21 @@ async function confirmDelete(id) {
   try {
     const res = await callApi('deleteAsset', { id }, 'POST');
     if (res && res.success) {
+      STATE.assetList = STATE.assetList.filter(a => String(a.id) !== String(id));
+      render();
       showToast('Aset berhasil dihapus', 'success');
-      await AdminModule.loadAllData(true);
+      setTimeout(() => loadAllData(true).catch(() => {}), 500);
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+    await loadAllData(true).catch(() => {});
   }
 }
 
 async function deleteSelectedAssets() {
-  const ids = ctx.state.selectedAssets.slice();
+  const ids = STATE.selectedAssets.slice();
   if (ids.length === 0) {
     showToast('Pilih minimal satu aset', 'warning');
     return;
@@ -1120,28 +995,30 @@ async function deleteSelectedAssets() {
   if (!confirm(`Hapus ${ids.length} aset terpilih?`)) return;
 
   const btn = getEl('deleteSelectedBtn');
-  const restore = setBtnLoading(btn, true, 'Menghapus...');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
 
   try {
     let successCount = 0;
-    const CONCURRENCY = 3;
-    for (let i = 0; i < ids.length; i += CONCURRENCY) {
-      const batch = ids.slice(i, i + CONCURRENCY);
-      const results = await Promise.allSettled(
-        batch.map(id => callApi('deleteAsset', { id }, 'POST'))
-      );
-      results.forEach(r => {
-        if (r.status === 'fulfilled' && r.value && r.value.success) successCount++;
-      });
+    for (const id of ids) {
+      try {
+        const res = await callApi('deleteAsset', { id }, 'POST');
+        if (res && res.success) successCount++;
+      } catch (e) { /* continue */ }
     }
 
-    ctx.state.selectedAssets = [];
+    STATE.assetList = STATE.assetList.filter(a => !ids.includes(String(a.id)));
+    STATE.selectedAssets = [];
+    render();
     showToast(`Berhasil menghapus ${successCount}/${ids.length} aset`, 'success');
-    await AdminModule.loadAllData(true);
+    setTimeout(() => loadAllData(true).catch(() => {}), 500);
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
+    await loadAllData(true).catch(() => {});
   } finally {
-    restore();
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
@@ -1149,73 +1026,65 @@ async function deleteSelectedAssets() {
 //   FOLDER CRUD
 // ============================================================
 function openFolderModal() {
-  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
+  const setVal = (id, val) => {
+    const el = getEl(id);
+    if (el) el.value = val;
+  };
   setVal('folderNama', '');
 
   const parentSel = getEl('folderParent');
   if (parentSel) {
     parentSel.innerHTML = '<option value="">Root (Tanpa Folder)</option>' +
-      ctx.state.folderList.map(f =>
+      STATE.folderList.map(f =>
         `<option value="${escapeHtml(String(f.id))}">${escapeHtml(f.nama)}</option>`
       ).join('');
   }
-  ctx.getModal('folderModal')?.show();
+  getModal('folderModal')?.show();
 }
 
 async function saveFolder() {
-  if (ctx.state.isSaving) return;
+  if (STATE.isSaving) return;
 
   const nama = getEl('folderNama')?.value.trim() || '';
   const parentId = getEl('folderParent')?.value || '';
   if (!nama) { showToast('Nama folder wajib diisi', 'error'); return; }
 
   const btn = getEl('saveFolderBtn');
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-  ctx.state.isSaving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isSaving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
   try {
     const res = await callApi('addFolder', { nama, parentId }, 'POST');
     if (res && res.success) {
       showToast('Folder berhasil dibuat', 'success');
-      ctx.getModal('folderModal')?.hide();
-      await AdminModule.loadAllData(true);
+      getModal('folderModal')?.hide();
+      await loadAllData(true);
     } else {
       throw new Error((res && res.error) || 'Gagal membuat folder');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.state.isSaving = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isSaving = false;
   }
 }
 
-// ============================================================
-//   FOLDER SETTINGS
-// ============================================================
-async function openFolderSettings(id) {
-  const folder = ctx.state.folderList.find(f => String(f.id) === String(id));
+function openFolderSettings(id) {
+  const folder = STATE.folderList.find(f => String(f.id) === String(id));
   if (!folder) { showToast('Folder tidak ditemukan', 'error'); return; }
 
-  const globalConfig = await loadGlobalConfig();
-  applyGlobalConfigToUI(globalConfig);
-
-  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
+  const setVal = (elId, val) => {
+    const el = getEl(elId);
+    if (el) el.value = val;
+  };
   setVal('folderSettingsId', id);
 
   const titleEl = getEl('folderSettingsTitle');
   if (titleEl) titleEl.textContent = `Pengaturan: ${folder.nama || ''}`;
-
-  const folderSectionName = getEl('folderSectionName');
-  if (folderSectionName) folderSectionName.textContent = `Folder "${folder.nama || ''}"`;
-
-  const folderContent = getEl('folderSectionContent');
-  const folderEmpty = getEl('folderSectionEmpty');
-  if (folderContent) folderContent.style.display = 'block';
-  if (folderEmpty) folderEmpty.style.display = 'none';
-
-  const deleteBtn = getEl('deleteFolderBtn');
-  if (deleteBtn) deleteBtn.style.display = '';
 
   const pubEl = getEl('folderSettingPublic');
   if (pubEl) pubEl.checked = folder.isPublic === true || folder.isPublic === 'true';
@@ -1234,51 +1103,20 @@ async function openFolderSettings(id) {
   const statusEl = getEl('folderSettingsStatus');
   if (statusEl) statusEl.innerHTML = '';
 
-  ctx.getModal('folderSettingsModal')?.show();
+  getModal('folderSettingsModal')?.show();
 }
 
-async function openPublicConfig() {
-  const globalConfig = await loadGlobalConfig(true);
-  applyGlobalConfigToUI(globalConfig);
-
-  const titleEl = getEl('folderSettingsTitle');
-  if (titleEl) titleEl.textContent = 'Pengaturan Galeri Publik';
-
-  const folderSectionName = getEl('folderSectionName');
-  if (folderSectionName) folderSectionName.textContent = 'Pengaturan Folder';
-
-  const folderContent = getEl('folderSectionContent');
-  const folderEmpty = getEl('folderSectionEmpty');
-  if (folderContent) folderContent.style.display = 'none';
-  if (folderEmpty) folderEmpty.style.display = 'block';
-
-  const deleteBtn = getEl('deleteFolderBtn');
-  if (deleteBtn) deleteBtn.style.display = 'none';
-
-  const idEl = getEl('folderSettingsId');
-  if (idEl) idEl.value = '';
-
-  ctx.getModal('folderSettingsModal')?.show();
-}
-
-// ============================================================
-//   FOLDER TOGGLES
-// ============================================================
 async function toggleFolderPublic(id, isPublic) {
   try {
     const res = await callApi('toggleFolderPublic', { id, isPublic }, 'POST');
     if (res && res.success) {
       showToast(`Folder ${isPublic ? 'dipublikasikan' : 'ditarik'}`, 'success');
-      await AdminModule.loadAllData(true);
-      const pubEl = getEl('folderSettingPublic');
-      if (pubEl) pubEl.checked = isPublic;
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
+      await loadAllData(true);
+      openFolderSettings(id);
+    } else throw new Error((res && res.error) || 'Gagal');
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
-    const pubEl = getEl('folderSettingPublic');
-    if (pubEl) pubEl.checked = !isPublic;
+    await loadAllData(true).catch(() => {});
   }
 }
 
@@ -1287,16 +1125,12 @@ async function toggleFolderHide(id, isHidden) {
     const res = await callApi('toggleFolderHideFromGallery', { id, isHidden }, 'POST');
     if (res && res.success) {
       showToast(`Folder ${isHidden ? 'disembunyikan' : 'ditampilkan'}`, 'success');
-      await AdminModule.loadAllData(true);
-      const hideEl = getEl('folderSettingHide');
-      if (hideEl) hideEl.checked = isHidden;
-    } else {
-      throw new Error((res && res.error) || 'Gagal');
-    }
+      await loadAllData(true);
+      openFolderSettings(id);
+    } else throw new Error((res && res.error) || 'Gagal');
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
-    const hideEl = getEl('folderSettingHide');
-    if (hideEl) hideEl.checked = !isHidden;
+    await loadAllData(true).catch(() => {});
   }
 }
 
@@ -1305,94 +1139,81 @@ async function saveFolderPassword() {
   const password = getEl('folderSettingPassword')?.value.trim() || '';
   const statusDiv = getEl('folderSettingsStatus');
 
-  if (!id) return;
   if (!password || password.length < 6) {
     if (statusDiv) statusDiv.innerHTML = '<div class="alert alert-danger p-2 small mb-0">Password minimal 6 karakter.</div>';
     return;
   }
 
   const btn = getEl('folderSavePasswordBtn');
-  const restore = setBtnLoading(btn, true, '');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
   try {
     const res = await callApi('setFolderPassword', { id, password }, 'POST');
     if (res && res.success) {
       if (statusDiv) statusDiv.innerHTML = '<div class="alert alert-success p-2 small mb-0">Password berhasil disimpan.</div>';
-      await AdminModule.loadAllData(true);
-
-      const folder = ctx.state.folderList.find(f => String(f.id) === String(id));
-      const hasPass = folder ? (folder.hasPassword === true || folder.hasPassword === 'true') : true;
-      const passEl = getEl('folderSettingPassStatus');
-      if (passEl) {
-        passEl.textContent = hasPass ? '🔒 Terproteksi' : '🔓 Tidak ada';
-        passEl.className = hasPass ? 'badge bg-warning text-dark' : 'badge bg-secondary';
-      }
-
-      const passInput = getEl('folderSettingPassword');
-      if (passInput) passInput.value = '';
-    } else {
-      throw new Error((res && res.error) || 'Gagal menyimpan');
-    }
+      await loadAllData(true);
+      openFolderSettings(id);
+    } else throw new Error((res && res.error) || 'Gagal menyimpan');
   } catch (e) {
     if (statusDiv) statusDiv.innerHTML = `<div class="alert alert-danger p-2 small mb-0">Gagal: ${escapeHtml(e.message)}</div>`;
   } finally {
-    restore();
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
 async function clearFolderPassword() {
   const id = getEl('folderSettingsId')?.value;
-  if (!id) return;
   if (!confirm('Yakin ingin menghapus password folder ini?')) return;
 
   const statusDiv = getEl('folderSettingsStatus');
   const btn = getEl('folderClearPasswordBtn');
-  const restore = setBtnLoading(btn, true, '');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
   try {
     const res = await callApi('clearFolderPassword', { id }, 'POST');
     if (res && res.success) {
       if (statusDiv) statusDiv.innerHTML = '<div class="alert alert-success p-2 small mb-0">Password dihapus.</div>';
-      await AdminModule.loadAllData(true);
-      const passEl = getEl('folderSettingPassStatus');
-      if (passEl) {
-        passEl.textContent = '🔓 Tidak ada';
-        passEl.className = 'badge bg-secondary';
-      }
-    } else {
-      throw new Error((res && res.error) || 'Gagal menghapus');
-    }
+      await loadAllData(true);
+      openFolderSettings(id);
+    } else throw new Error((res && res.error) || 'Gagal menghapus');
   } catch (e) {
     if (statusDiv) statusDiv.innerHTML = `<div class="alert alert-danger p-2 small mb-0">Gagal: ${escapeHtml(e.message)}</div>`;
   } finally {
-    restore();
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
 async function deleteFolderHandler() {
   const id = getEl('folderSettingsId')?.value;
-  const folder = ctx.state.folderList.find(f => String(f.id) === String(id));
+  const folder = STATE.folderList.find(f => String(f.id) === String(id));
   if (!folder) return;
 
   if (!confirm(`Hapus folder "${folder.nama}" beserta semua aset di dalamnya?`)) return;
 
   const btn = getEl('deleteFolderBtn');
-  const restore = setBtnLoading(btn, true, 'Menghapus...');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
 
   try {
     const res = await callApi('deleteFolder', { id }, 'POST');
     if (res && res.success) {
-      ctx.getModal('folderSettingsModal')?.hide();
+      getModal('folderSettingsModal')?.hide();
       showToast('Folder berhasil dihapus', 'success');
-      if (String(ctx.state.currentFolderId) === String(id)) ctx.state.currentFolderId = '';
-      await AdminModule.loadAllData(true);
-    } else {
-      throw new Error((res && res.error) || 'Gagal menghapus');
-    }
+      if (String(STATE.currentFolderId) === String(id)) STATE.currentFolderId = '';
+      await loadAllData(true);
+    } else throw new Error((res && res.error) || 'Gagal menghapus');
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
@@ -1400,7 +1221,7 @@ async function deleteFolderHandler() {
 //   MOVE ASSETS
 // ============================================================
 function openMoveModal() {
-  const ids = ctx.state.selectedAssets;
+  const ids = STATE.selectedAssets;
   if (ids.length === 0) {
     showToast('Pilih minimal satu aset', 'warning');
     return;
@@ -1412,103 +1233,109 @@ function openMoveModal() {
   const sel = getEl('moveToFolderSelect');
   if (sel) {
     sel.innerHTML = '<option value="">Root (Tanpa Folder)</option>' +
-      ctx.state.folderList.map(f =>
+      STATE.folderList.map(f =>
         `<option value="${escapeHtml(String(f.id))}">${escapeHtml(f.nama)}</option>`
       ).join('');
   }
 
-  ctx.getModal('moveAssetModal')?.show();
+  getModal('moveAssetModal')?.show();
 }
 
 async function executeMove() {
-  if (ctx.state.isMoving) return;
+  if (STATE.isMoving) return;
 
   const targetFolderId = getEl('moveToFolderSelect')?.value || '';
-  const ids = ctx.state.selectedAssets.slice();
+  const ids = STATE.selectedAssets.slice();
   if (ids.length === 0) return;
 
   const btn = getEl('executeMoveBtn');
-  const restore = setBtnLoading(btn, true, 'Memindahkan...');
-  ctx.state.isMoving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isMoving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memindahkan...';
 
   try {
     let successCount = 0;
-    const CONCURRENCY = 3;
-    for (let i = 0; i < ids.length; i += CONCURRENCY) {
-      const batch = ids.slice(i, i + CONCURRENCY);
-      const results = await Promise.allSettled(
-        batch.map(async (id) => {
-          const item = getAssetById(id);
-          if (!item) return { success: false };
-          return callApi('updateAsset', {
-            id,
-            folderId: targetFolderId,
-            judul: item.judul,
-            deskripsi: item.deskripsi,
-            jenis: item.jenis,
-          }, 'POST');
-        })
-      );
-      results.forEach(r => {
-        if (r.status === 'fulfilled' && r.value && r.value.success) successCount++;
-      });
+    for (const id of ids) {
+      try {
+        const item = getAssetById(id);
+        if (!item) continue;
+        const res = await callApi('updateAsset', {
+          id,
+          folderId: targetFolderId,
+          judul: item.judul,
+          deskripsi: item.deskripsi,
+          jenis: item.jenis,
+        }, 'POST');
+        if (res && res.success) successCount++;
+      } catch (e) { /* continue */ }
     }
 
     showToast(`Berhasil memindahkan ${successCount}/${ids.length} aset`, 'success');
-    ctx.getModal('moveAssetModal')?.hide();
-    ctx.state.selectedAssets = [];
-    await AdminModule.loadAllData(true);
+    getModal('moveAssetModal')?.hide();
+    STATE.selectedAssets = [];
+    await loadAllData(true);
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.state.isMoving = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isMoving = false;
   }
 }
 
 // ============================================================
-//   SAVE PUBLIC CONFIG
+//   PUBLIC CONFIG
 // ============================================================
+async function openPublicConfig() {
+  try {
+    const res = await callApi('getAssetPublicConfig', {}, 'GET');
+    const enabled = res?.enabled || false;
+
+    const enEl = getEl('enablePublicGallery');
+    if (enEl) enEl.checked = enabled;
+    const passGroup = getEl('publicPasswordGroup');
+    const linkArea = getEl('publicLinkArea');
+    if (passGroup) passGroup.style.display = enabled ? 'block' : 'none';
+    if (linkArea) linkArea.style.display = enabled ? 'block' : 'none';
+
+    if (enabled) {
+      const urlEl = getEl('publicGalleryUrl');
+      if (urlEl) urlEl.value = window.location.origin + '/bisaa/public_assets.html';
+    }
+    const passEl = getEl('publicAssetPassword');
+    if (passEl) passEl.value = '';
+
+    getModal('publicConfigModal')?.show();
+  } catch (e) {
+    showToast('Gagal memuat konfigurasi: ' + e.message, 'error');
+  }
+}
+
 async function savePublicConfig() {
-  if (ctx.state.isSavingGlobal) return;
+  if (STATE.isSaving) return;
 
   const enabled = getEl('enablePublicGallery')?.checked || false;
   const password = getEl('publicAssetPassword')?.value.trim() || '';
 
   const btn = getEl('savePublicConfigBtn');
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-  ctx.state.isSavingGlobal = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isSaving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
   try {
     const res = await callApi('setAssetPublicPassword', { enabled, password }, 'POST');
-    if (!res || !res.success) {
-      throw new Error((res && res.error) || 'Gagal menyimpan');
-    }
-
-    showToast('Pengaturan publik berhasil disimpan', 'success');
-
-    ctx.state.globalConfig = {
-      enabled: enabled,
-      hasPassword: ctx.state.globalConfig?.hasPassword || !!password,
-    };
-    ctx.state.globalConfigFetchedAt = Date.now();
-    ctx.state.lastGlobalConfigSaveTime = Date.now();
-
-    applyGlobalConfigToUI(ctx.state.globalConfig);
-
-    const passEl = getEl('publicAssetPassword');
-    if (passEl) passEl.value = '';
+    if (res && res.success) {
+      showToast('Pengaturan publik berhasil disimpan', 'success');
+      getModal('publicConfigModal')?.hide();
+    } else throw new Error((res && res.error) || 'Gagal menyimpan');
   } catch (e) {
-    const errMsg = String(e?.message || e || '').toLowerCase();
-    const isTimeout = errMsg.includes('timeout') || errMsg.includes('network') || errMsg.includes('failed to fetch');
-    if (isTimeout) {
-      showToast('Permintaan memakan waktu lebih lama. Refresh halaman.', 'warning');
-    } else {
-      showToast('Gagal: ' + e.message, 'error');
-    }
+    showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.state.isSavingGlobal = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isSaving = false;
   }
 }
 
@@ -1517,12 +1344,11 @@ async function savePublicConfig() {
 // ============================================================
 function openPreviewWithPlaylist(items, startIndex) {
   if (!items || items.length === 0) return;
-  if (startIndex < 0 || startIndex >= items.length) startIndex = 0;
 
-  ctx.state.playlistItems = items;
-  ctx.state.currentPlaylistIndex = startIndex;
-  ctx.state.isModalOpen = true;
-  ctx.state.isAutoplayActive = false;
+  STATE.playlistItems = items;
+  STATE.currentPlaylistIndex = startIndex;
+  STATE.isModalOpen = true;
+  STATE.isAutoplayActive = false;
 
   const modal = getEl('customPreviewModal');
   if (modal) modal.style.display = 'flex';
@@ -1537,7 +1363,7 @@ function openPreviewWithPlaylist(items, startIndex) {
 }
 
 function updatePreview(item) {
-  if (!item || !ctx.state.isModalOpen) return;
+  if (!item || !STATE.isModalOpen) return;
 
   const iframe = getEl('previewContent');
   const spinner = getEl('customPreviewSpinner');
@@ -1551,9 +1377,9 @@ function updatePreview(item) {
     return;
   }
 
-  if (ctx.state.autoplayTimeoutId) {
-    clearTimeout(ctx.state.autoplayTimeoutId);
-    ctx.state.autoplayTimeoutId = null;
+  if (STATE.autoplayTimeoutId) {
+    clearTimeout(STATE.autoplayTimeoutId);
+    STATE.autoplayTimeoutId = null;
   }
 
   if (titleEl) titleEl.innerHTML = `<i class="bi bi-eye me-2"></i>${escapeHtml(item.judul || 'Pratinjau')}`;
@@ -1570,7 +1396,7 @@ function updatePreview(item) {
   }
 
   setTimeout(() => {
-    if (!iframe || !ctx.state.isModalOpen) return;
+    if (!iframe) return;
     iframe.src = `https://drive.google.com/file/d/${cleaned}/preview`;
     iframe.onload = () => {
       if (spinner) spinner.style.display = 'none';
@@ -1588,46 +1414,46 @@ function updatePreview(item) {
 
   const prevBtn = getEl('navPrev');
   const nextBtn = getEl('navNext');
-  if (prevBtn) prevBtn.classList.toggle('disabled', ctx.state.currentPlaylistIndex <= 0);
-  if (nextBtn) nextBtn.classList.toggle('disabled', ctx.state.currentPlaylistIndex >= ctx.state.playlistItems.length - 1);
+  if (prevBtn) prevBtn.classList.toggle('disabled', STATE.currentPlaylistIndex <= 0);
+  if (nextBtn) nextBtn.classList.toggle('disabled', STATE.currentPlaylistIndex >= STATE.playlistItems.length - 1);
 }
 
 function scheduleNextPlay() {
-  if (ctx.state.autoplayTimeoutId) clearTimeout(ctx.state.autoplayTimeoutId);
-  if (!ctx.state.isAutoplayActive || !ctx.state.isModalOpen) return;
+  if (STATE.autoplayTimeoutId) clearTimeout(STATE.autoplayTimeoutId);
+  if (!STATE.isAutoplayActive || !STATE.isModalOpen) return;
 
-  const currentItem = ctx.state.playlistItems[ctx.state.currentPlaylistIndex];
+  const currentItem = STATE.playlistItems[STATE.currentPlaylistIndex];
   const isVideo = String(currentItem?.jenis || '').toLowerCase() === 'video' ||
                   String(currentItem?.mimeType || '').startsWith('video/');
   const delay = isVideo ? 60000 : 5000;
 
-  ctx.state.autoplayTimeoutId = setTimeout(() => {
-    if (!ctx.state.isModalOpen) return;
-    if (ctx.state.currentPlaylistIndex >= ctx.state.playlistItems.length - 1) {
-      ctx.state.currentPlaylistIndex = 0;
+  STATE.autoplayTimeoutId = setTimeout(() => {
+    if (!STATE.isModalOpen) return;
+    if (STATE.currentPlaylistIndex >= STATE.playlistItems.length - 1) {
+      STATE.currentPlaylistIndex = 0;
     } else {
-      ctx.state.currentPlaylistIndex++;
+      STATE.currentPlaylistIndex++;
     }
-    updatePreview(ctx.state.playlistItems[ctx.state.currentPlaylistIndex]);
+    updatePreview(STATE.playlistItems[STATE.currentPlaylistIndex]);
   }, delay);
 }
 
 function toggleAutoplay() {
-  if (!ctx.state.isModalOpen) return;
+  if (!STATE.isModalOpen) return;
   const btn = getEl('autoplayToggleBtn');
 
-  if (ctx.state.isAutoplayActive) {
-    ctx.state.isAutoplayActive = false;
-    if (ctx.state.autoplayTimeoutId) {
-      clearTimeout(ctx.state.autoplayTimeoutId);
-      ctx.state.autoplayTimeoutId = null;
+  if (STATE.isAutoplayActive) {
+    STATE.isAutoplayActive = false;
+    if (STATE.autoplayTimeoutId) {
+      clearTimeout(STATE.autoplayTimeoutId);
+      STATE.autoplayTimeoutId = null;
     }
     if (btn) {
       btn.innerHTML = '<i class="bi bi-play-circle-fill" style="font-size:1.2rem;"></i>';
       btn.title = 'Putar Otomatis';
     }
   } else {
-    ctx.state.isAutoplayActive = true;
+    STATE.isAutoplayActive = true;
     if (btn) {
       btn.innerHTML = '<i class="bi bi-pause-circle-fill" style="font-size:1.2rem;"></i>';
       btn.title = 'Jeda Putar Otomatis';
@@ -1637,11 +1463,11 @@ function toggleAutoplay() {
 }
 
 function closePreview() {
-  ctx.state.isModalOpen = false;
-  ctx.state.isAutoplayActive = false;
-  if (ctx.state.autoplayTimeoutId) {
-    clearTimeout(ctx.state.autoplayTimeoutId);
-    ctx.state.autoplayTimeoutId = null;
+  STATE.isModalOpen = false;
+  STATE.isAutoplayActive = false;
+  if (STATE.autoplayTimeoutId) {
+    clearTimeout(STATE.autoplayTimeoutId);
+    STATE.autoplayTimeoutId = null;
   }
 
   const modal = getEl('customPreviewModal');
@@ -1654,29 +1480,19 @@ function closePreview() {
 }
 
 function navPrevPreview() {
-  if (!ctx.state.isModalOpen) return;
-  if (ctx.state.isAutoplayActive) toggleAutoplay();
-  if (ctx.state.currentPlaylistIndex > 0) {
-    ctx.state.currentPlaylistIndex--;
-    updatePreview(ctx.state.playlistItems[ctx.state.currentPlaylistIndex]);
+  if (!STATE.isModalOpen) return;
+  if (STATE.isAutoplayActive) toggleAutoplay();
+  if (STATE.currentPlaylistIndex > 0) {
+    STATE.currentPlaylistIndex--;
+    updatePreview(STATE.playlistItems[STATE.currentPlaylistIndex]);
   }
 }
 
 function navNextPreview() {
-  if (!ctx.state.isModalOpen) return;
-  if (ctx.state.isAutoplayActive) toggleAutoplay();
-  if (ctx.state.currentPlaylistIndex < ctx.state.playlistItems.length - 1) {
-    ctx.state.currentPlaylistIndex++;
-    updatePreview(ctx.state.playlistItems[ctx.state.currentPlaylistIndex]);
+  if (!STATE.isModalOpen) return;
+  if (STATE.isAutoplayActive) toggleAutoplay();
+  if (STATE.currentPlaylistIndex < STATE.playlistItems.length - 1) {
+    STATE.currentPlaylistIndex++;
+    updatePreview(STATE.playlistItems[STATE.currentPlaylistIndex]);
   }
 }
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default { mount, unmount };
-
-console.log(
-  '%c Asset View v27.2.0 — Preload + Subscription Edition ',
-  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);

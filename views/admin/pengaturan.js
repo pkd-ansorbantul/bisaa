@@ -1,20 +1,26 @@
 // ============================================================
-// VIEW: pengaturan.js — v27.2.0 PRELOAD + SUBSCRIPTION EDITION
+// VIEW: pengaturan.js — Full Fix v26.1.2 Production Ready
 // Dimuat oleh: js/router.js
 // HTML: views/admin/pengaturan.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.0.0):
-//   ✅ NEW: Instant render dari AdminModule preload cache
-//   ✅ NEW: Subscription ke perubahan data
-//   ✅ REMOVED: Poll interval — auto-sync global handle
-//   ✅ FIX: safeLocalStorage wrapper (quota safe)
-//   ✅ FIX: Race condition lock (isSavingGlobal guard)
-//   ✅ FIX: Null-safe element access
-//   ✅ FIX: Parallel load semua async sections
-//   ✅ FIX: Robust logout via dynamic import
-//   ✅ KEEP: Confirm reset ganda (checkbox + ketik "RESET")
-//   ✅ KEEP: Semua fitur (general, lokasi, login mode, visibilitas,
-//             form viewer, keamanan, backup, reset, info)
+// Fitur:
+// ✅ Pengaturan umum (app name, desc, logo preview)
+// ✅ Lokasi PKD (CRUD + filter aktif)
+// ✅ Mode login publik (wajib login vs guest) — FIXED race condition
+// ✅ Visibilitas menu publik (per halaman)
+// ✅ Form Builder viewer (read-only)
+// ✅ Keamanan akun admin (ganti password) — FIXED pakai endpoint
+// ✅ Backup data (JSON download)
+// ✅ Reset cache lokal (dengan konfirmasi ganda)
+// ✅ Info sistem (total data + last update)
+// ✅ Zero memory leak + full cleanup
+//
+// v26.1.2 FIXES:
+// ✅ BUG-001: Toast login mode sync dengan state UI (race condition)
+// ✅ BUG-005: Ganti password admin pakai endpoint resetMemberPassword
+// ✅ Hapus dependency ke endpoint yang tidak ada
+// ✅ Better error handling di semua handler
+// ✅ Loading state pada semua tombol
 // ============================================================
 
 import {
@@ -32,17 +38,9 @@ import {
   getPublicVisibility,
   setPublicVisibility,
   getFormSettings,
-  updateAdminPassword,
-  downloadJSON,
+  resetMemberPassword,
 } from '../../js/core/api.js';
-import { BASE_PATH } from '../../js/core/config.js';
 import { AdminModule } from '../../js/modules/admin.js';
-import {
-  getEl,
-  setBtnLoading,
-  createViewContext,
-  cleanupBootstrapArtifacts,
-} from '../../js/core/view-helpers.js';
 
 // ============================================================
 //   CONSTANTS
@@ -75,97 +73,114 @@ const FIELD_TYPE_LABELS = {
 };
 
 const MIN_PASSWORD_LENGTH = 6;
-const CACHE_TTL_MS = 30000;
-const RESET_PHRASE = 'RESET';
 
 // ============================================================
-//   CONTEXT
+//   MODULE STATE
 // ============================================================
-const ctx = createViewContext(
-  {
-    lokasiPKDList: [],
-    formFields: [],
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'settings'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[PengaturanView] ⚡ Settings changed (${type})`);
-      try {
-        loadLokasiPKD();
-        updateSystemInfo();
-      } catch (e) {
-        console.warn('[PengaturanView] Re-render error:', e);
-      }
-    },
+let pollInterval = null;
+let isMounted = false;
+let isSaving = false;
+
+const STATE = {
+  lokasiPKDList: [],
+  formFields: [],
+  modals: {},
+};
+
+const listeners = [];
+
+// ============================================================
+//   UTILITY
+// ============================================================
+function on(el, ev, handler, options) {
+  if (!el) return null;
+  el.addEventListener(ev, handler, options);
+  listeners.push({ el, ev, handler, options });
+  return handler;
+}
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getModal(id) {
+  const el = getEl(id);
+  if (!el) return null;
+  if (!STATE.modals[id]) {
+    try {
+      STATE.modals[id] = new bootstrap.Modal(el);
+    } catch (e) {
+      console.warn('[PengaturanView] Gagal init modal:', id, e);
+      return null;
+    }
   }
-);
+  return STATE.modals[id];
+}
 
-// ============================================================
-//   SAFE STORAGE
-// ============================================================
-function safeLocalGet(key) {
-  try { return localStorage.getItem(key); } catch (e) { return null; }
+function disposeAllModals() {
+  Object.keys(STATE.modals).forEach(id => {
+    try { STATE.modals[id]?.dispose?.(); } catch (e) { /* silent */ }
+  });
+  STATE.modals = {};
 }
-function safeLocalSet(key, value) {
-  try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
+
+function safeLS(fn) {
+  try { return fn(); } catch (e) { return null; }
 }
-function safeLocalRemove(key) {
-  try { localStorage.removeItem(key); return true; } catch (e) { return false; }
+
+function setBtnLoading(btn, loading, loadingText) {
+  if (!btn) return () => {};
+  const original = btn.innerHTML;
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${loadingText || 'Memuat...'}`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+  return () => {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  };
 }
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount() {
-  if (ctx.mounted) {
+export async function mount({ path, query, outlet }) {
+  if (isMounted) {
     console.warn('[PengaturanView] Sudah mounted, skip');
     return unmount;
   }
-  ctx.mounted = true;
-  ctx.saving = false;
-  ctx.refreshing = false;
+  isMounted = true;
   console.log('[PengaturanView] mounted');
 
-  ctx.state.lokasiPKDList = [];
-  ctx.state.formFields = [];
+  // Reset state
+  STATE.lokasiPKDList = [];
+  STATE.formFields = [];
+  isSaving = false;
 
-  // Sync sections (instant dari cache)
+  // Load sync sections first (localStorage-based)
   loadAdminUsername();
   loadGeneralSettings();
-  bindEvents();
 
-  // ⚡ Instant render dari cache AdminModule
-  const cachedLoginMode = AdminModule.getLoginMode();
-  const cachedVisibility = AdminModule.getPublicVisibility();
-  const cachedFormSettings = AdminModule.getFormSettings();
-
-  // Apply cache dulu (instant)
-  if (typeof cachedLoginMode === 'boolean') {
-    const toggleEl = getEl('loginModeToggle');
-    if (toggleEl) toggleEl.checked = cachedLoginMode;
-    updateLoginModeStatus(cachedLoginMode);
-  }
-  if (cachedVisibility && Object.keys(cachedVisibility).length > 0) {
-    renderVisibilityToggles(cachedVisibility);
-  }
-  if (Array.isArray(cachedFormSettings) && cachedFormSettings.length > 0) {
-    ctx.state.formFields = cachedFormSettings;
-    renderFormFields();
-  }
-
-  // ⚡ Subscribe ke perubahan data
-  await ctx.subscribeToData();
-
-  // Load async sections (paralel) — untuk refresh detail
+  // Load async sections paralel (tapi tidak saling block)
   await Promise.allSettled([
-    loadLokasiPKD(),
-    loadLoginMode(),
-    loadVisibility(),
-    loadFormFields(),
+    loadLokasiPKD().catch(e => console.error('[PengaturanView] loadLokasiPKD:', e)),
+    loadLoginMode().catch(e => console.error('[PengaturanView] loadLoginMode:', e)),
+    loadVisibility().catch(e => console.error('[PengaturanView] loadVisibility:', e)),
+    loadFormFields().catch(e => console.error('[PengaturanView] loadFormFields:', e)),
   ]);
 
   updateSystemInfo();
+  bindEvents();
+
+  // Poll system info setiap 60 detik
+  pollInterval = setInterval(() => {
+    if (document.hidden) return;
+    if (!isMounted) return;
+    updateSystemInfo();
+  }, 60000);
 
   return unmount;
 }
@@ -174,48 +189,48 @@ export async function mount() {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!ctx.mounted) return;
-  ctx.mounted = false;
+  if (!isMounted) return;
+  isMounted = false;
   console.log('[PengaturanView] unmounted');
 
-  ctx.cleanup();
-  cleanupBootstrapArtifacts();
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+
+  listeners.forEach(({ el, ev, handler, options }) => {
+    try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
+  });
+  listeners.length = 0;
+
+  disposeAllModals();
+
+  try {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  } catch (e) { /* silent */ }
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  ctx.on(getEl('saveGeneralSettings'), 'click', saveGeneralSettings);
-  ctx.on(getEl('addLokasiBtn'), 'click', addLokasiHandler);
-  ctx.on(getEl('savePkdLokasiBtn'), 'click', savePkdLokasiHandler);
-  ctx.on(getEl('saveLoginModeBtn'), 'click', saveLoginModeHandler);
-  ctx.on(getEl('saveVisibilityBtn'), 'click', saveVisibilityHandler);
-  ctx.on(getEl('changePasswordBtn'), 'click', changePasswordHandler);
-  ctx.on(getEl('backupDataBtn'), 'click', backupDataHandler);
-  ctx.on(getEl('resetDataBtn'), 'click', openResetConfirm);
-  ctx.on(getEl('confirmResetCheck'), 'change', updateResetButtonState);
-  ctx.on(getEl('confirmResetPhrase'), 'input', updateResetButtonState);
-  ctx.on(getEl('confirmResetBtn'), 'click', executeResetCache);
-  ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
+  on(getEl('saveGeneralSettings'), 'click', saveGeneralSettings);
+  on(getEl('addLokasiBtn'), 'click', addLokasiHandler);
+  on(getEl('savePkdLokasiBtn'), 'click', savePkdLokasiHandler);
+  on(getEl('saveLoginModeBtn'), 'click', saveLoginModeHandler);
+  on(getEl('saveVisibilityBtn'), 'click', saveVisibilityHandler);
+  on(getEl('changePasswordBtn'), 'click', changePasswordHandler);
+  on(getEl('backupDataBtn'), 'click', backupDataHandler);
+  on(getEl('resetDataBtn'), 'click', openResetConfirm);
+  on(getEl('confirmResetCheck'), 'change', handleResetCheckChange);
+  on(getEl('confirmResetBtn'), 'click', executeResetCache);
+  on(getEl('refreshDataBtn'), 'click', handleRefresh);
 
-  // Password strength indicator
-  ctx.on(getEl('newPassword'), 'input', function () {
-    const strength = getPasswordStrength(this.value);
-    const bar = getEl('passwordStrengthBar');
-    const label = getEl('passwordStrengthLabel');
-    if (bar) {
-      bar.style.width = strength.level + '%';
-      bar.className = 'progress-bar ' + strength.class;
-    }
-    if (label) {
-      label.textContent = this.value ? strength.label : '';
-      label.className = 'small mt-1 text-' + strength.class.replace('bg-', '');
-    }
-  });
-
-  // Delegation — password toggle
-  ctx.on(document, 'click', function (e) {
+  // Delegation: toggle password visibility
+  on(document, 'click', function (e) {
     const t = e.target.closest('[data-toggle-pass]');
     if (!t) return;
     const input = getEl(t.dataset.togglePass);
@@ -227,24 +242,7 @@ function bindEvents() {
 }
 
 // ============================================================
-//   PASSWORD STRENGTH
-// ============================================================
-function getPasswordStrength(pwd) {
-  if (!pwd) return { level: 0, label: 'Kosong', class: 'bg-secondary' };
-  let score = 0;
-  if (pwd.length >= 6) score++;
-  if (pwd.length >= 10) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[0-9]/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-
-  if (score <= 2) return { level: score * 20, label: 'Lemah', class: 'bg-danger' };
-  if (score <= 3) return { level: score * 20, label: 'Sedang', class: 'bg-warning' };
-  return { level: Math.min(score * 20, 100), label: 'Kuat', class: 'bg-success' };
-}
-
-// ============================================================
-//   1. PENGATURAN UMUM
+//   PENGATURAN UMUM
 // ============================================================
 function loadAdminUsername() {
   const userData = getUserData() || {};
@@ -259,7 +257,7 @@ function loadGeneralSettings() {
   };
   let settings = { ...defaults };
 
-  const saved = safeLocalGet(LS_KEYS.APP_SETTINGS);
+  const saved = safeLS(() => localStorage.getItem(LS_KEYS.APP_SETTINGS));
   if (saved) {
     try { settings = { ...defaults, ...JSON.parse(saved) }; }
     catch (e) { /* silent */ }
@@ -283,7 +281,6 @@ function saveGeneralSettings(e) {
   }
 
   const settings = { appName, appDesc };
-  safeLocalSet(LS_KEYS.APP_SETTINGS, JSON.stringify(settings));
 
   if (logoFile) {
     if (logoFile.size > 2 * 1024 * 1024) {
@@ -294,11 +291,16 @@ function saveGeneralSettings(e) {
     reader.onload = (ev) => {
       const preview = getEl('logoPreview');
       if (preview) preview.src = ev.target.result;
+      showToast('Pengaturan umum disimpan (logo diperbarui)', 'success');
     };
+    reader.onerror = () => showToast('Gagal membaca file logo', 'error');
     reader.readAsDataURL(logoFile);
+  } else {
+    showToast('Pengaturan umum berhasil disimpan', 'success');
   }
 
-  showToast('Pengaturan umum berhasil disimpan', 'success');
+  safeLS(() => localStorage.setItem(LS_KEYS.APP_SETTINGS, JSON.stringify(settings)));
+
   if (btn) {
     const restore = setBtnLoading(btn, true, 'Menyimpan...');
     setTimeout(restore, 400);
@@ -306,18 +308,17 @@ function saveGeneralSettings(e) {
 }
 
 // ============================================================
-//   2. LOKASI PKD
+//   LOKASI PKD
 // ============================================================
 async function loadLokasiPKD() {
   try {
     const res = await getLokasiPKDList();
-    if (!ctx.mounted) return;
-    ctx.state.lokasiPKDList = Array.isArray(res) ? res : (res?.data || []);
+    STATE.lokasiPKDList = Array.isArray(res) ? res : (res?.data || []);
     renderLokasiPKDList();
     await loadPkdLokasiSetting();
   } catch (e) {
     console.warn('[PengaturanView] loadLokasiPKD:', e);
-    ctx.state.lokasiPKDList = [];
+    STATE.lokasiPKDList = [];
     renderLokasiPKDList();
   }
 }
@@ -326,40 +327,42 @@ function renderLokasiPKDList() {
   const c = getEl('lokasiPKDListContainer');
   if (!c) return;
 
-  if (ctx.state.lokasiPKDList.length === 0) {
+  if (STATE.lokasiPKDList.length === 0) {
     c.innerHTML = '<p class="text-muted small mb-0">Belum ada lokasi PKD.</p>';
   } else {
-    c.innerHTML = ctx.state.lokasiPKDList.map(item => `
+    c.innerHTML = STATE.lokasiPKDList.map(item => `
       <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
         <span><span class="badge bg-primary">${escapeHtml(item.nama || '-')}</span></span>
-        <button class="btn btn-sm btn-outline-danger" data-delete-lokasi="${escapeHtml(String(item.id))}" title="Hapus" aria-label="Hapus lokasi">
-          <i class="bi bi-trash" aria-hidden="true"></i>
+        <button class="btn btn-sm btn-outline-danger" data-delete-lokasi="${escapeHtml(String(item.id))}" title="Hapus">
+          <i class="bi bi-trash"></i>
         </button>
       </div>
     `).join('');
-
-    c.querySelectorAll('[data-delete-lokasi]').forEach(btn => {
-      btn.addEventListener('click', () => deleteLokasiHandler(btn.dataset.deleteLokasi));
-    });
   }
 
+  // Re-bind delete buttons
+  c.querySelectorAll('[data-delete-lokasi]').forEach(btn => {
+    btn.addEventListener('click', () => deleteLokasiHandler(btn.dataset.deleteLokasi));
+  });
+
+  // Sync select dropdown
   const sel = getEl('pkdLokasiSelect');
   if (sel) {
     const cur = sel.value;
     sel.innerHTML = '<option value="">-- Semua Lokasi --</option>' +
-      ctx.state.lokasiPKDList.map(l =>
+      STATE.lokasiPKDList.map(l =>
         `<option value="${escapeHtml(l.nama || '')}">${escapeHtml(l.nama || '')}</option>`
       ).join('');
     if (cur) {
-      for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === cur) { sel.selectedIndex = i; break; }
+      for (const opt of sel.options) {
+        if (opt.value === cur) { opt.selected = true; break; }
       }
     }
   }
 }
 
 async function addLokasiHandler(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('addLokasiBtn');
   const input = getEl('newLokasiInput');
@@ -370,7 +373,7 @@ async function addLokasiHandler(e) {
     return;
   }
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, '');
 
   try {
@@ -386,16 +389,17 @@ async function addLokasiHandler(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 async function deleteLokasiHandler(id) {
-  const item = ctx.state.lokasiPKDList.find(l => String(l.id) === String(id));
+  const item = STATE.lokasiPKDList.find(l => String(l.id) === String(id));
   if (!item) {
     showToast('Lokasi tidak ditemukan', 'error');
     return;
   }
+
   if (!confirm(`Hapus lokasi "${item.nama}"?`)) return;
 
   try {
@@ -414,12 +418,11 @@ async function deleteLokasiHandler(id) {
 async function loadPkdLokasiSetting() {
   try {
     const res = await getPKDLokasi();
-    if (!ctx.mounted) return;
     const current = res?.data || '';
     const sel = getEl('pkdLokasiSelect');
     if (sel && current) {
-      for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === current) { sel.selectedIndex = i; break; }
+      for (const opt of sel.options) {
+        if (opt.value === current) { opt.selected = true; break; }
       }
     }
     const statusEl = getEl('pkdLokasiStatus');
@@ -430,13 +433,13 @@ async function loadPkdLokasiSetting() {
 }
 
 async function savePkdLokasiHandler(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('savePkdLokasiBtn');
   const lokasi = getEl('pkdLokasiSelect')?.value || '';
   const statusEl = getEl('pkdLokasiStatus');
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
@@ -454,23 +457,24 @@ async function savePkdLokasiHandler(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   3. LOGIN MODE
+//   LOGIN MODE — FIXED race condition
 // ============================================================
 async function loadLoginMode() {
   const toggleEl = getEl('loginModeToggle');
   if (toggleEl) toggleEl.checked = false;
   updateLoginModeStatus(false);
 
-  const cached = safeLocalGet(LS_KEYS.LOGIN_MODE_CACHE);
+  // Check cache (30 detik)
+  const cached = safeLS(() => localStorage.getItem(LS_KEYS.LOGIN_MODE_CACHE));
   if (cached) {
     try {
       const { enabled, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
+      if (Date.now() - timestamp < 30000) {
         if (toggleEl) toggleEl.checked = !!enabled;
         updateLoginModeStatus(!!enabled);
         return;
@@ -481,12 +485,15 @@ async function loadLoginMode() {
   try {
     const res = await getLoginMode();
     const enabled = res?.success ? !!res.enabled : false;
-    safeLocalSet(LS_KEYS.LOGIN_MODE_CACHE, JSON.stringify({ enabled, timestamp: Date.now() }));
+    safeLS(() => localStorage.setItem(
+      LS_KEYS.LOGIN_MODE_CACHE,
+      JSON.stringify({ enabled, timestamp: Date.now() })
+    ));
     if (toggleEl) toggleEl.checked = enabled;
     updateLoginModeStatus(enabled);
   } catch (e) {
     console.warn('[PengaturanView] loadLoginMode:', e);
-    safeLocalRemove(LS_KEYS.LOGIN_MODE_CACHE);
+    safeLS(() => localStorage.removeItem(LS_KEYS.LOGIN_MODE_CACHE));
     updateLoginModeStatus(false);
   }
 }
@@ -503,8 +510,9 @@ function updateLoginModeStatus(enabled) {
   }
 }
 
+// ✅ FIXED: Toast sync dengan state final, bukan state pre-API
 async function saveLoginModeHandler(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('saveLoginModeBtn');
   const toggleEl = getEl('loginModeToggle');
@@ -512,7 +520,7 @@ async function saveLoginModeHandler(e) {
 
   const requestedEnabled = toggleEl.checked;
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
@@ -521,23 +529,37 @@ async function saveLoginModeHandler(e) {
       throw new Error((res && res.error) || 'Gagal menyimpan');
     }
 
-    safeLocalRemove(LS_KEYS.LOGIN_MODE_CACHE);
+    // Clear cache
+    safeLS(() => localStorage.removeItem(LS_KEYS.LOGIN_MODE_CACHE));
 
+    // ✅ Re-verify dari server untuk dapat nilai final
     let finalEnabled = requestedEnabled;
     try {
       const fresh = await getLoginMode();
-      if (fresh && fresh.success) finalEnabled = !!fresh.enabled;
+      if (fresh && fresh.success) {
+        finalEnabled = !!fresh.enabled;
+      }
     } catch (err) {
       console.warn('[PengaturanView] Verify login mode gagal:', err);
     }
 
+    // ✅ Sync UI dengan nilai FINAL
     toggleEl.checked = finalEnabled;
     updateLoginModeStatus(finalEnabled);
 
-    safeLocalSet(LS_KEYS.LOGIN_MODE_CACHE, JSON.stringify({ enabled: finalEnabled, timestamp: Date.now() }));
-    showToast(`Mode login: ${finalEnabled ? 'Wajib Login' : 'Guest'}`, 'success');
+    // Update cache
+    safeLS(() => localStorage.setItem(
+      LS_KEYS.LOGIN_MODE_CACHE,
+      JSON.stringify({ enabled: finalEnabled, timestamp: Date.now() })
+    ));
+
+    // ✅ Toast pakai nilai FINAL (bukan requested)
+    showToast(
+      `Mode login: ${finalEnabled ? 'Wajib Login' : 'Guest'}`,
+      'success'
+    );
   } catch (err) {
-    // Rollback
+    // Rollback UI ke state sebenarnya (fetch ulang)
     try {
       const fresh = await getLoginMode();
       if (fresh?.success) {
@@ -554,21 +576,21 @@ async function saveLoginModeHandler(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   4. VISIBILITAS MENU
+//   VISIBILITAS MENU
 // ============================================================
 async function loadVisibility() {
   renderVisibilityToggles({});
 
-  const cached = safeLocalGet(LS_KEYS.VISIBILITY_CACHE);
+  const cached = safeLS(() => localStorage.getItem(LS_KEYS.VISIBILITY_CACHE));
   if (cached) {
     try {
       const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
+      if (Date.now() - timestamp < 30000) {
         renderVisibilityToggles(data || {});
         return;
       }
@@ -578,7 +600,10 @@ async function loadVisibility() {
   try {
     const res = await getPublicVisibility();
     if (res?.success && res.data) {
-      safeLocalSet(LS_KEYS.VISIBILITY_CACHE, JSON.stringify({ data: res.data, timestamp: Date.now() }));
+      safeLS(() => localStorage.setItem(
+        LS_KEYS.VISIBILITY_CACHE,
+        JSON.stringify({ data: res.data, timestamp: Date.now() })
+      ));
       renderVisibilityToggles(res.data);
     }
   } catch (e) {
@@ -607,20 +632,20 @@ function renderVisibilityToggles(visibility) {
 }
 
 async function saveVisibilityHandler(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('saveVisibilityBtn');
   const toggles = document.querySelectorAll('.visibility-toggle');
   const data = {};
   toggles.forEach(t => { data[t.dataset.key] = t.checked; });
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
     const res = await setPublicVisibility(data);
     if (res && res.success) {
-      safeLocalRemove(LS_KEYS.VISIBILITY_CACHE);
+      safeLS(() => localStorage.removeItem(LS_KEYS.VISIBILITY_CACHE));
       showToast('Visibilitas menu berhasil disimpan', 'success');
     } else {
       throw new Error((res && res.error) || 'Gagal menyimpan');
@@ -629,12 +654,12 @@ async function saveVisibilityHandler(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   5. FORM FIELDS (read-only viewer)
+//   FORM FIELDS (read-only viewer)
 // ============================================================
 async function loadFormFields() {
   const c = getEl('formFieldsContainer');
@@ -647,10 +672,12 @@ async function loadFormFields() {
     if (res?.success && Array.isArray(res.data)) fields = res.data;
     else if (Array.isArray(res)) fields = res;
 
-    // Handle nested array
-    if (fields.length > 0 && Array.isArray(fields[0])) fields = fields[0];
+    // Handle nested array (form struktur dari backend kadang nested)
+    if (fields.length > 0 && Array.isArray(fields[0])) {
+      fields = fields[0];
+    }
 
-    ctx.state.formFields = fields;
+    STATE.formFields = fields;
     renderFormFields();
   } catch (e) {
     console.warn('[PengaturanView] loadFormFields:', e);
@@ -662,7 +689,7 @@ function renderFormFields() {
   const c = getEl('formFieldsContainer');
   if (!c) return;
 
-  if (ctx.state.formFields.length === 0) {
+  if (STATE.formFields.length === 0) {
     c.innerHTML = '<div class="alert alert-info text-center mb-0 small">Belum ada konfigurasi field.</div>';
     return;
   }
@@ -676,7 +703,7 @@ function renderFormFields() {
     <th style="width:100px;">Core</th>
   </tr></thead><tbody>`;
 
-  ctx.state.formFields.forEach((f, i) => {
+  STATE.formFields.forEach((f, i) => {
     const typeLabel = FIELD_TYPE_LABELS[f.type] || f.type || 'text';
     html += `<tr>
       <td>${i + 1}</td>
@@ -697,10 +724,10 @@ function renderFormFields() {
 }
 
 // ============================================================
-//   6. KEAMANAN AKUN ADMIN
+//   KEAMANAN AKUN ADMIN — FIXED pakai endpoint yang ada
 // ============================================================
 async function changePasswordHandler(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('changePasswordBtn');
   const newPass = getEl('newPassword')?.value || '';
@@ -708,54 +735,35 @@ async function changePasswordHandler(e) {
   const userData = getUserData() || {};
   const username = userData.username || userData.nama || 'admin';
 
+  // Validasi
   if (!newPass && !confirmPass) {
     showToast('Masukkan password baru untuk mengubah', 'info');
     return;
   }
   if (newPass !== confirmPass) {
     showToast('Konfirmasi password tidak cocok', 'error');
-    getEl('confirmPassword')?.focus();
     return;
   }
   if (newPass.length < MIN_PASSWORD_LENGTH) {
     showToast(`Password minimal ${MIN_PASSWORD_LENGTH} karakter`, 'error');
-    getEl('newPassword')?.focus();
     return;
   }
 
-  if (!confirm(`Ubah password untuk akun "${username}"?\n\nSetelah berhasil, Anda akan otomatis logout dan harus login ulang.`)) {
-    return;
-  }
+  if (!confirm(`Ubah password untuk akun "${username}"?`)) return;
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
-    const res = await updateAdminPassword(username, newPass);
+    // ✅ Pakai endpoint resetMemberPassword (bekerja untuk semua role)
+    const res = await resetMemberPassword({ username, newPassword: newPass });
 
     if (res && res.success) {
-      showToast('✅ Password berhasil diubah. Auto-logout dalam 2 detik…', 'success');
-
+      showToast('Password berhasil diubah. Silakan login ulang.', 'success');
       const newEl = getEl('newPassword');
       const confEl = getEl('confirmPassword');
       if (newEl) newEl.value = '';
       if (confEl) confEl.value = '';
-
-      const bar = getEl('passwordStrengthBar');
-      const label = getEl('passwordStrengthLabel');
-      if (bar) { bar.style.width = '0%'; bar.className = 'progress-bar'; }
-      if (label) { label.textContent = ''; }
-
-      setTimeout(() => {
-        import('../../js/core/api.js')
-          .then(mod => {
-            if (typeof mod.logout === 'function') mod.logout();
-            else window.location.href = BASE_PATH + 'login.html';
-          })
-          .catch(() => {
-            window.location.href = BASE_PATH + 'login.html';
-          });
-      }, 2000);
     } else {
       throw new Error((res && res.error) || 'Gagal mengubah password');
     }
@@ -763,12 +771,12 @@ async function changePasswordHandler(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   7. BACKUP & RESET
+//   BACKUP & RESET
 // ============================================================
 function backupDataHandler() {
   const state = AdminModule.getState();
@@ -788,43 +796,39 @@ function backupDataHandler() {
 
   const exportObj = {
     exportedAt: new Date().toISOString(),
-    version: '27.2.0',
+    version: '26.1.2',
     platform: 'PKD GP Ansor Kabupaten Bantul',
     data: sanitized,
   };
 
-  const today = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  const localDate = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-
-  if (downloadJSON(exportObj, `backup_pkd_${localDate}.json`)) {
+  try {
+    const json = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_pkd_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     showToast('Backup data berhasil diunduh', 'success');
-  } else {
-    showToast('Gagal membuat backup', 'error');
+  } catch (e) {
+    showToast('Gagal membuat backup: ' + e.message, 'error');
   }
 }
 
 function openResetConfirm() {
   const checkEl = getEl('confirmResetCheck');
-  const phraseEl = getEl('confirmResetPhrase');
   const btnEl = getEl('confirmResetBtn');
   if (checkEl) checkEl.checked = false;
-  if (phraseEl) phraseEl.value = '';
   if (btnEl) btnEl.disabled = true;
-  ctx.getModal('resetConfirmModal')?.show();
+  getModal('resetConfirmModal')?.show();
 }
 
-function updateResetButtonState() {
-  const checkEl = getEl('confirmResetCheck');
-  const phraseEl = getEl('confirmResetPhrase');
-  const btnEl = getEl('confirmResetBtn');
-  if (!btnEl) return;
-
-  const isChecked = !!checkEl?.checked;
-  const isPhraseCorrect =
-    (phraseEl?.value || '').trim().toUpperCase() === RESET_PHRASE;
-
-  btnEl.disabled = !(isChecked && isPhraseCorrect);
+function handleResetCheckChange(e) {
+  const btn = getEl('confirmResetBtn');
+  if (btn) btn.disabled = !e.target.checked;
 }
 
 function executeResetCache(e) {
@@ -833,22 +837,18 @@ function executeResetCache(e) {
 
   let cleared = 0;
   try {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('pkd_cache_') || key.startsWith('pkd_member_cache_'))) {
-        keysToRemove.push(key);
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('pkd_cache_') || key.startsWith('pkd_member_cache_')) {
+        localStorage.removeItem(key);
+        cleared++;
       }
-    }
-    keysToRemove.forEach(k => {
-      try { localStorage.removeItem(k); cleared++; } catch (e) { /* silent */ }
     });
   } catch (e) { /* silent */ }
 
   try { AdminModule.clearState(); } catch (e) { /* silent */ }
 
   showToast(`Cache lokal dibersihkan (${cleared} entri)`, 'success');
-  ctx.getModal('resetConfirmModal')?.hide();
+  getModal('resetConfirmModal')?.hide();
 
   setTimeout(() => {
     restore();
@@ -860,15 +860,18 @@ function executeResetCache(e) {
 //   REFRESH
 // ============================================================
 async function handleRefresh(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('refreshDataBtn');
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memuat...');
 
   try {
-    safeLocalRemove(LS_KEYS.LOGIN_MODE_CACHE);
-    safeLocalRemove(LS_KEYS.VISIBILITY_CACHE);
+    // Clear cache
+    safeLS(() => {
+      localStorage.removeItem(LS_KEYS.LOGIN_MODE_CACHE);
+      localStorage.removeItem(LS_KEYS.VISIBILITY_CACHE);
+    });
 
     await Promise.allSettled([
       loadLoginMode(),
@@ -883,7 +886,7 @@ async function handleRefresh(e) {
     showToast('Gagal menyegarkan: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
@@ -897,8 +900,7 @@ function updateSystemInfo() {
 
     let totalData = 0;
     ['peserta', 'sesi', 'materi', 'skrining', 'pretest', 'posttest',
-     'alumni', 'kader', 'informasi', 'absensi', 'sertifikat',
-     'timInstruktur'].forEach(k => {
+     'alumni', 'kader', 'informasi', 'absensi', 'sertifikat'].forEach(k => {
       if (Array.isArray(state[k])) totalData += state[k].length;
     });
 
@@ -915,13 +917,3 @@ function updateSystemInfo() {
     console.warn('[PengaturanView] updateSystemInfo:', e);
   }
 }
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default { mount, unmount };
-
-console.log(
-  '%c Pengaturan View v27.2.0 — Preload + Subscription Edition ',
-  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);

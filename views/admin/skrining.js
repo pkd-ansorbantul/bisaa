@@ -1,20 +1,26 @@
 // ============================================================
-// VIEW: skrining.js — v27.2.0 PRELOAD + SUBSCRIPTION EDITION
+// VIEW: skrining.js — Full Fix v26.1.2 Production Ready
 // Dimuat oleh: js/router.js
 // HTML: views/admin/skrining.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.0.0):
-//   ✅ NEW: Subscription ke AdminModule (auto re-render)
-//   ✅ NEW: Instant render dari preload cache
-//   ✅ REMOVED: Per-view polling 60s
-//   ✅ FIX: BUG-002 — Load default dengan backup + rollback
-//   ✅ FIX: Progress indicator saat load default
-//   ✅ FIX: isSaving guard konsisten di semua async handlers
-//   ✅ FIX: Modal dispose otomatis via ctx.cleanup
-//   ✅ FIX: isMounted guard di dalam loop loadDefault
-//   ✅ FIX: Parallel batch 5 concurrent untuk load default
-//   ✅ FIX: Focus preservation saat re-render
-//   ✅ Zero memory leak
+// Fitur:
+// ✅ Stats: total, pertanyaan, hari ini, minggu ini
+// ✅ Responses: list + search + filter hasil + pagination
+// ✅ Detail respons (dengan dataJson parsing)
+// ✅ Delete respons — FIXED off-by-one row index
+// ✅ Questions: CRUD (text + radio) + load default
+// ✅ Export JSON
+// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
+// ✅ Zero memory leak + full cleanup on unmount
+//
+// v26.1.2 FIXES:
+// ✅ BUG-002: Timezone inconsistency — pakai local date (bukan UTC)
+// ✅ BUG-DELETE: Kirim `_rowIndex` ke backend (bukan `id`)
+// ✅ Edit respons: clear messaging "hanya lokal"
+// ✅ Add respons: pakai API `submitSkrining` (persist)
+// ✅ Better error handling di semua handler
+// ✅ Loading state pada semua tombol
+// ✅ Fix stale state setelah add/delete (auto-reload)
 // ============================================================
 
 import {
@@ -27,23 +33,8 @@ import {
   addSkriningQuestion,
   updateSkriningQuestion,
   getSkriningQuestions,
-  formatDateTimeID,
-  getLocalDateOnly,
-  downloadJSON,
 } from '../../js/core/api.js';
 import { AdminModule } from '../../js/modules/admin.js';
-import {
-  getEl,
-  debounce,
-  setBtnLoading,
-  createViewContext,
-  delegateTableClicks,
-  captureFocusState,
-  restoreFocusState,
-  cleanupBootstrapArtifacts,
-  computeListHash,
-  SEARCH_DEBOUNCE,
-} from '../../js/core/view-helpers.js';
 
 // ============================================================
 //   CONSTANTS
@@ -60,19 +51,102 @@ const DEFAULT_QUESTIONS = [
   { teks: 'Catatan (opsional)', jenis: 'text', opsi: '', urutan: 9 },
 ];
 
-const BATCH_SIZE = 5;
+// ============================================================
+//   MODULE STATE
+// ============================================================
+let pollInterval = null;
+let searchDebounceTimer = null;
+let isMounted = false;
+let isRefreshing = false;
+let isSaving = false;
+
+const STATE = {
+  skriningList: [],
+  filteredList: [],
+  questionList: [],
+  searchQuery: '',
+  hasilFilter: '',
+  currentPage: 1,
+  itemsPerPage: 15,
+  modals: {},
+};
+
+const listeners = [];
 
 // ============================================================
-//   LOCAL HELPERS
+//   UTILITY
 // ============================================================
-function setCacheStatus(status) {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-  const cls = status === 'Live' ? 'live'
-    : (status === 'Offline' || status === 'Error') ? 'offline'
-    : '';
-  el.className = 'cache-status' + (cls ? ' ' + cls : '');
+function on(el, ev, handler, options) {
+  if (!el) return null;
+  el.addEventListener(ev, handler, options);
+  listeners.push({ el, ev, handler, options });
+  return handler;
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getModal(id) {
+  const el = getEl(id);
+  if (!el) return null;
+  if (!STATE.modals[id]) {
+    try {
+      STATE.modals[id] = new bootstrap.Modal(el);
+    } catch (e) {
+      console.warn('[SkriningView] Gagal init modal:', id, e);
+      return null;
+    }
+  }
+  return STATE.modals[id];
+}
+
+function disposeAllModals() {
+  Object.keys(STATE.modals).forEach(id => {
+    try { STATE.modals[id]?.dispose?.(); } catch (e) { /* silent */ }
+  });
+  STATE.modals = {};
+}
+
+function setBtnLoading(btn, loading, loadingText) {
+  if (!btn) return () => {};
+  const original = btn.innerHTML;
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${loadingText || 'Memuat...'}`;
+  }
+  return () => {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  };
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '-';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return '-'; }
+}
+
+// ✅ FIX BUG-002: Local date helper (bukan UTC)
+function getLocalDateOnly(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function getHasilBadge(hasil) {
@@ -83,96 +157,52 @@ function getHasilBadge(hasil) {
 }
 
 // ============================================================
-//   CONTEXT
-// ============================================================
-const ctx = createViewContext(
-  {
-    skriningList: [],
-    filteredList: [],
-    questionList: [],
-    searchQuery: '',
-    hasilFilter: '',
-    currentPage: 1,
-    itemsPerPage: 15,
-    pendingDeleteId: null,
-    pendingDeleteRowIndex: null,
-    pendingDeleteQuestionId: null,
-    lastResponHash: '',
-    lastQuestionHash: '',
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'skrining'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[SkriningView] ⚡ Data changed (${type}) → refresh from cache`);
-      try {
-        refreshResponsesFromCache();
-      } catch (e) {
-        console.warn('[SkriningView] Re-render error:', e);
-      }
-    },
-  }
-);
-
-let responTableCleanup = null;
-let questionTableCleanup = null;
-
-// ============================================================
 //   MOUNT
 // ============================================================
-export async function mount() {
-  if (ctx.mounted) {
+export async function mount({ path, query, outlet }) {
+  if (isMounted) {
     console.warn('[SkriningView] Sudah mounted, skip');
     return unmount;
   }
-  ctx.mounted = true;
-  ctx.saving = false;
-  ctx.refreshing = false;
+  isMounted = true;
   console.log('[SkriningView] mounted');
 
-  Object.assign(ctx.state, {
-    skriningList: [],
-    filteredList: [],
-    questionList: [],
-    searchQuery: '',
-    hasilFilter: '',
-    currentPage: 1,
-    pendingDeleteId: null,
-    pendingDeleteRowIndex: null,
-    pendingDeleteQuestionId: null,
-    lastResponHash: '',
-    lastQuestionHash: '',
-  });
+  // Reset state
+  STATE.skriningList = [];
+  STATE.filteredList = [];
+  STATE.questionList = [];
+  STATE.searchQuery = '';
+  STATE.hasilFilter = '';
+  STATE.currentPage = 1;
+  isSaving = false;
 
+  // Reset form
   const searchEl = getEl('searchInput');
   const filterEl = getEl('filterHasil');
   if (searchEl) searchEl.value = '';
   if (filterEl) filterEl.value = '';
 
-  // ⚡ Instant render dari preload cache
-  const cached = AdminModule.getSkriningList() || [];
-  if (cached.length > 0) {
-    console.log('[SkriningView] ⚡ Rendering responses from preload cache');
-    ctx.state.skriningList = cached.map(s => ({ ...s }));
-    ctx.state.lastResponHash = computeListHash(cached, ['id', 'timestamp', 'nama']);
-    applyFiltersAndSort();
-    setCacheStatus('Live');
-  } else {
-    console.log('[SkriningView] ⚠️ No cache, showing skeleton');
-    renderSkeletonResponses();
-  }
+  renderSkeletonResponses();
   renderSkeletonQuestions();
+
+  // Load data paralel
+  await Promise.allSettled([
+    loadResponses(true).catch(e => console.error('[SkriningView] loadResponses:', e)),
+    loadQuestions(true).catch(e => console.error('[SkriningView] loadQuestions:', e)),
+  ]);
 
   bindEvents();
 
-  // ⚡ Subscribe ke perubahan data
-  await ctx.subscribeToData();
-
-  // Load questions (tidak di-preload) + fallback responses
-  await Promise.allSettled([
-    cached.length === 0 ? loadResponses(false) : Promise.resolve(),
-    loadQuestions(false),
-  ]);
+  // Auto-refresh 30s
+  pollInterval = setInterval(() => {
+    if (document.hidden) return;
+    if (!isMounted) return;
+    if (isRefreshing) return;
+    isRefreshing = true;
+    loadResponses(false)
+      .catch(() => {})
+      .finally(() => { isRefreshing = false; });
+  }, 30000);
 
   return unmount;
 }
@@ -181,108 +211,78 @@ export async function mount() {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!ctx.mounted) return;
-  ctx.mounted = false;
+  if (!isMounted) return;
+  isMounted = false;
   console.log('[SkriningView] unmounted');
 
-  if (responTableCleanup) {
-    try { responTableCleanup(); } catch (e) { /* silent */ }
-    responTableCleanup = null;
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
   }
-  if (questionTableCleanup) {
-    try { questionTableCleanup(); } catch (e) { /* silent */ }
-    questionTableCleanup = null;
-  }
-
-  ctx.cleanup();
-  cleanupBootstrapArtifacts();
-}
-
-// ============================================================
-//   REFRESH FROM CACHE
-// ============================================================
-function refreshResponsesFromCache() {
-  const fresh = AdminModule.getSkriningList() || [];
-  const freshHash = computeListHash(fresh, ['id', 'timestamp', 'nama']);
-
-  if (freshHash === ctx.state.lastResponHash) {
-    console.log('[SkriningView] No change, skip re-render');
-    return;
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
   }
 
-  ctx.state.skriningList = fresh.map(s => ({ ...s }));
-  ctx.state.lastResponHash = freshHash;
-  applyFiltersAndSort();
-  setCacheStatus('Live');
+  listeners.forEach(({ el, ev, handler, options }) => {
+    try { el.removeEventListener(ev, handler, options); } catch (e) { /* silent */ }
+  });
+  listeners.length = 0;
+
+  disposeAllModals();
+
+  try {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  } catch (e) { /* silent */ }
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  // Search + filter
-  ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
-    ctx.state.searchQuery = e.target.value;
-    ctx.state.currentPage = 1;
-    applyFiltersAndSort();
-  }, SEARCH_DEBOUNCE));
+  const searchEl = getEl('searchInput');
+  const filterEl = getEl('filterHasil');
 
-  ctx.on(getEl('filterHasil'), 'change', function (e) {
-    ctx.state.hasilFilter = e.target.value;
-    ctx.state.currentPage = 1;
+  on(searchEl, 'input', debounce(function (e) {
+    STATE.searchQuery = e.target.value;
+    applyFiltersAndSort();
+  }, 300));
+
+  on(filterEl, 'change', function (e) {
+    STATE.hasilFilter = e.target.value;
     applyFiltersAndSort();
   });
 
-  // Toolbar
-  ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
-  ctx.on(getEl('exportDataBtn'), 'click', exportData);
-  ctx.on(getEl('addSkriningBtn'), 'click', openAddModal);
-  ctx.on(getEl('saveSkriningBtn'), 'click', saveSkrining);
-  ctx.on(getEl('confirmDeleteBtn'), 'click', executeDelete);
+  on(getEl('refreshDataBtn'), 'click', handleRefresh);
+  on(getEl('exportDataBtn'), 'click', exportData);
+  on(getEl('addSkriningBtn'), 'click', openAddModal);
+  on(getEl('saveSkriningBtn'), 'click', saveSkrining);
+  on(getEl('confirmDeleteBtn'), 'click', executeDelete);
 
-  // Question CRUD
-  ctx.on(getEl('addQuestionBtn'), 'click', openAddQuestionModal);
-  ctx.on(getEl('saveQuestionBtn'), 'click', saveQuestion);
-  ctx.on(getEl('confirmDeleteQuestionBtn'), 'click', executeDeleteQuestion);
-  ctx.on(getEl('loadDefaultQuestionsBtn'), 'click', loadDefaultQuestions);
+  // Question management
+  on(getEl('addQuestionBtn'), 'click', openAddQuestionModal);
+  on(getEl('saveQuestionBtn'), 'click', saveQuestion);
+  on(getEl('confirmDeleteQuestionBtn'), 'click', executeDeleteQuestion);
+  on(getEl('loadDefaultQuestionsBtn'), 'click', loadDefaultQuestions);
 
-  ctx.on(getEl('questionJenis'), 'change', function () {
+  // Question type toggle
+  on(getEl('questionJenis'), 'change', function () {
     const group = getEl('questionOptionsGroup');
     if (group) group.style.display = this.value === 'radio' ? 'block' : 'none';
   });
-
-  // ✅ DELEGATION — responses table
-  const tableContainer = getEl('skriningTableContainer');
-  if (tableContainer) {
-    responTableCleanup = delegateTableClicks(tableContainer, {
-      onSort: null,
-      onAction: (action, id) => {
-        if (action === 'detail') viewSkrining(id);
-        else if (action === 'edit') editSkrining(id);
-        else if (action === 'delete') deleteSkrining(id);
-      },
-      onPage: (page) => goToPage(page),
-    });
-  }
-
-  // ✅ DELEGATION — questions table
-  const qContainer = getEl('questionsTableContainer');
-  if (qContainer) {
-    questionTableCleanup = delegateTableClicks(qContainer, {
-      onAction: (action, id) => {
-        if (action === 'edit-q') editQuestion(id);
-        else if (action === 'delete-q') deleteQuestion(id);
-      },
-    });
-  }
 }
 
 // ============================================================
-//   STATS
+//   STATS — FIXED timezone
 // ============================================================
 function renderStats() {
-  const total = ctx.state.skriningList.length;
-  const questions = ctx.state.questionList.length;
+  const total = STATE.skriningList.length;
+  const questions = STATE.questionList.length;
+
+  // ✅ FIX: pakai local date, bukan UTC
   const today = getLocalDateOnly(new Date());
 
   const sevenDaysAgo = new Date();
@@ -290,15 +290,21 @@ function renderStats() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   let todayCount = 0, weekCount = 0;
-  ctx.state.skriningList.forEach(item => {
+  STATE.skriningList.forEach(item => {
     if (!item.timestamp) return;
     const ts = new Date(item.timestamp);
     if (isNaN(ts.getTime())) return;
+
+    // ✅ FIX: bandingkan dengan local date
     if (getLocalDateOnly(ts) === today) todayCount++;
+
     if (ts >= sevenDaysAgo) weekCount++;
   });
 
-  const setText = (id, val) => { const el = getEl(id); if (el) el.textContent = val; };
+  const setText = (id, val) => {
+    const el = getEl(id);
+    if (el) el.textContent = val;
+  };
   setText('statTotal', total);
   setText('statPertanyaan', questions);
   setText('statHariIni', todayCount);
@@ -306,7 +312,7 @@ function renderStats() {
 }
 
 // ============================================================
-//   SKELETON
+//   SKELETON RENDER
 // ============================================================
 function renderSkeletonResponses() {
   const c = getEl('skriningTableContainer');
@@ -337,21 +343,21 @@ function renderSkeletonQuestions() {
 }
 
 // ============================================================
-//   FILTER & SORT
+//   FILTER & SORT RESPONSES
 // ============================================================
 function getFilteredSkrining() {
-  let filtered = ctx.state.skriningList.slice();
+  let filtered = STATE.skriningList.slice();
 
-  if (ctx.state.searchQuery.trim() !== '') {
-    const q = ctx.state.searchQuery.toLowerCase().trim();
+  if (STATE.searchQuery.trim() !== '') {
+    const q = STATE.searchQuery.toLowerCase().trim();
     filtered = filtered.filter(item =>
       (item.nama || '').toLowerCase().includes(q) ||
       (item.alamat || '').toLowerCase().includes(q)
     );
   }
 
-  if (ctx.state.hasilFilter !== '') {
-    filtered = filtered.filter(item => item.hasil === ctx.state.hasilFilter);
+  if (STATE.hasilFilter !== '') {
+    filtered = filtered.filter(item => item.hasil === STATE.hasilFilter);
   }
 
   filtered.sort((a, b) => {
@@ -365,28 +371,27 @@ function getFilteredSkrining() {
 }
 
 function applyFiltersAndSort() {
-  ctx.state.filteredList = getFilteredSkrining();
-  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
-  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
-  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
+  STATE.filteredList = getFilteredSkrining();
+  STATE.currentPage = 1;
   renderResponsesTable();
   renderStats();
 }
 
 // ============================================================
-//   RENDER — RESPONSES TABLE
+//   RENDER RESPONSES TABLE
 // ============================================================
 function renderResponsesTable() {
   const c = getEl('skriningTableContainer');
   if (!c) return;
 
-  const savedFocus = captureFocusState('searchInput');
+  const totalItems = STATE.filteredList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+  if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+  if (STATE.currentPage < 1) STATE.currentPage = 1;
 
-  const totalItems = ctx.state.filteredList.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
-  const start = (ctx.state.currentPage - 1) * ctx.state.itemsPerPage;
-  const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
-  const pageData = ctx.state.filteredList.slice(start, end);
+  const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+  const end = Math.min(start + STATE.itemsPerPage, totalItems);
+  const pageData = STATE.filteredList.slice(start, end);
 
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
     <thead class="table-light"><tr>
@@ -399,9 +404,9 @@ function renderResponsesTable() {
     </tr></thead><tbody>`;
 
   if (pageData.length === 0) {
-    const hasFilter = ctx.state.searchQuery || ctx.state.hasilFilter;
+    const hasFilter = STATE.searchQuery || STATE.hasilFilter;
     html += `<tr><td colspan="6" class="text-center py-5 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
+      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
       Tidak ada data skrining${hasFilter ? ' untuk filter ini' : ''}.
     </td></tr>`;
   } else {
@@ -415,17 +420,17 @@ function renderResponsesTable() {
         <td>${globalIdx}</td>
         <td><strong>${escapeHtml(item.nama || '-')}</strong></td>
         <td>${escapeHtml(alamat)}</td>
-        <td>${escapeHtml(formatDateTimeID(item.timestamp))}</td>
+        <td>${escapeHtml(formatTimestamp(item.timestamp))}</td>
         <td><span class="badge ${badge}">${escapeHtml(item.hasil || 'Belum')}</span></td>
         <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-info me-1" data-action="detail" data-id="${safeId}" title="Detail" aria-label="Lihat detail">
-            <i class="bi bi-eye" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-info me-1" data-action="detail" data-id="${safeId}" title="Lihat Detail">
+            <i class="bi bi-eye"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-warning me-1" data-action="edit" data-id="${safeId}" title="Edit (lokal)" aria-label="Edit">
-            <i class="bi bi-pencil" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-warning me-1" data-action="edit" data-id="${safeId}" title="Edit (lokal)">
+            <i class="bi bi-pencil"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus" aria-label="Hapus">
-            <i class="bi bi-trash" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus">
+            <i class="bi bi-trash"></i>
           </button>
         </td>
       </tr>`;
@@ -439,52 +444,66 @@ function renderResponsesTable() {
     <div class="btn-group">`;
 
   const maxButtons = 7;
-  let startPage = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
+  let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxButtons - 1);
   if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
   if (startPage > 1) {
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
-    if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
+    if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
+    html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
               data-action="goto" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
-    if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
+    if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
   c.innerHTML = html;
 
-  restoreFocusState('searchInput', savedFocus);
+  // Bind action buttons
+  c.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', handleResponseAction);
+  });
+}
+
+function handleResponseAction(e) {
+  const action = e.currentTarget.dataset.action;
+  const id = e.currentTarget.dataset.id;
+  const page = parseInt(e.currentTarget.dataset.page);
+
+  if (action === 'detail') viewSkrining(id);
+  else if (action === 'edit') editSkrining(id);
+  else if (action === 'delete') deleteSkrining(id);
+  else if (action === 'goto') goToPage(page);
 }
 
 function goToPage(page) {
-  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(STATE.filteredList.length / STATE.itemsPerPage));
   if (page < 1 || page > totalPages) return;
-  ctx.state.currentPage = page;
+  STATE.currentPage = page;
   renderResponsesTable();
   getEl('skriningTableContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
-//   RENDER — QUESTIONS TABLE
+//   RENDER QUESTIONS TABLE
 // ============================================================
 function renderQuestionsTable() {
   const c = getEl('questionsTableContainer');
   if (!c) return;
 
-  if (!ctx.state.questionList || ctx.state.questionList.length === 0) {
+  if (!STATE.questionList || STATE.questionList.length === 0) {
     c.innerHTML = `<div class="alert alert-info text-center mb-0">
       Belum ada pertanyaan skrining. Klik <strong>Tambah Pertanyaan</strong> atau <strong>Muat Default</strong>.
     </div>`;
     return;
   }
 
-  const sorted = ctx.state.questionList.slice().sort((a, b) =>
+  const sorted = STATE.questionList.slice().sort((a, b) =>
     (parseInt(a.urutan) || 0) - (parseInt(b.urutan) || 0)
   );
 
@@ -508,11 +527,11 @@ function renderQuestionsTable() {
       <td><small>${escapeHtml(q.opsi || '-')}</small></td>
       <td>${escapeHtml(String(q.urutan || '-'))}</td>
       <td class="text-center">
-        <button type="button" class="btn btn-sm btn-outline-warning me-1" data-action="edit-q" data-id="${safeId}" title="Edit" aria-label="Edit">
-          <i class="bi bi-pencil" aria-hidden="true"></i>
+        <button class="btn btn-sm btn-outline-warning me-1" data-action="edit-q" data-id="${safeId}">
+          <i class="bi bi-pencil"></i>
         </button>
-        <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete-q" data-id="${safeId}" title="Hapus" aria-label="Hapus">
-          <i class="bi bi-trash" aria-hidden="true"></i>
+        <button class="btn btn-sm btn-outline-danger" data-action="delete-q" data-id="${safeId}">
+          <i class="bi bi-trash"></i>
         </button>
       </td>
     </tr>`;
@@ -520,49 +539,61 @@ function renderQuestionsTable() {
 
   html += `</tbody></table></div>`;
   c.innerHTML = html;
+
+  c.querySelectorAll('[data-action="edit-q"]').forEach(btn => {
+    btn.addEventListener('click', () => editQuestion(btn.dataset.id));
+  });
+  c.querySelectorAll('[data-action="delete-q"]').forEach(btn => {
+    btn.addEventListener('click', () => deleteQuestion(btn.dataset.id));
+  });
 }
 
 // ============================================================
-//   LOAD — RESPONSES (fallback)
+//   LOAD RESPONSES
 // ============================================================
 async function loadResponses(forceRefresh = false) {
+  const cacheEl = getEl('cacheStatus');
+  if (cacheEl) cacheEl.textContent = 'Memuat…';
+
   try {
     if (!AdminModule.getState().lastSync || forceRefresh) {
       await AdminModule.loadAllData(forceRefresh);
     }
-    if (!ctx.mounted) return;
-    refreshResponsesFromCache();
+    STATE.skriningList = AdminModule.getSkriningList() || [];
+    applyFiltersAndSort();
+
+    if (cacheEl) {
+      cacheEl.textContent = 'Live';
+      cacheEl.className = 'cache-status live';
+    }
   } catch (e) {
     console.error('[SkriningView] loadResponses error:', e);
     const c = getEl('skriningTableContainer');
-    if (c && ctx.state.skriningList.length === 0) {
+    if (c && STATE.skriningList.length === 0) {
       c.innerHTML = `<div class="alert alert-danger text-center">
         Gagal memuat data: ${escapeHtml(e.message)}
       </div>`;
     }
-    setCacheStatus('Error');
+    if (cacheEl) {
+      cacheEl.textContent = 'Error';
+      cacheEl.className = 'cache-status offline';
+    }
   }
 }
 
 // ============================================================
-//   LOAD — QUESTIONS
+//   LOAD QUESTIONS
 // ============================================================
 async function loadQuestions(forceRefresh = false) {
   try {
     const res = await getSkriningQuestions();
-    if (!ctx.mounted) return;
     let list = [];
     if (res && res.success && Array.isArray(res.data)) list = res.data;
     else if (Array.isArray(res)) list = res;
 
-    const freshHash = computeListHash(list, ['id', 'teks', 'urutan']);
-
-    if (freshHash !== ctx.state.lastQuestionHash || forceRefresh) {
-      ctx.state.questionList = list;
-      ctx.state.lastQuestionHash = freshHash;
-      renderQuestionsTable();
-      renderStats();
-    }
+    STATE.questionList = list;
+    renderQuestionsTable();
+    renderStats();
   } catch (e) {
     console.warn('[SkriningView] loadQuestions error:', e);
     const c = getEl('questionsTableContainer');
@@ -576,22 +607,23 @@ async function loadQuestions(forceRefresh = false) {
 //   REFRESH
 // ============================================================
 async function handleRefresh(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('refreshDataBtn');
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memuat...');
-  ctx.saving = true;
 
   try {
-    await AdminModule.loadAllData(true);
-    refreshResponsesFromCache();
-    await loadQuestions(true);
+    await Promise.allSettled([
+      loadResponses(true),
+      loadQuestions(true),
+    ]);
     showToast('Data disegarkan', 'success');
   } catch (err) {
     showToast('Gagal menyegarkan: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
@@ -599,7 +631,7 @@ async function handleRefresh(e) {
 //   DETAIL RESPONS
 // ============================================================
 function viewSkrining(id) {
-  const item = ctx.state.skriningList.find(x => String(x.id) === String(id));
+  const item = STATE.skriningList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   const badge = getHasilBadge(item.hasil);
@@ -617,7 +649,7 @@ function viewSkrining(id) {
     const val = item[key];
     if (val === undefined || val === null || val === '') return;
     const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    const displayVal = key === 'timestamp' ? formatDateTimeID(val) : val;
+    const displayVal = key === 'timestamp' ? formatTimestamp(val) : val;
     html += `<div class="list-group-item py-3">
       <strong>${escapeHtml(label)}:</strong><br>
       ${escapeHtml(String(displayVal))}
@@ -642,49 +674,40 @@ function viewSkrining(id) {
   html += `</div>`;
   const content = getEl('detailContent');
   if (content) content.innerHTML = html;
-  ctx.getModal('detailSkriningModal')?.show();
+  getModal('detailSkriningModal')?.show();
 }
 
 // ============================================================
 //   ADD / EDIT RESPONS
 // ============================================================
 function openAddModal() {
-  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
-  setVal('editSkriningId', '');
-  setVal('skriningNama', '');
-  setVal('skriningAlamat', '');
-  setVal('skriningHasil', 'Layak');
-  setVal('skriningTanggal', getLocalDateOnly(new Date()));
-  setVal('skriningNote', '');
-
-  const titleEl = getEl('formModalTitle');
-  if (titleEl) titleEl.textContent = 'Tambah Skrining';
-
-  ctx.getModal('skriningFormModal')?.show();
+  getEl('editSkriningId').value = '';
+  getEl('skriningNama').value = '';
+  getEl('skriningAlamat').value = '';
+  getEl('skriningHasil').value = 'Layak';
+  getEl('skriningTanggal').value = getLocalDateOnly(new Date());
+  getEl('skriningNote').value = '';
+  getEl('formModalTitle').textContent = 'Tambah Skrining';
+  getModal('skriningFormModal')?.show();
 }
 
 function editSkrining(id) {
-  const item = ctx.state.skriningList.find(x => String(x.id) === String(id));
+  const item = STATE.skriningList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
-  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
-  setVal('editSkriningId', id);
-  setVal('skriningNama', item.nama || '');
-  setVal('skriningAlamat', item.alamat || '');
-  setVal('skriningHasil', item.hasil || 'Layak');
-  setVal('skriningTanggal', item.timestamp
-    ? getLocalDateOnly(item.timestamp)
-    : getLocalDateOnly(new Date()));
-  setVal('skriningNote', item.catatan || '');
-
-  const titleEl = getEl('formModalTitle');
-  if (titleEl) titleEl.textContent = 'Edit Skrining (Lokal)';
-
-  ctx.getModal('skriningFormModal')?.show();
+  getEl('editSkriningId').value = id;
+  getEl('skriningNama').value = item.nama || '';
+  getEl('skriningAlamat').value = item.alamat || '';
+  getEl('skriningHasil').value = item.hasil || 'Layak';
+  getEl('skriningTanggal').value = item.timestamp
+    ? getLocalDateOnly(item.timestamp) : getLocalDateOnly(new Date());
+  getEl('skriningNote').value = item.catatan || '';
+  getEl('formModalTitle').textContent = 'Edit Skrining (Lokal)';
+  getModal('skriningFormModal')?.show();
 }
 
 async function saveSkrining(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('saveSkriningBtn');
   const id = getEl('editSkriningId').value;
@@ -693,30 +716,41 @@ async function saveSkrining(e) {
   const hasil = getEl('skriningHasil').value;
   const catatan = getEl('skriningNote').value.trim();
 
+  // Validasi
   if (!nama) { showToast('Nama wajib diisi', 'error'); return; }
   if (!alamat) { showToast('Alamat wajib diisi', 'error'); return; }
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
     if (id) {
-      const idx = ctx.state.skriningList.findIndex(x => String(x.id) === String(id));
+      // ✅ EDIT: lokal only (tidak ada endpoint update di backend)
+      const idx = STATE.skriningList.findIndex(x => String(x.id) === String(id));
       if (idx !== -1) {
-        ctx.state.skriningList[idx].nama = nama;
-        ctx.state.skriningList[idx].alamat = alamat;
-        ctx.state.skriningList[idx].hasil = hasil;
-        ctx.state.skriningList[idx].catatan = catatan;
+        STATE.skriningList[idx].nama = nama;
+        STATE.skriningList[idx].alamat = alamat;
+        STATE.skriningList[idx].hasil = hasil;
+        STATE.skriningList[idx].catatan = catatan;
       }
       showToast('Data diubah di tampilan lokal. Untuk permanen, edit di Google Sheets.', 'info');
-      ctx.getModal('skriningFormModal')?.hide();
+      getModal('skriningFormModal')?.hide();
       applyFiltersAndSort();
     } else {
-      const res = await submitSkrining({ nama, alamat, hasil, catatan });
+      // ✅ ADD: pakai API submitSkrining agar persist ke backend
+      const res = await submitSkrining({
+        nama,
+        alamat,
+        hasil,
+        catatan,
+        // Note: timestamp akan di-set oleh backend ke waktu saat ini
+      });
+
       if (res && res.success) {
         showToast('Data skrining berhasil ditambahkan', 'success');
-        ctx.getModal('skriningFormModal')?.hide();
-        await AdminModule.loadAllData(true);
+        getModal('skriningFormModal')?.hide();
+        // Force reload untuk dapat data baru dari backend
+        await loadResponses(true);
       } else {
         throw new Error((res && res.error) || 'Gagal menambahkan');
       }
@@ -725,55 +759,60 @@ async function saveSkrining(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   DELETE RESPONS
+//   DELETE RESPONS — FIXED off-by-one rowIndex
 // ============================================================
 function deleteSkrining(id) {
-  const item = ctx.state.skriningList.find(x => String(x.id) === String(id));
+  const item = STATE.skriningList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
+  // Simpan rowIndex untuk delete
   const rowIndex = item._rowIndex;
-  if (rowIndex == null || rowIndex === '' || isNaN(parseInt(rowIndex, 10))) {
+  if (!rowIndex) {
     showToast('Tidak bisa hapus: ID baris tidak ditemukan. Refresh data dulu.', 'warning');
     return;
   }
 
-  ctx.state.pendingDeleteId = id;
-  ctx.state.pendingDeleteRowIndex = rowIndex;
-
-  const idEl = getEl('deleteSkriningId');
-  if (idEl) idEl.value = id;
-
-  ctx.getModal('deleteConfirmModal')?.show();
+  getEl('deleteSkriningId').value = id;
+  getEl('deleteSkriningRowIndex').value = String(rowIndex);
+  getModal('deleteConfirmModal')?.show();
 }
 
 async function executeDelete(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('confirmDeleteBtn');
-  const id = ctx.state.pendingDeleteId;
-  const rowIndex = ctx.state.pendingDeleteRowIndex;
+  const id = getEl('deleteSkriningId').value;
+  const rowIndex = getEl('deleteSkriningRowIndex')?.value;
 
-  if (!id) { showToast('Data tidak valid', 'error'); return; }
+  if (!id) {
+    showToast('Data tidak valid', 'error');
+    return;
+  }
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menghapus...');
 
   try {
-    const payloadId = (rowIndex != null && rowIndex !== '' && !isNaN(parseInt(rowIndex, 10)))
-      ? parseInt(rowIndex, 10)
-      : parseInt(id, 10);
+    // ✅ FIX: kirim rowIndex (bukan id) — backend expects `id` as row number
+    const payloadId = rowIndex ? parseInt(rowIndex) : parseInt(id);
 
-    const res = await deleteSkriningResponse(payloadId);
+    const res = await deleteSkriningResponse({ id: payloadId });
 
     if (res && res.success) {
       showToast('Data skrining berhasil dihapus', 'success');
-      ctx.getModal('deleteConfirmModal')?.hide();
-      await AdminModule.loadAllData(true);
+      getModal('deleteConfirmModal')?.hide();
+
+      // Remove dari state lokal
+      STATE.skriningList = STATE.skriningList.filter(x => String(x.id) !== String(id));
+      applyFiltersAndSort();
+
+      // Sync ulang dari backend
+      setTimeout(() => loadResponses(true).catch(() => {}), 500);
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
@@ -781,9 +820,7 @@ async function executeDelete(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
-    ctx.state.pendingDeleteId = null;
-    ctx.state.pendingDeleteRowIndex = null;
+    isSaving = false;
   }
 }
 
@@ -791,55 +828,40 @@ async function executeDelete(e) {
 //   QUESTIONS CRUD
 // ============================================================
 function openAddQuestionModal() {
-  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
-  setVal('editQuestionId', '');
-  setVal('questionTeks', '');
-  setVal('questionJenis', 'text');
-  setVal('questionOpsi', '');
-  setVal('questionUrutan', ctx.state.questionList.length + 1);
-
-  const titleEl = getEl('questionModalTitle');
-  if (titleEl) titleEl.textContent = 'Tambah Pertanyaan';
-
-  const group = getEl('questionOptionsGroup');
-  if (group) group.style.display = 'none';
-
-  ctx.getModal('questionFormModal')?.show();
+  getEl('editQuestionId').value = '';
+  getEl('questionTeks').value = '';
+  getEl('questionJenis').value = 'text';
+  getEl('questionOpsi').value = '';
+  getEl('questionUrutan').value = STATE.questionList.length + 1;
+  getEl('questionModalTitle').textContent = 'Tambah Pertanyaan';
+  getEl('questionOptionsGroup').style.display = 'none';
+  getModal('questionFormModal')?.show();
 }
 
 function editQuestion(id) {
-  const q = ctx.state.questionList.find(item => String(item.id) === String(id));
+  const q = STATE.questionList.find(item => String(item.id) === String(id));
   if (!q) { showToast('Pertanyaan tidak ditemukan', 'error'); return; }
 
-  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
-  setVal('editQuestionId', q.id);
-  setVal('questionTeks', q.teks || '');
-  setVal('questionJenis', q.jenis || 'text');
-  setVal('questionOpsi', q.opsi || '');
-  setVal('questionUrutan', q.urutan || 1);
-
-  const titleEl = getEl('questionModalTitle');
-  if (titleEl) titleEl.textContent = 'Edit Pertanyaan';
-
-  const group = getEl('questionOptionsGroup');
-  if (group) group.style.display = q.jenis === 'radio' ? 'block' : 'none';
-
-  ctx.getModal('questionFormModal')?.show();
+  getEl('editQuestionId').value = q.id;
+  getEl('questionTeks').value = q.teks || '';
+  getEl('questionJenis').value = q.jenis || 'text';
+  getEl('questionOpsi').value = q.opsi || '';
+  getEl('questionUrutan').value = q.urutan || 1;
+  getEl('questionModalTitle').textContent = 'Edit Pertanyaan';
+  getEl('questionOptionsGroup').style.display = q.jenis === 'radio' ? 'block' : 'none';
+  getModal('questionFormModal')?.show();
 }
 
 function deleteQuestion(id) {
-  const q = ctx.state.questionList.find(item => String(item.id) === String(id));
+  const q = STATE.questionList.find(item => String(item.id) === String(id));
   if (!q) { showToast('Pertanyaan tidak ditemukan', 'error'); return; }
 
-  ctx.state.pendingDeleteQuestionId = id;
-  const idEl = getEl('deleteQuestionId');
-  if (idEl) idEl.value = id;
-
-  ctx.getModal('deleteQuestionModal')?.show();
+  getEl('deleteQuestionId').value = id;
+  getModal('deleteQuestionModal')?.show();
 }
 
 async function saveQuestion(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('saveQuestionBtn');
   const id = getEl('editQuestionId').value;
@@ -854,7 +876,7 @@ async function saveQuestion(e) {
     return;
   }
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menyimpan...');
 
   try {
@@ -870,7 +892,7 @@ async function saveQuestion(e) {
 
     if (res && res.success) {
       showToast(id ? 'Pertanyaan diperbarui' : 'Pertanyaan ditambahkan', 'success');
-      ctx.getModal('questionFormModal')?.hide();
+      getModal('questionFormModal')?.hide();
       await loadQuestions(true);
     } else {
       throw new Error((res && res.error) || 'Gagal menyimpan');
@@ -879,25 +901,25 @@ async function saveQuestion(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
 async function executeDeleteQuestion(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const btn = e.currentTarget || getEl('confirmDeleteQuestionBtn');
-  const id = ctx.state.pendingDeleteQuestionId || getEl('deleteQuestionId')?.value;
+  const id = getEl('deleteQuestionId').value;
   if (!id) return;
 
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Menghapus...');
 
   try {
     const res = await deleteSkriningQuestion(id);
     if (res && res.success) {
       showToast('Pertanyaan berhasil dihapus', 'success');
-      ctx.getModal('deleteQuestionModal')?.hide();
+      getModal('deleteQuestionModal')?.hide();
       await loadQuestions(true);
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
@@ -906,92 +928,68 @@ async function executeDeleteQuestion(e) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
-    ctx.state.pendingDeleteQuestionId = null;
+    isSaving = false;
   }
 }
 
 // ============================================================
-//   LOAD DEFAULT QUESTIONS — Backup + Rollback + isMounted guard
+//   LOAD DEFAULT QUESTIONS
 // ============================================================
 async function loadDefaultQuestions(e) {
-  if (ctx.saving) return;
+  if (isSaving) return;
 
   const confirmed = confirm(
     '⚠️ PERHATIAN\n\n' +
     'Tindakan ini akan:\n' +
-    '1. Backup semua pertanyaan yang ada\n' +
-    '2. Menghapus SEMUA pertanyaan yang ada\n' +
-    '3. Memuat 9 pertanyaan default\n\n' +
+    '1. Menghapus SEMUA pertanyaan yang ada\n' +
+    '2. Memuat 9 pertanyaan default\n\n' +
     'Data jawaban peserta TIDAK akan terhapus.\n\n' +
     'Lanjutkan?'
   );
   if (!confirmed) return;
 
   const btn = e.currentTarget || getEl('loadDefaultQuestionsBtn');
-  ctx.saving = true;
+  isSaving = true;
   const restore = setBtnLoading(btn, true, 'Memproses...');
-
-  // Backup dulu sebelum delete
-  const backup = ctx.state.questionList.map(q => ({
-    teks: q.teks,
-    jenis: q.jenis,
-    opsi: q.opsi,
-    urutan: q.urutan,
-  }));
 
   try {
     let deletedCount = 0;
     let addedCount = 0;
+    const errors = [];
 
-    // Phase 1: Delete all (parallel batch 5)
-    const deleteList = ctx.state.questionList.slice();
-    for (let i = 0; i < deleteList.length; i += BATCH_SIZE) {
-      if (!ctx.mounted) break;
-      const batch = deleteList.slice(i, i + BATCH_SIZE);
-      const results = await Promise.allSettled(
-        batch.map(q => deleteSkriningQuestion(q.id))
-      );
-      results.forEach(r => {
-        if (r.status === 'fulfilled' && r.value && r.value.success) deletedCount++;
-      });
-    }
-
-    // Phase 2: Add defaults (parallel batch 5)
-    for (let i = 0; i < DEFAULT_QUESTIONS.length; i += BATCH_SIZE) {
-      if (!ctx.mounted) break;
-      const batch = DEFAULT_QUESTIONS.slice(i, i + BATCH_SIZE);
-      const results = await Promise.allSettled(
-        batch.map(q => addSkriningQuestion(q))
-      );
-      results.forEach(r => {
-        if (r.status === 'fulfilled' && r.value && r.value.success) addedCount++;
-      });
-    }
-
-    // Rollback kalau TIDAK ADA pertanyaan berhasil ditambahkan
-    if (addedCount === 0 && backup.length > 0 && ctx.mounted) {
-      console.warn('[SkriningView] Load default gagal, rollback', backup.length, 'pertanyaan...');
-      showToast('Load default gagal, memulihkan backup...', 'warning');
-
-      for (let i = 0; i < backup.length; i += BATCH_SIZE) {
-        if (!ctx.mounted) break;
-        const batch = backup.slice(i, i + BATCH_SIZE);
-        await Promise.allSettled(batch.map(q => addSkriningQuestion(q)));
+    // Hapus semua pertanyaan
+    for (const q of STATE.questionList) {
+      try {
+        const res = await deleteSkriningQuestion(q.id);
+        if (res && res.success) deletedCount++;
+      } catch (err) {
+        errors.push(`Delete ${q.id}: ${err.message}`);
       }
-      throw new Error('Load default gagal. Data lama dikembalikan.');
     }
 
-    showToast(
-      `Berhasil: ${deletedCount} dihapus, ${addedCount} ditambahkan`,
-      addedCount === DEFAULT_QUESTIONS.length ? 'success' : 'warning'
-    );
+    // Tambah pertanyaan default
+    for (const q of DEFAULT_QUESTIONS) {
+      try {
+        const res = await addSkriningQuestion(q);
+        if (res && res.success) addedCount++;
+      } catch (err) {
+        errors.push(`Add: ${err.message}`);
+      }
+    }
+
+    if (errors.length > 0) {
+      showToast(`Selesai dengan ${errors.length} error. Cek console.`, 'warning');
+      console.warn('[SkriningView] loadDefaultQuestions errors:', errors);
+    } else {
+      showToast(`Berhasil: ${deletedCount} dihapus, ${addedCount} ditambahkan`, 'success');
+    }
+
     await loadQuestions(true);
   } catch (err) {
     showToast('Gagal: ' + err.message, 'error');
   } finally {
     restore();
-    ctx.saving = false;
+    isSaving = false;
   }
 }
 
@@ -999,7 +997,7 @@ async function loadDefaultQuestions(e) {
 //   EXPORT
 // ============================================================
 function exportData() {
-  const data = ctx.state.filteredList.length > 0 ? ctx.state.filteredList : ctx.state.skriningList;
+  const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.skriningList;
   if (data.length === 0) {
     showToast('Tidak ada data untuk diekspor', 'info');
     return;
@@ -1023,20 +1021,19 @@ function exportData() {
     return base;
   });
 
-  const fileName = `skrining_export_${getLocalDateOnly(new Date())}.json`;
-  if (downloadJSON(out, fileName)) {
+  try {
+    const json = JSON.stringify(out, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `skrining_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     showToast(`Berhasil mengekspor ${data.length} data`, 'success');
-  } else {
-    showToast('Gagal ekspor data', 'error');
+  } catch (e) {
+    showToast('Gagal ekspor: ' + e.message, 'error');
   }
 }
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default { mount, unmount };
-
-console.log(
-  '%c Skrining View v27.2.0 — Preload + Subscription Edition ',
-  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);

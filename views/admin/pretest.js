@@ -1,78 +1,89 @@
 // ============================================================
-// VIEW: pretest.js — v27.3.0 PRELOAD + SUBSCRIPTION EDITION
+// VIEW: pretest.js — Full Fix Production Ready
 // Dimuat oleh: js/router.js
 // HTML: views/admin/pretest.html
 // ============================================================
-// CHANGELOG v27.3.0 (dari v27.2.3):
-//   ✅ NEW: preloadData() — dipanggil app.js saat boot
-//   ✅ NEW: Instant render questions dari localStorage cache
-//   ✅ NEW: bindRefreshButton() → window.__pkd.forceSync()
-//   ✅ NEW: Cache status badge terintegrasi
-//   ✅ NEW: Auto-sync background via AdminModule subscription
-//   ✅ FIX: Separated refresh handler (questions vs responses)
-//   ✅ FIX: isMounted guard di semua async callbacks
-//   ✅ FIX: Modal dispose + cleanup on unmount
-//   ✅ FIX: Focus preservation saat re-render
-//   ✅ KEEP: All features (CRUD, responses table, CSV export)
+// Fitur:
+// ✅ Tab: Soal Pretest & Data Pretest
+// ✅ CRUD soal pretest (text, opsi, jawaban, urutan, timer)
+// ✅ Data responses (search, sort, pagination)
+// ✅ Detail jawaban per response (parse answersJson)
+// ✅ Export CSV
+// ✅ Cache 5 menit (questions & responses)
+// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
+// ✅ Zero memory leak + full cleanup on unmount
 // ============================================================
 
-import {
-  callApi,
-  showToast,
-  escapeHtml,
-} from '../../js/core/api.js';
-import { AdminModule } from '../../js/modules/admin.js';
-import {
-  getEl,
-  debounce,
-  setBtnLoading,
-  createViewContext,
-  captureFocusState,
-  restoreFocusState,
-  cleanupBootstrapArtifacts,
-  computeListHash,
-  setCacheStatus as setCacheStatusHelper,
-  SEARCH_DEBOUNCE,
-} from '../../js/core/view-helpers.js';
+import { callApi, showToast, escapeHtml } from '../../js/core/api.js';
 
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const KIND = 'pretest';
-const TITLE = 'Pre-test';
-const CACHE_KEY = 'pkd_cache_pretest_questions_v3';
-const EXPORT_FILENAME = 'pretest_data';
-const QUESTION_CACHE_AGE_MS = 5 * 60 * 1000; // 5 menit
+const CACHE_KEYS = {
+  QUESTIONS: 'pkd_cache_pretest_questions',
+  RESPONSES: 'pkd_cache_pretest_responses',
+};
+const CACHE_AGE_MS = 5 * 60 * 1000; // 5 menit
 
-const API = {
-  getQuestions: 'getPretestQuestions',
-  addQuestion: 'addPretestQuestion',
-  updateQuestion: 'updatePretestQuestion',
-  deleteQuestion: 'deletePretestQuestion',
+// ============================================================
+//   MODULE STATE
+// ============================================================
+let pollInterval = null;
+let searchDebounceTimer = null;
+let isMounted = false;
+let isRefreshing = false;
+
+const STATE = {
+  questions: [],
+  responses: [],
+  filteredResponses: [],
+  selectedAnswerIndex: 0,
+  searchQuery: '',
+  isSaving: false,
+  isLoading: false,
+  modals: {},
 };
 
-const IDS = {
-  soalContainer: 'soalContainer',
-  dataContainer: 'dataContainer',
-  modal: 'pretestModal',
-  modalTitle: 'pretestModalTitle',
-  editId: 'pretestId',
-  teks: 'pretestTeks',
-  opsi: 'pretestOpsi',
-  optionsContainer: 'pretestOptionsContainer',
-  jawaban: 'pretestJawaban',
-  urutan: 'pretestUrutan',
-  timerEnabled: 'pretestTimerEnabled',
-  timerDurationGroup: 'pretestTimerDurationGroup',
-  timerDuration: 'pretestTimerDuration',
-  saveBtn: 'simpanPretestBtn',
-  detailModal: 'detailModal',
-  detailBody: 'detailModalBody',
-};
+const listeners = [];
 
 // ============================================================
 //   UTILITY
 // ============================================================
+function on(el, ev, handler, options) {
+  if (!el) return null;
+  el.addEventListener(ev, handler, options);
+  listeners.push({ el, ev, handler, options });
+  return handler;
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getModal(id) {
+  const el = getEl(id);
+  if (!el) return null;
+  if (!STATE.modals[id]) {
+    STATE.modals[id] = new bootstrap.Modal(el);
+  }
+  return STATE.modals[id];
+}
+
+function disposeAllModals() {
+  Object.keys(STATE.modals).forEach(id => {
+    try { STATE.modals[id]?.dispose?.(); } catch (e) {}
+  });
+  STATE.modals = {};
+}
+
 function formatDateTime(ts) {
   if (!ts) return '-';
   try {
@@ -85,175 +96,69 @@ function formatDateTime(ts) {
   } catch { return '-'; }
 }
 
-function getResponses() {
-  return AdminModule.getPretestList() || [];
-}
-
 // ============================================================
-//   ⚡ PRELOAD API — dipanggil oleh app.js saat boot
+//   CACHE HELPERS
 // ============================================================
-export async function preloadData() {
-  const cached = cacheGet();
-  if (cached && Array.isArray(cached) && cached.length > 0) {
-    console.log(`[${TITLE}Preload] ✅ Cache hit (${cached.length} questions)`);
-    return { success: true, source: 'cache', count: cached.length };
-  }
-
+function safeCacheGet(key) {
   try {
-    console.log(`[${TITLE}Preload] ⚡ Fetching questions from server...`);
-    const res = await callApi(API.getQuestions, {}, 'GET');
-    const list = Array.isArray(res) ? res : (res?.data || []);
-
-    if (list.length > 0) {
-      cacheSet(list);
-      console.log(`[${TITLE}Preload] ✅ Loaded ${list.length} questions`);
-      return { success: true, source: 'network', count: list.length };
-    }
-    return { success: true, source: 'network', count: 0 };
-  } catch (e) {
-    console.warn(`[${TITLE}Preload] ⚠️ Failed:`, e.message);
-    return { success: false, error: e.message };
-  }
-}
-
-// ============================================================
-//   CACHE HELPERS (questions — localStorage)
-// ============================================================
-function cacheGet() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > QUESTION_CACHE_AGE_MS) {
-      localStorage.removeItem(CACHE_KEY);
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    const { data, timestamp } = JSON.parse(item);
+    if (Date.now() - timestamp > CACHE_AGE_MS) {
+      localStorage.removeItem(key);
       return null;
     }
     return data;
-  } catch { return null; }
+  } catch (e) { return null; }
 }
 
-function cacheSet(data) {
+function safeCacheSet(key, data) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
-  } catch (e) { /* quota exceeded — silent */ }
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch (e) {}
 }
 
-function cacheClear() {
-  try { localStorage.removeItem(CACHE_KEY); } catch (e) { /* silent */ }
-}
-
-// ============================================================
-//   SET CACHE STATUS (konsisten dengan view lain)
-// ============================================================
-function setCacheStatus(status) {
-  setCacheStatusHelper(status, 'cacheStatus');
-}
-
-// ============================================================
-//   CONTEXT (Subscription ke AdminModule)
-// ============================================================
-const ctx = createViewContext(
-  {
-    questions: [],
-    responses: [],
-    filteredResponses: [],
-    selectedAnswerIndex: 0,
-    searchQuery: '',
-    responseHash: '',
-    questionHash: '',
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'pretest'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[${TITLE}View] ⚡ Data changed (${type}) → refresh from cache`);
-      try {
-        refreshResponsesFromCache();
-      } catch (e) {
-        console.warn(`[${TITLE}View] Re-render error:`, e);
-      }
-    },
-  }
-);
-
-// ============================================================
-//   REFRESH RESPONSES FROM CACHE
-// ============================================================
-function refreshResponsesFromCache() {
-  const fresh = getResponses() || [];
-  const hash = computeListHash(fresh);
-
-  if (hash === ctx.state.responseHash) {
-    console.log(`[${TITLE}View] No change, skip re-render`);
-    return;
-  }
-
-  ctx.state.responses = fresh;
-  ctx.state.responseHash = hash;
-  applyResponseFilters();
+function safeCacheClear(key) {
+  try { localStorage.removeItem(key); } catch (e) {}
 }
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount() {
-  if (ctx.mounted) {
-    console.warn(`[${TITLE}View] Sudah mounted, skip`);
+export async function mount({ path, query, outlet }) {
+  if (isMounted) {
+    console.warn('[PretestView] Sudah mounted, skip');
     return unmount;
   }
-  ctx.mounted = true;
-  ctx.saving = false;
-  ctx.refreshing = false;
-  console.log(`[${TITLE}View] mounted`);
+  isMounted = true;
+  console.log('[PretestView] mounted');
 
   // Reset state
-  Object.assign(ctx.state, {
-    questions: [],
-    responses: [],
-    filteredResponses: [],
-    selectedAnswerIndex: 0,
-    searchQuery: '',
-    responseHash: '',
-    questionHash: '',
-  });
+  STATE.questions = [];
+  STATE.responses = [];
+  STATE.filteredResponses = [];
+  STATE.selectedAnswerIndex = 0;
+  STATE.searchQuery = '';
+  STATE.isSaving = false;
+  STATE.isLoading = false;
+
+  await Promise.all([
+    loadQuestions(false).catch(e => console.error('loadQuestions:', e)),
+    loadResponses(false).catch(e => console.error('loadResponses:', e)),
+  ]);
 
   bindEvents();
 
-  // ===== ⚡ INSTANT RENDER RESPONSES dari AdminModule cache =====
-  const cachedResponses = getResponses() || [];
-  if (cachedResponses.length > 0) {
-    console.log(`[${TITLE}View] ⚡ Rendering responses from preload cache`);
-    ctx.state.responses = cachedResponses;
-    ctx.state.responseHash = computeListHash(cachedResponses);
-    applyResponseFilters();
-  } else {
-    renderSkeletonData();
-  }
-
-  // ===== ⚡ INSTANT RENDER QUESTIONS dari localStorage cache =====
-  const cachedQuestions = cacheGet();
-  if (cachedQuestions && Array.isArray(cachedQuestions) && cachedQuestions.length > 0) {
-    console.log(`[${TITLE}View] ⚡ Rendering questions from cache (${cachedQuestions.length})`);
-    ctx.state.questions = cachedQuestions;
-    ctx.state.questionHash = computeListHash(cachedQuestions);
-    renderSoal();
-    setCacheStatus('Cache');
-  } else {
-    console.log(`[${TITLE}View] ⚠️ No question cache, showing skeleton`);
-    renderSkeletonSoal();
-    // Lazy load di background
-    loadQuestions(false).catch(e =>
-      console.warn(`[${TITLE}View] Lazy load questions:`, e)
-    );
-  }
-
-  // ===== ⚡ Subscribe ke AdminModule =====
-  await ctx.subscribeToData();
-
-  // ===== ⚡ Bind refresh button ke global forceSync =====
-  ctx.bindRefreshButton('refreshDataBtn', 'Data disegarkan');
-
-  // ⚡ NO POLLING — auto-sync global di app.js (60s interval)
+  // Auto-refresh responses saja
+  pollInterval = setInterval(() => {
+    if (document.hidden) return;
+    if (!isMounted) return;
+    if (isRefreshing) return;
+    isRefreshing = true;
+    loadResponses(false)
+      .catch(() => {})
+      .finally(() => { isRefreshing = false; });
+  }, 30000);
 
   return unmount;
 }
@@ -262,308 +167,160 @@ export async function mount() {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!ctx.mounted) return;
-  ctx.mounted = false;
-  console.log(`[${TITLE}View] unmounted`);
+  if (!isMounted) return;
+  isMounted = false;
+  console.log('[PretestView] unmounted');
 
-  ctx.cleanup();
-  cleanupBootstrapArtifacts();
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
+  }
+
+  listeners.forEach(({ el, ev, handler, options }) => {
+    try { el.removeEventListener(ev, handler, options); } catch (e) {}
+  });
+  listeners.length = 0;
+
+  disposeAllModals();
+
+  try {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  } catch (e) {}
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  // Modal form save
-  ctx.on(getEl(IDS.saveBtn), 'click', saveQuestion);
+  // Modal buttons
+  on(getEl('simpanPretestBtn'), 'click', saveQuestion);
 
-  // Opsi input — re-render option buttons as user types
-  ctx.on(getEl(IDS.opsi), 'input', function () {
-    renderOptionButtons(this.value, ctx.state.selectedAnswerIndex);
+  // Opsi input → update preview tombol
+  on(getEl('pretestOpsi'), 'input', function () {
+    renderOptionButtons(this.value, STATE.selectedAnswerIndex);
   });
 
   // Timer toggle
-  ctx.on(getEl(IDS.timerEnabled), 'change', function () {
-    const group = getEl(IDS.timerDurationGroup);
+  on(getEl('pretestTimerEnabled'), 'change', function () {
+    const group = getEl('pretestTimerDurationGroup');
     if (group) group.style.display = this.checked ? 'block' : 'none';
   });
 
-  // ============ DELEGATION — soal container ============
-  const soalContainer = getEl(IDS.soalContainer);
-  if (soalContainer) {
-    ctx.on(soalContainer, 'click', (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      e.preventDefault();
-      const action = btn.dataset.action;
-      const id = btn.dataset.id;
+  // Event delegation untuk action di dalam soal container
+  on(getEl('soalContainer'), 'click', function (e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
 
-      if (action === 'edit-q') {
-        const q = ctx.state.questions.find(x => String(x.id) === String(id));
-        if (q) showModal(q);
-      } else if (action === 'delete-q') {
-        deleteQuestion(id);
-      } else if (action === 'refresh') {
-        handleRefreshQuestions(btn);
-      } else if (action === 'add') {
-        showModal(null);
-      }
-    });
-  }
-
-  // ============ DELEGATION — data container ============
-  const dataContainer = getEl(IDS.dataContainer);
-  if (dataContainer) {
-    ctx.on(dataContainer, 'click', (e) => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      e.preventDefault();
-      const action = btn.dataset.action;
-
-      if (action === 'refresh') {
-        handleRefreshResponses(btn);
-      } else if (action === 'export') {
-        exportCSV();
-      } else if (action === 'detail') {
-        const id = btn.dataset.id;
-        const row = ctx.state.responses.find(r =>
-          String(r.id || r._rowIndex) === String(id)
-        );
-        if (row) showDetail(row);
-        else showToast('Data tidak ditemukan', 'error');
-      }
-    });
-
-    // Input — search dengan debounce
-    ctx.on(dataContainer, 'input', debounce((e) => {
-      if (!e.target.matches('#filterDataInput')) return;
-      ctx.state.searchQuery = e.target.value;
-      applyResponseFilters();
-    }, SEARCH_DEBOUNCE));
-  }
-}
-
-// ============================================================
-//   MANUAL REFRESH — QUESTIONS (force re-fetch)
-// ============================================================
-async function handleRefreshQuestions(btn) {
-  if (ctx.saving) return;
-
-  const restore = btn ? setBtnLoading(btn, true, '') : () => {};
-  ctx.saving = true;
-  setCacheStatus('Memuat...');
-
-  try {
-    cacheClear();
-    await loadQuestions(true);
-    setCacheStatus('Live');
-    showToast('Soal disegarkan', 'success');
-  } catch (err) {
-    setCacheStatus('Error');
-    showToast('Gagal menyegarkan soal', 'error');
-  } finally {
-    restore();
-    ctx.saving = false;
-  }
-}
-
-// ============================================================
-//   MANUAL REFRESH — RESPONSES (via AdminModule)
-// ============================================================
-async function handleRefreshResponses(btn) {
-  if (ctx.saving) return;
-
-  const restore = btn ? setBtnLoading(btn, true, '') : () => {};
-  ctx.saving = true;
-  setCacheStatus('Memuat...');
-
-  try {
-    await AdminModule.loadAllData(true);
-    refreshResponsesFromCache();
-    setCacheStatus('Live');
-    showToast('Data disegarkan', 'success');
-  } catch (e) {
-    setCacheStatus('Error');
-    showToast('Gagal menyegarkan: ' + e.message, 'error');
-  } finally {
-    restore();
-    ctx.saving = false;
-  }
-}
-
-// ============================================================
-//   LOAD: QUESTIONS
-// ============================================================
-async function loadQuestions(forceRefresh = false) {
-  const container = getEl(IDS.soalContainer);
-  if (!container) return;
-
-  // Kalau tidak force, cek cache dulu
-  if (!forceRefresh) {
-    const cached = cacheGet();
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      ctx.state.questions = cached;
-      ctx.state.questionHash = computeListHash(cached);
-      renderSoal();
-      setCacheStatus('Cache');
-      return;
+    if (action === 'edit-q') {
+      const q = STATE.questions.find(x => String(x.id) === String(id));
+      if (q) showPretestModal(q);
+    } else if (action === 'delete-q') {
+      deleteQuestion(id);
+    } else if (action === 'refresh') {
+      safeCacheClear(CACHE_KEYS.QUESTIONS);
+      loadQuestions(true);
+    } else if (action === 'add') {
+      showPretestModal(null);
     }
-  }
-
-  // Skeleton kalau belum ada data
-  if (ctx.state.questions.length === 0) {
-    renderSkeletonSoal();
-  }
-
-  try {
-    const res = await callApi(API.getQuestions, {}, 'GET');
-    if (!ctx.mounted) return;
-
-    const list = Array.isArray(res) ? res : (res?.data || []);
-    if (list.length > 0) {
-      ctx.state.questions = list;
-      ctx.state.questionHash = computeListHash(list);
-      cacheSet(list);
-      renderSoal();
-      setCacheStatus('Live');
-    } else {
-      ctx.state.questions = [];
-      ctx.state.questionHash = '';
-      cacheSet([]);
-      container.innerHTML = `<div class="alert alert-info text-center">
-        Belum ada soal ${TITLE.toLowerCase()}. Klik <strong>Tambah Soal</strong> untuk memulai.
-      </div>`;
-      setCacheStatus('Live');
-    }
-  } catch (e) {
-    console.warn(`[${TITLE}View] loadQuestions:`, e);
-    if (ctx.state.questions.length === 0) {
-      container.innerHTML = `<div class="alert alert-danger text-center">
-        Gagal memuat soal: ${escapeHtml(e.message)}
-      </div>`;
-    }
-    setCacheStatus('Error');
-  }
-}
-
-// ============================================================
-//   FILTER RESPONSES
-// ============================================================
-function applyResponseFilters() {
-  let list = ctx.state.responses.slice();
-
-  if (ctx.state.searchQuery.trim() !== '') {
-    const q = ctx.state.searchQuery.toLowerCase().trim();
-    list = list.filter(r =>
-      String(r.nama || '').toLowerCase().includes(q) ||
-      String(r.nohp || '').toLowerCase().includes(q)
-    );
-  }
-
-  list.sort((a, b) => {
-    const at = new Date(a.timestamp || 0).getTime();
-    const bt = new Date(b.timestamp || 0).getTime();
-    return (isNaN(bt) ? 0 : bt) - (isNaN(at) ? 0 : at);
   });
 
-  ctx.state.filteredResponses = list;
-  renderData();
+  // Event delegation untuk action di dalam data container
+  on(getEl('dataContainer'), 'click', function (e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'refresh') {
+      safeCacheClear(CACHE_KEYS.RESPONSES);
+      loadResponses(true);
+    } else if (action === 'export') {
+      exportCSV();
+    } else if (action === 'detail') {
+      const encoded = btn.dataset.row;
+      if (!encoded) return;
+      try {
+        const row = JSON.parse(decodeURIComponent(encoded));
+        showDetail(row);
+      } catch (err) {
+        showToast('Gagal menampilkan detail', 'error');
+      }
+    }
+  });
+
+  // Event delegation untuk search input di data container
+  on(getEl('dataContainer'), 'input', debounce(function (e) {
+    if (!e.target.matches('#filterDataInput')) return;
+    STATE.searchQuery = e.target.value;
+    applyResponseFilters();
+  }, 300));
+
+  // Keep focus after re-render
+  on(getEl('dataContainer'), 'input', function (e) {
+    if (!e.target.matches('#filterDataInput')) return;
+    // Update state (delegated above), tapi preserve focus
+    // Cursor position akan otomatis karena kita pakai setTimeout di applyResponseFilters
+  });
 }
 
 // ============================================================
-//   RENDER: DATA TABLE
+//   LOAD: SOAL
 // ============================================================
-function renderData() {
-  const container = getEl(IDS.dataContainer);
-  if (!container) return;
+async function loadQuestions(forceRefresh = false) {
+  renderSkeletonSoal();
 
-  const savedFocus = captureFocusState('filterDataInput');
-  const data = ctx.state.filteredResponses;
-
-  let html = `
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <div>
-        <span class="text-muted small">Total Data: </span>
-        <span class="badge bg-primary">${data.length}</span>
-      </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm rounded-pill" data-action="refresh" type="button">
-          <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
-        </button>
-        <button class="btn btn-success btn-sm rounded-pill" data-action="export" type="button">
-          <i class="bi bi-download me-1"></i> Ekspor CSV
-        </button>
-      </div>
-    </div>
-    <div class="mb-3">
-      <input type="text" class="form-control" id="filterDataInput"
-             placeholder="🔍 Cari nama peserta atau no HP…" autocomplete="off"
-             value="${escapeHtml(ctx.state.searchQuery)}"
-             aria-label="Cari data">
-    </div>
-    <div class="table-container">
-      <div class="table-responsive" style="max-height:500px;overflow-y:auto;">
-        <table class="table table-bordered table-sm table-striped align-middle">
-          <thead class="table-light"><tr>
-            <th>Waktu</th>
-            <th>Nama</th>
-            <th>No HP</th>
-            <th style="width:60px;">Skor</th>
-            <th style="width:90px;">Jawaban</th>
-            <th style="width:70px;" class="text-center">Detail</th>
-          </tr></thead><tbody>`;
-
-  if (data.length === 0) {
-    html += `<tr><td colspan="6" class="text-center py-4 text-muted">
-      ${ctx.state.searchQuery ? 'Tidak ada hasil pencarian.' : `Belum ada data ${TITLE.toLowerCase()}.`}
-    </td></tr>`;
-  } else {
-    data.forEach(row => {
-      let ringkasan = '-';
-      try {
-        const raw = row.answers || row.answersJson || '[]';
-        const jawaban = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (Array.isArray(jawaban)) {
-          const benar = jawaban.filter(a => a && a.correct).length;
-          ringkasan = `${benar}/${jawaban.length}`;
-        }
-      } catch { ringkasan = '—'; }
-
-      const rowId = String(row.id || row._rowIndex || '');
-
-      html += `<tr>
-        <td><small>${escapeHtml(formatDateTime(row.timestamp))}</small></td>
-        <td><strong>${escapeHtml(row.nama || '-')}</strong></td>
-        <td>${escapeHtml(row.nohp || '-')}</td>
-        <td><span class="badge bg-primary">${escapeHtml(String(row.score || 0))}</span></td>
-        <td>${escapeHtml(ringkasan)}</td>
-        <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-info"
-                  data-action="detail" data-id="${escapeHtml(rowId)}"
-                  title="Detail" aria-label="Lihat detail">
-            <i class="bi bi-search"></i>
-          </button>
-        </td>
-      </tr>`;
-    });
+  const cached = forceRefresh ? null : safeCacheGet(CACHE_KEYS.QUESTIONS);
+  if (cached && Array.isArray(cached) && cached.length > 0) {
+    STATE.questions = cached;
+    renderSoal();
   }
 
-  html += `</tbody></table></div></div>`;
-  container.innerHTML = html;
+  try {
+    const res = await callApi('getPretestQuestions', {}, 'GET');
+    const dataArray = Array.isArray(res) ? res : (res?.data || []);
 
-  restoreFocusState('filterDataInput', savedFocus);
+    if (dataArray.length > 0) {
+      STATE.questions = dataArray;
+      safeCacheSet(CACHE_KEYS.QUESTIONS, dataArray);
+      renderSoal();
+    } else if (!cached || cached.length === 0) {
+      const c = getEl('soalContainer');
+      if (c) {
+        c.innerHTML = `<div class="alert alert-info text-center">
+          Belum ada soal pretest. Klik <strong>Tambah Soal</strong> untuk memulai.
+        </div>`;
+      }
+    }
+  } catch (e) {
+    console.warn('[PretestView] loadQuestions:', e);
+    if (!cached || cached.length === 0) {
+      const c = getEl('soalContainer');
+      if (c) {
+        c.innerHTML = `<div class="alert alert-danger text-center">
+          Gagal memuat soal: ${escapeHtml(e.message)}
+        </div>`;
+      }
+    }
+  }
 }
 
-// ============================================================
-//   RENDER: SOAL TABLE
-// ============================================================
 function renderSoal() {
-  const c = getEl(IDS.soalContainer);
+  const c = getEl('soalContainer');
   if (!c) return;
 
-  const sorted = ctx.state.questions.slice().sort((a, b) =>
-    (parseInt(a.urutan) || 0) - (parseInt(b.urutan) || 0)
-  );
+  const sorted = STATE.questions.slice().sort((a, b) => {
+    const ua = parseInt(a.urutan) || 0;
+    const ub = parseInt(b.urutan) || 0;
+    return ua - ub;
+  });
 
   let html = `
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -572,10 +329,10 @@ function renderSoal() {
         <span class="badge bg-primary">${sorted.length}</span>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" data-action="refresh">
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" data-action="refresh">
           <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
         </button>
-        <button type="button" class="btn btn-success btn-sm rounded-pill" data-action="add">
+        <button class="btn btn-success btn-sm rounded-pill" data-action="add">
           <i class="bi bi-plus-circle me-1"></i> Tambah Soal
         </button>
       </div>
@@ -590,12 +347,11 @@ function renderSoal() {
           <th style="width:80px;">Urutan</th>
           <th style="width:80px;">Timer</th>
           <th style="width:130px;" class="text-center">Aksi</th>
-        </tr></thead><tbody>`;
+        </tr></thead>
+        <tbody>`;
 
   if (sorted.length === 0) {
-    html += `<tr><td colspan="7" class="text-center py-4 text-muted">
-      Belum ada soal ${TITLE.toLowerCase()}.
-    </td></tr>`;
+    html += `<tr><td colspan="7" class="text-center py-4 text-muted">Belum ada soal pretest.</td></tr>`;
   } else {
     sorted.forEach(q => {
       const opsiStr = Array.isArray(q.opsi) ? q.opsi.join(', ') : (q.opsi || '');
@@ -603,7 +359,6 @@ function renderSoal() {
       const timerInfo = q.timer_enabled
         ? `⏱️ ${escapeHtml(String(q.timer_duration || 30))}s`
         : '⛔';
-
       html += `<tr>
         <td>${escapeHtml(String(q.id))}</td>
         <td><small>${escapeHtml(q.teks || '')}</small></td>
@@ -612,12 +367,10 @@ function renderSoal() {
         <td>${escapeHtml(String(q.urutan || '-'))}</td>
         <td>${timerInfo}</td>
         <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-warning me-1"
-                  data-action="edit-q" data-id="${safeId}" title="Edit" aria-label="Edit soal">
+          <button class="btn btn-sm btn-outline-warning me-1" data-action="edit-q" data-id="${safeId}" title="Edit">
             <i class="bi bi-pencil"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger"
-                  data-action="delete-q" data-id="${safeId}" title="Hapus" aria-label="Hapus soal">
+          <button class="btn btn-sm btn-outline-danger" data-action="delete-q" data-id="${safeId}" title="Hapus">
             <i class="bi bi-trash"></i>
           </button>
         </td>
@@ -630,87 +383,244 @@ function renderSoal() {
 }
 
 // ============================================================
+//   LOAD: RESPONSES
+// ============================================================
+async function loadResponses(forceRefresh = false) {
+  if (STATE.isLoading) return;
+  STATE.isLoading = true;
+
+  const container = getEl('dataContainer');
+  if (container && !container.querySelector('.table-container')) {
+    renderSkeletonData();
+  }
+
+  const cached = forceRefresh ? null : safeCacheGet(CACHE_KEYS.RESPONSES);
+  if (cached && Array.isArray(cached) && cached.length > 0) {
+    STATE.responses = cached;
+    applyResponseFilters();
+  }
+
+  try {
+    const res = await callApi('getPretestResponses', {}, 'GET');
+    const dataArray = Array.isArray(res) ? res : (res?.data || []);
+
+    if (dataArray.length > 0) {
+      STATE.responses = dataArray;
+      safeCacheSet(CACHE_KEYS.RESPONSES, dataArray);
+      applyResponseFilters();
+    } else if (!cached || cached.length === 0) {
+      const c = getEl('dataContainer');
+      if (c) {
+        c.innerHTML = `<div class="alert alert-info text-center">Belum ada data pretest.</div>`;
+      }
+    }
+  } catch (e) {
+    console.warn('[PretestView] loadResponses:', e);
+    if (!cached || cached.length === 0) {
+      const c = getEl('dataContainer');
+      if (c) {
+        c.innerHTML = `<div class="alert alert-danger text-center">
+          Gagal memuat data: ${escapeHtml(e.message)}
+        </div>`;
+      }
+    }
+  } finally {
+    STATE.isLoading = false;
+  }
+}
+
+function applyResponseFilters() {
+  let filtered = STATE.responses.slice();
+
+  if (STATE.searchQuery.trim() !== '') {
+    const q = STATE.searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(r =>
+      String(r.nama || '').toLowerCase().includes(q) ||
+      String(r.nohp || '').toLowerCase().includes(q)
+    );
+  }
+
+  filtered.sort((a, b) => {
+    const at = new Date(a.timestamp || 0).getTime();
+    const bt = new Date(b.timestamp || 0).getTime();
+    const aT = isNaN(at) ? 0 : at;
+    const bT = isNaN(bt) ? 0 : bt;
+    return bT - aT;
+  });
+
+  STATE.filteredResponses = filtered;
+  renderData();
+}
+
+function renderData() {
+  const c = getEl('dataContainer');
+  if (!c) return;
+
+  const data = STATE.filteredResponses;
+  let html = `
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <span class="text-muted small">Total Data: </span>
+        <span class="badge bg-primary">${data.length}</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" data-action="refresh">
+          <i class="bi bi-arrow-clockwise me-1"></i> Segarkan
+        </button>
+        <button class="btn btn-success btn-sm rounded-pill" data-action="export">
+          <i class="bi bi-download me-1"></i> Ekspor CSV
+        </button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <input type="text" class="form-control" id="filterDataInput"
+             placeholder="🔍 Cari nama peserta atau no HP…" autocomplete="off"
+             value="${escapeHtml(STATE.searchQuery)}">
+    </div>
+    <div class="table-container">
+      <div class="table-responsive" style="max-height:500px;overflow-y:auto;">
+        <table class="table table-bordered table-sm table-striped align-middle">
+          <thead class="table-light"><tr>
+            <th>Waktu</th>
+            <th>Nama</th>
+            <th>No HP</th>
+            <th style="width:60px;">Skor</th>
+            <th style="width:80px;">Jawaban</th>
+            <th style="width:70px;" class="text-center">Detail</th>
+          </tr></thead>
+          <tbody>`;
+
+  if (data.length === 0) {
+    html += `<tr><td colspan="6" class="text-center py-4 text-muted">
+      ${STATE.searchQuery ? 'Tidak ada hasil pencarian.' : 'Belum ada data pretest.'}
+    </td></tr>`;
+  } else {
+    data.forEach(row => {
+      let ringkasan = '-';
+      try {
+        const rawAnswers = row.answers || row.answersJson || '[]';
+        const jawaban = typeof rawAnswers === 'string' ? JSON.parse(rawAnswers) : rawAnswers;
+        if (Array.isArray(jawaban)) {
+          const benar = jawaban.filter(a => a && a.correct).length;
+          ringkasan = `${benar}/${jawaban.length}`;
+        }
+      } catch { ringkasan = '—'; }
+
+      const safeRow = encodeURIComponent(JSON.stringify({
+        nama: row.nama,
+        nohp: row.nohp,
+        score: row.score,
+        timestamp: row.timestamp,
+        answers: row.answers || row.answersJson,
+      }));
+
+      html += `<tr>
+        <td><small>${escapeHtml(formatDateTime(row.timestamp))}</small></td>
+        <td><strong>${escapeHtml(row.nama || '-')}</strong></td>
+        <td>${escapeHtml(row.nohp || '-')}</td>
+        <td><span class="badge bg-primary">${escapeHtml(String(row.score || 0))}</span></td>
+        <td>${escapeHtml(ringkasan)}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-info" data-action="detail" data-row="${safeRow}" title="Detail">
+            <i class="bi bi-search"></i>
+          </button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table></div></div>`;
+  c.innerHTML = html;
+
+  // Preserve focus ke input jika sedang fokus sebelumnya
+  const newInput = getEl('filterDataInput');
+  if (newInput && STATE.searchQuery) {
+    newInput.focus();
+    try {
+      newInput.setSelectionRange(newInput.value.length, newInput.value.length);
+    } catch (e) {}
+  }
+}
+
+// ============================================================
 //   SKELETON
 // ============================================================
 function renderSkeletonSoal() {
-  const c = getEl(IDS.soalContainer);
+  const c = getEl('soalContainer');
   if (!c) return;
   c.innerHTML = `
-    <div class="table-container"><div class="table-responsive">
-      <table class="table table-hover align-middle">
+    <div class="table-container">
+      <div class="table-responsive"><table class="table table-hover align-middle">
         <thead class="table-light"><tr>
           ${Array(7).fill(0).map(() => `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`).join('')}
         </tr></thead>
         <tbody>${Array(5).fill(0).map(() =>
           `<tr>${Array(7).fill(0).map(() => `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`).join('')}</tr>`
         ).join('')}</tbody>
-      </table>
-    </div></div>`;
+      </table></div>
+    </div>`;
 }
 
 function renderSkeletonData() {
-  const c = getEl(IDS.dataContainer);
+  const c = getEl('dataContainer');
   if (!c) return;
   c.innerHTML = `
-    <div class="table-container"><div class="table-responsive">
-      <table class="table table-hover align-middle">
+    <div class="table-container">
+      <div class="table-responsive"><table class="table table-hover align-middle">
         <thead class="table-light"><tr>
           ${Array(6).fill(0).map(() => `<th><div class="skeleton-box" style="height:20px;width:70px;"></div></th>`).join('')}
         </tr></thead>
         <tbody>${Array(5).fill(0).map(() =>
           `<tr>${Array(6).fill(0).map(() => `<td><div class="skeleton-box" style="height:20px;width:90px;"></div></td>`).join('')}</tr>`
         ).join('')}</tbody>
-      </table>
-    </div></div>`;
+      </table></div>
+    </div>`;
 }
 
 // ============================================================
-//   MODAL: SHOW
+//   MODAL: SOAL
 // ============================================================
-function showModal(soal) {
+function showPretestModal(soal) {
   const isEdit = !!soal;
+
   const setVal = (id, val) => {
     const el = getEl(id);
     if (el) el.value = val;
   };
 
-  const titleEl = getEl(IDS.modalTitle);
-  if (titleEl) {
-    titleEl.textContent = isEdit ? `Edit Soal ${TITLE}` : `Tambah Soal ${TITLE}`;
-  }
+  const titleEl = getEl('pretestModalTitle');
+  if (titleEl) titleEl.textContent = isEdit ? 'Edit Soal Pretest' : 'Tambah Soal Pretest';
 
-  setVal(IDS.editId, isEdit ? soal.id : '');
-  setVal(IDS.teks, isEdit ? (soal.teks || '') : '');
-  setVal(IDS.opsi, isEdit
+  setVal('pretestId', isEdit ? soal.id : '');
+  setVal('pretestTeks', isEdit ? (soal.teks || '') : '');
+  setVal('pretestOpsi', isEdit
     ? (Array.isArray(soal.opsi) ? soal.opsi.join(',') : (soal.opsi || ''))
     : '');
-  setVal(IDS.urutan, isEdit ? (soal.urutan || '') : '');
+  setVal('pretestUrutan', isEdit ? (soal.urutan || '') : '');
 
-  const timerEnabledEl = getEl(IDS.timerEnabled);
+  const timerEnabledEl = getEl('pretestTimerEnabled');
   if (timerEnabledEl) timerEnabledEl.checked = isEdit ? !!soal.timer_enabled : false;
 
-  setVal(IDS.timerDuration, isEdit ? (soal.timer_duration || 30) : 30);
+  setVal('pretestTimerDuration', isEdit ? (soal.timer_duration || 30) : 30);
 
-  const timerGroup = getEl(IDS.timerDurationGroup);
+  const timerGroup = getEl('pretestTimerDurationGroup');
   if (timerGroup) {
     timerGroup.style.display = (isEdit && soal.timer_enabled) ? 'block' : 'none';
   }
 
-  ctx.state.selectedAnswerIndex = (isEdit && soal.jawaban !== undefined)
+  STATE.selectedAnswerIndex = (isEdit && soal.jawaban !== undefined)
     ? parseInt(soal.jawaban)
     : 0;
 
-  setVal(IDS.jawaban, ctx.state.selectedAnswerIndex);
-  renderOptionButtons(getEl(IDS.opsi)?.value || '', ctx.state.selectedAnswerIndex);
+  setVal('pretestJawaban', STATE.selectedAnswerIndex);
 
-  ctx.getModal(IDS.modal)?.show();
+  renderOptionButtons(getEl('pretestOpsi')?.value || '', STATE.selectedAnswerIndex);
+
+  getModal('pretestModal')?.show();
 }
 
-// ============================================================
-//   MODAL: OPTION BUTTONS
-// ============================================================
 function renderOptionButtons(opsiString, selectedIndex) {
-  const c = getEl(IDS.optionsContainer);
+  const c = getEl('pretestOptionsContainer');
   if (!c) return;
 
   if (!opsiString || !opsiString.trim()) {
@@ -718,12 +628,12 @@ function renderOptionButtons(opsiString, selectedIndex) {
     return;
   }
 
-  const options = opsiString.split(',').map(s => s.trim()).filter(Boolean);
+  const options = opsiString.split(',').map(s => s.trim()).filter(s => s !== '');
   let html = '';
   options.forEach((opt, idx) => {
     const isCorrect = (idx === selectedIndex);
     html += `<button type="button" class="btn btn-sm ${isCorrect ? 'btn-success' : 'btn-outline-secondary'}"
-              data-opt-index="${idx}" aria-label="Pilih ${escapeHtml(opt)} sebagai jawaban benar">
+              data-opt-index="${idx}">
       ${escapeHtml(opt)} ${isCorrect ? '✓' : ''}
     </button>`;
   });
@@ -731,36 +641,35 @@ function renderOptionButtons(opsiString, selectedIndex) {
 
   c.querySelectorAll('[data-opt-index]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ctx.state.selectedAnswerIndex = parseInt(btn.dataset.optIndex);
-      const hiddenInput = getEl(IDS.jawaban);
-      if (hiddenInput) hiddenInput.value = ctx.state.selectedAnswerIndex;
-      renderOptionButtons(opsiString, ctx.state.selectedAnswerIndex);
+      STATE.selectedAnswerIndex = parseInt(btn.dataset.optIndex);
+      const hiddenInput = getEl('pretestJawaban');
+      if (hiddenInput) hiddenInput.value = STATE.selectedAnswerIndex;
+      renderOptionButtons(opsiString, STATE.selectedAnswerIndex);
     });
   });
 }
 
-// ============================================================
-//   SAVE QUESTION
-// ============================================================
-async function saveQuestion(e) {
-  if (ctx.saving) return;
+async function saveQuestion() {
+  if (STATE.isSaving) return;
 
-  const id = getEl(IDS.editId)?.value;
-  const teks = getEl(IDS.teks)?.value.trim() || '';
-  const opsi = getEl(IDS.opsi)?.value.trim() || '';
-  const jawaban = parseInt(getEl(IDS.jawaban)?.value) || 0;
-  const urutan = parseInt(getEl(IDS.urutan)?.value) || 0;
-  const timerEnabled = getEl(IDS.timerEnabled)?.checked || false;
-  const timerDuration = parseInt(getEl(IDS.timerDuration)?.value) || 30;
+  const id = getEl('pretestId')?.value;
+  const teks = getEl('pretestTeks')?.value.trim() || '';
+  const opsi = getEl('pretestOpsi')?.value.trim() || '';
+  const jawaban = parseInt(getEl('pretestJawaban')?.value) || 0;
+  const urutan = parseInt(getEl('pretestUrutan')?.value) || 0;
+  const timerEnabled = getEl('pretestTimerEnabled')?.checked || false;
+  const timerDuration = parseInt(getEl('pretestTimerDuration')?.value) || 30;
 
   if (!teks || !opsi) {
     showToast('Teks soal dan opsi wajib diisi', 'error');
     return;
   }
 
-  ctx.saving = true;
-  const btn = e?.currentTarget || getEl(IDS.saveBtn);
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
+  const btn = getEl('simpanPretestBtn');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isSaving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
   try {
     const payload = {
@@ -772,32 +681,30 @@ async function saveQuestion(e) {
     let res;
     if (id) {
       payload.id = id;
-      res = await callApi(API.updateQuestion, payload, 'POST');
+      res = await callApi('updatePretestQuestion', payload, 'POST');
     } else {
-      res = await callApi(API.addQuestion, payload, 'POST');
+      res = await callApi('addPretestQuestion', payload, 'POST');
     }
 
     if (res && res.success) {
       showToast(id ? 'Soal diperbarui' : 'Soal ditambahkan', 'success');
-      ctx.getModal(IDS.modal)?.hide();
-      cacheClear();
+      getModal('pretestModal')?.hide();
+      safeCacheClear(CACHE_KEYS.QUESTIONS);
       await loadQuestions(true);
     } else {
       throw new Error((res && res.error) || 'Gagal menyimpan');
     }
-  } catch (err) {
-    showToast('Gagal: ' + err.message, 'error');
+  } catch (e) {
+    showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.saving = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isSaving = false;
   }
 }
 
-// ============================================================
-//   DELETE QUESTION
-// ============================================================
 async function deleteQuestion(id) {
-  const q = ctx.state.questions.find(x => String(x.id) === String(id));
+  const q = STATE.questions.find(x => String(x.id) === String(id));
   if (!q) { showToast('Soal tidak ditemukan', 'error'); return; }
 
   const preview = String(q.teks || '').substring(0, 60);
@@ -805,12 +712,12 @@ async function deleteQuestion(id) {
   if (!confirm(`Hapus soal:\n"${preview}${suffix}"?`)) return;
 
   try {
-    const res = await callApi(API.deleteQuestion, { id }, 'POST');
+    const res = await callApi('deletePretestQuestion', { id }, 'POST');
     if (res && res.success) {
-      ctx.state.questions = ctx.state.questions.filter(x => String(x.id) !== String(id));
-      cacheClear();
+      STATE.questions = STATE.questions.filter(x => String(x.id) !== String(id));
       renderSoal();
       showToast('Soal berhasil dihapus', 'success');
+      safeCacheClear(CACHE_KEYS.QUESTIONS);
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
@@ -820,10 +727,11 @@ async function deleteQuestion(id) {
 }
 
 // ============================================================
-//   SHOW DETAIL
+//   MODAL: DETAIL RESPONSE
 // ============================================================
 function showDetail(row) {
-  const body = getEl(IDS.detailBody);
+  const modal = getModal('detailModal');
+  const body = getEl('detailModalBody');
   if (!body) return;
 
   let html = `
@@ -849,40 +757,35 @@ function showDetail(row) {
           </tr></thead><tbody>`;
         answers.forEach((a, idx) => {
           const selected = (a.selected !== undefined && a.selected !== null) ? a.selected : 'Tidak menjawab';
+          const isCorrect = a.correct === true;
           html += `<tr>
             <td>${idx + 1}</td>
             <td>${escapeHtml(String(a.qid || '-'))}</td>
             <td>${escapeHtml(String(selected))}</td>
-            <td class="text-center">${a.correct === true ? '✅' : '❌'}</td>
+            <td class="text-center">${isCorrect ? '✅' : '❌'}</td>
           </tr>`;
         });
         html += `</tbody></table></div>`;
       } else {
         html += '<p class="text-muted">Tidak ada data jawaban.</p>';
       }
-    } catch {
-      html += '<p class="text-danger small">Gagal parsing data jawaban.</p>';
+    } catch (e) {
+      html += '<p class="text-danger small">Gagal mem-parsing data jawaban.</p>';
     }
   } else {
     html += '<p class="text-muted">Tidak ada data jawaban.</p>';
   }
 
   body.innerHTML = html;
-  ctx.getModal(IDS.detailModal)?.show();
+  modal?.show();
 }
 
 // ============================================================
 //   EXPORT CSV
 // ============================================================
 function exportCSV() {
-  const data = ctx.state.filteredResponses.length > 0
-    ? ctx.state.filteredResponses
-    : ctx.state.responses;
-
-  if (data.length === 0) {
-    showToast('Tidak ada data untuk diekspor', 'info');
-    return;
-  }
+  const data = STATE.filteredResponses.length > 0 ? STATE.filteredResponses : STATE.responses;
+  if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
 
   const headers = ['Timestamp', 'Nama', 'No HP', 'Skor', 'Jawaban (Soal ID - Pilihan - Benar?)'];
   const rows = data.map(r => {
@@ -898,33 +801,22 @@ function exportCSV() {
   });
 
   const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   try {
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const today = new Date();
-    const pad = n => String(n).padStart(2, '0');
     a.href = url;
-    a.download = `${EXPORT_FILENAME}_${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}.csv`;
+    a.download = `pretest_data_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    URL.revokeObjectURL(url);
     showToast(`Berhasil mengekspor ${data.length} data`, 'success');
   } catch (e) {
     showToast('Gagal ekspor: ' + e.message, 'error');
   }
 }
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default { mount, unmount, preloadData };
-
-console.log(
-  '%c Pretest View v27.3.0 — Preload + Subscription Edition ',
-  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);

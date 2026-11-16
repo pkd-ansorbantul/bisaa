@@ -1,66 +1,98 @@
 // ============================================================
-// VIEW: informasi.js — v27.2.0 PRELOAD + SUBSCRIPTION EDITION
+// VIEW: informasi.js — Full Fix Production Ready
 // Dimuat oleh: js/router.js
 // HTML: views/admin/informasi.html
 // ============================================================
-// CHANGELOG v27.2.0 (dari v27.0.0):
-//   ✅ NEW: Subscription ke AdminModule (auto re-render)
-//   ✅ NEW: Instant render dari preload cache
-//   ✅ REMOVED: Poll 120s — auto-sync global handle
-//   ✅ FIX: Modal cleanup (delete confirm, usulan action)
-//   ✅ FIX: isMounted guard di semua async callbacks
-//   ✅ FIX: Focus preservation saat re-render
-//   ✅ KEEP: Form, edit, toggle, delete, usulan ACC/reject
-//   ✅ Zero memory leak
+// Fitur:
+// ✅ CRUD informasi/flyer (add/edit/delete)
+// ✅ Search debounced
+// ✅ Filter jenis (timeline/flyer)
+// ✅ Filter status (aktif/selesai)
+// ✅ Sort (jenis, judul, tanggal, urutan, status)
+// ✅ Pagination
+// ✅ Toggle status (aktif ↔ selesai)
+// ✅ Export JSON
+// ✅ Usulan PAC (approve/reject) dengan modal konfirmasi
+// ✅ Auto-refresh 30s (visibility-aware + re-entrance guard)
+// ✅ Zero memory leak + full cleanup
 // ============================================================
 
-import {
-  callApi,
-  showToast,
-  escapeHtml,
-  formatDateID,
-  fileToBase64,
-  getLocalDateOnly,
-  downloadJSON,
-} from '../../js/core/api.js';
+import { callApi, showToast, escapeHtml } from '../../js/core/api.js';
 import { AdminModule } from '../../js/modules/admin.js';
-import {
-  getEl,
-  debounce,
-  setBtnLoading,
-  createViewContext,
-  delegateTableClicks,
-  captureFocusState,
-  restoreFocusState,
-  cleanupBootstrapArtifacts,
-  computeListHash,
-  SEARCH_DEBOUNCE,
-} from '../../js/core/view-helpers.js';
 
 // ============================================================
-//   CONSTANTS
+//   MODULE STATE
 // ============================================================
-const MAX_FILE_SIZE_MB = 2;
+let pollInterval = null;
+let searchDebounceTimer = null;
+let isMounted = false;
+let isRefreshing = false;
 
-const MENU_FIELDS = [
-  { id: 'jenis', label: 'Jenis' },
-  { id: 'judul', label: 'Judul' },
-  { id: 'tanggal_mulai', label: 'Tanggal' },
-  { id: 'urutan', label: 'Urutan' },
-  { id: 'status', label: 'Status' },
-];
+const STATE = {
+  informasiList: [],
+  filteredList: [],
+  usulanList: [],
+  searchQuery: '',
+  jenisFilter: '',
+  statusFilter: '',
+  currentPage: 1,
+  itemsPerPage: 15,
+  sortColumn: 'createdAt',
+  sortDirection: 'desc',
+  isEditing: false,
+  isSaving: false,
+  pendingDeleteId: null,
+  modals: {},
+};
+
+const listeners = [];
 
 // ============================================================
-//   LOCAL HELPERS
+//   UTILITY
 // ============================================================
-function setCacheStatus(status) {
-  const el = getEl('cacheStatus');
-  if (!el) return;
-  el.textContent = status;
-  const cls = status === 'Live' ? 'live'
-    : (status === 'Offline' || status === 'Error') ? 'offline'
-    : '';
-  el.className = 'cache-status' + (cls ? ' ' + cls : '');
+function on(el, ev, handler, options) {
+  if (!el) return null;
+  el.addEventListener(ev, handler, options);
+  listeners.push({ el, ev, handler, options });
+  return handler;
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function getModal(id) {
+  const el = getEl(id);
+  if (!el) return null;
+  if (!STATE.modals[id]) {
+    STATE.modals[id] = new bootstrap.Modal(el);
+  }
+  return STATE.modals[id];
+}
+
+function disposeAllModals() {
+  Object.keys(STATE.modals).forEach(id => {
+    try { STATE.modals[id]?.dispose?.(); } catch (e) {}
+  });
+  STATE.modals = {};
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  try {
+    const s = String(dateStr);
+    const d = s.length === 10 ? new Date(s + 'T00:00:00') : new Date(s);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { return '-'; }
 }
 
 function getStatusBadge(status) {
@@ -71,84 +103,43 @@ function getStatusLabel(status) {
   return String(status || 'aktif').toLowerCase() === 'selesai' ? '✅ Selesai' : '🔄 Aktif';
 }
 
-function getThumbUrl(driveId, size) {
-  if (!driveId) return '';
-  const clean = String(driveId).trim().replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!clean) return '';
-  return `https://drive.google.com/thumbnail?id=${clean}&sz=w${size || 100}`;
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
-
-// ============================================================
-//   CONTEXT
-// ============================================================
-const ctx = createViewContext(
-  {
-    informasiList: [],
-    filteredList: [],
-    usulanList: [],
-    searchQuery: '',
-    jenisFilter: '',
-    statusFilter: '',
-    currentPage: 1,
-    itemsPerPage: 15,
-    sortColumn: 'createdAt',
-    sortDirection: 'desc',
-    lastInfoHash: '',
-    lastUsulanHash: '',
-    pendingDeleteId: null,
-    pendingUsulanId: null,
-    pendingUsulanType: null,
-  },
-  {
-    watchTypes: ['all', 'multiple', 'manual-refresh', 'informasi'],
-    onDataChange: (type) => {
-      if (!ctx.mounted) return;
-      console.log(`[InformasiView] ⚡ Data changed (${type}) → refresh from cache`);
-      try {
-        refreshFromCache();
-      } catch (e) {
-        console.warn('[InformasiView] Re-render error:', e);
-      }
-    },
-  }
-);
-
-let infoTableDelegationCleanup = null;
-let usulanTableDelegationCleanup = null;
 
 // ============================================================
 //   MOUNT
 // ============================================================
-export async function mount() {
-  if (ctx.mounted) {
+export async function mount({ path, query, outlet }) {
+  if (isMounted) {
     console.warn('[InformasiView] Sudah mounted, skip');
     return unmount;
   }
-  ctx.mounted = true;
-  ctx.saving = false;
-  ctx.refreshing = false;
+  isMounted = true;
   console.log('[InformasiView] mounted');
 
   // Reset state
-  Object.assign(ctx.state, {
-    informasiList: [],
-    filteredList: [],
-    usulanList: [],
-    searchQuery: '',
-    jenisFilter: '',
-    statusFilter: '',
-    currentPage: 1,
-    sortColumn: 'createdAt',
-    sortDirection: 'desc',
-    lastInfoHash: '',
-    lastUsulanHash: '',
-    pendingDeleteId: null,
-    pendingUsulanId: null,
-    pendingUsulanType: null,
-  });
+  STATE.informasiList = [];
+  STATE.filteredList = [];
+  STATE.usulanList = [];
+  STATE.searchQuery = '';
+  STATE.jenisFilter = '';
+  STATE.statusFilter = '';
+  STATE.currentPage = 1;
+  STATE.sortColumn = 'createdAt';
+  STATE.sortDirection = 'desc';
+  STATE.isEditing = false;
+  STATE.isSaving = false;
+  STATE.pendingDeleteId = null;
 
   resetForm();
 
+  // Reset filter form
   const searchEl = getEl('searchInput');
   const jenisEl = getEl('filterJenis');
   const statusEl = getEl('filterStatus');
@@ -156,36 +147,27 @@ export async function mount() {
   if (jenisEl) jenisEl.value = '';
   if (statusEl) statusEl.value = '';
 
-  // ⚡ Instant render dari preload cache
-  const cached = AdminModule.getInformasiList() || [];
-  if (cached.length > 0) {
-    console.log('[InformasiView] ⚡ Rendering from preload cache');
-    ctx.state.informasiList = cached.map(i => ({ ...i }));
-    ctx.state.lastInfoHash = computeListHash(ctx.state.informasiList);
-    applyFiltersAndSort();
-    renderUsulanTable();
-    setCacheStatus('Live');
-  } else {
-    console.log('[InformasiView] ⚠️ No cache, showing skeleton');
-    renderSkeletonTable();
-    renderSkeletonUsulan();
-  }
+  renderSkeletonTable();
+  renderSkeletonUsulan();
+
+  await Promise.all([
+    loadInformasi(true).catch(e => console.error('loadInformasi:', e)),
+    loadUsulan().catch(e => console.error('loadUsulan:', e)),
+  ]);
 
   bindEvents();
 
-  // ⚡ Subscribe ke perubahan data
-  await ctx.subscribeToData();
-
-  // Fallback: kalau cache kosong, load data
-  if (cached.length === 0) {
-    await Promise.allSettled([
-      loadInformasi(false),
-      loadUsulan(),
-    ]);
-  } else {
-    // Tetap load usulan (tidak di-preload)
-    loadUsulan().catch(() => {});
-  }
+  // Auto-refresh 30s
+  pollInterval = setInterval(() => {
+    if (document.hidden) return;
+    if (!isMounted) return;
+    if (isRefreshing) return;
+    isRefreshing = true;
+    Promise.all([
+      loadInformasi(false).catch(() => {}),
+      loadUsulan().catch(() => {}),
+    ]).finally(() => { isRefreshing = false; });
+  }, 30000);
 
   return unmount;
 }
@@ -194,102 +176,91 @@ export async function mount() {
 //   UNMOUNT
 // ============================================================
 export function unmount() {
-  if (!ctx.mounted) return;
-  ctx.mounted = false;
+  if (!isMounted) return;
+  isMounted = false;
   console.log('[InformasiView] unmounted');
 
-  if (infoTableDelegationCleanup) {
-    try { infoTableDelegationCleanup(); } catch (e) { /* silent */ }
-    infoTableDelegationCleanup = null;
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
   }
-  if (usulanTableDelegationCleanup) {
-    try { usulanTableDelegationCleanup(); } catch (e) { /* silent */ }
-    usulanTableDelegationCleanup = null;
-  }
-
-  ctx.cleanup();
-  cleanupBootstrapArtifacts();
-}
-
-// ============================================================
-//   REFRESH FROM CACHE
-// ============================================================
-function refreshFromCache() {
-  const fresh = AdminModule.getInformasiList() || [];
-  const freshHash = computeListHash(fresh);
-
-  if (freshHash === ctx.state.lastInfoHash) {
-    console.log('[InformasiView] No change, skip re-render');
-    return;
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
   }
 
-  ctx.state.informasiList = fresh.map(i => ({ ...i }));
-  ctx.state.lastInfoHash = freshHash;
-  applyFiltersAndSort();
-  setCacheStatus('Live');
+  listeners.forEach(({ el, ev, handler, options }) => {
+    try { el.removeEventListener(ev, handler, options); } catch (e) {}
+  });
+  listeners.length = 0;
+
+  disposeAllModals();
+
+  try {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  } catch (e) {}
 }
 
 // ============================================================
 //   BIND EVENTS
 // ============================================================
 function bindEvents() {
-  // Search + filter
-  ctx.on(getEl('searchInput'), 'input', debounce(function (e) {
-    ctx.state.searchQuery = e.target.value;
-    ctx.state.currentPage = 1;
-    applyFiltersAndSort();
-  }, SEARCH_DEBOUNCE));
+  const searchEl = getEl('searchInput');
+  const jenisEl = getEl('filterJenis');
+  const statusEl = getEl('filterStatus');
 
-  ctx.on(getEl('filterJenis'), 'change', function (e) {
-    ctx.state.jenisFilter = e.target.value;
-    ctx.state.currentPage = 1;
+  on(searchEl, 'input', debounce(function (e) {
+    STATE.searchQuery = e.target.value;
     applyFiltersAndSort();
-  });
+  }, 300));
 
-  ctx.on(getEl('filterStatus'), 'change', function (e) {
-    ctx.state.statusFilter = e.target.value;
-    ctx.state.currentPage = 1;
+  on(jenisEl, 'change', function (e) {
+    STATE.jenisFilter = e.target.value;
     applyFiltersAndSort();
   });
 
-  // Form
-  ctx.on(getEl('infoForm'), 'submit', submitInfoForm);
-  ctx.on(getEl('cancelEditBtn'), 'click', resetForm);
+  on(statusEl, 'change', function (e) {
+    STATE.statusFilter = e.target.value;
+    applyFiltersAndSort();
+  });
 
-  // Toolbar
-  ctx.on(getEl('refreshDataBtn'), 'click', handleRefresh);
-  ctx.on(getEl('refreshUsulanBtn'), 'click', handleRefreshUsulan);
-  ctx.on(getEl('exportDataBtn'), 'click', exportData);
+  on(getEl('infoForm'), 'submit', submitInfoForm);
+  on(getEl('cancelEditBtn'), 'click', resetForm);
 
-  // Modal actions
-  ctx.on(getEl('confirmDeleteBtn'), 'click', executeDelete);
-  ctx.on(getEl('usulanActionBtn'), 'click', executeUsulanAction);
+  on(getEl('exportDataBtn'), 'click', exportData);
 
-  // ✅ DELEGATION — informasi table
-  const infoContainer = getEl('informasiTableContainer');
-  if (infoContainer) {
-    infoTableDelegationCleanup = delegateTableClicks(infoContainer, {
-      onSort: (col) => handleSort(col),
-      onAction: (action, id) => {
-        if (action === 'edit') editInfo(id);
-        else if (action === 'toggle') toggleStatus(id);
-        else if (action === 'delete') confirmDelete(id);
-      },
-      onPage: (page) => goToPage(page),
+  on(getEl('refreshDataBtn'), 'click', async function () {
+    const btn = this;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    try {
+      await Promise.all([loadInformasi(true), loadUsulan()]);
+      showToast('Data disegarkan', 'success');
+    } catch (e) {
+      showToast('Gagal menyegarkan: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+
+  on(getEl('refreshUsulanBtn'), 'click', function () {
+    const btn = this;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memuat...';
+    loadUsulan().finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = original;
     });
-  }
+  });
 
-  // ✅ DELEGATION — usulan table
-  const usulanContainer = getEl('usulanTableContainer');
-  if (usulanContainer) {
-    usulanTableDelegationCleanup = delegateTableClicks(usulanContainer, {
-      onAction: (action, id) => {
-        if (action === 'approve' || action === 'reject') {
-          openUsulanActionModal(id, action);
-        }
-      },
-    });
-  }
+  on(getEl('confirmDeleteBtn'), 'click', executeDelete);
+  on(getEl('usulanActionBtn'), 'click', executeUsulanAction);
 }
 
 // ============================================================
@@ -327,35 +298,35 @@ function renderSkeletonUsulan() {
 //   FILTER & SORT
 // ============================================================
 function getFilteredInformasi() {
-  let arr = ctx.state.informasiList.slice();
+  let arr = STATE.informasiList.slice();
 
-  if (ctx.state.searchQuery.trim() !== '') {
-    const q = ctx.state.searchQuery.toLowerCase().trim();
+  if (STATE.searchQuery.trim() !== '') {
+    const q = STATE.searchQuery.toLowerCase().trim();
     arr = arr.filter(item =>
       String(item.judul || '').toLowerCase().includes(q) ||
       String(item.deskripsi || '').toLowerCase().includes(q)
     );
   }
 
-  if (ctx.state.jenisFilter !== '') {
-    arr = arr.filter(item => String(item.jenis || '').toLowerCase() === ctx.state.jenisFilter);
+  if (STATE.jenisFilter !== '') {
+    arr = arr.filter(item => String(item.jenis || '').toLowerCase() === STATE.jenisFilter);
   }
 
-  if (ctx.state.statusFilter !== '') {
-    arr = arr.filter(item => String(item.status || 'aktif').toLowerCase() === ctx.state.statusFilter);
+  if (STATE.statusFilter !== '') {
+    arr = arr.filter(item => String(item.status || 'aktif').toLowerCase() === STATE.statusFilter);
   }
 
-  if (ctx.state.sortColumn) {
+  if (STATE.sortColumn) {
     arr.sort((a, b) => {
-      let va = a[ctx.state.sortColumn];
-      let vb = b[ctx.state.sortColumn];
+      let va = a[STATE.sortColumn];
+      let vb = b[STATE.sortColumn];
 
-      if (ctx.state.sortColumn === 'createdAt' || ctx.state.sortColumn === 'tanggal_mulai') {
+      if (STATE.sortColumn === 'createdAt' || STATE.sortColumn === 'timestamp') {
         va = new Date(va || 0).getTime();
         vb = new Date(vb || 0).getTime();
         if (isNaN(va)) va = 0;
         if (isNaN(vb)) vb = 0;
-      } else if (ctx.state.sortColumn === 'urutan') {
+      } else if (STATE.sortColumn === 'urutan') {
         va = parseInt(va) || 0;
         vb = parseInt(vb) || 0;
       } else {
@@ -363,8 +334,8 @@ function getFilteredInformasi() {
         vb = String(vb || '').toLowerCase();
       }
 
-      if (va < vb) return ctx.state.sortDirection === 'asc' ? -1 : 1;
-      if (va > vb) return ctx.state.sortDirection === 'asc' ? 1 : -1;
+      if (va < vb) return STATE.sortDirection === 'asc' ? -1 : 1;
+      if (va > vb) return STATE.sortDirection === 'asc' ? 1 : -1;
       return String(a.id || '').localeCompare(String(b.id || ''));
     });
   }
@@ -373,32 +344,30 @@ function getFilteredInformasi() {
 }
 
 function applyFiltersAndSort() {
-  ctx.state.filteredList = getFilteredInformasi();
-  const total = ctx.state.filteredList.length;
-  const totalPages = Math.max(1, Math.ceil(total / ctx.state.itemsPerPage));
-  if (ctx.state.currentPage > totalPages) ctx.state.currentPage = totalPages;
-  if (ctx.state.currentPage < 1) ctx.state.currentPage = 1;
+  STATE.filteredList = getFilteredInformasi();
+  STATE.currentPage = 1;
   renderTable();
 }
 
 // ============================================================
-//   RENDER — INFORMASI TABLE
+//   RENDER TABLE INFORMASI
 // ============================================================
 function renderTable() {
   const c = getEl('informasiTableContainer');
   if (!c) return;
 
-  const savedFocus = captureFocusState('searchInput');
+  const totalItems = STATE.filteredList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / STATE.itemsPerPage));
+  if (STATE.currentPage > totalPages) STATE.currentPage = totalPages;
+  if (STATE.currentPage < 1) STATE.currentPage = 1;
 
-  const totalItems = ctx.state.filteredList.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ctx.state.itemsPerPage));
-  const start = (ctx.state.currentPage - 1) * ctx.state.itemsPerPage;
-  const end = Math.min(start + ctx.state.itemsPerPage, totalItems);
-  const pageData = ctx.state.filteredList.slice(start, end);
+  const start = (STATE.currentPage - 1) * STATE.itemsPerPage;
+  const end = Math.min(start + STATE.itemsPerPage, totalItems);
+  const pageData = STATE.filteredList.slice(start, end);
 
   const arrow = (col) => {
-    if (ctx.state.sortColumn !== col) return '↕';
-    return ctx.state.sortDirection === 'asc' ? '↑' : '↓';
+    if (STATE.sortColumn !== col) return '↕';
+    return STATE.sortDirection === 'asc' ? '↑' : '↓';
   };
 
   let html = `<div class="table-responsive"><table class="table table-hover align-middle">
@@ -415,9 +384,9 @@ function renderTable() {
     </tr></thead><tbody>`;
 
   if (pageData.length === 0) {
-    const hasFilter = ctx.state.searchQuery || ctx.state.jenisFilter || ctx.state.statusFilter;
+    const hasFilter = STATE.searchQuery || STATE.jenisFilter || STATE.statusFilter;
     html += `<tr><td colspan="9" class="text-center py-5 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2" aria-hidden="true"></i>
+      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
       Tidak ada data informasi${hasFilter ? ' sesuai filter' : ''}.
     </td></tr>`;
   } else {
@@ -426,21 +395,21 @@ function renderTable() {
       const isFlyer = String(item.jenis || '').toLowerCase() === 'flyer';
       const safeId = escapeHtml(String(item.id || ''));
 
-      let tanggal = item.tanggal_mulai ? formatDateID(item.tanggal_mulai) : '';
-      if (item.tanggal_akhir) tanggal += ' - ' + formatDateID(item.tanggal_akhir);
+      let tanggal = item.tanggal_mulai ? formatDate(item.tanggal_mulai) : '';
+      if (item.tanggal_akhir) tanggal += ' - ' + formatDate(item.tanggal_akhir);
       const lokasi = item.lokasi
         ? `<br><small class="text-muted"><i class="bi bi-geo-alt"></i> ${escapeHtml(item.lokasi)}</small>`
         : '';
 
       let preview = '-';
       if (isFlyer && item.url) {
-        const thumbUrl = getThumbUrl(item.url, 100);
+        const thumbUrl = `https://lh3.googleusercontent.com/d/${escapeHtml(item.url)}=w100`;
         const fullUrl = `https://drive.google.com/file/d/${escapeHtml(item.url)}/view`;
         preview = `<a href="${fullUrl}" target="_blank" rel="noopener">
           <img src="${thumbUrl}" alt="flyer" class="border rounded"
                style="max-width:80px;max-height:60px;object-fit:cover;cursor:pointer;"
                onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
-          <i class="bi bi-image" style="display:none;font-size:1.5rem;color:#94a3b8;" aria-hidden="true"></i>
+          <i class="bi bi-image" style="display:none;font-size:1.5rem;color:#94a3b8;"></i>
         </a>`;
       }
 
@@ -458,17 +427,15 @@ function renderTable() {
         <td>${escapeHtml(String(item.urutan || ''))}</td>
         <td><span class="badge ${badge}">${statusLabel}</span></td>
         <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-warning me-1" data-action="edit" data-id="${safeId}" title="Edit" aria-label="Edit">
-            <i class="bi bi-pencil" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-warning me-1" data-action="edit" data-id="${safeId}" title="Edit">
+            <i class="bi bi-pencil"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-${isSelesai ? 'success' : 'secondary'} me-1"
-                  data-action="toggle" data-id="${safeId}"
-                  title="${isSelesai ? 'Aktifkan' : 'Tandai Selesai'}"
-                  aria-label="${isSelesai ? 'Aktifkan' : 'Tandai Selesai'}">
-            <i class="bi ${isSelesai ? 'bi-arrow-counterclockwise' : 'bi-check-circle'}" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-${isSelesai ? 'success' : 'secondary'} me-1"
+                  data-action="toggle" data-id="${safeId}" title="${isSelesai ? 'Aktifkan' : 'Tandai Selesai'}">
+            <i class="bi ${isSelesai ? 'bi-arrow-counterclockwise' : 'bi-check-circle'}"></i>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus" aria-label="Hapus">
-            <i class="bi bi-trash" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${safeId}" title="Hapus">
+            <i class="bi bi-trash"></i>
           </button>
         </td>
       </tr>`;
@@ -477,63 +444,80 @@ function renderTable() {
 
   html += `</tbody></table></div>`;
 
+  // Pagination
   html += `<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
     <div class="small text-muted">Menampilkan ${pageData.length > 0 ? start + 1 : 0} - ${end} dari ${totalItems} data</div>
     <div class="btn-group">`;
 
   const maxButtons = 7;
-  let startPage = Math.max(1, ctx.state.currentPage - Math.floor(maxButtons / 2));
+  let startPage = Math.max(1, STATE.currentPage - Math.floor(maxButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxButtons - 1);
   if (endPage - startPage + 1 < maxButtons) startPage = Math.max(1, endPage - maxButtons + 1);
 
   if (startPage > 1) {
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
-    if (startPage > 2) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="1">1</button>`;
+    if (startPage > 2) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
   }
   for (let i = startPage; i <= endPage; i++) {
-    html += `<button type="button" class="btn btn-sm ${i === ctx.state.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
+    html += `<button class="btn btn-sm ${i === STATE.currentPage ? 'btn-primary' : 'btn-outline-secondary'}"
               data-action="goto" data-page="${i}">${i}</button>`;
   }
   if (endPage < totalPages) {
-    if (endPage < totalPages - 1) html += `<button type="button" class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
-    html += `<button type="button" class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
+    if (endPage < totalPages - 1) html += `<button class="btn btn-sm btn-outline-secondary" disabled>…</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" data-action="goto" data-page="${totalPages}">${totalPages}</button>`;
   }
   html += `</div></div>`;
 
   c.innerHTML = html;
 
-  restoreFocusState('searchInput', savedFocus);
+  c.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', handleTableAction);
+  });
+  c.querySelectorAll('[data-sort]').forEach(th => {
+    th.addEventListener('click', () => handleSort(th.dataset.sort));
+  });
+}
+
+function handleTableAction(e) {
+  const action = e.currentTarget.dataset.action;
+  const id = e.currentTarget.dataset.id;
+  const page = parseInt(e.currentTarget.dataset.page);
+
+  switch (action) {
+    case 'edit':    return editInfo(id);
+    case 'toggle':  return toggleStatus(id);
+    case 'delete':  return confirmDelete(id);
+    case 'goto':    return goToPage(page);
+  }
 }
 
 function handleSort(col) {
-  if (ctx.state.sortColumn === col) {
-    ctx.state.sortDirection = ctx.state.sortDirection === 'asc' ? 'desc' : 'asc';
+  if (STATE.sortColumn === col) {
+    STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
   } else {
-    ctx.state.sortColumn = col;
-    ctx.state.sortDirection = col === 'createdAt' ? 'desc' : 'asc';
+    STATE.sortColumn = col;
+    STATE.sortDirection = 'asc';
   }
-  ctx.state.currentPage = 1;
+  STATE.currentPage = 1;
   renderTable();
 }
 
 function goToPage(page) {
-  const totalPages = Math.max(1, Math.ceil(ctx.state.filteredList.length / ctx.state.itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(STATE.filteredList.length / STATE.itemsPerPage));
   if (page < 1 || page > totalPages) return;
-  ctx.state.currentPage = page;
+  STATE.currentPage = page;
   renderTable();
-  getEl('informasiTableContainer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
-//   RENDER — USULAN TABLE
+//   RENDER TABLE USULAN
 // ============================================================
 function renderUsulanTable() {
   const c = getEl('usulanTableContainer');
   if (!c) return;
 
-  if (!ctx.state.usulanList || ctx.state.usulanList.length === 0) {
+  if (!STATE.usulanList || STATE.usulanList.length === 0) {
     c.innerHTML = `<div class="alert alert-info text-center mb-0 small">
-      <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
       Tidak ada usulan pending saat ini.
     </div>`;
     return;
@@ -549,9 +533,9 @@ function renderUsulanTable() {
       <th style="width:160px;" class="text-center">Aksi</th>
     </tr></thead><tbody>`;
 
-  ctx.state.usulanList.forEach(u => {
-    let tgl = u.tanggal_mulai ? formatDateID(u.tanggal_mulai) : '';
-    if (u.tanggal_akhir) tgl += ' - ' + formatDateID(u.tanggal_akhir);
+  STATE.usulanList.forEach(u => {
+    let tgl = u.tanggal_mulai ? formatDate(u.tanggal_mulai) : '';
+    if (u.tanggal_akhir) tgl += ' - ' + formatDate(u.tanggal_akhir);
     const safeId = escapeHtml(String(u.id || ''));
     html += `<tr>
       <td>${escapeHtml(u.nama || '-')}</td>
@@ -560,11 +544,11 @@ function renderUsulanTable() {
       <td>${escapeHtml(u.lokasi || '-')}</td>
       <td>${escapeHtml(u.no_hp || '-')}</td>
       <td class="text-center">
-        <button type="button" class="btn btn-sm btn-success me-1" data-action="approve" data-id="${safeId}" title="Setujui" aria-label="Setujui">
-          <i class="bi bi-check-circle" aria-hidden="true"></i> ACC
+        <button class="btn btn-sm btn-success me-1" data-usulan-action="approve" data-id="${safeId}" title="Setujui">
+          <i class="bi bi-check-circle"></i> ACC
         </button>
-        <button type="button" class="btn btn-sm btn-danger" data-action="reject" data-id="${safeId}" title="Tolak" aria-label="Tolak">
-          <i class="bi bi-x-circle" aria-hidden="true"></i> Tolak
+        <button class="btn btn-sm btn-danger" data-usulan-action="reject" data-id="${safeId}" title="Tolak">
+          <i class="bi bi-x-circle"></i> Tolak
         </button>
       </td>
     </tr>`;
@@ -572,47 +556,48 @@ function renderUsulanTable() {
 
   html += `</tbody></table></div>`;
   c.innerHTML = html;
+
+  c.querySelectorAll('[data-usulan-action]').forEach(btn => {
+    btn.addEventListener('click', () => openUsulanActionModal(btn.dataset.id, btn.dataset.usulanAction));
+  });
 }
 
 // ============================================================
-//   LOAD — INFORMASI
+//   LOAD DATA
 // ============================================================
 async function loadInformasi(forceRefresh = false) {
+  const cacheEl = getEl('cacheStatus');
   try {
     if (!AdminModule.getState().lastSync || forceRefresh) {
       await AdminModule.loadAllData(forceRefresh);
     }
-    if (!ctx.mounted) return;
-    refreshFromCache();
+    STATE.informasiList = AdminModule.getInformasiList() || [];
+    applyFiltersAndSort();
+    if (cacheEl) {
+      cacheEl.textContent = 'Live';
+      cacheEl.className = 'cache-status live';
+    }
   } catch (e) {
     console.error('[InformasiView] loadInformasi error:', e);
     const c = getEl('informasiTableContainer');
-    if (c && ctx.state.informasiList.length === 0) {
+    if (c) {
       c.innerHTML = `<div class="alert alert-danger text-center">
         Gagal memuat data: ${escapeHtml(e.message)}
       </div>`;
     }
-    setCacheStatus('Error');
+    if (cacheEl) {
+      cacheEl.textContent = 'Error';
+      cacheEl.className = 'cache-status offline';
+    }
   }
 }
 
-// ============================================================
-//   LOAD — USULAN
-// ============================================================
 async function loadUsulan() {
   try {
     const res = await callApi('getUsulanList', {}, 'GET');
-    if (!ctx.mounted) return;
     const list = Array.isArray(res) ? res : (res?.data || []);
-    const pending = list.filter(u =>
-      String(u.status || '').toLowerCase() === 'pending'
-    );
-    const freshHash = computeListHash(pending);
-    if (freshHash !== ctx.state.lastUsulanHash) {
-      ctx.state.usulanList = pending;
-      ctx.state.lastUsulanHash = freshHash;
-      renderUsulanTable();
-    }
+    STATE.usulanList = list.filter(u => String(u.status || '').toLowerCase() === 'pending');
+    renderUsulanTable();
   } catch (e) {
     console.warn('[InformasiView] loadUsulan error:', e);
     const c = getEl('usulanTableContainer');
@@ -623,10 +608,13 @@ async function loadUsulan() {
 }
 
 // ============================================================
-//   FORM
+//   FORM SUBMIT
 // ============================================================
 function resetForm() {
-  const setVal = (id, val) => { const el = getEl(id); if (el) el.value = val; };
+  const setVal = (id, val) => {
+    const el = getEl(id);
+    if (el) el.value = val;
+  };
   setVal('editId', '');
   setVal('judulItem', '');
   setVal('deskripsiItem', '');
@@ -644,13 +632,18 @@ function resetForm() {
 
   const preview = getEl('fileEditPreview');
   if (preview) preview.style.display = 'none';
+
+  STATE.isEditing = false;
 }
 
 function editInfo(id) {
-  const item = ctx.state.informasiList.find(x => String(x.id) === String(id));
+  const item = STATE.informasiList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
-  const setVal = (elId, val) => { const el = getEl(elId); if (el) el.value = val; };
+  const setVal = (elId, val) => {
+    const el = getEl(elId);
+    if (el) el.value = val;
+  };
   setVal('editId', id);
   setVal('judulItem', item.judul || '');
   setVal('deskripsiItem', item.deskripsi || '');
@@ -677,12 +670,13 @@ function editInfo(id) {
     if (preview) preview.style.display = 'none';
   }
 
+  STATE.isEditing = true;
   getEl('infoForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function submitInfoForm(e) {
   e.preventDefault();
-  if (ctx.saving) return;
+  if (STATE.isSaving) return;
 
   const id = getEl('editId').value;
   const judul = getEl('judulItem').value.trim();
@@ -703,8 +697,8 @@ async function submitInfoForm(e) {
   let fileName = null;
   if (fileInput && fileInput.files.length > 0) {
     const file = fileInput.files[0];
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      if (msgEl) msgEl.innerHTML = `<div class="alert alert-danger mb-0">Ukuran file maksimal ${MAX_FILE_SIZE_MB} MB.</div>`;
+    if (file.size > 2 * 1024 * 1024) {
+      if (msgEl) msgEl.innerHTML = '<div class="alert alert-danger mb-0">Ukuran file maksimal 2 MB.</div>';
       return;
     }
     try {
@@ -717,8 +711,10 @@ async function submitInfoForm(e) {
   }
 
   const btn = getEl('saveBtn');
-  const restore = setBtnLoading(btn, true, 'Menyimpan...');
-  ctx.saving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  STATE.isSaving = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
 
   try {
     const payload = {
@@ -744,7 +740,7 @@ async function submitInfoForm(e) {
     if (res && res.success) {
       showToast(id ? 'Informasi diperbarui' : 'Informasi ditambahkan', 'success');
       resetForm();
-      await AdminModule.loadAllData(true);
+      await loadInformasi(true);
     } else {
       throw new Error((res && res.error) || 'Gagal menyimpan');
     }
@@ -752,8 +748,9 @@ async function submitInfoForm(e) {
     showToast('Gagal: ' + err.message, 'error');
     if (msgEl) msgEl.innerHTML = `<div class="alert alert-danger mb-0">${escapeHtml(err.message)}</div>`;
   } finally {
-    restore();
-    ctx.saving = false;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.isSaving = false;
   }
 }
 
@@ -761,7 +758,7 @@ async function submitInfoForm(e) {
 //   TOGGLE STATUS
 // ============================================================
 async function toggleStatus(id) {
-  const item = ctx.state.informasiList.find(x => String(x.id) === String(id));
+  const item = STATE.informasiList.find(x => String(x.id) === String(id));
   if (!item) { showToast('Data tidak ditemukan', 'error'); return; }
 
   if (!confirm(`Ubah status informasi "${item.judul}"?`)) return;
@@ -769,8 +766,10 @@ async function toggleStatus(id) {
   try {
     const res = await callApi('toggleInfoStatus', { id }, 'POST');
     if (res && res.success) {
+      item.status = (String(item.status).toLowerCase() === 'selesai') ? 'aktif' : 'selesai';
+      applyFiltersAndSort();
       showToast('Status berhasil diubah', 'success');
-      await AdminModule.loadAllData(true);
+      setTimeout(() => loadInformasi(true).catch(() => {}), 500);
     } else {
       throw new Error((res && res.error) || 'Gagal mengubah status');
     }
@@ -783,37 +782,36 @@ async function toggleStatus(id) {
 //   DELETE
 // ============================================================
 function confirmDelete(id) {
-  ctx.state.pendingDeleteId = id;
-  const idEl = getEl('deleteInformasiId');
-  if (idEl) idEl.value = id;
-  ctx.getModal('deleteConfirmModal')?.show();
+  STATE.pendingDeleteId = id;
+  getEl('deleteInformasiId').value = id;
+  getModal('deleteConfirmModal')?.show();
 }
 
 async function executeDelete() {
-  if (ctx.saving) return;
-
-  const id = ctx.state.pendingDeleteId || getEl('deleteInformasiId')?.value;
+  const id = getEl('deleteInformasiId').value;
   if (!id) return;
 
   const btn = getEl('confirmDeleteBtn');
-  const restore = setBtnLoading(btn, true, 'Menghapus...');
-  ctx.saving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menghapus...';
 
   try {
     const res = await callApi('deleteInfo', { id }, 'POST');
     if (res && res.success) {
+      STATE.informasiList = STATE.informasiList.filter(x => String(x.id) !== String(id));
+      applyFiltersAndSort();
       showToast('Informasi berhasil dihapus', 'success');
-      ctx.getModal('deleteConfirmModal')?.hide();
-      await AdminModule.loadAllData(true);
+      getModal('deleteConfirmModal')?.hide();
     } else {
       throw new Error((res && res.error) || 'Gagal menghapus');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.saving = false;
-    ctx.state.pendingDeleteId = null;
+    btn.disabled = false;
+    btn.innerHTML = original;
+    STATE.pendingDeleteId = null;
   }
 }
 
@@ -821,17 +819,12 @@ async function executeDelete() {
 //   USULAN ACTIONS
 // ============================================================
 function openUsulanActionModal(id, type) {
-  const item = ctx.state.usulanList.find(u => String(u.id) === String(id));
+  const item = STATE.usulanList.find(u => String(u.id) === String(id));
   if (!item) { showToast('Usulan tidak ditemukan', 'error'); return; }
 
   const isApprove = type === 'approve';
-  ctx.state.pendingUsulanId = id;
-  ctx.state.pendingUsulanType = type;
-
-  const idEl = getEl('usulanActionId');
-  const typeEl = getEl('usulanActionType');
-  if (idEl) idEl.value = id;
-  if (typeEl) typeEl.value = type;
+  getEl('usulanActionId').value = id;
+  getEl('usulanActionType').value = type;
 
   const titleEl = getEl('usulanActionTitle');
   if (titleEl) {
@@ -850,26 +843,23 @@ function openUsulanActionModal(id, type) {
   }
 
   const btn = getEl('usulanActionBtn');
-  if (btn) {
-    btn.className = `btn ${isApprove ? 'btn-success' : 'btn-danger'} rounded-pill px-4`;
-    btn.innerHTML = isApprove
-      ? '<i class="bi bi-check-circle me-1"></i> Ya, Setujui'
-      : '<i class="bi bi-x-circle me-1"></i> Ya, Tolak';
-  }
+  btn.className = `btn ${isApprove ? 'btn-success' : 'btn-danger'} rounded-pill px-4`;
+  btn.innerHTML = isApprove
+    ? '<i class="bi bi-check-circle me-1"></i> Ya, Setujui'
+    : '<i class="bi bi-x-circle me-1"></i> Ya, Tolak';
 
-  ctx.getModal('usulanActionModal')?.show();
+  getModal('usulanActionModal')?.show();
 }
 
 async function executeUsulanAction() {
-  if (ctx.saving) return;
-
-  const id = ctx.state.pendingUsulanId || getEl('usulanActionId')?.value;
-  const type = ctx.state.pendingUsulanType || getEl('usulanActionType')?.value;
+  const id = getEl('usulanActionId').value;
+  const type = getEl('usulanActionType').value;
   if (!id || !type) return;
 
   const btn = getEl('usulanActionBtn');
-  const restore = setBtnLoading(btn, true, 'Memproses...');
-  ctx.saving = true;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memproses...';
 
   const status = type === 'approve' ? 'approved' : 'rejected';
 
@@ -877,56 +867,16 @@ async function executeUsulanAction() {
     const res = await callApi('updateUsulanStatus', { id, status }, 'POST');
     if (res && res.success) {
       showToast(`Usulan berhasil di-${type === 'approve' ? 'setujui' : 'tolak'}`, 'success');
-      ctx.getModal('usulanActionModal')?.hide();
-      await Promise.all([
-        loadUsulan(),
-        AdminModule.loadAllData(true),
-      ]);
+      getModal('usulanActionModal')?.hide();
+      await Promise.all([loadUsulan(), loadInformasi(true)]);
     } else {
       throw new Error((res && res.error) || 'Gagal memproses');
     }
   } catch (e) {
     showToast('Gagal: ' + e.message, 'error');
   } finally {
-    restore();
-    ctx.saving = false;
-    ctx.state.pendingUsulanId = null;
-    ctx.state.pendingUsulanType = null;
-  }
-}
-
-// ============================================================
-//   REFRESH HANDLERS
-// ============================================================
-async function handleRefresh(e) {
-  if (ctx.saving) return;
-
-  const btn = e.currentTarget || getEl('refreshDataBtn');
-  const restore = setBtnLoading(btn, true, 'Memuat...');
-  ctx.saving = true;
-
-  try {
-    setCacheStatus('Memuat…');
-    await AdminModule.loadAllData(true);
-    refreshFromCache();
-    await loadUsulan();
-    showToast('Data disegarkan', 'success');
-  } catch (err) {
-    showToast('Gagal menyegarkan: ' + err.message, 'error');
-  } finally {
-    restore();
-    ctx.saving = false;
-  }
-}
-
-async function handleRefreshUsulan(e) {
-  const btn = e.currentTarget || getEl('refreshUsulanBtn');
-  const restore = setBtnLoading(btn, true, 'Memuat...');
-  try {
-    await loadUsulan();
-    showToast('Usulan disegarkan', 'success');
-  } finally {
-    restore();
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 
@@ -934,7 +884,7 @@ async function handleRefreshUsulan(e) {
 //   EXPORT
 // ============================================================
 function exportData() {
-  const data = ctx.state.filteredList.length > 0 ? ctx.state.filteredList : ctx.state.informasiList;
+  const data = STATE.filteredList.length > 0 ? STATE.filteredList : STATE.informasiList;
   if (data.length === 0) { showToast('Tidak ada data untuk diekspor', 'info'); return; }
 
   const exportArr = data.map(item => ({
@@ -944,20 +894,19 @@ function exportData() {
     createdAt: item.createdAt,
   }));
 
-  const fileName = `informasi_${getLocalDateOnly(new Date())}.json`;
-  if (downloadJSON(exportArr, fileName)) {
+  try {
+    const json = JSON.stringify(exportArr, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `informasi_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     showToast(`Berhasil mengekspor ${data.length} data`, 'success');
-  } else {
-    showToast('Gagal ekspor data', 'error');
+  } catch (e) {
+    showToast('Gagal ekspor: ' + e.message, 'error');
   }
 }
-
-// ============================================================
-//   EXPORT DEFAULT
-// ============================================================
-export default { mount, unmount };
-
-console.log(
-  '%c Informasi View v27.2.0 — Preload + Subscription Edition ',
-  'background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
-);
