@@ -1,144 +1,42 @@
 // ============================================================
-// js/core/api.js — v28.3.0 FULL FIX + SIGNATURE QUEUE EDITION
-// GitHub Pages /bisaa/ Edition
+// js/core/api.js — Full Fix Core API (Production Ready v26.1.6)
 // ============================================================
-// CHANGELOG v28.3.0 (dari v28.2.0):
-//   ✅ NEW: Signature Queue API — 5 helpers
-//   ✅ FIX: verifySignPassword returns object with role
-//   ✅ FIX: getSignatureOrderStatus support _inQueue flag
-//   ✅ FIX: submitDigitalSignature & bulkSignForRole payload lengkap
-//   ✅ FIX: All 165+ exports zero regression
-//   ✅ FIX: Safe storage fallback untuk localStorage diblokir
-//   ✅ FIX: Circuit breaker auto-reset lebih cepat (25s)
-//   ✅ FIX: Retry 3x exponential backoff untuk semua GET
-//   ✅ FIX: Deteksi HTML response dari GAS (deployment not-public)
-//   ✅ FIX: Normalize response — data bisa nested
-//   ✅ KEEP: 160+ exports (v28.2.0)
+// Sinkron dengan code.gs v26.1.6 & config.js v26.1.4
+//
+// Fitur:
+//   ✅ Auth state management (userRole, userData)
+//   ✅ HTTP wrapper: timeout, retry, dedup
+//   ✅ Named export 135+ action endpoints
+//   ✅ Cache layer (localStorage) dengan TTL
+//   ✅ Toast notification global
+//   ✅ Guard public access
+//   ✅ Form default fields helper
+//   ✅ verifySignPassword (real-time password check)
+//   ✅ Tim Instruktur CRUD (v26.1.6)
+//   ✅ Zero memory leak (pendingRequests auto-cleanup)
 // ============================================================
 
-import {
-  SCRIPT_URL,
-  BASE_PATH,
-  APP_VERSION,
-  DEFAULT_TIMEOUT_MS,
-  HEALTH_TIMEOUT_MS,
-  MAX_RETRY,
-  CACHE_PREFIX,
-  AUTH_STORAGE_KEY,
-  LOGIN_PATH,
-  isOnline,
-  isScriptUrlValid,
-  getActiveScriptUrl,
-} from './config.js';
+import { SCRIPT_URL, BASE_PATH } from './config.js';
 
 // ============================================================
-//   AUTH STATE
+//   AUTH STATE (module-level)
 // ============================================================
 let userRole = null;
 let userData = {};
 
 // ============================================================
-//   REQUEST DEDUPLICATION
+//   CONSTANTS
 // ============================================================
+const AUTH_STORAGE_KEY = 'pkd_auth';
+const CACHE_PREFIX = 'pkd_cache_';
+const DEFAULT_TIMEOUT_MS = 30000;
+const MAX_RETRY = 2;
+
+// Request deduplication map: key → Promise
 const pendingRequests = new Map();
-const DEDUP_WINDOW_MS = 500;
 
 // ============================================================
-//   CIRCUIT BREAKER
-// ============================================================
-const _circuit = {
-  failures: 0,
-  openedAt: 0,
-  successSinceOpen: 0,
-  lastFailureType: null,
-  THRESHOLD: 3,
-  COOLDOWN_MS: 25000,
-  HALF_OPEN_SUCCESS: 2,
-};
-
-function _isCircuitOpen() {
-  if (_circuit.failures < _circuit.THRESHOLD) return false;
-
-  const elapsed = Date.now() - _circuit.openedAt;
-  if (elapsed > _circuit.COOLDOWN_MS) {
-    if (_circuit.successSinceOpen === 0) {
-      console.log(`[API] 🟡 Circuit HALF-OPEN — testing (failures=${_circuit.failures})`);
-    }
-    return false;
-  }
-  return true;
-}
-
-function _recordSuccess() {
-  if (_circuit.failures > 0) {
-    _circuit.successSinceOpen++;
-    if (_circuit.successSinceOpen >= _circuit.HALF_OPEN_SUCCESS) {
-      console.log(`[API] 🟢 Circuit CLOSED — server recovered`);
-      _circuit.failures = 0;
-      _circuit.openedAt = 0;
-      _circuit.successSinceOpen = 0;
-      _circuit.lastFailureType = null;
-    }
-  }
-}
-
-function _recordFailure(errorType) {
-  const isBreakable = errorType === 'cors' || errorType === 'network' || errorType === 'timeout';
-  if (!isBreakable) return;
-
-  _circuit.failures++;
-  _circuit.lastFailureType = errorType;
-  _circuit.successSinceOpen = 0;
-
-  if (_circuit.failures >= _circuit.THRESHOLD && _circuit.openedAt === 0) {
-    _circuit.openedAt = Date.now();
-    console.warn(
-      `[API] 🔴 Circuit OPEN — ${_circuit.failures} ${errorType} failures. ` +
-      `Pausing ${_circuit.COOLDOWN_MS / 1000}s.`
-    );
-  }
-}
-
-export function getCircuitState() {
-  const isOpen = _isCircuitOpen();
-  const remainingMs = isOpen
-    ? Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt))
-    : 0;
-
-  return {
-    isOpen,
-    failures: _circuit.failures,
-    remainingMs,
-    cooldownMs: _circuit.COOLDOWN_MS,
-    threshold: _circuit.THRESHOLD,
-    lastFailureType: _circuit.lastFailureType,
-  };
-}
-
-export function resetCircuit() {
-  _circuit.failures = 0;
-  _circuit.openedAt = 0;
-  _circuit.successSinceOpen = 0;
-  _circuit.lastFailureType = null;
-  console.log('[API] 🔄 Circuit reset manually');
-}
-
-function _classifyError(message) {
-  const msg = String(message || '').toLowerCase();
-  if (msg.includes('failed to fetch') || msg.includes('cors') || msg.includes('access-control')) {
-    return 'cors';
-  }
-  if (msg.includes('network') || msg.includes('err_failed') || msg.includes('err_network')) {
-    return 'network';
-  }
-  if (msg.includes('timeout') || msg.includes('abort')) {
-    return 'timeout';
-  }
-  return 'other';
-}
-
-// ============================================================
-//   ESCAPE HTML
+//   UTILITY: escapeHtml
 // ============================================================
 export function escapeHtml(unsafe) {
   if (unsafe == null) return '';
@@ -148,61 +46,6 @@ export function escapeHtml(unsafe) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
-}
-
-// ============================================================
-//   NORMALIZE RESPONSE
-// ============================================================
-export function normalizeResult(res) {
-  if (!res) return [];
-  if (Array.isArray(res)) return res;
-  if (res.data && Array.isArray(res.data.data)) return res.data.data;
-  if (Array.isArray(res.data)) return res.data;
-  return [];
-}
-
-export function normalizeObject(res, fallback = null) {
-  if (res === null || res === undefined) return fallback;
-  if (Array.isArray(res)) return res[0] || fallback;
-  if (typeof res === 'object') {
-    if (res.success === false) return fallback;
-    if (res.data !== undefined) {
-      if (res.data && typeof res.data === 'object' && res.data.data !== undefined) {
-        return res.data.data || fallback;
-      }
-      return res.data;
-    }
-    return res;
-  }
-  return fallback;
-}
-
-// ============================================================
-//   EXTRACT ID (multi-level)
-// ============================================================
-export function extractId(result) {
-  if (!result) return null;
-
-  const candidates = [
-    result.id,
-    result.pesertaId,
-    result.newId,
-    result.rowIndex,
-    result.data?.id,
-    result.data?.pesertaId,
-    result.data?.newId,
-    result.data?.rowIndex,
-    result.data?.data?.id,
-    result.data?.data?.pesertaId,
-    result.result?.id,
-  ];
-
-  for (const c of candidates) {
-    if (c !== undefined && c !== null && c !== '' && c !== 0) {
-      return c;
-    }
-  }
-  return null;
 }
 
 // ============================================================
@@ -220,84 +63,48 @@ function toParams(arg, key) {
 }
 
 // ============================================================
-//   UTILITY: JSON serialize decision
+//   UTILITY: normalizeArray
 // ============================================================
-function shouldJsonSerialize(v) {
-  if (v === null || v === undefined) return false;
-  if (typeof v !== 'object') return false;
-  if (v instanceof Date) return false;
-  if (typeof Blob !== 'undefined' && v instanceof Blob) return false;
-  if (typeof File !== 'undefined' && v instanceof File) return false;
-  if (typeof FormData !== 'undefined' && v instanceof FormData) return false;
-  if (typeof ArrayBuffer !== 'undefined' && v instanceof ArrayBuffer) return false;
-  return true;
+export function normalizeArray(res) {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (res.data && Array.isArray(res.data)) return res.data;
+  return [];
 }
 
 // ============================================================
-//   SAFE STORAGE (in-memory fallback)
+//   UTILITY: buildQuery
 // ============================================================
-const _memoryStore = new Map();
-
-function safeLocalGet(key) {
-  try {
-    const v = localStorage.getItem(key);
-    if (v !== null) return v;
-  } catch (e) { /* blocked */ }
-  return _memoryStore.get('L:' + key) || null;
+export function buildQuery(params) {
+  if (!params || typeof params !== 'object') return '';
+  const usp = new URLSearchParams();
+  Object.keys(params).forEach(k => {
+    const v = params[k];
+    if (v !== undefined && v !== null) usp.append(k, String(v));
+  });
+  return usp.toString();
 }
 
-function safeLocalSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    _memoryStore.delete('L:' + key);
-    return true;
-  } catch (e) {
-    _memoryStore.set('L:' + key, value);
-    return false;
-  }
-}
-
-function safeLocalRemove(key) {
-  try { localStorage.removeItem(key); } catch (e) { /* silent */ }
-  _memoryStore.delete('L:' + key);
-}
-
-function safeSessionGet(key) {
-  try {
-    const v = sessionStorage.getItem(key);
-    if (v !== null) return v;
-  } catch (e) { /* blocked */ }
-  return _memoryStore.get('S:' + key) || null;
-}
-
-function safeSessionSet(key, value) {
-  try {
-    sessionStorage.setItem(key, value);
-    _memoryStore.delete('S:' + key);
-    return true;
-  } catch (e) {
-    _memoryStore.set('S:' + key, value);
-    return false;
-  }
-}
-
-function safeSessionRemove(key) {
-  try { sessionStorage.removeItem(key); } catch (e) { /* silent */ }
-  _memoryStore.delete('S:' + key);
-}
+// ============================================================
+//   SAFE STORAGE
+// ============================================================
+function safeLocalGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+function safeLocalSet(key, value) { try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
+function safeLocalRemove(key) { try { localStorage.removeItem(key); } catch (e) {} }
+function safeSessionGet(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
+function safeSessionSet(key, value) { try { sessionStorage.setItem(key, value); return true; } catch (e) { return false; } }
+function safeSessionRemove(key) { try { sessionStorage.removeItem(key); } catch (e) {} }
 
 // ============================================================
 //   TOAST
 // ============================================================
 export function showToast(message, type = 'success') {
   let toastEl = document.getElementById('apiToast');
-
   if (!toastEl) {
     if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
       console.log(`[Toast/${type}]`, message);
       return;
     }
-
     const container = document.createElement('div');
     container.className = 'toast-container position-fixed top-0 end-0 p-3';
     container.id = 'apiToastContainer';
@@ -307,7 +114,7 @@ export function showToast(message, type = 'success') {
         <div class="toast-header bg-white border-0">
           <i class="bi me-2" id="apiToastIcon"></i>
           <strong class="me-auto" id="apiToastTitle">Berhasil</strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Tutup"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body" id="apiToastMessage"></div>
       </div>
@@ -324,17 +131,20 @@ export function showToast(message, type = 'success') {
 
   const icons = {
     success: { cls: 'bi-check-circle-fill text-success', title: 'Berhasil' },
-    error:   { cls: 'bi-x-circle-fill text-danger', title: 'Gagal' },
+    error:   { cls: 'bi-x-circle-fill text-danger',      title: 'Gagal' },
     warning: { cls: 'bi-exclamation-triangle-fill text-warning', title: 'Peringatan' },
-    info:    { cls: 'bi-info-circle-fill text-primary', title: 'Info' },
+    info:    { cls: 'bi-info-circle-fill text-primary',  title: 'Info' },
   };
   const cfg = icons[type] || icons.info;
   if (icon) icon.className = `bi ${cfg.cls}`;
   if (title) title.innerText = cfg.title;
 
   if (toastEl && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-    try { bootstrap.Toast.getOrCreateInstance(toastEl).show(); }
-    catch (e) { console.log(`[Toast/${type}]`, message); }
+    try {
+      bootstrap.Toast.getOrCreateInstance(toastEl).show();
+    } catch (e) {
+      console.log(`[Toast/${type}]`, message);
+    }
   }
 }
 
@@ -369,14 +179,13 @@ export function loadAuthState() {
     }
   }
 
-  try { updateNavbarMenu(); } catch (e) { /* silent */ }
+  try { updateNavbarMenu(); } catch (e) {}
   return { role: userRole, data: userData };
 }
 
 export function logout() {
   userRole = null;
   userData = {};
-
   safeSessionRemove(AUTH_STORAGE_KEY);
   safeLocalRemove(AUTH_STORAGE_KEY);
 
@@ -389,10 +198,7 @@ export function logout() {
       }
     }
     keysToRemove.forEach(k => safeLocalRemove(k));
-  } catch (e) { /* silent */ }
-
-  safeSessionRemove('pkd_filter_lokasi');
-  safeSessionRemove('pkd_filter_angkatan');
+  } catch (e) {}
 
   window.location.href = BASE_PATH + 'index.html';
 }
@@ -475,58 +281,27 @@ export function updateNavbarMenu() {
 
   menu.innerHTML = html;
 
-  document.getElementById('apiLogoutBtn')?.addEventListener('click', function (e) {
+  const lo = document.getElementById('apiLogoutBtn');
+  if (lo) lo.addEventListener('click', function (e) {
     e.preventDefault();
     logout();
   });
-  document.getElementById('apiLoginBtn')?.addEventListener('click', function () {
+
+  const li = document.getElementById('apiLoginBtn');
+  if (li) li.addEventListener('click', function () {
     window.location.href = BASE_PATH + 'login.html';
   });
 }
 
 // ============================================================
-//   ⭐ CORE API CALL — v28.3.0
+//   CORE API CALL
 // ============================================================
 export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_TIMEOUT_MS) {
   method = String(method || 'GET').toUpperCase();
 
-  if (!isOnline()) {
-    return Promise.resolve({
-      success: false,
-      error: 'Browser sedang offline. Periksa koneksi internet Anda.',
-      _offline: true,
-    });
-  }
+  const dedupeKey = `${method}:${action}:${JSON.stringify(params)}`;
 
-  if (!isScriptUrlValid()) {
-    console.error('[API] ❌ SCRIPT_URL tidak valid, cek js/core/config.js');
-    return Promise.resolve({
-      success: false,
-      error: 'Konfigurasi server tidak valid. Hubungi admin.',
-      _configError: true,
-    });
-  }
-
-  if (_isCircuitOpen()) {
-    const remaining = Math.max(0, _circuit.COOLDOWN_MS - (Date.now() - _circuit.openedAt));
-    return Promise.resolve({
-      success: false,
-      error: `Server sibuk — coba lagi dalam ${Math.ceil(remaining / 1000)}s`,
-      _circuitOpen: true,
-      _retryAfterMs: remaining,
-    });
-  }
-
-  const dedupParams = { ...params };
-  delete dedupParams._t;
-  delete dedupParams._nocache;
-
-  const useDedup = (method === 'GET');
-  const dedupeKey = useDedup
-    ? `${method}:${action}:${JSON.stringify(dedupParams)}`
-    : null;
-
-  if (useDedup && pendingRequests.has(dedupeKey)) {
+  if (pendingRequests.has(dedupeKey)) {
     return pendingRequests.get(dedupeKey);
   }
 
@@ -535,19 +310,10 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
       const cleanParams = {};
       Object.keys(params || {}).forEach(key => {
         const val = params[key];
-        if (val === undefined || val === null) return;
-
-        if (val instanceof Date) {
-          cleanParams[key] = val.toISOString();
-        } else if (shouldJsonSerialize(val)) {
-          cleanParams[key] = JSON.stringify(val);
-        } else {
-          cleanParams[key] = val;
-        }
+        if (val !== undefined && val !== null) cleanParams[key] = val;
       });
 
-      const activeUrl = getActiveScriptUrl();
-      let url = activeUrl;
+      let url = SCRIPT_URL;
       let fetchOptions;
 
       if (method === 'GET') {
@@ -556,62 +322,35 @@ export function callApi(action, params = {}, method = 'GET', timeout = DEFAULT_T
         fetchOptions = {
           method: 'GET',
           mode: 'cors',
-          redirect: 'follow',
-          credentials: 'omit',
-          cache: 'no-store',
           headers: { 'Accept': 'application/json' },
         };
       } else {
-        const body = new URLSearchParams({ action, ...cleanParams }).toString();
+        const urlEncoded = new URLSearchParams({ action, ...cleanParams }).toString();
         fetchOptions = {
           method: 'POST',
           mode: 'cors',
-          redirect: 'follow',
-          credentials: 'omit',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: urlEncoded,
         };
       }
 
-      const retries = (method === 'GET') ? MAX_RETRY : 0;
-
-      _fetchWithRetry(url, fetchOptions, timeout, retries)
-        .then(response => {
-          if (response && response.success) {
-            _recordSuccess();
-          } else if (response && response.error) {
-            const errorType = _classifyError(response.error);
-            _recordFailure(errorType);
-          }
-          resolve(response);
-        })
-        .catch(err => {
-          const errorType = _classifyError(err.message);
-          _recordFailure(errorType);
-          resolve({
-            success: false,
-            error: err.message || 'Unknown error',
-            _errorType: errorType,
-          });
-        });
+      _fetchWithRetry(url, fetchOptions, timeout, method === 'GET' ? MAX_RETRY : 0)
+        .then(response => resolve(response))
+        .catch(err => resolve({ success: false, error: err.message || 'Unknown error' }));
     } catch (e) {
       resolve({ success: false, error: e.message });
     }
   });
 
-  if (useDedup) {
-    pendingRequests.set(dedupeKey, promise);
-    promise.finally(() => {
-      setTimeout(() => pendingRequests.delete(dedupeKey), DEDUP_WINDOW_MS);
-    });
-  }
+  pendingRequests.set(dedupeKey, promise);
+
+  promise.finally(() => {
+    setTimeout(() => pendingRequests.delete(dedupeKey), 100);
+  });
 
   return promise;
 }
 
-// ============================================================
-//   FETCH WITH RETRY (Exponential Backoff)
-// ============================================================
 async function _fetchWithRetry(url, options, timeout, maxRetry) {
   let lastError = null;
 
@@ -619,23 +358,17 @@ async function _fetchWithRetry(url, options, timeout, maxRetry) {
     try {
       const result = await _fetchOnce(url, options, timeout);
 
-      if (!result._httpError || !result._retryable) {
-        return result;
-      }
-
-      lastError = new Error(result.error);
-      if (attempt < maxRetry) {
-        const delay = 500 * Math.pow(2, attempt);
-        console.warn(`[API] HTTP error, retry ${attempt + 1}/${maxRetry} in ${delay}ms`);
-        await _sleep(delay);
+      if (result && result._httpError && attempt < maxRetry) {
+        lastError = new Error(result.error);
+        await _sleep(500 * (attempt + 1));
         continue;
       }
+
+      return result;
     } catch (e) {
       lastError = e;
       if (attempt < maxRetry) {
-        const delay = 500 * Math.pow(2, attempt);
-        console.warn(`[API] Network error, retry ${attempt + 1}/${maxRetry} in ${delay}ms:`, e.message);
-        await _sleep(delay);
+        await _sleep(500 * (attempt + 1));
         continue;
       }
     }
@@ -644,31 +377,22 @@ async function _fetchWithRetry(url, options, timeout, maxRetry) {
   throw lastError || new Error('Request failed after retries');
 }
 
-// ============================================================
-//   FETCH ONCE
-// ============================================================
 function _fetchOnce(url, options, timeout) {
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, timeout);
-
-    const startTime = Date.now();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     fetch(url, { ...options, signal: controller.signal })
       .then(response => {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const retryable = response.status >= 500 && response.status < 600;
           return response.text().then(text => {
             console.warn('[API] HTTP', response.status, '→', text.substring(0, 200));
             resolve({
               success: false,
-              error: `Server Error (${response.status}). Coba lagi dalam beberapa saat.`,
+              error: `Server Error (${response.status}): ${(text || '').substring(0, 200)}`,
               _httpError: true,
-              _retryable: retryable,
             });
           });
         }
@@ -676,25 +400,6 @@ function _fetchOnce(url, options, timeout) {
         return response.text().then(text => {
           if (!text || text.trim() === '') {
             return resolve({ success: true, data: [] });
-          }
-
-          const trimmed = text.trim();
-
-          // Detect HTML response
-          if (trimmed.startsWith('<') || trimmed.toLowerCase().includes('<html')) {
-            if (text.includes('accounts.google.com') || text.includes('Sign in')) {
-              console.error('[API] ❌ GAS deployment BUKAN "Anyone"');
-              return resolve({
-                success: false,
-                error: 'Deployment GAS belum di-set "Anyone". Buka GAS → Deploy → Manage Deployments → Who has access → "Anyone".',
-                _configError: true,
-              });
-            }
-            return resolve({
-              success: false,
-              error: 'Server mengembalikan HTML, bukan JSON. Cek deployment GAS.',
-              _configError: true,
-            });
           }
 
           try {
@@ -710,27 +415,18 @@ function _fetchOnce(url, options, timeout) {
               resolve({ success: true, data });
             }
           } catch (parseErr) {
-            console.error('[API] JSON parse error:', parseErr.message);
             resolve({
               success: false,
-              error: `JSON parse error: ${parseErr.message}`,
-              _parseError: true,
+              error: `JSON parse error: ${parseErr.message} — ${text.substring(0, 150)}`,
             });
           }
         });
       })
       .catch(err => {
         clearTimeout(timeoutId);
-        const elapsed = Date.now() - startTime;
 
         if (err.name === 'AbortError') {
-          reject(new Error(`Request timeout (${elapsed}ms). Server tidak merespons.`));
-        } else if (err.name === 'TypeError' && err.message && err.message.includes('Failed to fetch')) {
-          reject(new Error(
-            'CORS_ERROR: Gagal terhubung ke server. ' +
-            'Kemungkinan: (1) Deployment GAS belum "Anyone", ' +
-            '(2) Koneksi internet bermasalah, (3) Server sedang throttle.'
-          ));
+          reject(new Error('Request timeout'));
         } else {
           reject(new Error(err.message || 'Network error'));
         }
@@ -762,7 +458,7 @@ export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinu
         safeLocalRemove(fullKey);
       }
     }
-  } catch (e) { /* silent */ }
+  } catch (e) {}
 
   if (!forceRefresh && cached !== null) return cached;
 
@@ -772,6 +468,7 @@ export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinu
     if (data === undefined || data === null) data = [];
 
     safeLocalSet(fullKey, JSON.stringify({ data, timestamp: now }));
+
     return data;
   } catch (e) {
     if (cached !== null) return cached;
@@ -782,25 +479,12 @@ export async function fetchWithCache(action, params = {}, cacheKey, cacheAgeMinu
 // ============================================================
 //   GUARD PUBLIC ACCESS
 // ============================================================
-let _loginModeCache = { value: null, timestamp: 0 };
-const LOGIN_MODE_CACHE_MS = 30000;
-
 export async function guardPublicAccess() {
   if (userRole) return true;
 
   try {
-    let enabled = false;
-    const now = Date.now();
-
-    if (_loginModeCache.value !== null && (now - _loginModeCache.timestamp) < LOGIN_MODE_CACHE_MS) {
-      enabled = _loginModeCache.value;
-    } else {
-      const modeRes = await getLoginMode();
-      enabled = !!(modeRes && modeRes.success && modeRes.enabled);
-      _loginModeCache = { value: enabled, timestamp: now };
-    }
-
-    if (enabled) {
+    const modeRes = await getLoginMode();
+    if (modeRes && modeRes.success && modeRes.enabled) {
       const redirect = window.location.pathname + window.location.search;
       window.location.href = BASE_PATH + 'login.html?redirect=' + encodeURIComponent(redirect);
       return false;
@@ -832,175 +516,6 @@ export function getDefaultFormFields() {
 }
 
 // ============================================================
-//   DATE/TIME HELPERS
-// ============================================================
-export function formatDateID(dateInput, opts) {
-  if (!dateInput) return '-';
-  try {
-    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
-    if (isNaN(d.getTime())) return '-';
-    return d.toLocaleDateString('id-ID', opts || {
-      day: '2-digit', month: 'short', year: 'numeric',
-    });
-  } catch (e) { return '-'; }
-}
-
-export function formatDateTimeID(dateInput) {
-  if (!dateInput) return '-';
-  try {
-    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
-    if (isNaN(d.getTime())) return '-';
-    return d.toLocaleString('id-ID', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-  } catch (e) { return '-'; }
-}
-
-export function getLocalDateOnly(dateInput) {
-  if (dateInput === null || dateInput === undefined) return '';
-  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
-  if (isNaN(d.getTime())) return '';
-  const pad = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-export function timeSinceID(dateInput) {
-  if (!dateInput) return '';
-  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
-  if (isNaN(d.getTime())) return '';
-  const secs = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (secs < 60) return secs + ' dtk lalu';
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return mins + ' mnt lalu';
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + ' jam lalu';
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return days + ' hr lalu';
-  const months = Math.floor(days / 30);
-  if (months < 12) return months + ' bln lalu';
-  return Math.floor(months / 12) + ' thn lalu';
-}
-
-// ============================================================
-//   FILE HELPERS
-// ============================================================
-export function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) return reject(new Error('File kosong'));
-    if (file.size === 0) return reject(new Error('File kosong (0 byte)'));
-    const reader = new FileReader();
-    reader.onload = () => {
-      const r = reader.result;
-      if (!r || typeof r !== 'string') return reject(new Error('Hasil baca file tidak valid'));
-      resolve(r);
-    };
-    reader.onerror = () => reject(new Error('Gagal membaca file'));
-    reader.readAsDataURL(file);
-  });
-}
-
-export function uploadToDrive(token, file, fileNameOverride) {
-  return new Promise((resolve, reject) => {
-    if (!file) return reject(new Error('File kosong'));
-    if (!token) return reject(new Error('Token tidak tersedia'));
-
-    const formData = new FormData();
-    formData.append(
-      'metadata',
-      new Blob([JSON.stringify({ name: fileNameOverride || file.name })], { type: 'application/json' })
-    );
-    formData.append('file', file);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-    xhr.timeout = 120000;
-
-    xhr.onload = () => {
-      if (xhr.status === 200 || xhr.status === 201) {
-        try { resolve(JSON.parse(xhr.responseText)); }
-        catch (e) { reject(new Error('Respons Drive tidak valid')); }
-      } else {
-        reject(new Error(`Upload Drive gagal (HTTP ${xhr.status})`));
-      }
-    };
-    xhr.onerror = () => reject(new Error('Network error saat upload ke Drive'));
-    xhr.ontimeout = () => reject(new Error('Upload Drive timeout'));
-    xhr.send(formData);
-  });
-}
-
-// ============================================================
-//   DOWNLOAD HELPERS
-// ============================================================
-export function downloadJSON(data, filename) {
-  try {
-    const json = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || `export_${getLocalDateOnly(new Date())}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return true;
-  } catch (e) {
-    console.error('[downloadJSON]', e);
-    return false;
-  }
-}
-
-export function downloadCSV(rows, headers, filename) {
-  try {
-    const headerLine = headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',');
-    const dataLines = rows.map(row =>
-      row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
-    );
-    const csv = '\uFEFF' + [headerLine, ...dataLines].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || `export_${getLocalDateOnly(new Date())}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return true;
-  } catch (e) {
-    console.error('[downloadCSV]', e);
-    return false;
-  }
-}
-
-export function getAppVersion() {
-  return APP_VERSION;
-}
-
-// ============================================================
-//   DIAGNOSTIC HELPERS
-// ============================================================
-export async function healthCheck() {
-  return await callApi('health', {}, 'GET', HEALTH_TIMEOUT_MS);
-}
-
-export async function ping() {
-  return await callApi('ping', {}, 'GET', HEALTH_TIMEOUT_MS);
-}
-
-export async function testConnection() {
-  try {
-    const res = await callApi('ping', {}, 'GET', HEALTH_TIMEOUT_MS);
-    return res && res.success === true;
-  } catch (e) {
-    return false;
-  }
-}
-
-// ============================================================
 //   AUTHENTICATION
 // ============================================================
 export function verifyAdmin(username, password) { return callApi('verifyAdmin', { username, password }, 'GET'); }
@@ -1011,7 +526,9 @@ export function updateAdminPassword(username, newPassword) { return callApi('upd
 // ============================================================
 //   PESERTA
 // ============================================================
-export function getPesertaList(statusOrParams) { return callApi('getPesertaList', toParams(statusOrParams, 'status'), 'GET'); }
+export function getPesertaList(statusOrParams) {
+  return callApi('getPesertaList', toParams(statusOrParams, 'status'), 'GET');
+}
 export function submitPeserta(data) { return callApi('submitPeserta', data, 'POST'); }
 export function updatePeserta(data) { return callApi('updatePeserta', data, 'POST'); }
 export function deletePeserta(id) { return callApi('deletePeserta', { id }, 'POST'); }
@@ -1023,26 +540,26 @@ export function resetPesertaPassword(id, newPassword) { return callApi('resetPes
 export function getTotalPeserta() { return callApi('getTotalPeserta', {}, 'GET'); }
 export function getAlumniList() { return callApi('getAlumniList', {}, 'GET'); }
 export function moveToAlumni(id) { return callApi('moveToAlumni', { id }, 'POST'); }
-export function moveMultipleToAlumni(ids) { return callApi('moveMultipleToAlumni', { ids }, 'POST'); }
+export function moveMultipleToAlumni(ids) {
+  const payload = Array.isArray(ids) ? JSON.stringify(ids) : ids;
+  return callApi('moveMultipleToAlumni', { ids: payload }, 'POST');
+}
 export function moveBackToActive(id) { return callApi('moveBackToActive', { id }, 'POST'); }
 
 // ============================================================
 //   SESI ABSEN
 // ============================================================
 export function getSesiAbsen() { return callApi('getSesiAbsen', {}, 'GET'); }
-
 export function addSesiAbsen(nama, waktuMulai, waktuSelesai, aktif, password) {
   return callApi('addSesiAbsen', {
     nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password,
   }, 'POST');
 }
-
 export function updateSesiAbsen(id, nama, waktuMulai, waktuSelesai, aktif, password) {
   return callApi('updateSesiAbsen', {
     id, nama, waktu_mulai: waktuMulai, waktu_selesai: waktuSelesai, aktif, password,
   }, 'POST');
 }
-
 export function deleteSesiAbsen(id) { return callApi('deleteSesiAbsen', { id }, 'POST'); }
 export function regenerateQRSesi(id) { return callApi('regenerateQRSesi', { id }, 'POST'); }
 export function toggleAttendanceSession(id, open) { return callApi('toggleAttendanceSession', { id, open }, 'POST'); }
@@ -1056,7 +573,6 @@ export function submitAbsen(nama, sesiId, tandaTangan, password, qrToken, pesert
     nama, sesiId, tandaTangan, password, qrToken, pesertaId,
   }, 'POST');
 }
-
 export function getAbsensiResponses() { return callApi('getAbsensiResponses', {}, 'GET'); }
 export function getAttendanceBySesi(sesiId) { return callApi('getAttendanceBySesi', { sesiId }, 'GET'); }
 export function deleteAbsensi(params) { return callApi('deleteAbsensi', params, 'POST'); }
@@ -1203,8 +719,13 @@ export function getSignPasswords() { return callApi('getSignPasswords', {}, 'GET
 export function updateSignPassword(role, newPassword) {
   return callApi('updateSignPassword', { role, newPassword }, 'POST');
 }
-export function verifySignPassword(role, password) { return callApi('verifySignPassword', { role, password }, 'POST'); }
 
+// ⭐ Real-time password check (sign pages UX)
+export function verifySignPassword(role, password) {
+  return callApi('verifySignPassword', { role, password }, 'POST');
+}
+
+// Bulk Sign per Role (1 TTD → semua peserta eligible)
 export function bulkSignForRole(role, nama, signature, password, filterPac, kegunaan) {
   return callApi('bulkSignForRole', {
     role, nama, signature, password,
@@ -1213,124 +734,56 @@ export function bulkSignForRole(role, nama, signature, password, filterPac, kegu
   }, 'POST');
 }
 
+// Cek status urutan TTD per peserta
 export function getSignatureOrderStatus() { return callApi('getSignatureOrderStatus', {}, 'GET'); }
 
 // ============================================================
-//   ⭐ SIGNATURE QUEUE — v28.3.0 NEW
+//   ⭐ v26.1.6: TIM INSTRUKTUR
 // ============================================================
-/**
- * Tambah 1 peserta ke signature queue.
- * @param {string} pesertaNama - Nama peserta
- * @param {string} pesertaId - (opsional) ID peserta
- * @param {string} selectedBy - (opsional) Role yang memilih, default 'ketua_pc'
- * @param {string} notes - (opsional) Catatan
- */
-export function addToSignatureQueue(pesertaNama, pesertaId, selectedBy, notes) {
-  return callApi('addToSignatureQueue', {
-    peserta_nama: pesertaNama,
-    peserta_id: pesertaId || '',
-    selected_by: selectedBy || 'ketua_pc',
-    notes: notes || '',
-  }, 'POST');
+export function getTimInstrukturList() {
+  return callApi('getTimInstrukturList', {}, 'GET');
 }
-
-/**
- * Tambah banyak peserta ke queue sekaligus.
- * @param {Array} items - Array of { peserta_nama, peserta_id, notes }
- * @param {string} selectedBy - Role yang memilih
- */
-export function addBulkToSignatureQueue(items, selectedBy) {
-  return callApi('addBulkToSignatureQueue', {
-    items: JSON.stringify(items || []),
-    selected_by: selectedBy || 'ketua_pc',
-  }, 'POST');
+export function addTimInstruktur(params) {
+  return callApi('addTimInstruktur', params, 'POST');
 }
-
-export function getSignatureQueue() {
-  return callApi('getSignatureQueue', {}, 'GET');
+export function updateTimInstruktur(params) {
+  return callApi('updateTimInstruktur', params, 'POST');
 }
-
-export function removeFromSignatureQueue(pesertaNama) {
-  return callApi('removeFromSignatureQueue', { peserta_nama: pesertaNama }, 'POST');
+export function deleteTimInstruktur(id) {
+  return callApi('deleteTimInstruktur', { id }, 'POST');
 }
-
-export function clearSignatureQueue() {
-  return callApi('clearSignatureQueue', {}, 'POST');
+export function reorderTimInstruktur(orders) {
+  const payload = Array.isArray(orders) ? JSON.stringify(orders) : orders;
+  return callApi('reorderTimInstruktur', { orders: payload }, 'POST');
 }
-
-// ============================================================
-//   TIM INSTRUKTUR
-// ============================================================
-export function getTimInstrukturList() { return callApi('getTimInstrukturList', {}, 'GET'); }
-export function addTimInstruktur(params) { return callApi('addTimInstruktur', params, 'POST'); }
-export function updateTimInstruktur(params) { return callApi('updateTimInstruktur', params, 'POST'); }
-export function deleteTimInstruktur(id) { return callApi('deleteTimInstruktur', { id }, 'POST'); }
-export function reorderTimInstruktur(orders) { return callApi('reorderTimInstruktur', { orders }, 'POST'); }
 
 // ============================================================
 //   RTL
 // ============================================================
-export function getRTLTasks(pesertaIdOrParams) { return callApi('getRTLTasks', toParams(pesertaIdOrParams, 'pesertaId'), 'GET'); }
+export function getRTLTasks(pesertaIdOrParams) {
+  return callApi('getRTLTasks', toParams(pesertaIdOrParams, 'pesertaId'), 'GET');
+}
 export function addRTLTask(params) { return callApi('addRTLTask', params, 'POST'); }
 export function updateRTLTask(params) { return callApi('updateRTLTask', params, 'POST'); }
 export function deleteRTLTask(id) { return callApi('deleteRTLTask', { id }, 'POST'); }
 export function approveRTLTask(id) { return callApi('approveRTLTask', { id }, 'POST'); }
-export function approveAllRTL(pesertaIdOrParams) { return callApi('approveAllRTL', toParams(pesertaIdOrParams, 'pesertaId'), 'POST'); }
-export function getRTLStatus(pesertaIdOrParams) { return callApi('getRTLStatus', toParams(pesertaIdOrParams, 'pesertaId'), 'GET'); }
+export function approveAllRTL(pesertaIdOrParams) {
+  return callApi('approveAllRTL', toParams(pesertaIdOrParams, 'pesertaId'), 'POST');
+}
+export function getRTLStatus(pesertaIdOrParams) {
+  return callApi('getRTLStatus', toParams(pesertaIdOrParams, 'pesertaId'), 'GET');
+}
 export function submitRTLAttachment(taskId, fileData, fileName) {
   return callApi('submitRTLAttachment', { taskId, fileData, fileName }, 'POST');
 }
 export function getRTLAttachments(taskId) { return callApi('getRTLAttachments', { taskId }, 'GET'); }
 
 // ============================================================
-//   ANGKATAN PKD
+//   LOKASI PKD
 // ============================================================
-export function getAngkatanPKDList() {
-  return callApi('getAngkatanPKDList', {}, 'GET');
-}
-
-export function getAngkatanPKDWithCount() {
-  return callApi('getAngkatanPKDWithCount', {}, 'GET');
-}
-
-export function getAngkatanDetail(namaOrId) {
-  const params = {};
-  const str = String(namaOrId || '').trim();
-
-  if (/^\d+$/.test(str)) {
-    params.id = str;
-    params.lokasiId = str;
-  } else {
-    params.nama = str;
-  }
-
-  return callApi('getAngkatanDetail', params, 'GET');
-}
-
-export function addAngkatanPKD(nama, tahun, status, lokasi, tglMulai, tglSelesai) {
-  return callApi('addAngkatanPKD', {
-    nama: String(nama || '').trim(),
-    tahun: tahun || new Date().getFullYear(),
-    status: status || 'aktif',
-    lokasi: lokasi || String(nama || '').trim(),
-    tanggal_mulai: tglMulai || '',
-    tanggal_selesai: tglSelesai || '',
-  }, 'POST');
-}
-
-export function updateAngkatanPKD(data) {
-  return callApi('updateAngkatanPKD', data, 'POST');
-}
-
-export function deleteAngkatanPKD(id) {
-  return callApi('deleteAngkatanPKD', { id }, 'POST');
-}
-
-// Legacy alias
-export const getLokasiPKDList = getAngkatanPKDList;
-export const getLokasiPKDWithCount = getAngkatanPKDWithCount;
-export const addLokasiPKD = (nama) => addAngkatanPKD(nama);
-export const deleteLokasiPKD = deleteAngkatanPKD;
+export function getLokasiPKDList() { return callApi('getLokasiPKDList', {}, 'GET'); }
+export function addLokasiPKD(nama) { return callApi('addLokasiPKD', { nama }, 'POST'); }
+export function deleteLokasiPKD(id) { return callApi('deleteLokasiPKD', { id }, 'POST'); }
 
 // ============================================================
 //   MEMBER
@@ -1353,11 +806,17 @@ export function saveQuizSettings(params) { return callApi('saveQuizSettings', pa
 export function getLoginMode() { return callApi('getLoginMode', {}, 'GET'); }
 export function setLoginMode(enabled) { return callApi('setLoginMode', { enabled }, 'POST'); }
 export function getPublicVisibility() { return callApi('getPublicVisibility', {}, 'GET'); }
-export function setPublicVisibility(data) { return callApi('setPublicVisibility', { data }, 'POST'); }
+export function setPublicVisibility(data) {
+  const payload = (typeof data === 'string') ? data : JSON.stringify(data);
+  return callApi('setPublicVisibility', { data: payload }, 'POST');
+}
 export function getPKDLokasi() { return callApi('getPKDLokasi', {}, 'GET'); }
 export function setPKDLokasi(lokasi) { return callApi('setPKDLokasi', { lokasi }, 'POST'); }
 export function getFormSettings() { return callApi('getFormSettings', {}, 'GET'); }
-export function setFormSettings(fields) { return callApi('setFormSettings', { fields }, 'POST'); }
+export function setFormSettings(fields) {
+  const payload = (typeof fields === 'string') ? fields : JSON.stringify(fields);
+  return callApi('setFormSettings', { fields: payload }, 'POST');
+}
 export function getRealtimeSetting() { return callApi('getRealtimeSetting', {}, 'GET'); }
 export function setRealtimeSetting(enabled) { return callApi('setRealtimeSetting', { enabled }, 'POST'); }
 export function getDashboardStats() { return callApi('getDashboardStats', {}, 'GET'); }
@@ -1372,55 +831,25 @@ export function submitKontak(nama, email, pesan, username, role, ip) {
 // ============================================================
 //   MIGRATION
 // ============================================================
-export function migrateSettingsBooleans() { return callApi('migrateSettingsBooleans', {}, 'POST'); }
-
-// ============================================================
-//   PASSWORD DIAGNOSTICS
-// ============================================================
-export function debugVerifyPassword(username, password) {
-  return callApi('debugVerifyPassword', { username, password }, 'GET');
-}
-export function auditAllPasswords() { return callApi('auditAllPasswords', {}, 'GET'); }
-export function repairHashes(params) { return callApi('repairHashes', params, 'POST'); }
-
-// ============================================================
-//   CONVENIENCE HELPERS
-// ============================================================
-export async function getSesiAbsenById(id) {
-  const res = await getSesiAbsen();
-  const list = Array.isArray(res) ? res : (res?.data || []);
-  return list.find(s => String(s.id) === String(id)) || null;
-}
-
-export async function getPesertaByStatus(status) {
-  return await getPesertaList({ status });
-}
-
-export function unreadNotifCount() {
-  try {
-    const raw = safeLocalGet('pkd_notif_read_ids');
-    if (!raw) return 0;
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.length : 0;
-  } catch (e) { return 0; }
+export function migrateSettingsBooleans() {
+  return callApi('migrateSettingsBooleans', {}, 'POST');
 }
 
 // ============================================================
 //   AUTO-INIT
 // ============================================================
 if (typeof document !== 'undefined') {
-  try { loadAuthState(); }
-  catch (e) { console.warn('[API] Auto-init loadAuthState failed:', e); }
+  try {
+    loadAuthState();
+  } catch (e) {
+    console.warn('[API] Auto-init loadAuthState failed:', e);
+  }
 }
 
 // ============================================================
 //   CONSOLE BANNER
 // ============================================================
 console.log(
-  `%c API v28.3.0 — Full Fix + Signature Queue Edition `,
+  '%c API v26.1.6 — Full Production Ready ',
   'background:#16a34a;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;'
-);
-console.log(
-  `%c 💡 165+ exports | Signature Queue | Retry 3x | Circuit breaker 25s `,
-  'background:#0f172a;color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
