@@ -1,47 +1,53 @@
 // ============================================================
-// js/core/voice-notifier.js — v1.2.0 FULL FIX EDITION
+// js/core/voice-notifier.js — v1.3.0 FULL FIX EDITION
 // Shared module: Notifikasi suara TTS untuk absen peserta
 // ============================================================
-// CHANGELOG v1.2.0 (dari v1.1.0):
-//   ✅ FIX CRITICAL: Default state ON saat first time (bukan OFF)
-//   ✅ FIX: Race condition saat init — DOM ready check
+// CHANGELOG v1.3.0 (dari v1.2.0):
+//   ✅ FIX CRITICAL: Chrome autoplay policy — warm-up TTS via user gesture
 //   ✅ FIX: Voice selection retry — handle async onvoiceschanged
-//   ✅ FIX: Logging lebih jelas (🔧 Init, 🎙️ Voice, 🔊 Speak)
-//   ✅ FIX: Queue processing lebih robust
-//   ✅ FIX: Dedup window 2s (hindari speak 2x)
-//   ✅ FIX: Utterance timeout protection (30s)
-//   ✅ FIX: Cancel & cleanup saat disable
-//   ✅ NEW: forceEnable() — bypass localStorage
-//   ✅ NEW: reloadConfig() — reload config dari storage
-//   ✅ NEW: isFirstTime() — cek user baru
-//   ✅ KEEP: Semua API v1.1.0 (100% backward compatible)
+//   ✅ FIX: Utterance timeout protect (30s) — force continue queue
+//   ✅ FIX: Dedup window 2s — hindari speak 2x untuk text sama
+//   ✅ FIX: Queue processing robust — tidak stuck saat speech error
+//   ✅ FIX: Cancel & cleanup saat disable — hapus queue + utterance
+//   ✅ FIX: Chrome Web Speech bug — resume() jika stuck paused
+//   ✅ FIX: Rate/pitch/volume clamp [0.1-10, 0-2, 0-1]
+//   ✅ FIX: Safe storage fallback (in-memory) kalau localStorage diblokir
+//   ✅ NEW: warmUp() — panggil saat user pertama klik apapun
+//   ✅ NEW: announce(text) — generic announcement
+//   ✅ NEW: getSupportedVoices() debug helper
+//   ✅ NEW: Diagnostic console log lengkap
+//   ✅ NEW: onStart/onEnd/onError callbacks
+//   ✅ KEEP: Semua API v1.2.0 (backward compatible)
+//   ✅ KEEP: announceAbsen(nama, sesi), detectNewAbsen(list, skipFirst)
+//   ✅ KEEP: setEnabled, toggle, isEnabled, isSupported, isSpeaking
 // ============================================================
 
 // ============================================================
 //   CONSTANTS
 // ============================================================
-const STORAGE_KEY_ENABLED   = 'pkd_voice_notif_enabled';
-const STORAGE_KEY_INIT      = 'pkd_voice_notif_initialized';
-const STORAGE_KEY_VOICE     = 'pkd_voice_notif_voice';
-const STORAGE_KEY_RATE      = 'pkd_voice_notif_rate';
-const STORAGE_KEY_PITCH     = 'pkd_voice_notif_pitch';
-const STORAGE_KEY_VOLUME    = 'pkd_voice_notif_volume';
+const STORAGE_KEY_ENABLED = 'pkd_voice_notif_enabled';
+const STORAGE_KEY_INIT    = 'pkd_voice_notif_initialized';
+const STORAGE_KEY_VOICE   = 'pkd_voice_notif_voice';
+const STORAGE_KEY_RATE    = 'pkd_voice_notif_rate';
+const STORAGE_KEY_PITCH   = 'pkd_voice_notif_pitch';
+const STORAGE_KEY_VOLUME  = 'pkd_voice_notif_volume';
 
 const DEFAULT_LANG    = 'id-ID';
 const DEFAULT_RATE    = 0.95;
 const DEFAULT_PITCH   = 1.0;
 const DEFAULT_VOLUME  = 1.0;
-const QUEUE_DELAY_MS  = 350;
+const QUEUE_DELAY_MS  = 400;
 const MAX_TEXT_LENGTH = 200;
 const UTTERANCE_TIMEOUT_MS = 30000;
-const VOICE_LOAD_RETRY_MS  = 100;
+const VOICE_LOAD_RETRY_MS  = 150;
 const VOICE_LOAD_MAX_RETRY = 20;
 const DEDUP_WINDOW_MS = 2000;
+const CHROME_RESUME_INTERVAL_MS = 5000;
 
 // ============================================================
 //   STATE
 // ============================================================
-let _enabled = true;           // ⭐ Default: ON
+let _enabled = true;
 let _isSpeaking = false;
 let _queue = [];
 let _lastAbsenIds = new Set();
@@ -52,9 +58,10 @@ let _voiceRetryTimer = null;
 let _voiceRetryCount = 0;
 let _currentUtterance = null;
 let _utteranceTimeoutTimer = null;
+let _chromeResumeTimer = null;
 let _isInitialized = false;
+let _isWarmedUp = false;
 
-// Config
 let _config = {
   lang: DEFAULT_LANG,
   rate: DEFAULT_RATE,
@@ -72,8 +79,38 @@ let _onSpeakError = null;
 let _recentSpokenHash = '';
 let _recentSpokenTime = 0;
 
+// In-memory fallback storage
+const _memStore = new Map();
+
 // ============================================================
-//   UTILITY
+//   SAFE STORAGE
+// ============================================================
+function safeGet(key, fallback = null) {
+  try {
+    const v = localStorage.getItem(key);
+    if (v !== null) return v;
+  } catch (e) { /* blocked */ }
+  return _memStore.has(key) ? _memStore.get(key) : fallback;
+}
+
+function safeSet(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
+    _memStore.delete(key);
+    return true;
+  } catch (e) {
+    _memStore.set(key, String(value));
+    return false;
+  }
+}
+
+function safeRemove(key) {
+  try { localStorage.removeItem(key); } catch (e) { /* silent */ }
+  _memStore.delete(key);
+}
+
+// ============================================================
+//   SUPPORT CHECK
 // ============================================================
 function isSpeechSupported() {
   return typeof window !== 'undefined' &&
@@ -81,40 +118,17 @@ function isSpeechSupported() {
          typeof SpeechSynthesisUtterance !== 'undefined';
 }
 
-function safeLocalGet(key, fallback = null) {
-  try {
-    const v = localStorage.getItem(key);
-    return v !== null ? v : fallback;
-  } catch (e) {
-    return fallback;
-  }
-}
-
-function safeLocalSet(key, value) {
-  try {
-    localStorage.setItem(key, String(value));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-function safeLocalRemove(key) {
-  try { localStorage.removeItem(key); }
-  catch (e) { /* silent */ }
-}
-
 // ============================================================
-//   CONFIG LOAD / SAVE
+//   CONFIG LOAD/SAVE
 // ============================================================
 function loadEnabledState() {
-  const raw = safeLocalGet(STORAGE_KEY_ENABLED, null);
-  const isInit = safeLocalGet(STORAGE_KEY_INIT, null);
+  const raw = safeGet(STORAGE_KEY_ENABLED, null);
+  const isInit = safeGet(STORAGE_KEY_INIT, null);
 
-  // ⭐ First time — default ON
+  // First time — default ON
   if (raw === null || isInit === null) {
-    safeLocalSet(STORAGE_KEY_ENABLED, 'true');
-    safeLocalSet(STORAGE_KEY_INIT, 'true');
+    safeSet(STORAGE_KEY_ENABLED, 'true');
+    safeSet(STORAGE_KEY_INIT, 'true');
     console.log('[VoiceNotifier] 🔧 First time — enabled=true');
     return true;
   }
@@ -123,12 +137,12 @@ function loadEnabledState() {
 }
 
 function loadConfigFromStorage() {
-  _config.rate = parseFloat(safeLocalGet(STORAGE_KEY_RATE, DEFAULT_RATE)) || DEFAULT_RATE;
-  _config.pitch = parseFloat(safeLocalGet(STORAGE_KEY_PITCH, DEFAULT_PITCH)) || DEFAULT_PITCH;
-  _config.volume = parseFloat(safeLocalGet(STORAGE_KEY_VOLUME, DEFAULT_VOLUME)) || DEFAULT_VOLUME;
-  _config.voiceName = safeLocalGet(STORAGE_KEY_VOICE, null);
+  _config.rate = parseFloat(safeGet(STORAGE_KEY_RATE, DEFAULT_RATE)) || DEFAULT_RATE;
+  _config.pitch = parseFloat(safeGet(STORAGE_KEY_PITCH, DEFAULT_PITCH)) || DEFAULT_PITCH;
+  _config.volume = parseFloat(safeGet(STORAGE_KEY_VOLUME, DEFAULT_VOLUME)) || DEFAULT_VOLUME;
+  _config.voiceName = safeGet(STORAGE_KEY_VOICE, null);
 
-  // Clamp values
+  // Clamp
   _config.rate = Math.max(0.1, Math.min(10, _config.rate));
   _config.pitch = Math.max(0, Math.min(2, _config.pitch));
   _config.volume = Math.max(0, Math.min(1, _config.volume));
@@ -152,13 +166,13 @@ function selectIndonesianVoice() {
   const voices = getVoiceList();
   if (!voices || voices.length === 0) return null;
 
-  // 1. Custom voice (kalau user sudah pilih)
+  // 1. Custom voice saved by user
   if (_config.voiceName) {
     const saved = voices.find(v => v.name === _config.voiceName);
     if (saved) return saved;
   }
 
-  // 2. Prioritas: id-ID → id → name includes "indonesia"
+  // 2. Priority: id-ID → id → contains "indonesia"
   let chosen = voices.find(v => v.lang === 'id-ID');
   if (!chosen) chosen = voices.find(v => v.lang === 'id');
   if (!chosen) chosen = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('id'));
@@ -166,7 +180,7 @@ function selectIndonesianVoice() {
     v.name && v.name.toLowerCase().includes('indonesia')
   );
 
-  // 3. Fallback ke default browser
+  // 3. Fallback to default
   if (!chosen) {
     chosen = voices.find(v => v.default) || voices[0];
   }
@@ -241,6 +255,28 @@ function chunkText(text, maxLen = MAX_TEXT_LENGTH) {
 }
 
 // ============================================================
+//   CHROME RESUME HACK
+//   Chrome desktop sering stuck dalam state paused → resume() tiap 5s
+// ============================================================
+function startChromeResumeGuard() {
+  if (_chromeResumeTimer) return;
+  _chromeResumeTimer = setInterval(() => {
+    try {
+      if (window.speechSynthesis.speaking && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch (e) { /* silent */ }
+  }, CHROME_RESUME_INTERVAL_MS);
+}
+
+function stopChromeResumeGuard() {
+  if (_chromeResumeTimer) {
+    clearInterval(_chromeResumeTimer);
+    _chromeResumeTimer = null;
+  }
+}
+
+// ============================================================
 //   SPEAK INTERNAL
 // ============================================================
 function speakInternal(text) {
@@ -269,6 +305,7 @@ function speakChunksSequentially(chunks, index) {
     _isSpeaking = false;
     _currentUtterance = null;
     clearUtteranceTimeout();
+    stopChromeResumeGuard();
     if (typeof _onSpeakEnd === 'function') {
       try { _onSpeakEnd(); } catch (e) { /* silent */ }
     }
@@ -290,6 +327,7 @@ function speakChunksSequentially(chunks, index) {
 
   utterance.onstart = () => {
     _isSpeaking = true;
+    startChromeResumeGuard();
     if (index === 0 && typeof _onSpeakStart === 'function') {
       try { _onSpeakStart(chunk); } catch (e) { /* silent */ }
     }
@@ -311,16 +349,19 @@ function speakChunksSequentially(chunks, index) {
     }
     _isSpeaking = false;
     _currentUtterance = null;
+    stopChromeResumeGuard();
     scheduleNextQueue();
   };
 
   _currentUtterance = utterance;
 
+  // Timeout protection
   _utteranceTimeoutTimer = setTimeout(() => {
     console.warn('[VoiceNotifier] ⏱️ Utterance timeout, force continue');
     try { window.speechSynthesis.cancel(); } catch (e) { /* silent */ }
     _isSpeaking = false;
     _currentUtterance = null;
+    stopChromeResumeGuard();
     scheduleNextQueue();
   }, UTTERANCE_TIMEOUT_MS);
 
@@ -406,7 +447,11 @@ export const VoiceNotifier = {
   },
 
   isFirstTime() {
-    return safeLocalGet(STORAGE_KEY_INIT, null) === null;
+    return safeGet(STORAGE_KEY_INIT, null) === null;
+  },
+
+  isWarmedUp() {
+    return _isWarmedUp;
   },
 
   getConfig() {
@@ -415,6 +460,7 @@ export const VoiceNotifier = {
       enabled: _enabled,
       supported: isSpeechSupported(),
       initialized: _isInitialized,
+      warmedUp: _isWarmedUp,
       queueLength: _queue.length,
       voiceReady: _voiceReady,
       currentVoice: _voice ? {
@@ -430,7 +476,7 @@ export const VoiceNotifier = {
   // ==========================================================
   setEnabled(val) {
     _enabled = !!val;
-    safeLocalSet(STORAGE_KEY_ENABLED, _enabled);
+    safeSet(STORAGE_KEY_ENABLED, _enabled);
 
     if (!_enabled) {
       // Cancel semua
@@ -439,6 +485,7 @@ export const VoiceNotifier = {
       _isSpeaking = false;
       _currentUtterance = null;
       clearUtteranceTimeout();
+      stopChromeResumeGuard();
     }
 
     console.log(`[VoiceNotifier] ${_enabled ? '🔊 ON' : '🔇 OFF'}`);
@@ -480,7 +527,28 @@ export const VoiceNotifier = {
     return true;
   },
 
+  // ⭐ Warm-up: panggil saat user pertama klik apapun (bypass Chrome autoplay)
+  warmUp() {
+    if (!isSpeechSupported()) return false;
+    if (_isWarmedUp) return true;
+
+    try {
+      const utterance = new SpeechSynthesisUtterance(' ');
+      utterance.volume = 0;
+      utterance.rate = 10;
+      utterance.pitch = 0.1;
+      window.speechSynthesis.speak(utterance);
+      _isWarmedUp = true;
+      console.log('[VoiceNotifier] 🔥 Warm-up OK');
+      return true;
+    } catch (e) {
+      console.warn('[VoiceNotifier] Warm-up failed:', e.message);
+      return false;
+    }
+  },
+
   testVoice() {
+    this.warmUp();
     return this.speak('Notifikasi suara aktif dan berfungsi');
   },
 
@@ -537,9 +605,9 @@ export const VoiceNotifier = {
   setVoice(voiceName) {
     _config.voiceName = voiceName || null;
     if (_config.voiceName) {
-      safeLocalSet(STORAGE_KEY_VOICE, _config.voiceName);
+      safeSet(STORAGE_KEY_VOICE, _config.voiceName);
     } else {
-      safeLocalRemove(STORAGE_KEY_VOICE);
+      safeRemove(STORAGE_KEY_VOICE);
     }
     _voiceReady = false;
     _voice = null;
@@ -551,7 +619,7 @@ export const VoiceNotifier = {
     const r = parseFloat(rate);
     if (isNaN(r)) return _config.rate;
     _config.rate = Math.max(0.1, Math.min(10, r));
-    safeLocalSet(STORAGE_KEY_RATE, _config.rate);
+    safeSet(STORAGE_KEY_RATE, _config.rate);
     return _config.rate;
   },
 
@@ -559,7 +627,7 @@ export const VoiceNotifier = {
     const p = parseFloat(pitch);
     if (isNaN(p)) return _config.pitch;
     _config.pitch = Math.max(0, Math.min(2, p));
-    safeLocalSet(STORAGE_KEY_PITCH, _config.pitch);
+    safeSet(STORAGE_KEY_PITCH, _config.pitch);
     return _config.pitch;
   },
 
@@ -567,7 +635,7 @@ export const VoiceNotifier = {
     const v = parseFloat(volume);
     if (isNaN(v)) return _config.volume;
     _config.volume = Math.max(0, Math.min(1, v));
-    safeLocalSet(STORAGE_KEY_VOLUME, _config.volume);
+    safeSet(STORAGE_KEY_VOLUME, _config.volume);
     return _config.volume;
   },
 
@@ -625,6 +693,7 @@ export const VoiceNotifier = {
     _recentSpokenTime = 0;
     _currentUtterance = null;
     clearUtteranceTimeout();
+    stopChromeResumeGuard();
 
     try { window.speechSynthesis.cancel(); }
     catch (e) { /* silent */ }
@@ -635,6 +704,7 @@ export const VoiceNotifier = {
     _isSpeaking = false;
     _currentUtterance = null;
     clearUtteranceTimeout();
+    stopChromeResumeGuard();
     try { window.speechSynthesis.cancel(); }
     catch (e) { /* silent */ }
   },
@@ -649,7 +719,6 @@ export const VoiceNotifier = {
   //   INIT
   // ==========================================================
   init() {
-    // ⭐ FIX: Load config dari storage
     _enabled = loadEnabledState();
     loadConfigFromStorage();
 
@@ -663,7 +732,7 @@ export const VoiceNotifier = {
     // Ensure voice ready
     ensureVoiceReady();
 
-    // Listen onvoiceschanged (Chrome async load)
+    // Listen voiceschanged (Chrome async load)
     try {
       if (typeof window.speechSynthesis.onvoiceschanged !== 'function') {
         window.speechSynthesis.onvoiceschanged = () => {
@@ -678,13 +747,25 @@ export const VoiceNotifier = {
       }
     } catch (e) { /* silent */ }
 
+    // Warm-up listener — sekali saja
+    if (!_warmUpListenerAttached) {
+      _warmUpListenerAttached = true;
+      const warmUpHandler = () => {
+        VoiceNotifier.warmUp();
+        document.removeEventListener('click', warmUpHandler);
+        document.removeEventListener('touchstart', warmUpHandler);
+        document.removeEventListener('keydown', warmUpHandler);
+      };
+      document.addEventListener('click', warmUpHandler, { once: true });
+      document.addEventListener('touchstart', warmUpHandler, { once: true });
+      document.addEventListener('keydown', warmUpHandler, { once: true });
+    }
+
     _isInitialized = true;
 
-    // Log final state
     const emoji = _enabled ? '🔊 ON' : '🔇 OFF';
     console.log(`[VoiceNotifier] ✅ Initialized — ${emoji}`);
 
-    // Log available voices
     const idVoices = this.getIndonesianVoices();
     if (idVoices.length > 0) {
       console.log(`[VoiceNotifier] 🇮🇩 Found ${idVoices.length} Indonesian voice(s):`,
@@ -697,6 +778,9 @@ export const VoiceNotifier = {
   },
 };
 
+// Flag untuk auto-warmup listener
+let _warmUpListenerAttached = false;
+
 // ============================================================
 //   AUTO-INIT
 // ============================================================
@@ -704,7 +788,6 @@ if (typeof window !== 'undefined' && isSpeechSupported()) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => VoiceNotifier.init(), { once: true });
   } else {
-    // DOM already ready
     VoiceNotifier.init();
   }
 
@@ -721,6 +804,6 @@ if (typeof window !== 'undefined' && isSpeechSupported()) {
 export default VoiceNotifier;
 
 console.log(
-  '%c VoiceNotifier v1.2.0 — Full Fix Edition ',
+  '%c VoiceNotifier v1.3.0 — Full Fix Edition ',
   'background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-weight:600;'
 );
