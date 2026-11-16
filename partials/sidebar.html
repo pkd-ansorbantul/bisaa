@@ -1,69 +1,29 @@
 <!-- ============================================================
      SIDEBAR PARTIAL — PKD GP Ansor Bantul
-     Versi: 28.0.0 — ANGKATAN PKD EDITION
+     Versi: 26.1.6
      Dimuat oleh: js/components/sidebar.js
+     Tidak ada <html>, <head>, <body> — hanya konten fragment
      ============================================================
-     v28.0.0 CHANGES (dari v27.3.0):
-     ✅ NEW: Menu "Angkatan PKD" (menggantikan Alumni)
-     ✅ REMOVED: Menu "Lokasi PKD" (digantikan Angkatan PKD)
-     ✅ REMOVED: Link "Alumni" di submenu Peserta
-     ✅ KEEP: Semua menu + submenu + brand + logout
-     ✅ KEEP: Mobile drawer (backdrop + close btn)
-     ✅ KEEP: Theme toggle + notif + minimize
+     v26.1.6 UPDATE:
+     ✅ Tambah menu "Tim Instruktur" setelah Kader
      ============================================================ -->
 
 <div class="sidebar-wrapper" id="sidebarWrapper" role="navigation" aria-label="Navigasi utama">
 
-  <!-- ==========================================================
-       SIDEBAR HEADER — Notif + Theme + Minimize + Close
-       ========================================================== -->
-  <div class="sidebar-header">
-
-    <!-- Notif Center Container — diisi oleh notification-center.js -->
-    <div id="notif-center-container" class="sidebar-header-notif" aria-label="Notifikasi"></div>
-
-    <!-- Kontrol: theme toggle + minimize + close (mobile) -->
-    <div class="sidebar-header-controls">
-
-      <!-- Theme Toggle (dark/light) — di-bind oleh theme-toggle.js -->
-      <button
-        type="button"
-        id="sidebarThemeToggleBtn"
-        class="sidebar-mini-btn theme-toggle-btn"
-        title="Toggle Tema (Dark / Light)"
-        aria-label="Toggle tema gelap atau terang"
-        aria-pressed="false"
-      >
-        <i class="bi bi-sun-fill theme-icon-light" aria-hidden="true"></i>
-        <i class="bi bi-moon-stars-fill theme-icon-dark" aria-hidden="true"></i>
-      </button>
-
-      <!-- Minimize Toggle — di-bind oleh sidebar.js -->
-      <button
-        type="button"
-        id="toggleSidebarBtn"
-        class="sidebar-mini-btn sidebar-minimize-btn"
-        title="Minimize / Maximize Sidebar"
-        aria-label="Minimize atau maximize sidebar"
-      >
-        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
-      </button>
-
-      <!-- Close Button (mobile only) — di-bind oleh sidebar.js -->
-      <button
-        type="button"
-        id="closeSidebarBtn"
-        class="sidebar-mini-btn sidebar-close-btn"
-        title="Tutup Menu"
-        aria-label="Tutup menu navigasi"
-      >
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      </button>
-
-    </div>
+  <!-- ============ TOGGLE BUTTON ============ -->
+  <div class="sidebar-toggle">
+    <button
+      type="button"
+      id="toggleSidebarBtn"
+      title="Minimize / Maximize Sidebar"
+      aria-label="Minimize atau maximize sidebar"
+    >
+      <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+    </button>
   </div>
 
   <!-- ============ BRAND AREA ============ -->
+  <!-- ⭐ Logo & nama aplikasi → link ke halaman publik (index.html) -->
   <div class="sidebar-brand-area">
     <a
       class="brand-sidebar"
@@ -71,7 +31,7 @@
       title="Kunjungi Beranda Publik"
       target="_self"
     >
-      <img src="/bisaa/LOGOANSOR.webp" alt="GP Ansor">
+      <img src="/bisaa/LOGO%20ANSOR.webp" alt="GP Ansor">
       <div>
         <div class="brand-sidebar-title">PKD GP Ansor</div>
         <span class="brand-sidebar-sub">Kabupaten Bantul</span>
@@ -82,6 +42,7 @@
   <!-- ============ MENU AREA ============ -->
   <div class="sidebar-menu-area">
 
+    <!-- ⚠️ PENTING: id="sidebarMenu" dipakai oleh sidebar.js untuk query -->
     <div class="nav flex-column nav-pills" id="sidebarMenu" role="tablist">
 
       <!-- ============ Dashboard ============ -->
@@ -102,7 +63,6 @@
         title="Akademik"
         role="button"
         tabindex="0"
-        aria-expanded="false"
       >
         <i class="bi bi-book" aria-hidden="true"></i>
         <span>Akademik</span>
@@ -129,7 +89,6 @@
         title="Peserta"
         role="button"
         tabindex="0"
-        aria-expanded="false"
       >
         <i class="bi bi-people" aria-hidden="true"></i>
         <span>Peserta</span>
@@ -139,28 +98,20 @@
           <i class="bi bi-person-badge" aria-hidden="true"></i>
           <span>Peserta</span>
         </a>
+        <a class="nav-link" href="#/admin/alumni" data-route="#/admin/alumni" title="Alumni">
+          <i class="bi bi-award" aria-hidden="true"></i>
+          <span>Alumni</span>
+        </a>
         <a class="nav-link" href="#/admin/kader" data-route="#/admin/kader" title="Kader">
           <i class="bi bi-people-fill" aria-hidden="true"></i>
           <span>Kader</span>
         </a>
+        <!-- ⭐ v26.1.6: Tim Instruktur -->
         <a class="nav-link" href="#/admin/tim-instruktur" data-route="#/admin/tim-instruktur" title="Tim Instruktur">
           <i class="bi bi-person-vcard" aria-hidden="true"></i>
           <span>Tim Instruktur</span>
         </a>
       </div>
-
-      <!-- ============================================================
-           ⭐ NEW v28.0.0: Angkatan PKD (menggantikan Alumni + Lokasi PKD)
-           ============================================================ -->
-      <a
-        class="nav-link"
-        href="#/admin/angkatan-pkd"
-        data-route="#/admin/angkatan-pkd"
-        title="Angkatan PKD"
-      >
-        <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
-        <span>Angkatan PKD</span>
-      </a>
 
       <!-- ============ Absensi (parent) ============ -->
       <div
@@ -169,7 +120,6 @@
         title="Absensi"
         role="button"
         tabindex="0"
-        aria-expanded="false"
       >
         <i class="bi bi-calendar-check" aria-hidden="true"></i>
         <span>Absensi</span>
@@ -196,7 +146,6 @@
         title="Informasi"
         role="button"
         tabindex="0"
-        aria-expanded="false"
       >
         <i class="bi bi-info-circle" aria-hidden="true"></i>
         <span>Informasi</span>
@@ -212,57 +161,28 @@
         </a>
       </div>
 
-      <!-- ============ Skrining ============ -->
-      <a
-        class="nav-link"
-        href="#/admin/skrining"
-        data-route="#/admin/skrining"
-        title="Skrining"
-      >
+      <!-- ============ Standalone Menu ============ -->
+      <a class="nav-link" href="#/admin/skrining" data-route="#/admin/skrining" title="Skrining">
         <i class="bi bi-clipboard-check" aria-hidden="true"></i>
         <span>Skrining</span>
       </a>
 
-      <!-- ============ Sertifikat ============ -->
-      <a
-        class="nav-link"
-        href="#/admin/sertifikat"
-        data-route="#/admin/sertifikat"
-        title="Sertifikat"
-      >
+      <a class="nav-link" href="#/admin/sertifikat" data-route="#/admin/sertifikat" title="Sertifikat">
         <i class="bi bi-patch-check" aria-hidden="true"></i>
         <span>Sertifikat</span>
       </a>
 
-      <!-- ============ Tanda Tangan ============ -->
-      <a
-        class="nav-link"
-        href="#/admin/tanda-tangan"
-        data-route="#/admin/tanda-tangan"
-        title="Tanda Tangan"
-      >
+      <a class="nav-link" href="#/admin/tanda-tangan" data-route="#/admin/tanda-tangan" title="Tanda Tangan">
         <i class="bi bi-pencil-square" aria-hidden="true"></i>
         <span>Tanda Tangan</span>
       </a>
 
-      <!-- ============ RTL & Tugas ============ -->
-      <a
-        class="nav-link"
-        href="#/admin/rtl"
-        data-route="#/admin/rtl"
-        title="RTL & Tugas"
-      >
+      <a class="nav-link" href="#/admin/rtl" data-route="#/admin/rtl" title="RTL & Tugas">
         <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
         <span>RTL &amp; Tugas</span>
       </a>
 
-      <!-- ============ Pengaturan ============ -->
-      <a
-        class="nav-link"
-        href="#/admin/pengaturan"
-        data-route="#/admin/pengaturan"
-        title="Pengaturan"
-      >
+      <a class="nav-link" href="#/admin/pengaturan" data-route="#/admin/pengaturan" title="Pengaturan">
         <i class="bi bi-gear" aria-hidden="true"></i>
         <span>Pengaturan</span>
       </a>
